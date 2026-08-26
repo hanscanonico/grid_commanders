@@ -29,6 +29,17 @@ static func active() -> bool:
 	return _active == 1
 
 
+## Pins the answer for this process. The driven gate (tests/unit/test_touch_press.gd)
+## has to build mobile chrome inside an ordinary headless run, where neither door
+## is open; `unpin` puts the question back.
+static func pin(active: bool) -> void:
+	_active = 1 if active else 0
+
+
+static func unpin() -> void:
+	_active = -1
+
+
 ## The same answer over arguments handed in, so the rule is checkable without a
 ## process to launch — CmdArgs' own idiom, and the reason that class takes its
 ## args rather than reading them.

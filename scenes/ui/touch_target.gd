@@ -18,13 +18,18 @@ extends Control
 ## simply win it, which is a stolen tap rather than a bigger one — so each takes
 ## half the gap and the growth that is left goes where nothing is standing. A row
 ## of buttons packed edge to edge therefore gains nothing in that axis, and that
-## is the honest answer: there is no free space there to give.
+## is the honest answer: there is no free space there to give. A neighbour lying
+## diagonally is measured by neither axis' gap, so `_retreat` is a second pass that
+## hands back whichever axis it reaches into by least.
 ##
 ## A tap on the area is the parent's press and only the parent's — the event is
 ## claimed here, so one finger still makes one receipt (mobile R1).
 
 ## Set once by `expand`; the caller's, because the metric belongs to UiTheme.
 var _minimum := 0.0
+## True between a press on this area and its release, so a tap that wandered off
+## before letting go is cancelled rather than delivered.
+var _armed := false
 
 
 ## Lays an area over `host` and hands it back. The area is a child, so it follows
@@ -74,7 +79,51 @@ static func inflation(
 		trail = trail.min(screen.end - host.end)
 	var x := _spread(host.position.x, host.end.x, minimum, lead.x, trail.x)
 	var y := _spread(host.position.y, host.end.y, minimum, lead.y, trail.y)
-	return Rect2(Vector2(x.x, y.x), Vector2(x.y - x.x, y.y - y.x))
+	var grown := Rect2(Vector2(x.x, y.x), Vector2(x.y - x.x, y.y - y.x))
+	for other: Rect2 in neighbours:
+		grown = _retreat(grown, host, other)
+	return grown
+
+
+## The second pass, and the one that makes "never a neighbour's" true rather than
+## nearly true: growing both axes at once can reach a control that sits *diagonally*
+## away, which neither axis' own gap ever measured. The rectangle gives that
+## neighbour back the axis it overlaps by least — the smaller retreat of the two —
+## and never gives back the host's own drawn rect.
+static func _retreat(rect: Rect2, host: Rect2, other: Rect2) -> Rect2:
+	if other.intersects(host) or not other.intersects(rect):
+		return rect
+	var axis := (
+		0 if _retreat_cost(rect, host, other, 0) <= _retreat_cost(rect, host, other, 1) else 1
+	)
+	var trimmed := _trim(rect, host, other, axis)
+	# The cheaper axis cannot always clear it: the retreat stops at the host's own
+	# drawn rect, and where that binds the other axis is the one that has room. A
+	# neighbour that does not touch the host is always disjoint on one of the two.
+	if trimmed.intersects(other):
+		trimmed = _trim(trimmed, host, other, 1 - axis)
+	return trimmed
+
+
+## How much of an edge one axis' retreat would cost, so the rectangle gives back
+## the side it reaches into by least.
+static func _retreat_cost(rect: Rect2, host: Rect2, other: Rect2, axis: int) -> float:
+	if other.get_center()[axis] >= host.get_center()[axis]:
+		return rect.end[axis] - other.position[axis]
+	return other.end[axis] - rect.position[axis]
+
+
+## Pulls one edge back clear of `other`, never past the host's own edge.
+static func _trim(rect: Rect2, host: Rect2, other: Rect2, axis: int) -> Rect2:
+	var position := rect.position
+	var size := rect.size
+	if other.get_center()[axis] >= host.get_center()[axis]:
+		size[axis] = maxf(other.position[axis], host.end[axis]) - rect.position[axis]
+	else:
+		var edge := minf(other.end[axis], host.position[axis])
+		size[axis] = rect.end[axis] - edge
+		position[axis] = edge
+	return Rect2(position, size)
 
 
 ## One axis, as the span it ends up covering: the control grows evenly toward
@@ -96,22 +145,38 @@ static func _shares_band(from: float, to: float, other_from: float, other_to: fl
 	return other_from < to and from < other_to
 
 
-## A press on the area is the host's press, claimed here so it is delivered once.
-## Which button classes arrive is the engine's: a finger reaches this as an
-## emulated mouse press, the default `emulate_mouse_from_touch` no project setting
-## turns off.
+## A tap on the area is the host's tap, claimed here so it is delivered once
+## (mobile R1), and delivered exactly as the engine delivers it: on **release**,
+## which is `BaseButton`'s own default action mode, and as `toggled` **and**
+## `pressed` together on a toggle. A flip alone is what a segmented control cannot
+## hear — `UiKit.segment` reads `pressed`, so a segment answering only `toggled`
+## is a dead control. `tests/unit/test_touch_press.gd` drives every wiring kind
+## through a real viewport for that reason.
+##
+## Which event class arrives is the engine's: a finger reaches this as an emulated
+## mouse press, the default `emulate_mouse_from_touch` no project setting turns
+## off.
 func _gui_input(event: InputEvent) -> void:
 	var host := get_parent() as BaseButton
 	if host == null or host.disabled:
 		return
-	var press := event as InputEventMouseButton
-	if press == null or not press.pressed or press.button_index != MOUSE_BUTTON_LEFT:
+	var click := event as InputEventMouseButton
+	if click == null or click.button_index != MOUSE_BUTTON_LEFT:
 		return
 	accept_event()
+	if click.pressed:
+		_armed = true
+		return
+	# Released off the area after pressing on it — a cancelled tap, as it is on any
+	# other button.
+	var inside := Rect2(Vector2.ZERO, size).has_point(click.position)
+	if not _armed or not inside:
+		_armed = false
+		return
+	_armed = false
 	if host.toggle_mode:
 		host.button_pressed = not host.button_pressed
-	else:
-		host.pressed.emit()
+	host.pressed.emit()
 
 
 func _fit() -> void:

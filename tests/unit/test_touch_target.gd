@@ -101,3 +101,39 @@ func test_an_enclosing_rect_is_not_a_neighbour() -> void:
 	)
 	assert_almost_eq(grown.size.x, MIN, 0.01)
 	assert_almost_eq(grown.size.y, MIN, 0.01)
+
+
+## Growing both axes at once can reach a control neither axis' own gap measured —
+## one sitting diagonally away. Fuzzed rather than reasoned about, because that is
+## how it was found: 105 of 20,000 random boards crossed a diagonal neighbour before
+## `_retreat` existed.
+func test_no_board_lets_a_hit_rectangle_cross_a_neighbour() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20260826
+	var crossings := 0
+	var lost := 0
+	for _case in 20000:
+		var host := Rect2(
+			rng.randi_range(0, 120),
+			rng.randi_range(0, 120),
+			rng.randi_range(4, 30),
+			rng.randi_range(4, 30)
+		)
+		var neighbours: Array[Rect2] = []
+		for _other in rng.randi_range(1, 4):
+			var other := Rect2(
+				rng.randi_range(0, 160),
+				rng.randi_range(0, 160),
+				rng.randi_range(4, 30),
+				rng.randi_range(4, 30)
+			)
+			if not other.intersects(host):
+				neighbours.append(other)
+		var grown := TouchTarget.inflation(host, neighbours, MIN)
+		if not grown.encloses(host):
+			lost += 1
+		for other: Rect2 in neighbours:
+			if grown.intersects(other):
+				crossings += 1
+	assert_eq(crossings, 0, "a hit rectangle never reaches into a neighbour")
+	assert_eq(lost, 0, "and never retreats inside the control it was drawn for")
