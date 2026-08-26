@@ -15,18 +15,15 @@ extends RefCounted
 ## silent engine default — and it speaks only when the emulation that would
 ## otherwise speak for it is switched off.
 
-## Whether the engine is making our mouse clicks out of touches. A project
-## setting, so it cannot change mid-run and is read once.
-static var _mouse_emulated: bool = ProjectSettings.get_setting(
-	"input_devices/pointing/emulate_mouse_from_touch", true
-)
-
 
 ## True for a press of the one finger door, which is shut while the engine is
-## emulating a click for the same finger.
+## emulating a click for the same finger. The engine is asked whether it is
+## emulating, rather than the project setting it starts from, because
+## `Input.set_emulate_mouse_from_touch` can move it at runtime and a second
+## opinion here would answer for a click nobody is sending.
 static func is_touch_press(event: InputEvent) -> bool:
 	var touch := event as InputEventScreenTouch
-	return touch != null and touch.pressed and not _mouse_emulated
+	return touch != null and touch.pressed and not Input.is_emulating_mouse_from_touch()
 
 
 ## The narrower question the two states that swallow play still ask: the confirm
