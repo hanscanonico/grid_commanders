@@ -458,14 +458,15 @@ Then open `build/ios/grid_commanders.xcodeproj`, or build it from the command li
 ```sh
 cd build/ios
 xcodebuild -project grid_commanders.xcodeproj -scheme grid_commanders \
-  -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
+  -configuration Debug -sdk iphonesimulator -arch x86_64 CODE_SIGNING_ALLOWED=NO build
 ```
 
-Two toolchain facts worth knowing before that command is trusted. The 4.7.1 template's simulator
-slice of `grid_commanders.xcframework` is **x86_64 only**, so a simulator build on an Apple Silicon
-Mac has to be asked for with `-arch x86_64`; and Xcode needs its iOS platform support component
-installed (`xcodebuild -downloadPlatform iOS`) or `actool` and `ibtool` refuse the asset catalog and
-the launch storyboard.
+Two toolchain facts are why that command reads the way it does. The 4.7.1 template's simulator slice
+of `grid_commanders.xcframework` is **x86_64 only** — `lipo -info` on it says so — which is why the
+architecture is pinned rather than left to the Apple Silicon default. And Xcode needs its iOS
+platform support component installed (`xcodebuild -downloadPlatform iOS`): without it the build stops
+at `Found no destinations for the scheme` before compiling anything, and a toolchain holding the SDK
+without that component has `actool` and `ibtool` refuse the asset catalog and the launch storyboard.
 
 `window/stretch/scale_mode` stays absent on iOS too, and here that is a reading rather than
 arithmetic. Measured on an iPhone 15 simulator (1179 short edge, window scale 3.275): the picture is

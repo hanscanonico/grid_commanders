@@ -20,8 +20,11 @@ ANDROID_APK ?= build/android/grid_commanders.apk
 # Ignored by git, like the APK.
 IOS_IPA ?= build/ios/grid_commanders.ipa
 IOS_XCODEPROJ ?= build/ios/grid_commanders.xcodeproj
-# The placeholder team id committed in export_presets.cfg, replaced in the
-# generated project when IOS_TEAM_ID is passed.
+IOS_EXPORT_OPTIONS ?= build/ios/grid_commanders/export_options.plist
+# The placeholder team id committed in export_presets.cfg. Rewriting the
+# placeholder itself is what covers every place the generated project repeats
+# it: DEVELOPMENT_TEAM in both build configurations, the target's
+# DevelopmentTeam attribute, and teamID in export_options.plist.
 IOS_TEAM_PLACEHOLDER := AAAAAAAAAA
 
 # The two things a gate can be missing. tools/check_scripts.sh and
@@ -415,10 +418,8 @@ export-ios: import
 	@mkdir -p $(dir $(IOS_XCODEPROJ))
 	$(GODOT) --headless --path . --export-debug "iOS" $(CURDIR)/$(IOS_IPA)
 	@test -z "$(IOS_TEAM_ID)" || { \
-		sed -i '' 's/DEVELOPMENT_TEAM = [A-Za-z0-9]*;/DEVELOPMENT_TEAM = $(IOS_TEAM_ID);/' \
-			$(IOS_XCODEPROJ)/project.pbxproj; \
-		sed -i '' 's|<string>$(IOS_TEAM_PLACEHOLDER)</string>|<string>$(IOS_TEAM_ID)</string>|' \
-			$(dir $(IOS_IPA))grid_commanders/export_options.plist; \
+		sed -i '' 's/$(IOS_TEAM_PLACEHOLDER)/$(IOS_TEAM_ID)/g' \
+			$(IOS_XCODEPROJ)/project.pbxproj $(IOS_EXPORT_OPTIONS); \
 		echo "export-ios: development team set to $(IOS_TEAM_ID)"; }
 	@ls -d $(IOS_XCODEPROJ)
 
