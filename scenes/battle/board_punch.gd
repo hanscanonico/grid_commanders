@@ -54,7 +54,7 @@ func _ready() -> void:
 ## between the two docked bars, which is where the camera's own centre lands.
 ## Static and pure, so the geometry is checked without a viewport.
 static func band_center(view_size: Vector2) -> Vector2:
-	return Vector2(view_size.x * 0.5, view_size.y * 0.5 - float(BattleView.BOARD_LIFT_PX))
+	return Vector2(view_size.x * 0.5, view_size.y * 0.5 - float(MobileDock.board_lift_px()))
 
 
 ## Grabs the board as it stands and shows it in place of the live one, at rest.
@@ -75,7 +75,7 @@ func open() -> void:
 	var view_size := get_viewport_rect().size
 	_frame.texture = ImageTexture.create_from_image(image)
 	position = Vector2(0.0, float(UiTheme.HUD_TOP_H))
-	size = view_size - Vector2(0.0, float(UiTheme.HUD_BARS_H))
+	size = view_size - Vector2(0.0, float(MobileDock.chrome_h()))
 	_frame.position = Vector2(0.0, -float(UiTheme.HUD_TOP_H))
 	_frame.size = view_size
 	_frame.pivot_offset = band_center(view_size)

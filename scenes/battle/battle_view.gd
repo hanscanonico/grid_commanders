@@ -39,16 +39,6 @@ const ATLAS_SOURCE_ID := 0
 
 const UNIT_SPRITE_SCENE := preload("res://scenes/battle/unit_sprite.tscn")
 
-## How many *screen* pixels the board rides up out of the window's middle so it
-## sits centred in the band between the two docked bars. The bars' heights differ
-## by an odd number, so the exact half-difference is 11.5, and half a screen pixel
-## of camera offset puts every texel boundary of the board on a half pixel — the
-## fractional rest the whole integer-rung argument exists to forbid. The odd pixel
-## goes to the bottom: the board rides 12 up rather than 11, so the extra half of
-## clearance sits above the taller bar, where a unit standing on the last row is
-## further from the chrome rather than nearer it.
-const BOARD_LIFT_PX := (UiTheme.HUD_BOTTOM_H - UiTheme.HUD_TOP_H + 1) / 2
-
 ## The surface a property overlay stands on, under `terrain_layer`. The atlas
 ## ships its property columns transparent (TerrainDB.GROUND_ID), so a city drawn
 ## alone is a hole in the board; this layer is the ground the building sits on.
@@ -93,6 +83,9 @@ var mission_strip: MissionStrip
 ## the same reason the strip does rather than being chrome the camera is framed
 ## around.
 var mission_panel: MissionObjectivesPanel
+## The touch build's third docked bar — null on a desktop build, where D5 says the
+## mobile chrome is never constructed at all. `setup` is what installs it.
+var mobile_dock: MobileDock
 
 ## The transient jitter the animator lays over the board's docking shift. Set —
 ## and tweened — by BattleAnimator.shake_camera rather than written to the
@@ -145,6 +138,7 @@ func setup() -> void:
 	hud_bottom.ground = db.ground()  # and paints a property chip on the same ground the board does
 	hud_bottom.fire_pressed.connect(fire_pressed.emit)
 	hud_bottom.end_turn_pressed.connect(end_turn_pressed.emit)
+	mobile_dock = MobileDock.install(hud_bottom)
 	# Whose actions the teaching strip may learn from — the computer plays through
 	# the same events and must not retire a hint on the player's behalf — and
 	# whether this board teaches at all, which is MapCatalog's answer (COM-122).
@@ -540,6 +534,8 @@ func refresh_range_lens(on: bool) -> void:
 func refresh_keys(context: StringName) -> void:
 	hud_top.show_keys(ControlHints.legend_for(context))
 	hud_bottom.show_end_turn(BattleLegend.commands_board(context))
+	if mobile_dock != null:
+		mobile_dock.refresh(context)
 
 
 ## The sides a person is playing. One in a match against the computer, both in
@@ -706,7 +702,7 @@ func _apply_zoom() -> void:
 ## match. So the shake is asked for through `shake_offset` and composed here.
 ## Anything else that wants to move the camera belongs in this sum too.
 func _apply_board_offset() -> void:
-	camera.offset = Vector2(0, float(BOARD_LIFT_PX) / camera.zoom.y) + shake_offset
+	camera.offset = Vector2(0, float(MobileDock.board_lift_px()) / camera.zoom.y) + shake_offset
 
 
 ## The furthest out the player may zoom, with the backdrop filling whatever the
@@ -731,7 +727,7 @@ func min_zoom() -> float:
 func _apply_camera_limits() -> void:
 	var map_px := Vector2(map.size() * TILE)
 	var extra := ((_board_viewport_size() / camera.zoom.x - map_px) / 2.0).max(Vector2.ZERO)
-	var hidden := float(UiTheme.HUD_BARS_H) / (2.0 * camera.zoom.y)
+	var hidden := float(MobileDock.chrome_h()) / (2.0 * camera.zoom.y)
 	camera.limit_left = floori(-extra.x)
 	camera.limit_top = floori(-extra.y - hidden)
 	camera.limit_right = ceili(map_px.x + extra.x)
@@ -746,7 +742,7 @@ func _viewport_size() -> Vector2:
 ## bars do not cover. Derived from constants, so it answers the same on every
 ## call in a match and the camera is never re-framed mid-turn.
 func _board_viewport_size() -> Vector2:
-	return _viewport_size() - Vector2(0, UiTheme.HUD_BARS_H)
+	return _viewport_size() - Vector2(0, MobileDock.chrome_h())
 
 
 ## Where the board's first cell lands on screen, in the same transform

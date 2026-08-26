@@ -344,6 +344,13 @@ DEFAULT_MODES=(
 	menu_campaign_interlude menu_campaign_deep menu_commander_select
 )
 
+# mobile_back is deliberately NOT in that list. A touch build is a boot fact of the
+# whole process — MobileProfile resolves --mobile once — so a mobile scenario can
+# never share the one-boot sweep with a desktop one, and adding it would also put
+# every recorded manifest on a different queue. Run it on its own:
+# `make smoke MODES=mobile_back`. It drives the touch dock out of all four
+# targeting states and through a paused computer turn (mobile plan MB3).
+
 if [[ ! -x "$GODOT" ]]; then
 	echo "smoke: Godot binary not found at $GODOT" >&2
 	echo "smoke: see README.md for engine setup, or pass GODOT=<path>" >&2
@@ -445,6 +452,10 @@ run_one_scenario() {
 		godot_args+=("$BATTLE")
 	fi
 	godot_args+=(-- "--screenshot=$shot" "--demo=$demo")
+	# A touch build is a boot fact of the whole process (MobileProfile resolves it
+	# once), so a mobile scenario can only run one process to itself — which is why
+	# none is in DEFAULT_MODES and why the flag is added here and not in the batch.
+	[[ "$demo" == mobile_* ]] && godot_args+=(--mobile)
 	if [[ "$demo" != "$mode" ]]; then
 		godot_args+=(--fog)
 	fi
@@ -509,10 +520,16 @@ run_batched_sweep() {
 		run_one_scenario "${members[0]}"
 		return
 	fi
-	local front=() battle_rest=() boards=() menu=()
+	local front=() battle_rest=() boards=() menu=() solo=()
 	local demo
 	for m in "${members[@]}"; do
 		demo="${m%+fog}"
+		# A mobile mode needs --mobile, which MobileProfile resolves once per
+		# process, so it can never share a boot with a desktop scenario.
+		if [[ "$demo" == mobile_* ]]; then
+			solo+=("$m")
+			continue
+		fi
 		case "$m" in
 			commander_info | cutin:bomber:tank)
 				front+=("$m")
@@ -527,9 +544,16 @@ run_batched_sweep() {
 			battle_rest+=("$m")
 		fi
 	done
+	local batched=(
+		${front[@]+"${front[@]}"} ${battle_rest[@]+"${battle_rest[@]}"}
+		${boards[@]+"${boards[@]}"} ${menu[@]+"${menu[@]}"}
+	)
+	for m in ${solo[@]+"${solo[@]}"}; do
+		run_one_scenario "$m"
+	done
+	((${#batched[@]} == 0)) && return
 	local demos="" first="" map
-	for m in ${front[@]+"${front[@]}"} ${battle_rest[@]+"${battle_rest[@]}"} \
-		${boards[@]+"${boards[@]}"} ${menu[@]+"${menu[@]}"}; do
+	for m in "${batched[@]}"; do
 		first="${first:-$m}"
 		map="$(map_for_demo "${m%+fog}")"
 		demos+="${demos:+,}${m}${map:+@$map}"
@@ -539,18 +563,18 @@ run_batched_sweep() {
 	local godot_args=(--path .)
 	[[ "${first%+fog}" != menu_* ]] && godot_args+=("$BATTLE")
 	godot_args+=(-- "--shots-dir=$out_dir" "--demos=$demos" "--scenario-timeout=$SMOKE_TIMEOUT")
-	run_with_timeout $((SMOKE_TIMEOUT * ${#members[@]})) "$GODOT_GUI" "${godot_args[@]}"
+	run_with_timeout $((SMOKE_TIMEOUT * ${#batched[@]})) "$GODOT_GUI" "${godot_args[@]}"
 	local status=$?
 	local ok=1 shot bytes
 	((status != 0)) && ok=""
-	for m in "${members[@]}"; do
+	for m in "${batched[@]}"; do
 		shot="$out_dir/${m//:/-}.png"
 		if [[ ! -f "$shot" ]] || (($(wc -c <"$shot" | tr -d ' ') < MIN_BYTES)); then
 			ok=""
 		fi
 	done
 	if [[ -n "$ok" ]]; then
-		for m in "${members[@]}"; do
+		for m in "${batched[@]}"; do
 			shot="$out_dir/${m//:/-}.png"
 			bytes="$(wc -c <"$shot" | tr -d ' ')"
 			printf 'smoke: %-14s ' "$m"
@@ -564,9 +588,9 @@ run_batched_sweep() {
 	local batch_log="$out_dir/batch-sweep.log"
 	cp "$out_dir/last.log" "$batch_log" 2>/dev/null
 	batch_fallbacks+=("one-boot sweep ($batch_log)")
-	echo "smoke: one-boot sweep of ${#members[@]} failed; log kept at $batch_log" >&2
+	echo "smoke: one-boot sweep of ${#batched[@]} failed; log kept at $batch_log" >&2
 	echo "smoke: re-running its scenarios one by one" >&2
-	for m in "${members[@]}"; do
+	for m in "${batched[@]}"; do
 		run_one_scenario "$m"
 	done
 }

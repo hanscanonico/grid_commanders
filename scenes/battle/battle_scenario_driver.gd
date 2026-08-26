@@ -229,6 +229,10 @@ func _run_demo(mode: String) -> void:
 	if mode in BattleMissionScenario.MODES:
 		_fail_if(await BattleMissionScenario.new(_battle).run(mode))
 		return
+	# And the touch dock's, which runs only under --mobile.
+	if mode in BattleMobileScenario.MODES:
+		_fail_if(await BattleMobileScenario.new(_battle).run(mode))
+		return
 	# And the driven feedback family, for the same reason.
 	if mode in BattleFeedbackScenario.MODES:
 		_fail_if(await BattleFeedbackScenario.new(_battle).run(mode))
