@@ -1,0 +1,1659 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — Mobile Builds Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > *,
+    :where([style*="display: grid"], [style*="display:grid"], [style*="display: flex"], [style*="display:flex"]) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-blue: #3276c6;
+      --gc-iron: #6d6f7e;
+      --gc-verdant: #4e9a5c;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(255,255,255,.03) 25%, transparent 25%);
+      background-size: 32px 32px, 32px 32px, 64px 64px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid #d58a24; }
+    .gc-risk-good { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-locked { border-color: var(--gc-grass-dark); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gc-grass-dark) 30%, transparent); }
+    .gc-checks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-checks li::before { content: "✓"; color: var(--gc-grass-dark); font-weight: 900; }
+    .gc-crosses li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-crosses li::before { content: "✗"; color: var(--gc-red); font-weight: 900; }
+    .gc-mode {
+      border: 2px solid var(--gc-water-dark);
+      border-radius: .6rem;
+      overflow: hidden;
+      background: white;
+    }
+    .gc-mode header { color: white; padding: .65rem .9rem; font-weight: 900; display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+    .gc-mode .body { padding: .8rem .9rem; font-size: .9rem; }
+    table.gc-nums td, table.gc-nums th { font-size: .85rem; }
+    table.gc-nums td:first-child { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: .8rem; }
+    .gc-flow {
+      display: grid;
+      gap: .35rem;
+      font: 600 .82rem/1.45 ui-monospace, Menlo, monospace;
+      background: #10263a;
+      color: #dbe9f6;
+      border-radius: .6rem;
+      padding: .9rem 1rem;
+    }
+    .gc-flow .dim { opacity: .55; }
+    .gc-flow .hot { color: #ffd27a; }
+    .gc-board {
+      display: grid;
+      grid-template-columns: repeat(7, 1.35rem);
+      grid-auto-rows: 1.35rem;
+      gap: 2px;
+      background: var(--gc-water-dark);
+      padding: 4px;
+      border-radius: .45rem;
+      width: max-content;
+    }
+    .gc-board.grand {
+      grid-template-columns: repeat(9, 1.05rem);
+      grid-auto-rows: 1.05rem;
+    }
+    .gc-board.small {
+      grid-template-columns: repeat(5, 1.35rem);
+    }
+    .gc-board span { border-radius: 2px; background: var(--gc-grass); }
+    .gc-board .w { background: var(--gc-water); }
+    .gc-board .r { background: var(--gc-red); }
+    .gc-board .b { background: var(--gc-blue); }
+    .gc-board .i { background: var(--gc-iron); }
+    .gc-board .v { background: var(--gc-verdant); }
+    .gc-board .n { background: #cfc8b8; }
+    .gc-board .f { background: var(--gc-grass-dark); }
+    .gc-seat {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      border: 2px solid var(--gc-water-dark);
+      border-radius: .45rem;
+      background: white;
+      padding: .3rem .6rem;
+      font: 700 .8rem ui-monospace, Menlo, monospace;
+    }
+    .gc-seat.closed { opacity: .45; border-style: dashed; background: repeating-linear-gradient(45deg, #fff 0 6px, #eee 6px 12px); }
+    table.gc-table { width: 100%; font-size: .82rem; border-collapse: collapse; }
+    table.gc-table th { text-align: left; border-bottom: 2px solid var(--gc-ink); padding: .45rem .55rem; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
+    table.gc-table td { border-bottom: 1px solid color-mix(in srgb, var(--gc-ink) 15%, transparent); padding: .45rem .55rem; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <div class="gc-shell">
+
+    <!-- ============================== HERO ============================== -->
+    <header class="gc-hero px-6 py-10 md:px-12">
+      <p class="gc-kicker opacity-80">Grid Commanders · Platform + presentation · Proposed · rev 2 · supersedes rev 1 wholesale</p>
+      <h1 class="text-3xl md:text-4xl font-black mt-2">Mobile Builds — the whole command table in two hands</h1>
+      <p class="mt-3 max-w-3xl opacity-90">
+        The engine profile was already right and still is: Godot 4.7.1, a 640×360 landscape canvas
+        under <code>canvas_items</code> stretch, <code>gl_compatibility</code> on desktop
+        <em>and</em> mobile (<span class="gc-file">project.godot:190–194</span>), ordinary
+        <code>Button</code> chrome, a complete joypad map, and every persisted byte already under
+        <code>user://</code>. What is missing is not simulation and not rendering. It is
+        <strong>the last metre of interaction</strong> and <strong>a package</strong>. A tap already
+        selects a unit, walks it, confirms an attack, buys a tank and ends a turn — because Godot
+        emulates a mouse from touch and every one of those routes is a click or a real
+        <code>Button</code>. But <strong>eight interactions in this game exist only on a key</strong>,
+        and the worst of them is destructive: on a bare touchscreen a player who opens Hammerfall's
+        aiming state has no way out except to fire it.
+      </p>
+      <p class="mt-3 max-w-3xl opacity-90">
+        This plan ships Android first, keeps every rule where it is, and treats mobile as what it
+        is — <strong>presentation and packaging</strong>. Nine milestones, three of them small. The
+        merge bar throughout is the one the art programme already uses: <code>make smoke</code>
+        byte-stable across all 85 scenarios, because mobile chrome does not exist on a desktop
+        build.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2">
+        <span class="badge badge-lg" style="background:var(--gc-grass); border:0;">No <code>core/</code> or <code>ai/</code> changes</span>
+        <span class="badge badge-lg" style="background:var(--gc-road); border:0;">640×360 landscape · aspect <code>keep</code></span>
+        <span class="badge badge-lg" style="background:var(--gc-blue); color:white; border:0;">Android establishes the contract</span>
+        <span class="badge badge-lg" style="background:var(--gc-iron); color:white; border:0;">9 milestones · 14 issues</span>
+      </div>
+      <p class="text-sm opacity-75 mt-4">
+        Nine milestones (MB1–MB9), three sized S. Exactly one engine-configuration line is added in
+        the first release (<code>display/window/handheld/orientation="landscape"</code>); a second,
+        the aspect mode, is deliberately deferred behind a decision. Zero files under
+        <code>core/</code>, <code>ai/</code>, <code>data/</code> or <code>maps/</code> are touched by
+        any milestone.
+      </p>
+    </header>
+
+    <!-- ============================== 1 · WHERE THIS STANDS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">1</span>
+        <h2 class="text-2xl font-black">Where this stands — a touch-complete game, minus eight routes</h2>
+      </div>
+      <p class="max-w-3xl mb-4">
+        Every claim below is a read of <code>main</code> @ <code>2ab1adbe</code>. The baseline that
+        makes most of the game work already is a default nobody wrote down:
+        <span class="gc-file">project.godot</span> declares no <code>[input_devices]</code> section,
+        so Godot's <code>emulate_mouse_from_touch</code> stays <em>on</em> and
+        <code>emulate_touch_from_mouse</code> stays <em>off</em>. A tap therefore arrives as an
+        <code>InputEventMouseMotion</code> followed by a left <code>InputEventMouseButton</code> —
+        which is exactly what <span class="gc-file">scenes/battle/battle.gd:576–587</span> is
+        written against. There is <strong>no touch code anywhere in the repository</strong>: no
+        <code>InputEventScreenTouch</code>, no <code>InputEventScreenDrag</code>, no gesture class,
+        no <code>get_display_safe_area</code>, and not one <code>OS.has_feature</code> outside
+        <code>addons/</code>.
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-5">
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">What already works on a bare touchscreen</h3>
+          <ul class="gc-checks text-sm mt-2">
+            <li><strong>The whole command loop</strong> — cursor placement, unit select, path
+            preview, move, attack confirm, transport drop, build and preview all land in
+            <code>confirm_at</code> through the mouse-button arm at
+            <span class="gc-file">battle.gd:581–587</span>.</li>
+            <li><strong>Every menu</strong> — the action menu's rows are real
+            <code>Button</code>s (<span class="gc-file">scenes/ui/action_menu.gd:62–74</span>), a
+            <code>Cancel</code> row is appended to every one of them
+            (<span class="gc-file">scenes/battle/battle_menus.gd:25,217</span>), and value rows
+            cycle forward on a tap (<span class="gc-file">action_menu.gd:140–142</span>).</li>
+            <li><strong>End Turn and FIRE</strong> — both are ordinary buttons on the bottom bar
+            (<span class="gc-file">scenes/ui/hud_bottom_bar.gd:166,178</span>), so the two
+            match-shaping commands were never keyboard-only.</li>
+            <li><strong>Threat, Range and Objectives</strong> — the top bar's chips are
+            <code>_chip_button</code>s that dispatch the action they name
+            (<span class="gc-file">scenes/ui/hud_top_bar.gd:87,93,98</span>). The dock this plan
+            adds owes nothing for these three.</li>
+            <li><strong>The handoff blackout</strong> — dismissed by
+            <code>TransitionInput.is_confirm</code>, which accepts a left click
+            (<span class="gc-file">scenes/common/transition_input.gd:11–16</span>), and there is a
+            real button under it too (<span class="gc-file">scenes/battle/battle.tscn:238</span>,
+            wired at <span class="gc-file">battle.gd:77</span>).</li>
+            <li><strong>Banners, cut-in skips and the victory lockup</strong> — all accept a mouse
+            press today, so they accept an emulated tap.</li>
+            <li><strong>Persistence</strong> — <code>user://settings.cfg</code>
+            (<span class="gc-file">autoload/settings.gd:23</span>),
+            <code>user://save.json</code> (<span class="gc-file">core/save_game.gd:31</span>),
+            <code>user://replays/</code> (<span class="gc-file">core/replay_file.gd:34</span>) and
+            <code>user://campaigns/</code>
+            (<span class="gc-file">core/campaign/campaign_profile.gd:21</span>). No
+            <code>FileDialog</code> anywhere. Nothing to port.</li>
+          </ul>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">What a touchscreen simply cannot reach</h3>
+          <ul class="gc-crosses text-sm mt-2">
+            <li><strong>Back / Cancel</strong> in the four states that have somewhere to go back to
+            — <code>UNIT_SELECTED</code>, <code>TARGETING</code>, <code>DROP_TARGETING</code>,
+            <code>POWER_TARGETING</code>. <code>_cancel()</code>
+            (<span class="gc-file">battle.gd:690–709</span>) is reachable only through the
+            <code>cancel</code> action (<span class="gc-file">battle.gd:591</span>).</li>
+            <li><strong>Pause a computer turn</strong> — <span class="gc-file">battle.gd:543–546</span>,
+            <code>cancel</code> only. <strong>Resume one</strong> —
+            <span class="gc-file">battle.gd:552–559</span>, <code>confirm</code> only, and the
+            comment there says a click is <em>deliberately</em> not a resume.</li>
+            <li><strong>Zoom</strong> — <span class="gc-file">battle.gd:574</span> hands the event to
+            <code>BattleZoom.handle_input</code>
+            (<span class="gc-file">scenes/battle/battle_zoom.gd:67–75</span>), which listens for
+            <code>zoom_in</code>/<code>zoom_out</code>: wheel, <code>=</code>/<code>-</code>, keypad,
+            or a pad shoulder. A phone has none of them.</li>
+            <li><strong>Next ready unit</strong> — the chip exists but is a
+            <code>UiTheme.hud_label</code>, not a button
+            (<span class="gc-file">hud_top_bar.gd:104</span>).</li>
+            <li><strong>Replay step</strong> — <code>replay_step</code> is bound to
+            <code>S</code> and nothing else (<span class="gc-file">project.godot:172</span>),
+            consumed at <span class="gc-file">battle.gd:565–567</span>.</li>
+            <li><strong>Fast forward</strong> — polled with
+            <code>Input.is_action_pressed</code> (<span class="gc-file">scenes/common/fast_forward.gd:29–30</span>),
+            so it needs a <em>held</em> control, not a tap. <strong>Deliberately out of the first
+            release</strong> — D2 says why, §7 lists it.</li>
+            <li><strong>Tooltips — unverified on device, and one of them provably unreachable by
+            focus</strong>. <code>Tooltip.attach</code> opens on <code>mouse_entered</code> or
+            <code>focus_entered</code> (<span class="gc-file">scenes/ui/tooltip.gd:118,120</span>),
+            and <code>follow_focus</code>'s door — the one the segmented controls and the
+            illustrated rows use (<span class="gc-file">tooltip.gd:148–150</span>) — is shut to
+            anything but the keyboard by <code>FocusSource.by_keyboard</code>
+            (<span class="gc-file">tooltip.gd:255–256</span>,
+            <span class="gc-file">scenes/ui/focus_source.gd:36–42</span>). The <em>hover</em> door
+            may or may not open on a phone: under <code>emulate_mouse_from_touch</code> a
+            press-and-hold synthesises motion, so <code>mouse_entered</code> can fire on a real
+            device. <strong>Nobody has measured it, so this is a device check (MB4) and not a
+            finding.</strong> What is not in doubt is the one trigger no focus source can ever
+            reach: the disabled Continue button
+            (<span class="gc-file">scenes/menu/main_menu.gd:652</span>) — a disabled control takes
+            no focus, and its own comment banks on the pointer instead
+            (<span class="gc-file">main_menu.gd:649–651</span>, "<em>a disabled control still
+            answers the pointer</em>"). That one needs an answer that is not a tooltip.</li>
+            <li><strong>A package</strong> — no <code>export_presets.cfg</code>, no
+            <code>make</code> export target among the Makefile's three dozen, and only
+            <code>4.1.2.stable</code> templates installed against a
+            <code>4.7.1.stable</code> engine.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 class="font-black mt-6 mb-2">Route by route</h3>
+      <div class="overflow-x-auto">
+        <table class="gc-table">
+          <thead><tr><th>Route</th><th>Where it is answered</th><th>On touch</th></tr></thead>
+          <tbody>
+            <tr><td>Cursor placement</td><td><span class="gc-file">battle.gd:576–580</span></td><td>OK — emulated motion</td></tr>
+            <tr><td>Select / move / attack-confirm / drop / build / preview</td><td><span class="gc-file">battle.gd:581–587</span> → <code>confirm_at</code></td><td>OK — tap is a click</td></tr>
+            <tr><td>Open the map menu from rest</td><td><span class="gc-file">battle.gd:692</span> <code>_cancel</code> → <code>_open_map_menu</code>; also the <code>IDLE</code> fallback on empty ground (<span class="gc-file">battle.gd:630</span>)</td><td>OK — tapping empty ground opens it</td></tr>
+            <tr><td>Action-menu rows and the Cancel row</td><td><span class="gc-file">action_menu.gd:62–74</span>, <span class="gc-file">battle_menus.gd:217</span></td><td>OK</td></tr>
+            <tr><td>Value rows (speed, tiers) in the map menu</td><td><span class="gc-file">action_menu.gd:140–142</span></td><td>OK, forward-only</td></tr>
+            <tr><td>End Turn · Fire Command Power</td><td><span class="gc-file">hud_bottom_bar.gd:178</span> · <span class="gc-file">:166</span></td><td>OK</td></tr>
+            <tr><td>Threat / Range / Objectives lenses</td><td><span class="gc-file">hud_top_bar.gd:87,93,98</span> → <code>_send_action</code> <span class="gc-file">:181–186</span></td><td>OK</td></tr>
+            <tr><td><b>Next ready unit</b></td><td><span class="gc-file">hud_top_bar.gd:104</span> — a label, not a button</td><td><b>missing</b></td></tr>
+            <tr><td><b>Zoom in / out</b></td><td><span class="gc-file">battle.gd:574</span> → <span class="gc-file">battle_zoom.gd:67–75</span></td><td><b>missing</b></td></tr>
+            <tr><td><b>Back out of the four targeting states</b></td><td><span class="gc-file">battle.gd:591</span> → <span class="gc-file">:690–709</span></td><td><b>missing</b></td></tr>
+            <tr><td><b>Pause a computer turn</b></td><td><span class="gc-file">battle.gd:543–546</span> → <code>request_pause()</code> <span class="gc-file">:386</span></td><td><b>missing</b></td></tr>
+            <tr><td><b>Resume a paused turn</b></td><td><span class="gc-file">battle.gd:552–559</span> → <code>resume_turn()</code> <span class="gc-file">:423</span></td><td><b>missing</b></td></tr>
+            <tr><td><b>Step a replay</b></td><td><span class="gc-file">battle.gd:565–567</span> → <code>step_replay()</code> <span class="gc-file">:413</span></td><td><b>missing</b></td></tr>
+            <tr><td>Fast forward</td><td><span class="gc-file">fast_forward.gd:29–30</span> (polled, <em>held</em>)</td><td>missing — <b>out of scope for the first release</b> (D2, §7)</td></tr>
+            <tr><td>Handoff blackout dismiss</td><td><span class="gc-file">battle.gd:538–542</span>, <span class="gc-file">battle.tscn:238</span></td><td>OK</td></tr>
+            <tr><td>Banner / power banner / speech-card skip</td><td><span class="gc-file">scenes/battle/battle_animator.gd:551</span> → <code>TransitionInput.is_press</code> <span class="gc-file">transition_input.gd:18–29</span></td><td>OK <em>via emulation only</em></td></tr>
+            <tr><td>Cut-in skip</td><td><span class="gc-file">scenes/battle/cutscene/cutscene_playback.gd:193–199</span></td><td>OK <em>via emulation only</em></td></tr>
+            <tr><td>Victory lockup, end-turn guard, commander sheet close</td><td>real <code>Button</code>s throughout</td><td>OK</td></tr>
+            <tr><td>Commander card scroll (▲ ▼)</td><td>a real <code>ScrollContainer</code> per card (<span class="gc-file">scenes/ui/commander_info_sheet.gd:202,208</span>), stepped by <code>DirectionalInput</code> (<span class="gc-file">:257–261,271–274</span>)</td><td>keys are one door; the <b>drag</b> is the other — <b>needs the same device check</b> as the other scroll frames (MB4)</td></tr>
+            <tr><td>Menus, map picker, seat strip, commander select, campaign hub, replay list</td><td><code>UiKit.action_button</code> / <code>segment</code> / <code>toggle</code></td><td>OK</td></tr>
+            <tr><td><b>Tooltips</b></td><td><span class="gc-file">tooltip.gd:118,120,148–150,255–256</span>, <span class="gc-file">focus_source.gd:36–42</span></td><td>focus door shut to touch; <b>hover door unverified on device</b> (a press-and-hold may already open it) — MB4 measures before it builds</td></tr>
+            <tr><td><b>Disabled Continue's reason</b></td><td><span class="gc-file">main_menu.gd:652</span>, comment at <span class="gc-file">:649–651</span></td><td><b>unreachable by any focus source</b> — a disabled control takes no focus; needs an answer that is not a tooltip (MB4)</td></tr>
+            <tr><td>ScrollContainers (map picker <span class="gc-file">main_menu.gd:436</span>, campaign hub, guard list, replay list, commander card <span class="gc-file">commander_info_sheet.gd:202</span>)</td><td>plain <code>ScrollContainer</code>; drag-scroll is engine-gated on <code>DisplayServer.is_touchscreen_available()</code>; the scrollbars are ~2px</td><td>needs a device check</td></tr>
+            <tr><td><code>TransitionInput</code> / <code>DirectionalInput</code></td><td><span class="gc-file">transition_input.gd:18–29</span>, <span class="gc-file">scenes/common/directional_input.gd:35,45</span></td><td>no touch branch — emulation only</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="font-black mt-6 mb-2">The dead ends, ranked</h3>
+      <p class="max-w-3xl text-sm mb-3">
+        A missing route is an annoyance. A missing route <em>out of a state</em> is a bug, and this
+        is the ranked list the milestone order is built on. The first is the only destructive one.
+      </p>
+      <div class="grid gap-3">
+        <div class="card border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">1 · <code>POWER_TARGETING</code> — destructive, no abort</h3>
+          <p class="text-sm mt-1 max-w-3xl">Radek Morn's Hammerfall is aimed, and in the aiming
+          state <em>any</em> tap on the board calls <code>_fire_aimed_power(cell)</code>
+          (<span class="gc-file">battle.gd:669–670</span>); <code>PowerCommand.validate</code>
+          refuses an off-board target and nothing else, which is the more-commanders plan's D2. The
+          only abort is the <code>cancel</code> action
+          (<span class="gc-file">battle.gd:704–709</span>), and it is the one branch that
+          deliberately spends nothing. <strong>A touch player who opens the aiming state must fire
+          the most expensive power in the game, at a cell they did not choose.</strong> This is why
+          MB3's headline is not "a Back button" but "the abort".</p>
+        </div>
+        <div class="card border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">2 · <code>PAUSED</code> — no exit</h3>
+          <p class="text-sm mt-1 max-w-3xl">Resume is the <code>confirm</code> key alone, and Esc
+          reopens the map menu whose Cancel row returns to <code>rest_state()</code>
+          (<span class="gc-file">battle.gd:444–445</span>) — which, mid-computer-turn, is
+          <code>PAUSED</code> again. A touch player who somehow reached the pause cannot leave it.</p>
+        </div>
+        <div class="card border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">3 · <code>AI_TURN</code> — no route to any menu, and in a watched match no route out at all</h3>
+          <p class="text-sm mt-1 max-w-3xl">A tap during a computer turn earns
+          <code>_reject("CPU turn.")</code> (<span class="gc-file">battle.gd:671–672</span>). In a
+          replay playback or an AI-vs-AI watch <em>every</em> turn is a computer turn, so on a phone
+          there is no touch route to pause, to the map menu, or back to the main menu. The pause
+          seam exists and is well designed — <code>Battle.pause_gate</code>
+          (<span class="gc-file">battle.gd:398</span>) — it simply has no touchable door.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">4 · <code>TARGETING</code> / <code>DROP_TARGETING</code> — refusals with no way back</h3>
+          <p class="text-sm mt-1 max-w-3xl">An off-target tap answers "No target there." or
+          "Cannot unload there." (<span class="gc-file">battle.gd:659–668</span>) forever. The
+          command is not lost — the unit is mid-order — but the order cannot be abandoned.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">5 · <code>UNIT_SELECTED</code> — one escape, and it is undiscoverable</h3>
+          <p class="text-sm mt-1 max-w-3xl">A tap out of reach answers "Out of reach."
+          (<span class="gc-file">battle.gd:658</span>). The single way out is to tap the unit's own
+          cell — a zero-length move into the action menu
+          (<span class="gc-file">battle.gd:643–645</span>) — and then Cancel, which runs
+          <code>_undo_move_preview</code> (<span class="gc-file">battle.gd:1316</span>). Nothing on
+          screen says so.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">6 · Replay playback is keyboard-only</h3>
+          <p class="text-sm mt-1 max-w-3xl">Esc parks the runner, <code>S</code> takes one command.
+          Neither has a control. With dead ends 2 and 3, the replay plan's whole control set is off
+          the table on a phone.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">7 · The zoom is frozen at the opening rung</h3>
+          <p class="text-sm mt-1 max-w-3xl">On Bulwark the floor rung is 0.568, which frames the
+          whole 49×32 board — a cell is then about 9 canvas pixels, roughly 1.5 mm on a 6.1" phone.
+          There is no touch way to zoom in, so the largest board in the game is unplayable rather
+          than merely awkward.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">8 · The tooltips are unverified on device, and one of them cannot work at all</h3>
+          <p class="text-sm mt-1 max-w-3xl">The focus door is shut to a finger by
+          <code>FocusSource.by_keyboard</code>; the hover door might not be, because
+          <code>emulate_mouse_from_touch</code> synthesises motion and a press-and-hold may already
+          raise <code>mouse_entered</code> on a phone. That is a measurement MB4 takes
+          <em>before</em> it writes a third focus source, and it is the gate on whether that work
+          is scoped at all. The exception needs no measurement: <strong>the greyed-out Continue
+          button takes no focus by definition</strong>, so its explanation cannot be recovered by
+          any focus source, and — if the hover reading comes back negative — cannot be recovered by
+          a tooltip at all. That copy is the one case where the words exist precisely because the
+          control cannot speak for itself, so it gets its own answer rather than a shared one.</p>
+        </div>
+      </div>
+
+      <h3 class="font-black mt-6 mb-2">The seam, end to end</h3>
+      <div class="gc-flow mt-2">
+        <div><span class="dim">finger</span> → <span class="hot">InputEventScreenTouch</span> <span class="dim">(engine)</span> → <span class="hot">emulated MouseButton</span> → <span class="dim">battle.gd:581 → confirm_at → Command → validate/apply → typed events → scenes animate</span></div>
+        <div><span class="dim">finger on a dock chip</span> → <span class="hot">Button.pressed</span> → <span class="hot">MobileDock._send_action(&amp;"cancel")</span> → <span class="dim">Input.parse_input_event → battle.gd:591 → _cancel() → the same branch the key runs</span></div>
+        <div><span class="dim">finger on the board, two fingers</span> → <span class="hot">MobileDock pinch</span> → <span class="dim">BattleZoom.set_zoom(rung) → BattleView.set_zoom → _apply_board_offset (the only writer of camera.offset)</span></div>
+        <div class="dim">nothing on any of these three lines reaches core/ or ai/ — check_scripts.sh:325 is what says so</div>
+      </div>
+
+      <h3 class="font-black mt-6 mb-2">What rev 1 got wrong, and what has shipped since</h3>
+      <div class="card bg-base-100 border-2 p-4" style="border-color:var(--gc-water-dark);">
+        <p class="text-sm max-w-3xl mb-3">
+          Rev 1 traced <code>main</code> @ <code>d3abfa5</code> on 2026-07-31. Main is
+          <strong>462 commits past it</strong>, and four of rev 1's five section-1 claims have moved.
+          This table is why rev 2 supersedes it wholesale rather than editing it.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="gc-table">
+            <thead><tr><th>Rev 1 said</th><th>Status now</th></tr></thead>
+            <tbody>
+              <tr><td>The input handler is <code>battle.gd:467–531</code></td><td><b>Stale.</b> <code>_unhandled_input</code> is <span class="gc-file">battle.gd:533–605</span>; the file went 1,260 → 1,415 lines.</td></tr>
+              <tr><td><code>project.godot:23–28, 151–155</code></td><td><b>Stale line numbers, unchanged content.</b> <code>[display]</code> is 24–31, <code>[rendering]</code> 190–194.</td></tr>
+              <tr><td>"No visible control emits several actions a keyboard supplies"</td><td><b>Half stale.</b> The top bar grew <code>_chip_button</code> chips for Threat, Range and Objectives, and the bottom bar has FIRE and END TURN. The dock owes only Back, Pause/Resume, Step, zoom ± and Next.</td></tr>
+              <tr><td>The dock's vocabulary is <code>cancel</code>, <code>show_range</code>, <code>show_threat</code>, <code>zoom_in</code>, <code>zoom_out</code></td><td><b>Incomplete.</b> <code>next_unit</code>, <code>show_objectives</code>, <code>replay_step</code> and <code>fast_forward</code> did not exist in July. D2 below names the full set.</td></tr>
+              <tr><td>MOB-02's acceptance list</td><td><b>Missing the worst case.</b> Aimed powers arrived with the more-commanders plan's MC4, so <code>POWER_TARGETING</code> — the one destructive dead end — is absent from rev 1 entirely, as are pause, resume and replay step.</td></tr>
+              <tr><td>"The 10px action rows are small"</td><td><b>Misstated.</b> 10 is <code>UiTheme.SIZE_BUTTON</code>, a <em>font</em> size (<span class="gc-file">scenes/common/ui_theme.gd:178</span>). The row box is <code>MENU_ICON_ROW</code> = 22 (<span class="gc-file">ui_theme.gd:171–172</span>) ≈ 3.7 mm at 3× — tight but hittable. The real failures are the 7px HUD chips (<span class="gc-file">ui_theme.gd:143</span>) at ≈ 1.2 mm.</td></tr>
+              <tr><td>R1 · emulated touch double-fires</td><td><b>Still valid and now sharper.</b> <code>HudTopBar._send_action</code> (<span class="gc-file">hud_top_bar.gd:181–186</span>) re-injects a synthetic <code>InputEventAction</code>, and <code>TransitionInput.is_press</code> accepts that class (<span class="gc-file">transition_input.gd:28–29</span>) — so a chip press can skip a banner as well as do its own job. That makes "one tap → one receipt" a test, not an assumption.</td></tr>
+              <tr><td>D5 · <code>_apply_board_offset</code> is the only writer of <code>camera.offset</code></td><td><b>Still true, and now load-bearing in a way it was not.</b> <code>BOARD_LIFT_PX</code> (<span class="gc-file">scenes/battle/battle_view.gd:50</span>) and the whole-rung <code>BattleZoom</code> ladder both landed after rev 1, so a third bar changes <code>HUD_BARS_H</code> → <code>_board_viewport_size</code> → <code>min_zoom</code> → the ladder floor on <em>every</em> board.</td></tr>
+              <tr><td>No <code>export_presets.cfg</code>; MB1 must bootstrap</td><td><b>Still true.</b> Templates are still 4.1.2 only.</td></tr>
+              <tr><td>D1 · nothing under <code>core/</code> or <code>ai/</code></td><td><b>Holds, and is machine-checked</b> — <span class="gc-file">tools/check_scripts.sh:325,335,345</span> already refuse a Node, the global RNG and a pacing read in those two directories.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== 2 · THE DESIGN ============================== -->
+    <section class="px-6 py-8 md:px-12" style="background:color-mix(in srgb, var(--gc-road) 26%, transparent);">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">2</span>
+        <h2 class="text-2xl font-black">The design — one dock, one size profile, one package</h2>
+      </div>
+      <p class="max-w-3xl mb-5">
+        Three pieces, and they are deliberately independent: the dock closes the interaction gaps,
+        the size profile makes what is already there hittable, and the package makes any of it
+        reachable on a device. Each ships without the others.
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <div class="gc-mode">
+          <header style="background:var(--gc-water-dark)"><span>The dock</span><span>MB3 · MB6</span></header>
+          <div class="body">
+            <p><code>MobileDock</code>, a third bar under the two the HUD already docks, mounted
+            only on a mobile build. Its leading chip <strong>follows <code>Battle.state</code>
+            through the setter that already prints the key legend</strong> —
+            <span class="gc-file">battle.gd:139–143</span>, whose <code>STATE_CONTEXT</code> table
+            (<span class="gc-file">battle.gd:45</span>) is the one place a state is turned into what
+            the player is told. Menu at rest, <strong>Back</strong> in the four targeting states,
+            <strong>Pause</strong> while the computer plays, <strong>Resume</strong> and
+            <strong>Step</strong> while paused. Beside it, always: <code>−</code>, <code>+</code>,
+            <code>N</code>. Threat, Range and Objectives stay where they already are, on the top
+            bar.</p>
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark)"><span>The size profile</span><span>MB4</span></header>
+          <div class="body">
+            <p>A mobile branch inside <code>UiTheme</code> and <code>UiKit</code> — the menu plan's
+            D1 makes those two the only files a metric may live in — that inflates
+            <strong>hit rectangles first and drawn chrome second</strong>. The order is not taste:
+            every drawn height in the two HUD bars feeds <code>HUD_BARS_H</code>
+            (<span class="gc-file">ui_theme.gd:113</span>), which feeds
+            <code>_board_viewport_size</code>
+            (<span class="gc-file">battle_view.gd:741–742</span>), which feeds
+            <code>min_zoom</code> and therefore the floor rung of every board in the game.</p>
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-verdant)"><span>The package</span><span>MB1 · MB5 · MB8 · MB9</span></header>
+          <div class="body">
+            <p><code>export_presets.cfg</code> with Android and iOS presets, 4.7.1 templates,
+            <code>make export-android</code>, and an exclude list that keeps
+            <strong>the editor addons out of a player build</strong> — the
+            <code>_mcp_game_helper</code> autoload
+            (<span class="gc-file">project.godot:22</span>) is 1,105 lines with a per-frame
+            <code>_process</code> and a remote command surface. Plus the payload diet: 11.6 MB of
+            uncompressed music is the single largest thing in the repository.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="font-black mt-2 mb-2">The dock, drawn</h3>
+      <figure class="card bg-base-100 border-2 p-4 mb-6" style="border-color:var(--gc-water-dark);">
+        <div style="background:#0a1015; border:4px solid #111518; border-radius:.7rem; padding:.5rem;">
+          <div style="aspect-ratio:16/9; display:grid; grid-template-rows:9% 1fr 18% 16%; background:var(--gc-grass); border-radius:.35rem; overflow:hidden; font:800 .62rem ui-monospace, Menlo, monospace;">
+            <div style="background:#22303c; color:#dbe9f6; display:flex; align-items:center; gap:.5rem; padding:0 .5rem;"><span>DAY 4</span><span>MERIDIAN</span><span style="flex:1">URBAN COMMAND</span><span>12,000</span><span style="opacity:.75">T · R · O · N</span></div>
+            <div style="position:relative; background:repeating-linear-gradient(0deg,transparent 0 15px,rgba(0,0,0,.07) 15px 16px),repeating-linear-gradient(90deg,transparent 0 15px,rgba(0,0,0,.07) 15px 16px);"></div>
+            <div style="background:#22303c; color:#dbe9f6; display:flex; align-items:center; gap:.5rem; padding:0 .5rem;"><span style="width:1.4rem; height:1.4rem; background:var(--gc-red); border:2px solid #111518;"></span><span>ALINA</span><span style="flex:1">INFANTRY · 10 HP</span><span>CITY · 3★</span><span style="background:#111518; color:#ffd27a; padding:.15rem .4rem;">FIRE</span><span style="background:#111518; color:#ffd27a; padding:.15rem .4rem;">END TURN</span></div>
+            <div style="background:#111518; display:grid; grid-template-columns:1.6fr repeat(3,1fr); gap:.3rem; padding:.3rem;">
+              <span style="display:grid; place-items:center; background:#f4efe3; color:#111518; border-radius:.2rem;">BACK</span>
+              <span style="display:grid; place-items:center; color:#dbe9f6; border:2px solid #3b4a57; border-radius:.2rem;">−</span>
+              <span style="display:grid; place-items:center; color:#dbe9f6; border:2px solid #3b4a57; border-radius:.2rem;">+</span>
+              <span style="display:grid; place-items:center; color:#dbe9f6; border:2px solid #3b4a57; border-radius:.2rem;">N</span>
+            </div>
+          </div>
+        </div>
+        <figcaption class="text-sm mt-3"><strong>The mobile dock in <code>UNIT_SELECTED</code>.</strong>
+        Opaque and docked, like both bars above it, so the HUD rule that a pointer never falls
+        through chrome onto a covered cell (<code>MOUSE_FILTER_STOP</code>, the tile-info panel
+        plan) holds for a finger too. Desktop never instantiates it, which is why every one of the
+        85 <code>make smoke</code> frames is byte-identical across MB3. The leading chip is the only
+        one whose label changes; the three on the right never do.</figcaption>
+      </figure>
+
+      <h3 class="font-black mt-6 mb-2">The measurement that governs MB4</h3>
+      <p class="max-w-3xl text-sm mb-3">
+        On a 6.1" 1080p phone held in landscape, the canvas scales by 1080 / 360 = <strong>exactly
+        3</strong>. One canvas pixel is three device pixels ≈ 0.166 mm, which makes one canvas pixel
+        ≈ 1 pt ≈ 1 dp — so Apple's 44 pt and Android's 48 dp both land at roughly
+        <strong>44–48 canvas pixels</strong>. Measured against that bar, <strong>every interactive
+        control in the game is between 27% and 73% of the minimum</strong>, and the two on the
+        board's own chrome are the worst:
+      </p>
+      <div class="overflow-x-auto mb-4">
+        <table class="table table-xs gc-nums">
+          <thead><tr><th>Token</th><th>Where</th><th>px</th><th>vs 44</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>HUD_CHIP</td><td><span class="gc-file">ui_theme.gd:143</span></td><td>7</td><td>16%</td><td>T / R / O / N — <b>unhittable, ≈1.2 mm</b></td></tr>
+            <tr><td>HUD_TOP_H</td><td><span class="gc-file">ui_theme.gd:111</span></td><td>23</td><td>52%</td><td>the whole top bar is half a target tall</td></tr>
+            <tr><td>MENU_ICON_ROW</td><td><span class="gc-file">ui_theme.gd:171–172</span></td><td>22</td><td>50%</td><td>action-menu row (<span class="gc-file">action_menu.gd:68</span>)</td></tr>
+            <tr><td>HUD_TILE_ICON</td><td><span class="gc-file">ui_theme.gd:159</span></td><td>20</td><td>45%</td><td></td></tr>
+            <tr><td>UiKit action button</td><td><span class="gc-file">ui_kit.gd:96</span></td><td>20</td><td>45%</td><td>every menu's primary control</td></tr>
+            <tr><td>UiKit toggle row</td><td><span class="gc-file">ui_kit.gd:242</span></td><td>16</td><td>36%</td><td></td></tr>
+            <tr><td>Seat segment / tier chip</td><td><span class="gc-file">seat_strip.gd:57,618</span></td><td>16</td><td>36%</td><td>four seats × three states</td></tr>
+            <tr><td>UiKit checkbox</td><td><span class="gc-file">ui_kit.gd:255</span></td><td>12×12</td><td>27%</td><td><b>the smallest control in the shell</b></td></tr>
+            <tr><td>UiKit radio dot</td><td><span class="gc-file">ui_kit.gd:325</span></td><td>6×6</td><td>—</td><td>a mark, not a target; its row is the target</td></tr>
+            <tr><td>HUD_PORTRAIT / HUD_UNIT_ICON</td><td><span class="gc-file">ui_theme.gd:157–158</span></td><td>31 / 32</td><td>70% / 73%</td><td>the closest anything gets</td></tr>
+            <tr><td>HUD_BOTTOM_H</td><td><span class="gc-file">ui_theme.gd:112</span></td><td>46</td><td>105%</td><td>the <em>bar</em> clears it; its contents do not</td></tr>
+            <tr><td>Board cell at DEFAULT_ZOOM</td><td><code>TILE</code>=16 × 2.0</td><td>32</td><td>73%</td><td>playable</td></tr>
+            <tr><td>Board cell at Bulwark's floor</td><td>16 × 0.568</td><td>≈9</td><td>20%</td><td><b>≈1.5 mm — MB6's whole reason</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="max-w-3xl text-sm mb-4">
+        Type is a separate reading and it comes out better: <code>SIZE_BODY</code> and
+        <code>SIZE_STAT</code> are 8 (<span class="gc-file">ui_theme.gd:184,201</span>) → 24 device
+        pixels at 3×, which is comfortable. <code>SIZE_MARK</code> = 6
+        (<span class="gc-file">ui_theme.gd:206</span>) is marginal at 18, and it is a board badge
+        rather than a label, so it stays. The faces are pixel faces imported with
+        <code>subpixel_positioning</code> on, which is crisp at a whole 3× and softens at a
+        fractional one — the one place a non-integer device scale actually costs something, and the
+        reason the iOS scale question in §3/D4 is a real question rather than a formality.
+      </p>
+
+      <h3 class="font-black mt-6 mb-2">The zoom ladder is a mobile constraint, not just a desktop one</h3>
+      <p class="max-w-3xl text-sm mb-3">
+        <code>BattleZoom</code> is the one statement of what rungs exist: <code>floor_for</code>
+        (<span class="gc-file">battle_zoom.gd:39–41</span>) is the rung that frames the whole board,
+        <code>rungs_for</code> (<span class="gc-file">:45–51</span>) is that floor plus every whole
+        number above it, and <code>set_zoom</code> (<span class="gc-file">:60–61</span>) settles on
+        the nearest rung. A pinch has to obey all of it.
+      </p>
+      <div class="overflow-x-auto mb-4">
+        <table class="table table-xs gc-nums">
+          <thead><tr><th>Board</th><th>Cells</th><th>map px</th><th>Floor</th><th>Ladder</th><th>Span</th></tr></thead>
+          <tbody>
+            <tr><td>bulwark</td><td>49×32</td><td>784×512</td><td>0.568</td><td>0.568, 1, 2, 3, 4, 5</td><td>8.8×</td></tr>
+            <tr><td>quartet</td><td>16×9</td><td>256×144</td><td>2.02</td><td>2.02, 3, 4, 5</td><td>2.5×</td></tr>
+            <tr><td>boot_camp</td><td>12×9</td><td>192×144</td><td>2.02</td><td>2.02, 3, 4, 5</td><td>2.5×</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="max-w-3xl text-sm mb-4">
+        The board's viewport is the canvas minus both bars — 640 × (360 − 69)
+        (<span class="gc-file">ui_theme.gd:113</span>,
+        <span class="gc-file">battle_view.gd:741–742</span>) — so <em>the ladder is a function of
+        the chrome</em>. That is the coupling D5 and D8 exist to protect: inflate a bar by ten
+        pixels and Bulwark's floor moves, which moves the opening frame of every board, which moves
+        every smoke capture. Hit areas do not have that property. Drawn heights do.
+      </p>
+
+      <h3 class="font-black mt-6 mb-2">Device scale, and why <code>scale_mode</code> stays absent</h3>
+      <p class="max-w-3xl text-sm mb-3">
+        The zoom-ladder record says <code>window/stretch/scale_mode</code> is off, and it names the
+        playtest that turned it off: on a maximized 1512×945 Mac window it shrank the picture to
+        1280×720 inside hard bars, and made every texel a perfectly aligned block that read as
+        <em>more</em> pixelated. That was measured at a window scale of 945/360 = 2.625. A phone's
+        arithmetic is different, and it is different <em>per platform</em>:
+      </p>
+      <div class="overflow-x-auto mb-4">
+        <table class="table table-xs gc-nums">
+          <thead><tr><th>Device</th><th>Short edge</th><th>window_scale</th><th>Whole?</th></tr></thead>
+          <tbody>
+            <tr><td>Android 1080p (2340×1080, 2400×1080)</td><td>1080</td><td>3.000</td><td>yes</td></tr>
+            <tr><td>Android 720p (1600×720)</td><td>720</td><td>2.000</td><td>yes</td></tr>
+            <tr><td>iPhone 12–15</td><td>1170</td><td>3.250</td><td>no</td></tr>
+            <tr><td>iPhone 14/15/16 Pro</td><td>1179</td><td>3.275</td><td>no</td></tr>
+            <tr><td>iPad Pro 12.9"</td><td>2048</td><td>5.689</td><td>no</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="max-w-3xl text-sm mb-4">
+        <strong>On the Android targets the board is already texel-stable at every whole rung with
+        no <code>scale_mode</code> at all</strong> — integer mode would buy exactly nothing, which
+        is why MB1 changes one line and not two. On iPhone the scale is fractional, integer mode
+        would snap 1179 → 1080 (a 3× picture inside ~50 px of extra bar), and the fractional case
+        is also where the pixel faces soften. That is a genuine per-platform measurement for MB9 to
+        take on a device. It is <em>not</em> a re-litigation of the desktop decision, and this plan
+        does not take it.
+      </p>
+
+      <h3 class="font-black mt-6 mb-2">What the build weighs, and what runs in it</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card bg-base-100 border p-4">
+          <h4 class="font-black text-sm">Payload</h4>
+          <ul class="text-sm mt-2 gc-checks">
+            <li><strong>Music is 11.6 MB of PCM</strong> —
+            <span class="gc-file">assets/music/advance.wav</span> 5,131,680 bytes and
+            <span class="gc-file">assets/music/parade.wav</span> 6,513,274 bytes, imported as
+            <code>AudioStreamWAV</code> with no 8-bit, mono or rate reduction. That is both package
+            size <em>and</em> resident RAM. Ogg Vorbis cuts it roughly tenfold, and the sibling
+            <code>audio_generator</code> pipeline behind <code>make audio</code>
+            (<span class="gc-file">Makefile:332–340</span>) is where a format change belongs.</li>
+            <li>Six unit atlases at 1152×480, ≈68 KB each on disk but ≈2.2 MB of VRAM each — ≈13 MB
+            resident. Fine on any 2020-onwards phone; worth knowing before anyone adds a seventh.</li>
+            <li>Terrain atlas 896×320, ten autotile sheets at 116 KB, portraits 728 KB, sfx 264 KB.
+            Nothing else is close to the music.</li>
+          </ul>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h4 class="font-black text-sm">What is running that should not be</h4>
+          <ul class="text-sm mt-2 gc-crosses">
+            <li><code>_mcp_game_helper</code> — <span class="gc-file">project.godot:22</span> loads
+            <span class="gc-file">addons/godot_ai/runtime/game_helper.gd</span> in every run:
+            1,105 lines, <code>_process</code> at <span class="gc-file">:132</span>, a remote
+            command surface and a stall detector. CLAUDE.md's project-layout note records keeping it
+            out of export builds as an <em>open decision</em>. D7 closes it.</li>
+            <li><code>addons/gut/</code> — the test framework, in the tree, with no reason to be in
+            a package.</li>
+            <li><code>tools/</code>, <code>tests/</code>, <code>reports/</code>,
+            <code>docs/</code>, <code>maps/fixtures/</code> — offline instruments and fixtures. The
+            fixture boards are reachable only by a CLI flag no player has.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 class="font-black mt-6 mb-2">The planner's clock, stated once so nobody optimises it here</h3>
+      <p class="max-w-3xl text-sm">
+        <span class="gc-file">docs/difficulty_check.md:509–510</span> measures desktop per-turn
+        planning at 33.2 / 37.9 / 65.7 ms with every threat dial at zero, and 63.0 / 75.6 / 105.2 ms
+        with <code>withdraw</code> at 0.1 — line 522 states the rule of thumb, that each threat-map
+        dial roughly doubles per-turn planning time. Line 753 records the shipped tiers at 15.3 →
+        19.9 ms (Normal) through 51.6 → 60.4 ms (Easy). A phone is two to four times slower, so
+        <strong>60–400 ms per computer turn, on the main thread, per computer seat</strong> — and a
+        four-army Bulwark match plays up to three of them back to back. The AR1 plan cache is
+        deliberately inert with fog on, so the live game gets none of its speedup. <strong>None of
+        that is this plan's to fix</strong>: see D9.
+      </p>
+    </section>
+
+    <!-- ============================== 3 · DECISIONS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">3</span>
+        <h2 class="text-2xl font-black">Decisions</h2>
+      </div>
+      <div class="grid gap-4">
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D1 · Mobile is presentation and packaging — nothing under <code>core/</code> or <code>ai/</code> learns a phone exists</h3>
+            <span class="badge badge-outline">proposed · carried from rev 1</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            Every milestone here lives in <code>scenes/</code>, <code>autoload/</code>,
+            <span class="gc-file">project.godot</span>, <code>export_presets.cfg</code>, the
+            Makefile or the asset pipeline. <strong>No <code>OS</code>, no
+            <code>DisplayServer</code>, no feature tag, no touch class and no safe-area read may
+            appear under <code>core/</code> or <code>ai/</code>, and the save, replay and campaign
+            formats do not move a byte.</strong> This is not a promise, it is a gate that already
+            runs: <span class="gc-file">tools/check_scripts.sh:325</span> refuses a Node or a scene
+            path in those two directories, <span class="gc-file">:335</span> refuses the global RNG
+            and <span class="gc-file">:345</span> refuses a <code>GameSpeed</code> or
+            <code>Settings</code> read. A touch class is a scene-layer type by the same argument
+            pacing is: a device may not move an outcome, a save or a replay. The corollary the
+            milestones are written against is that a mobile build and a desktop build must be
+            able to <em>trade save files</em>, because they are the same simulation.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> a "mobile mode" flag read inside the sim — for instance a
+            reduced day cap, a smaller default board, or a cheaper AI tier chosen by platform. Every
+            one of those makes the platform a balance surface, and the difficulty plan's standing
+            rule is that a tier is an <code>AIProfile</code> and a label. A phone that plays a
+            different game is a second game to balance.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D2 · The input actions stay the vocabulary, and one facade owns mobile dispatch</h3>
+            <span class="badge badge-outline">proposed · sharpens rev 1 D2</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            A touch control never calls a <code>Battle</code> branch of its own. It dispatches the
+            action the keyboard already dispatches, through the idiom the top bar already uses —
+            <code>HudTopBar._chip_button</code> (<span class="gc-file">hud_top_bar.gd:171</span>)
+            wired to <code>_send_action</code> (<span class="gc-file">:181–186</span>), which
+            synthesises a pressed and then a released <code>InputEventAction</code> and feeds both
+            to <code>Input.parse_input_event</code>. <strong>One class,
+            <code>scenes/ui/mobile_dock.gd</code> (<code>MobileDock</code>), is the single authority
+            for what a mobile control may say, and it never copies a transition out of
+            <code>Battle</code>.</strong> The full vocabulary it owes, stated now rather than
+            discovered later: <code>cancel</code> (Back / Menu), <code>zoom_in</code>,
+            <code>zoom_out</code>, <code>next_unit</code>, <code>replay_step</code>, plus pause and
+            resume — and those last two are the deliberate exception, because <code>Battle</code>
+            already publishes <code>request_pause()</code>
+            (<span class="gc-file">battle.gd:386</span>) and <code>resume_turn()</code>
+            (<span class="gc-file">:423</span>) as named entry points, which is a better door than
+            re-synthesising a key. <code>show_range</code>, <code>show_threat</code>,
+            <code>show_objectives</code>, <code>fire_power</code> and <code>end_turn</code> already
+            have visible controls and the dock adds none.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong><code>fast_forward</code> is the one action in the map the dock deliberately
+            does not carry, and it is out of the first release entirely</strong> (§7). Every other
+            action is momentary: it is dispatched, it is consumed, it is over. Fast forward is
+            <em>held</em> — <code>FastForward.held()</code> polls
+            <code>Input.is_action_pressed</code>
+            (<span class="gc-file">scenes/common/fast_forward.gd:29–30</span>) and
+            <code>rate()</code> is read per frame — so a chip that synthesises a pressed-then-released
+            <code>InputEventAction</code>, which is the whole idiom of D2, cannot express it. Giving
+            it a control means either a press-and-hold chip with its own timing (a second input
+            convention, on the platform where R1 says one tap must produce one receipt) or a latched
+            toggle (a second piece of pacing state beside <code>GameSpeed</code>'s tier, which is the
+            device preference that already answers "make this faster" and answers it durably rather
+            than for as long as a thumb stays down). <strong>The game-speed tier is the touch
+            player's fast forward</strong>, it is reachable from the map menu's value rows today, and
+            it costs the dock nothing. A press-and-hold chip is a considered follow-up after MB8
+            reports what the pacing actually feels like on a device — not a gap this release is
+            leaving by oversight.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            The leading chip's label is <strong>not</strong> a state machine of its own: it reads
+            <code>Battle.state</code> through the same setter that already swaps the key legend
+            (<span class="gc-file">battle.gd:139–143</span>, table at
+            <span class="gc-file">:45</span>). One setter, two consumers. A dock that watched for
+            state changes some other way would be the second answer that entry exists to prevent —
+            "never refreshed from the dozen sites that assign the state" is its own comment.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            One consequence has to be tested rather than assumed. <code>_send_action</code> injects
+            an <code>InputEventAction</code>, and <code>TransitionInput.is_press</code> accepts that
+            class (<span class="gc-file">transition_input.gd:28–29</span>) — so a dock press that
+            lands while a banner is up can both do its job <em>and</em> skip the banner.
+            <strong>One physical tap must produce one receipt</strong>, and MB3's proof is a
+            scenario that says so, not a paragraph that hopes so.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> a touch-specific input path inside
+            <span class="gc-file">battle.gd</span> — a <code>_touch_input</code> beside
+            <code>_unhandled_input</code>, or dock buttons calling <code>_cancel()</code>,
+            <code>confirm_at()</code> and the selection helpers directly. That is a second state
+            machine beside <code>Battle.state</code>, and the first divergence between it and the
+            keyboard path is a bug no desktop test can see.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D3 · Touch completeness beats gesture purity — and a pinch settles on a rung</h3>
+            <span class="badge badge-outline">proposed · carried and extended</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Every interaction gets a visible control before any of them gets a gesture.</strong>
+            A gesture is undiscoverable, unlabelable and unphotographable; a button is all three. So
+            MB3 ships buttons for zoom and MB6 adds pinch on top of them, never instead. The
+            ordering is also a risk ordering: buttons cannot fight the board's own tap handling,
+            and a drag can.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            When the pinch lands it obeys the ladder, and the rules are the ladder's rather than the
+            gesture's. <strong>A pinch may run continuously during the drag, but on release it
+            settles on a rung through <code>BattleZoom.set_zoom</code>
+            (<span class="gc-file">battle_zoom.gd:60–61</span>), never resting between two</strong> —
+            because a fractional rest is exactly the crawling-edge defect the whole-rung ladder
+            exists to prevent, and <span class="gc-file">tests/unit/test_texel_stability.gd</span>
+            is what holds it. Pinching out clamps to the board's <em>floor</em> rung, which is
+            <code>floor_for</code>'s answer and is 0.568 on Bulwark, not 1.0. The gesture never
+            writes <code>camera.zoom</code> and never writes <code>camera.offset</code>:
+            <code>BattleView._apply_board_offset</code>
+            (<span class="gc-file">battle_view.gd:701–702</span>) stays the only writer, composing
+            <code>BOARD_LIFT_PX / camera.zoom.y</code>. A one-finger pan rests on whole world
+            pixels, which is the animation milestone's A3 — <code>position_smoothing</code> was
+            switched off for exactly this reason and a gesture must not bring the fractional rest
+            back by another door.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> a continuous free zoom on mobile, on the argument that a
+            phone's screen is small enough to want one. It would put the board at a fractional rung
+            for the whole match on the one platform where the picture is already being resampled by
+            the window scale, and it would make "which rungs exist" have two answers — the ladder's
+            on desktop and the gesture's on mobile.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D4 · The first release keeps the 640×360 landscape canvas, letterboxed; the aspect question is one decision, deferred whole</h3>
+            <span class="badge badge-outline">proposed · sharpens rev 1 D4</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            <span class="gc-file">project.godot:26–31</span> is right as it stands:
+            <code>canvas_items</code> stretch over 640×360 with <code>aspect="keep"</code>. MB1 adds
+            <strong>exactly one line</strong> — <code>display/window/handheld/orientation="landscape"</code>
+            — which declares what the engine already defaults to, so no pixel moves and the
+            declaration is what a portrait rotation is refused by. <code>scale_mode</code> stays
+            absent, because on the Android targets the window scale is already whole (3.000 and
+            2.000) and integer mode buys nothing there; whether iOS wants a per-platform override
+            is a measurement MB9 takes on a device, recorded in §2 and deliberately not decided
+            here.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Aspect <code>expand</code> and safe-area handling are one decision and ship
+            together or not at all, in MB7.</strong> They are inseparable because
+            <code>keep</code> is currently what makes the notch harmless: the letterbox bars are
+            where the cutout lands. There is zero safe-area handling in the repository, the HUD bars
+            dock to the canvas edges (the bottom bar spans full width), and the only inset anywhere
+            is <code>HUD_EDGE</code> = 2 (<span class="gc-file">ui_theme.gd:115</span>). The moment
+            the canvas expands, the cutout eats the top bar's left end and the home indicator sits
+            under the bottom bar — so shipping <code>expand</code> without a
+            <code>SafeArea</code> authority ships a broken HUD, and shipping the authority without
+            <code>expand</code> is dead code. <code>keep</code> costs about 210 device pixels a side
+            on a 19.5:9 phone, roughly 18% of the screen. That is the price of the deferral and it
+            is stated so nobody pays it twice by accident.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> widening the design canvas (say to 800×360) so 20:9 fills
+            natively. It changes <code>_viewport_size</code> for every board, which changes
+            <code>floor_for</code>, which changes the opening rung of every map and every one of the
+            85 smoke frames — on desktop, for a mobile benefit. If the letterbox proves intolerable
+            on a device, MB7's variable-width <code>expand</code> is the answer, because there the
+            width is a runtime fact the desktop never sees.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D5 · Desktop pixels do not move — the gate is <code>OS.has_feature("mobile")</code> and the bar is <code>make smoke</code></h3>
+            <span class="badge badge-outline">proposed · carried from rev 1</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            The dock and the mobile size profile are built only when
+            <code>OS.has_feature("mobile")</code> answers true, or when the presentation-only flag
+            <code>--mobile</code> is passed — read through <code>CmdArgs.flag()</code> like every
+            other switch, and <strong>presentation-only in the strict sense: it reaches no
+            <code>MatchRequest</code> field, no save and no replay, and a match played with it
+            resolves identically</strong>. It exists so a mobile frame can be photographed on a
+            desktop machine, which is what makes MB3 and MB4 reviewable at all.
+            <strong>On a desktop build the mobile chrome is not merely hidden, it is never
+            constructed</strong>, so all 85 <code>make smoke</code> scenarios and
+            <code>make screenshot</code> stay byte-identical, and that byte-diff is the merge bar
+            for every milestone here.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            The coupling that makes this more than hygiene:
+            <code>BattleView._apply_board_offset</code>
+            (<span class="gc-file">battle_view.gd:701–702</span>) is the only writer of
+            <code>camera.offset</code>, and <code>BOARD_LIFT_PX</code>
+            (<span class="gc-file">:50</span>) is derived from the two bar heights. A third docked
+            bar therefore has to feed <code>HUD_BARS_H</code>
+            (<span class="gc-file">ui_theme.gd:113</span>) → <code>_board_viewport_size</code>
+            (<span class="gc-file">battle_view.gd:741–742</span>) → <code>min_zoom</code>
+            (<span class="gc-file">:709</span>) → the ladder floor, <em>through those authorities and
+            not around them</em>. A dock that overlaid the board instead would leave the camera
+            framing a strip it no longer owns, and the board would be playable behind chrome.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Under a banner, a cut-in, the handoff blackout and the victory lockup the dock
+            is docked and dead: every chip disabled, the bar never hidden.</strong> That is
+            ux-recovery D3 ("no interactive menu may sit under a banner or a cut-in") read for a
+            third bar, and it needs no new seam, because the bottom bar has answered it that way
+            since before this plan: <code>Battle.state</code>'s setter calls
+            <code>BattleView.refresh_keys(context)</code>
+            (<span class="gc-file">battle.gd:139–143</span>,
+            <span class="gc-file">battle_view.gd:533–535</span>), which prints the legend
+            <em>and</em> sets <code>hud_bottom.show_end_turn(BattleLegend.commands_board(context))</code>
+            — and <code>show_end_turn</code> is one line,
+            <code>_end_turn_button.disabled = not offered</code>
+            (<span class="gc-file">scenes/ui/hud_bottom_bar.gd:327–330</span>).
+            <strong>The dock takes the same call</strong>: <code>refresh_keys</code> gains a third
+            consumer, so the legend, End Turn and the dock cannot disagree about whose board it is,
+            and no dock chip is ever refreshed from a call site that assigns a state. Which states
+            close it is not a new list either — <span class="gc-file">battle.gd:572</span> already
+            names the ones that swallow board input (<code>ANIMATING</code>, covering every banner
+            and cut-in, plus <code>MENU</code>, <code>CONFIRM</code>, <code>VICTORY</code> and
+            <code>INFO</code>), and <code>HANDOFF</code> is refused a line earlier at
+            <span class="gc-file">:538</span>. <code>PAUSED</code> and <code>AI_TURN</code> are the
+            deliberate opposites: those are the two states the dock exists <em>for</em>.
+            Disabled rather than hidden, because a bar that vanished under every banner would
+            reflow the board — <code>HUD_BARS_H</code> → the ladder floor, R2's whole coupling —
+            several times a turn.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> a floating, translucent dock over the board, which needs no
+            ladder change. It breaks the HUD's standing rule that chrome swallows the pointer
+            (both bars are <code>MOUSE_FILTER_STOP</code> precisely so events cannot fall through to
+            cells rendered behind them), and on the smallest boards it would cover the cells a
+            player most needs.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D6 · Android establishes the contract; iOS repeats it</h3>
+            <span class="badge badge-outline">proposed · carried from rev 1</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            The touch contract, the dock, the size profile and the payload diet are all proven on
+            Android first, and iOS (MB9) is the same result carried through Xcode plus the two
+            things only iOS has: a fractional device scale and a home indicator.
+            <strong>The toolchain reality is that neither platform can be exported today</strong> —
+            installed templates are <code>4.1.2.stable</code> against a
+            <code>4.7.1.stable.official.a13da4feb</code> engine, so MB1's first act is fetching
+            4.7.1 templates. What Android has going for it is that everything else is present:
+            OpenJDK 21.0.1 at <code>/usr/bin/java</code> (Godot targets 17; 21 is fine for a plain
+            export), an SDK at <code>~/Library/Android/sdk</code> with build-tools, platform-tools,
+            accepted licenses and platforms android-33/34, and no NDK needed for a GDScript-only
+            project. Xcode is present too, so MB9 is sequencing rather than a blocker.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> shipping both platforms from one milestone. Two toolchains,
+            two signing stories and two device shapes in one review is where a mobile port stalls;
+            and iOS's fractional scale is the one measurement that could send D4 back for revision,
+            which is a bad thing to discover while also debugging a first APK.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D7 · A player build ships no editor addon</h3>
+            <span class="badge badge-outline">proposed · new · closes a recorded open decision</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>The export presets exclude <code>addons/godot_ai/</code>,
+            <code>addons/gut/</code>, <code>tools/</code>, <code>tests/</code>,
+            <code>reports/</code>, <code>docs/</code> and <code>maps/fixtures/</code>, and the
+            <code>_mcp_game_helper</code> autoload does not run in a packaged build.</strong>
+            CLAUDE.md's project-layout note records this as an open decision —
+            "<em>keeping it out of export builds is an open decision, recorded here so the extra
+            autoload is never a surprise</em>" — and a mobile build is where it stops being
+            deferrable: the helper is 1,105 lines with a <code>_process</code> at
+            <span class="gc-file">addons/godot_ai/runtime/game_helper.gd:132</span>, a remote
+            command surface (<code>_handle_game_command</code>, <code>_game_get_scene_tree</code>,
+            <code>_handle_take_screenshot</code>) and a stall detector, on a device where a frame
+            costs more and a remote command surface in a shipped app is a liability rather than a
+            convenience.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Excluding the files is only half the mechanism, and the missing half is a
+            boot error.</strong> <span class="gc-file">project.godot:22</span> is an
+            <code>[autoload]</code> entry pointing at
+            <code>res://addons/godot_ai/runtime/game_helper.gd</code>. Strip the directory from the
+            package and the entry still resolves at startup, against a script that is no longer
+            there — a dangling autoload, which the engine reports as a load failure on the first
+            frame of a shipped app. <strong>So the entry is turned off by a feature-tagged project
+            setting override, <code>autoload/_mcp_game_helper.mobile=""</code>, beside the plain
+            entry the editor keeps.</strong> The reason it is that and not an export-time strip: an
+            override lives in the same file the entry does, is resolved by the engine when settings
+            load, and needs no build step — where a strip means the Makefile rewrites
+            <span class="gc-file">project.godot</span> before an export and restores it after,
+            which puts a mutable checked-in file in the build path and one interrupted export away
+            from a dirty tree. If the override proves not to clear an autoload (MB1 measures it
+            rather than assuming it), the recorded fallback is to move the registration where it
+            belongs — the <code>godot_ai</code> editor plugin adding its own runtime singleton in
+            <code>_enter_tree</code>, so <code>[autoload]</code> never names an excluded file at
+            all. <strong>MB1's proof is not "the helper is absent" but "the build boots with no
+            autoload error"</strong>, which is the stronger reading and the one that catches this.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>MB1 measured it, and the override is REFUTED on 4.7.1.</strong> The engine reads
+            each <code>autoload/*</code> property <em>raw</em>, not through the override map: the
+            base entry loads anyway (<code>_mcp_game_helper</code> was still in the tree), and the
+            dotted key is picked up as an autoload of its own with an empty path — one
+            "Failed to instantiate an autoload" per boot, <em>on every platform including
+            desktop</em>, whether or not the named feature is active. Excluding the directory while
+            a live <code>[autoload]</code> entry names it is the same error. So MB1 ships the preset
+            <strong>without</strong> <span class="gc-file">addons/godot_ai/</span> excluded (≈740 KB
+            packed) and this decision's goal is outstanding: the fallback above — the plugin
+            registering its own runtime singleton — is the remaining route, and it belongs to the
+            addon rather than to a packaging slice.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> guarding the helper at runtime with
+            <code>OS.has_feature("editor")</code> and shipping the file anyway. It leaves the code
+            and its 1,105 lines in the package, leaves the addon a supported part of a player build
+            in principle, and answers the size question with nothing. Excluding beats guarding when
+            the thing has no business being there at all.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D8 · Touch targets are hit areas first, drawn chrome second</h3>
+            <span class="badge badge-outline">proposed · new</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            Every interactive control in the game is between 27% and 73% of 44 pt (§2's table), so
+            something has to grow. <strong>What grows first is the rectangle a finger has to hit,
+            not the rectangle the game draws</strong> — an inflated hit area is invisible to
+            <code>HUD_BARS_H</code>, and an inflated drawn height is not: it moves
+            <code>_board_viewport_size</code>, therefore <code>min_zoom</code>, therefore the floor
+            rung of every board, therefore the opening frame of every match. A control may be
+            painted at 7 px and answer a 44 px touch; the reverse costs the board its share of a
+            screen it can least spare.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>The mobile metric set lives in <code>UiTheme</code> and <code>UiKit</code> and
+            nowhere else</strong>, which is the menu-revamp plan's D1 read on a second platform:
+            <code>UiTheme</code> owns the recipe (a colour, a size, a stylebox) and <code>UiKit</code>
+            owns the widget built from it, and a screen that kept its own copy of a metric is the
+            drift that rule exists to prevent — <code>pad</code> had already done it in three files
+            once. A mobile size is therefore a second value on an existing token, resolved once,
+            never a per-screen <code>if</code>.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> a global UI scale factor on the whole canvas. It halves the
+            board's share of the screen at a stroke — the thing the player is actually looking at —
+            and it scales the parts that are already fine (the 8 px type reads at 24 device pixels)
+            along with the parts that are not.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D9 · The planner is not a mobile task</h3>
+            <span class="badge badge-outline">proposed · new</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            A computer turn costs 15–105 ms on this desk (§2) and will cost 60–400 ms on a phone,
+            on the main thread, once per computer seat. <strong>No milestone in this plan edits
+            anything under <code>ai/</code>, and no <code>AIProfile</code> value is touched for a
+            phone's sake.</strong> Two reasons and both are other plans': the difficulty lock says a
+            tier is an <code>AIProfile</code> and a label, so a cheaper mobile tier is a fifth tier
+            nobody measured; and the arena's D2 says a performance change is proven byte-identical
+            with both balance reports, which is not a bar a mobile milestone should be trying to
+            clear. The mitigation here is entirely presentational: keep the frame alive at the
+            boundaries <code>Battle.pause_gate</code> (<span class="gc-file">battle.gd:398</span>)
+            already provides, and give the player something that says the computer is thinking. The
+            hitch is recorded as R5 rather than solved.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> moving planning to a thread, and lowering the shipped tier on
+            mobile. The first buys a determinism problem — the sim threads a seeded RNG precisely so
+            the same seed and commands give the same result — for a saving on the one platform least
+            able to absorb a new class of bug. The second makes the platform a balance surface,
+            which is D1's whole boundary.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== 4 · MILESTONES ============================== -->
+    <section class="px-6 py-8 md:px-12" style="background:color-mix(in srgb, var(--gc-grass) 14%, transparent);">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">4</span>
+        <h2 class="text-2xl font-black">Milestones — each one shippable</h2>
+      </div>
+      <p class="max-w-3xl mb-4 text-sm">
+        Order and dependency: <strong>MB1 → MB2 → MB3</strong> is the spine, and nothing else may
+        start before MB1 merges, because until then no reviewer can hold a build. MB4 and MB5 are
+        independent of each other and of MB3, and can land in any order after MB1. MB6 needs MB3
+        (the buttons it is layered on). MB7 is decision-gated and needs the user's answer on aspect
+        before a line is written. MB8 gates MB9. Every milestone's proof line ends the same way:
+        <code>make verify</code> green and the desktop byte bars clean.
+      </p>
+      <div class="grid gap-4">
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB1 · Bootstrap and packaging <span class="badge badge-outline badge-sm">size M</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li>Install Godot <code>4.7.1.stable</code> export templates (the tree currently has
+            <code>4.1.2.stable</code> only) and record the step in the README beside the engine
+            setup already documented there.</li>
+            <li><code>export_presets.cfg</code> — an Android debug preset: landscape orientation,
+            package identity, launcher icons, GL Compatibility, <code>arm64-v8a</code>. Signing
+            secrets stay out of the repository; <code>.gitignore</code> gains the keystore
+            patterns.</li>
+            <li><strong>D7's exclude list</strong> on the preset:
+            <code>addons/godot_ai/</code>, <code>addons/gut/</code>, <code>tools/</code>,
+            <code>tests/</code>, <code>reports/</code>, <code>docs/</code>,
+            <code>maps/fixtures/</code>.</li>
+            <li><strong>D7's other half</strong> — <code>autoload/_mcp_game_helper.mobile=""</code>
+            in <span class="gc-file">project.godot</span> beside the entry at
+            <span class="gc-file">:22</span>, so the excluded addon is not left named by a live
+            autoload. Excluding without this is a dangling autoload and a boot error, which is why
+            the proof below reads the log for silence rather than for absence.</li>
+            <li><span class="gc-file">project.godot</span> — one line,
+            <code>display/window/handheld/orientation="landscape"</code>, declaring the default the
+            engine already applies (D4). <code>scale_mode</code> stays absent, with the per-device
+            arithmetic recorded as a comment so the next reader does not re-derive it.</li>
+            <li><span class="gc-file">Makefile</span> — <code>export-android</code> beside the
+            three dozen existing targets, importing first the way <code>run</code> and
+            <code>screenshot</code> do.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; <code>make smoke</code>
+            byte-identical across all 85 scenarios and <code>make screenshot</code> byte-identical
+            (nothing presentational moved); a debug APK installs on a device or emulator, opens the
+            real main menu, plays Boot Camp to a turn end, and writes and continues a save. The
+            package size is recorded in the PR body, and <strong>the build boots with no autoload
+            error</strong> — <code>_mcp_game_helper</code> absent <em>and</em> the log clean of a
+            failed load for it, which are two different readings and only the second catches a
+            dangling entry (D7).</li>
+            <li><strong>Also proved here, because D5's whole gate rests on it:</strong>
+            <code>OS.has_feature("mobile")</code> answers true in the exported Android build. It is
+            an engine-supplied tag, not one this project declares — <span class="gc-file">project.godot:15</span>
+            lists only <code>4.7</code> and <code>GL Compatibility</code> under
+            <code>config/features</code> — so it is read on the device once and recorded, rather
+            than assumed by every milestone after it. If it does not answer as expected, D5's gate
+            becomes the <code>--mobile</code> flag plus a named custom feature tag on the preset,
+            and that is a finding for MB1 to report before MB3 depends on it.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB2 · The touch classes become explicit <span class="badge badge-outline badge-sm">size S</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li><span class="gc-file">scenes/common/transition_input.gd</span> —
+            <code>is_press</code> and <code>is_confirm</code> accept a pressed
+            <code>InputEventScreenTouch</code>. Today they answer Key, MouseButton, JoypadButton and
+            Action (<span class="gc-file">:18–29</span>) and touch arrives only by emulation, which
+            works and is undeclared. This makes the boundary convention (ux-recovery D3) true of a
+            finger by statement rather than by a project setting nobody wrote down.</li>
+            <li><span class="gc-file">scenes/common/directional_input.gd</span> — the one-step-per-gesture
+            answer is unchanged for touch (a screen has no d-pad), but the class is read and its
+            silence documented, so a later reader does not add a second convention.</li>
+            <li><span class="gc-file">scenes/battle/cutscene/cutscene_playback.gd:193–199</span> —
+            <code>consume_skip</code> accepts a screen touch beside its confirm, cancel and mouse
+            press, so a cut-in is skippable on a device even if emulation is ever turned off.</li>
+            <li>Emulation stays on: no <code>[input_devices]</code> section is added. This milestone
+            adds a second, explicit door; it does not close the first.</li>
+            <li>Tests: <span class="gc-file">tests/unit/test_transition_input.gd</span> gains screen-touch
+            cases — a pressed touch is a press and a confirm, a released touch is neither — in the
+            Node-free idiom that suite already uses.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; <code>make smoke</code> and
+            <code>make screenshot</code> byte-identical (no desktop event class changed meaning).</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB3 · The dock — every state has a way home <span class="badge badge-outline badge-sm">size M</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li><span class="gc-file">scenes/ui/mobile_dock.gd</span> (<code>MobileDock</code>) — a
+            third docked bar built only under <code>OS.has_feature("mobile")</code> or
+            <code>--mobile</code> (D5), from <code>UiTheme</code> tokens and
+            <code>HudTopBar._chip_button</code>'s idiom, <code>MOUSE_FILTER_STOP</code> like both
+            bars above it.</li>
+            <li><strong>The headline is the <code>POWER_TARGETING</code> abort</strong> — the one
+            dead end where the absent control costs the player a Command Power. Back also leaves
+            <code>UNIT_SELECTED</code>, <code>TARGETING</code> and <code>DROP_TARGETING</code>,
+            and at rest it opens the map menu, exactly as <code>_cancel()</code> already branches
+            (<span class="gc-file">battle.gd:690–709</span>).</li>
+            <li>Pause, Resume and Step call <code>Battle.request_pause()</code>,
+            <code>resume_turn()</code> and <code>step_replay()</code> — the public entry points at
+            <span class="gc-file">battle.gd:386,423,413</span>. "A click is deliberately not a
+            resume" is preserved: the resume is a labelled button, not a tap on the board.</li>
+            <li><code>−</code> / <code>+</code> dispatch <code>zoom_out</code> /
+            <code>zoom_in</code>; <code>N</code> dispatches <code>next_unit</code>. On the desktop
+            top bar the <code>NEXT_CHIP</code> label (<span class="gc-file">hud_top_bar.gd:104</span>)
+            is left exactly as it is — promoting it to a button there would move every battle
+            frame for no desktop benefit.</li>
+            <li>The leading chip's label follows <code>Battle.state</code> through the setter at
+            <span class="gc-file">battle.gd:139–143</span> and the <code>STATE_CONTEXT</code> table
+            at <span class="gc-file">:45</span> (D2). The copy is <code>ControlHints</code>', like
+            every other chip's.</li>
+            <li>The same <code>refresh_keys</code> call disables every chip in the states that
+            already swallow board input — <code>ANIMATING</code> (banners and cut-ins),
+            <code>HANDOFF</code>, <code>VICTORY</code>, <code>MENU</code>, <code>CONFIRM</code>,
+            <code>INFO</code> (<span class="gc-file">battle.gd:572</span>,
+            <span class="gc-file">:538</span>) — and leaves them live in <code>AI_TURN</code> and
+            <code>PAUSED</code>. Disabled, never hidden, for the reason D5 gives: a bar that came
+            and went would move the ladder floor several times a turn. The vocabulary is D2's and
+            it is closed: <code>fast_forward</code> is a held action and is not on the dock.</li>
+            <li>The dock's height feeds <code>UiTheme.HUD_BARS_H</code> so
+            <code>_board_viewport_size</code> → <code>min_zoom</code> → the ladder floor recompute
+            through the existing authorities (D5) — on a mobile build only.</li>
+            <li>Tests and scenarios: a new <code>mobile_back</code> smoke scenario driven with
+            <code>--mobile</code>, walking into and out of all four targeting states and asserting
+            the power meter is unspent at the end; the <code>ai_pause</code> scenario
+            (<span class="gc-file">scenes/battle/battle_transition_scenario.gd:191</span>) extended
+            to pause, step and resume from the dock rather than from keys.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; all 85 existing
+            <code>make smoke</code> frames byte-identical (checked with
+            <code>SMOKE_HASHES</code>), the two new mobile frames added; and the double-fire test —
+            one synthetic tap on the Back chip while a banner is up produces one receipt, not a
+            command <em>and</em> a banner skip (D2, R1).</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB4 · Hit areas, and copy a finger can reach <span class="badge badge-outline badge-sm">size M</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li><span class="gc-file">scenes/common/ui_theme.gd</span> and
+            <span class="gc-file">scenes/ui/ui_kit.gd</span> — the mobile metric set (D8), hit
+            rectangles only: the HUD chips, the action-menu rows, the seat segments, the toggle rows
+            and the checkbox reach 44 px of touchable area with their drawn sizes unchanged.
+            <code>HUD_TOP_H</code>, <code>HUD_BOTTOM_H</code> and therefore
+            <code>HUD_BARS_H</code> do not move.</li>
+            <li><strong>The tooltip device check comes first, and it decides whether the
+            <code>FocusSource</code> work is scoped at all.</strong> On a real phone, with
+            <code>emulate_mouse_from_touch</code> as it ships, does a press-and-hold on a seat
+            segment raise <code>mouse_entered</code> and open the tip
+            (<span class="gc-file">tooltip.gd:118</span>)? If it does, the hover door already
+            answers a finger, the two bullets below are <strong>deleted rather than deferred</strong>,
+            and MB4 keeps only the hit rectangles and the scroll check. If it does not, they run.
+            Measured before a line is written, because a third focus source built on an untested
+            assumption is a permanent second convention bought for nothing.</li>
+            <li><em>Conditional on that reading —</em>
+            <span class="gc-file">scenes/ui/focus_source.gd</span>: a third source beside keyboard
+            and pointer. Today <code>by_keyboard</code> is a single flag set from
+            <code>_input</code> (<span class="gc-file">:36–41</span>); touch becomes its own answer
+            so the <code>:focus-visible</code>-shaped gate can admit a finger without admitting the
+            desktop pointer.</li>
+            <li><em>Conditional on that reading —</em>
+            <span class="gc-file">scenes/ui/tooltip.gd</span>: the focus door
+            (<span class="gc-file">:255–256</span>) opens for the touch source. Nothing about the
+            hover door changes, so the desktop behaviour is untouched by construction. The copy this
+            recovers is the match-setup help and the seat strip's explanations
+            (<span class="gc-file">seat_strip.gd:625,714</span>) — every trigger that can take
+            focus.</li>
+            <li><strong>The disabled Continue button is not one of them, and it gets its own
+            answer: inline copy under the control.</strong> A disabled control takes no focus, so no
+            focus source of any kind reaches its tip
+            (<span class="gc-file">main_menu.gd:652</span>, and the comment at
+            <span class="gc-file">:649–651</span> says the pointer is exactly what it was banking
+            on). The reason Continue is greyed out therefore moves into
+            <code>_continue_caption</code> — the micro-label already sitting under the button
+            (<span class="gc-file">main_menu.gd:645–648</span>), already written by
+            <code>_refresh_continue</code>, already the panel's idiom for metadata about the control
+            above it. On a mobile build it says why the button is dead in the same place it says
+            what the button would resume; the tooltip stays for desktop and nothing about the
+            desktop frame moves. <strong>Rejected: tap-to-explain on the disabled row</strong> — a
+            disabled control that answers a tap is a control that is not disabled, and inventing one
+            interaction rule for one button is worse than a line of copy that is always on screen.</li>
+            <li>Scroll: confirm on a device that Godot's own touch drag-scroll (gated on
+            <code>DisplayServer.is_touchscreen_available()</code>) carries the map picker
+            (<span class="gc-file">main_menu.gd:436</span>), the campaign hub, the end-turn guard's
+            list, the replay list <strong>and the commander info sheet's per-card frames</strong>
+            (<span class="gc-file">commander_info_sheet.gd:202,208</span>) — the last of which is
+            the ▲▼ route, a real <code>ScrollContainer</code> stepped by
+            <code>DirectionalInput</code> (<span class="gc-file">:257–261,271–274</span>) rather
+            than a bespoke one, so it needs no control of its own if the drag carries it. If the
+            drag does not carry any of them, the fix is a wider scrollbar in <code>UiTheme</code>,
+            not a custom gesture, and not ▲▼ chips on the dock.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; every menu smoke frame and
+            every battle frame byte-identical on desktop (a hit rectangle draws nothing, and the
+            caption line is mobile-only); on a device, each of the five hit-area surfaces accepts a
+            tap on the first attempt, ten times out of ten; all five scroll frames drag; the
+            greyed-out Continue button states its reason without any interaction at all; and the
+            tooltip reading is recorded either way, since it is what says whether the two
+            conditional bullets ran.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB5 · The payload diet <span class="badge badge-outline badge-sm">size S</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li>Music to Ogg Vorbis through the sibling <code>audio_generator</code> pipeline
+            (<code>make audio</code>, <span class="gc-file">Makefile:332–340</span>) — the two
+            tracks are 5,131,680 and 6,513,274 bytes of PCM today, roughly a tenth of that as Ogg,
+            and the saving is resident RAM as well as package size.</li>
+            <li>Sound effects reviewed for mono where stereo buys nothing; the nine files total
+            264 KB, so this is hygiene rather than a win, and any format change is recorded in
+            <span class="gc-file">assets/LICENSES.md</span>.</li>
+            <li>Compare the exported package before and after and record both numbers.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; the sfx and music cues fire
+            in the same beats (the audio is triggered by the same autoloads, so a format change is
+            invisible to the sim); <code>make smoke</code> byte-identical — the sweep photographs
+            frames, not sound.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB6 · Pinch and pan <span class="badge badge-outline badge-sm">size M</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li>Two-finger pinch and one-finger pan on the board, owned by <code>MobileDock</code>'s
+            gesture side or a sibling under <code>scenes/battle/</code> — never by
+            <span class="gc-file">battle.gd</span>, which keeps its one input handler.</li>
+            <li>D3's four rules, each with a test: settles on a rung through
+            <code>BattleZoom.set_zoom</code>; clamps out to the board's floor rung and not to 1.0;
+            never writes <code>camera.zoom</code> or <code>camera.offset</code> directly; pan rests
+            on whole world pixels.</li>
+            <li>Sensitivity is per ladder, because Bulwark spans 8.8× over six rungs and
+            <code>quartet</code> spans 2.5× over four — one gain constant would make one of them
+            unusable.</li>
+            <li>A drag that starts on a unit must not become a move: the gesture claims the event
+            or the board does, never both. This is R1 in its second form.</li>
+            <li>Tests: <span class="gc-file">tests/unit/test_texel_stability.gd</span> unchanged
+            and still green (the ladder did not move); new Node-free cases for the pinch-to-rung
+            arithmetic, in the shape <code>BattleZoom.floor_for</code> is already checked in.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; desktop byte bars clean;
+            on a device, a pinch on Bulwark reaches every rung of that board's ladder and always
+            rests on one, and a pan never leaves the board resting on a half pixel.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4" style="border-style:dashed;">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB7 · Safe area and <code>expand</code> <span class="badge badge-outline badge-sm">size M/L</span> <span class="badge badge-sm" style="background:var(--gc-road); border:0;">decision-gated</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li><strong>Does not start until the user answers the aspect question</strong> (§7).
+            If the answer is "keep the letterbox", this milestone is deleted rather than deferred.</li>
+            <li><span class="gc-file">scenes/common/safe_area.gd</span> (<code>SafeArea</code>) —
+            one authority resolved once per boot, in the <code>SideIdentity</code> /
+            <code>GameSpeed</code> idiom: ask it, never call
+            <code>DisplayServer.get_display_safe_area</code> twice. Answers zero insets everywhere
+            but a mobile build, so desktop is unchanged by construction.</li>
+            <li><span class="gc-file">project.godot</span> — <code>stretch/aspect="expand"</code>,
+            and with it a variable canvas width that changes <code>_viewport_size</code> →
+            <code>floor_for</code> → the floor rung <em>at runtime, on mobile only</em>.</li>
+            <li>The two HUD bars and the menu margins inset by the safe area; the board's docked
+            offset composes through <code>_apply_board_offset</code> as always.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; desktop byte bars clean;
+            on devices with a notch and with a home indicator, no control and no readable glyph
+            falls under either, in both rotations of landscape.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB8 · Android device soak <span class="badge badge-outline badge-sm">size S</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li>Thirty minutes of real play on a real phone: a campaign mission, a four-army skirmish
+            on a large board, a replay watched to its end, and a save resumed after the app has been
+            backgrounded.</li>
+            <li>Watched for: an input dead end, a duplicated command, a stale touch focus, a lost
+            save, a control outside the visible area, an audio dropout on interruption, and the
+            planner hitch's real cost per computer turn (R5) measured rather than estimated.</li>
+            <li>The replay recorder appends a line per command into ten rotating slots under
+            <code>user://replays/</code> — a flash write per action, which is worth timing on a
+            device where flash is slower than a desk's SSD.</li>
+            <li><strong>Proof:</strong> a written record of the soak in the PR body, per the
+            instrument convention the balance and legibility docs already follow: a dated
+            measurement, superseded wholesale by a later one rather than edited.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">MB9 · iOS <span class="badge badge-outline badge-sm">size M</span></h3>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li>The iOS preset and the Xcode handoff; bundle identifier and team configured outside
+            source control.</li>
+            <li>The fractional-scale measurement D4 defers to here: does a 3.275 window scale soften
+            the pixel faces enough to want a per-platform <code>scale_mode=integer</code>, given
+            that integer mode would snap 1179 → 1080 and add ~50 px of bar? Rendered on a device and
+            judged there, not argued.</li>
+            <li>The home indicator, which is MB7's business if MB7 ran and a letterbox's business
+            if it did not.</li>
+            <li><strong>Proof:</strong> the exported project builds to a device, survives
+            background and foreground, saves and continues, and completes the same touch turn
+            Android's soak completed, with GL Compatibility parity confirmed.</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== 5 · ISSUE REGISTER ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">5</span>
+        <h2 class="text-2xl font-black">Issue register</h2>
+      </div>
+      <p class="max-w-4xl mb-4">
+        Source trace: branch <code>main</code>, commit <code>2ab1adbe</code>, inspected 2026-08-25.
+        The identifiers below are stable plan IDs and must prefix their Linear issue titles. Rev 1's
+        MOB-01…05 were never filed and are renumbered here without ceremony; the mapping is in §8.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="gc-table">
+          <thead><tr><th>ID</th><th>Severity</th><th>Slice</th><th>Problem / target fix</th><th>Acceptance</th></tr></thead>
+          <tbody>
+            <tr id="mob-01"><td><b>MOB-01</b></td><td>High</td><td>MB1 · Packaging</td><td><b>No native package can be produced at all.</b> Only <code>4.1.2.stable</code> templates are installed against a <code>4.7.1</code> engine and there is no <code>export_presets.cfg</code>. Fetch 4.7.1 templates, add an Android debug preset (landscape, package identity, launcher assets, GL Compatibility), a <code>make export-android</code> target and keystore ignores. No signing secret is committed.</td><td><code>mobile_android_boot</code>: a clean debug APK installs, opens the real main menu, plays Boot Camp to a turn end, writes a save and continues it. <code>make verify</code> green; <code>make smoke</code> and <code>make screenshot</code> byte-identical.</td></tr>
+            <tr id="mob-02"><td><b>MOB-02</b></td><td>High</td><td>MB3 · Dock</td><td><b>A touch player who opens an aimed Command Power must fire it.</b> In <code>POWER_TARGETING</code> any tap calls <code>_fire_aimed_power</code> (<code>battle.gd:669–670</code>) and the only abort is the <code>cancel</code> action. Give the dock a Back chip that dispatches <code>cancel</code>, reaching the existing <code>_cancel()</code> branch at <code>battle.gd:704–709</code> — no new rule, no second transition.</td><td><code>mobile_back</code>: opens Hammerfall aiming, taps Back, and the power meter is still full and no unit has been removed. Repeated for <code>UNIT_SELECTED</code>, <code>TARGETING</code> and <code>DROP_TARGETING</code>.</td></tr>
+            <tr id="mob-03"><td><b>MOB-03</b></td><td>High</td><td>MB3 · Dock</td><td><b>A paused computer turn cannot be resumed and a computer turn cannot be paused.</b> <code>battle.gd:543–559</code> binds both to keys, and a watched match or replay is nothing but computer turns — so a phone has no route to the map menu or out of the match. Dock chips calling <code>request_pause()</code> / <code>resume_turn()</code> / <code>step_replay()</code> (<code>battle.gd:386,423,413</code>).</td><td>The <code>ai_pause</code> scenario (<code>battle_transition_scenario.gd:191</code>) extended: pause from the dock, step once, resume, and the runner picks the turn up where it stopped. Plus a replay watched to its end using dock controls only.</td></tr>
+            <tr id="mob-04"><td><b>MOB-04</b></td><td>High</td><td>MB3 · Dock</td><td><b>One physical tap may produce two receipts.</b> <code>HudTopBar._send_action</code> (<code>:181–186</code>) injects a synthetic <code>InputEventAction</code>, and <code>TransitionInput.is_press</code> accepts that class (<code>transition_input.gd:28–29</code>), so a dock press landing during a banner can act <em>and</em> skip the banner. Establish the one-tap-one-receipt rule for every dock chip before any gesture exists. The dock is also the third bar that must obey ux-recovery D3 — <b>disabled, never hidden, under a banner, a cut-in, the handoff blackout and the victory lockup</b>, through the same <code>refresh_keys</code> call the End Turn button already reads (D5).</td><td>A driven scenario presses each dock chip while a turn banner is up and asserts exactly one receipt: either the banner skip or the action, never both. Plus: in each of <code>ANIMATING</code> (banner and cut-in), <code>HANDOFF</code>, <code>VICTORY</code>, <code>MENU</code>, <code>CONFIRM</code> and <code>INFO</code> every dock chip reads disabled and the bar is still on screen at its full height (the ladder floor never moves mid-match); in <code>AI_TURN</code> and <code>PAUSED</code> the chips are live, which is the point of them. Runs as part of <code>mobile_back</code>.</td></tr>
+            <tr id="mob-05"><td><b>MOB-05</b></td><td>High</td><td>MB4 · Hit areas</td><td><b>Every interactive control is 27–73% of the 44 pt minimum.</b> Worst are the 7 px HUD chips (<code>ui_theme.gd:143</code>, ≈1.2 mm) and the 12×12 checkbox (<code>ui_kit.gd:255</code>). Add a mobile metric set in <code>UiTheme</code>/<code>UiKit</code> that inflates <b>hit rectangles only</b> — drawn sizes and therefore <code>HUD_BARS_H</code> unchanged (D8).</td><td>On a device, the HUD chips, action-menu rows, seat segments, toggle rows and the checkbox each accept a tap on the first attempt ten times out of ten. On desktop every <code>make smoke</code> frame is byte-identical.</td></tr>
+            <tr id="mob-06"><td><b>MOB-06</b></td><td>High</td><td>MB1 · Packaging</td><td><b>A player build would ship the editor's remote-control addon.</b> <code>_mcp_game_helper</code> (<code>project.godot:22</code>) is 1,105 lines with a per-frame <code>_process</code> (<code>game_helper.gd:132</code>), a remote command surface and a stall detector; <code>addons/gut/</code>, <code>tools/</code>, <code>tests/</code>, <code>reports/</code>, <code>docs/</code> and <code>maps/fixtures/</code> have no business in a package either. Exclude them in the preset — <b>and turn the autoload entry off with them</b>, via the feature-tagged override <code>autoload/_mcp_game_helper.mobile=""</code>, because an excluded script still named by a live <code>[autoload]</code> entry is a dangling autoload and a boot error (D7).</td><td><code>mobile_android_boot</code> <b>boots with no autoload error</b> — the helper absent <i>and</i> no failed load logged for it; the exported package contains none of the excluded directories; the recorded package size drops accordingly. <code>OS.has_feature("mobile")</code> is read on the device and recorded in the same pass, since D5's gate rests on it.</td></tr>
+            <tr id="mob-07"><td><b>MOB-07</b></td><td>Medium</td><td>MB3 · Dock</td><td><b>Zoom and Next-ready-unit have no touch route.</b> <code>zoom_in</code>/<code>zoom_out</code> live on wheel, keys and pad shoulders (<code>battle_zoom.gd:67–75</code>); <code>next_unit</code>'s chip is a label, not a button (<code>hud_top_bar.gd:104</code>). Add <code>−</code>, <code>+</code> and <code>N</code> to the dock, dispatching the existing actions; leave the desktop top bar untouched.</td><td><code>mobile_back</code> also steps the zoom to both ends of Bulwark's ladder and walks the ready units with <code>N</code>. Desktop battle frames byte-identical, since the top bar did not change.</td></tr>
+            <tr id="mob-08"><td><b>MOB-08</b></td><td>Medium</td><td>MB4 · Tooltips</td><td><b>Tooltip reachability on touch is unverified, and one tooltip provably cannot work.</b> <code>Tooltip.attach</code> opens on hover or on focus; <code>follow_focus</code>'s door (<code>tooltip.gd:148–150</code>) is gated to keyboard by <code>FocusSource.by_keyboard</code> (<code>tooltip.gd:255–256</code>), so focus is shut to a finger — but under <code>emulate_mouse_from_touch</code> a press-and-hold may already raise <code>mouse_entered</code> (<code>tooltip.gd:118</code>) on device, and nobody has looked. <b>Measure that first: it is the gate on whether a third <code>FocusSource</code> is built at all.</b> Separately and unconditionally, the disabled Continue button (<code>main_menu.gd:652</code>) takes no focus by definition, so no focus source ever reaches its tip — its reason moves into the existing <code>_continue_caption</code> micro-label under the button (<code>main_menu.gd:645–648</code>) on a mobile build, which is copy rather than an interaction. <i>Rejected: tap-to-explain on the disabled row</i> — a disabled control that answers a tap is not disabled.</td><td>The device reading is recorded either way, and it says whether the <code>FocusSource</code>/<code>Tooltip</code> half of MB4 ran or was deleted. If it ran: on a device every tooltip in match setup and in the seat strip opens by tapping its trigger. Unconditionally: the greyed-out Continue button states its reason with no interaction at all. Every menu smoke frame is byte-identical on desktop.</td></tr>
+            <tr id="mob-09"><td><b>MOB-09</b></td><td>Medium</td><td>MB2 · Input classes</td><td><b>The whole touch contract rests on an undeclared engine default.</b> <code>emulate_mouse_from_touch</code> is on because <code>project.godot</code> declares no <code>[input_devices]</code> section; there is no <code>InputEventScreenTouch</code> anywhere in the tree. Teach <code>TransitionInput</code>, <code>DirectionalInput</code> and <code>CutscenePlayback</code> the touch classes explicitly, keeping emulation on.</td><td><code>tests/unit/test_transition_input.gd</code> gains screen-touch cases (pressed = press and confirm; released = neither), Node-free. <code>make smoke</code> byte-identical.</td></tr>
+            <tr id="mob-10"><td><b>MOB-10</b></td><td>Medium</td><td>MB5 · Payload</td><td><b>11.6 MB of uncompressed music ships in the package and sits in RAM.</b> <code>assets/music/advance.wav</code> (5,131,680 B) and <code>parade.wav</code> (6,513,274 B) import as <code>AudioStreamWAV</code> with no rate, bit-depth or channel reduction. Re-emit as Ogg Vorbis through the sibling <code>audio_generator</code> pipeline (<code>make audio</code>); record the format in <code>assets/LICENSES.md</code>.</td><td>Package size before and after recorded in the PR; both tracks play in the same cues; <code>make verify</code> green and <code>make smoke</code> byte-identical.</td></tr>
+            <tr id="mob-11"><td><b>MOB-11</b></td><td>Medium</td><td>MB6 · Gestures</td><td><b>The largest board is unplayable at its opening rung.</b> Bulwark's floor rung is 0.568, which makes a cell ≈9 canvas px (≈1.5 mm), and there is no touch way off it beyond MOB-07's buttons. Add pinch and pan under D3's four rules — settles on a rung via <code>set_zoom</code>, clamps to the board's floor, never writes <code>camera.zoom</code>/<code>camera.offset</code>, pan rests on whole world pixels.</td><td>On a device, a pinch on Bulwark reaches every one of that board's six rungs and always rests on one; <code>tests/unit/test_texel_stability.gd</code> is unchanged and green; a drag beginning on a unit never issues a move.</td></tr>
+            <tr id="mob-12"><td><b>MOB-12</b></td><td>Medium</td><td>MB7 · Aspect</td><td><b>There is no safe-area handling and the letterbox is what is currently hiding that.</b> No <code>get_display_safe_area</code> exists in <code>core/</code>, <code>scenes/</code> or <code>autoload/</code>; the HUD bars dock to the canvas edges with a 2 px inset (<code>ui_theme.gd:115</code>). <code>aspect="keep"</code> costs ~18% of a 19.5:9 screen; <code>expand</code> recovers it and immediately puts the notch through the top bar. Ship a <code>SafeArea</code> authority and <code>expand</code> together, or ship neither.</td><td><code>mobile_device_shapes</code>: at simulated 16:9, 19.5:9 and 20:9 with insets, no control or glyph falls under a cutout or a home indicator, in both landscape rotations, on menu, commander select, battle idle / selected / targeting / map menu / handoff / victory. Confirmed on one notched device.</td></tr>
+            <tr id="mob-13"><td><b>MOB-13</b></td><td>Medium</td><td>MB8 · Soak</td><td><b>Nothing proves the build survives being a phone app.</b> Backgrounding, audio interruption, rotation refusal, the per-command flash write the replay recorder does into <code>user://replays/</code>, and the 60–400 ms planner hitch are all unmeasured on hardware. Run a real soak and write the measurement down.</td><td><code>mobile_android_soak</code>: 30 minutes across a campaign mission, a four-army large-board skirmish, a watched replay and a backgrounded resume, with no input dead end, no duplicate command, no lost save and no control off screen. Per-turn AI wall clock recorded per tier.</td></tr>
+            <tr id="mob-14"><td><b>MOB-14</b></td><td>Medium</td><td>MB9 · iOS</td><td><b>The proven Android contract has no iOS package, and iOS is the one target with a fractional device scale.</b> 1170 and 1179 short edges give 3.250 and 3.275 over the 360-line canvas, which softens the pixel faces' subpixel positioning. Add the iOS preset and Xcode handoff, and take the per-platform <code>scale_mode</code> measurement on a device rather than deciding it on paper.</td><td><code>mobile_ios_boot</code> and <code>mobile_ios_tap_turn</code>: the exported project builds to a device, survives background/foreground, saves and continues, and completes the same touch turn Android's soak completed. The scale reading is recorded either way.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================== 6 · RISKS ============================== -->
+    <section class="px-6 py-8 md:px-12" style="background:color-mix(in srgb, var(--gc-red) 8%, transparent);">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">6</span>
+        <h2 class="text-2xl font-black">Risks</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card bg-base-100 border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">R1 · One tap, two receipts</h3>
+          <p class="text-sm mt-1">Godot can deliver a touch <em>and</em> an emulated mouse event for
+          the same finger, and the dock's own dispatch adds a third class:
+          <code>_send_action</code> injects an <code>InputEventAction</code> that
+          <code>TransitionInput.is_press</code> accepts
+          (<span class="gc-file">transition_input.gd:28–29</span>). The mitigation is structural —
+          one facade owns dispatch (D2) — and the proof is a test that presses each chip during a
+          banner and counts receipts (MOB-04). This is checked <em>before</em> MB6 adds gestures,
+          because a drag that both zooms and issues a move is the same bug with a longer fuse.</p>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">R2 · The third bar and the zoom ladder are one system</h3>
+          <p class="text-sm mt-1">A dock's height is not chrome: it is
+          <code>HUD_BARS_H</code> → <code>_board_viewport_size</code> → <code>min_zoom</code> →
+          <code>floor_for</code> → the opening rung of every board. Get this wrong on desktop and 85
+          smoke frames move; get it wrong on mobile and the camera frames a strip the dock is
+          covering. Mitigation: the dock feeds the existing authorities rather than compensating for
+          itself, <code>_apply_board_offset</code> stays the only writer of
+          <code>camera.offset</code>, and the desktop byte bar catches any leak on the way in.</p>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">R3 · Safe area and <code>expand</code> cannot be split</h3>
+          <p class="text-sm mt-1">Shipping <code>expand</code> alone puts the cutout through the top
+          bar's left end and the home indicator under the bottom bar; shipping the
+          <code>SafeArea</code> authority alone is dead code with no way to prove itself. The plan's
+          answer is to make them one milestone and to gate that milestone on a decision, not on
+          appetite. The standing cost of <em>not</em> deciding is ~18% of a 19.5:9 screen, which is
+          a real cost and not a rounding error.</p>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R4 · The <code>ScrollContainer</code> question is unanswerable from here</h3>
+          <p class="text-sm mt-1">Godot's touch drag-scroll is gated on
+          <code>DisplayServer.is_touchscreen_available()</code>, which is exactly the thing a
+          desktop cannot report honestly. The map picker
+          (<span class="gc-file">main_menu.gd:436</span>), the campaign hub, the end-turn guard's
+          list, the replay list and the commander info sheet's per-card frames
+          (<span class="gc-file">commander_info_sheet.gd:202</span>, the ▲▼ route) all depend on it,
+          and their scrollbars are ~2 px wide. MB4's
+          acceptance is a device check for this reason. The fallback is a wider bar in
+          <code>UiTheme</code> — never a hand-rolled gesture, which would be a second scrolling
+          authority.</p>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R5 · The computer's turn will hitch, and this plan may not fix it</h3>
+          <p class="text-sm mt-1">60–400 ms per computer turn on the main thread, up to three back
+          to back on a four-army board, with the AR1 plan cache inert while fog is on. D9 forbids
+          touching <code>ai/</code>, so the mitigations available are presentational: keep the frame
+          alive at <code>pause_gate</code> boundaries and say the computer is thinking. MB8 measures
+          the real number. If it is intolerable, the next step is a decision in the AI plans, not a
+          patch here.</p>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R6 · Fractional scale softens the pixel faces on iPhone</h3>
+          <p class="text-sm mt-1">The display faces are pixel faces imported with subpixel
+          positioning; at a whole 3× they are crisp and at 3.275 they are not. The remedy —
+          per-platform <code>scale_mode=integer</code> — snaps 1179 to 1080 and adds bars, which is
+          the trade the desktop playtest rejected in a different context. MB9 renders both and
+          judges on a device. Nothing about the desktop decision is reopened either way.</p>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R7 · The toolchain is one version behind on both ends</h3>
+          <p class="text-sm mt-1">4.1.2 templates against a 4.7.1 engine, and Java 21 against a
+          toolchain that targets 17. Neither is expected to bite for a GDScript-only project with no
+          NDK requirement, but both are unproven here and MB1 is where they are proven. A template
+          fetch failing is a bad first milestone but a cheap one.</p>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-good">
+          <h3 class="font-black text-sm">R8 · Platform work leaks into the sim</h3>
+          <p class="text-sm mt-1">Low, and machine-checked. <code>tools/check_scripts.sh</code>
+          already refuses a Node, the global RNG and a pacing read under <code>core/</code> and
+          <code>ai/</code> (<span class="gc-file">:325,335,345</span>); D1 adds
+          <code>OS</code>, <code>DisplayServer</code>, feature tags and the touch classes to the
+          same protect list, in the same file, by the same mechanism. The save, replay and campaign
+          formats do not move, so a desktop save opens on a phone and back again.</p>
+        </div>
+      </div>
+      <ul class="gc-checks text-sm mt-5 space-y-2 max-w-4xl">
+        <li>GL Compatibility stays the rendering method on desktop, mobile and the simulator —
+        <span class="gc-file">project.godot:192–193</span> already says both.</li>
+        <li>Nearest-neighbour texture filtering
+        (<span class="gc-file">project.godot:194</span>) is what the whole art programme is built
+        on and is not negotiable on any platform.</li>
+        <li>Every existing keyboard, mouse and controller binding keeps working, unchanged.</li>
+        <li>Desktop capture gates stay byte-stable because mobile chrome is never constructed there.</li>
+        <li><code>SideIdentity</code>, the HUD's token ownership, the fog gates and the command
+        snapshots are untouched by every milestone.</li>
+      </ul>
+    </section>
+
+    <!-- ============================== 7 · OPEN DECISIONS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">7</span>
+        <h2 class="text-2xl font-black">Open decisions — three settled, three open</h2>
+      </div>
+      <p class="max-w-3xl text-sm mb-4">
+        Each of these is a decision this plan deliberately does not take. Three were answered by
+        the user on 2026-08-26 and are marked <strong>DECIDED</strong>; the rest can be answered
+        while the work runs.
+      </p>
+      <ol class="text-sm max-w-3xl grid gap-3" style="list-style:decimal; padding-left:1.5rem;">
+        <li><strong>Landscape only? — DECIDED: yes.</strong> MB1 declares it
+        (<code>display/window/handheld/orientation="landscape"</code>, shipped). A portrait layout
+        is a second HUD, not a setting.</li>
+        <li><strong><code>keep</code> or <code>expand</code>?</strong> This gates MB7 entirely.
+        <code>keep</code> ships sooner and costs ~18% of a modern phone screen; <code>expand</code>
+        recovers it and brings the safe-area work with it. The plan's default is
+        <code>keep</code> first, <code>expand</code> as a considered follow-up.
+        <strong>DECIDED: keep.</strong> MB7 stays a later follow-up rather than being deleted.</li>
+        <li><strong>Per-platform <code>scale_mode=integer</code> on iOS?</strong> A measurement for
+        MB9, not a decision now — but the user may want to rule it out in advance, since it is the
+        one setting the desktop playtest already rejected once.</li>
+        <li><strong>Widen the design canvas?</strong> Recommended no (D4's Rejected paragraph says
+        why); worth asking, because it is the obvious-looking alternative to MB7.</li>
+        <li><strong>Android first? — DECIDED: yes, and both platforms ship.</strong> Android
+        establishes the contract (D6) and iOS is MB9. Both toolchains are present, so "both at
+        once" was possible — it is just where ports stall.</li>
+        <li><strong>Both stores, eventually?</strong> Nothing here depends on the answer, but store
+        listings, ratings questionnaires and privacy declarations are work this plan does not
+        contain and someone should own.</li>
+      </ol>
+    </section>
+
+    <!-- ============================== 8 · SUPERSESSIONS AND OUT OF SCOPE ============================== -->
+    <section class="px-6 py-8 md:px-12" style="background:color-mix(in srgb, var(--gc-road) 22%, transparent);">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">8</span>
+        <h2 class="text-2xl font-black">What this supersedes, and what it will not do</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">Superseded from rev 1</h3>
+          <ul class="text-sm mt-2 grid gap-2">
+            <li><em>"battle.gd:467–531 accepts mouse clicks and action-map presses"</em> — the
+            handler is <span class="gc-file">battle.gd:533–605</span> and the file is 155 lines
+            longer.</li>
+            <li><em>"No visible control emits several actions a keyboard supplies"</em> — three
+            lenses, FIRE and END TURN have had buttons since. The dock's scope shrank accordingly.</li>
+            <li><em>"The 10px action rows are small"</em> — 10 is a font size. The row is 22 px and
+            the failing targets are the 7 px chips.</li>
+            <li>Rev 1's five-slice shape (MB1 Bootstrap, MB2 Controls, MB3 Layout, MB4 Quality,
+            MB5 iOS) — replaced by nine, because "Controls" hid MB2's input classes inside MB3's
+            dock and "Layout" hid the aspect decision inside a milestone that would otherwise just
+            ship.</li>
+            <li>MOB-01…05 → MOB-01…14. The old MOB-01 is the new MOB-01; MOB-02 splits into MOB-02,
+            03, 04 and 07; MOB-03 splits into MOB-05, 08 and 12; MOB-04 becomes MOB-13; MOB-05
+            becomes MOB-14. MOB-06, 09, 10 and 11 are new.</li>
+          </ul>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">Carried unchanged from rev 1</h3>
+          <ul class="gc-checks text-sm mt-2">
+            <li>D1, D3, D5 and D6 in substance — presentation and packaging; completeness before
+            gestures; desktop pixels do not move; Android establishes the contract.</li>
+            <li>The protect list, which becomes R8's and gains the platform APIs by name.</li>
+            <li>The thesis: the engine profile was right and the last metre of interaction is the
+            work. Two months of commits did not change that, only the inventory of what the last
+            metre now contains.</li>
+          </ul>
+        </div>
+      </div>
+      <h3 class="font-black mb-2">Explicitly out of scope</h3>
+      <ul class="gc-crosses text-sm max-w-3xl grid gap-2">
+        <li><strong>A portrait layout</strong> — a second HUD arrangement, a second set of captures
+        and a second set of zoom floors, for a game whose board is 16:9.</li>
+        <li><strong>Any change under <code>core/</code>, <code>ai/</code>, <code>data/</code> or
+        <code>maps/</code></strong> — D1 and D9, and the check script that enforces the first of
+        them.</li>
+        <li><strong>Touch-specific balance or content</strong> — no mobile board, no mobile tier, no
+        shorter day cap. A phone plays the shipped game.</li>
+        <li><strong>Store listings, ratings, privacy declarations, analytics and crash
+        reporting</strong> — real work, none of it this plan's.</li>
+        <li><strong>In-app purchases, cloud saves, achievements, network play</strong> — network
+        play is where every other plan has left it.</li>
+        <li><strong>Re-litigating <code>scale_mode</code> on desktop</strong> — the playtest that
+        turned it off is recorded in <span class="gc-file">tests/unit/test_texel_stability.gd</span>'s
+        own header and pinned there. iOS is a separate platform and a separate measurement.</li>
+        <li><strong>A touch control for <code>fast_forward</code></strong> — the one action in the
+        input map the dock deliberately does not carry. It is <em>held</em>
+        (<span class="gc-file">fast_forward.gd:29–30</span> polls
+        <code>Input.is_action_pressed</code>), and D2's whole idiom is a chip that synthesises a
+        pressed-then-released <code>InputEventAction</code>, which cannot say "held". The
+        alternatives are a press-and-hold chip with its own timing — a second input convention on
+        the platform where R1 says one tap must make one receipt — or a latched toggle, which is a
+        second piece of pacing state beside the game-speed tier. <strong>The tier is the touch
+        player's fast forward</strong>, it is a durable device preference rather than a thumb held
+        down, and it is already on a value row in the map menu. Revisit after MB8 reports how the
+        pacing actually reads on a device.</li>
+        <li><strong>A haptics or vibration layer</strong> — a nice-to-have that would need its own
+        settings row and its own accessibility argument.</li>
+      </ul>
+    </section>
+
+    <!-- ============================== FOOTER ============================== -->
+    <footer class="gc-hero px-6 py-6 md:px-12 text-sm">
+      <p class="opacity-85">
+        Grid Commanders · mobile-builds plan <strong>rev 2</strong>, which
+        <strong>supersedes rev 1 wholesale</strong> (Proposed, source <code>main</code> @
+        <code>d3abfa5</code>, 2026-07-31). Rev 1 is superseded rather than edited because
+        <code>main</code> is 462 commits past it and four of its five current-state claims had
+        moved: the input handler relocated and grew, three lens chips and two command buttons
+        landed, the aimed Command Power created the one destructive dead end rev 1 does not mention,
+        and the whole-rung zoom ladder plus <code>BOARD_LIFT_PX</code> turned "a third bar" from a
+        layout question into a coupling with every board's opening frame. Rev 2 keeps rev 1's
+        thesis and four of its six decisions, renumbers its unfiled issue register, and adds D7–D9.
+      </p>
+      <p class="opacity-85 mt-3">
+        Builds on <span class="gc-file">.lavish/menu-revamp-plan.html</span> (D1 — <code>UiTheme</code>
+        and <code>UiKit</code> are the one home for a metric, which is what makes D8's size profile
+        one file), <span class="gc-file">.lavish/ux-recovery-plan.html</span> (D3 —
+        <code>TransitionInput</code> is the one answer at every boundary, which MB2 extends to a
+        finger), <span class="gc-file">.lavish/range-preview-plan.html</span> and the field-overlays
+        record (the lens chips the dock deliberately does not duplicate),
+        <span class="gc-file">.lavish/tile-info-panel-plan.html</span> (the HUD's token ownership and
+        the <code>MOUSE_FILTER_STOP</code> rule the dock inherits), the zoom-ladder and animation
+        records in CLAUDE.md (the whole rungs, <code>BOARD_LIFT_PX</code>, and A3's whole-pixel
+        rest that D3 binds a pinch to), <span class="gc-file">.lavish/difficulty-modes-plan.html</span>
+        and <span class="gc-file">.lavish/ai-arena-plan.html</span> (why D9 forbids touching the
+        planner) and <span class="gc-file">.lavish/battle-animations-plan.html</span> (the cut-in's
+        skip seam MB2 teaches the touch classes).
+      </p>
+      <p class="opacity-85 mt-3">
+        Source trace: <span class="gc-file">project.godot</span>,
+        <span class="gc-file">scenes/battle/battle.gd</span>,
+        <span class="gc-file">scenes/battle/battle_zoom.gd</span>,
+        <span class="gc-file">scenes/battle/battle_view.gd</span>,
+        <span class="gc-file">scenes/common/ui_theme.gd</span>,
+        <span class="gc-file">scenes/ui/ui_kit.gd</span>,
+        <span class="gc-file">scenes/ui/hud_top_bar.gd</span>,
+        <span class="gc-file">scenes/ui/tooltip.gd</span>,
+        <span class="gc-file">tools/check_scripts.sh</span> and
+        <span class="gc-file">docs/difficulty_check.md</span>, all read on <code>main</code> @
+        <code>2ab1adbe</code>, inspected 2026-08-25.
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>

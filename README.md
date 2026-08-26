@@ -40,6 +40,7 @@ make audio           # reinstall the sound effects + music from the sibling audi
 make portraits       # regenerate the commander portraits + faction emblems
 make portraits-check # bake them in memory and byte-diff against the committed PNGs
 make import          # (re)import assets headless
+make export-android  # package a debug APK -> build/android/ (setup below)
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
 make gallery-screenshot   # render all twenty-three commander cards (the G1 gate)
@@ -394,6 +395,48 @@ class exactly what road does, so a careless one is a bridge. See the format at t
 `core/map_data.gd`; the first comment line is the tooltip description.
 
 Any Godot 4.7+ works too — open the project folder in the editor.
+
+## Mobile builds (Android)
+
+`make export-android` packages a debug APK into `build/android/`. It imports first, the way
+`make run` does, and the preset is committed as `export_presets.cfg` — landscape, arm64-v8a, GL
+Compatibility, the prebuilt template (no Gradle, no NDK). **No signing secret is in the
+repository**: a debug build is signed with the machine's own `~/.android/debug.keystore`, named in
+the editor settings, and `.gitignore` refuses `*.keystore`, `*.jks`, `*.apk` and `*.aab`.
+
+Three one-off machine steps, none of them committed:
+
+```sh
+# 1. Export templates matching the vendored engine (4.7.1), ~1.3 GB.
+curl -sL -o /tmp/templates.tpz \
+  https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_export_templates.tpz
+unzip -q /tmp/templates.tpz -d /tmp/tpl
+mkdir -p ~/Library/Application\ Support/Godot/export_templates/4.7.1.stable
+cp -R /tmp/tpl/templates/* ~/Library/Application\ Support/Godot/export_templates/4.7.1.stable/
+```
+
+2. An Android SDK with platform-tools, build-tools and accepted licences, plus a JDK. Godot's
+   toolchain targets 17; **OpenJDK 21 exports and signs fine** — the only noise is a
+   "Could not find version of build tools that matches Target SDK" line, which picks an older
+   build-tools and signs correctly.
+
+3. Point the editor at all three, in
+   `~/Library/Application Support/Godot/editor_settings-4.7.tres`:
+
+```
+export/android/android_sdk_path = "<home>/Library/Android/sdk"
+export/android/java_sdk_path = "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"
+export/android/debug_keystore = "<home>/.android/debug.keystore"
+```
+
+Then `make export-android`, and `adb install -r build/android/grid_commanders.apk`.
+
+`display/window/handheld/orientation="landscape"` in `project.godot` is the one engine line the
+mobile work added; it declares the default the engine already applies, so no pixel moves.
+`window/stretch/scale_mode` stays **absent** on purpose: an Android short edge of 1080 or 720 over
+the 360-line canvas is a window scale of exactly 3.000 or 2.000, so the board is already stable on
+whole texels and integer mode would buy nothing while costing screen. iPhone's 3.250 / 3.275 is a
+different arithmetic and a separate measurement.
 
 ## Main menu
 

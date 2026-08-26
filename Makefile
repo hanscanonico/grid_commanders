@@ -13,6 +13,8 @@ BATTLE := scenes/battle/battle.tscn
 # a checkout of https://github.com/hanscanonico/sprite_generator to rebuild;
 # the committed atlases are its output, so a clone without it still plays.
 SPRITEGEN ?= ../sprite_generator
+# Where make export-android drops the debug package. Ignored by git.
+ANDROID_APK ?= build/android/grid_commanders.apk
 
 # The two things a gate can be missing. tools/check_scripts.sh and
 # tools/check_determinism.sh already say this for themselves; a target that
@@ -383,6 +385,17 @@ import:
 	$(call require-godot)
 	$(GODOT) --headless --path . --import
 
+# Mobile packaging (mobile plan MB1). Imports first the way run and screenshot
+# do: an export of an unimported tree packages nothing but the source files.
+# Needs a one-off machine setup — 4.7.1 export templates plus the Android SDK,
+# JDK and debug keystore paths in the editor settings, none of which belong in
+# the repository. README.md "Mobile builds (Android)" is the recipe.
+export-android: import
+	$(call require-godot)
+	@mkdir -p $(dir $(ANDROID_APK))
+	$(GODOT) --headless --path . --export-debug "Android" $(CURDIR)/$(ANDROID_APK)
+	@ls -l $(ANDROID_APK)
+
 # The battle scene is launched directly so demos and captures skip the menu.
 screenshot: import
 	$(GODOT_GUI) --path . $(BATTLE) -- --screenshot=$(CURDIR)/screenshot.png
@@ -397,7 +410,7 @@ gallery-screenshot: import
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	audio portraits portraits-check import campaign-difficulty \
+	audio portraits portraits-check import campaign-difficulty export-android \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns legibility-check
