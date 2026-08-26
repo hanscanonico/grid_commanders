@@ -6,7 +6,7 @@ extends GutTest
 ## retires, the outcome lockup swallows the press — so an event class it answers
 ## wrong for is either a beat that cannot be skipped or one that skips itself.
 ## The keyboard half is the only branch the smoke scenarios drive; the mouse,
-## controller and echo branches have no other check.
+## controller, touch and echo branches have no other check.
 
 
 func test_a_key_press_is_a_press() -> void:
@@ -73,6 +73,48 @@ func test_a_synthesised_action_release_is_not() -> void:
 	event.action = &"ui_accept"
 	event.pressed = false
 	assert_false(TransitionInput.is_press(event))
+
+
+## One finger is one press, and that is the whole of the touch contract. With
+## `emulate_mouse_from_touch` on — the shipped setting — the engine delivers a
+## tap as *both* a screen touch and a synthesised click, and both reach
+## `_unhandled_input`, so the finger door stays shut and the click answers. These
+## run under the shipped setting, which is the configuration the game ships in.
+func test_the_finger_door_is_shut_while_the_engine_emulates_a_click() -> void:
+	assert_true(TransitionInput._mouse_emulated, "the game ships with mouse emulation on")
+	var event := InputEventScreenTouch.new()
+	event.pressed = true
+	assert_false(TransitionInput.is_touch_press(event))
+	assert_false(TransitionInput.is_press(event), "the emulated click is the press")
+	assert_false(TransitionInput.is_confirm(event))
+
+
+## With emulation off there is no click to answer, so the finger speaks for
+## itself — which is the whole point of naming the class rather than leaning on
+## an engine default.
+func test_the_finger_speaks_for_itself_with_emulation_off() -> void:
+	var was: bool = TransitionInput._mouse_emulated
+	TransitionInput._mouse_emulated = false
+	var event := InputEventScreenTouch.new()
+	event.pressed = true
+	assert_true(TransitionInput.is_touch_press(event))
+	assert_true(TransitionInput.is_press(event))
+	assert_true(TransitionInput.is_confirm(event))
+	event.pressed = false
+	assert_false(TransitionInput.is_press(event), "a lifted finger is not a press")
+	assert_false(TransitionInput.is_confirm(event))
+	TransitionInput._mouse_emulated = was
+
+
+## A finger sliding across a banner is not a press, for the reason a moving
+## mouse is not one — in either configuration.
+func test_a_screen_drag_is_never_a_press() -> void:
+	var was: bool = TransitionInput._mouse_emulated
+	for emulated: bool in [true, false]:
+		TransitionInput._mouse_emulated = emulated
+		assert_false(TransitionInput.is_press(InputEventScreenDrag.new()))
+		assert_false(TransitionInput.is_confirm(InputEventScreenDrag.new()))
+	TransitionInput._mouse_emulated = was
 
 
 ## Moving the mouse over a banner must not retire it, and neither may a stick
