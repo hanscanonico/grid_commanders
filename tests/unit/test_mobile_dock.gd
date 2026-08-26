@@ -3,7 +3,7 @@ extends GutTest
 ## a desktop build's pixels do not move, and these are that promise stated as
 ## arithmetic: on this build the dock is not constructed, so the chrome is the two
 ## bars and the lift is the constant it has always been. The dock's own behaviour
-## is presentation and is driven by the `mobile_dock` capture scenario instead.
+## is presentation and is driven by the `mobile_back` capture scenario instead.
 
 
 func test_a_desktop_build_builds_no_dock() -> void:

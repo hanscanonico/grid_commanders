@@ -19,9 +19,9 @@ extends PanelContainer
 ## Disabled, never hidden. The bar keeps its height in every state, because the
 ## height is part of the chrome the board's viewport is framed against and a bar
 ## that came and went would move the zoom ladder's floor several times a turn.
-## A disabled chip also cannot be pressed, which is what makes one physical tap
-## produce one receipt rather than an action *and* a banner skip during the
-## states that swallow board input.
+## A disabled chip answers nothing at all, and the bar under it swallows the tap
+## the way both bars above it do — so a finger that lands here during a banner or
+## a cut-in neither acts nor skips the beat, rather than doing both at once.
 
 ## The gap between a chip's ink and the bar's edge, and between the two thumbs'
 ## groups. The dock is one row of short labels, so it uses the bars' own pad.
