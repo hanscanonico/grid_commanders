@@ -13,14 +13,12 @@ extends GutTest
 
 const MANIFEST_PATH := "res://assets/tiles/anim.json"
 const TILES_DIR := "res://assets/tiles/"
-## Installed by the generator and read by nothing yet: the cut-in's idle pair and
-## the move clip's two sheets are wired in by their own slices. Named here so the
-## manifest still answers for them and the next reader does not take them for
-## dead weight. The sea's frame B has left this list — SeaBeat draws it.
+## Installed by the generator and read by nothing yet: the cut-in's idle pair is
+## deliberately deferred. Named here so the manifest still answers for it and the
+## next reader does not take it for dead weight. The sea's frame B and the move
+## pair have left this list — SeaBeat and the move clip draw them.
 const UNREAD_SHEETS := [
 	"res://assets/tiles/units_atlas_figures_b.png",
-	"res://assets/tiles/units_atlas_move.png",
-	"res://assets/tiles/units_atlas_move_b.png",
 ]
 
 var manifest: Dictionary
@@ -59,6 +57,11 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 	)
 	assert_eq(
 		_clip_sheets("ambient_figures")[0], UnitSprite.UNITS_ATLAS_FIGURES_PATH, "the figure sheet"
+	)
+	assert_eq(
+		_clip_sheets("move"),
+		[UnitSprite.UNITS_ATLAS_MOVE_PATH, UnitSprite.UNITS_ATLAS_MOVE_B_PATH],
+		"the move pair"
 	)
 	assert_eq(
 		_clip_sheets("sea"),

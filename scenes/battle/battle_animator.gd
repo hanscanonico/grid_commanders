@@ -88,8 +88,13 @@ var _cut_in_streak := 0
 
 ## Tweens a sprite along a path without touching the sim. Awaitable.
 ##
+## The travel is this tween and the gait is the sprite's move clip: the sprite is
+## put on that clip for exactly the tween's lifetime, and turned to face each leg
+## at the corner it turns rather than once for the whole path.
+##
 ## Instant sets the destination and returns in the same frame — a path the flow
-## already walks, since a one-cell "move" has always returned without a tween.
+## already walks, since a one-cell "move" has always returned without a tween —
+## so a still board plays no clip at all.
 func animate_path(sprite: UnitSprite, path: Array[Vector2i]) -> void:
 	if path.size() < 2:
 		return
@@ -99,10 +104,18 @@ func animate_path(sprite: UnitSprite, path: Array[Vector2i]) -> void:
 		sprite.position = BattleView.cell_center(path[path.size() - 1])
 		return
 	var tween := node.create_tween()
+	sprite.moving = true
 	for i in range(1, path.size()):
-		var step := BattleView.cell_center(path[i])
-		tween.tween_property(sprite, "position", step, tier.move_step_seconds())
+		var leg: Vector2i = path[i] - path[i - 1]
+		tween.tween_callback(sprite.face_step.bind(leg))
+		tween.tween_property(
+			sprite, "position", BattleView.cell_center(path[i]), tier.move_step_seconds()
+		)
 	await tween.finished
+	# Parked again whether the walk finished or the tween died with the scene:
+	# a sprite left on the clip strides on the spot.
+	if is_instance_valid(sprite):
+		sprite.moving = false
 
 
 # --- combat ------------------------------------------------------------------

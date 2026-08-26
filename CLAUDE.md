@@ -534,6 +534,32 @@ plan is stated in full below and has no copy there.
   so the out-of-bounds ring beats with the water it continues with no second code path. Instant and
   a pinned capture are already frame A through `BoardBeat.frame`, so **all 85 smoke frames are
   byte-identical** — measured in one tree against the same sweep with the slice reverted in place.
+  **The milestone's eighth slice is the move clip** (this clause is its record, and it supersedes
+  the sixth's "read by nothing" for `units_atlas_move.png` / `_move_b.png` only). A unit walking a
+  path used to be a parked unit sliding; now it plays the generator's gait pair on
+  `BoardBeat.MOVE_MS` for exactly the length of `BattleAnimator.animate_path`'s tween. Four
+  decisions, all presentation, nothing under `core/` or `ai/`. **It is a clip, not a second beat** —
+  `UnitSprite._sheet_path(frame)` is the one answer to which sheet this sprite draws from, and every
+  site that builds or re-points the texture (the `atlas_row` setter, `_process`, the `moving`
+  setter) goes through it, because a repaint mid-walk — a defection's row, a fog flip — would
+  otherwise snap a striding unit back to parked. **The clip's lifetime is the tween's**: the
+  animator sets `moving` on both sides of it and nothing else does, Instant returns before any of
+  it so a still board plays no clip at all, and the flag is cleared even if the tween died with the
+  scene, a sprite left moving striding on the spot forever. **The sheets face screen-left and a
+  rightward step mirrors them** — `UnitSprite.facing_for(delta, was)` is that policy, static and
+  pure the way `PathArrow.segments` is, and **a purely vertical leg holds the previous facing**;
+  facing is set in `setup()` and by `face_step` at each corner and **never in `refresh()`**, so a
+  unit that walked right stays facing right through every later repaint. The generator draws the
+  move pair's land and air cells over a **cell-centred** cast shadow, so mirroring leaves that
+  shadow where it was and the game does nothing about it; the ambient pair's is not centred, so the
+  facing outliving the clip costs a parked strider about a board pixel of shadow displacement —
+  measured, and the accepted price of a facing that survives a repaint.
+  **An unauthored unit needs no fallback code**: the generator bakes each unauthored
+  column's ambient cell into both move sheets, so the clip is valid for the whole roster and nothing
+  here asks which families are authored — `tests/unit/test_move_frames.gd` pins that pairing (both
+  move frames equal to their ambient counterparts, or both different), the shared grid, the cadence,
+  the two stills and the flip policy against the shipped art. **All 85 smoke frames are
+  byte-identical**, and structurally so: a capture pins Instant, so it never runs a tween.
   (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can

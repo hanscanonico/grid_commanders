@@ -45,6 +45,20 @@ const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## cells on an idle key pose. Every column differs, so every sprite processes;
 ## tests/unit/test_ambient_frames.gd pins that against the shipped art.
 const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
+## The walk cycle: the same grid again, one gait pose per frame, played only
+## while BattleAnimator is tweening a unit along its path. A unit the generator
+## has authored no gait for carries its ambient cell in both move sheets, so
+## nothing here ever asks which units are authored — the clip is valid for the
+## whole roster from the day it ships. The art faces screen-left and a rightward
+## step mirrors it: the generator draws this pair's land and air cells over a
+## cell-centred cast shadow, so the mirror leaves the shadow where it was. The
+## facing outlives the clip, so a unit that walked right parks mirrored over the
+## *ambient* pair, whose shadow is not centred — about a board pixel of
+## displacement, the price of a facing that survives every later repaint.
+## tests/unit/test_move_frames.gd pins the grid, the pairing, the cadence, the two
+## stills and the flip policy.
+const UNITS_ATLAS_MOVE_PATH := "res://assets/tiles/units_atlas_move.png"
+const UNITS_ATLAS_MOVE_B_PATH := "res://assets/tiles/units_atlas_move_b.png"
 ## The same army with the tile's cast shadow subtracted, for a surface that
 ## draws the art at 1:1 over ground and a shadow of its own — see
 ## `figure_texture_for`.
@@ -93,9 +107,20 @@ var atlas_row: int = -1:
 		if atlas_row == value:
 			return
 		atlas_row = value
-		texture = texture_for(unit.type, value, _frame)
+		texture = _region_of(load(_sheet_path(_frame)), unit.type, value)
 
-## Which ambient frame this sprite currently shows. Instance state so a
+## True while this sprite is walking a path. Set by BattleAnimator on both sides
+## of its tween and by nothing else: it selects the clip the sprite draws, so a
+## sprite left moving would stride on the spot for the rest of the match.
+var moving: bool = false:
+	set(value):
+		if moving == value:
+			return
+		moving = value
+		_frame = BoardBeat.frame(_period_ms())
+		_repoint_sheet()
+
+## Which frame of the current clip this sprite shows. Instance state so a
 ## repaint (atlas_row, refresh) rebuilds the texture on the right sheet.
 var _frame: int = 0
 
@@ -115,6 +140,7 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	# built mid-beat would otherwise open on frame A and snap a frame later.
 	set_process(true)
 	_frame = BoardBeat.frame(BoardBeat.AMBIENT_MS)
+	flip_h = false
 	atlas_row = p_atlas_row
 	scale = Vector2.ONE * SPRITE_SCALE
 	offset = ART_OFFSET
@@ -140,9 +166,11 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 ## team int — the two coincided before factions, when team N drew in row N, and
 ## this is the one line where that stopped being true. Static so menus can show
 ## the same artwork the board does without instancing a sprite; callers that draw it
-## outside the world grid size it themselves.
-static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
-	return _region_of(load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH), type, row)
+## outside the world grid size it themselves. Always the resting frame: a slot
+## outside the board shows the army parked, and `_sheet_path` stays the one place
+## a clip and a frame pick a sheet.
+static func texture_for(type: UnitType, row: int) -> AtlasTexture:
+	return _region_of(load(UNITS_ATLAS_PATH), type, row)
 
 
 ## The same art cut down to its footprint square — the tile the unit stands on,
@@ -178,13 +206,48 @@ static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTextu
 
 
 func _process(_delta: float) -> void:
-	var frame := BoardBeat.frame(BoardBeat.AMBIENT_MS)
+	var frame := BoardBeat.frame(_period_ms())
 	if frame == _frame:
 		return
 	_frame = frame
+	_repoint_sheet()
+
+
+## Which screen direction a sprite faces after a leg of `delta`, given the facing
+## it already had. The sheets are drawn facing screen-left, so a step with a
+## positive x mirrors and a negative one does not; a purely vertical leg holds
+## what the last horizontal one left. Static and pure so the policy is checkable
+## without a sprite, the way PathArrow.segments() is.
+static func facing_for(delta: Vector2i, was: bool) -> bool:
+	if delta.x == 0:
+		return was
+	return delta.x > 0
+
+
+## Turns this sprite for one leg of a walk. Called at the corner rather than once
+## for the whole path, and never from refresh(): a unit that walked right stays
+## facing right through every later repaint.
+func face_step(delta: Vector2i) -> void:
+	flip_h = facing_for(delta, flip_h)
+
+
+## The one answer to which sheet this sprite draws from, so that a repaint
+## mid-walk — a defection's atlas_row, a fog flip — cannot snap a striding unit
+## back to its parked pose.
+func _sheet_path(frame: int) -> String:
+	if moving:
+		return UNITS_ATLAS_MOVE_B_PATH if frame == 1 else UNITS_ATLAS_MOVE_PATH
+	return UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH
+
+
+func _period_ms() -> int:
+	return BoardBeat.MOVE_MS if moving else BoardBeat.AMBIENT_MS
+
+
+func _repoint_sheet() -> void:
 	var atlas := texture as AtlasTexture
 	if atlas != null:
-		atlas.atlas = load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH)
+		atlas.atlas = load(_sheet_path(_frame))
 
 
 func set_active_team(team: int) -> void:
