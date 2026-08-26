@@ -61,6 +61,8 @@ make replay-report REPLAY=<dir>   # survey a directory of them -> rates (docs/re
 make legibility-check     # every unit, tint, ground and overlay composited, and how many ramp
                           # steps its contour keeps from the ground beside it
                           # -> reports/ (docs/sprite_legibility.md)
+make mobile-soak          # what a computer turn costs to plan and what the replay recorder's
+                          # per-command flush costs (docs/mobile_soak.md)
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,

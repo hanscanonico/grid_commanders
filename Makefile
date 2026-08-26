@@ -435,9 +435,21 @@ menu-screenshot: import
 gallery-screenshot: import
 	$(GODOT_GUI) --path . scenes/menu/commander_gallery.tscn -- --screenshot=$(CURDIR)/screenshot.png
 
+# The mobile soak's desktop baseline (mobile plan MB8): how long a computer turn
+# takes to plan on the busiest board, and what the replay recorder's per-command
+# flush costs. A measurement, not a gate — out of `make verify` and `make test`,
+# and it tunes nothing. docs/mobile_soak.md is the committed record; the device
+# half of MB8 is played by hand and written down there too. Examples:
+#   make mobile-soak SOAK="--seeds=4 --days=30"
+#   make mobile-soak SOAK="--map=meridian --grouping=1v2 --tier=normal"
+SOAK ?=
+mobile-soak:
+	$(call require-godot)
+	$(GODOT) --headless --path . -s res://tools/run_mobile_soak.gd -- $(SOAK)
+
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
 	audio portraits portraits-check import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
-	balance-watch replay replay-report campaigns legibility-check
+	balance-watch replay replay-report campaigns legibility-check mobile-soak
