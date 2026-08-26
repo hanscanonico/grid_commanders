@@ -171,6 +171,15 @@ const HUD_CO_MIN_W := 105
 const MENU_ICON := 16
 const MENU_ICON_ROW := MENU_ICON + 2 * BUTTON_PAD_V
 
+## What a finger has to be able to hit, in canvas pixels (mobile plan D8). On a
+## 1080p phone held in landscape the 360-line canvas scales by exactly 3, so one
+## canvas pixel is about one dp and about one pt — which puts Android's 48 dp and
+## Apple's 44 pt both at roughly this many. It is a *hit* size and never a drawn
+## one: every drawn height on the two docked bars feeds HUD_BARS_H and therefore
+## the zoom ladder's floor, so the chrome keeps the size it was designed at and
+## UiKit.touchable lays the tap over it.
+const TOUCH_MIN := 44
+
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
 ## A full-screen page's title (CommanderSelectPanel, ReplayPickerPanel).

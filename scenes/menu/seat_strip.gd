@@ -629,6 +629,7 @@ func _tier_chip(index: int) -> Button:
 		Tooltip.Side.BOTTOM
 	)
 	chip.pressed.connect(_cycle_tier.bind(index))
+	UiKit.touchable(chip)
 	_tier_buttons.append(chip)
 	return chip
 

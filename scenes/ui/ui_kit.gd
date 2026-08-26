@@ -51,6 +51,34 @@ static func pad(child: Control, h: int, v: int) -> MarginContainer:
 	return margin
 
 
+## Gives `button` a finger-sized hit rectangle and hands it back, so a caller can
+## wrap a control where it builds it. A no-op off a touch build — nothing is
+## constructed there, which is what keeps every desktop frame byte-identical
+## (mobile plan D5) — and a no-op for a control already big enough.
+##
+## Call it once the control is built and, on anything that carries decoration,
+## *after* UiTheme.make_decoration: that pass silences a whole subtree, and a
+## silenced area answers no tap.
+static func touchable(button: BaseButton) -> BaseButton:
+	if MobileProfile.active():
+		TouchTarget.expand(button, UiTheme.TOUCH_MIN)
+	return button
+
+
+## A caption that carries the reason its control is dead, on a touch build only.
+##
+## The reason lives in a tooltip on desktop, and a disabled control takes no
+## focus, so no focus source of any kind reaches that tip — the tip banks on the
+## pointer, which a finger is not. So the words move into the caption already
+## under the control, where they need no interaction at all (mobile plan D8, and
+## its rejected alternative: a disabled control that answers a tap is a control
+## that is not disabled).
+static func caption_with_reason(headline: String, reason: String) -> String:
+	if reason.is_empty() or not MobileProfile.active():
+		return headline
+	return "%s\n%s" % [headline, reason.to_upper()]
+
+
 ## A Silkscreen micro-label, set in caps: the heading over a group and the caption
 ## under a control.
 static func micro_label(text: String) -> Label:
@@ -170,7 +198,7 @@ static func segment(
 		seg.custom_minimum_size = Vector2(0, height)
 		seg.add_theme_font_override("font", UiTheme.display())
 		seg.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
-		seg_row.add_child(seg)
+		seg_row.add_child(UiKit.touchable(seg))
 		buttons.append(seg)
 		button_sink.append(seg)
 
@@ -297,6 +325,10 @@ static func toggle(
 		status.text = "ON" if on else "OFF"
 		status.add_theme_color_override("font_color", UiTheme.CAPTURE if on else UiTheme.NEUTRAL)
 	repaint.call(is_on)
+	# After the decoration pass and after the tip, for the reason stated on
+	# `touchable`: the 12x12 check box inside this row is the smallest control in
+	# the shell, and the row is what a finger aims at.
+	UiKit.touchable(button)
 	button.toggled.connect(
 		func(pressed: bool) -> void:
 			repaint.call(pressed)
