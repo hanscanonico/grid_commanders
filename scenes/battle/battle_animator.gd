@@ -113,7 +113,9 @@ func animate_path(sprite: UnitSprite, path: Array[Vector2i]) -> void:
 		)
 	await tween.finished
 	# Parked again whether the walk finished or the tween died with the scene:
-	# a sprite left on the clip strides on the spot.
+	# a sprite left on the clip strides on the spot. Leaving the clip is also
+	# what faces it forward again — the mirror is the clip's, and `moving` owns
+	# both ends of it.
 	if is_instance_valid(sprite):
 		sprite.moving = false
 

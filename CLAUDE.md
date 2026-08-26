@@ -548,12 +548,18 @@ plan is stated in full below and has no copy there.
   scene, a sprite left moving striding on the spot forever. **The sheets face screen-left and a
   rightward step mirrors them** — `UnitSprite.facing_for(delta, was)` is that policy, static and
   pure the way `PathArrow.segments` is, and **a purely vertical leg holds the previous facing**;
-  facing is set in `setup()` and by `face_step` at each corner and **never in `refresh()`**, so a
-  unit that walked right stays facing right through every later repaint. The generator draws the
-  move pair's land and air cells over a **cell-centred** cast shadow, so mirroring leaves that
-  shadow where it was and the game does nothing about it; the ambient pair's is not centred, so the
-  facing outliving the clip costs a parked strider about a board pixel of shadow displacement —
-  measured, and the accepted price of a facing that survives a repaint.
+  facing is set in `setup()` and by `face_step` at each corner and **never in `refresh()`**, so no
+  repaint mid-walk turns a striding unit around. **The mirror is the CLIP'S and ends with it** —
+  the `moving` setter faces a parked sprite forward again, one place owning both ends of it, and
+  the reason is the art: the generator draws the *move* pair over a **cell-centred** cast shadow,
+  so mirroring leaves that shadow where it was, while the **ambient** pair's is not centred (34–36
+  px of 64 on every column of the shipped sheets). A unit left mirrored at rest therefore dropped
+  its shadow 5–9 art px to the *other side* of itself from an unmirrored neighbour of the same
+  type, which reads as two suns on one board rather than as a nudge — this supersedes the slice's
+  own "about a board pixel, the accepted price of a facing that survives a repaint", which
+  under-measured it against the cell centre instead of against a parked neighbour.
+  `test_move_frames.gd` carries that measurement, so if the generator ever centres the ambient
+  shadow the rule can be revisited out loud.
   **An unauthored unit needs no fallback code**: the generator bakes each unauthored
   column's ambient cell into both move sheets, so the clip is valid for the whole roster and nothing
   here asks which families are authored — `tests/unit/test_move_frames.gd` pins that pairing (both

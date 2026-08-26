@@ -52,9 +52,8 @@ const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
 ## whole roster from the day it ships. The art faces screen-left and a rightward
 ## step mirrors it: the generator draws this pair's land and air cells over a
 ## cell-centred cast shadow, so the mirror leaves the shadow where it was. The
-## facing outlives the clip, so a unit that walked right parks mirrored over the
-## *ambient* pair, whose shadow is not centred — about a board pixel of
-## displacement, the price of a facing that survives every later repaint.
+## *ambient* pair's is not centred (34-36 px of 64, measured off the shipped
+## sheets), so the mirror is the clip's and ends with it — see `moving`.
 ## tests/unit/test_move_frames.gd pins the grid, the pairing, the cadence, the two
 ## stills and the flip policy.
 const UNITS_ATLAS_MOVE_PATH := "res://assets/tiles/units_atlas_move.png"
@@ -115,11 +114,20 @@ var atlas_row: int = -1:
 ## True while this sprite is walking a path. Set by BattleAnimator on both sides
 ## of its tween and by nothing else: it selects the clip the sprite draws, so a
 ## sprite left moving would stride on the spot for the rest of the match.
+##
+## Leaving the clip also faces the sprite forward again, here rather than at the
+## animator's clear site so the clip and its mirror can never be let go of
+## separately. The board's sun is the generator's: a unit parked mirrored over
+## the ambient pair, whose shadow is not cell-centred, drops that shadow on the
+## other side from an unmirrored neighbour of the same type, which reads as two
+## suns on one board.
 var moving: bool = false:
 	set(value):
 		if moving == value:
 			return
 		moving = value
+		if not moving:
+			flip_h = false
 		_frame = BoardBeat.frame(_period_ms())
 		_repoint_sheet()
 
@@ -233,8 +241,9 @@ static func facing_for(delta: Vector2i, was: bool) -> bool:
 
 
 ## Turns this sprite for one leg of a walk. Called at the corner rather than once
-## for the whole path, and never from refresh(): a unit that walked right stays
-## facing right through every later repaint.
+## for the whole path, and never from refresh(): a repaint mid-walk — a fog flip,
+## a defection's atlas_row — must not turn a striding unit around. The facing
+## lasts exactly as long as the clip does; `moving` lets go of both together.
 func face_step(delta: Vector2i) -> void:
 	flip_h = facing_for(delta, flip_h)
 
