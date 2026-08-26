@@ -14,6 +14,13 @@ extends RefCounted
 ## deadzone — or swing to the other side of the same axis — before it may ask
 ## again.
 ##
+## A touchscreen is deliberately absent from all of that, and the silence is the
+## answer rather than a gap: a screen has no d-pad and no stick, so a finger asks
+## for a direction only by pressing a control that dispatches the direction
+## action — which arrives as an InputEventAction and is already one press per
+## gesture, like the key. There is nothing here for a touch class to latch, so do
+## not add a second convention for one.
+##
 ## Every threshold and every direction comes from the InputMap: nothing here
 ## reads an axis value, so the action's own deadzone stays the only authority.
 ## State is per instance, so each modal owner latches its own gestures.

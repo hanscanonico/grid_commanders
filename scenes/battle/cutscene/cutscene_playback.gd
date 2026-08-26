@@ -190,6 +190,10 @@ func skip() -> void:
 ## The skip press, decided in one place for both cut-ins so the two can never
 ## disagree about what cuts one short. Returns whether the event was consumed;
 ## the director marks it handled, which needs a Node.
+##
+## The finger door is `TransitionInput`'s, which is what keeps a cut-in
+## skippable on a device even if mouse emulation is ever switched off — and
+## keeps one tap worth one skip while it is on.
 func consume_skip(event: InputEvent) -> bool:
 	if not playing:
 		return false
@@ -197,6 +201,7 @@ func consume_skip(event: InputEvent) -> bool:
 		event.is_action_pressed(&"confirm")
 		or event.is_action_pressed(&"cancel")
 		or (event is InputEventMouseButton and (event as InputEventMouseButton).pressed)
+		or TransitionInput.is_touch_press(event)
 	)
 	if not pressed:
 		return false
