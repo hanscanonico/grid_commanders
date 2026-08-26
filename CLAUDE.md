@@ -551,13 +551,14 @@ plan is stated in full below and has no copy there.
   facing is set in `setup()` and by `face_step` at each corner and **never in `refresh()`**, so no
   repaint mid-walk turns a striding unit around. **The mirror is the CLIP'S and ends with it** —
   the `moving` setter faces a parked sprite forward again, one place owning both ends of it, and
-  the reason is the art: the generator draws the *move* pair over a **cell-centred** cast shadow,
-  so mirroring leaves that shadow where it was, while the **ambient** pair's is not centred (34–36
-  px of 64 on every column of the shipped sheets). A unit left mirrored at rest therefore dropped
-  its shadow 5–9 art px to the *other side* of itself from an unmirrored neighbour of the same
-  type, which reads as two suns on one board rather than as a nudge — this supersedes the slice's
-  own "about a board pixel, the accepted price of a facing that survives a repaint", which
-  under-measured it against the cell centre instead of against a parked neighbour.
+  the reason is the art: the generator draws the *move* pair's land and air cells over a
+  **cell-centred** cast shadow, so mirroring leaves that shadow where it was, while the **ambient**
+  pair's is not centred on any column (34 px of 64 on land and sea, 36 on air). A unit left
+  mirrored at rest therefore dropped its shadow 5–9 art px to the *other side* of itself from an
+  unmirrored neighbour of the same type, which reads as two suns on one board rather than as a
+  nudge — this supersedes the slice's own "about a board pixel, the accepted price of a facing
+  that survives a repaint", which under-measured it against the cell centre instead of against a
+  parked neighbour.
   `test_move_frames.gd` carries that measurement, so if the generator ever centres the ambient
   shadow the rule can be revisited out loud.
   **An unauthored unit needs no fallback code**: the generator bakes each unauthored
