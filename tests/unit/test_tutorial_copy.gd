@@ -160,8 +160,12 @@ func test_every_legend_fits_the_top_bar() -> void:
 
 func test_unknown_context_falls_back_to_the_resting_legend() -> void:
 	# Battle maps its State to a context key; a state that grows without one must
-	# leave the bar telling the truth rather than blank.
-	assert_eq(ControlHints.legend_for(&"no_such_context"), ControlHints.LEGENDS[ControlHints.IDLE])
+	# leave the bar telling the truth rather than blank. The hand is named rather
+	# than defaulted: this file answers for the keyboard's table, so a sibling
+	# suite's pin of MobileProfile can never decide which table it read.
+	assert_eq(
+		ControlHints.legend_for(&"no_such_context", false), ControlHints.LEGENDS[ControlHints.IDLE]
+	)
 
 
 func test_legends_are_ascii_only() -> void:

@@ -202,12 +202,16 @@ func _update_labels() -> void:
 		)
 
 
-## Settles the menu inside the *board band* — the strip the two docked HUD bars
-## leave over — rather than inside the window. The bars are opaque, so a menu that
-## slid under one would be unreadable rather than merely off-centre, and clamping
+## Settles the menu inside the *board band* — the strip the docked HUD bars leave
+## over — rather than inside the window. The bars are opaque, so a menu that slid
+## under one would be unreadable rather than merely off-centre, and clamping
 ## against the band is what the old dodge around the floating commander chip
 ## became: with nothing persistent left over the map, the only thing a menu has to
-## stay clear of is the chrome, and that geometry is a constant.
+## stay clear of is the chrome.
+##
+## How much chrome sits below the board is `MobileDock`'s answer, not a constant
+## here: on a touch build the bottom bar rides up by the dock's height, and a menu
+## clamped against the desktop band covered both.
 func _place() -> void:
 	# A PanelContainer grows to fit its rows and never shrinks back on its own, so
 	# a short menu opened where a tall one just was keeps the tall one's panel
@@ -217,5 +221,6 @@ func _place() -> void:
 	reset_size()
 	var view := get_viewport().get_visible_rect().size
 	var top_left := Vector2(MARGIN, UiTheme.HUD_TOP_H + MARGIN)
-	var max_pos := (view - size - Vector2(MARGIN, UiTheme.HUD_BOTTOM_H + MARGIN)).max(top_left)
+	var below := UiTheme.HUD_BOTTOM_H + MobileDock.height()
+	var max_pos := (view - size - Vector2(MARGIN, below + MARGIN)).max(top_left)
 	position = position.clamp(top_left, max_pos)

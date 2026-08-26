@@ -15,6 +15,11 @@ extends RefCounted
 ## (Space and Z also), ESC for `cancel` (X and Backspace also) — because a legend
 ## that listed every alternative would be longer than the bar.
 ##
+## Two tables, one per hand: a build played with a finger has no ENTER to name, so
+## `TOUCH_LEGENDS` says what a tap does and leaves to the dock what the dock says.
+## `legend_for` and `chip_for` are the two ways to ask, and which table they read
+## is `MobileProfile`'s answer rather than a caller's.
+##
 ## ASCII only, deliberately. Silkscreen carries no arrow glyphs, so a "↑↓" would
 ## fall through to whatever system face the machine happens to have and print at
 ## a different size than the rest of the line.
@@ -58,6 +63,18 @@ const NEXT_CHIP := "N · NEXT"
 ## beside a legend already running at MAX_CHARS, each is ASCII — are checked over
 ## the set rather than over a list a new chip has to be remembered into.
 const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHIP]
+
+## What each chip says on a touch build, where naming the key is naming something
+## the device has not got. A chip is a button, so what is left is the word it does
+## — and an empty word takes the chip off the bar entirely, which is what NEXT
+## asks for: the dock already carries that control, and a strip of chrome saying
+## the same thing twice is the room the shorter touch legends were freed to buy.
+const TOUCH_CHIPS: Dictionary = {
+	THREAT_CHIP: "THREAT",
+	RANGE_CHIP: "RANGE",
+	OBJECTIVES_CHIP: "MISSION",
+	NEXT_CHIP: "",
+}
 
 ## End Turn's key, printed on the bottom bar's button rather than in a legend —
 ## the button is already the thing that says what the key does, so a legend entry
@@ -163,6 +180,38 @@ const LEGENDS: Dictionary = {
 	END_TURN_GUARD: "L/R · PICK   UP/DN · SCROLL   ENTER · OK",
 }
 
+## The same table for a build played with a finger, which has no ENTER to press
+## and no ESC to leave with. Every line is what a *finger* does, and a line the
+## dock already states is empty rather than restated — the two thumbs' bar is one
+## row below, so BACK, RESUME, STEP and the zoom are named there and nowhere else.
+## What is left is the board, where the gesture is the thing a legend can teach: a
+## tap acts on the cell under it, and a pinch steps the zoom ladder.
+##
+## Its own table rather than a rewrite of the one above, because both ship: the
+## desktop legend is untouched, and a key legend on a phone and a gesture legend
+## on a desktop are equally wrong.
+const TOUCH_LEGENDS: Dictionary = {
+	IDLE: "TAP · SELECT   PINCH · ZOOM",
+	UNIT_SELECTED: "TAP · MOVE",
+	PREVIEW: "",
+	MENU: "TAP · PICK",
+	# A tap on a value row steps it where it stands, exactly as confirm does — see
+	# ActionMenu.choose — so the words say stepping rather than picking.
+	VALUE_MENU: "TAP · PICK   TAP A VALUE · STEP",
+	TARGETING: "TAP · FIRE",
+	DROP_TARGETING: "TAP · DROP",
+	POWER_TARGETING: "TAP · STRIKE",
+	ANIMATING: "TAP · SKIP",
+	AI_TURN: "CPU PLAYING",
+	REPLAY: "REPLAY",
+	REPLAY_PAUSED: "PAUSED",
+	PAUSED: "PAUSED",
+	HANDOFF: "TAP · READY",
+	VICTORY: "TAP · PICK",
+	INFO: "TAP · CLOSE",
+	END_TURN_GUARD: "TAP · PICK",
+}
+
 ## Context -> the leading chip's word. A context with no row rests at MENU, which
 ## is what `cancel` does in every state that is not listed here.
 const DOCK_BACK_WORDS: Dictionary = {
@@ -176,11 +225,19 @@ const DOCK_BACK_WORDS: Dictionary = {
 }
 
 
-## The legend for a context. An unknown key falls back to IDLE's rather than
-## blanking the bar: a legend is a promise about the keyboard, and the resting
-## one is true in more places than an empty line is useful.
-static func legend_for(context: StringName) -> String:
-	return LEGENDS.get(context, LEGENDS[IDLE])
+## The legend for a context, in the vocabulary of the hand playing. An unknown key
+## falls back to IDLE's rather than blanking the bar: a legend is a promise about
+## the controls, and the resting one is true in more places than an empty line is
+## useful. `touch` is handed in so the copy is checkable without a process to
+## launch, MobileProfile's own idiom.
+static func legend_for(context: StringName, touch := MobileProfile.active()) -> String:
+	var table: Dictionary = TOUCH_LEGENDS if touch else LEGENDS
+	return table.get(context, table[IDLE])
+
+
+## What a chip says to the hand playing. Empty means the bar leaves it off.
+static func chip_for(chip: String, touch := MobileProfile.active()) -> String:
+	return TOUCH_CHIPS.get(chip, chip) if touch else chip
 
 
 ## What the dock's leading chip says in this context. One chip and one action —
