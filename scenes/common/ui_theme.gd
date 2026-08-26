@@ -111,6 +111,13 @@ const PAGE_BUTTON_MARGIN := 13
 const HUD_TOP_H := 23
 const HUD_BOTTOM_H := 46
 const HUD_BARS_H := HUD_TOP_H + HUD_BOTTOM_H
+## The touch dock's height, on a mobile build only — the third docked bar, under
+## the bottom one (mobile plan MB3). Fixed like the two above it and for the same
+## reason: it is part of the chrome the board's viewport is framed against, so a
+## dock that grew with its labels would move the zoom ladder's floor mid-match.
+## `MobileDock` is what answers whether it is on the screen at all; this is only
+## how tall it is when it is.
+const HUD_DOCK_H := 28
 ## The 3px ink edge the bars present to the board, halved like the rest.
 const HUD_EDGE := 2
 ## The vertical rule that splits a bar's groups.

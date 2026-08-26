@@ -70,6 +70,32 @@ const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHI
 ## is held to fitting beside a legend this one never sits next to.
 const END_TURN_CHIP := "E · END TURN"
 
+## The touch dock's copy (mobile plan MB3). Its own block because the dock is a
+## row of buttons rather than a legend: each chip says what it *does* instead of
+## naming a key, since the key it dispatches is one a phone does not have. Still
+## this file's, for the reason every chip above is — a control named anywhere
+## else is a control that eventually names a binding the InputMap no longer has.
+const DOCK_BACK := "BACK"
+const DOCK_MENU := "MENU"
+const DOCK_PAUSE := "PAUSE"
+const DOCK_RESUME := "RESUME"
+const DOCK_STEP := "STEP"
+const DOCK_ZOOM_OUT := "-"
+const DOCK_ZOOM_IN := "+"
+const DOCK_NEXT := "NEXT"
+
+## Every word the dock may print, held to the same ASCII rule the chips above are.
+const DOCK_CHIPS: Array[String] = [
+	DOCK_BACK,
+	DOCK_MENU,
+	DOCK_PAUSE,
+	DOCK_RESUME,
+	DOCK_STEP,
+	DOCK_ZOOM_OUT,
+	DOCK_ZOOM_IN,
+	DOCK_NEXT,
+]
+
 const IDLE := &"idle"
 const UNIT_SELECTED := &"unit_selected"
 const PREVIEW := &"preview"
@@ -137,9 +163,30 @@ const LEGENDS: Dictionary = {
 	END_TURN_GUARD: "L/R · PICK   UP/DN · SCROLL   ENTER · OK",
 }
 
+## Context -> the leading chip's word. A context with no row rests at MENU, which
+## is what `cancel` does in every state that is not listed here.
+const DOCK_BACK_WORDS: Dictionary = {
+	UNIT_SELECTED: DOCK_BACK,
+	PREVIEW: DOCK_BACK,
+	TARGETING: DOCK_BACK,
+	DROP_TARGETING: DOCK_BACK,
+	POWER_TARGETING: DOCK_BACK,
+	AI_TURN: DOCK_PAUSE,
+	REPLAY: DOCK_PAUSE,
+}
+
 
 ## The legend for a context. An unknown key falls back to IDLE's rather than
 ## blanking the bar: a legend is a promise about the keyboard, and the resting
 ## one is true in more places than an empty line is useful.
 static func legend_for(context: StringName) -> String:
 	return LEGENDS.get(context, LEGENDS[IDLE])
+
+
+## What the dock's leading chip says in this context. One chip and one action —
+## `cancel` — because that key is already "get me out of here" everywhere: it
+## aborts a targeting state, asks for the pause during a computer turn, and opens
+## the map menu at rest. The word is what changes, so the chip reads as the thing
+## it is about to do rather than as three controls that happen to share a slot.
+static func dock_back_for(context: StringName) -> String:
+	return DOCK_BACK_WORDS.get(context, DOCK_MENU)

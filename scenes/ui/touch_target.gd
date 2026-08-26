@@ -181,7 +181,11 @@ func _gui_input(event: InputEvent) -> void:
 
 func _fit() -> void:
 	var host := get_parent() as Control
-	if host == null:
+	# The fit is deferred, and a menu row picked with a finger is freed inside the
+	# frame that placed it — so by the time this runs the area can be off the tree
+	# with its host still attached to it, and there is then nothing to measure
+	# against (found by MB3's driven dock scenario, which picks several rows).
+	if host == null or not is_inside_tree():
 		return
 	var seat := host.get_global_rect()
 	var screen := get_viewport().get_visible_rect()
