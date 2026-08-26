@@ -142,6 +142,18 @@ func test_a_swallowed_release_does_not_strand_a_finger() -> void:
 	)
 
 
+## The stranded finger the guard is really for: a pinch whose releases the board
+## swallowed leaves two fingers down, and without the clear the next press is read
+## as half a pinch and can never tap again.
+func test_a_swallowed_pinch_does_not_strand_two_fingers() -> void:
+	_press(0, Vector2(100, 100))
+	_press(1, Vector2(200, 100))
+	assert_eq(_press(0, Vector2(140, 140)), TouchGestures.Kind.HELD)
+	assert_eq(
+		_release(0, Vector2(140, 140)), TouchGestures.Kind.TAP, "the fresh press is a fresh hand"
+	)
+
+
 func test_a_drag_with_no_press_behind_it_asks_nothing() -> void:
 	assert_eq(_drag(0, Vector2(200, 200), Vector2(CELL, 0)), TouchGestures.Kind.HELD)
 
