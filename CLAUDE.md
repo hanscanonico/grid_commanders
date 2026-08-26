@@ -417,8 +417,9 @@ plan is stated in full below and has no copy there.
   down with it. `camera.zoom` is now a rung and nothing else. The rejected mechanism is a
   `SubViewport` around the cut-in *layer*: the thing being scaled is the board, not the band, and
   wrapping the world in a viewport buys a second coordinate space for every input and overlay
-  answer to be wrong in. **A2: the board docks on a whole screen pixel** — `BattleView.BOARD_LIFT_PX`
-  is 12, not the bars' exact half-difference of 11.5, and **the odd pixel goes to the bottom** so a
+  answer to be wrong in. **A2: the board docks on a whole screen pixel** — the lift is 12, not the
+  bars' exact half-difference of 11.5 (`MobileDock.board_lift_px()`, which retired
+  `BattleView.BOARD_LIFT_PX` once the touch dock gave the chrome a second height), and **the odd pixel goes to the bottom** so a
   unit on the last row ends up further from the chrome rather than nearer it. **A3: the camera
   lands on the cell rather than gliding to it** — `position_smoothing` spent a third of a second
   after every cursor step between two cells, which is that same fractional rest by another name;
@@ -1393,15 +1394,17 @@ plan is stated in full below and has no copy there.
   D1: **nothing under `core/` or `ai/` learns a phone exists** — no `OS`, no `DisplayServer`, no
   feature tag, no touch class, and a mobile build and a desktop build trade save files. D5: **the
   gate is `MobileProfile` and the bar is `make smoke` byte-stable** — mobile chrome is never
-  *constructed* on desktop, and every slice below re-cleared 85/85 measured in one tree against
-  itself reverted in place. D8: touch targets grow their **hit** rectangles, never their drawn
+  *constructed* on desktop, and every slice that touches a file the game loads re-cleared 85/85
+  measured in one tree against itself reverted in place (MB8 and MB9 touch none, so no frame of
+  theirs can move). D8: touch targets grow their **hit** rectangles, never their drawn
   heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor rung.
   D9: the planner is not a mobile task. **Landscape only** (user decision) and **`aspect="keep"`**.
   The five new authorities the plan left behind are `MobileProfile`, `TouchTarget` /
   `UiKit.touchable`, `MobileDock`, `TouchGestures` / `BoardPointer` and
-  `TransitionInput.is_touch_press`; each is stated with its milestone.
-  **MB1 (#381), the package.** `export_presets.cfg` and `make export-android`; `project.godot` gains
-  only the landscape line. **`OS.has_feature("mobile")` answers `true`** (with `android` true and
+  `TransitionInput.is_touch_press`.
+  **MB1 (#381), the package.** `export_presets.cfg` and `make export-android`; `project.godot` gains the
+  landscape line and `import_etc2_astc`, which the Android exporter refuses to run without and which
+  moves no imported byte, every texture in the tree being `compress/mode=0`. **`OS.has_feature("mobile")` answers `true`** (with `android` true and
   `editor` false), so D5's gate stands as written. `window/stretch/scale_mode` stays **absent** — the
   Android window scale is a whole 3.000 or 2.000, so integer mode buys nothing there (README carries
   the arithmetic). **D7's mechanism is REFUTED and D7's goal is therefore outstanding**: a
