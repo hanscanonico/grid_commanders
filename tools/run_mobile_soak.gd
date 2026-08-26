@@ -23,9 +23,10 @@ extends SceneTree
 ## `--print-fps`.
 ##
 ## It is an instrument, not a gate: out of `make verify` and `make test`, it
-## tunes nothing and writes nothing outside `reports/`. docs/mobile_soak.md is
-## the committed record, and — like every instrument doc here — a later
-## measurement supersedes it wholesale rather than editing it.
+## tunes nothing, and it writes nothing but the scratch file the storage clock
+## times and then removes. docs/mobile_soak.md is the committed record, and —
+## like every instrument doc here — a later measurement supersedes it wholesale
+## rather than editing it.
 ##
 ## Nothing under `core/` or `ai/` learns this exists: the planner loop is
 ## `tools/run_bulwark_measure.gd`'s, wrapped in a clock.
@@ -45,11 +46,16 @@ extends SceneTree
 const TOOL := "mobile-soak"
 const DEFAULT_MAP := "bulwark"
 const DEFAULT_GROUPING := "1+2+3v4"
+## The one grouping that is not seats: `MatchRequest.parse_sides_flag` reads the
+## empty grammar as a free-for-all, and `ffa` is what a reader types for it.
+const FREE_FOR_ALL := "ffa"
 const ALL_SECTIONS: Array[String] = ["planner", "replay"]
-## Where the storage clock writes. Under `user://` rather than `reports/`
-## because it is measuring the recorder's own directory, and the recorder's
-## own slots are the thing being timed.
-const REPLAY_PROBE := "user://replays/mobile_soak_probe.jsonl"
+## Where the storage clock writes: `user://`, the storage the recorder writes to,
+## but deliberately beside the player's rotating slots rather than inside them —
+## a run interrupted mid-clock would otherwise leave a file in `ReplayFile.DIR`
+## that the next match's `prune` counts against `KEEP` and evicts a real
+## recording for.
+const REPLAY_PROBE := "user://mobile_soak_probe.jsonl"
 
 var _harness: BalanceHarness
 var _map: MapData
@@ -105,25 +111,57 @@ func _parse_args() -> bool:
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
 		elif arg.begins_with("--seeds="):
-			_seed_count = _positive(arg, _seed_count)
+			_seed_count = _positive(arg)
+			if _seed_count < 0:
+				return false
 		elif arg.begins_with("--days="):
-			_days_cap = _positive(arg, _days_cap)
+			_days_cap = _positive(arg)
+			if _days_cap < 0:
+				return false
 		elif arg.begins_with("--appends="):
-			_append_count = _positive(arg, _append_count)
+			_append_count = _positive(arg)
+			if _append_count < 0:
+				return false
 		elif arg.begins_with("--fog="):
 			_fog = arg.get_slice("=", 1) in ["on", "true", "1"]
 		else:
 			push_error("%s: unknown flag '%s'" % [TOOL, arg])
 			return false
-	return _sections.size() > 0
+	return _sections.size() > 0 and _grouping_readable()
 
 
-func _positive(arg: String, fallback: int) -> int:
+## -1 for a value that is not a positive integer, so the caller refuses the run:
+## a horizon that quietly fell back to its default would be a reading of a
+## different question than the one asked for.
+func _positive(arg: String) -> int:
 	var parsed := BalanceHarness.int_flag(arg.get_slice("=", 1), 1)
 	if parsed < 0:
-		push_error("%s: %s takes a positive integer" % [TOOL, arg.get_slice("=", 0)])
-		return fallback
+		push_error(
+			(
+				"%s: %s takes a positive integer (got '%s')"
+				% [TOOL, arg.get_slice("=", 0), arg.get_slice("=", 1)]
+			)
+		)
 	return parsed
+
+
+## Refused here rather than at the board, because `parse_sides_flag` answers an
+## unreadable grouping with a free-for-all: the run would be timed on a seating
+## nobody asked for, under a heading naming the one they did.
+func _grouping_readable() -> bool:
+	if _grouping == FREE_FOR_ALL:
+		return true
+	for token in _grouping.split("v", false):
+		for seat in token.split("+", false):
+			if not seat.strip_edges().is_valid_int():
+				push_error(
+					(
+						"%s: --grouping is ffa or a grouping like 1+2+3v4 (got '%s')"
+						% [TOOL, _grouping]
+					)
+				)
+				return false
+	return true
 
 
 # --- the planner clock -------------------------------------------------------
@@ -186,7 +224,7 @@ func _play(profile: AIProfile, seed_val: int, commands: Array[float], turns: Arr
 	if state == null:
 		return 0
 	var sides: Dictionary[int, int] = {}
-	var parsed := MatchRequest.parse_sides_flag(_grouping)
+	var parsed := MatchRequest.parse_sides_flag("" if _grouping == FREE_FOR_ALL else _grouping)
 	for seat: int in parsed:
 		sides[seat] = int(parsed[seat])
 	state.sides = sides
