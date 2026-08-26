@@ -9,9 +9,10 @@ extends GutTest
 ## is exactly what these tests are about.
 ##
 ## The bars and the tempo each track was composed at, in the sibling
-## audio_generator repo (`make audio` installs its renders).
+## audio_generator repo (`make audio` installs its renders as Ogg Vorbis).
 ## A loop is seamless only if the file is a whole number of beats long, so the
-## length is pinned here rather than eyeballed.
+## length is pinned here rather than eyeballed — and it is what says the codec
+## kept every sample frame.
 const TEMPOS := {&"parade": 104.0, &"advance": 132.0}
 const BARS := 32
 
@@ -27,25 +28,18 @@ func _player() -> AudioStreamPlayer:
 func test_each_shipped_track_plays_and_loops_its_whole_length() -> void:
 	for track: StringName in Music.NAMES:
 		Music.play(track)
-		var stream := _player().stream as AudioStreamWAV
+		var stream := _player().stream as AudioStreamOggVorbis
 		assert_not_null(stream, "%s should be loaded" % track)
-		assert_eq(stream.resource_path, "res://assets/music/%s.wav" % track)
+		assert_eq(stream.resource_path, "res://assets/music/%s.ogg" % track)
 		assert_true(_player().playing, "%s should be playing" % track)
-		assert_eq(stream.loop_mode, AudioStreamWAV.LOOP_FORWARD, "%s should loop" % track)
-		var bar_frames: float = BARS * 4 * 60.0 / TEMPOS[track] * stream.mix_rate
-		assert_eq(stream.loop_begin, 0, "%s should loop from the top" % track)
-		assert_almost_eq(
-			float(stream.loop_end),
-			bar_frames,
-			1.0,
-			"%s should loop over all %d bars" % [track, BARS]
-		)
+		assert_true(stream.loop, "%s should loop" % track)
+		assert_eq(stream.loop_offset, 0.0, "%s should loop from the top" % track)
 
 
 func test_each_track_is_a_whole_number_of_bars() -> void:
 	for track: StringName in Music.NAMES:
 		Music.play(track)
-		var beats: float = (_player().stream as AudioStreamWAV).get_length() * TEMPOS[track] / 60.0
+		var beats: float = _player().stream.get_length() * TEMPOS[track] / 60.0
 		assert_almost_eq(beats, float(BARS * 4), 0.001, "%s should be %d bars" % [track, BARS])
 
 
@@ -59,7 +53,7 @@ func test_restating_the_playing_track_is_a_no_op() -> void:
 func test_the_battle_theme_replaces_the_menu_theme() -> void:
 	Music.play(&"parade")
 	Music.play(&"advance")
-	assert_eq(_player().stream.resource_path, "res://assets/music/advance.wav")
+	assert_eq(_player().stream.resource_path, "res://assets/music/advance.ogg")
 	assert_true(_player().playing)
 
 

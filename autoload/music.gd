@@ -15,11 +15,10 @@ var _current: StringName = &""
 
 func _ready() -> void:
 	for track in NAMES:
-		var path := "%s/%s.wav" % [MUSIC_DIR, track]
+		var path := "%s/%s.ogg" % [MUSIC_DIR, track]
 		if ResourceLoader.exists(path):
-			var stream: AudioStreamWAV = load(path)
-			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-			stream.loop_end = roundi(stream.get_length() * stream.mix_rate)
+			var stream: AudioStreamOggVorbis = load(path)
+			stream.loop = true
 			_streams[track] = stream
 	_player = AudioStreamPlayer.new()
 	add_child(_player)

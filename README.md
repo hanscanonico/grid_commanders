@@ -1234,8 +1234,8 @@ Portraits" design handoff's spec, no third-party pixels. All sound — the nine 
 project-original looping marches, `parade` for the menu and `advance` for the battle — is composed
 and rendered deterministically in the sibling
 [audio_generator](https://github.com/hanscanonico/audio_generator) repo, gated there (determinism,
-loop-seam, loudness and distinctness measurements), and installed here as committed WAVs by
-`make audio`. Third-party asset licenses must be
+loop-seam, loudness and distinctness measurements), and installed here by `make audio` — the
+effects as committed WAVs, the two marches as Ogg Vorbis. Third-party asset licenses must be
 tracked in `assets/LICENSES.md`. No Nintendo assets or names may ever be used.
 
 `make tiles` rebuilds the art in three ordered steps: `atlases` regenerates both sheets in the
