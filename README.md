@@ -438,6 +438,44 @@ the 360-line canvas is a window scale of exactly 3.000 or 2.000, so the board is
 whole texels and integer mode would buy nothing while costing screen. iPhone's 3.250 / 3.275 is a
 different arithmetic and a separate measurement.
 
+## Mobile builds (iOS)
+
+`make export-ios` writes an **Xcode project** into `build/ios/` — the preset sets
+`application/export_project_only`, so the export needs no signing identity and the archive is
+Xcode's to make. **No identity is in the repository**: `export_presets.cfg` carries a placeholder
+team id (the engine refuses to export without one, even project-only), and
+
+```sh
+make export-ios IOS_TEAM_ID=<your 10-char team id>
+```
+
+writes the real one into the *generated* project, which is gitignored build output. Machine setup is
+the 4.7.1 export templates from the Android recipe above, plus Xcode with the iOS platform support
+installed.
+
+Then open `build/ios/grid_commanders.xcodeproj`, or build it from the command line:
+
+```sh
+cd build/ios
+xcodebuild -project grid_commanders.xcodeproj -scheme grid_commanders \
+  -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
+```
+
+Two toolchain facts worth knowing before that command is trusted. The 4.7.1 template's simulator
+slice of `grid_commanders.xcframework` is **x86_64 only**, so a simulator build on an Apple Silicon
+Mac has to be asked for with `-arch x86_64`; and Xcode needs its iOS platform support component
+installed (`xcodebuild -downloadPlatform iOS`) or `actool` and `ibtool` refuse the asset catalog and
+the launch storyboard.
+
+`window/stretch/scale_mode` stays absent on iOS too, and here that is a reading rather than
+arithmetic. Measured on an iPhone 15 simulator (1179 short edge, window scale 3.275): the picture is
+2096x1179 with a 230px letterbox bar a side, and the type carries **no blended pixel at all** — a
+pixel face is rasterised at the final resolution under `canvas_items` stretch, so a fractional window
+scale does not soften it. Integer mode snaps the picture to 1920x1080, which costs 8.4% of the short
+edge and 16% of the picture's area, and it does not make the type's stems more even. What it does fix
+is texture art, where the fractional lattice leaves 1px slivers. Neither reading is worth the screen,
+so the desktop decision is repeated rather than reopened.
+
 ## Main menu
 
 The game boots to the menu: pick a map, set the **seats**, pick a **Speed**,

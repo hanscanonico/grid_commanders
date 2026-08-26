@@ -15,6 +15,14 @@ BATTLE := scenes/battle/battle.tscn
 SPRITEGEN ?= ../sprite_generator
 # Where make export-android drops the debug package. Ignored by git.
 ANDROID_APK ?= build/android/grid_commanders.apk
+# Where make export-ios drops the Xcode project. The .ipa path is what the
+# preset names; with export_project_only the project lands beside it instead.
+# Ignored by git, like the APK.
+IOS_IPA ?= build/ios/grid_commanders.ipa
+IOS_XCODEPROJ ?= build/ios/grid_commanders.xcodeproj
+# The placeholder team id committed in export_presets.cfg, replaced in the
+# generated project when IOS_TEAM_ID is passed.
+IOS_TEAM_PLACEHOLDER := AAAAAAAAAA
 
 # The two things a gate can be missing. tools/check_scripts.sh and
 # tools/check_determinism.sh already say this for themselves; a target that
@@ -396,6 +404,24 @@ export-android: import
 	$(GODOT) --headless --path . --export-debug "Android" $(CURDIR)/$(ANDROID_APK)
 	@ls -l $(ANDROID_APK)
 
+# iOS packaging (mobile plan MB9). The preset exports an Xcode project rather
+# than an .ipa, so this target needs no signing identity: what it leaves in
+# build/ios is grid_commanders.xcodeproj, which Xcode builds, runs and archives.
+# IOS_TEAM_ID is optional and is written into that GENERATED project, never into
+# export_presets.cfg — a tracked file stays out of the build path. README.md
+# "Mobile builds (iOS)" is the recipe and the simulator command line.
+export-ios: import
+	$(call require-godot)
+	@mkdir -p $(dir $(IOS_XCODEPROJ))
+	$(GODOT) --headless --path . --export-debug "iOS" $(CURDIR)/$(IOS_IPA)
+	@test -z "$(IOS_TEAM_ID)" || { \
+		sed -i '' 's/DEVELOPMENT_TEAM = [A-Za-z0-9]*;/DEVELOPMENT_TEAM = $(IOS_TEAM_ID);/' \
+			$(IOS_XCODEPROJ)/project.pbxproj; \
+		sed -i '' 's|<string>$(IOS_TEAM_PLACEHOLDER)</string>|<string>$(IOS_TEAM_ID)</string>|' \
+			$(dir $(IOS_IPA))grid_commanders/export_options.plist; \
+		echo "export-ios: development team set to $(IOS_TEAM_ID)"; }
+	@ls -d $(IOS_XCODEPROJ)
+
 # The battle scene is launched directly so demos and captures skip the menu.
 screenshot: import
 	$(GODOT_GUI) --path . $(BATTLE) -- --screenshot=$(CURDIR)/screenshot.png
@@ -410,7 +436,7 @@ gallery-screenshot: import
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	audio portraits portraits-check import campaign-difficulty export-android \
+	audio portraits portraits-check import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns legibility-check

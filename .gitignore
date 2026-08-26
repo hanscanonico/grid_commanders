@@ -51,11 +51,13 @@ reports/*
 !.promo/make_promo.sh
 
 # Mobile packages and their signing material. The package is build output
-# (make export-android writes build/android/), and a keystore is a secret that
-# never enters the repository — the debug one lives in ~/.android and a release
-# one is machine setup. export_presets.cfg carries paths and identity only.
+# (make export-android writes build/android/, make export-ios writes the Xcode
+# project into build/ios/), and a keystore is a secret that never enters the
+# repository — the debug one lives in ~/.android and a release one is machine
+# setup. export_presets.cfg carries paths and identity only.
 build/
 *.apk
 *.aab
+*.ipa
 *.keystore
 *.jks
