@@ -118,15 +118,15 @@ func _parse_args() -> bool:
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
 		elif arg.begins_with("--seeds="):
-			_seed_count = _positive(arg)
+			_seed_count = BalanceHarness.positive_flag(TOOL, "--seeds", arg.get_slice("=", 1))
 			if _seed_count < 0:
 				return false
 		elif arg.begins_with("--days="):
-			_days_cap = _positive(arg)
+			_days_cap = BalanceHarness.positive_flag(TOOL, "--days", arg.get_slice("=", 1))
 			if _days_cap < 0:
 				return false
 		elif arg.begins_with("--appends="):
-			_append_count = _positive(arg)
+			_append_count = BalanceHarness.positive_flag(TOOL, "--appends", arg.get_slice("=", 1))
 			if _append_count < 0:
 				return false
 		elif arg.begins_with("--fog="):
@@ -135,21 +135,6 @@ func _parse_args() -> bool:
 			push_error("%s: unknown flag '%s'" % [TOOL, arg])
 			return false
 	return _sections.size() > 0 and _grouping_readable()
-
-
-## -1 for a value that is not a positive integer, so the caller refuses the run:
-## a horizon that quietly fell back to its default would be a reading of a
-## different question than the one asked for.
-func _positive(arg: String) -> int:
-	var parsed := BalanceHarness.int_flag(arg.get_slice("=", 1), 1)
-	if parsed < 0:
-		push_error(
-			(
-				"%s: %s takes a positive integer (got '%s')"
-				% [TOOL, arg.get_slice("=", 0), arg.get_slice("=", 1)]
-			)
-		)
-	return parsed
 
 
 ## Refused here rather than at the board, because `parse_sides_flag` answers an

@@ -55,16 +55,9 @@ func _parse_args() -> bool:
 		push_error("arena-report: --matches=<matches.json or a directory> names what to score")
 		return false
 	if _out_dir != "":
-		var resolved := BalanceReportWriter.resolve_out(_out_dir)
-		if resolved == "":
-			push_error(
-				(
-					"arena-report: --out is a directory under %s/ (got '%s')"
-					% [BalanceReportWriter.REPORTS_ROOT, _out_dir]
-				)
-			)
+		_out_dir = BalanceHarness.out_flag("arena-report", _out_dir)
+		if _out_dir == "":
 			return false
-		_out_dir = resolved
 	return true
 
 

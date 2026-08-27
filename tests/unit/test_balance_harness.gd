@@ -44,3 +44,34 @@ func test_map_of_reports_an_unknown_name_with_the_known_ones() -> void:
 	# against separately for the part the first assert already consumed.
 	assert_null(harness.map_of("no_such_board_at_all"))
 	assert_push_error("first_steps")
+
+
+## The refusal every driver's numeric flags now share: the message names the
+## tool and the flag that read it, so one wording answers for seven drivers.
+func test_positive_flag_refuses_a_non_number_by_name() -> void:
+	assert_eq(BalanceHarness.positive_flag("balance-sim", "--seeds", "12"), 12)
+	assert_eq(BalanceHarness.positive_flag("balance-sim", "--seeds", "0"), -1)
+	assert_push_error("balance-sim: --seeds must be a positive integer (got '0')")
+
+
+## 0 is a legal count and only a negative or a non-number is not.
+func test_count_flag_accepts_zero() -> void:
+	assert_eq(BalanceHarness.count_flag("bulwark", "--seed-offset", "0"), 0)
+	assert_eq(BalanceHarness.count_flag("bulwark", "--seed-offset", "-1"), -1)
+	assert_push_error("bulwark: --seed-offset must be a non-negative integer (got '-1')")
+
+
+## `--out=` keeps BalanceReportWriter.resolve_out as the authority on where a run
+## may write; what the helper adds is the one refusal wording.
+func test_out_flag_refuses_a_path_outside_reports() -> void:
+	assert_eq(BalanceHarness.out_flag("balance", "reports/flag_test"), "reports/flag_test")
+	assert_eq(BalanceHarness.out_flag("balance", "/tmp/elsewhere"), "")
+	assert_push_error("balance: --out is a directory under reports/ (got '/tmp/elsewhere')")
+
+
+## Padding around a value is the same value: the helpers strip, so a flag read
+## out of a quoted shell variable is not a refusal on one driver and a run on
+## another.
+func test_flags_strip_padding() -> void:
+	assert_eq(BalanceHarness.positive_flag("balance", "--days", " 20 "), 20)
+	assert_eq(BalanceHarness.out_flag("balance", " reports/flag_test "), "reports/flag_test")

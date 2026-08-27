@@ -114,17 +114,17 @@ func _parse_args() -> bool:
 		elif arg.begins_with("--mission="):
 			_missions.append(arg.get_slice("=", 1))
 		elif arg.begins_with("--seeds="):
-			if not _positive(arg, 1):
+			_seed_count = BalanceHarness.positive_flag(TOOL, "--seeds", arg.get_slice("=", 1))
+			if _seed_count < 0:
 				return false
-			_seed_count = BalanceHarness.int_flag(arg.get_slice("=", 1), 1)
 		elif arg.begins_with("--seed-offset="):
-			if not _positive(arg, 0):
+			_seed_offset = BalanceHarness.count_flag(TOOL, "--seed-offset", arg.get_slice("=", 1))
+			if _seed_offset < 0:
 				return false
-			_seed_offset = BalanceHarness.int_flag(arg.get_slice("=", 1), 0)
 		elif arg.begins_with("--days="):
-			if not _positive(arg, 1):
+			_days_cap = BalanceHarness.positive_flag(TOOL, "--days", arg.get_slice("=", 1))
+			if _days_cap < 0:
 				return false
-			_days_cap = BalanceHarness.int_flag(arg.get_slice("=", 1), 1)
 		elif arg.begins_with("--out="):
 			_out_dir = arg.get_slice("=", 1)
 		else:
@@ -132,20 +132,8 @@ func _parse_args() -> bool:
 			return false
 	if _out_dir == "":
 		_out_dir = DEFAULT_OUT
-	var resolved := BalanceReportWriter.resolve_out(_out_dir)
-	if resolved == "":
-		push_error("%s: --out is a directory under reports/ (got '%s')" % [TOOL, _out_dir])
-		return false
-	_out_dir = resolved
-	return true
-
-
-func _positive(arg: String, floor_value: int) -> bool:
-	var value := arg.get_slice("=", 1)
-	if BalanceHarness.int_flag(value, floor_value) < 0:
-		push_error("%s: %s takes an integer of at least %d" % [TOOL, arg, floor_value])
-		return false
-	return true
+	_out_dir = BalanceHarness.out_flag(TOOL, _out_dir)
+	return _out_dir != ""
 
 
 ## One mission over the whole seed range, folded into the row the table prints.

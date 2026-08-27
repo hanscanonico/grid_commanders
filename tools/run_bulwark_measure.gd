@@ -125,28 +125,17 @@ func _parse_args() -> bool:
 		elif arg.begins_with("--tier="):
 			_tier_id = StringName(arg.get_slice("=", 1))
 		elif arg.begins_with("--seeds="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 1)
-			if parsed < 0:
-				push_error("%s: --seeds must be a positive integer (got '%s')" % [TOOL, value])
+			_seed_count = BalanceHarness.positive_flag(TOOL, "--seeds", arg.get_slice("=", 1))
+			if _seed_count < 0:
 				return false
-			_seed_count = parsed
 		elif arg.begins_with("--seed-offset="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 0)
-			if parsed < 0:
-				push_error(
-					"%s: --seed-offset must be a non-negative integer (got '%s')" % [TOOL, value]
-				)
+			_seed_offset = BalanceHarness.count_flag(TOOL, "--seed-offset", arg.get_slice("=", 1))
+			if _seed_offset < 0:
 				return false
-			_seed_offset = parsed
 		elif arg.begins_with("--days="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 1)
-			if parsed < 0:
-				push_error("%s: --days must be a positive integer (got '%s')" % [TOOL, value])
+			_days_cap = BalanceHarness.positive_flag(TOOL, "--days", arg.get_slice("=", 1))
+			if _days_cap < 0:
 				return false
-			_days_cap = parsed
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
 		elif arg.begins_with("--out="):
@@ -158,12 +147,8 @@ func _parse_args() -> bool:
 		return false
 	if _out_dir == "":
 		_out_dir = "reports".path_join(_map_name)
-	var resolved := BalanceReportWriter.resolve_out(_out_dir)
-	if resolved == "":
-		push_error("%s: --out is a directory under reports/ (got '%s')" % [TOOL, _out_dir])
-		return false
-	_out_dir = resolved
-	return true
+	_out_dir = BalanceHarness.out_flag(TOOL, _out_dir)
+	return _out_dir != ""
 
 
 ## `alliance` and `both` name Bulwark's own preset, so they say nothing about
