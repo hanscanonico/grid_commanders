@@ -124,7 +124,7 @@ func test_the_scan_reaches_every_kind_it_answers_for() -> void:
 ## PowerCommand would carry the power past both.
 func test_every_power_expires_at_one_of_the_two_points() -> void:
 	var expiries: Array[int] = [CommanderType.Duration.OWNER_TURN, CommanderType.Duration.ROUND]
-	for co in CommanderDB.load_default().all():
+	for co in Fixture.commander_db().all():
 		assert_has(expiries, int(co.power_duration), "%s's power expires at no known point" % co.id)
 
 

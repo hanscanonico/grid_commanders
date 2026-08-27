@@ -26,7 +26,7 @@ var db: CommanderDB
 
 
 func before_all() -> void:
-	db = CommanderDB.load_default()
+	db = Fixture.commander_db()
 
 
 func test_face_region_fits_inside_a_portrait() -> void:

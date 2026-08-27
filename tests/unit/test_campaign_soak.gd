@@ -36,9 +36,9 @@ var db: CampaignDB
 
 
 func before_all() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	commander_db = Fixture.commander_db()
 	db = CampaignDB.load_default()
 
 

@@ -21,7 +21,7 @@ var db: CommanderDB
 
 
 func before_all() -> void:
-	db = CommanderDB.load_default()
+	db = Fixture.commander_db()
 
 
 ## Set equality rather than one-way coverage, so a failure names the side that

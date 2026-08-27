@@ -37,9 +37,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 	CampaignSession.clear()
 	CampaignProfile.erase(PROBE)
 
@@ -244,7 +244,7 @@ func test_a_saved_mission_resumes_from_the_campaign_profile() -> void:
 	assert_eq(progress.active_mission, &"probe_one", "the profile names the mission it holds")
 	var request := MatchRequest.new()
 	request.campaign_resume = PROBE
-	var built := BattleSetup.build(request, terrain_db, unit_db, CommanderDB.load_default())
+	var built := BattleSetup.build(request, terrain_db, unit_db, Fixture.commander_db())
 	assert_not_null(built)
 	assert_eq(built.game.day, 12, "the saved board, not day one of the mission")
 	assert_eq(built.game.map_path, FIRST_STEPS)
@@ -287,5 +287,5 @@ func test_a_mission_won_through_the_override_writes_nothing() -> void:
 func test_a_campaign_resume_with_no_snapshot_is_refused() -> void:
 	var request := MatchRequest.new()
 	request.campaign_resume = PROBE
-	assert_null(BattleSetup.build(request, terrain_db, unit_db, CommanderDB.load_default()))
+	assert_null(BattleSetup.build(request, terrain_db, unit_db, Fixture.commander_db()))
 	assert_push_error("holds no mission in progress")

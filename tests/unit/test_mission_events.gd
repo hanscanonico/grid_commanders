@@ -351,7 +351,7 @@ func test_a_mission_holds_an_events_lines_to_the_roster() -> void:
 	var event := _event(&"the_turn", [_day(3)])
 	event.lines = [MissionLine.of(&"nobody_at_all", "The wardens are yours.")]
 	mission.events = [event]
-	var db := CommanderDB.load_default()
+	var db := Fixture.commander_db()
 	assert_ne(mission.story_error(db), "", "a speaker who is not on the roster prints as a blank")
 	event.lines = [MissionLine.of(&"ivar_thorne", "The wardens are yours.")]
 	assert_eq(mission.story_error(db), "")

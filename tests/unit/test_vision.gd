@@ -87,7 +87,7 @@ func test_reefs_conceal_like_woods() -> void:
 ## this a test of the cover rule rather than of the vision bonus beside it.
 func test_seeing_into_cover_covers_reefs_too() -> void:
 	var state := _state("[terrain]\n...*\n...*\n[units]\n1 i 0 0\n1 t 0 1")
-	state.set_commander(1, CommanderDB.load_default().by_id(&"nia_rowan"))
+	state.set_commander(1, Fixture.commander_db().by_id(&"nia_rowan"))
 	assert_false(
 		Vision.visible_cells(state, 1).has(Vector2i(3, 1)),
 		"before the power, the tank's reef is cover at three tiles"

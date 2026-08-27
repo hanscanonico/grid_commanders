@@ -26,7 +26,7 @@ func before_each() -> void:
 	unit_db = Fixture.unit_db()
 	chart = Fixture.chart()
 	commander_db = Fixture.commander_db()
-	shard = ArenaShard.new(TerrainDB.load_default(), unit_db, chart, commander_db)
+	shard = ArenaShard.new(Fixture.terrain_db(), unit_db, chart, commander_db)
 
 
 func _pairing(

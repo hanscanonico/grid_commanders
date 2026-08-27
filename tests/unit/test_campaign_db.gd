@@ -66,7 +66,7 @@ func test_the_badge_and_the_order_read_the_same_key() -> void:
 ## The picker's card reads three authored things off every war. A campaign that
 ## leaves any of them empty is a row with a hole in it, and nothing else asks.
 func test_every_war_carries_the_card_the_picker_prints() -> void:
-	var terrain := TerrainDB.load_default()
+	var terrain := Fixture.terrain_db()
 	for campaign in CampaignDB.load_default().all():
 		assert_false(campaign.premise.is_empty(), "%s states a premise" % campaign.id)
 		assert_false(campaign.antagonist.is_empty(), "%s names an antagonist" % campaign.id)

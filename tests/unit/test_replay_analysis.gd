@@ -292,7 +292,7 @@ func test_a_unit_with_nothing_in_reach_is_not_idle() -> void:
 
 func test_banked_power_counts_a_full_meter_nobody_fires() -> void:
 	var state := _bare_state()
-	var db := CommanderDB.load_default()
+	var db := Fixture.commander_db()
 	state.set_commander(1, db.by_id(&"alina_ward"))
 	var co_state := state.commander_state(1)
 	co_state.charge = co_state.type.power_cost
@@ -335,7 +335,7 @@ func test_banked_power_reports_again_after_the_hold_breaks() -> void:
 
 func test_a_power_that_goes_off_resets_the_count() -> void:
 	var state := _bare_state()
-	var db := CommanderDB.load_default()
+	var db := Fixture.commander_db()
 	state.set_commander(1, db.by_id(&"alina_ward"))
 	state.commander_state(1).charge = state.commander_state(1).type.power_cost
 	var entries: Array = [{"c": "power", "target": [0, 0]}, {"c": "end_turn"}]

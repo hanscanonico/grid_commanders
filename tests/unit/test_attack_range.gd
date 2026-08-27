@@ -141,7 +141,7 @@ func test_strike_reach_is_the_budget_and_the_gun() -> void:
 	infantry.fuel = 1
 	assert_eq(AttackRange.strike_reach(state, infantry), 2, "an empty tank is a shorter reach")
 	var tank := state.units[3]
-	state.set_commander(2, CommanderDB.load_default().by_id(&"cass_orlov"))
+	state.set_commander(2, Fixture.commander_db().by_id(&"cass_orlov"))
 	var before := AttackRange.strike_reach(state, tank)
 	state.commander_state(2).power_active = true
 	assert_eq(AttackRange.strike_reach(state, tank), before + 1, "and a move bonus is a longer one")

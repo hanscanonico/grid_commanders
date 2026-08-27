@@ -31,7 +31,7 @@ func test_the_two_pools_share_no_seed() -> void:
 
 
 func test_every_pooled_board_is_a_land_duel_the_arena_can_seat() -> void:
-	var terrain_db := TerrainDB.load_default()
+	var terrain_db := Fixture.terrain_db()
 	var boards: Array[String] = ArenaPools.TRAINING_BOARDS.duplicate()
 	boards.append_array(ArenaPools.VALIDATION_BOARDS)
 	boards.append_array(ArenaPools.RESERVE_BOARDS)
