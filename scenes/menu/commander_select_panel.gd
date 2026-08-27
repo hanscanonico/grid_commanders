@@ -169,26 +169,8 @@ func chrome() -> Dictionary[String, Control]:
 
 
 func _build() -> void:
-	# Anchors *and* offsets: set_anchors_preset alone rewrites the offsets to
-	# preserve the rect the control already has, which for a page built in code and
-	# added to an already-sized menu is 0x0. That is what left this whole page laid
-	# out at its content's minimum size in the top-left corner, with nothing bounded
-	# by the viewport — the ground COM-31's missing Confirm button grew from.
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var bg := ColorRect.new()
-	bg.color = UiTheme.veil(0.985)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
-
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, UiTheme.PAGE_MARGIN)
-	add_child(margin)
-
-	var main := VBoxContainer.new()
-	main.add_theme_constant_override("separation", 6)
-	margin.add_child(main)
+	UiKit.page_veil(self)
+	var main := UiKit.page_body(self, 6)
 
 	main.add_child(_build_topbar())
 
