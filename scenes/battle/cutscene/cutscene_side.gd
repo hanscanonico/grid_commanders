@@ -635,16 +635,7 @@ func _draw_terrain_row(plate: Rect2) -> void:
 	for i in MAX_STARS:
 		var center := Vector2(first + _inward(STAR_STEP * i), plate.position.y + 10.0)
 		var tint := CutscenePalette.GOLD if i < stars else CutscenePalette.STAR_OFF
-		draw_colored_polygon(_star_points(center, 4.5), Color(tint, tint.a * plate_p))
-
-
-func _star_points(center: Vector2, radius: float) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for i in 10:
-		var reach := radius if i % 2 == 0 else radius * 0.45
-		var angle := -PI * 0.5 + float(i) * PI / 5.0
-		points.append(center + Vector2(cos(angle), sin(angle)) * reach)
-	return points
+		draw_colored_polygon(CutsceneFx.star_points(center, 4.5), Color(tint, tint.a * plate_p))
 
 
 # --- mirroring helpers -------------------------------------------------------
