@@ -466,6 +466,23 @@ if (($# == 0)); then
 			failed=$((failed + 1))
 		fi
 	done <<<"$finding_kinds"
+
+	# CLAUDE.md is the design of record and docs/ holds the instruments' committed
+	# measurements, so a citation nobody can follow is evidence gone missing. A
+	# token counts as a citation only when it names a top-level directory of this
+	# repo and carries a file extension — which is what keeps prose, a glob and a
+	# sibling repo's path (qualified with that repo's name) out of it.
+	cited_paths="$(
+		grep -ohE '(^|[^A-Za-z0-9_./~-])(core|ai|scenes|data|tools|docs|tests|maps|assets|autoload|addons)/[A-Za-z0-9_./-]*\.(md|gd|txt|tres|tscn|png|sh|py|json|cfg)' \
+			CLAUDE.md README.md docs/*.md | sed -E 's/^[^A-Za-z0-9_]//' | sort -u
+	)"
+	while read -r cited; do
+		[[ -z "$cited" ]] && continue
+		if [[ ! -e "$cited" ]]; then
+			echo "check: $cited is cited in CLAUDE.md, README.md or docs/ and does not exist" >&2
+			failed=$((failed + 1))
+		fi
+	done <<<"$cited_paths"
 fi
 
 if ((failed > 0)); then
