@@ -500,6 +500,24 @@ ever wrote**, named for a digest of the vector it carries, with an `index.json`
 mapping the name back to the block and the numbers. A champion is re-run by
 naming its file.
 
+### Watching one
+
+A campaign is hours to days of matches and its log only speaks at wave
+boundaries, so `tools/arena_status.sh` reads the artifacts the run has already
+written — the pool's status line and each block's `search.json` — and prints
+where it is now: whether the search is running, how many waves each block has
+finished, the best training score so far, and which dials have moved off the
+vector it started from. It plays nothing, writes nothing and is safe against a
+live run. With no argument it reads the newest run under `reports/ai_arena/`,
+and it refuses out loud rather than guessing when there is none.
+
+```sh
+tools/arena_status.sh                          # the newest run
+tools/arena_status.sh reports/ai_arena/gen4 --watch
+```
+
+`--watch` redraws every 10 s until interrupted; macOS ships no `watch(1)`.
+
 ### Resumable at three levels
 
 The pool already skips a shard whose records are on disk. Above that, a candidate
