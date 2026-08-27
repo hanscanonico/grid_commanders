@@ -35,8 +35,9 @@ func is_met(
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if not map.in_bounds(cell):
-		return "cell-owned trigger names %s, off a %dx%d board" % [cell, map.width, map.height]
+	var bounds_error := MissionBoardCheck.off_board(map, cell, "cell-owned trigger names")
+	if bounds_error != "":
+		return bounds_error
 	if not map.terrain_at(cell).is_property:
 		return (
 			"cell-owned trigger names %s, which is %s and cannot change hands"

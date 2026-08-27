@@ -41,8 +41,9 @@ func spawned_tags() -> Array[StringName]:
 
 
 func board_error(state: GameState, _team: int) -> String:
-	if not state.teams.has(team):
-		return "spawn lands units for army %d, which is not at this table" % team
+	var seat_error := MissionBoardCheck.absent_team(state, team, "spawn lands units for")
+	if seat_error != "":
+		return seat_error
 	for spawn: MissionSpawn in units:
 		if spawn == null or spawn.unit_type == null:
 			return "spawn holds an empty unit slot"
@@ -52,8 +53,9 @@ func board_error(state: GameState, _team: int) -> String:
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if not map.teams().has(team):
-		return "spawn lands units for army %d, which this board does not seat" % team
+	var seat_error := MissionBoardCheck.unseated_team(map, team, "spawn lands units for")
+	if seat_error != "":
+		return seat_error
 	if units.is_empty():
 		return "spawn lands nothing"
 	var landing: Dictionary[Vector2i, bool] = {}
@@ -78,8 +80,9 @@ func _placement_error(map: MapData, spawn: MissionSpawn) -> String:
 	if spawn == null or spawn.unit_type == null:
 		return "spawn holds an empty unit slot"
 	var what := spawn.unit_type.id
-	if not map.in_bounds(spawn.cell):
-		return "spawn lands %s at %s, off a %dx%d board" % [what, spawn.cell, map.width, map.height]
+	var bounds_error := MissionBoardCheck.off_board(map, spawn.cell, "spawn lands %s at" % what)
+	if bounds_error != "":
+		return bounds_error
 	var terrain := map.terrain_at(spawn.cell)
 	if not terrain.is_passable(spawn.unit_type.move_class):
 		return "spawn lands %s on %s, which it cannot stand on" % [what, terrain.id]

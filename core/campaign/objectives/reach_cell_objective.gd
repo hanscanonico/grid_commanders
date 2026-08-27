@@ -37,8 +37,9 @@ func definition_error(map: MapData, _team: int, unit_db: UnitDB) -> String:
 	var fieldable := _fieldable_classes(map, unit_db)
 	var named: Dictionary[Vector2i, bool] = {}
 	for cell: Vector2i in cells:
-		if not map.in_bounds(cell):
-			return "reach objective names %s, off a %dx%d board" % [cell, map.width, map.height]
+		var bounds_error := MissionBoardCheck.off_board(map, cell, "reach objective names")
+		if bounds_error != "":
+			return bounds_error
 		if named.has(cell):
 			return "reach objective names %s twice" % cell
 		if not _enterable(map.terrain_at(cell), fieldable):

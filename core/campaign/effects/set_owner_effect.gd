@@ -19,8 +19,10 @@ func apply(state: GameState, _team: int) -> void:
 
 
 func board_error(state: GameState, _team: int) -> String:
-	if team != MapData.NEUTRAL and not state.teams.has(team):
-		return "ownership is handed to army %d, which is not at this table" % team
+	if team != MapData.NEUTRAL:
+		var seat_error := MissionBoardCheck.absent_team(state, team, "ownership is handed to")
+		if seat_error != "":
+			return seat_error
 	for cell: Vector2i in cells:
 		if not state.map.in_bounds(cell):
 			return "ownership is set on %s, off the board" % cell
@@ -28,13 +30,16 @@ func board_error(state: GameState, _team: int) -> String:
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if team != MapData.NEUTRAL and not map.teams().has(team):
-		return "ownership is handed to army %d, which this board does not seat" % team
+	if team != MapData.NEUTRAL:
+		var seat_error := MissionBoardCheck.unseated_team(map, team, "ownership is handed to")
+		if seat_error != "":
+			return seat_error
 	if cells.is_empty():
 		return "ownership is set on no ground"
 	for cell: Vector2i in cells:
-		if not map.in_bounds(cell):
-			return "ownership is set on %s, off a %dx%d board" % [cell, map.width, map.height]
+		var bounds_error := MissionBoardCheck.off_board(map, cell, "ownership is set on")
+		if bounds_error != "":
+			return bounds_error
 		if not map.terrain_at(cell).is_property:
 			return (
 				"ownership is set on %s, which is %s and belongs to nobody"

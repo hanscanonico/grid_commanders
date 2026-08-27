@@ -21,6 +21,4 @@ func is_met(state: GameState, _player_team: int, _progress: MissionProgress) -> 
 func definition_error(map: MapData, player_team: int, _unit_db: UnitDB) -> String:
 	if team == player_team:
 		return "defeat objective names the player's own army %d" % team
-	if not map.teams().has(team):
-		return "defeat objective names army %d, which this board does not seat" % team
-	return ""
+	return MissionBoardCheck.unseated_team(map, team, "defeat objective names")
