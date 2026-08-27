@@ -6,6 +6,29 @@ extends GutTest
 
 const TIER_DIR := "res://data/ai"
 
+## Every dial that reads zero on all four shipped tiers, with why it ships that
+## way — the AIProfile side of test_commander_ai_advice.gd's ADVICE_COVERAGE.
+## Under the AI Judgement D1 contract an inert dial skips its capability
+## entirely, so each of these is code no shipped match runs, and seating one is
+## a balance change. Listed here, it is a change this file names.
+##
+## A reason is read off the design record, never invented — docs/difficulty_check.md,
+## docs/ai_arena_results.md, docs/causeway_measure.md and ai/ai_profile.gd's own
+## fields — and a dial nobody has measured says so. bank_scope and bank_rank_margin
+## are inert by nature rather than by verdict: zero is the shipped planner's own
+## answer, and what each does when moved is
+## tests/unit/test_ai_production_cadence.gd's.
+const DARK_DIALS := {
+	"focus_fire_bonus": "worthless on three refutations (docs/difficulty_check.md)",
+	"withdraw_weight": "negative at every value tried, then the arena left it at zero",
+	"join_weight": "AR6c's dial, declined through four arena waves (docs/ai_arena_results.md)",
+	"capture_goal_value_tiles": "inert from AE1-AE3; the arena's search never stepped off zero",
+	"capture_threat_aversion": "changed nothing on the free-for-all, never carried to the 2v2",
+	"standoff_band_tolerance": "no recorded measurement; a content gun is easier to close on",
+	"bank_scope": "zero is BANK_SCOPE_BOARD, one banking answer for the whole board",
+	"bank_rank_margin": "zero banks for a one-place improvement, which is the shipped planner",
+}
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -165,3 +188,44 @@ func test_hq_preference_comes_from_the_profile() -> void:
 		Vector2i(1, 0),
 		"without the HQ multiplier the closer city wins on step cost"
 	)
+
+
+## What a .tres can hold that this file can call inert: a number at zero. An
+## array or a StringName has no dark value, so the sweep below never asks.
+func _is_dark(value: Variant) -> bool:
+	var kind := typeof(value)
+	if kind != TYPE_INT and kind != TYPE_FLOAT:
+		return false
+	return value == 0
+
+
+func _tier_profiles() -> Array[AIProfile]:
+	var profiles: Array[AIProfile] = []
+	for tier in DifficultyDB.load_default().all():
+		profiles.append(tier.profile())
+	return profiles
+
+
+## Every dial DARK_DIALS names really is inert wherever it ships, so the
+## inventory cannot go stale by a tier seating one quietly.
+func test_every_listed_dark_dial_is_inert_on_every_tier() -> void:
+	var fields := _stored_fields()
+	for dial: String in DARK_DIALS:
+		assert_true(fields.has(dial), "%s: DARK_DIALS should name a stored field" % dial)
+		for profile in _tier_profiles():
+			assert_true(_is_dark(profile.get(dial)), "%s: listed as dark, seated instead" % dial)
+
+
+## The converse, and the half that makes the inventory a gate: a dial that is
+## zero everywhere and unlisted fails until somebody writes down why it ships
+## dark. Together with the test above, seating a listed dial or darkening an
+## unlisted one is a failure naming the dial rather than a silent balance move.
+func test_no_unlisted_dial_is_inert_on_every_tier() -> void:
+	var profiles := _tier_profiles()
+	assert_gt(profiles.size(), 2, "the ladder should ship more than a pair of tiers")
+	for field in _stored_fields():
+		var dark_everywhere := true
+		for profile in profiles:
+			dark_everywhere = dark_everywhere and _is_dark(profile.get(field))
+		if dark_everywhere:
+			assert_true(DARK_DIALS.has(field), "%s: inert on every tier and unlisted" % field)
