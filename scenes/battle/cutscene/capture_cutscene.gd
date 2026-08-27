@@ -1,5 +1,5 @@
 class_name CaptureCutscene
-extends CanvasLayer
+extends CutsceneDirector
 ## The capture cut-in: when an infantry squad takes a property, the board gives
 ## way to a single-panel frame — the squad marches up, mashes the building down
 ## over one to three hops as a points meter drains, and on completion the
@@ -13,19 +13,13 @@ extends CanvasLayer
 ## points_after`), never a call back into `capture_strength`, so a press
 ## mid-mash lands on the same number the terrain panel reports.
 ##
-## One clock, one exit — both `CutscenePlayback`'s, held rather than repeated.
+## One clock, one exit — both `CutsceneDirector`'s, held rather than repeated.
 ## Every visual below is a pure function of `_play.t`, so skipping is the clock
 ## jumping to its end rather than a race between cancelled tweens, and the
 ## awaitable `play()` resolves exactly once whatever the player presses (plan R2).
-## This file owns the beat sheet and what goes in the band; the shell around it —
-## letterbox, dim, camera punch, cue ledger — is shared with CombatCutscene.
-##
-## Owned by Battle, which assigns `view` and hands it to the animator — the same
-## assignment-not-constructor shape the rest use.
-
-## Emitted once per cut-in, when the wipe has cleared and control belongs to the
-## caller again. Every branch funnels through `_finish`, the only place it emits.
-signal finished
+## This file owns the beat sheet and what goes in the band; the lifecycle and the
+## shell around it — letterbox, dim, camera punch, cue ledger — are shared with
+## CombatCutscene.
 
 ## Beat budgets, in seconds. A completing capture runs ~2.4 s and a partial ~2.0
 ## — the tempo the plan's beat sheet asks for, and deliberately faster than the
@@ -67,18 +61,6 @@ class Beats:
 	var total := 0.0
 
 
-## The board the capture is taken on. Assigned by Battle before first use. The
-## cut-in reads the property's terrain and the two atlas rows off it — the owner's
-## and the capturer's — which is what dresses the panel and drives the flip.
-var view: BattleView
-## Playback rate and how much of the closing hold/wipe is kept — the AI-pacing
-## levers (plan CP3), set by the animator's shared streak state so a turn mixing
-## attacks and captures tightens as one run.
-var speed := 1.0
-var tail_scale := 1.0
-
-## The clock, the letterbox and the single exit, shared with CombatCutscene.
-var _play := CutscenePlayback.new()
 var _stage: CaptureStage
 var _hud: CaptureHud
 
@@ -92,7 +74,6 @@ var _chips := PackedInt32Array()
 func _ready() -> void:
 	_build()
 	_play.root.hide()
-	set_process(false)
 
 
 # --- playing -----------------------------------------------------------------
@@ -104,12 +85,7 @@ func _ready() -> void:
 ## through the view (see CutscenePlayback).
 func play(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> void:
 	_pose(result, unit, cell)
-	_play.begin(_beats.total, view)
-	_play.layout()
-	_apply()
-	_play.root.show()
-	set_process(true)
-	set_process_unhandled_input(true)
+	run()
 	await finished
 
 
@@ -119,10 +95,7 @@ func play(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> v
 ## Dev-only; play never poses.
 func pose_at(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i, at: float) -> void:
 	_pose(result, unit, cell)
-	_play.pose(_beats.total, at)
-	_play.layout()
-	_apply()
-	_play.root.show()
+	hold(at)
 
 
 ## The diorama, so a posed still can be read back. Dev-only, like `pose_at` and
@@ -132,37 +105,6 @@ func stage() -> CaptureStage:
 	return _stage
 
 
-## Fast-forwards every remaining beat to its end state. Never aborts: the clock is
-## set to the end, the final tableau is applied, and the same exit runs — which is
-## what makes a skip at any beat land on the right board.
-func skip() -> void:
-	_play.skip()
-
-
-func _process(delta: float) -> void:
-	if not _play.playing:
-		return
-	var done := _play.advance(delta * speed)
-	_apply()
-	if done:
-		_finish()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if _play.consume_skip(event):
-		get_viewport().set_input_as_handled()
-
-
-## The single exit. Every branch reaches it, and it emits once.
-func _finish() -> void:
-	if not _play.playing:
-		return
-	_play.end()
-	set_process(false)
-	set_process_unhandled_input(false)
-	finished.emit()
-
-
 # --- staging -----------------------------------------------------------------
 
 
@@ -170,7 +112,7 @@ func _finish() -> void:
 func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> void:
 	_result = result
 	var terrain := view.map.terrain_at(cell)
-	_play.accent = _accent_of(unit.team)
+	_play.accent = accent_of(unit.team)
 	# The two faction rows the flip crosses between, both SideIdentity's answer —
 	# and the second of them is the marching squad's row as well, since the squad
 	# *is* the capturer (see CaptureStage.bind).
@@ -181,16 +123,6 @@ func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> 
 	var hops := clampi(removed, 1, MAX_HOPS)
 	_chips = _split(removed, hops)
 	_beats = _plan(result.captured, hops, clampf(tail_scale, 0.0, 1.0))
-
-
-## A side's faction accent, asked of the identity that resolved the match rather
-## than of the commander directly — the sibling of CombatCutscene._accent_of, and
-## for the same reason. SideIdentity gives a commanded side its own faction's
-## colour and a commander-less one the classic its slot falls back to, and it is
-## the only one that knows about the mirror borrow: the plate must wear whatever
-## the marching squad beside it is drawn in, borrowed classic included.
-func _accent_of(team: int) -> Color:
-	return view.identity.theme(team).color_light
 
 
 ## Splits the points removed across the mashes, largest first, so the chips sum
@@ -229,12 +161,16 @@ static func _plan(captured: bool, hops: int, tail: float) -> Beats:
 	return beats
 
 
+## How long this capture runs: the beat sheet's own end.
+func _total() -> float:
+	return _beats.total
+
+
 # --- the frame ---------------------------------------------------------------
 
 
-## Everything the cut-in shows, as a pure function of the clock. Called once per
-## frame while playing and once by `skip`, so it may never do anything that only
-## makes sense the first time — sounds go through `_play.cue`.
+## Everything the cut-in shows — sounds go through `_play.cue`, which is what
+## keeps a beat crossed twice heard once.
 func _apply() -> void:
 	var present := clampf(
 		_play.window(Vector2(0.0, WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
