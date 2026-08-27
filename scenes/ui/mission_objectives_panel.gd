@@ -186,7 +186,7 @@ func layout_error() -> String:
 
 func _build() -> void:
 	custom_minimum_size = Vector2(_WIDTH, 0)
-	add_theme_stylebox_override("panel", _card_box())
+	add_theme_stylebox_override("panel", UiTheme.dark_panel_box(UiTheme.SLATE_800, _PAD, _PAD - 1))
 	# The card sits on the board, so it stops the pointer for the reason the docked
 	# bars do: the board renders behind it, and an event falling through would walk
 	# the game cursor onto a cell hidden under opaque paint.
@@ -316,6 +316,8 @@ func _first_line(text: String, color: Color) -> Label:
 ## command.
 func _place() -> void:
 	await get_tree().process_frame
+	if not is_inside_tree():  # rematch, menu exit or a batch scene change freed the card
+		return
 	if not visible:
 		return
 	reset_size()
@@ -327,15 +329,3 @@ func _place() -> void:
 static func _dock_position(dock: int, viewport: Vector2, card_size: Vector2) -> Vector2:
 	var x := viewport.x - card_size.x - _MARGIN if dock == _DOCK_RIGHT else float(_MARGIN)
 	return Vector2(x, UiTheme.HUD_TOP_H + _MARGIN)
-
-
-## The docked bars' slate with the ink outline and hard shadow every floating
-## surface in this design system carries — a card on the board, and it reads as
-## one.
-func _card_box() -> StyleBoxFlat:
-	var box := UiTheme.dark_panel_box()
-	box.content_margin_left = _PAD
-	box.content_margin_right = _PAD
-	box.content_margin_top = _PAD - 1
-	box.content_margin_bottom = _PAD - 1
-	return box
