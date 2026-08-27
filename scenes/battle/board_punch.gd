@@ -13,7 +13,7 @@ extends Control
 ##
 ## The still is exact rather than approximate. A camera zoom scales what is
 ## rendered about the camera's screen anchor, and that anchor is the middle of
-## the board band by construction (`BattleView._apply_board_offset`) — so scaling
+## the board band by construction (`BoardCamera._apply_board_offset`) — so scaling
 ## the captured frame about the same point draws what the camera zoom drew,
 ## without resampling the art.
 ##

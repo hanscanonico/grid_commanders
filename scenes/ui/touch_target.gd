@@ -5,7 +5,7 @@ extends Control
 ## (mobile plan D8, "hit areas first, drawn chrome second").
 ##
 ## Drawn heights are not free here — every pixel of the two docked HUD bars feeds
-## UiTheme.HUD_BARS_H, therefore BattleView's board viewport, therefore min_zoom
+## UiTheme.HUD_BARS_H, therefore BoardCamera's board viewport, therefore min_zoom
 ## and the floor rung of every board — so a control that grew to meet a thumb
 ## would move the opening frame of every match. A hit rectangle costs the board
 ## nothing.

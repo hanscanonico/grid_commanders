@@ -84,7 +84,7 @@ func _confirm(cell: Vector2i) -> void:
 
 
 ## A pan walks the cursor, because the cursor is what the camera rides:
-## `BattleView.move_cursor_to` parks the camera on the cell the cursor stands on,
+## `BoardCamera.move_cursor_to` parks the camera on the cell the cursor stands on,
 ## so a pan that wrote `camera.position` itself would be a second opinion about
 ## where the board is — and whole cells rest on whole world pixels for free.
 func _walk(cells: Vector2i) -> void:

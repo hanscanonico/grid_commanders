@@ -89,7 +89,8 @@ func save_and_leave() -> void:
 func confirm_abandon() -> void:
 	_battle.state = Battle.State.MENU
 	_battle.action_menu.open(
-		BattleMenus.abandon_confirm_actions(), _battle.view.screen_pos_for_cell(_battle.cursor_cell)
+		BattleMenus.abandon_confirm_actions(),
+		_battle.view.board_camera.screen_pos_for_cell(_battle.cursor_cell)
 	)
 
 

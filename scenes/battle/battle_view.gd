@@ -87,15 +87,19 @@ var mission_panel: MissionObjectivesPanel
 ## mobile chrome is never constructed at all. `setup` is what installs it.
 var mobile_dock: MobileDock
 
+## Where the board sits on screen: the cursor's cell, the rung, the docking shift
+## and the screen point of any cell. Handed the nodes it drives by `setup`, and
+## the one writer of `camera.zoom` and `camera.offset` from there on.
+var board_camera := BoardCamera.new()
+
 ## The transient jitter the animator lays over the board's docking shift. Set —
 ## and tweened — by BattleAnimator.shake_camera rather than written to the
 ## camera, so the two can never be the same property's second owner; see
-## `_apply_board_offset`, which composes both and is the only writer.
+## `BoardCamera`, which composes both and is the only writer.
 var shake_offset := Vector2.ZERO:
 	set(value):
 		shake_offset = value
-		if camera != null:
-			_apply_board_offset()
+		board_camera.shake_offset = value
 
 ## The transient flinch the cut-in's entry lays over the board — 1.0 at rest. It
 ## is a scale on a still of the board rather than on the camera, because the zoom
@@ -125,14 +129,15 @@ var _sprites: Dictionary[Unit, UnitSprite] = {}
 ## Teams the computer plays, from `set_ai_teams`. The view only needs them to know
 ## whose controls it must not offer; Battle owns the list.
 var _ai_teams: Array[int] = []
-## The zoom level the player is playing at. BattleZoom owns it and its clamp; this
-## is the last level it set, kept so a punch can ride over it.
-var _resting_zoom := 1.0
 
 
 ## Builds the tile sets from data and paints the opening board. Call once, after
 ## the node fields and `db`/`map`/`game` are set.
 func setup() -> void:
+	board_camera.camera = camera
+	board_camera.cursor = cursor
+	board_camera.map = map
+	board_camera.mission_panel = mission_panel
 	hud_bottom.identity = identity  # the bar names and tints sides through the same resolver
 	hud_bottom.chart = game.damage_chart  # and asks the rules which weapons a unit owns
 	hud_bottom.ground = db.ground()  # and paints a property chip on the same ground the board does
@@ -170,7 +175,7 @@ func setup() -> void:
 	_paint_map()
 	_paint_backdrop()
 	_spawn_unit_sprites()
-	_apply_camera_limits()
+	board_camera.setup()
 
 
 static func cell_center(cell: Vector2i) -> Vector2:
@@ -273,7 +278,7 @@ func _paint_autotile(layer: TileMapLayer, cell: Vector2i) -> bool:
 func _paint_backdrop() -> void:
 	var plains := db.by_id(&"plains")
 	var map_px := Vector2(map.size() * TILE)
-	var exposed := _viewport_size() / min_zoom()
+	var exposed := board_camera.viewport_size() / board_camera.min_zoom()
 	var margin := Vector2i(
 		ceili(maxf(0.0, (exposed.x - map_px.x) / 2.0) / TILE) + 1,
 		ceili(maxf(0.0, (exposed.y - map_px.y) / 2.0) / TILE) + 1
@@ -629,8 +634,8 @@ func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) ->
 	# lines, and those vary with the numbers in them. It sits up and to the
 	# right of the tile, and flips to its left rather than run off the screen.
 	var panel := damage_preview.get_combined_minimum_size()
-	var pos := screen_pos_for_cell(cell) + Vector2(4.0, 6.0 - panel.y)
-	if pos.x + panel.x > _viewport_size().x - 4.0:
+	var pos := board_camera.screen_pos_for_cell(cell) + Vector2(4.0, 6.0 - panel.y)
+	if pos.x + panel.x > board_camera.viewport_size().x - 4.0:
 		pos.x -= panel.x + 12.0
 	# The forecast is one of the three things still allowed to float over the map,
 	# but the bars are opaque: clamped into the board band it can never slide
@@ -638,26 +643,7 @@ func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) ->
 	damage_preview.position = pos.max(Vector2(4, UiTheme.HUD_TOP_H + 4))
 
 
-# --- cursor and camera geometry ----------------------------------------------
-
-
-## Moves the cursor sprite and the camera that follows it. The interaction
-## state that hangs off a cursor move stays in Battle.
-##
-## The camera lands on the cell rather than gliding to it. Cell centres are whole
-## world pixels and every rung of the ladder is whole, so a camera parked on one
-## draws the board on whole screen pixels — while `position_smoothing` spent the
-## third of a second after every cursor step somewhere between two cells, which
-## is a fractional rest by another name and the exact thing the whole texel
-## argument forbids. A step is one cell; the board should arrive with the cursor.
-func move_cursor_to(cell: Vector2i) -> void:
-	cursor.position = cell_center(cell)
-	camera.position = cursor.position
-	# The mission card parks in a board corner, so a cursor walking under it would
-	# be working blind; it steps aside from here rather than polling for the cell.
-	mission_panel.follow_cursor(
-		cell, roundi(TILE * camera.zoom.x), _board_origin_on_screen(), _viewport_size()
-	)
+# --- cursor ------------------------------------------------------------------
 
 
 ## The cell the cursor is standing on, read back off the sprite the view owns.
@@ -665,121 +651,3 @@ func move_cursor_to(cell: Vector2i) -> void:
 ## redraws, which must not have to ask for it.
 func _cursor_cell() -> Vector2i:
 	return Vector2i((cursor.position / float(TILE)).floor())
-
-
-## The level the player is playing at, from BattleZoom, which owns it and clamps
-## it against `min_zoom`.
-func set_zoom(zoom: float) -> void:
-	_resting_zoom = zoom
-	_apply_zoom()
-
-
-## **`camera.zoom` has one writer, and this is it**, and what it writes is a whole
-## rung of `BattleZoom`'s ladder and nothing else. The combat flinch used to be
-## composed in here as a multiplier; it is a scale on a rendered still now
-## (`BoardPunch`), which is what keeps the camera on a rung for the whole match.
-func _apply_zoom() -> void:
-	camera.zoom = Vector2.ONE * _resting_zoom
-	_apply_board_offset()
-	_apply_camera_limits()
-
-
-## Slides the camera so the cell it is centred on lands in the middle of the
-## *board band* — the strip between the two docked HUD bars — rather than the
-## middle of the window, which the bottom bar's larger height would put low.
-##
-## The bars are chrome outside the map, so the board's viewport is the window
-## minus their combined height, computed from constants that never change while a
-## match is running (hud handoff SPEC, "Fixed heights"). Applied on zoom because
-## Camera2D.offset is world units: the same screen inset is a different world
-## distance at each zoom level, and re-deriving it here is what keeps the band
-## centred without the camera ever re-laying-out mid-turn.
-##
-## **`camera.offset` has one writer, and this is it.** The docking shift and the
-## combat shake are two different things that both want that property; a shake
-## written straight to the camera settles at Vector2.ZERO and takes the docking
-## shift down with it, leaving the board half a bar low for the rest of the
-## match. So the shake is asked for through `shake_offset` and composed here.
-## Anything else that wants to move the camera belongs in this sum too.
-func _apply_board_offset() -> void:
-	camera.offset = Vector2(0, float(MobileDock.board_lift_px()) / camera.zoom.y) + shake_offset
-
-
-## The furthest out the player may zoom, with the backdrop filling whatever the
-## map's aspect leaves over. On a map smaller than the viewport this sits above
-## the default zoom, so a small map starts at its floor. Which rungs exist is
-## `BattleZoom`'s — this only hands it the board it has to frame.
-func min_zoom() -> float:
-	return BattleZoom.floor_for(_board_viewport_size(), Vector2(map.size() * TILE))
-
-
-## Camera limits pin the view inside the map. On an axis where the view shows
-## more than the whole map they expand just enough to centre it instead,
-## splitting the exposed backdrop evenly. Floor/ceil keeps the limit span at
-## least the visible extent, so the camera is never pushed against one edge.
-##
-## The vertical limits carry one extra term. Godot clamps the camera against the
-## *rendered* rect, which is the whole window, while the strip a player can
-## actually see is the board band; pushing the limits out by half the bars' world
-## height makes the engine's clamp land on the band's edges instead, so the board
-## still reaches the chrome rather than stopping short of it and showing a seam
-## of backdrop.
-func _apply_camera_limits() -> void:
-	var map_px := Vector2(map.size() * TILE)
-	var extra := ((_board_viewport_size() / camera.zoom.x - map_px) / 2.0).max(Vector2.ZERO)
-	var hidden := float(MobileDock.chrome_h()) / (2.0 * camera.zoom.y)
-	camera.limit_left = floori(-extra.x)
-	camera.limit_top = floori(-extra.y - hidden)
-	camera.limit_right = ceili(map_px.x + extra.x)
-	camera.limit_bottom = ceili(map_px.y + extra.y + hidden)
-
-
-func _viewport_size() -> Vector2:
-	return cursor.get_viewport().get_visible_rect().size
-
-
-## The strip of window the board actually gets: everything the two docked HUD
-## bars do not cover. Derived from constants, so it answers the same on every
-## call in a match and the camera is never re-framed mid-turn.
-func _board_viewport_size() -> Vector2:
-	return _viewport_size() - Vector2(0, MobileDock.chrome_h())
-
-
-## Where the board's first cell lands on screen, in the same transform
-## `screen_pos_for_cell` uses and without its tooltip nudge — the anchor a screen
-## rect for any cell is measured from.
-func _board_origin_on_screen() -> Vector2:
-	return -_screen_center() * camera.zoom + _viewport_size() / 2.0
-
-
-func screen_pos_for_cell(cell: Vector2i) -> Vector2:
-	var world := cell_center(cell) + Vector2(TILE, -TILE) / 2.0
-	return (world - _screen_center()) * camera.zoom + _viewport_size() / 2.0 + Vector2(6, 0)
-
-
-## The world point the middle of the screen shows, clamped the way the engine
-## clamps the camera itself so UI placed near a map edge lands on the tile it
-## points at rather than off it.
-##
-## `camera.offset` is part of the answer: it is what pushes the board down into
-## the band between the bars, so a transient overlay measured against the screen
-## centre has to carry the same shift or it would sit a bar's height off the tile
-## it points at.
-func _screen_center() -> Vector2:
-	return _camera_target() + camera.offset
-
-
-func _camera_target() -> Vector2:
-	var view_size := _viewport_size()
-	return Vector2(
-		clampf(
-			camera.position.x,
-			camera.limit_left + view_size.x / (2.0 * camera.zoom.x),
-			camera.limit_right - view_size.x / (2.0 * camera.zoom.x)
-		),
-		clampf(
-			camera.position.y,
-			camera.limit_top + view_size.y / (2.0 * camera.zoom.y),
-			camera.limit_bottom - view_size.y / (2.0 * camera.zoom.y)
-		)
-	)

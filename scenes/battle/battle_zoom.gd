@@ -1,8 +1,8 @@
 class_name BattleZoom
 extends RefCounted
 ## Owns the battle camera's zoom: the ladder itself, the current rung, and the
-## clamp against the view's floor. Battle decides when to zoom and the view owns
-## the camera itself — this sits between them, split out of battle.gd so the
+## clamp against the board's floor. Battle decides when to zoom and BoardCamera
+## owns the camera itself — this sits between them, split out of battle.gd so the
 ## interaction flow could shed a responsibility (the gdlintrc line ratchet).
 ##
 ## **The rungs are whole numbers, and the floor is the one that frames the board.**
@@ -25,13 +25,13 @@ const MAX_ZOOM := 5.0
 ## The rung a match opens on, wherever the board can hold it.
 const DEFAULT_ZOOM := 2.0
 
-var _view: BattleView
+var _board: BoardCamera
 var _rungs := rungs_for(DEFAULT_ZOOM)
 var _zoom := DEFAULT_ZOOM
 
 
-func _init(view: BattleView) -> void:
-	_view = view
+func _init(board: BoardCamera) -> void:
+	_board = board
 
 
 ## The furthest-out rung a board is offered: exactly far enough to frame the
@@ -51,9 +51,9 @@ static func rungs_for(floor_zoom: float) -> PackedFloat64Array:
 
 
 ## How far the player may zoom out depends on the viewport, so the ladder is
-## worked out here; the view owns the camera itself.
+## worked out here; BoardCamera owns the camera itself.
 func setup() -> void:
-	_rungs = rungs_for(_view.min_zoom())
+	_rungs = rungs_for(_board.min_zoom())
 	set_zoom(_zoom)
 
 
@@ -91,7 +91,7 @@ func handle_input(event: InputEvent) -> bool:
 ## the board resting between two rungs.
 func settle_at(index: int) -> void:
 	_zoom = _rungs[clampi(index, 0, _rungs.size() - 1)]
-	_view.set_zoom(_zoom)
+	_board.set_zoom(_zoom)
 
 
 ## Which rung a level asks for: the closest one, so the opening DEFAULT_ZOOM lands

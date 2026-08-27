@@ -308,7 +308,7 @@ func _ready() -> void:
 	handoff_button.pressed.connect(leave_handoff)
 	HandoffScreen.dress(%HandoffBackdrop, handoff_label, %HandoffHint, handoff_button)
 	commander_info_sheet.closed.connect(_close_commander_info)
-	_zoom = BattleZoom.new(view)
+	_zoom = BattleZoom.new(view.board_camera)
 	_zoom.setup()
 	pointer = BoardPointer.new(self, _zoom)
 	set_cursor_cell(Vector2i.ZERO)
@@ -391,7 +391,7 @@ func request_pause() -> void:
 		return
 	_pause_requested = true
 	_stepping = false  # this press wants the menu, so a step in flight stops being one
-	action_feedback.show_reason("Pausing...", view.screen_pos_for_cell(cursor_cell))
+	action_feedback.show_reason("Pausing...", view.board_camera.screen_pos_for_cell(cursor_cell))
 
 
 ## The AI runner's pause point, awaited between commands. Returns at once unless a
@@ -664,7 +664,7 @@ func confirm_at(cell: Vector2i) -> void:
 
 
 func _reject(reason: String, cell: Vector2i) -> void:
-	action_feedback.show_reason(reason, view.screen_pos_for_cell(cell))
+	action_feedback.show_reason(reason, view.board_camera.screen_pos_for_cell(cell))
 
 
 ## One of ours that cannot be commanded: it says why, then falls back to the
@@ -830,14 +830,14 @@ func _on_move_animation_done() -> void:
 		var special := _pending_special_actions
 		_pending_special_actions = []
 		special.append(BattleMenus.CANCEL)
-		action_menu.open(special, view.screen_pos_for_cell(dest))
+		action_menu.open(special, view.board_camera.screen_pos_for_cell(dest))
 		return
 	_attack_targets = perspective.attackable_cells(selected, dest, planned_path.size() > 1)
 	_drop_options = perspective.drop_options(selected, dest)
 	var actions := BattleMenus.unit_actions(
 		game, selected, planned_path, not _attack_targets.is_empty(), _drop_options
 	)
-	action_menu.open(actions, view.screen_pos_for_cell(dest))
+	action_menu.open(actions, view.board_camera.screen_pos_for_cell(dest))
 
 
 func _on_menu_action(action: StringName) -> void:
@@ -1094,7 +1094,7 @@ func _open_build_menu(cell: Vector2i) -> void:
 	var actions := BattleMenus.build_actions(
 		game, unit_db, map.terrain_at(cell), game.current_team, view.identity
 	)
-	action_menu.open(actions, view.screen_pos_for_cell(cell))
+	action_menu.open(actions, view.board_camera.screen_pos_for_cell(cell))
 
 
 func _open_map_menu() -> void:
@@ -1114,7 +1114,7 @@ func _open_map_menu() -> void:
 		BattleMenus.map_actions(
 			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db, card
 		),
-		view.screen_pos_for_cell(cursor_cell)
+		view.board_camera.screen_pos_for_cell(cursor_cell)
 	)
 	state = State.MENU
 
@@ -1386,7 +1386,7 @@ func _update_damage_preview() -> void:
 
 func set_cursor_cell(cell: Vector2i) -> void:
 	cursor_cell = cell
-	view.move_cursor_to(cell)
+	view.board_camera.move_cursor_to(cell)
 	refresh_panel()
 	if state == State.UNIT_SELECTED:
 		if move_range.has(cell) and move_range.can_stop_at(cell):

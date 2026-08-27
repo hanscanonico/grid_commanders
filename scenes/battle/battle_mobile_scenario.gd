@@ -413,7 +413,7 @@ func _pan_the_board() -> String:
 
 ## The rungs this board offers, asked of the ladder rather than rebuilt.
 func _rungs() -> PackedFloat64Array:
-	return BattleZoom.rungs_for(_battle.view.min_zoom())
+	return BattleZoom.rungs_for(_battle.view.board_camera.min_zoom())
 
 
 func _on_a_rung() -> String:

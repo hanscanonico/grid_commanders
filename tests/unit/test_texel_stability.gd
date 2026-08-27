@@ -191,7 +191,7 @@ func test_a_board_too_big_for_one_rung_still_gets_a_survey_rung() -> void:
 # --- where the board rests ----------------------------------------------------
 #
 # A whole rung is only half of a stable frame: the board also has to be *parked*
-# on whole screen pixels. `BattleView._apply_board_offset` docks it by
+# on whole screen pixels. `BoardCamera._apply_board_offset` docks it by
 # `MobileDock.board_lift_px() / zoom` **world** units, which the camera turns back into exactly
 # that many screen pixels — the rung cancels. So no rung can rescue a
 # fractional lift, and the lift itself is the whole of what has to be whole.
