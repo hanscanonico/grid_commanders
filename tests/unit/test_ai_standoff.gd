@@ -1,8 +1,8 @@
 extends GutTest
 ## `standoff_band_tolerance` · an indirect unit inside its band is content there.
 ##
-## `AIAdvance.position_rank` makes an indirect unit want exactly maximum stand-off from a
-## goal that is recomputed every turn, which is a potential that repels up close
+## `AIAdvance.position_rank` makes an indirect unit want exactly maximum stand-off
+## from a goal that is recomputed every turn, which is a potential that repels up close
 ## and attracts from afar: a battleship in one analysed recording cycled between
 ## two cells for eight days (docs/causeway_measure.md). Flat inside the band lets
 ## `AIAdvance.command_for`'s own cost tie-break hold the unit where it stands.

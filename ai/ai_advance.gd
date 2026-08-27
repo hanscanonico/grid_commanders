@@ -208,9 +208,8 @@ func _cohesion_penalty(
 ## can never join, and an aircraft toward ground it does not fight over. Same
 ## team, and deliberately not the whole side: a unit cannot rely on an army it
 ## does not command to hold station with it. The asymmetry with the planner's
-## `_defend_bonus`,
-## which does reach across the alliance through `GameState.allied`, is the point
-## — defended ground is the side's, formation is the army's.
+## defend bonus, which does reach across the alliance through `GameState.allied`,
+## is the point — defended ground is the side's, formation is the army's.
 func _column_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	if profile.cohesion_tiles <= 0.0:
@@ -324,11 +323,10 @@ static func produces(terrain: TerrainType) -> bool:
 ## The property to head for: the nearest one, less however many tiles a
 ## production property is worth going out of the way for (AI Economy D4).
 ##
-## The detour is the same judgement the planner's `_consider_captures` prices the
-## arrival with,
-## converted into the currency a goal is chosen in — so "worth taking" and "worth
-## walking to" cannot disagree, and a unit does not walk to a factory only to turn
-## around when it gets there. At either dial's inert value `_goal_steps` is the
+## The detour is the same judgement the planner prices the arrival with, converted
+## into the currency a goal is chosen in — so "worth taking" and "worth walking
+## to" cannot disagree, and a unit does not walk to a factory only to turn around
+## when it gets there. At either dial's inert value `_goal_steps` is the
 ## plain walk, so this reads as the nearest property.
 func _worth_walking_to(state: GameState, from: Vector2i, cells: Array[Vector2i]) -> Vector2i:
 	var best := cells[0]

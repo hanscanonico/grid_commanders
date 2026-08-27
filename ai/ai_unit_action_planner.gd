@@ -508,8 +508,8 @@ static func _better_refuge(
 ## What standing on `cell` costs this unit's own weapon, as a rank to minimise —
 ## and zero for a unit whose usefulness a refuge cannot take away.
 ##
-## It is `AIAdvance.position_rank`'s answer, because "where does this unit want to stand
-## relative to what it shoots" has one owner and a withdrawal must not be a second
+## It is `AIAdvance.position_rank`'s answer, because "where does this unit want to
+## stand relative to what it shoots" has one owner and a withdrawal must not be a second
 ## opinion on it: an indirect unit that steps back to a cell its own advance would
 ## walk it out of next turn is dithering, not retreating. That rank is what prices
 ## the defect this milestone exists for — it is the difference between a cell
