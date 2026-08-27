@@ -42,11 +42,32 @@ static var _chart: DamageChart
 ## dictionary leaves both sides neutral, which is what most boards want.
 static func state(map_text: String, commanders: Dictionary = {}) -> GameState:
 	var map := MapData.parse(map_text, terrain_db())
+	if map == null:
+		return null  # MapData.parse has already named the line it refused
 	var game := GameState.create(map, unit_db(), chart())
 	if game == null:
 		push_error("Fixture: the board does not build a GameState:\n%s" % map_text)
 		return null
 	game.rng.seed = DEFAULT_SEED
+	for team: int in commanders:
+		game.set_commander(team, commander_db().by_id(commanders[team]))
+	return game
+
+
+## The same match, on a board that lives on disk — `MapData.load_from_file`
+## rather than `parse`, and `map_path` set to where it came from, which is what
+## a save, a replay and a resume all read the board back through.
+static func state_from_file(path: String, commanders: Dictionary = {}) -> GameState:
+	var map := MapData.load_from_file(path, terrain_db())
+	if map == null:
+		push_error("Fixture: no board at %s" % path)
+		return null
+	var game := GameState.create(map, unit_db(), chart())
+	if game == null:
+		push_error("Fixture: the board at %s does not build a GameState" % path)
+		return null
+	game.rng.seed = DEFAULT_SEED
+	game.map_path = path
 	for team: int in commanders:
 		game.set_commander(team, commander_db().by_id(commanders[team]))
 	return game

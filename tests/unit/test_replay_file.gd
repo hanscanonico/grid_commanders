@@ -32,9 +32,7 @@ func _clear() -> void:
 
 
 func _state() -> GameState:
-	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	state.map_path = "res://maps/first_steps.txt"
+	var state := Fixture.state_from_file("res://maps/first_steps.txt")
 	state.day = 4
 	return state
 

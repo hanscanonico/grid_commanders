@@ -37,9 +37,7 @@ func _map() -> MapData:
 
 
 func _state() -> GameState:
-	var state := GameState.create(_map(), unit_db, chart)
-	state.map_path = FIXTURE
-	return state
+	return Fixture.state_from_file(FIXTURE)
 
 
 func test_the_board_deals_four_seats() -> void:

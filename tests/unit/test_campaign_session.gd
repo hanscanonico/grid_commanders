@@ -66,7 +66,7 @@ func _campaign() -> CampaignDefinition:
 
 
 func _state() -> GameState:
-	var state := GameState.create(MapData.parse(ROW, terrain_db), unit_db, chart)
+	var state := Fixture.state(ROW)
 	assert_not_null(state)
 	return state
 

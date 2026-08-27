@@ -35,13 +35,11 @@ const THEIRS := Vector2i(1, 0)
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
 	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 	CampaignSession.clear()
 
 
@@ -50,7 +48,7 @@ func after_each() -> void:
 
 
 func _state(allies: Array = []) -> GameState:
-	var state := GameState.create(MapData.parse(BOARD, terrain_db), unit_db, chart)
+	var state := Fixture.state(BOARD)
 	assert_not_null(state)
 	for team: int in allies:
 		state.sides[team] = 0

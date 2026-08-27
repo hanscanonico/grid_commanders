@@ -8,15 +8,8 @@ extends GutTest
 
 const DIR := "user://test_replay_recorder_path"
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 	_clear()
 
 
@@ -32,9 +25,7 @@ func _clear() -> void:
 
 
 func _state() -> GameState:
-	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	state.map_path = "res://maps/first_steps.txt"
+	var state := Fixture.state_from_file("res://maps/first_steps.txt")
 	return state
 
 
