@@ -254,8 +254,8 @@ max-public-methods: 22
 # it, to MenuCaptureDriver, which was already parsing the same command line in the
 # same `_ready`. main_menu.gd ends at 1112 and now carries a per-file budget in
 # tools/check_scripts.sh instead, so it cannot grow back into the driver's slack.
-# The map picker and the parallax backdrop are still the menu's and are still a
-# split that is due; that half is COM-38's, on its own trigger.
+# COM-38 has since landed: the map picker is scenes/menu/map_picker.gd's, and the
+# parallax backdrop is what is left of the menu's own to split.
 #
 # 1382 -> 1412 for MC4's aimed Command Power, and the ceiling is battle.gd's again
 # for the first time since 918: the two files moved in the same change and

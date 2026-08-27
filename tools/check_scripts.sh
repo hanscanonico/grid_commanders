@@ -180,12 +180,36 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # scenes/battle/board_pointer.gd owns where a pointing device lands on the board
 # now, and scenes/battle/touch_gestures.gd is the Node-free recogniser under it.
 # What stayed is the one dispatch arm, beside the zoom's.
+#
+# Four extractions have since landed and each left its budget line alone, one
+# PR owning this file at the time; these are those four measured back down to
+# what the files are now. A ratchet left slack is a ratchet not ratcheting.
+#
+# ai/ai_unit_action_planner.gd 1099 -> 665: the fallback advance. ai/ai_advance.gd
+# owns the goal a unit walks to, the column it keeps station with and the capture
+# claims its fellows stake; what stays here is plan_next, the _consider_* family
+# and the refuge.
+#
+# scenes/menu/main_menu.gd 1121 -> 896: the map picker (COM-38). The roster, the
+# selection, the cells and the words are one piece of state, so they are
+# scenes/menu/map_picker.gd's the way the seating is SeatStrip's, and the menu
+# asks it.
+#
+# core/save_codec.gd 1332 -> 1106: the questions that need the board.
+# core/save_board_check.gd is the seam this file already named — board_error, the
+# home-HQ board check, the cell and turn/winner reads and the carriage check —
+# and SaveCodec.board_error forwards to it.
+#
+# scenes/battle/battle_scenario_driver.gd 990 -> 737: the Command Power family.
+# scenes/battle/battle_power_scenario.gd takes the eleven power modes and their
+# consts, the way BattleFeedbackScenario and BattleMissionScenario already do,
+# and the driver keeps one dispatch arm.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1402
-scenes/menu/main_menu.gd 1121
-core/save_codec.gd 1332
-ai/ai_unit_action_planner.gd 1099
-scenes/battle/battle_scenario_driver.gd 990
+scenes/menu/main_menu.gd 896
+core/save_codec.gd 1106
+ai/ai_unit_action_planner.gd 665
+scenes/battle/battle_scenario_driver.gd 737
 "
 
 if [[ ! -x "$GODOT" ]]; then
