@@ -50,27 +50,11 @@ func _draw() -> void:
 		_draw_badge(font, Vector2(cell * TILE) + ORIGIN, str(_pips[cell]))
 
 
-## A green flag and the count, both outlined rather than boxed.
-##
-## The design reference set the chip on a filled ink panel. At a 44-pixel tile
-## that panel is trim; at this board's 16 it covers the building being captured,
-## so the player can no longer see what the number is counting down. Outlined
-## marks carry on any terrain and leave the tile readable underneath — the badge
-## idiom UnitSprite already wears for HP and fuel, for the same reason.
+## A green flag and the count, both outlined rather than boxed — BoardMark says
+## why, and draws the count.
 func _draw_badge(font: Font, origin: Vector2, text: String) -> void:
 	for mark: Rect2 in [POLE, PENNANT]:
 		draw_rect(Rect2(origin + mark.position, mark.size).grow(1.0), UiTheme.HARD_BORDER)
 	for mark: Rect2 in [POLE, PENNANT]:
 		draw_rect(Rect2(origin + mark.position, mark.size), UiTheme.CAPTURE)
-	var pen := origin + Vector2(TEXT_X, BASELINE)
-	draw_string_outline(
-		font,
-		pen,
-		text,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		UiTheme.SIZE_MARK,
-		OUTLINE,
-		UiTheme.HARD_BORDER
-	)
-	draw_string(font, pen, text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MARK, UiTheme.WHITE)
+	BoardMark.count(self, font, origin + Vector2(TEXT_X, BASELINE), text, OUTLINE)

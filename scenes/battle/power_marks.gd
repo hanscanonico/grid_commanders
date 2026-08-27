@@ -7,8 +7,7 @@ extends Node2D
 ## `PowerEffects` and handed over already through the fog gate, and this only
 ## draws them. It never reads GameState and never asks a commander anything.
 ##
-## Outlined marks rather than filled chips, for the reason CapturePips wears
-## them: on a 16-pixel tile a panel covers the very unit the mark is about.
+## Outlined marks rather than filled chips, for the reason BoardMark states.
 
 const TILE := BattleView.TILE
 
@@ -124,14 +123,4 @@ func _draw_cross(origin: Vector2, colour: Color) -> void:
 
 
 func _draw_number(font: Font, pen: Vector2, text: String) -> void:
-	draw_string_outline(
-		font,
-		pen,
-		text,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		UiTheme.SIZE_MARK,
-		int(OUTLINE),
-		UiTheme.HARD_BORDER
-	)
-	draw_string(font, pen, text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MARK, UiTheme.WHITE)
+	BoardMark.count(self, font, pen, text, int(OUTLINE))
