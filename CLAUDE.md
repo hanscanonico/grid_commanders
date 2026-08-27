@@ -1513,7 +1513,9 @@ plan is stated in full below and has no copy there.
   **MB8 (#388), the soak.** `tools/run_mobile_soak.gd` (`make mobile-soak`) **is an instrument and
   `docs/mobile_soak.md` its dated record**, superseded wholesale by a later soak in the
   `bulwark_balance.md` convention; it is out of `make verify` and it tunes nothing. Its planner loop
-  is `run_bulwark_measure.gd`'s with a clock around it rather than a second match engine. The
+  is `run_bulwark_measure.gd`'s with a clock around it rather than a second match engine — since
+  #401 literally so: `tools/balance/four_army_loop.gd` (`FourArmyLoop`) is the one loop both read,
+  the soak's clock an `on_command` callback, and a rejected command is loud in both. The
   measurement retires R5's *estimate*: a four-army Bulwark turn costs 249 ms (Normal) to 924 ms
   (Brutal) of mean planning on a quiet desktop, worst turns 1.1–3.5 s, with fog worth 2.9x of it (the
   AR1 cache being inert with fog on), so the phone answer — if one is wanted — belongs to the AI
