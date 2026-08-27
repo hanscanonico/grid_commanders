@@ -19,10 +19,6 @@ extends RefCounted
 ## literal seconds below: a tween timed by a number written here would ignore the
 ## player's setting forever.
 
-signal banner_finished
-signal power_banner_finished
-signal speech_finished
-
 ## The two durations that deliberately do *not* follow the setting: the shake is
 ## impact feedback and the pulse is idle UI, and neither is gameplay theatre.
 ## Named rather than written inline so the exception is visibly meant, and so
@@ -404,9 +400,6 @@ func _blocking_cards() -> Array[BlockingCard]:
 			BlockingCard.new(power_banner, node, true),
 			BlockingCard.new(mission_speech, node, true),
 		]
-		_cards[_TURN_CARD].finished.connect(func() -> void: banner_finished.emit())
-		_cards[_POWER_CARD].finished.connect(func() -> void: power_banner_finished.emit())
-		_cards[_SPEECH_CARD].finished.connect(func() -> void: speech_finished.emit())
 	return _cards
 
 
