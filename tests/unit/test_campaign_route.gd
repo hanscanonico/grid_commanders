@@ -16,21 +16,11 @@ extends GutTest
 const HELD := &"greenwater_held"
 
 
-func _mission(id: StringName) -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = id
-	mission.title = String(id)
-	mission.map_path = "res://maps/first_steps.txt"
-	return mission
-
-
 func _campaign(ids: Array = [&"one", &"two", &"three"]) -> CampaignDefinition:
-	var campaign := CampaignDefinition.new()
-	campaign.id = &"probe"
-	campaign.title = "Probe"
+	var missions: Array[MissionDefinition] = []
 	for id: StringName in ids:
-		campaign.missions.append(_mission(id))
-	return campaign
+		missions.append(CampaignFixture.mission(id))
+	return CampaignFixture.campaign(&"probe", missions)
 
 
 func _condition(flag: StringName, at_least := 1, at_most := -1) -> FlagCondition:
@@ -247,7 +237,7 @@ func test_a_mission_opening_on_a_mission_behind_it_is_allowed_and_ahead_is_not()
 
 
 func test_a_condition_nothing_could_hold_is_refused_when_the_mission_loads() -> void:
-	var mission := _mission(&"one")
+	var mission := CampaignFixture.mission(&"one")
 	mission.unlock_requires = _condition(HELD, 3, 1)
 	var map := MapData.load_from_file(mission.map_path, Fixture.terrain_db())
 	assert_string_contains(mission.definition_error(map, Fixture.unit_db()), "opens on")

@@ -22,27 +22,17 @@ C...Q
 """
 
 
-func _mission(map_path: String = "res://maps/first_steps.txt") -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = &"probe_one"
-	mission.title = "Probe One"
+func _mission(map_path: String = CampaignFixture.MAP_PATH) -> MissionDefinition:
+	var mission := CampaignFixture.capture_mission(&"probe_one")
 	mission.map_path = map_path
-	mission.player_team = 1
-	var objective := CaptureCellObjective.new()
-	objective.cell = Vector2i(0, 0)
-	mission.objectives.append(objective)
 	return mission
 
 
 func _campaign(count: int = 2) -> CampaignDefinition:
-	var campaign := CampaignDefinition.new()
-	campaign.id = &"__probe_carry_campaign"
-	campaign.title = "Probe"
+	var missions: Array[MissionDefinition] = []
 	for index in count:
-		var mission := _mission()
-		mission.id = StringName("probe_%d" % index)
-		campaign.missions.append(mission)
-	return campaign
+		missions.append(CampaignFixture.capture_mission(StringName("probe_%d" % index)))
+	return CampaignFixture.campaign(&"__probe_carry_campaign", missions)
 
 
 func _board(text: String) -> MapData:

@@ -10,21 +10,12 @@ extends GutTest
 const HELD := &"greenwater_held"
 
 
-func _mission(id: StringName) -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = id
-	mission.title = String(id)
-	mission.map_path = "res://maps/first_steps.txt"
-	return mission
-
-
 ## Four missions in two blocks of two, and a page after the first.
 func _campaign() -> CampaignDefinition:
-	var campaign := CampaignDefinition.new()
-	campaign.id = &"probe"
-	campaign.title = "Probe"
+	var missions: Array[MissionDefinition] = []
 	for id: StringName in [&"one", &"two", &"three", &"four"]:
-		campaign.missions.append(_mission(id))
+		missions.append(CampaignFixture.mission(id))
+	var campaign := CampaignFixture.campaign(&"probe", missions)
 	campaign.block_titles = ["First", "Second"]
 	campaign.block_lengths = [2, 2]
 	campaign.interludes.append(_interlude(0))

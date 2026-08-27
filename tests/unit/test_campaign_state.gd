@@ -16,21 +16,11 @@ func before_each() -> void:
 	campaign = _campaign([&"one", &"two", &"three"])
 
 
-func _mission(id: StringName) -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = id
-	mission.title = String(id)
-	mission.map_path = "res://maps/first_steps.txt"
-	return mission
-
-
 func _campaign(ids: Array) -> CampaignDefinition:
-	var definition := CampaignDefinition.new()
-	definition.id = &"probe"
-	definition.title = "Probe"
+	var missions: Array[MissionDefinition] = []
 	for id: StringName in ids:
-		definition.missions.append(_mission(id))
-	return definition
+		missions.append(CampaignFixture.mission(id))
+	return CampaignFixture.campaign(&"probe", missions)
 
 
 # --- ordering ---------------------------------------------------------------
@@ -58,7 +48,7 @@ func test_blocks_that_do_not_cover_the_campaign_are_refused() -> void:
 
 
 func test_a_campaign_naming_one_mission_twice_is_refused() -> void:
-	campaign.missions.append(_mission(&"one"))
+	campaign.missions.append(CampaignFixture.mission(&"one"))
 	assert_ne(campaign.definition_error(), "")
 
 

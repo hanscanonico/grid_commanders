@@ -50,19 +50,8 @@ func after_each() -> void:
 
 
 func _campaign() -> CampaignDefinition:
-	var campaign := CampaignDefinition.new()
-	campaign.id = PROBE
-	campaign.title = "Probe"
-	var mission := MissionDefinition.new()
-	mission.id = &"probe_one"
-	mission.title = "Probe One"
-	mission.map_path = FIRST_STEPS
-	mission.player_team = 1
-	var objective := CaptureCellObjective.new()
-	objective.cell = Vector2i(0, 0)
-	mission.objectives.append(objective)
-	campaign.missions.append(mission)
-	return campaign
+	var missions: Array[MissionDefinition] = [CampaignFixture.capture_mission(&"probe_one")]
+	return CampaignFixture.campaign(PROBE, missions)
 
 
 func _state() -> GameState:

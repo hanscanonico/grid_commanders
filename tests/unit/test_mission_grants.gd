@@ -8,6 +8,8 @@ extends GutTest
 ## `Command` is handed a board, so a hidden objective coming out of hiding and a
 ## mission ending are declared and collected rather than written.
 
+const RIDGE := "res://maps/fixtures/ridge.txt"
+
 const FIELD := """
 [terrain]
 CCQ...
@@ -35,10 +37,7 @@ func _map() -> MapData:
 
 ## A mission on this board, with whatever conditions a case is about.
 func _mission(objectives: Array[MissionObjective]) -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = &"fixture"
-	mission.map_path = "res://maps/fixtures/ridge.txt"
-	mission.player_team = 1
+	var mission := CampaignFixture.mission(&"fixture", RIDGE)
 	mission.objectives = objectives
 	return mission
 

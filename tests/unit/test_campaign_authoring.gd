@@ -39,22 +39,11 @@ Q.C.Q
 """
 
 
-func _mission(id: StringName = &"probe_one") -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = id
-	mission.title = String(id)
-	mission.map_path = "res://maps/first_steps.txt"
-	mission.player_team = 1
-	return mission
-
-
 func _campaign(ids: Array = [&"one", &"two"]) -> CampaignDefinition:
-	var campaign := CampaignDefinition.new()
-	campaign.id = &"probe"
-	campaign.title = "Probe"
+	var missions: Array[MissionDefinition] = []
 	for id: StringName in ids:
-		campaign.missions.append(_mission(id))
-	return campaign
+		missions.append(CampaignFixture.mission(id))
+	return CampaignFixture.campaign(&"probe", missions)
 
 
 func _condition(flag: StringName, at_least := 1, at_most := -1) -> FlagCondition:
@@ -181,7 +170,7 @@ func test_a_gated_mission_inside_a_block_is_fine() -> void:
 
 
 func test_a_mission_already_won_before_the_first_command_is_refused() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.objectives.append(_capture(Vector2i(0, 0)))
 	assert_string_contains(
 		mission.board_error(Fixture.state(BOARD)), "already over on the board it opens on"
@@ -189,7 +178,7 @@ func test_a_mission_already_won_before_the_first_command_is_refused() -> void:
 
 
 func test_a_mission_still_to_be_played_passes() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.objectives.append(_capture(Vector2i(2, 0)))
 	assert_eq(mission.board_error(Fixture.state(BOARD)), "")
 
@@ -197,14 +186,14 @@ func test_a_mission_still_to_be_played_passes() -> void:
 ## Tactical victory outranks the objective list, so taking the last enemy's home
 ## headquarters wins the mission with everything beside it still unticked.
 func test_an_objective_beside_a_match_ending_one_is_refused() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.objectives.append(_capture(Vector2i(4, 0)))
 	mission.objectives.append(_capture(Vector2i(2, 0)))
 	assert_string_contains(mission.board_error(Fixture.state(BOARD)), "ends the match")
 
 
 func test_a_match_ending_objective_on_its_own_is_the_mission() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.objectives.append(_capture(Vector2i(4, 0)))
 	assert_eq(mission.board_error(Fixture.state(BOARD)), "")
 
@@ -212,7 +201,7 @@ func test_a_match_ending_objective_on_its_own_is_the_mission() -> void:
 ## Felling one army of two enemies resolves nothing, so the objective beside it
 ## is judged exactly as it reads.
 func test_a_headquarters_that_leaves_another_enemy_standing_ends_nothing() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.objectives.append(_capture(Vector2i(4, 0)))
 	mission.objectives.append(_capture(Vector2i(2, 0)))
 	assert_eq(mission.board_error(Fixture.state(THREE_SEAT_BOARD)), "")
@@ -228,7 +217,7 @@ func _line(text: String, condition: FlagCondition = null) -> MissionLine:
 
 
 func test_a_briefing_every_line_of_which_is_gated_is_refused() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.briefing.append(_line("The relay held.", _condition(HELD)))
 	mission.briefing.append(_line("The relay fell.", _condition(HELD, 0, 0)))
 	assert_string_contains(
@@ -237,7 +226,7 @@ func test_a_briefing_every_line_of_which_is_gated_is_refused() -> void:
 
 
 func test_a_briefing_with_one_line_every_player_hears_is_fine() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.briefing.append(_line("Move on the relay at dawn."))
 	mission.briefing.append(_line("The relay held.", _condition(HELD)))
 	assert_eq(mission.story_error(Fixture.commander_db()), "")
@@ -246,7 +235,7 @@ func test_a_briefing_with_one_line_every_player_hears_is_fine() -> void:
 ## The debrief is asked on its own, so an unconditional briefing cannot vouch for
 ## a victory page that every route can leave empty.
 func test_an_all_gated_debrief_beside_a_plain_briefing_is_refused() -> void:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	mission.briefing.append(_line("Move on the relay at dawn."))
 	mission.victory.append(_line("And it held.", _condition(HELD)))
 	assert_string_contains(
@@ -280,7 +269,7 @@ func _deadline(last_day: int) -> DayDeadlineObjective:
 ## A mission that clears every content bar, which each assert below then breaks
 ## exactly one of.
 func _authored() -> MissionDefinition:
-	var mission := _mission()
+	var mission := CampaignFixture.mission(&"probe_one")
 	_writes(mission, HELD, _on_day(1))
 	mission.commanders = {1: &"tomas_reed"}
 	mission.briefing.append(_line("Move on the relay at dawn."))
@@ -338,13 +327,13 @@ func _own(count: int) -> OwnPropertiesObjective:
 ## The player opens holding their own headquarters, so a one-property goal is a
 ## free checkmark — on either list, and with the mission not over either way.
 func test_a_goal_already_met_at_deploy_is_refused() -> void:
-	var primary := _mission()
+	var primary := CampaignFixture.mission(&"probe_one")
 	primary.objectives.append(_capture(Vector2i(2, 0)))
 	primary.objectives.append(_own(1))
 	assert_string_contains(
 		primary.board_error(Fixture.state(BOARD)), "is met before the first command"
 	)
-	var bonus := _mission()
+	var bonus := CampaignFixture.mission(&"probe_one")
 	bonus.objectives.append(_capture(Vector2i(2, 0)))
 	bonus.bonus_objectives.append(_own(1))
 	assert_string_contains(
@@ -356,14 +345,14 @@ func test_a_goal_already_met_at_deploy_is_refused() -> void:
 ## beat reveals it, and "keep the marshal in the field" is the one goal that can
 ## fall back false.
 func test_a_goal_that_opens_true_by_design_is_left_alone() -> void:
-	var hidden := _mission()
+	var hidden := CampaignFixture.mission(&"probe_one")
 	hidden.objectives.append(_capture(Vector2i(2, 0)))
 	var prize := _own(1)
 	prize.hidden = true
 	prize.id = &"the_quiet_prize"
 	hidden.bonus_objectives.append(prize)
 	assert_eq(hidden.board_error(Fixture.state(BOARD)), "")
-	var escort := _mission()
+	var escort := CampaignFixture.mission(&"probe_one")
 	escort.objectives.append(_capture(Vector2i(2, 0)))
 	var ally := AllySurvivesObjective.new()
 	ally.team = 2
