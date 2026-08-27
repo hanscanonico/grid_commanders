@@ -155,6 +155,8 @@ static func _reveal_around(
 			#
 			# absi(dx) + absi(dy) is Grid.manhattan(Vector2i.ZERO, Vector2i(dx, dy)),
 			# inlined: this walk is per-cell in a fill run after every command.
+			# Its own walk rather than Grid.ring_offsets': the order visible_cells
+			# fills in is observable, and this one runs rows before columns.
 			if state.map.terrain_at(cell).conceals and absi(dx) + absi(dy) > 1:
 				continue  # cover hides anything not right next to a viewer
 			cells[cell] = true
