@@ -376,11 +376,21 @@ static func panel_box() -> StyleBoxFlat:
 
 ## The dark variant — slate surface for HUD-style overlays (the select page's
 ## backdrop panels). Same outline and shadow as the cream panel.
-static func dark_panel_box(fill := SLATE_800) -> StyleBoxFlat:
+##
+## `pad_x` / `pad_y` set the content margins when non-zero, which is what a card
+## on the board — not a docked bar — asks for: it carries its own words inside
+## its outline instead of being laid out around.
+static func dark_panel_box(fill := SLATE_800, pad_x: int = 0, pad_y: int = 0) -> StyleBoxFlat:
 	var box := flat(fill)
 	box.border_color = HARD_BORDER
 	box.set_border_width_all(PANEL_BORDER)
 	box.set_corner_radius_all(RADIUS)
+	if pad_x != 0:
+		box.content_margin_left = pad_x
+		box.content_margin_right = pad_x
+	if pad_y != 0:
+		box.content_margin_top = pad_y
+		box.content_margin_bottom = pad_y
 	return hard_shadow(box)
 
 

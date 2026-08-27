@@ -148,7 +148,7 @@ func _build() -> void:
 	# under it: unlike the docked bars, which stop the pointer on purpose, every
 	# control here is decoration. `make_decoration` walks the whole subtree, which
 	# is what keeps that true when a label is added later.
-	add_theme_stylebox_override("panel", _strip_box())
+	add_theme_stylebox_override("panel", UiTheme.dark_panel_box(UiTheme.SLATE_800, _PAD, _PAD - 1))
 
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 3)
@@ -192,15 +192,3 @@ func _place() -> void:
 	reset_size()
 	var view_w := get_viewport().get_visible_rect().size.x
 	position = Vector2(roundf((view_w - size.x) / 2.0), UiTheme.HUD_TOP_H + _MARGIN)
-
-
-## The docked bars' slate, with the ink outline and hard shadow the design
-## system's floating surfaces carry — the strip is a card on the board, not a
-## docked bar, and reads as one.
-func _strip_box() -> StyleBoxFlat:
-	var box := UiTheme.dark_panel_box()
-	box.content_margin_left = _PAD
-	box.content_margin_right = _PAD
-	box.content_margin_top = _PAD - 1
-	box.content_margin_bottom = _PAD - 1
-	return box
