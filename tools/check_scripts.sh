@@ -355,6 +355,18 @@ if (($# == 0)); then
 		failed=$((failed + 1))
 	fi
 
+	# A leading underscore is this repo's word for "private to its file", so a
+	# class reached for through one is either an API nobody named as such or a
+	# helper somebody should not be calling. Matching a call on a PascalCase
+	# receiver keeps `self._helper()` and a plain `_helper()` — the ordinary
+	# private calls — out of it.
+	private_reach="$(grep -rnoE '\b[A-Z][A-Za-z0-9]*\._[a-z_][a-z0-9_]*\(' core ai scenes tools --include='*.gd' || true)"
+	if [[ -n "$private_reach" ]]; then
+		echo "check: a \`_\`-prefixed member is private to its file — promote it or stop reaching for it" >&2
+		printf '%s\n' "$private_reach" >&2
+		failed=$((failed + 1))
+	fi
+
 	# The balance pool is Python, so `make test` never reaches it. Its two pure
 	# decisions — where a run may write, and what a resumed shard is keyed on —
 	# are pinned by its own self-check, which needs no engine.

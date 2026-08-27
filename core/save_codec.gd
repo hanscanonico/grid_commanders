@@ -51,7 +51,7 @@ const VERSION := 11
 const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 ## The version-rule schema — `Shape`, `KEY_RULES` and its per-list siblings, and the
-## generic readers over them (`is_shape`, `_entries_error` and friends) — moved to
+## generic readers over them (`is_shape`, `entries_error` and friends) — moved to
 ## `SaveSchema` (COM-184), shared with `ReplayCodec` rather than copied. This file
 ## keeps only what is the *save envelope's* own: which version wrote what is
 ## `SaveSchema.KEY_RULES`'s question, but which version a save may claim at all
@@ -459,10 +459,10 @@ static func validate(data: Dictionary) -> String:
 	# What a save of *this* version promised to write, it has to have written, holding
 	# what it promised to hold. See SaveSchema.KEY_RULES: below its version a field is old, at or
 	# above it a missing one is lost and a wrong-typed one is a typo.
-	var written := SaveSchema._keys_written_by(version, SaveSchema.KEY_RULES)
-	var missing := SaveSchema._missing_key(data, written)
+	var written := SaveSchema.keys_written_by(version, SaveSchema.KEY_RULES)
+	var missing := SaveSchema.missing_key(data, written)
 	if missing != "":
-		return SaveSchema._missing_message(
+		return SaveSchema.missing_message(
 			missing, SaveSchema.KEY_RULES, version, READABLE_VERSIONS[0]
 		)
 	for key: String in written:
@@ -491,18 +491,18 @@ static func validate(data: Dictionary) -> String:
 		func() -> String: return _auto_tiers_error(data),
 		func() -> String: return _seat_tiers_error(data),
 		func() -> String:
-			return SaveSchema._entries_error(
+			return SaveSchema.entries_error(
 				data["owners"], SaveSchema.OWNER_KEY_RULES, version, "owner"
 			),
 		func() -> String:
-			return SaveSchema._entries_error(
+			return SaveSchema.entries_error(
 				data.get("capture_progress", []),
 				SaveSchema.PROGRESS_KEY_RULES,
 				version,
 				"capture progress"
 			),
 		func() -> String:
-			return SaveSchema._entries_error(
+			return SaveSchema.entries_error(
 				data["units"], SaveSchema.UNIT_KEY_RULES, version, "unit"
 			),
 		func() -> String: return _unit_tags_error(data, version),
@@ -564,15 +564,15 @@ static func board_error(data: Dictionary, map: MapData, unit_db: UnitDB) -> Stri
 	# unlike `validate`'s walk, nothing below is derived from an earlier rule's answer.
 	var format_checks: Array[Callable] = [
 		func() -> String:
-			return SaveSchema._entries_error(
+			return SaveSchema.entries_error(
 				data.get("units"), SaveSchema.UNIT_KEY_RULES, version, "unit"
 			),
 		func() -> String:
-			return SaveSchema._entries_error(
+			return SaveSchema.entries_error(
 				data.get("owners"), SaveSchema.OWNER_KEY_RULES, version, "owner"
 			),
 		func() -> String:
-			return SaveSchema._entries_error(
+			return SaveSchema.entries_error(
 				data.get("capture_progress", []),
 				SaveSchema.PROGRESS_KEY_RULES,
 				version,
@@ -661,7 +661,7 @@ static func board_error(data: Dictionary, map: MapData, unit_db: UnitDB) -> Stri
 static func _home_hq_board_error(data: Dictionary, map: MapData, version: int) -> String:
 	if version < int(SaveSchema.KEY_RULES["home_hq"]["since"]):
 		return ""
-	var error := SaveSchema._entries_error(
+	var error := SaveSchema.entries_error(
 		data.get("home_hq"), SaveSchema.HOME_HQ_KEY_RULES, version, "home HQ"
 	)
 	if error != "":
@@ -718,13 +718,13 @@ static func _commander_block_error(data: Dictionary, version: int) -> String:
 	if version < int(SaveSchema.KEY_RULES["commanders"]["since"]):
 		return ""
 	var saved: Dictionary = data["commanders"]
-	var keys := SaveSchema._keys_written_by(version, SaveSchema.COMMANDER_KEY_RULES)
+	var keys := SaveSchema.keys_written_by(version, SaveSchema.COMMANDER_KEY_RULES)
 	for team in _roster(data):
 		var entry: Variant = saved.get(str(team))
 		if not (entry is Dictionary):
 			return "a version %d save is missing the commander for team %d" % [version, team]
 		var record := entry as Dictionary
-		var missing := SaveSchema._missing_key(record, keys)
+		var missing := SaveSchema.missing_key(record, keys)
 		if missing != "":
 			return (
 				"a version %d save is missing '%s' for team %d's commander"
@@ -1083,7 +1083,7 @@ static func _home_hq_error(data: Dictionary) -> String:
 	var version := _claimed_version(data)
 	if version < int(SaveSchema.KEY_RULES["home_hq"]["since"]):
 		return ""
-	var error := SaveSchema._entries_error(
+	var error := SaveSchema.entries_error(
 		data["home_hq"], SaveSchema.HOME_HQ_KEY_RULES, version, "home HQ"
 	)
 	if error != "":
