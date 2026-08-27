@@ -20,7 +20,7 @@ func before_each() -> void:
 
 
 func test_ground_units_burn_no_fuel_standing_still() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := Fixture.state(Fixture.LONE_TANK)
 	state.units[0].fuel = 40
 	EndTurnCommand.new().apply(state)
 	EndTurnCommand.new().apply(state)  # back to red

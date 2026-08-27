@@ -71,7 +71,7 @@ func test_an_unknown_id_reads_as_the_loudest_step() -> void:
 
 
 func test_the_map_menu_offers_one_sound_row_reading_off_settings() -> void:
-	var rows := BattleMenus.map_actions(Fixture.state("[terrain]\nB."))
+	var rows := BattleMenus.map_actions(Fixture.state(Fixture.NEUTRAL_BASE))
 	var ids := _ids(rows)
 	assert_eq(ids.count(&"sound"), 1, "exactly one Sound row")
 	var label := ""
@@ -86,7 +86,7 @@ func test_the_map_menu_offers_one_sound_row_reading_off_settings() -> void:
 
 
 func test_every_value_row_is_offered_once_and_declares_how_it_steps() -> void:
-	var rows := BattleMenus.map_actions(Fixture.state("[terrain]\nB."))
+	var rows := BattleMenus.map_actions(Fixture.state(Fixture.NEUTRAL_BASE))
 	var ids := _ids(rows)
 	for row: StringName in Settings.VALUE_ROWS:
 		assert_eq(ids.count(row), 1, "exactly one %s row" % row)

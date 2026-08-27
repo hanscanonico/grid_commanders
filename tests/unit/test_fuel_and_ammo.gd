@@ -12,7 +12,7 @@ func before_each() -> void:
 
 
 func test_units_start_with_full_tanks() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := Fixture.state(Fixture.LONE_TANK)
 	assert_eq(state.units[0].fuel, 70)
 	assert_eq(state.units[0].ammo, 9)
 
@@ -29,7 +29,7 @@ func test_movement_spends_fuel_by_terrain_cost() -> void:
 
 
 func test_fuel_caps_movement_range() -> void:
-	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY_WIDE)
 	state.units[0].fuel = 1
 	var reachable := MovementResolver.reachable(state, state.units[0])
 	assert_true(reachable.has(Vector2i(1, 0)))
@@ -128,7 +128,7 @@ func test_turn_start_resupplies_carried_passenger() -> void:
 
 
 func test_no_resupply_in_the_field() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := Fixture.state(Fixture.LONE_TANK)
 	state.units[0].fuel = 5
 	EndTurnCommand.new().apply(state)
 	EndTurnCommand.new().apply(state)

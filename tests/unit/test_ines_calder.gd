@@ -16,7 +16,7 @@ func before_each() -> void:
 
 
 func _state() -> GameState:
-	return Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", {1: &"ines_calder"})
+	return Fixture.state(Fixture.TANK_VS_INFANTRY, {1: &"ines_calder"})
 
 
 func _fight(state: GameState) -> Engagement:

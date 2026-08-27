@@ -30,6 +30,33 @@ extends RefCounted
 ## `RandomNumberGenerator`'s stream rather than mixing into it.
 const DEFAULT_SEED := 1701
 
+## The suite's stock situations, named for what is on the board rather than for
+## its glyphs. A board earns a name here at four call sites; below that it stays
+## spelled out where it is played, because a name a reader has to look up buys
+## less than the four escaped lines it saves.
+
+## Two plains: team 1's tank at (0, 0), team 2's infantry beside it at (1, 0).
+const TANK_VS_INFANTRY := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+
+## Two plains, team 1's infantry alone at (0, 0).
+const LONE_INFANTRY := "[terrain]\n..\n[units]\n1 i 0 0"
+
+## Four plains in a row, team 1's infantry alone at the west end.
+const LONE_INFANTRY_WIDE := "[terrain]\n....\n[units]\n1 i 0 0"
+
+## Two plains, team 1's tank alone at (0, 0).
+const LONE_TANK := "[terrain]\n..\n[units]\n1 t 0 0"
+
+## Three plains: team 1's artillery at (0, 0), team 2's tank two cells east —
+## outside a direct weapon's reach and inside the lob's band.
+const ARTILLERY_VS_TANK := "[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0"
+
+## A base and a plain, nobody's and nothing on either.
+const NEUTRAL_BASE := "[terrain]\nB."
+
+## The same board with team 1 holding the base, so it can build.
+const OWNED_BASE := "[terrain]\nB.\n[owners]\n1 0 0"
+
 static var _terrain_db: TerrainDB
 static var _unit_db: UnitDB
 static var _commander_db: CommanderDB

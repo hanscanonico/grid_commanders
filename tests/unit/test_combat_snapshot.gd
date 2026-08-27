@@ -25,7 +25,7 @@ func before_each() -> void:
 ## already hold their post-combat HP. The snapshot is the only record of what
 ## they went in with.
 func test_resolve_snapshots_the_hp_both_sides_went_in_with() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.rng.seed = 11
 	var attacker := state.units[0]
 	var defender := state.units[1]
@@ -43,7 +43,7 @@ func test_resolve_snapshots_the_hp_both_sides_went_in_with() -> void:
 ## from the state, so the cut-in's entire "this side was still standing a moment
 ## ago" comes from the snapshot.
 func test_resolve_snapshots_survive_a_kill() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.rng.seed = 7
 	var defender := state.units[1]
 	defender.hp = 10  # any hit kills
@@ -58,7 +58,7 @@ func test_resolve_snapshots_survive_a_kill() -> void:
 ## that exchange and no other. An indirect attack — no counter, no reply — still
 ## records both sides, because the cut-in stages both halves either way.
 func test_resolve_snapshots_an_unanswered_volley() -> void:
-	var state := Fixture.state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	var state := Fixture.state(Fixture.ARTILLERY_VS_TANK)
 	state.rng.seed = 3
 	var attacker := state.units[0]
 	attacker.hp = 41  # 5 displayed
@@ -89,7 +89,7 @@ func test_resolve_snapshots_the_hp_both_sides_came_out_with() -> void:
 ## A killed unit leaves the state, and an unanswered volley leaves the attacker
 ## untouched: the two ends of the range the after-snapshot has to cover.
 func test_resolve_snapshots_a_kill_and_an_unanswered_volley() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.rng.seed = 7
 	var defender := state.units[1]
 	defender.hp = 10  # any hit kills
@@ -103,10 +103,10 @@ func test_resolve_snapshots_a_kill_and_an_unanswered_volley() -> void:
 ## gave it. The cut-in arcs an indirect round higher, and asking AttackRange again
 ## at replay time is the second opinion the plan's D1 forbids.
 func test_resolve_snapshots_whether_the_opening_shot_was_lobbed() -> void:
-	var flat := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var flat := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	flat.rng.seed = 3
 	assert_false(CombatResolver.resolve(flat, flat.units[0], flat.units[1]).attacker_indirect)
-	var lobbed := Fixture.state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	var lobbed := Fixture.state(Fixture.ARTILLERY_VS_TANK)
 	lobbed.rng.seed = 3
 	var result := CombatResolver.resolve(lobbed, lobbed.units[0], lobbed.units[1])
 	assert_true(result.attacker_indirect)

@@ -131,7 +131,7 @@ func test_indirect_unit_closes_in_when_out_of_range() -> void:
 
 
 func test_ends_turn_when_nothing_left() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	state.units[0].acted = true
 	var command := ai.plan_next_command(state)
 	assert_true(command is EndTurnCommand)

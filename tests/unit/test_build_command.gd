@@ -12,7 +12,7 @@ func before_each() -> void:
 
 
 func test_build_spawns_exhausted_unit_and_charges() -> void:
-	var state := Fixture.state("[terrain]\nB.\n[owners]\n1 0 0")
+	var state := Fixture.state(Fixture.OWNED_BASE)
 	# owned base pays 1000 on day 1
 	var command := BuildCommand.new(1, unit_db.by_id(&"infantry"), Vector2i(0, 0))
 	assert_eq(command.validate(state), "")
@@ -26,13 +26,13 @@ func test_build_spawns_exhausted_unit_and_charges() -> void:
 
 
 func test_unknown_unit_type_rejected() -> void:
-	var state := Fixture.state("[terrain]\nB.\n[owners]\n1 0 0")
+	var state := Fixture.state(Fixture.OWNED_BASE)
 	var command := BuildCommand.new(1, unit_db.by_id(&"no_such_unit"), Vector2i(0, 0))
 	assert_eq(command.validate(state), "unknown unit type")
 
 
 func test_insufficient_funds_rejected() -> void:
-	var state := Fixture.state("[terrain]\nB.\n[owners]\n1 0 0")
+	var state := Fixture.state(Fixture.OWNED_BASE)
 	var command := BuildCommand.new(1, unit_db.by_id(&"md_tank"), Vector2i(0, 0))
 	assert_eq(command.validate(state), "insufficient funds")
 
@@ -66,7 +66,7 @@ func test_off_turn_build_rejected() -> void:
 
 
 func test_rout_by_combat_sets_winner() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.rng.seed = 11
 	var blue := state.units[1]
 	blue.hp = 10  # last blue unit; any hit kills
@@ -90,7 +90,7 @@ func test_airport_builds_aircraft() -> void:
 
 
 func test_a_base_cannot_build_aircraft() -> void:
-	var state := Fixture.state("[terrain]\nB.\n[owners]\n1 0 0")
+	var state := Fixture.state(Fixture.OWNED_BASE)
 	state.funds[1] = 99999
 	var command := BuildCommand.new(1, unit_db.by_id(&"bomber"), Vector2i(0, 0))
 	assert_eq(command.validate(state), "base does not build bomber")

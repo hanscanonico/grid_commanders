@@ -34,7 +34,7 @@ func _fight(attacker: Unit, defender: Unit) -> Engagement:
 
 
 func test_teams_start_neutral() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	for team in GameState.TEAMS:
 		assert_eq(state.commander_of(team).id, CommanderType.NEUTRAL_ID)
 		assert_false(state.commander_of(team).has_power())
@@ -43,7 +43,7 @@ func test_teams_start_neutral() -> void:
 
 
 func test_neutral_hooks_return_the_pre_commander_rules() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	var tank := state.units[0]
 	var infantry := state.units[1]
 	var co := state.commander_of(1)
@@ -97,7 +97,7 @@ func test_golden_damage_matrix_for_the_neutral_commander() -> void:
 ## less well. Pinned here because both terms sit inside the same multiplier
 ## chain the doctrines hook into.
 func test_golden_damage_matrix_for_damaged_units() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.units[0].hp = 50  # 5 displayed
 	# 75 * 0.5 * (1 - 0.1 * 1 * 1.0) = 33.75 -> 34.
 	assert_eq(

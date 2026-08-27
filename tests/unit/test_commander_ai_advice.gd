@@ -85,7 +85,7 @@ func _blind_profile() -> AIProfile:
 
 
 func test_the_neutral_commander_advises_nothing() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	var co := state.commander_of(1)
 	var tank := state.units[0]
 	assert_eq(co.stand_value(state, tank, Vector2i(1, 0)), 0)

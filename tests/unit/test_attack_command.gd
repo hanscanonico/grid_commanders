@@ -18,7 +18,7 @@ func test_move_and_fire_applies() -> void:
 
 
 func test_fire_in_place_applies() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.rng.seed = 42
 	var command := AttackCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
 	assert_eq(command.validate(state), "")
@@ -39,7 +39,7 @@ func test_friendly_target_rejected() -> void:
 
 
 func test_empty_target_cell_rejected() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := Fixture.state(Fixture.LONE_TANK)
 	var command := AttackCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
 	assert_eq(command.validate(state), "no unit at the target cell")
 
@@ -59,7 +59,7 @@ func test_indirect_cannot_move_and_fire() -> void:
 
 
 func test_indirect_fires_within_ring() -> void:
-	var state := Fixture.state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	var state := Fixture.state(Fixture.ARTILLERY_VS_TANK)
 	state.rng.seed = 8
 	var command := AttackCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(2, 0))
 	assert_eq(command.validate(state), "")
@@ -74,7 +74,7 @@ func test_indirect_minimum_range_enforced() -> void:
 
 
 func test_acted_unit_rejected_via_move_rules() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.units[0].acted = true
 	var command := AttackCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
 	assert_eq(command.validate(state), "unit has already acted")
