@@ -100,9 +100,11 @@ func atlas_row(team: int) -> int:
 
 ## The atlas row a *cell* is drawn in: its owner's faction row on a property, the
 ## untinted neutral row on ground that wears nobody's colours. `owner_row` is
-## already an `atlas_row` answer, so this is the one place the tinted question is
-## asked — the board, both cut-ins and the scenario driver's row check have to
-## agree on it, and a drawer spelling it again is how they stop.
+## already an `atlas_row` answer, so this is where the tinted question is asked:
+## both cut-in stages and the scenario driver's row check come here rather than
+## spelling it, which is what stopped that check re-deriving the rule it checks.
+## The board's own painters (BattleView, HudBottomBar, MapThumbnail) still spell
+## it and are the next callers.
 static func terrain_row(terrain: TerrainType, owner_row: int) -> int:
 	return owner_row if terrain.team_tinted else NEUTRAL_ROW
 
