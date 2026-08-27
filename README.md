@@ -35,7 +35,10 @@ make campaigns       # the campaign content gate (what it refuses: docs/campaign
 make determinism     # replay one pinned balance match; byte-diff it against the committed golden
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
+make format-check    # gdformat --check — report what it would rewrite, change nothing
 make tiles           # rebuild the art: generator atlases (SPRITEGEN=<path>), UI chrome, import
+make atlases         # the first half alone: the generator's sheets (SPRITEGEN=<path>)
+make ui-art          # the second alone: the overlay, cursor and icon this repo draws itself
 make audio           # reinstall the sound effects + music from the sibling audio_generator repo
 make portraits       # regenerate the commander portraits + faction emblems
 make portraits-check # bake them in memory and byte-diff against the committed PNGs
@@ -48,6 +51,10 @@ make gallery-screenshot   # render all twenty-three commander cards (the G1 gate
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make bulwark-measure      # Bulwark's win spread over N seeds -> reports/ (docs/bulwark_balance.md)
+make board-measure BOARD="--map=causeway --grouping=ffa --seeds=20"      # the same instrument on
+make board-measure BOARD="--map=compass --grouping=1+3v2+4 --tier=hard"  # any four-army board and
+                          # any tier: the win spread, and how long a match takes to get there
+                          # (docs/bulwark_balance.md)
 make campaign-difficulty  # how hard every mission plays -> reports/ (docs/campaign_difficulty.md)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
 make balance-pool         # the same engine, sharded across processes: resumable, several cores
@@ -55,6 +62,8 @@ make ai-arena             # play two arbitrary AIProfiles against each other -> 
 make arena-report         # score an arena run -> a leaderboard (docs/ai_arena.md)
 make arena-anchors ARENA_POOL=training   # play one fixed pool of the three shipped tiers, and score it
 make arena-search SEARCH="--block=all --dry-run"   # search a block of planner dials (state the budget first)
+tools/arena_status.sh [run] [--watch]     # read-only: where a running search is now, from the
+                          # artifacts it has already written (docs/ai_arena.md)
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
