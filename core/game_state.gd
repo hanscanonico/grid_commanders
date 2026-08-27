@@ -152,11 +152,11 @@ static func create(
 	state.damage_chart = p_damage_chart
 	if p_rules_config != null:
 		state.rules_config = p_rules_config
-	var repeated := Seating._repeated_seat(p_seats)
+	var repeated := Seating.repeated_seat(p_seats)
 	if repeated != 0:
 		push_error("GameState: seats %s name seat %d twice" % [p_seats, repeated])
 		return null
-	var unseated := Seating._unseated(p_map.teams(), p_seats)
+	var unseated := Seating.unseated(p_map.teams(), p_seats)
 	if not unseated.is_empty():
 		push_error(
 			(
@@ -165,7 +165,7 @@ static func create(
 			)
 		)
 		return null
-	state.teams = Seating._filled_seats(p_map.teams(), p_seats)
+	state.teams = Seating.filled_seats(p_map.teams(), p_seats)
 	if state.teams.size() < MIN_SEATS:
 		push_error(
 			(
@@ -174,7 +174,7 @@ static func create(
 			)
 		)
 		return null
-	state.property_owners = Seating._owners_of(p_map, state.teams)
+	state.property_owners = Seating.owners_of(p_map, state.teams)
 	state.home_hq = Seating.home_hqs(p_map, state.teams)
 	state.current_team = state.teams[0]
 	for team in state.teams:

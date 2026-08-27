@@ -184,7 +184,7 @@ func test_a_seating_that_leaves_fewer_than_two_armies_is_refused() -> void:
 
 
 ## A seating nobody could have meant, refused rather than absorbed — and reported as
-## the repeat it is, not as the short roster `Seating._filled_seats` would have made
+## the repeat it is, not as the short roster `Seating.filled_seats` would have made
 ## of it. The save format has always held a roster to this; the sim now answers the
 ## same.
 func test_a_seating_that_names_the_same_seat_twice_is_refused() -> void:

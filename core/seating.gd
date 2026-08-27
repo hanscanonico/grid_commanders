@@ -12,12 +12,12 @@ extends RefCounted
 ## names none twice.
 ##
 ## A repeat is refused rather than absorbed, even though the roster it would have
-## produced is the right one: it is a seating nobody could have meant, `_filled_seats`
+## produced is the right one: it is a seating nobody could have meant, `filled_seats`
 ## would silently make it mean something, and the count check would then report a
 ## short roster for a list that names enough seats. It is also what a save is held to
 ## (`SaveCodec._is_seatable`), and two authorities answering "is this a legal seating"
 ## differently is how the two drift apart.
-static func _repeated_seat(seats: Array[int]) -> int:
+static func repeated_seat(seats: Array[int]) -> int:
 	var seen: Dictionary[int, bool] = {}
 	for team in seats:
 		if seen.has(team):
@@ -33,7 +33,7 @@ static func _repeated_seat(seats: Array[int]) -> int:
 ## refusing a seating that leaves one army: `--seats=` is typed by hand, and a typo
 ## that narrows the roster in silence launches a different match than the one asked
 ## for — which is the failure nobody would think to look for.
-static func _unseated(roster: Array[int], seats: Array[int]) -> Array[int]:
+static func unseated(roster: Array[int], seats: Array[int]) -> Array[int]:
 	var unknown: Array[int] = []
 	for team in seats:
 		if not roster.has(team):
@@ -43,13 +43,13 @@ static func _unseated(roster: Array[int], seats: Array[int]) -> Array[int]:
 
 ## The board's roster narrowed to the seats a match fills, in seat order. Empty
 ## `seats` is every one of them; every seat named is one the board deals, which
-## `_unseated` has already answered for.
+## `unseated` has already answered for.
 ##
 ## Never a renumber: closing seat 2 of four leaves `[1, 3, 4]`, because `[owners]`,
 ## `[units]`, the liveries and the commander picks are all keyed by the seat's own
 ## number. Turn order is roster order over what is left, and the day still wraps on
 ## the roster, so a gap costs nothing — both read the list by index.
-static func _filled_seats(roster: Array[int], seats: Array[int]) -> Array[int]:
+static func filled_seats(roster: Array[int], seats: Array[int]) -> Array[int]:
 	if seats.is_empty():
 		return roster
 	var filled: Array[int] = []
@@ -62,7 +62,7 @@ static func _filled_seats(roster: Array[int], seats: Array[int]) -> Array[int]:
 ## The board's starting ownership with the vacant seats' ground opened up. A
 ## property nobody at the table owns is neutral rather than absent from the board:
 ## it is the prize a reduced match is played over.
-static func _owners_of(map: MapData, roster: Array[int]) -> Dictionary[Vector2i, int]:
+static func owners_of(map: MapData, roster: Array[int]) -> Dictionary[Vector2i, int]:
 	var owners := map.initial_owners()
 	for cell: Vector2i in owners.keys():
 		if not roster.has(owners[cell]):

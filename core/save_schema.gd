@@ -24,7 +24,7 @@ enum Shape { BOOL, NUMBER, STRING, ARRAY, DICTIONARY }
 ## `since: 1` is what "required" used to be a separate list for: a field written by every
 ## version this codec still reads. The distinction that remains is real but narrow — such
 ## a field is simply missing, while a later arrival is missing *for the version the save
-## claims* — and `_missing_message` derives even that from the table rather than from a
+## claims* — and `missing_message` derives even that from the table rather than from a
 ## second list.
 ##
 ## Both halves of a rule answer the same question: what a save of a given version
@@ -157,7 +157,7 @@ static func is_shape(value: Variant, shape: int) -> bool:
 ## Every key in `rules` that a save of this `version` was already writing — which is
 ## exactly the set it is neither allowed to be missing nor allowed to hold the wrong
 ## kind of value. Below its version a key is old and none of those rules reach it.
-static func _keys_written_by(version: int, rules: Dictionary) -> Array:
+static func keys_written_by(version: int, rules: Dictionary) -> Array:
 	var keys: Array = []
 	for key: String in rules:
 		if version >= int(rules[key]["since"]):
@@ -166,7 +166,7 @@ static func _keys_written_by(version: int, rules: Dictionary) -> Array:
 
 
 ## The first key `data` lacks, or "" when it carries them all.
-static func _missing_key(data: Dictionary, keys: Array) -> String:
+static func missing_key(data: Dictionary, keys: Array) -> String:
 	for key in keys:
 		if not data.has(key):
 			return String(key)
@@ -180,7 +180,7 @@ static func _missing_key(data: Dictionary, keys: Array) -> String:
 ##
 ## `oldest_readable` is the caller's own floor (`SaveCodec.READABLE_VERSIONS[0]`) — this
 ## engine carries no opinion of its own about which versions a codec still reads.
-static func _missing_message(
+static func missing_message(
 	key: String, rules: Dictionary, version: int, oldest_readable: int
 ) -> String:
 	if int(rules[key]["since"]) <= oldest_readable:
@@ -190,15 +190,15 @@ static func _missing_message(
 
 ## "" when `value` is an array of dictionaries that each carry the fields a save of
 ## `version` wrote, in the shapes it wrote them.
-static func _entries_error(value: Variant, rules: Dictionary, version: int, what: String) -> String:
+static func entries_error(value: Variant, rules: Dictionary, version: int, what: String) -> String:
 	if not (value is Array):
 		return "'%s' list is malformed" % what
-	var keys := _keys_written_by(version, rules)
+	var keys := keys_written_by(version, rules)
 	for entry: Variant in value as Array:
 		if not (entry is Dictionary):
 			return "%s entry is malformed" % what
 		var record := entry as Dictionary
-		var missing := _missing_key(record, keys)
+		var missing := missing_key(record, keys)
 		if missing != "":
 			return "%s entry is missing '%s'" % [what, missing]
 		for key: String in keys:
