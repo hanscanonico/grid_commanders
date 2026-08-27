@@ -45,7 +45,9 @@ var capture_claims: Dictionary[Unit, Vector2i] = {}
 
 var _unit_db: UnitDB
 var _threat_map: ThreatMap = null
-var _threat_key: String = ""
+var _threat_day: int = -1
+var _threat_team: int = 0
+var _threat_enemies: PackedInt32Array = PackedInt32Array()
 
 ## Property cells no army allied with us holds, and whether that scan has run
 ## yet this command. Both planners ask the identical question over the
@@ -142,10 +144,11 @@ func besieged_home_hqs() -> Array[Vector2i]:
 ## the day, planning team, or visible enemy set changes. Within the AI's own turn
 ## only the enemy set can change, when an enemy dies to a counter.
 func threat_map() -> ThreatMap:
-	var key := _threat_signature(state, visible_enemies)
-	if _threat_map == null or _threat_key != key:
+	if not threat_map_built():
 		_threat_map = ThreatMap.build(state, visible_enemies)
-		_threat_key = key
+		_threat_day = state.day
+		_threat_team = state.current_team
+		_threat_enemies = _threat_signature(visible_enemies)
 	return _threat_map
 
 
@@ -154,7 +157,9 @@ func threat_map() -> ThreatMap:
 ## moment of first need, so *when* it happens is part of the answer — which is
 ## what anything planning to skip a decision has to know before it does.
 func threat_map_built() -> bool:
-	return _threat_map != null and _threat_key == _threat_signature(state, visible_enemies)
+	if _threat_map == null or _threat_day != state.day or _threat_team != state.current_team:
+		return false
+	return _threat_enemies == _threat_signature(visible_enemies)
 
 
 ## The enemy units this planner may act on. The AI sees the whole board on
@@ -173,9 +178,14 @@ static func _scan_visible_enemies(p_state: GameState, p_team: int) -> Array[Unit
 	return enemies
 
 
-static func _threat_signature(p_state: GameState, enemies: Array[Unit]) -> String:
-	var parts := PackedStringArray()
-	parts.append("%d.%d" % [p_state.day, p_state.current_team])
+## The visible enemy set as (team, x, y) triples, in scan order. Compared with
+## `==` for an exact answer rather than hashed: a collision would hand the
+## planner a stale map of a board that has moved, and the day and the planning
+## team are held beside it as plain ints.
+static func _threat_signature(enemies: Array[Unit]) -> PackedInt32Array:
+	var parts := PackedInt32Array()
 	for enemy in enemies:
-		parts.append("%d.%d.%d" % [enemy.team, enemy.cell.x, enemy.cell.y])
-	return ",".join(parts)
+		parts.append(enemy.team)
+		parts.append(enemy.cell.x)
+		parts.append(enemy.cell.y)
+	return parts
