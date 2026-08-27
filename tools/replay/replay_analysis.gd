@@ -123,21 +123,42 @@ class Report:
 		}
 
 
-## A run of consecutive turns one side ended having bought nothing it could
-## afford. Held open while it lasts and reported once when it ends, because the
-## reader is being told about the streak rather than about each of its turns.
-class Hoard:
+## A run of consecutive turns of one side's. Held open while it lasts and
+## reported once when it ends, because the reader is being told about the streak
+## rather than about each of its turns — so the day a streak carries is the day
+## it began and the release is `_release`'s for every kind of streak there is.
+class Streak:
 	var day := 0
 	var turns := 0
+
+	## Counts this turn into the run.
+	func open(p_day: int) -> void:
+		if turns == 0:
+			day = p_day
+		turns += 1
+
+	func detail() -> String:
+		return ""
+
+	## How bad this instance of the streak was, for the ranking. Its length,
+	## unless the subclass measures the run in something the reader cares about
+	## more.
+	func magnitude() -> int:
+		return turns
+
+
+## A run of consecutive turns one side ended having bought nothing it could
+## afford.
+class Hoard:
+	extends Streak
+
 	var peak := 0
 	## The cheapest thing on the board at the turn the purse peaked, so the detail
 	## line's two numbers are a reading of the same board.
 	var cheapest := 0
 
 	func note(p_day: int, purse: int, p_cheapest: int) -> void:
-		if turns == 0:
-			day = p_day
-		turns += 1
+		open(p_day)
 		if purse > peak:
 			peak = purse
 			cheapest = p_cheapest
@@ -148,21 +169,23 @@ class Hoard:
 			% [turns, peak, cheapest]
 		)
 
+	## The purse rather than the length: what a refusal to buy cost is the money
+	## left standing, and a short streak on a fat purse is the one to read first.
+	func magnitude() -> int:
+		return peak
+
 
 ## A run of consecutive turns one side ended holding a charged Command Power it
-## never fired. Held open and released the same way a `Hoard` is, so the number
-## the reader is given is the length of the hold rather than the length it had
-## reached the first turn it was worth saying anything about.
+## never fired.
 class Bank:
-	var day := 0
-	var turns := 0
+	extends Streak
+
 	var commander := ""
 
 	func note(p_day: int, p_commander: String) -> void:
 		if turns == 0:
-			day = p_day
 			commander = p_commander
-		turns += 1
+		open(p_day)
 
 	func detail() -> String:
 		return "%s has held a charged Command Power for %d turns" % [commander, turns]
@@ -253,18 +276,13 @@ class Spend:
 ## Everything carried across turns while the walk runs. A plain object rather than
 ## a pile of locals threaded through eight detectors.
 class Walk:
+	# --- carried across turns ----------------------------------------------------
 	var report: Report
 	## The roster, for the one question the board cannot answer on its own: what a
 	## factory could have built and what it would have cost.
 	var unit_db: UnitDB
 	## Unit -> consecutive turns of its owner's it has ended without acting.
 	var idle: Dictionary = {}
-	## Unit -> the `Opening` its turn began on, which is the only board the capture
-	## question has an answer on: by the end of the turn the unit has moved and its
-	## budget is spent, so a reach measured there is a reading of next turn.
-	var openings: Dictionary = {}
-	## Unit -> the `Partial` capture it was standing on as its turn opened.
-	var partial: Dictionary = {}
 	## team -> the hoarding streak it is in the middle of, or absent.
 	var hoard: Dictionary = {}
 	## Unit -> the cells it has stood on at the end of its owner's last two turns.
@@ -279,13 +297,19 @@ class Walk:
 	## team -> the run of turns ended with a full meter unfired it is in the middle
 	## of, or absent.
 	var banked: Dictionary = {}
-	## The board this turn's Command Power was fired into, or null — no power, or a
-	## ROUND one, which buys the opponent's turn rather than this one.
-	var spend: Spend = null
 	## team -> whether its home HQ has already been reported as uncovered, and is
 	## still uncovered. Cleared the moment the side can answer for it again, so a
 	## second lapse is a second finding and a standing one is said once.
 	var hq_exposed: Dictionary = {}
+
+	# --- cleared each turn: `begin_turn` empties these, and `_open_turn` refills
+	# `openings` and `partial` for the side taking over ---------------------------
+	## Unit -> the `Opening` its turn began on, which is the only board the capture
+	## question has an answer on: by the end of the turn the unit has moved and its
+	## budget is spent, so a reach measured there is a reading of next turn.
+	var openings: Dictionary = {}
+	## Unit -> the `Partial` capture it was standing on as its turn opened.
+	var partial: Dictionary = {}
 	## Units that issued a command during the turn being walked.
 	var acted: Dictionary = {}
 	## Units that captured something during it, and whether a power went off.
@@ -294,10 +318,25 @@ class Walk:
 	var captured_cells: Dictionary = {}
 	## Units that fired during it.
 	var fought: Dictionary = {}
+	var dropped: Dictionary = {}
+	## The board this turn's Command Power was fired into, or null — no power, or a
+	## ROUND one, which buys the opponent's turn rather than this one.
+	var spend: Spend = null
 	var fired_power := false
 	## Whether the side on turn bought anything during it.
 	var built := false
-	var dropped: Dictionary = {}
+
+	## Forgets everything the turn just ended wrote, leaving what is carried
+	## across turns alone.
+	func begin_turn() -> void:
+		acted = {}
+		captured = {}
+		captured_cells = {}
+		fought = {}
+		dropped = {}
+		fired_power = false
+		spend = null
+		built = false
 
 
 ## Plays the recording through and reports on it. `commander_db` is optional for
@@ -344,17 +383,10 @@ static func run(
 			report.stopped = drift
 			break
 		if command is EndTurnCommand:
-			walk.acted = {}
-			walk.captured = {}
-			walk.captured_cells = {}
-			walk.fought = {}
-			walk.dropped = {}
-			walk.fired_power = false
-			walk.spend = null
-			walk.built = false
+			walk.begin_turn()
 			_open_turn(walk, state)
-	_close_hoards(walk)
-	_close_banks(walk)
+	_close_all(walk, walk.hoard, "hoarding", HOARD_TURNS)
+	_close_all(walk, walk.banked, "banked_power", BANKED_TURNS)
 	report.days = state.day
 	report.winner = state.winner
 	report.findings.sort_custom(_by_weight)
@@ -578,6 +610,30 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 		_check_oscillation(walk, state, unit)
 
 
+## Ends `team`'s streak of `kind`, reporting it if it ran long enough to be worth
+## a finding. A run shorter than `floor_turns` is dropped outright: that much is
+## ordinary play rather than a miss.
+static func _release(
+	walk: Walk, streaks: Dictionary, team: int, kind: String, floor_turns: int
+) -> void:
+	var streak: Streak = streaks.get(team)
+	if streak == null:
+		return
+	streaks.erase(team)
+	if streak.turns < floor_turns:
+		return
+	_add_at(walk, kind, streak.day, team, null, streak.detail(), streak.magnitude())
+
+
+## Every streak of `kind` still open when the recording ran out, in team order:
+## the order findings are appended in is observable in the report.
+static func _close_all(walk: Walk, streaks: Dictionary, kind: String, floor_turns: int) -> void:
+	var teams: Array = streaks.keys()
+	teams.sort()
+	for team: int in teams:
+		_release(walk, streaks, team, kind, floor_turns)
+
+
 ## A side that spent nothing on a turn it could have spent. The question is
 ## **refusal to buy**, never spare capacity: a side holding five bases always has
 ## a free one, so "some property stood idle" is arithmetic rather than judgement
@@ -598,12 +654,12 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 ## dropped outright below `HOARD_TURNS`.
 static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
 	if walk.built:
-		_release_hoard(walk, team)
+		_release(walk, walk.hoard, team, "hoarding", HOARD_TURNS)
 		return
 	var purse := int(state.funds.get(team, 0))
 	var cheapest := _cheapest_build(walk, state, team, purse)
 	if cheapest < 0:
-		_release_hoard(walk, team)
+		_release(walk, walk.hoard, team, "hoarding", HOARD_TURNS)
 		return
 	var streak: Hoard = walk.hoard.get(team, Hoard.new())
 	streak.note(state.day, purse, cheapest)
@@ -629,57 +685,21 @@ static func _cheapest_build(walk: Walk, state: GameState, team: int, purse: int)
 	return cheapest
 
 
-static func _release_hoard(walk: Walk, team: int) -> void:
-	var streak: Hoard = walk.hoard.get(team)
-	if streak == null:
-		return
-	walk.hoard.erase(team)
-	if streak.turns < HOARD_TURNS:
-		return
-	_add_at(walk, "hoarding", streak.day, team, null, streak.detail(), streak.peak)
-
-
-## Every streak still open when the recording ran out.
-static func _close_hoards(walk: Walk) -> void:
-	var teams: Array = walk.hoard.keys()
-	teams.sort()
-	for team: int in teams:
-		_release_hoard(walk, team)
-
-
 ## A meter that sat full while its owner had turns to spend it.
 ##
 ## Held open and released like a `Hoard`: one uninterrupted hold is one finding,
 ## said when it actually breaks — the power going off, or the meter dropping
 ## below ready — so the length reported is the length it ran to rather than the
 ## `BANKED_TURNS` it had reached the first turn it was worth reporting. A hold
-## the recording ends inside is released by `_close_banks`.
+## the recording ends inside is released by `_close_all`.
 static func _check_power(walk: Walk, state: GameState, team: int) -> void:
 	var co_state := state.commander_state(team)
 	if walk.fired_power or not co_state.is_ready():
-		_release_bank(walk, team)
+		_release(walk, walk.banked, team, "banked_power", BANKED_TURNS)
 		return
 	var streak: Bank = walk.banked.get(team, Bank.new())
 	streak.note(state.day, String(co_state.type.id))
 	walk.banked[team] = streak
-
-
-static func _release_bank(walk: Walk, team: int) -> void:
-	var streak: Bank = walk.banked.get(team)
-	if streak == null:
-		return
-	walk.banked.erase(team)
-	if streak.turns < BANKED_TURNS:
-		return
-	_add_at(walk, "banked_power", streak.day, team, null, streak.detail(), streak.turns)
-
-
-## Every hold still open when the recording ran out.
-static func _close_banks(walk: Walk) -> void:
-	var teams: Array = walk.banked.keys()
-	teams.sort()
-	for team: int in teams:
-		_release_bank(walk, team)
 
 
 ## A Command Power fired into a board it could not move. `banked_power` reports
@@ -1049,15 +1069,22 @@ static func _add(
 ## A finding whose day and team are stated rather than read off the board, which a
 ## latched detector needs: a streak is released on the turn it ends or after the
 ## recording has run out, and either way it is about where it began.
+##
+## A kind `SEVERITY` does not score is refused out loud rather than filed at the
+## bottom of the ranking, where a typo would read as a detector that never fires.
 static func _add_at(
 	walk: Walk, kind: String, day: int, team: int, unit: Unit, detail: String, magnitude: int
 ) -> void:
+	assert(SEVERITY.has(kind), "no severity for finding kind '%s'" % kind)
+	if not SEVERITY.has(kind):
+		push_error("replay analysis: no severity for finding kind '%s'" % kind)
+		return
 	var finding := Finding.new()
 	finding.kind = kind
 	finding.day = day
 	finding.team = team
 	finding.detail = detail
-	finding.severity = int(SEVERITY.get(kind, 1))
+	finding.severity = int(SEVERITY[kind])
 	finding.magnitude = magnitude
 	if unit != null:
 		finding.subject = String(unit.type.id)
