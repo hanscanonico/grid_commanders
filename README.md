@@ -29,7 +29,7 @@ make run             # boot the game — the menu (map, seats, difficulty, speed
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
 make verify          # the merge gate: check + lint + format-check + test + determinism, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
-make test            # run the GUT unit test suite (headless)
+make test            # run the GUT unit test suite (headless, two engines; TEST_JOBS=1 for one)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
 make campaigns       # the campaign content gate (what it refuses: docs/campaign_authoring.md)
 make determinism     # replay one pinned balance match; byte-diff it against the committed golden
@@ -81,6 +81,14 @@ ends with `ObjectDB instances were leaked at exit` and `resources still in use` 
 failing to tear down a *script* reference cycle (`AttackCommand.validate()` referring to its sibling
 `MoveCommand` pins the core script graph), reproducible in twelve lines with no GUT involved. No
 gameplay object leaks, so the gate reads exit status and ignores it.
+
+`make test` runs the suite as **two engines at once** (`tools/run_tests.sh`): the alliance and
+campaign soaks play whole matches and are most of the wall clock, so they get one process while
+every other script gets another, and the two summaries are added into one. The split is a partition
+of `tests/unit` — the slow half is named in the script, the fast half is the rest of what is on
+disk, and the run refuses to start unless the two together are exactly what is there — so a new
+suite is always run without being assigned anywhere. `TEST_JOBS=1 make test` runs the single
+verbatim `.gutconfig.json` pass.
 
 It is also run for you: `.github/workflows/verify.yml` fetches the pinned engine and plays the same
 targets, in the same order, on every pull request and every push to `main`. `make smoke` is not
