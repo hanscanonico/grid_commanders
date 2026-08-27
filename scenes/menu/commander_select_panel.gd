@@ -204,9 +204,7 @@ func _build() -> void:
 	# footer legend hold their place whatever a general's copy says. At
 	# READING_WIDTH the whole shipped roster fits, so the bar never appears — the
 	# scroll is the guarantee, not the mechanism.
-	var card_frame := ScrollContainer.new()
-	card_frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	card_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var card_frame := UiKit.vscroll()
 	body.add_child(card_frame)
 
 	_card = CommanderCard.new()

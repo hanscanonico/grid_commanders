@@ -189,7 +189,7 @@ const TOUCH_MIN := 44
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
-## A full-screen page's title (CommanderSelectPanel, ReplayPickerPanel).
+## The title of every full-screen page.
 const SIZE_PAGE_TITLE := 15
 const SIZE_BUTTON := 10
 ## The one announcement size: the beat that stops the board (the day banner) and
