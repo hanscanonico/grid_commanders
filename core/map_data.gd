@@ -231,7 +231,7 @@ func _set_owner_from_line(line: String) -> bool:
 		return false
 	var team := int(parts[0])
 	var cell := Vector2i(int(parts[1]), int(parts[2]))
-	if not PLAYER_TEAMS.has(team):
+	if not parts[0].is_valid_int() or not PLAYER_TEAMS.has(team):
 		push_error(_team_bound_message("owner", line))
 		return false
 	if not in_bounds(cell):
@@ -259,7 +259,7 @@ func _append_unit_from_line(line: String) -> bool:
 		return false
 	var team := int(parts[0])
 	var cell := Vector2i(int(parts[2]), int(parts[3]))
-	if not PLAYER_TEAMS.has(team):
+	if not parts[0].is_valid_int() or not PLAYER_TEAMS.has(team):
 		push_error(_team_bound_message("unit", line))
 		return false
 	if not in_bounds(cell):

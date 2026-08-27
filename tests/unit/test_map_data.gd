@@ -158,6 +158,8 @@ func test_unit_bad_team_rejected() -> void:
 	assert_push_error("unit team must be 1..4")
 	assert_null(MapData.parse("[terrain]\n..\n[units]\n5 i 1 0", db))
 	assert_push_error("unit team must be 1..4")
+	assert_null(MapData.parse("[terrain]\n..\n[units]\n2x i 1 0", db))
+	assert_push_error("unit team must be 1..4")
 
 
 func test_loads_first_steps_map() -> void:
@@ -179,6 +181,8 @@ func test_owner_bad_team_rejected() -> void:
 	assert_null(MapData.parse("[terrain]\n.C\n[owners]\n0 1 0", db))
 	assert_push_error("owner team must be 1..4")
 	assert_null(MapData.parse("[terrain]\n.C\n[owners]\n5 1 0", db))
+	assert_push_error("owner team must be 1..4")
+	assert_null(MapData.parse("[terrain]\n.C\n[owners]\n2x 1 0", db))
 	assert_push_error("owner team must be 1..4")
 
 
