@@ -190,7 +190,7 @@ func _planner_section() -> void:
 		var turns: Array[float] = []
 		var seats := 0
 		for i in _seed_count:
-			seats = _play(profile, i + 1, commands, turns)
+			seats = _play(id, profile, i + 1, commands, turns)
 		print(
 			(
 				"%-9s %5d %9d %9.1f %8.1f %8.1f %8.1f %10.1f %9.1f"
@@ -214,7 +214,9 @@ func _planner_section() -> void:
 ## with a clock hung off its per-command callback and the result thrown away:
 ## this measures how long the board takes to think, never who wins. Returns the
 ## seat count it played.
-func _play(profile: AIProfile, seed_val: int, commands: Array[float], turns: Array[float]) -> int:
+func _play(
+	tier: String, profile: AIProfile, seed_val: int, commands: Array[float], turns: Array[float]
+) -> int:
 	var sides: Dictionary[int, int] = {}
 	var parsed := MatchRequest.parse_sides_flag("" if _grouping == FREE_FOR_ALL else _grouping)
 	for seat: int in parsed:
@@ -228,7 +230,7 @@ func _play(profile: AIProfile, seed_val: int, commands: Array[float], turns: Arr
 			turns.append(_turn_ms)
 			_turn_ms = 0.0
 	var played := FourArmyLoop.play(
-		_map, _harness, profile, sides, seed_val, _days_cap, clock, _fog
+		_map, _harness, profile, sides, seed_val, _days_cap, tier, clock, _fog
 	)
 	if played.is_empty():
 		return 0

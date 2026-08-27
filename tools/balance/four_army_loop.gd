@@ -15,6 +15,10 @@ extends RefCounted
 ## Plays one match and returns `{state, commands, rejected, turn_cap_hits,
 ## cap_stall}` — an empty dictionary when the board cannot be seated at all.
 ##
+## `label` names this match in the refusal a rejected command raises — the
+## caller's own run ("alliance", a tier id), since a driver plays several and the
+## board alone would not say which one refused.
+##
 ## `on_command` is called once per issued command with the microseconds
 ## `plan_next_command` spent and whether the command being applied ends the
 ## turn, which is how the soak reads its clock without a stopwatch in here.
@@ -25,6 +29,7 @@ static func play(
 	sides: Dictionary[int, int],
 	seed_val: int,
 	days_cap: int,
+	label: String,
 	on_command: Callable = Callable(),
 	fog: bool = false
 ) -> Dictionary:
@@ -61,8 +66,8 @@ static func play(
 			rejected += 1
 			push_error(
 				(
-					"%s seed %d (day %d, team %d): %s"
-					% [map.source_path, seed_val, state.day, team, error]
+					"%s %s seed %d (day %d, team %d): %s"
+					% [map.source_path, label, seed_val, state.day, team, error]
 				)
 			)
 			command = EndTurnCommand.new()

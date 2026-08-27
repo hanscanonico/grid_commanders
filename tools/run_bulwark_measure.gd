@@ -265,7 +265,9 @@ func _run(run: Dictionary) -> bool:
 ## cannot be seated at all.
 func _play(run: Dictionary, seed_val: int) -> Dictionary:
 	var sides: Dictionary[int, int] = run["sides"]
-	var played := FourArmyLoop.play(_map, _harness, _profile, sides, seed_val, _days_cap)
+	var played := FourArmyLoop.play(
+		_map, _harness, _profile, sides, seed_val, _days_cap, run["label"]
+	)
 	if played.is_empty():
 		return {}
 	var state: GameState = played["state"]
