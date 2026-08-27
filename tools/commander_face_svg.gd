@@ -540,44 +540,66 @@ func _hair_back(style: StringName, hair: String) -> String:
 	return ""
 
 
+## Every fringe the table holds: one filled path, with circles for the shapes a
+## curve cannot carry — `under` sits behind the path, `over` in front of it —
+## and a `pen` only where the silhouette outline is not what the style wears.
+const HAIR_FRONT := {
+	&"long":
+	{
+		"d":
+		(
+			"M32,46 Q34,30 55,28 Q76,30 78,46 Q70,36 60,38"
+			+ " Q56,30 47,36 Q40,34 40,44 Q36,40 32,46 Z"
+		)
+	},
+	&"short": {"d": "M31,48 Q30,28 55,26 Q80,28 79,48 Q74,36 55,35 Q36,35 31,48 Z"},
+	&"ponytail": {"d": "M31,48 Q30,28 55,26 Q80,28 79,48 Q72,37 55,36 Q40,36 40,45 Q35,42 31,48 Z"},
+	&"bob": {"d": "M30,48 Q29,27 55,25 Q81,27 80,48 Q73,35 55,34 Q37,35 30,48 Z"},
+	&"braid": {"d": "M31,48 Q30,28 55,26 Q80,28 79,48 Q72,37 55,36 Q38,36 31,48 Z"},
+	&"buzz":
+	{
+		"d": "M33,46 Q34,31 55,30 Q76,31 77,46 Q70,40 55,40 Q40,40 33,46 Z",
+		"pen": ' opacity="0.85"',
+	},
+	&"sidepart": {"d": "M31,47 Q30,28 55,26 Q80,28 79,45 Q75,35 52,35 Q50,33 44,38 Q38,36 31,47 Z"},
+	&"spiky":
+	{
+		"d":
+		(
+			"M31,47 L34,30 L41,40 L46,27 L52,39 L58,27 L64,39 L70,29 L76,41"
+			+ " L79,47 Q70,38 55,38 Q40,38 31,47 Z"
+		)
+	},
+	&"curly":
+	{
+		"d": "M32,48 Q34,40 40,40 L70,40 Q76,40 78,48 Q70,42 55,42 Q40,42 32,48 Z",
+		"under": [[38, 36, 8], [50, 31, 8.5], [62, 31, 8.5], [73, 37, 8]],
+	},
+	&"bald":
+	{
+		"d": "M34,44 Q36,36 44,35 Q40,40 40,46 Z M76,44 Q74,36 66,35 Q70,40 70,46 Z",
+		"pen": "",
+	},
+	&"bun":
+	{
+		"d": "M31,48 Q30,30 55,28 Q80,30 79,48 Q72,38 55,38 Q38,38 31,48 Z",
+		"over": [[55, 24, 9]],
+	},
+}
+
+
 func _hair_front(style: StringName, hair: String) -> String:
-	var pen := _line()
-	match style:
-		&"long":
-			var d := "M32,46 Q34,30 55,28 Q76,30 78,46 Q70,36 60,38"
-			d += " Q56,30 47,36 Q40,34 40,44 Q36,40 32,46 Z"
-			return _path(d, hair, pen)
-		&"short":
-			return _path("M31,48 Q30,28 55,26 Q80,28 79,48 Q74,36 55,35 Q36,35 31,48 Z", hair, pen)
-		&"ponytail":
-			var d := "M31,48 Q30,28 55,26 Q80,28 79,48 Q72,37 55,36 Q40,36 40,45 Q35,42 31,48 Z"
-			return _path(d, hair, pen)
-		&"bob":
-			return _path("M30,48 Q29,27 55,25 Q81,27 80,48 Q73,35 55,34 Q37,35 30,48 Z", hair, pen)
-		&"braid":
-			return _path("M31,48 Q30,28 55,26 Q80,28 79,48 Q72,37 55,36 Q38,36 31,48 Z", hair, pen)
-		&"buzz":
-			var d := "M33,46 Q34,31 55,30 Q76,31 77,46 Q70,40 55,40 Q40,40 33,46 Z"
-			return _path(d, hair, ' opacity="0.85"')
-		&"sidepart":
-			var d := "M31,47 Q30,28 55,26 Q80,28 79,45 Q75,35 52,35 Q50,33 44,38 Q38,36 31,47 Z"
-			return _path(d, hair, pen)
-		&"spiky":
-			var d := "M31,47 L34,30 L41,40 L46,27 L52,39 L58,27 L64,39 L70,29 L76,41"
-			d += " L79,47 Q70,38 55,38 Q40,38 31,47 Z"
-			return _path(d, hair, pen)
-		&"curly":
-			var curls := _circle(38, 36, 8, hair, pen) + _circle(50, 31, 8.5, hair, pen)
-			curls += _circle(62, 31, 8.5, hair, pen) + _circle(73, 37, 8, hair, pen)
-			var d := "M32,48 Q34,40 40,40 L70,40 Q76,40 78,48 Q70,42 55,42 Q40,42 32,48 Z"
-			return curls + _path(d, hair, pen)
-		&"bald":
-			var d := "M34,44 Q36,36 44,35 Q40,40 40,46 Z M76,44 Q74,36 66,35 Q70,40 70,46 Z"
-			return _path(d, hair)
-		&"bun":
-			var d := "M31,48 Q30,30 55,28 Q80,30 79,48 Q72,38 55,38 Q38,38 31,48 Z"
-			return _path(d, hair, pen) + _circle(55, 24, 9, hair, pen)
-	return ""
+	if not HAIR_FRONT.has(style):
+		return ""
+	var spec: Dictionary = HAIR_FRONT[style]
+	var pen: String = spec.get("pen", _line())
+	var out := ""
+	for c: Array in spec.get("under", []):
+		out += _circle(c[0], c[1], c[2], hair, pen)
+	out += _path(spec["d"], hair, pen)
+	for c: Array in spec.get("over", []):
+		out += _circle(c[0], c[1], c[2], hair, pen)
+	return out
 
 
 func _headwear(acc: StringName) -> String:

@@ -10,11 +10,22 @@ disable:
 - class-definitions-order
 
 # Command `validate()` methods are guard-clause validators — one early return
-# per rejection reason, each with its own error string (attack_command has 9).
-# That shape is required by the command pattern in CLAUDE.md; collapsing it into
-# nested conditionals would be strictly worse. 12 leaves room without inviting
-# sprawl.
-max-returns: 12
+# per rejection reason, each with its own error string. That shape is required
+# by the command pattern in CLAUDE.md; collapsing it into nested conditionals
+# would be strictly worse, so the ceiling is set off the widest of them.
+#
+# Measured across the tree: the widest validator is attack_command's at 9, so 11
+# is two returns of slack — a rejection reason or two, no more. 12 had three, and
+# the only things it was actually holding up were two tools/ functions with no
+# validator shape at all: run_balance_sim's `_parse_args`, which is now the flag
+# loop and the cross-checks it can only run once every flag is read, and
+# commander_face_svg's `_hair_front`, whose match arm per hairstyle is now the
+# HAIR_FRONT table.
+#
+# It does not go to 10, which is where core/campaign/mission_definition.gd's
+# `definition_error` — a validator by every measure except its name — and three
+# scenario runners fail. Lowering it further means refactoring those first.
+max-returns: 11
 
 # Ratchet, not a target, in the same spirit as max-file-lines below:
 # scenes/battle/battle_view.gd is the widest class and sits at exactly 21 — it is

@@ -164,6 +164,11 @@ func _init() -> void:
 ## mistyped commander would otherwise measure a neutral matchup and the run would
 ## look fine.
 func _parse_args() -> bool:
+	return _read_flags() and _flags_agree()
+
+
+## One guard per malformed value, each naming the flag it read.
+func _read_flags() -> bool:
 	for arg in CmdArgs.user():
 		if arg.begins_with("--map="):
 			_map_name = arg.get_slice("=", 1).strip_edges()
@@ -210,6 +215,12 @@ func _parse_args() -> bool:
 		else:
 			push_error("balance-sim: unknown flag '%s'" % arg)
 			return false
+	return true
+
+
+## The checks that need every flag read first — a value against the databases,
+## and the two flags that cannot be given together.
+func _flags_agree() -> bool:
 	if _out_dir != "":
 		_out_dir = BalanceHarness.out_flag("balance-sim", _out_dir)
 		if _out_dir == "":
