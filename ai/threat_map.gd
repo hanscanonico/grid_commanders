@@ -62,10 +62,10 @@ static func build(state: GameState, enemies: Array[Unit]) -> ThreatMap:
 	for enemy in enemies:
 		if enemy.type.max_range <= 0 or not AttackRange.has_ready_weapon(state, enemy):
 			continue  # no ready weapon: no threat to map
-		var low := AttackRange.minimum(state, enemy)
-		var high := AttackRange.maximum(state, enemy)
+		var band := AttackRange.band(state, enemy)
+		var seen: Dictionary[Vector2i, bool] = {}
 		for from in AttackRange.firing_cells(state, enemy):
-			map._mark_ring(state, enemy, from, low, high)
+			map._mark_ring(state, enemy, from, band, seen)
 	return map
 
 
@@ -73,12 +73,22 @@ static func build(state: GameState, enemies: Array[Unit]) -> ThreatMap:
 ## threatened by `enemy`. The ring geometry — which cells, in what order — is
 ## AttackRange's, the same walk threat_cells and the range overlay use; this only
 ## records who threatens each one, the attribution the union throws away.
-func _mark_ring(state: GameState, enemy: Unit, from: Vector2i, low: int, high: int) -> void:
-	for cell in AttackRange.ring_cells(state, from, low, high):
+##
+## `seen` is this enemy's own set of cells already attributed to it, carried
+## across its firing positions by `build` so the once-per-cell rule costs a
+## lookup rather than a scan of the cell's list. It must stay a first-wins set:
+## the append order it preserves is the per-cell enemy order `_by_cell` holds,
+## and therefore the order `incoming_damage` sums its forecasts in.
+func _mark_ring(
+	state: GameState, enemy: Unit, from: Vector2i, band: Vector2i, seen: Dictionary[Vector2i, bool]
+) -> void:
+	for cell in AttackRange.ring_cells(state, from, band.x, band.y):
+		if seen.has(cell):
+			continue
+		seen[cell] = true
 		var here: Array = _by_cell.get(cell, [])
-		if enemy not in here:
-			here.append(enemy)
-			_by_cell[cell] = here
+		here.append(enemy)
+		_by_cell[cell] = here
 
 
 ## Expected luck-free damage `defender` would take standing on `cell`, summed
