@@ -48,6 +48,10 @@ const CUT_IN_STREAK_TAIL := 0.22
 ## clock rate — the seconds below are the default tier's, like the beat sheets'.
 const PUNCH_ZOOM := 1.14
 const PUNCH_SECONDS := 0.11
+## Where each blocking card sits in `_cards`.
+const _TURN_CARD := 0
+const _POWER_CARD := 1
+const _SPEECH_CARD := 2
 
 ## Assigned by Battle before first use, like BattleView's nodes.
 var node: Node
@@ -73,9 +77,8 @@ var capture_cutscene: CaptureCutscene
 ## animations — see `shake_camera` and `start_cursor_pulse` — and the cut-in.
 var capturing := false
 
-var _banner_tween: Tween
-var _power_banner_tween: Tween
-var _speech_tween: Tween
+## The three cards a press retires, in the order it retires them.
+var _cards: Array[BlockingCard] = []
 ## When the last cut-in ended, and how many have run back to back since the
 ## fighting started. Held as elapsed time rather than as a per-turn counter
 ## somebody has to remember to reset: there is no lifecycle to get wrong, and a
@@ -387,40 +390,48 @@ func animate_join(command: Command, mover: Unit, survivor: Unit) -> void:
 	view.refresh_sprite(survivor)
 
 
-# --- banner ------------------------------------------------------------------
+# --- blocking cards ----------------------------------------------------------
 
 
-## Shows the banner immediately and cancels any pending auto-hide.
-func _set_banner(text: String) -> void:
-	if _banner_tween != null and _banner_tween.is_valid():
-		_banner_tween.kill()
-	turn_banner.announce(text)
-	turn_banner.show()
-	turn_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+## The three cards, built on first use: Battle assigns `node` and the controls
+## field by field after construction, so there is no moment at which a
+## constructor could have them all. The signals stay here as relays, because
+## Battle and the scenarios know the animator rather than its cards.
+func _blocking_cards() -> Array[BlockingCard]:
+	if _cards.is_empty():
+		_cards = [
+			BlockingCard.new(turn_banner, node, false),
+			BlockingCard.new(power_banner, node, true),
+			BlockingCard.new(mission_speech, node, true),
+		]
+		_cards[_TURN_CARD].finished.connect(func() -> void: banner_finished.emit())
+		_cards[_POWER_CARD].finished.connect(func() -> void: power_banner_finished.emit())
+		_cards[_SPEECH_CARD].finished.connect(func() -> void: speech_finished.emit())
+	return _cards
+
+
+## Raises one card and holds it for as long as the tier says. A card that holds
+## while capturing is raised and left standing: there it is the frame's subject.
+func _present(which: int, seconds: float, after: Callable) -> void:
+	var card := _blocking_cards()[which]
+	card.raise(after)
+	if _frozen(card):
+		return
+	await card.hold(seconds)
+
+
+func _frozen(card: BlockingCard) -> bool:
+	return capturing and card.holds_while_capturing
 
 
 ## Shows one blocking beat and returns once time or a press retires it.
 func show_banner(text: String) -> void:
-	_set_banner(text)
-	_banner_tween = node.create_tween()
-	_banner_tween.tween_interval(Settings.speed.banner_seconds())
-	_banner_tween.tween_callback(_finish_banner)
-	await banner_finished
+	await _present(_TURN_CARD, Settings.speed.banner_seconds(), turn_banner.announce.bind(text))
 
 
 ## Dismisses the banner now, cancelling any pending auto-hide.
 func hide_banner() -> void:
-	if _banner_tween != null and _banner_tween.is_valid():
-		_banner_tween.kill()
-	_finish_banner()
-
-
-func _finish_banner() -> void:
-	_banner_tween = null
-	if not turn_banner.visible:
-		return
-	turn_banner.hide()
-	banner_finished.emit()
+	_blocking_cards()[_TURN_CARD].dismiss()
 
 
 ## The Command Power activation card: portrait, the general's spoken line, power
@@ -432,31 +443,15 @@ func _finish_banner() -> void:
 ## frame — the whole reason the two open-ended animations above are suppressed
 ## for captures.
 func show_power_banner(commander: CommanderType, team: int) -> void:
-	if _power_banner_tween != null and _power_banner_tween.is_valid():
-		_power_banner_tween.kill()
-	power_banner.bind(commander, team)
-	power_banner.show()
-	power_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	if capturing:
-		return
-	_power_banner_tween = node.create_tween()
-	_power_banner_tween.tween_interval(Settings.speed.power_banner_seconds())
-	_power_banner_tween.tween_callback(_finish_power_banner)
-	await power_banner_finished
+	await _present(
+		_POWER_CARD,
+		Settings.speed.power_banner_seconds(),
+		func() -> void: power_banner.bind(commander, team)
+	)
 
 
 func hide_power_banner() -> void:
-	if _power_banner_tween != null and _power_banner_tween.is_valid():
-		_power_banner_tween.kill()
-	_finish_power_banner()
-
-
-func _finish_power_banner() -> void:
-	_power_banner_tween = null
-	if not power_banner.visible:
-		return
-	power_banner.hide()
-	power_banner_finished.emit()
+	_blocking_cards()[_POWER_CARD].dismiss()
 
 
 ## Who the power just touched, said on the board rather than only on the card: a
@@ -503,13 +498,11 @@ func show_power_effects(marks: Array[PowerEffects.Mark]) -> void:
 func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	if lines.is_empty():
 		return
-	_raise_speech(lines, commanders)
-	if capturing:
-		return
-	_speech_tween = node.create_tween()
-	_speech_tween.tween_interval(Settings.speed.speech_seconds(_spoken_characters(lines)))
-	_speech_tween.tween_callback(_finish_speech)
-	await speech_finished
+	await _present(
+		_SPEECH_CARD,
+		Settings.speed.speech_seconds(_spoken_characters(lines)),
+		_fill_speech.bind(lines, commanders)
+	)
 
 
 ## The same card, held until the player puts it down: the briefing re-read from
@@ -519,10 +512,11 @@ func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 func speak_until_dismissed(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	if lines.is_empty():
 		return
-	_raise_speech(lines, commanders)
-	if capturing:
+	var card := _blocking_cards()[_SPEECH_CARD]
+	card.raise(_fill_speech.bind(lines, commanders))
+	if _frozen(card):
 		return
-	await speech_finished
+	await card.finished
 
 
 ## How much there is to read on the card: the words themselves, the speakers'
@@ -535,29 +529,16 @@ static func _spoken_characters(lines: Array[MissionLine]) -> int:
 	return said
 
 
-func _raise_speech(lines: Array[MissionLine], commanders: CommanderDB) -> void:
-	if _speech_tween != null and _speech_tween.is_valid():
-		_speech_tween.kill()
+## Filled and then measured, before the card is centred: it is as tall as the
+## words it was just given, and a PanelContainer's size is a layout pass behind
+## them.
+func _fill_speech(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	mission_speech.announce(lines, commanders)
-	mission_speech.show()
-	# Measured before it is centred: the card is as tall as the words it was just
-	# given, and a PanelContainer's size is a layout pass behind them.
 	mission_speech.reset_size()
-	mission_speech.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 
 
 func hide_speech() -> void:
-	if _speech_tween != null and _speech_tween.is_valid():
-		_speech_tween.kill()
-	_finish_speech()
-
-
-func _finish_speech() -> void:
-	_speech_tween = null
-	if not mission_speech.visible:
-		return
-	mission_speech.hide()
-	speech_finished.emit()
+	_blocking_cards()[_SPEECH_CARD].dismiss()
 
 
 ## Any keyboard, mouse or controller press retires the visible blocking card.
@@ -566,15 +547,10 @@ func _finish_speech() -> void:
 func consume_banner_skip(event: InputEvent) -> bool:
 	if not TransitionInput.is_press(event):
 		return false
-	if turn_banner.visible:
-		hide_banner()
-		return true
-	if power_banner.visible and not capturing:
-		hide_power_banner()
-		return true
-	if mission_speech.visible and not capturing:
-		hide_speech()
-		return true
+	for card: BlockingCard in _blocking_cards():
+		if card.is_up() and not _frozen(card):
+			card.dismiss()
+			return true
 	return false
 
 
