@@ -45,7 +45,7 @@ draw() {
 	# Scoped to THIS run: a second campaign in another directory is somebody
 	# else's, and reporting a finished run as live is the one lie that matters.
 	local out="${run#reports/}"
-	if pgrep -f "arena_search.py.*--out=$out" >/dev/null 2>&1; then
+	if pgrep -f "arena_search.py.*--out=(reports/)?$out" >/dev/null 2>&1; then
 		printf 'state    RUNNING (%s godot workers)\n' \
 			"$(pgrep -f "run_ai_arena.gd.*$out" 2>/dev/null | wc -l | tr -d ' ')"
 	else
@@ -77,7 +77,8 @@ first = waves[0]["incumbent"] if waves else {}
 moved = ", ".join(
 	"%s %s->%s" % (k, first[k], v) for k, v in inc.items() if k in first and first[k] != v
 )
-print("%-14s %6d  %-9s %s" % (name, len(waves), "%+.3f" % best if best else "-", moved or "-"))
+score = "%+.3f" % best if best is not None else "-"  # a best of 0.0 is a score, not a gap
+print("%-14s %6d  %-9s %s" % (name, len(waves), score, moved or "-"))
 PY
 	done
 	printf '\n(held-out replay runs after a block finishes its waves)\n'
