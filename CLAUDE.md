@@ -1061,8 +1061,8 @@ plan is stated in full below and has no copy there.
   mid-match "the HQ this team owns" has two answers exactly when it matters), and carried in save
   v7 — the map derives the same answer, so what persisting it buys is the **pin**: a save whose
   board has since moved an HQ is refused rather than silently re-homed, which
-  `SaveCodec._home_hq_board_error` enforces cell by cell. Every other HQ is a high-value property
-  with HQ terrain stars, captured like a city.
+  `SaveBoardCheck._home_hq_board_error` enforces cell by cell. Every other HQ is a high-value
+  property with HQ terrain stars, captured like a city.
   D2: **seats are the match's fourth setup fact** — `MatchRequest.seats` (empty = all) through all
   three adapters: `from_menu` reads the strip, `from_match` copies the live `state.teams` so a
   rematch of a reduced match is that match again, `apply_cmdline` reads `--seats=1,3,4` and reads it
