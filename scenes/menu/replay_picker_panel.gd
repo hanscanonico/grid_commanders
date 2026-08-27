@@ -44,7 +44,7 @@ func _ready() -> void:
 
 
 ## Opens the page on a list of recordings, newest first. The list is handed in
-## rather than read here for the reason `_refresh_continue` reads its save summary
+## rather than read here for the reason `ContinueSlot` is handed its save summary
 ## through the capture driver: a photographed frame must not depend on how many
 ## matches the machine that took it happens to have played.
 func begin(summaries: Array[ReplayFile.Summary]) -> void:
