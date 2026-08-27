@@ -179,7 +179,7 @@ plan is stated in full below and has no copy there.
   and 6 on the bottom, and the 6 had never reached a pixel, because `hud_spacer` floors a negative
   width at zero and each bar is inset by its own gap; one `HUD_PAD` of 7 is what both had always
   drawn. The terrain chip asks `BattleView` for the atlas and its cell size rather than mirroring
-  them. `BattleView._apply_board_offset` is the **only writer**
+  them. `BoardCamera._apply_board_offset` is the **only writer**
   of `camera.offset` (the combat shake composes through `BattleView.shake_offset`), and both bars
   swallow the pointer (`MOUSE_FILTER_STOP`) so events can't fall through to cells rendered behind
   them.

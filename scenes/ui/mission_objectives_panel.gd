@@ -121,7 +121,7 @@ func toggle(game: GameState) -> void:
 	refresh(game)
 
 
-## Steps the card out of the cursor's way, called from `BattleView.move_cursor_to`
+## Steps the card out of the cursor's way, called from `BoardCamera.move_cursor_to`
 ## — the seam the board cursor already reports through, so nothing polls. The
 ## common case is a dock that did not change and costs one geometry read.
 func follow_cursor(

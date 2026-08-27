@@ -27,7 +27,7 @@ func open_menu() -> void:
 	_battle.state = Battle.State.MENU
 	_battle.action_menu.open(
 		BattleMenus.auto_actions(_battle.difficulty_db),
-		_battle.view.screen_pos_for_cell(_battle.cursor_cell)
+		_battle.view.board_camera.screen_pos_for_cell(_battle.cursor_cell)
 	)
 
 

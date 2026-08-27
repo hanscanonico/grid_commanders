@@ -174,7 +174,7 @@ func _present_attack(
 		var sign := "+" if bounty_delta > 0 else "-"
 		_battle.action_feedback.show_reason(
 			"Bounty %s%d" % [sign, absi(bounty_delta)],
-			_battle.view.screen_pos_for_cell(command.target_cell)
+			_battle.view.board_camera.screen_pos_for_cell(command.target_cell)
 		)
 
 
@@ -256,7 +256,7 @@ func _present_blocked_drop(command: DropCommand, watched: bool) -> void:
 	if not (watched or _battle.perspective.can_see_cell(command.drop_cell)):
 		return
 	_battle.action_feedback.show_reason(
-		"Drop blocked", _battle.view.screen_pos_for_cell(command.drop_cell)
+		"Drop blocked", _battle.view.board_camera.screen_pos_for_cell(command.drop_cell)
 	)
 
 

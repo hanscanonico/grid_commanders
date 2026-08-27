@@ -38,7 +38,7 @@ func _build() -> void:
 	custom_minimum_size = Vector2(0, UiTheme.HUD_TOP_H)
 	add_theme_stylebox_override("panel", UiTheme.hud_bar_box(false))
 	# Chrome swallows the pointer. The board is deliberately allowed to render
-	# *behind* the bars (BattleView._apply_camera_limits), so a bar that let mouse
+	# *behind* the bars (BoardCamera._apply_camera_limits), so a bar that let mouse
 	# events fall through to Battle._unhandled_input would walk the game cursor
 	# onto a cell hidden under opaque paint — and a click there would select it.
 	# The bottom bar states the same thing for the same reason.
