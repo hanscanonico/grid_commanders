@@ -15,7 +15,6 @@ extends Control
 
 signal continued
 
-const _TITLE_SIZE := 15
 ## Between body and banner: the stars are the payoff, so they read bigger than
 ## the verdict's supporting copy.
 const _STAR_SIZE := 12
@@ -192,7 +191,7 @@ func _build() -> void:
 
 	_verdict = Label.new()
 	_verdict.add_theme_font_override("font", UiTheme.display(true))
-	_verdict.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_verdict.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
 	_verdict.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(_verdict)
 
@@ -207,9 +206,7 @@ func _build() -> void:
 	_scoreboard = _micro("")
 	main.add_child(_scoreboard)
 
-	var frame := ScrollContainer.new()
-	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var frame := UiKit.vscroll()
 	main.add_child(frame)
 
 	_body = VBoxContainer.new()

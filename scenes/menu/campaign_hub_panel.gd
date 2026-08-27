@@ -32,7 +32,6 @@ extends Control
 signal deployed(mission_id: StringName)
 signal cancelled
 
-const _TITLE_SIZE := 15
 const _ROW_HEIGHT := 26
 const _ROW_WIDTH := 420
 const _BUST := 44
@@ -181,7 +180,7 @@ func _build() -> void:
 
 	_title = Label.new()
 	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_header.add_child(_title)
 
@@ -265,12 +264,10 @@ func _build_board() -> Control:
 
 
 func _build_list(parent: VBoxContainer) -> void:
-	_list_scroll = ScrollContainer.new()
-	_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_list_scroll = UiKit.vscroll()
 	# Without it the list stays where it was while the keyboard walks off the page,
 	# so from mission eleven on Enter deploys a mission nobody can see.
 	_list_scroll.follow_focus = true
-	_list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(_list_scroll)
 
 	_rows = VBoxContainer.new()

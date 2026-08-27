@@ -198,9 +198,7 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	# Same bounded frame the select page gives its card: the card's height is
 	# content-driven, so it is the one child allowed to run out of room, and the
 	# scroll keeps that from reaching the Close button.
-	var frame := ScrollContainer.new()
-	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var frame := UiKit.vscroll()
 	# Neither the frame nor its bar may take focus, or an arrow key is spent on
 	# focus navigation before _unhandled_input ever sees it and the cards never
 	# move — the same pairing the end-turn guard's list needs.

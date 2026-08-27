@@ -2,8 +2,8 @@ class_name UiKit
 extends RefCounted
 ## The widgets the design system's screens are assembled from: the padded box, the
 ## micro-label, the divider, the action button, the segmented control, the toggle
-## row, the identity chip and the commander bust. Every one of them is drawn out of
-## UiTheme's colours, fonts and styleboxes and holds no state of its own.
+## row, the identity chip, the scroll frame and the commander bust. Every one of them
+## is drawn out of UiTheme's colours, fonts and styleboxes and holds no state of its own.
 ##
 ## UiTheme's sibling, and the split between them is what each answers. UiTheme owns
 ## the *recipe* — a colour, a size, a stylebox — and UiKit owns the *widget* built
@@ -106,6 +106,18 @@ static func rule() -> Control:
 	line.color = UiTheme.BORDER_SOFT
 	line.custom_minimum_size = Vector2(0, UiTheme.BORDER)
 	return line
+
+
+## The frame a page's body scrolls inside: it takes the height its container has
+## to give and never scrolls sideways, a page whose copy can slide out of the left
+## margin being a page the reader has to steer. A caller that wants the frame to
+## chase focus or to stand at a fixed height sets that on the control it is handed —
+## those are the page's business, and this is the shape they all share.
+static func vscroll() -> ScrollContainer:
+	var frame := ScrollContainer.new()
+	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	return frame
 
 
 ## A faction-tinted or cream action button with an optional suffix ("MATCH"),

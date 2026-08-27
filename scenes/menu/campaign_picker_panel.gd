@@ -15,7 +15,6 @@ extends Control
 signal picked(campaign_id: StringName)
 signal cancelled
 
-const _TITLE_SIZE := 15
 ## Six cards, the page's chrome and no scrollbar inside 360px. The card is its three
 ## lines of type — 40px, measured off their own fonts — plus a margin above and
 ## below, because a card whose last line sat on its own border read as clipped copy;
@@ -105,7 +104,7 @@ func _build() -> void:
 	_title = Label.new()
 	_title.text = "CAMPAIGNS"
 	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(_title)
 
@@ -114,9 +113,7 @@ func _build() -> void:
 	_empty = _note("No campaigns installed.")
 	main.add_child(_empty)
 
-	var frame := ScrollContainer.new()
-	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var frame := UiKit.vscroll()
 	main.add_child(frame)
 
 	_rows = VBoxContainer.new()

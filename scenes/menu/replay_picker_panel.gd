@@ -172,10 +172,8 @@ func _build_frame() -> Control:
 	# Scrolled because ten rows are more than the frame holds, and focus-following
 	# because otherwise the list stays put while the keyboard walks off the bottom
 	# of it — the campaign hub's list learned the same lesson.
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var scroll := UiKit.vscroll()
 	scroll.follow_focus = true
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(scroll)
 
 	_rows = VBoxContainer.new()
