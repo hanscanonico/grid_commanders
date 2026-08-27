@@ -69,6 +69,22 @@ func test_capturer_death_resets_progress() -> void:
 	assert_false(state.capture_progress.has(Vector2i(0, 0)))
 
 
+## A capture is a move first, so the move rules answer before the capture ones.
+func test_capture_answers_the_move_rules_first() -> void:
+	var state := _state("[terrain]\nC.\n[units]\n1 i 1 0\n1 i 0 0")
+	var mover := state.units[0]
+	assert_eq(
+		CaptureCommand.new(mover, Fixture.path([Vector2i(1, 0), Vector2i(0, 0)])).validate(state),
+		"destination is occupied",
+		"the city is already stood on by a friend"
+	)
+	mover.acted = true
+	assert_eq(
+		CaptureCommand.new(mover, Fixture.path([Vector2i(1, 0)])).validate(state),
+		"unit has already acted"
+	)
+
+
 func test_non_capture_unit_rejected() -> void:
 	var state := _state("[terrain]\nC.\n[units]\n1 t 0 0")
 	var command := CaptureCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]))

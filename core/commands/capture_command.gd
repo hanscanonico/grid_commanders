@@ -37,9 +37,10 @@ func _init(p_unit: Unit, p_path: Array[Vector2i]) -> void:
 
 
 func validate(state: GameState) -> String:
-	var move_error := MoveCommand.new(unit, path).validate(state)
-	if move_error != "":
-		return move_error
+	var visible := Vision.visible_cells_if_fogged(state, unit.team)
+	var moving := MoveCommand.move_error(state, unit, path, visible)
+	if moving != "":
+		return moving
 	if not unit.type.can_capture:
 		return "unit cannot capture"
 	var dest: Vector2i = path[path.size() - 1]

@@ -86,6 +86,21 @@ func test_dive_rejections() -> void:
 		DiveCommand.new(sub, Fixture.path([Vector2i(0, 0)]), true).validate(state),
 		"already submerged"
 	)
+	# A dive is a move first, so the move rules answer before the hatch does.
+	var moored := Fixture.state("[terrain]\nSS\n[units]\n1 s 0 0\n1 s 1 0")
+	var boat := moored.units[0]
+	assert_eq(
+		DiveCommand.new(boat, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]), true).validate(
+			moored
+		),
+		"destination is occupied",
+		"the boat may not submerge into the one moored beside it"
+	)
+	boat.acted = true
+	assert_eq(
+		DiveCommand.new(boat, Fixture.path([Vector2i(0, 0)]), true).validate(moored),
+		"unit has already acted"
+	)
 
 
 # --- targeting ----------------------------------------------------------------
