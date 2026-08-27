@@ -45,9 +45,11 @@ run: import
 hotseat: import
 	$(GODOT_GUI) --path . $(BATTLE) -- --hotseat
 
+# Two engines at once: the two soaks in one, every other script in the other.
+# TEST_JOBS=1 runs the single verbatim .gutconfig.json pass. See tools/run_tests.sh.
 test:
 	$(call require-godot)
-	$(GODOT) --headless --path . -s res://addons/gut/gut_cmdln.gd
+	GODOT="$(GODOT)" tools/run_tests.sh
 
 # The merge gate, in one command. Order is cheapest-feedback-first: parsing
 # fails fastest, style next, the suite last, then the ~1s determinism replay.
