@@ -445,7 +445,7 @@ func _consider_withdraw(
 ## dive: where it is safer is one question, and a second walk over the same threat
 ## map would be a second opinion on it. `threat` is null on a tier with every
 ## threat dial at zero — the dive is the one caller that can reach here without
-## one, since `dive_score` is live everywhere (see AIPlanCache._weighs_threat) —
+## one, since `dive_score` is live everywhere (see AIProfile.builds_threat_map) —
 ## and `_incoming` reads a null map as the same non-answer everywhere, which
 ## folds the first key out of `_better_refuge` and ranks purely by stand-off,
 ## repair and cost.
@@ -590,28 +590,15 @@ func _consider_dive(
 	if not wants or profile.dive_score <= plan.score:
 		return
 	plan.score = profile.dive_score
-	# dive_score is live on every tier, unlike the three dials that build the
-	# map — so a lone submarine on a threat-blind tier must not be what turns
-	# ThreatMap.build on for the whole turn. Only reach for the real map when
-	# something else already warrants its cost.
+	# dive_score is live on every tier, unlike the dials that build the map — so a
+	# lone submarine on a threat-blind tier must not be what turns ThreatMap.build
+	# on for the whole turn. Asked here of a plan being built *fresh*, so it only
+	# skips a cost; AIPlanCache asks the same authority of a plan it would keep.
 	var threat: ThreatMap = null
-	if _weighs_threat():
+	if profile.builds_threat_map():
 		threat = context.threat_map()
 	var refuge := _best_refuge(context, unit, reachable, threat)
 	plan.command = DiveCommand.new(unit, reachable.path_to(refuge), not unit.dived)
-
-
-## Whether any dial that builds the threat map is live. Mirrors
-## AIPlanCache._weighs_threat rather than calling it: the cache asks the
-## question to decide what a *kept* plan can depend on, this asks it to decide
-## what a *fresh* one may build, and each stays free to add a dial without
-## coupling the other's read to it.
-func _weighs_threat() -> bool:
-	return (
-		profile.threat_aversion > 0.0
-		or profile.advance_threat_tiles > 0.0
-		or profile.withdraw_weight > 0.0
-	)
 
 
 ## Whether an enemy that could damage `unit` can plausibly reach it next turn,
