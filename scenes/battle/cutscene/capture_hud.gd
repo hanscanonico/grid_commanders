@@ -62,7 +62,8 @@ func _draw_meter() -> void:
 	var shown := maxi(points_shown, 0)
 	var right := size.x - 16.0
 	var top := 14.0
-	_stroked(
+	CutsceneFx.stroked(
+		self,
 		font,
 		Vector2(right - 74.0, top + 6.0),
 		"CAPTURE PTS",
@@ -72,8 +73,11 @@ func _draw_meter() -> void:
 	var big := "%d" % shown
 	var big_w := font.get_string_size(big, HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
 	var num_tint := UiTheme.DANGER if shown <= 0 else CutscenePalette.GOLD
-	_stroked(font, Vector2(right - 26.0 - big_w, top + 34.0), big, 30, Color(num_tint, meter_p))
-	_stroked(
+	CutsceneFx.stroked(
+		self, font, Vector2(right - 26.0 - big_w, top + 34.0), big, 30, Color(num_tint, meter_p)
+	)
+	CutsceneFx.stroked(
+		self,
 		font,
 		Vector2(right - 22.0, top + 34.0),
 		"/%d" % METER_TOTAL,
@@ -100,7 +104,7 @@ func _draw_chips() -> void:
 		var text := "-%d" % chip_values[i]
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
 		var tint := Color(CutscenePalette.GOLD, alpha)
-		_stroked(font, chip_at + Vector2(-w * 0.5, rise), text, 26, tint)
+		CutsceneFx.stroked(self, font, chip_at + Vector2(-w * 0.5, rise), text, 26, tint)
 
 
 ## Bits of confetti thrown up when the property flips, in the capturer's accent
@@ -128,16 +132,10 @@ func _draw_banner() -> void:
 	var size_main := 40 if banner_complete else 30
 	var tint := CutscenePalette.GOLD if banner_complete else Color(1.0, 1.0, 1.0)
 	var main_w := font.get_string_size(banner_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size_main).x
-	_stroked(font, Vector2(-main_w * 0.5, 0.0), banner_text, size_main, tint)
+	CutsceneFx.stroked(self, font, Vector2(-main_w * 0.5, 0.0), banner_text, size_main, tint)
 	if banner_sub != "":
 		var sub_w := font.get_string_size(banner_sub, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
-		_stroked(font, Vector2(-sub_w * 0.5, 24.0), banner_sub, 18, Color(1.0, 1.0, 1.0))
+		CutsceneFx.stroked(
+			self, font, Vector2(-sub_w * 0.5, 24.0), banner_sub, 18, Color(1.0, 1.0, 1.0)
+		)
 	draw_set_transform(Vector2.ZERO)
-
-
-## Outlined text. Everything the overlay prints sits over moving art, so nothing
-## is drawn without a stroke around it — the same rule CutsceneFx follows.
-func _stroked(font: Font, at: Vector2, text: String, font_size: int, tint: Color) -> void:
-	var ink := Color(CutscenePalette.STROKE, tint.a)
-	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, ink)
-	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, tint)

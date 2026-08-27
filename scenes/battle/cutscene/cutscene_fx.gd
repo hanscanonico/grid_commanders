@@ -552,18 +552,19 @@ func _draw_callout(at: Vector2, amount: int, tag: String, progress: float) -> vo
 	if tag != "":
 		var tag_width := font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 		var tag_tint := KO_RED if tag == KO_TAG else FLASH_GOLD
-		_stroked(font, Vector2(-tag_width * 0.5, -18.0), tag, 15, Color(tag_tint, alpha))
+		stroked(self, font, Vector2(-tag_width * 0.5, -18.0), tag, 15, Color(tag_tint, alpha))
 	if amount > 0:
 		var text := "-%d" % amount
 		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
-		_stroked(font, Vector2(-width * 0.5, 8.0), text, 26, Color(1.0, 1.0, 1.0, alpha))
+		stroked(self, font, Vector2(-width * 0.5, 8.0), text, 26, Color(1.0, 1.0, 1.0, alpha))
 	draw_set_transform(Vector2.ZERO)
 
 
 func _draw_vs() -> void:
 	var font := get_theme_font(&"font", &"Label")
 	var width := font.get_string_size("VS", HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-	_stroked(
+	stroked(
+		self,
 		font,
 		Vector2(size.x * 0.5 - width * 0.5, size.y * 0.5 + 8.0),
 		"VS",
@@ -572,12 +573,25 @@ func _draw_vs() -> void:
 	)
 
 
-## Outlined text. Everything the overlay prints sits over moving art, so nothing
+## Outlined text. Everything either cut-in prints sits over moving art, so nothing
 ## is ever drawn without a stroke around it.
-func _stroked(font: Font, at: Vector2, text: String, font_size: int, tint: Color) -> void:
+static func stroked(
+	canvas: CanvasItem, font: Font, at: Vector2, text: String, font_size: int, tint: Color
+) -> void:
 	var ink := Color(CutscenePalette.STROKE, tint.a)
-	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, ink)
-	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, tint)
+	canvas.draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, ink)
+	canvas.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, tint)
+
+
+## The ten points of a five-pointed star, the shape both cut-ins print a defence
+## rating with.
+static func star_points(center: Vector2, radius: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in 10:
+		var reach := radius if i % 2 == 0 else radius * 0.45
+		var angle := -PI * 0.5 + float(i) * PI / 5.0
+		points.append(center + Vector2(cos(angle), sin(angle)) * reach)
+	return points
 
 
 ## Piecewise linear interpolation over matched stop/value lists — the one shape
