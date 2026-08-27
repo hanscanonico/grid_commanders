@@ -18,7 +18,8 @@ extends SceneTree
 ## candidates AB4 tried all lost to leaving the board alone, so the board it
 ## plays is AB2's.
 ##
-## The loop is the soak's `_soak`, not a preset over `BalanceMatchEngine` (whose
+## The loop is `FourArmyLoop`, shared with the mobile soak's planner clock and
+## the soak test's `_soak`, not a preset over `BalanceMatchEngine` (whose
 ## own `_has_independent_planners` / `tiebreak` / `_match_id` all assume exactly
 ## two teams): `BalanceHarness.map_of` -> `GameState.create` -> `state.sides`
 ## set directly, exactly as the soak sets it, never read off the map's own
@@ -61,6 +62,9 @@ const ALLIANCE_GRAMMAR := "1+2+3v4"
 ## them. Every other grouping names a side by its seats, there being nothing
 ## else to call it.
 const ALLIANCE_SIDE_NAMES: Dictionary[int, String] = {0: "alliance", 1: "bulwark"}
+## What `--grouping` takes, as a refusal names them: the shared loop's two plus
+## the preset this tool adds on top of them.
+const GROUPING_OPTIONS := "alliance, ffa, both or a grouping like 1+3v2+4"
 
 const CSV_COLUMNS: Array[String] = [
 	"grouping",
@@ -177,19 +181,7 @@ func _grouping_readable() -> bool:
 			)
 			return false
 		return true
-	if _grouping == "ffa":
-		return true
-	for token in _grouping.split("v", false):
-		for seat in token.split("+", false):
-			if not seat.strip_edges().is_valid_int():
-				push_error(
-					(
-						"%s: --grouping is alliance, ffa, both or a grouping like 1+3v2+4 (got '%s')"
-						% [TOOL, _grouping]
-					)
-				)
-				return false
-	return true
+	return FourArmyLoop.grouping_readable(TOOL, _grouping, GROUPING_OPTIONS)
 
 
 ## What this invocation plays, in order: label, output slug, sides and the names
@@ -261,68 +253,34 @@ func _run(run: Dictionary) -> bool:
 	return summary["total_rejected"] > 0 or summary["total_cap_stalls"] > 0 or not write_ok
 
 
-## One match, fresh state and one `AIController` per army. Mirrors
-## `test_alliance_soak.gd::_soak`'s loop exactly, with three differences: no
-## commander is ever seated (neutral throughout, measuring the board rather
-## than a doctrine); the day horizon is a measurement's rather than a legality
-## check's ten; and fog stays off for every seed, where the soak alternates it
-## by seed to walk the shared-sight path — fog moves AI pathing (a committed
-## path is walked with the mover's own visibility) and switches off the AR1
-## plan cache, so alternating it would measure two boards and report one
-## number. Returns an empty row when the board cannot be seated at all.
+## One match through `FourArmyLoop`, read back as the row this report is
+## written from. The loop mirrors `test_alliance_soak.gd::_soak`'s exactly, with
+## three differences here: no commander is ever seated (neutral throughout,
+## measuring the board rather than a doctrine); the day horizon is a
+## measurement's rather than a legality check's ten; and fog stays off for every
+## seed, where the soak alternates it by seed to walk the shared-sight path —
+## fog moves AI pathing (a committed path is walked with the mover's own
+## visibility) and switches off the AR1 plan cache, so alternating it would
+## measure two boards and report one number. Returns an empty row when the board
+## cannot be seated at all.
 func _play(run: Dictionary, seed_val: int) -> Dictionary:
-	var label: String = run["label"]
 	var sides: Dictionary[int, int] = run["sides"]
-	var state := GameState.create(_map, _harness.unit_db, _harness.chart)
-	if state == null:
+	var played := FourArmyLoop.play(
+		_map, _harness, _profile, sides, seed_val, _days_cap, run["label"]
+	)
+	if played.is_empty():
 		return {}
-	state.sides = sides
-	state.rng.seed = seed_val
-	var planners: Dictionary = {}
-	for team in state.teams:
-		planners[team] = AIController.new(_harness.unit_db, _profile)
-	var cap := BalanceMatchEngine.command_ceiling(_days_cap, state.teams.size())
-	var commands := 0
-	var rejected := 0
-	var turn_cap_hits := 0
-	var commands_this_turn := 0
-	while state.winner == 0 and state.day <= _days_cap and commands < cap:
-		var team: int = state.current_team
-		var ai: AIController = planners[team]
-		var command := ai.plan_next_command(state)
-		# The scene's own per-turn safety net (BalanceMatchEngine.play), applied
-		# here too: a planner that overstays is cut, not counted as a rejection.
-		if (
-			commands_this_turn >= BalanceMatchEngine.MAX_COMMANDS_PER_TURN
-			and not (command is EndTurnCommand)
-		):
-			turn_cap_hits += 1
-			command = EndTurnCommand.new()
-		var error := command.validate(state)
-		if error != "":
-			rejected += 1
-			push_error(
-				(
-					"%s %s seed %d (day %d, team %d): %s"
-					% [_map_name, label, seed_val, state.day, team, error]
-				)
-			)
-			command = EndTurnCommand.new()
-			if command.validate(state) != "":
-				break
-		commands_this_turn = 0 if command is EndTurnCommand else commands_this_turn + 1
-		command.apply(state)
-		commands += 1
+	var state: GameState = played["state"]
 	return {
-		"grouping": label,
+		"grouping": run["label"],
 		"seed": seed_val,
 		"winner": state.winner,
 		"winner_side": _winner_side(state, run),
 		"day_ended": state.day,
-		"commands": commands,
-		"rejected": rejected,
-		"cap_stall": 1 if (state.winner == 0 and commands >= cap) else 0,
-		"turn_cap_hits": turn_cap_hits,
+		"commands": played["commands"],
+		"rejected": played["rejected"],
+		"cap_stall": played["cap_stall"],
+		"turn_cap_hits": played["turn_cap_hits"],
 		"eliminated": ";".join(state.eliminated.keys().map(func(t: int) -> String: return str(t))),
 	}
 
@@ -399,8 +357,11 @@ func _summarise(label: String, sides: Dictionary[int, int], rows: Array[Dictiona
 		"undecided_pct": 100.0 * float(undecided) / maxf(1.0, float(n)),
 		"decided": decided,
 		"decided_pct": 100.0 * float(decided) / maxf(1.0, float(n)),
-		"mean_day": _mean(decided_days),
-		"median_day": _median(decided_days),
+		# Over the matches that resolved only: an undecided match has no length
+		# to average, only a horizon it outlived, so counting it as `days_cap`
+		# would report the horizon as a measurement.
+		"mean_day": FourArmyLoop.mean(decided_days),
+		"median_day": FourArmyLoop.median(decided_days),
 		"winners": winners,
 		"allied_falls": allied_falls,
 		"days_cap": _days_cap,
@@ -416,30 +377,6 @@ func _allied_seats(sides: Dictionary[int, int]) -> Array[int]:
 			seats.append(seat)
 	seats.sort()
 	return seats
-
-
-## Mean and median over the matches that resolved — an undecided match has no
-## length to average, only a horizon it outlived, so counting it as `days_cap`
-## would report the horizon as a measurement. A run that decided nothing reports
-## 0.0, which `decided` beside it is what tells apart from a real average.
-func _mean(days: Array[int]) -> float:
-	if days.is_empty():
-		return 0.0
-	var total := 0
-	for day in days:
-		total += day
-	return float(total) / float(days.size())
-
-
-func _median(days: Array[int]) -> float:
-	if days.is_empty():
-		return 0.0
-	var sorted := days.duplicate()
-	sorted.sort()
-	var mid := sorted.size() / 2
-	if sorted.size() % 2 == 1:
-		return float(sorted[mid])
-	return 0.5 * float(sorted[mid - 1] + sorted[mid])
 
 
 func _write(slug: String, rows: Array[Dictionary], summary: Dictionary) -> bool:

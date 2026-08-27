@@ -29,7 +29,7 @@ extends SceneTree
 ## rather than editing it.
 ##
 ## Nothing under `core/` or `ai/` learns this exists: the planner loop is
-## `tools/run_bulwark_measure.gd`'s, wrapped in a clock.
+## `tools/balance/four_army_loop.gd`, wrapped in a clock.
 ##
 ## Usage (headless; see `make mobile-soak`):
 ##   Godot --headless --path . -s res://tools/run_mobile_soak.gd -- [flags]
@@ -56,6 +56,8 @@ const ALL_SECTIONS: Array[String] = ["planner", "replay"]
 ## that the next match's `prune` counts against `KEEP` and evicts a real
 ## recording for.
 const REPLAY_PROBE := "user://mobile_soak_probe.jsonl"
+## What `--grouping` takes, as a refusal names them.
+const GROUPING_OPTIONS := "ffa or a grouping like 1+2+3v4"
 
 var _harness: BalanceHarness
 var _map: MapData
@@ -69,6 +71,11 @@ var _seed_count := 2
 var _days_cap := 20
 var _fog := true
 var _append_count := 200
+
+## What the running match has spent planning this turn, banked by the loop's
+## per-command callback: a lambda captures a local by value, so the clock's own
+## running total lives here.
+var _turn_ms := 0.0
 
 
 func _init() -> void:
@@ -149,19 +156,7 @@ func _positive(arg: String) -> int:
 ## unreadable grouping with a free-for-all: the run would be timed on a seating
 ## nobody asked for, under a heading naming the one they did.
 func _grouping_readable() -> bool:
-	if _grouping == FREE_FOR_ALL:
-		return true
-	for token in _grouping.split("v", false):
-		for seat in token.split("+", false):
-			if not seat.strip_edges().is_valid_int():
-				push_error(
-					(
-						"%s: --grouping is ffa or a grouping like 1+2+3v4 (got '%s')"
-						% [TOOL, _grouping]
-					)
-				)
-				return false
-	return true
+	return FourArmyLoop.grouping_readable(TOOL, _grouping, GROUPING_OPTIONS)
 
 
 # --- the planner clock -------------------------------------------------------
@@ -195,7 +190,7 @@ func _planner_section() -> void:
 		var turns: Array[float] = []
 		var seats := 0
 		for i in _seed_count:
-			seats = _play(profile, i + 1, commands, turns)
+			seats = _play(id, profile, i + 1, commands, turns)
 		print(
 			(
 				"%-9s %5d %9d %9.1f %8.1f %8.1f %8.1f %10.1f %9.1f"
@@ -203,64 +198,43 @@ func _planner_section() -> void:
 					id,
 					seats,
 					commands.size(),
-					_mean(commands),
+					FourArmyLoop.mean(commands),
 					_percentile(commands, 0.5),
 					_percentile(commands, 0.9),
 					_max(commands),
-					_mean(turns),
+					FourArmyLoop.mean(turns),
 					_max(turns)
 				]
 			)
 		)
 
 
-## One match, timing every `plan_next_command` call and banking the per-turn
-## sum. The loop is `tools/run_bulwark_measure.gd::_play`'s — one AIController
-## per army, neutral commanders, the same per-turn safety net — with the clock
-## added and the result thrown away: this measures how long the board takes to
-## think, never who wins. Returns the seat count it played.
-func _play(profile: AIProfile, seed_val: int, commands: Array[float], turns: Array[float]) -> int:
-	var state := GameState.create(_map, _harness.unit_db, _harness.chart)
-	if state == null:
-		return 0
+## One match through `FourArmyLoop` — the loop the board measurement plays, one
+## AIController per army, neutral commanders, the same per-turn safety net —
+## with a clock hung off its per-command callback and the result thrown away:
+## this measures how long the board takes to think, never who wins. Returns the
+## seat count it played.
+func _play(
+	tier: String, profile: AIProfile, seed_val: int, commands: Array[float], turns: Array[float]
+) -> int:
 	var sides: Dictionary[int, int] = {}
 	var parsed := MatchRequest.parse_sides_flag("" if _grouping == FREE_FOR_ALL else _grouping)
 	for seat: int in parsed:
 		sides[seat] = int(parsed[seat])
-	state.sides = sides
-	state.fog_enabled = _fog
-	state.rng.seed = seed_val
-	var planners: Dictionary = {}
-	for team in state.teams:
-		planners[team] = AIController.new(_harness.unit_db, profile)
-	var cap := BalanceMatchEngine.command_ceiling(_days_cap, state.teams.size())
-	var issued := 0
-	var this_turn := 0.0
-	var commands_this_turn := 0
-	while state.winner == 0 and state.day <= _days_cap and issued < cap:
-		var ai: AIController = planners[state.current_team]
-		var started := Time.get_ticks_usec()
-		var command := ai.plan_next_command(state)
-		var spent := float(Time.get_ticks_usec() - started) / 1000.0
+	_turn_ms = 0.0
+	var clock := func(spent_usec: int, ends_turn: bool) -> void:
+		var spent := float(spent_usec) / 1000.0
 		commands.append(spent)
-		this_turn += spent
-		if (
-			commands_this_turn >= BalanceMatchEngine.MAX_COMMANDS_PER_TURN
-			and not (command is EndTurnCommand)
-		):
-			command = EndTurnCommand.new()
-		if command.validate(state) != "":
-			command = EndTurnCommand.new()
-			if command.validate(state) != "":
-				break
-		if command is EndTurnCommand:
-			turns.append(this_turn)
-			this_turn = 0.0
-			commands_this_turn = 0
-		else:
-			commands_this_turn += 1
-		command.apply(state)
-		issued += 1
+		_turn_ms += spent
+		if ends_turn:
+			turns.append(_turn_ms)
+			_turn_ms = 0.0
+	var played := FourArmyLoop.play(
+		_map, _harness, profile, sides, seed_val, _days_cap, tier, clock, _fog
+	)
+	if played.is_empty():
+		return 0
+	var state: GameState = played["state"]
 	return state.teams.size()
 
 
@@ -299,7 +273,7 @@ func _replay_section() -> void:
 		(
 			"append ms  mean %.3f  p50 %.3f  p90 %.3f  p99 %.3f  max %.3f"
 			% [
-				_mean(spents),
+				FourArmyLoop.mean(spents),
 				_percentile(spents, 0.5),
 				_percentile(spents, 0.9),
 				_percentile(spents, 0.99),
@@ -310,15 +284,6 @@ func _replay_section() -> void:
 
 
 # --- arithmetic --------------------------------------------------------------
-
-
-func _mean(values: Array[float]) -> float:
-	if values.is_empty():
-		return 0.0
-	var total := 0.0
-	for value in values:
-		total += value
-	return total / float(values.size())
 
 
 func _max(values: Array[float]) -> float:
