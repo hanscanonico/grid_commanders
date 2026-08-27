@@ -32,10 +32,9 @@ static func validate_path_steps(
 	unit_path: Array[Vector2i],
 	visible: Dictionary[Vector2i, bool]
 ) -> String:
-	if state.winner != 0:
-		return "the match is over"
-	if unit_moving.team != state.current_team:
-		return "not this team's turn"
+	var gate := Command.turn_error(state, unit_moving.team)
+	if gate != "":
+		return gate
 	if unit_moving.carrier != null:
 		return "unit is being transported"
 	if unit_moving.acted:

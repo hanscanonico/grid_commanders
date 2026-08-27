@@ -25,10 +25,9 @@ func _init(p_team: int, p_unit_type: UnitType, p_cell: Vector2i) -> void:
 
 
 func validate(state: GameState) -> String:
-	if state.winner != 0:
-		return "the match is over"
-	if team != state.current_team:
-		return "not this team's turn"
+	var gate := Command.turn_error(state, team)
+	if gate != "":
+		return gate
 	if unit_type == null:
 		return "unknown unit type"
 	var terrain := state.map.terrain_at(cell)
