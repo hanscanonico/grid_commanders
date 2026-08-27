@@ -6,15 +6,8 @@ extends GutTest
 
 
 func _campaign(id: StringName) -> CampaignDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = &"one"
-	mission.title = "One"
-	mission.map_path = "res://maps/first_steps.txt"
-	var campaign := CampaignDefinition.new()
-	campaign.id = id
-	campaign.title = String(id)
-	campaign.missions.append(mission)
-	return campaign
+	var missions: Array[MissionDefinition] = [CampaignFixture.mission(&"one")]
+	return CampaignFixture.campaign(id, missions)
 
 
 func _ids(db: CampaignDB) -> Array[StringName]:

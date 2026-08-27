@@ -8,11 +8,8 @@ var _commanders := Fixture.commander_db()
 
 
 func _mission() -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = &"one"
-	mission.title = "One"
+	var mission := CampaignFixture.mission(&"one")
 	mission.location = "Ash Reach"
-	mission.map_path = "res://maps/first_steps.txt"
 	mission.ai_teams = [2]
 	mission.commanders = {2: &"radek_morn"}
 	mission.par_day = 12

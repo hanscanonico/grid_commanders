@@ -46,25 +46,11 @@ func after_each() -> void:
 	CampaignProfile.erase(PROBE)
 
 
-func _mission(id: StringName) -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = id
-	mission.title = String(id)
-	mission.map_path = "res://maps/first_steps.txt"
-	mission.player_team = 1
-	var objective := CaptureCellObjective.new()
-	objective.cell = Vector2i(0, 0)
-	mission.objectives.append(objective)
-	return mission
-
-
 func _campaign(ids: Array = [&"probe_one", &"probe_two"]) -> CampaignDefinition:
-	var campaign := CampaignDefinition.new()
-	campaign.id = PROBE
-	campaign.title = "Probe"
+	var missions: Array[MissionDefinition] = []
 	for id: StringName in ids:
-		campaign.missions.append(_mission(id))
-	return campaign
+		missions.append(CampaignFixture.capture_mission(id))
+	return CampaignFixture.campaign(PROBE, missions)
 
 
 func _condition(flag: StringName, at_least := 1, at_most := -1) -> FlagCondition:

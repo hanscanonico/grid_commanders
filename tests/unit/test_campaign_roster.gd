@@ -95,25 +95,11 @@ func _army(state: GameState, team: int) -> Dictionary:
 	return army
 
 
-func _mission(id: StringName) -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = id
-	mission.title = String(id)
-	mission.map_path = "res://maps/first_steps.txt"
-	mission.player_team = 1
-	var objective := CaptureCellObjective.new()
-	objective.cell = Vector2i(0, 0)
-	mission.objectives.append(objective)
-	return mission
-
-
 func _campaign(ids: Array = [&"probe_one", &"probe_two", &"probe_three"]) -> CampaignDefinition:
-	var campaign := CampaignDefinition.new()
-	campaign.id = PROBE
-	campaign.title = "Probe"
+	var missions: Array[MissionDefinition] = []
 	for id: StringName in ids:
-		campaign.missions.append(_mission(id))
-	return campaign
+		missions.append(CampaignFixture.capture_mission(id))
+	return CampaignFixture.campaign(PROBE, missions)
 
 
 ## The board a mission opens on, opened the way the live scene opens it: the

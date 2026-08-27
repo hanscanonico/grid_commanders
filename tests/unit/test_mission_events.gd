@@ -9,6 +9,8 @@ extends GutTest
 ## board does not remember having had a column landed on it, so the fired set is
 ## recorded in the mission's tally and saved with it.
 
+const RIDGE := "res://maps/fixtures/ridge.txt"
+
 const FIELD := """
 [terrain]
 CCQ...
@@ -82,13 +84,8 @@ func _event(id: StringName, triggers: Array[MissionTrigger]) -> MissionEvent:
 
 ## A launchable mission on this board, for the authoring-gate cases.
 func _mission() -> MissionDefinition:
-	var mission := MissionDefinition.new()
-	mission.id = &"fixture"
-	mission.map_path = "res://maps/fixtures/ridge.txt"
-	mission.player_team = 1
-	var objective := CaptureCellObjective.new()
-	objective.cell = Vector2i(1, 0)
-	mission.objectives = [objective]
+	var mission := CampaignFixture.capture_mission(&"fixture", Vector2i(1, 0))
+	mission.map_path = RIDGE
 	return mission
 
 
@@ -131,12 +128,8 @@ func test_a_repeating_event_stays_due() -> void:
 
 
 func test_the_fired_and_revealed_sets_survive_a_save_and_a_resume() -> void:
-	var campaign := CampaignDefinition.new()
-	campaign.id = &"__probe_events"
-	var mission := MissionDefinition.new()
-	mission.id = &"one"
-	mission.map_path = "res://maps/first_steps.txt"
-	campaign.missions.append(mission)
+	var missions: Array[MissionDefinition] = [CampaignFixture.mission(&"one")]
+	var campaign := CampaignFixture.campaign(&"__probe_events", missions)
 	var progress := CampaignState.begin(campaign)
 	progress.active_mission = &"one"
 	var tally := MissionProgress.new()
