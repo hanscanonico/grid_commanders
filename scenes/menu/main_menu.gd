@@ -56,11 +56,10 @@ var _seat_refusal: Label
 ## asked at launch rather than mirrored into menu state.
 var _seat_strip: SeatStrip
 var _setup_help_labels: Array[Label] = []
-var _continue_button: Button
-## The Silkscreen line under Continue naming what it resumes — "DAY 4 · SCRIMMAGE".
-var _continue_caption: Label
-## The tip hanging off that line, re-worded with it by `_refresh_continue`.
-var _continue_tip: Tooltip
+## The Continue row — the button, its caption, its tip and the press that opens
+## the save — kept whole in its own collaborator. It is handed what the slot
+## holds; where that comes from stays this page's decision.
+var _continue: ContinueSlot
 var _campaign_button: Button
 var _replay_button: Button
 var _quit_button: Button
@@ -84,14 +83,8 @@ var _campaign_flow: MenuCampaignFlow
 ## player set up rather than re-asking a strip they may have walked back to.
 var _pending_ai_teams: Array[int] = []
 
-## The database the picker parsed its roster with, kept because a Continue press
-## reads a saved match's own board through it.
+## The database the picker parses its roster with.
 var _terrain_db: TerrainDB
-## Why the last Continue press could not open the save, or "" while none has
-## failed. A save the caption could name may still be one `decode` refuses, and
-## the press is the only place that is found out, so the refusal is kept for the
-## caption refresh to read back.
-var _continue_refusal := ""
 ## The difficulty tiers in menu order, gentlest first — handed to the seat strip,
 ## which is where a tier is chosen (COM-225).
 var _difficulties: Array[Difficulty] = []
@@ -151,7 +144,16 @@ func _ready() -> void:
 	# a later Quit-to-menu cannot reopen a campaign nobody is in.
 	if CampaignSession.active():
 		_campaign_flow.resume()
-	_refresh_continue()
+	# Where the slot comes from stays this page's: the disk, or a posed one when a
+	# capture owns it, so a photographed menu never depends on what this machine
+	# has saved.
+	_continue.refresh(
+		(
+			_capture_driver.posed_slot(_map_picker.maps())
+			if _capture_driver.poses_slot()
+			else SaveGame.status()
+		)
+	)
 	_start_button.pressed.connect(func() -> void: _open_select(_seat_strip.ai_teams()))
 	# The strip is the only writer of who plays what, so the rule that a table with
 	# no computer at it has no difficulty to tune follows it rather than a mode
@@ -163,7 +165,6 @@ func _ready() -> void:
 	# the footer chips exist, so the selection is re-read once everything does —
 	# the roster is the board's answer and both of them are downstream of it.
 	_deal_seats_for_map()
-	_continue_button.pressed.connect(_continue)
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
 	_quit_button.pressed.connect(get_tree().quit)
@@ -521,24 +522,7 @@ func _build_action_stack() -> Control:
 	_seat_refusal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_seat_refusal)
 
-	# The one filled row under Start: resuming is the action a returning player came
-	# for, so it outranks the two offers below it and stays a step under the match
-	# it must not compete with.
-	_continue_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
-	col.add_child(_continue_button)
-	# What Continue resumes, on its own line rather than as the button's inline
-	# suffix: "DAY 12 · THE STRAITS" is longer than the 122px action stack can set
-	# at button size, and a micro-label under the control is the panel's own idiom.
-	# It is metadata about the button above it, not a control — hence muted ink and
-	# no dotted rule. `_refresh_continue` sets the words.
-	_continue_caption = UiKit.micro_label("")
-	_continue_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_continue_caption.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	col.add_child(_continue_caption)
-	# The tip hangs off the button itself: a disabled control still answers the
-	# pointer, so the one control here that can be disabled is also the one place
-	# the explanation is always reachable.
-	_continue_tip = Tooltip.attach(_continue_button, "", "", Tooltip.Side.BOTTOM)
+	_continue = ContinueSlot.new(col, func() -> void: _start([] as Array[int], true, {}))
 
 	# Above Replays, below Continue: an authored war is a different offer from the
 	# skirmish this page is otherwise about, and it is the one a first-time player
@@ -721,69 +705,6 @@ func _on_replay_cancelled() -> void:
 	_replay_button.grab_focus()
 
 
-## Names the saved match under the Continue button, so the menu alone answers
-## "is this the match I meant?" — the whole point of labelling the slot. The day
-## and board are read off the save envelope's own keys (SaveGame.status); nothing
-## is rebuilt, and the save format is untouched.
-##
-## Three captions, because the slot has three answers: a player told "no saved
-## match" about a save the disk truncated is told they never had one (COM-121).
-## A damaged save disables Continue like an empty slot does, and says why in the
-## codec's own words rather than in the codec's log.
-func _refresh_continue() -> void:
-	var slot := (
-		_capture_driver.posed_slot(_map_picker.maps())
-		if _capture_driver.poses_slot()
-		else SaveGame.status()
-	)
-	if slot.state == SaveGame.Slot.State.ABSENT:
-		_refuse_continue("NO SAVED MATCH", "Nothing saved yet", "Save in battle from the map menu")
-		return
-	# The codec's words when the slot itself will not read, the press's when the save
-	# was nameable and would not open.
-	var refusal := (
-		slot.reason if slot.state == SaveGame.Slot.State.UNREADABLE else _continue_refusal
-	)
-	if refusal != "":
-		_refuse_continue("SAVED MATCH UNREADABLE", "That save cannot be opened", refusal)
-		return
-	_continue_button.disabled = false
-	_continue_caption.text = slot.summary.label().to_upper()
-	# Muted, because it is a note about the button above it rather than something to
-	# press — but not the dimmer NEUTRAL_DARK, which is barely legible out here.
-	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL)
-	# The caption already names the day and board, so the tip does not repeat them.
-	_continue_tip.set_copy("Resume the saved match", "Its own board and commanders apply")
-
-
-## Continue with nothing to offer: the dim NEUTRAL_DARK of PRESS START, because it
-## explains a disabled button and must not read as loudly as a match waiting to be
-## resumed.
-func _refuse_continue(caption: String, tip: String, detail: String) -> void:
-	_continue_button.disabled = true
-	_continue_caption.text = UiKit.caption_with_reason(caption, detail)
-	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
-	_continue_tip.set_copy(tip, detail)
-
-
-## The saved match applies its own map, commanders and AI sides — and is opened
-## here, on the press, rather than on every boot: naming a save opens no board, so
-## one the caption named can still be one `decode` refuses. Staging that anyway
-## boots the battle scene onto the fresh match the request also states, on
-## whatever board the picker is showing, with nothing said (COM-121).
-func _continue() -> void:
-	var chart: DamageChart = load(DamageChart.DEFAULT_PATH)
-	var loaded := SaveGame.load_game(
-		_terrain_db, UnitDB.load_default(), chart, SaveGame.SAVE_PATH, CommanderDB.load_default()
-	)
-	if loaded == null:
-		# Which of the two it is the log says; a player can act on either.
-		_continue_refusal = "Its board may have changed, or the file is damaged"
-		_refresh_continue()
-		return
-	_start([] as Array[int], true, {})
-
-
 ## `load_save` resumes the saved match (its own map, commanders, AI sides and
 ## difficulty apply, so the choices above are ignored).
 func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> void:
@@ -813,7 +734,7 @@ func _chrome() -> Dictionary[String, Control]:
 		"the menu column": _column,
 		"selected map facts": _map_picker.caption(),
 		"Start": _start_button,
-		"Continue": _continue_button,
+		"Continue": _continue.button(),
 		"Replays": _replay_button,
 		"Quit": _quit_button,
 	}

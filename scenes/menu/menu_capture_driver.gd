@@ -10,7 +10,7 @@ extends RefCounted
 ## left is the two things a menu capture needs that a battle capture does not.
 ##
 ## First, the slot. `--demo=menu_with_save` poses a resumable match and
-## `--demo=menu_no_save` poses none, both through `MainMenu._refresh_continue`'s
+## `--demo=menu_no_save` poses none, both through `ContinueSlot.refresh`'s
 ## ordinary path with a real `SaveCodec.Summary`. Neither reads nor writes the
 ## `user://save.json` of the machine taking the picture: the menu's shape must not
 ## depend on whether this machine has a match in progress, so neither may the
