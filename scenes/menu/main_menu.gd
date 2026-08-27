@@ -25,12 +25,6 @@ const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const ICON_PATH := "res://assets/icon.png"
 ## Faction-silent by faction-identity D5: no "Red vs Blue" reaches a player screen.
 const TAGLINE := "TURN-BASED TACTICS · PICK YOUR GROUND"
-## Lines reserved for the selected board's caption. The words change with the
-## selection; the height may not (UX-recovery D2), so the panel is as tall on the
-## longest description as on the shortest.
-const MAP_CAPTION_LINES := 2
-## The picker card's frame inset, read by its stylebox and by the content over it.
-const CARD_PAD := 4
 ## The space between two groups of rows inside the Match Setup panel. Named so a
 ## row group built elsewhere can match it: the seat strip sets its own separation
 ## (SeatStrip._rebuild) and is tighter than this, which reads as a grouping the
@@ -41,14 +35,10 @@ const PANEL_ROW_GAP := 4
 ## click leaks to the buttons underneath.
 var _menu_root: Control
 
-## The map picker: a scrollable two-up grid of live board thumbnails (MN2). The
-## selected index drives the header, static facts, tooltip, and match's map_path.
-var _map_header: Label  # the panel's header-right "name · size"
-var _map_caption: Label
-var _map_scroll: ScrollContainer
-var _map_cells: Array[Button] = []
-var _map_marks: Array[Label] = []
-var _selected_map := 0
+## The map picker (MN2), the one owner of the roster and of which board is in
+## hand: the panel hosts its title-bar label and re-deals the seats when it says
+## the selection changed.
+var _map_picker: MapPicker
 var _fog_on := false
 ## The whole centered stack — header, setup panel, action column. Kept because it
 ## is the one rect that answers "does the menu fit?": the CenterContainer around
@@ -94,11 +84,8 @@ var _campaign_flow: MenuCampaignFlow
 ## player set up rather than re-asking a strip they may have walked back to.
 var _pending_ai_teams: Array[int] = []
 
-## The roster in dropdown order, parsed once at load so the tooltips and header
-## quote real numbers off the board rather than a hand-kept table.
-var _maps: Array[MapData] = []
-## Kept from parsing those boards, because a Continue press reads a saved match's
-## own board through it.
+## The database the picker parsed its roster with, kept because a Continue press
+## reads a saved match's own board through it.
 var _terrain_db: TerrainDB
 ## Why the last Continue press could not open the save, or "" while none has
 ## failed. A save the caption could name may still be one `decode` refuses, and
@@ -133,7 +120,10 @@ func _ready() -> void:
 	Music.play(&"parade")
 
 	_terrain_db = TerrainDB.load_default()
-	_maps = MapCatalog.ordered(_terrain_db)
+	# Built and stocked before the page is drawn: the backdrop bakes the fullest
+	# board in the roster, and the setup panel's title bar parents its header label.
+	_map_picker = MapPicker.new()
+	_map_picker.configure(_terrain_db)
 	_difficulties = DifficultyDB.load_default().all()
 	_speed_tiers = GameSpeed.ordered()
 	_posed = shot_path != ""
@@ -168,10 +158,11 @@ func _ready() -> void:
 	# flag — and follows it the moment a seat changes, not only once Start is
 	# pressed, so the panel can never disagree with the match in hand.
 	_seat_strip.changed.connect(_refresh_seats)
+	_map_picker.map_selected.connect(_on_map_selected)
 	# The map picker chooses a board while it is being built, before the strip and
 	# the footer chips exist, so the selection is re-read once everything does —
 	# the roster is the board's answer and both of them are downstream of it.
-	_refresh_map_facts()
+	_deal_seats_for_map()
 	_continue_button.pressed.connect(_continue)
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
@@ -242,17 +233,18 @@ func _pose_seats(args: PackedStringArray) -> void:
 	# picker's `· NP` mark and a strip of more than two rows, which every other
 	# menu scenario's tutorial board says neither of.
 	if _capture_driver.poses_four_seats():
-		await _show_map(_capture_driver.four_seat_map(_maps))
+		await _map_picker.show_map(_capture_driver.four_seat_map(_map_picker.maps()))
 	var wanted := CmdArgs.value(args, "--menu-map")
 	if wanted != "":
 		var path := MapCatalog.resolve(wanted)
+		var maps := _map_picker.maps()
 		var found := -1
-		for i in _maps.size():
-			if _maps[i].source_path == path:
+		for i in maps.size():
+			if maps[i].source_path == path:
 				found = i
 				break
 		if found < 0:
-			var shown := _map_at(_selected_map)
+			var shown := _map_picker.selected_map()
 			push_error(
 				(
 					"main menu: no board '%s'; this capture shows %s. Known: %s"
@@ -263,7 +255,7 @@ func _pose_seats(args: PackedStringArray) -> void:
 					]
 				)
 			)
-		await _show_map(found)
+		await _map_picker.show_map(found)
 	if not CmdArgs.has(args, "--menu-preset"):
 		return
 	var wanted_preset := CmdArgs.value(args, "--menu-preset")
@@ -285,17 +277,6 @@ func _pose_seats(args: PackedStringArray) -> void:
 	_refresh_seats()
 
 
-## Dev captures only: selects a board and waits for the picker to settle on it.
-## The picker scrolls the selection into view, which needs a laid-out tree — a
-## capture on the same frame photographs the board it was showing before.
-func _show_map(index: int) -> void:
-	_select_map(index)
-	await get_tree().process_frame
-	if _selected_map < _map_cells.size():
-		_map_scroll.ensure_control_visible(_map_cells[_selected_map])
-	await get_tree().process_frame
-
-
 # --- layout ------------------------------------------------------------------
 
 
@@ -307,9 +288,10 @@ func _build() -> void:
 	# The fullest board in the roster (largest, so last in MapCatalog.ordered()) is
 	# what drifts behind the page, baked by the thumbnail renderer — so the scenery
 	# can never disagree with the picker (plan R2).
+	var roster := _map_picker.maps()
 	var scenery: MapData = null
-	if not _maps.is_empty():
-		scenery = _maps[_maps.size() - 1]
+	if not roster.is_empty():
+		scenery = roster[roster.size() - 1]
 	_motion.paint_backdrop(self, scenery)
 
 	var center := CenterContainer.new()
@@ -330,7 +312,7 @@ func _build() -> void:
 	column.add_child(body)
 	body.add_child(_build_setup_panel())
 	body.add_child(_build_action_stack())
-	_reserve_map_caption()
+	_map_picker.reserve_caption()
 	_apply_menu_motion()
 
 
@@ -399,12 +381,9 @@ func _build_setup_panel() -> Control:
 	title.add_theme_color_override("font_color", UiTheme.WHITE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(title)
-	_map_header = Label.new()
-	_map_header.add_theme_font_override("font", UiTheme.stat())
-	_map_header.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	_map_header.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	_map_header.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header_row.add_child(_map_header)
+	# The picker's words, in the panel's title bar: the board's name and size are
+	# the selection speaking, so the label that sets them is the picker's.
+	header_row.add_child(_map_picker.header_label())
 	header.add_child(header_row)
 	col.add_child(header)
 
@@ -413,103 +392,13 @@ func _build_setup_panel() -> Control:
 	body.add_theme_constant_override("separation", PANEL_ROW_GAP)
 	col.add_child(UiKit.pad(body, 8, 7))
 
-	body.add_child(_build_map_picker())
+	body.add_child(_map_picker)
 	body.add_child(UiKit.rule())
 	body.add_child(_build_seats_row())
 	body.add_child(_build_choices_row())
 	body.add_child(UiKit.rule())
 	body.add_child(_build_toggles_row())
 	return panel
-
-
-## The map picker: a scrollable two-up grid of live board thumbnails, the whole
-## roster with its teaching board first (MapCatalog.ordered) — the dropdown is
-## gone (MN2). The selected cell gets the raised cream surface, the meridian
-## border and a ✓; scroll follows keyboard focus so every board is reachable
-## without a mouse. A static caption beneath the viewport carries the
-## decision-critical facts; each cell keeps the richer tooltip as optional detail.
-func _build_map_picker() -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
-	col.add_child(UiKit.micro_label("Map"))
-
-	_map_scroll = ScrollContainer.new()
-	# 126 before the seat strip took its lines of the panel's fixed height, and 80
-	# before COM-254 measured it against what the picker shows: one whole cell and
-	# its name. It is the one control here that scrolls by design, so it is the one
-	# that gives ground — down to its own content, and no further.
-	_map_scroll.custom_minimum_size = Vector2(0, 76)
-	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	col.add_child(_map_scroll)
-
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_map_scroll.add_child(grid)
-
-	if _maps.is_empty():
-		push_error("main menu: no maps found in %s" % MapCatalog.MAPS_DIR)
-	for i in _maps.size():
-		grid.add_child(_make_map_cell(i, _maps[i]))
-	_map_caption = UiKit.help_label("")
-	_map_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_map_caption.max_lines_visible = MAP_CAPTION_LINES
-	_map_caption.add_theme_constant_override("line_spacing", 1)
-	col.add_child(_map_caption)
-	_select_map(0)
-	return col
-
-
-## One picker cell: a focusable button holding a live thumbnail and the board's
-## name, and as tall as the two of them plus the frame, so a square board's
-## picture no longer crosses it. The thumbnail is a truthful miniature — real
-## terrain, real property colours — of the board this cell launches (plan D5).
-func _make_map_cell(index: int, map: MapData) -> Button:
-	const THUMB := Vector2(132.0 - 2 * CARD_PAD, 60)
-	var button := Button.new()
-	var name_height := UiTheme.display().get_height(UiTheme.SIZE_BODY)
-	button.custom_minimum_size = THUMB + Vector2(2 * CARD_PAD, 2 * CARD_PAD + name_height + 1)
-	# The cell is a single control describing itself, so it is its own trigger —
-	# the micro-label rule guards *group* controls, where hovering to reach a
-	# segment would fire an explanation of the group.
-	Tooltip.attach(
-		button,
-		map.description,
-		"%d×%d · %d properties" % [map.width, map.height, map.property_cells().size()],
-		Tooltip.Side.BOTTOM
-	)
-
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 1)
-	content.set_anchors_and_offsets_preset(
-		Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, CARD_PAD
-	)
-	button.add_child(content)
-
-	var thumb := MapThumbnail.new()
-	# The board's own roster, never the two-seat default: a four-army board's third
-	# and fourth HQs resolve to no theme under a duel's identity and would draw
-	# neutral grey, so the picker would show a duel where the match seats four.
-	thumb.setup(map, UiTheme.menu_identity(map.player_count()), THUMB)
-	thumb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	content.add_child(thumb)
-
-	var name_label := Label.new()
-	name_label.text = _map_cell_name(map, false)
-	name_label.add_theme_font_override("font", UiTheme.display())
-	name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
-	name_label.add_theme_color_override("font_color", UiTheme.INK)
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	content.add_child(name_label)
-	UiTheme.make_decoration(content)
-
-	button.focus_entered.connect(_select_map.bind(index))
-	button.pressed.connect(_select_map.bind(index))
-	_map_cells.append(button)
-	_map_marks.append(name_label)
-	return button
 
 
 ## The seat strip: who plays each army the board deals, how well the computer
@@ -721,18 +610,6 @@ func _option_help(text: String) -> Label:
 	return label
 
 
-## Pins the caption's height to its reserved lines, asked of the label itself
-## rather than typed in as a pixel count, so a font or spacing change carries the
-## reservation with it. Called once the whole menu is in the tree: a Control
-## resolves its fonts through the tree, so measured before that the label answers
-## with the default theme's line height instead of its own.
-func _reserve_map_caption() -> void:
-	var words := _map_caption.text
-	_map_caption.text = "X\n".repeat(MAP_CAPTION_LINES - 1) + "X"
-	_map_caption.custom_minimum_size = Vector2(0, _map_caption.get_combined_minimum_size().y)
-	_map_caption.text = words
-
-
 ## Whether the page's scenery moves: this boot's capture pose outranks the
 ## preference, a still frame not being allowed to depend on which machine took it.
 func _apply_menu_motion() -> void:
@@ -740,105 +617,6 @@ func _apply_menu_motion() -> void:
 
 
 # --- match option state ------------------------------------------------------
-
-
-## Picks a board: repaints the cells (the selected one raised, red-bordered and
-## ✓-marked), updates the header-right name·size, and scrolls the choice into
-## view so keyboard focus never lands on an off-screen cell.
-func _select_map(index: int) -> void:
-	if index < 0 or index >= _maps.size():
-		return
-	_selected_map = index
-	for i in _map_cells.size():
-		_style_map_cell(_map_cells[i], _map_marks[i], i, i == index)
-	if index < _map_cells.size():
-		_map_scroll.ensure_control_visible(_map_cells[index])
-	_refresh_map_facts()
-
-
-func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool) -> void:
-	var meridian := UiTheme.menu_identity().theme(1)
-	var box := _map_cell_box(UiTheme.PAPER_RAISED if selected else Color(0, 0, 0, 0))
-	if selected:
-		box.border_color = meridian.color
-		box.set_border_width_all(UiTheme.PANEL_BORDER)
-		UiTheme.hard_shadow(box)
-	cell.add_theme_stylebox_override("normal", box)
-	var hover := box if selected else _map_cell_box(UiTheme.HOVER_WASH)
-	cell.add_theme_stylebox_override("hover", hover)
-	cell.add_theme_stylebox_override("pressed", box)
-	cell.add_theme_stylebox_override("focus", UiTheme.focus_box())
-	name_label.text = (_map_cell_name(_maps[index], selected))
-	name_label.add_theme_color_override("font_color", UiTheme.INK if selected else UiTheme.NEUTRAL)
-
-
-## The map picker cell's shared frame: a flat fill, a whisker of rounding and the
-## grid's even inset. `_style_map_cell` layers a border and shadow on top when the
-## cell is selected; the hover wash and the unselected rest state need neither.
-func _map_cell_box(fill: Color) -> StyleBoxFlat:
-	var box := UiTheme.flat(fill)
-	box.set_corner_radius_all(UiTheme.RADIUS)
-	box.set_content_margin_all(CARD_PAD)
-	return box
-
-
-func _map_cell_name(map: MapData, selected: bool) -> String:
-	var cell_name := MapCatalog.display_name(map.source_path)
-	if MapCatalog.teaches(map.source_path):
-		cell_name += " · Tutorial"
-	if map.player_count() > 2:
-		cell_name += " · %dP" % map.player_count()
-	if selected:
-		cell_name += " ✓"
-	return cell_name
-
-
-## The caption `_refresh_map_facts` shows for `map`, factored out so the budget
-## check can measure every board without touching `_selected_map`.
-func _map_caption_text(map: MapData) -> String:
-	var parts := [
-		map.width,
-		map.height,
-		_armies_label(map.player_count()),
-		map.property_cells().size(),
-		map.description,
-	]
-	return ("%d×%d · %s · %d properties · %s" % parts).to_upper()
-
-
-## Header and persistent caption, read off the board itself so no hand-kept table
-## can drift from it. Tooltips repeat the facts but are never required to choose.
-func _refresh_map_facts() -> void:
-	var map := _map_at(_selected_map)
-	if map == null:
-		_map_header.text = ""
-		_map_caption.text = ""
-		return
-	_map_header.text = (
-		"%s · %d×%d" % [MapCatalog.display_name(map.source_path), map.width, map.height]
-	)
-	_map_caption.text = _map_caption_text(map)
-	# How many seats there are is the board's answer (plan D1), so the strip is
-	# re-dealt from the selection rather than from anything the player set.
-	if _seat_strip != null:
-		_seat_strip.set_roster(map.player_count())
-		_refresh_seats()
-
-
-## "4 armies" for a board whose seats all have to be filled, "2–4 armies" for one
-## where some may close (open-seats plan D4). A range rather than a count because a
-## count is what the board deals and the shelf's widest capability is what a player
-## scrolling the list is choosing between.
-func _armies_label(seats: int) -> String:
-	if seats <= SeatStrip.MIN_FILLED:
-		return "%d armies" % seats
-	return "%d–%d armies" % [SeatStrip.MIN_FILLED, seats]
-
-
-func _map_at(index: int) -> MapData:
-	if index < 0 or index >= _maps.size():
-		return null
-	return _maps[index]
 
 
 ## Speed is the odd one out: a device preference, not a match option, so a tap
@@ -879,6 +657,22 @@ func _refresh_seats() -> void:
 	# here is an army that will not be on the map, so its livery leaves the footer
 	# in the same tap (open-seats plan D4).
 	_refresh_chips(_seat_strip.seats())
+
+
+func _on_map_selected(_index: int) -> void:
+	_deal_seats_for_map()
+
+
+## How many seats there are is the board's answer (four-players D1), so the strip
+## is re-dealt from the picker's selection rather than from anything the player
+## set. Silent while the strip is still being built: the picker chooses a board on
+## its way up, before there is a strip to deal to.
+func _deal_seats_for_map() -> void:
+	var map := _map_picker.selected_map()
+	if map == null or _seat_strip == null:
+		return
+	_seat_strip.set_roster(map.player_count())
+	_refresh_seats()
 
 
 # --- flow (unchanged) --------------------------------------------------------
@@ -938,7 +732,9 @@ func _on_replay_cancelled() -> void:
 ## codec's own words rather than in the codec's log.
 func _refresh_continue() -> void:
 	var slot := (
-		_capture_driver.posed_slot(_maps) if _capture_driver.poses_slot() else SaveGame.status()
+		_capture_driver.posed_slot(_map_picker.maps())
+		if _capture_driver.poses_slot()
+		else SaveGame.status()
 	)
 	if slot.state == SaveGame.Slot.State.ABSENT:
 		_refuse_continue("NO SAVED MATCH", "Nothing saved yet", "Save in battle from the map menu")
@@ -991,7 +787,7 @@ func _continue() -> void:
 ## `load_save` resumes the saved match (its own map, commanders, AI sides and
 ## difficulty apply, so the choices above are ignored).
 func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> void:
-	var map := _map_at(_selected_map)
+	var map := _map_picker.selected_map()
 	var request := MatchRequest.from_menu(
 		map.source_path if map != null else MatchRequest.DEFAULT_MAP_PATH,
 		ai_teams,
@@ -1015,7 +811,7 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 func _chrome() -> Dictionary[String, Control]:
 	var chrome: Dictionary[String, Control] = {
 		"the menu column": _column,
-		"selected map facts": _map_caption,
+		"selected map facts": _map_picker.caption(),
 		"Start": _start_button,
 		"Continue": _continue_button,
 		"Replays": _replay_button,
@@ -1057,11 +853,11 @@ func seats_laid_out() -> bool:
 ## back by MenuCaptureDriver's capture gate; a capture-driver seam.
 func setup_context_ready() -> bool:
 	var passed := true
-	var map := _map_at(_selected_map)
+	var map := _map_picker.selected_map()
 	if map == null or not MapCatalog.teaches(map.source_path):
 		push_error("main menu setup context: tutorial board is not the default")
 		passed = false
-	elif not _map_caption.text.contains(map.description.to_upper()):
+	elif not _map_picker.caption().text.contains(map.description.to_upper()):
 		push_error("main menu setup context: selected map description is not visible")
 		passed = false
 	for label in _setup_help_labels:
@@ -1071,7 +867,7 @@ func setup_context_ready() -> bool:
 	# Deliberately not short-circuiting, like the driver's own frame check: one
 	# failed run should name every promise that broke, not just the first.
 	passed = _difficulty_follows_mode() and passed
-	passed = _caption_budget_holds() and passed
+	passed = _map_picker.caption_budget_holds() and passed
 	return passed
 
 
@@ -1097,25 +893,4 @@ func _difficulty_follows_mode() -> bool:
 		push_error("main menu setup context: the tier remains operable with nobody to tune")
 		passed = false
 	_refresh_seats()
-	return passed
-
-
-## No board may cost the panel a line the reserved caption does not have — the
-## COM-5 class again, where the layout budget quietly depended on the selection.
-## Measured on the live label's text alone; `_selected_map` and the seat strip
-## it would otherwise re-deal per board (COM-48's capture workaround) stay put.
-func _caption_budget_holds() -> bool:
-	var passed := true
-	var words := _map_caption.text
-	for i in _maps.size():
-		_map_caption.text = _map_caption_text(_maps[i])
-		if _map_caption.get_line_count() > MAP_CAPTION_LINES:
-			push_error(
-				(
-					"main menu setup context: %s wraps its caption to %d lines"
-					% [MapCatalog.display_name(_maps[i].source_path), _map_caption.get_line_count()]
-				)
-			)
-			passed = false
-	_map_caption.text = words
 	return passed

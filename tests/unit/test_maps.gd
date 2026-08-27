@@ -67,7 +67,7 @@ const SHOAL := &"shoal"
 ## second comment reaches the menu cut off mid-clause, which is how isthmus.txt
 ## shipped "…is the short" for the length of the roster (COM-224).
 const DESCRIPTION_ENDINGS := [".", "!", "?"]
-## What the map picker's caption holds. main_menu.gd's `_caption_budget_holds`
+## What the map picker's caption holds. `MapPicker.caption_budget_holds`
 ## already refuses a caption wrapping past `MAP_CAPTION_LINES`, but only with the
 ## menu on screen; this is the same budget where the author of a board meets it.
 ## The longest description shipped today is arsenal.txt's, at 100 characters, so
