@@ -265,6 +265,14 @@ cascade='Compile Error: Failed to compile depended scripts'
 failed=0
 checked=0
 
+# Where a file's diagnostics are parked. Percent-encoded, so the key is
+# one-to-one with the path: a file with a '%' in its name cannot land on
+# another file's report.
+report_path() {
+	local key="${1//%/%25}"
+	printf '%s' "$REPORTS/${key//\//%2F}"
+}
+
 # One engine boot per file, sharing nothing, so the files are checked in
 # parallel. xargs starts a fresh shell per file, which is why the worker is an
 # exported function over an exported environment rather than an inline body.
@@ -278,12 +286,12 @@ check_one() {
 		output="$(grep -vE "$cascade" <<<"$output")"
 	fi
 	if grep -qE 'SCRIPT ERROR|Parse Error' <<<"$output"; then
-		grep -E 'SCRIPT ERROR|Parse Error|^ +at:' <<<"$output" >"$REPORTS/${file//\//%}"
+		grep -E 'SCRIPT ERROR|Parse Error|^ +at:' <<<"$output" >"$(report_path "$file")"
 		return 1
 	fi
 	return 0
 }
-export -f check_one
+export -f check_one report_path
 export GODOT ignore cascade
 
 WORK="$(mktemp -d)"
@@ -305,12 +313,12 @@ fi
 xargs -0 -P "${CHECK_JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc)}" -n1 \
 	bash -c 'check_one "$0"' <"$queue"
 
-# A count kept inside the workers would die with the pipeline's subshells, so
+# A count kept inside a worker would die with the worker's own process, so
 # the failures are read back off disk — in queue order, so a parallel run says
 # exactly what a serial one said and two failures never interleave.
 while IFS= read -r -d '' file; do
 	checked=$((checked + 1))
-	report="$REPORTS/${file//\//%}"
+	report="$(report_path "$file")"
 	[[ -f "$report" ]] || continue
 	cat "$report"
 	failed=$((failed + 1))
