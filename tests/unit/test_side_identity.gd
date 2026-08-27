@@ -178,3 +178,16 @@ func test_for_game_reads_commander_of() -> void:
 	var identity := SideIdentity.for_game(state)
 	assert_eq(_key(identity, 1), &"iron")
 	assert_eq(_key(identity, 2), &"verdant")
+
+
+# --- what row a cell is drawn in ---------------------------------------------
+
+
+func test_a_tinted_cell_wears_its_owners_row() -> void:
+	var city := Fixture.terrain_db().by_id(&"city")
+	assert_eq(SideIdentity.terrain_row(city, 3), 3)
+
+
+func test_untinted_ground_wears_nobodys_colours() -> void:
+	var plains := Fixture.terrain_db().by_id(&"plains")
+	assert_eq(SideIdentity.terrain_row(plains, 3), SideIdentity.NEUTRAL_ROW)

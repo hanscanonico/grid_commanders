@@ -514,14 +514,13 @@ func _army_row(team: int) -> int:
 	return _battle.view.identity.atlas_row(team)
 
 
-## And the row a cell's ground is drawn in: its owner's faction row on a property,
-## the untinted row 0 on anything else. The same question `BattleView._paint_map`
-## answers for the board, asked of the board here so the cut-in is compared
-## against what the player sees under it rather than against itself.
+## And the row a cell's ground is drawn in — SideIdentity's answer again, asked
+## of the *board* here so the cut-in is compared against what the player sees
+## under it rather than against a rule this check spelled for itself.
 func _ground_row(cell: Vector2i) -> int:
-	if not _battle.map.terrain_at(cell).team_tinted:
-		return SideIdentity.NEUTRAL_ROW
-	return _army_row(_battle.game.owner_at(cell))
+	return SideIdentity.terrain_row(
+		_battle.map.terrain_at(cell), _army_row(_battle.game.owner_at(cell))
+	)
 
 
 func _check_row(what: String, drawn: int, wanted: int) -> void:

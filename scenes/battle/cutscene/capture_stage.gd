@@ -18,10 +18,10 @@ extends Control
 ## the capturer's at the flip — so the flip is the colour changing under a shape
 ## that keeps standing, and nothing about it is re-derived here.
 
-const PLATE_TOP_H := 26
-const PLATE_BOT_H := 20
 ## Share of the arena the grass plane fills, up from the bottom.
 const GROUND_RATIO := 0.42
+## How many steps the sky is graded in over what is left above it.
+const SKY_BANDS := 28
 ## How tall the property's tallest shape stands. The board cell is 64 px; here it
 ## fills a good third of the frame so the flip is the thing the eye lands on.
 const PROP_PX := 132.0
@@ -47,15 +47,9 @@ const ROOF_WINDOW := Rect2i(16, 24, 34, 16)
 ## bottom its feet rest.
 const PROP_CENTER := 0.66
 const FEET_RATIO := 0.82
-## The squad's art size and how many figures march (plan: infantry/mech capture,
-## a three-figure squad carries it — the pip-exact number lives on the meter).
-## Pinned to `UnitSprite.SPRITE_W` rather than the cell's height: the figures are
-## board art at 1:1 and their footprint — the slots they stand in and the ground
-## they are spaced across — is a width, so a cell that grows taller overflows
-## upward without moving where anyone stands. FIGURE_H is that cell's height, and
-## it is drawn entirely above the feet; test_texel_stability.gd pins both.
-const FIGURE_PX := 64
-const FIGURE_H := 96
+## How many figures march (plan: infantry/mech capture, a three-figure squad
+## carries it — the pip-exact number lives on the meter). The cell they are cut
+## from is CutscenePlates'.
 const SQUAD_SIZE := 3
 ## Where each figure stands relative to the squad's anchor, back to front.
 const SQUAD_SLOTS: Array[Vector2] = [
@@ -71,8 +65,6 @@ const MARCH_TO := 0.24
 const GRASS := Color(0.471, 0.784, 0.314)
 const GRASS_DARK := Color(0.353, 0.651, 0.235)
 const DUST := Color(0.941, 0.925, 0.886)
-const MAX_STARS := 4
-const STAR_STEP := 11.0
 
 # --- pose, written every frame by CaptureCutscene -----------------------------
 
@@ -160,7 +152,7 @@ func _draw() -> void:
 
 
 func _arena() -> Rect2:
-	return Rect2(0.0, PLATE_TOP_H, size.x, size.y - PLATE_TOP_H - PLATE_BOT_H)
+	return CutscenePlates.arena(size)
 
 
 # --- backdrop ----------------------------------------------------------------
@@ -168,24 +160,13 @@ func _arena() -> Rect2:
 
 func _draw_sky(arena: Rect2) -> void:
 	var horizon := _horizon(arena)
-	var bands := 28
-	for i in bands:
-		var top := arena.position.y + (horizon - arena.position.y) * float(i) / bands
-		var bottom := arena.position.y + (horizon - arena.position.y) * float(i + 1) / bands
-		var shade := CutscenePalette.SKY_TOP.lerp(
-			CutscenePalette.SKY_HORIZON, float(i) / float(bands - 1)
-		)
-		draw_rect(Rect2(0.0, top, size.x, bottom - top + 1.0), shade)
-	_draw_cloud(Vector2(size.x * 0.22, arena.position.y + arena.size.y * 0.16), 1.0)
-	_draw_cloud(Vector2(size.x * 0.72, arena.position.y + arena.size.y * 0.08), 0.66)
-
-
-func _draw_cloud(at: Vector2, scale: float) -> void:
-	var white := Color(1.0, 1.0, 1.0, 0.85)
-	draw_rect(Rect2(at.x - 30.0 * scale, at.y, 60.0 * scale, 9.0 * scale), white)
-	draw_circle(at + Vector2(-14.0, 1.0) * scale, 9.0 * scale, white)
-	draw_circle(at + Vector2(2.0, -3.0) * scale, 13.0 * scale, white)
-	draw_circle(at + Vector2(18.0, 0.0) * scale, 8.0 * scale, white)
+	CutsceneScenery.draw_sky_gradient(self, arena, size.x, horizon, SKY_BANDS)
+	CutsceneScenery.draw_cloud(
+		self, Vector2(size.x * 0.22, arena.position.y + arena.size.y * 0.16), 1.0
+	)
+	CutsceneScenery.draw_cloud(
+		self, Vector2(size.x * 0.72, arena.position.y + arena.size.y * 0.08), 0.66
+	)
 
 
 ## A grass plane receding to the horizon: rows that lighten and thin toward the
@@ -212,7 +193,7 @@ func _draw_ground(arena: Rect2) -> void:
 
 
 func _horizon(arena: Rect2) -> float:
-	return arena.position.y + arena.size.y * (1.0 - GROUND_RATIO)
+	return CutsceneScenery.horizon_of(arena, GROUND_RATIO)
 
 
 # --- the property ------------------------------------------------------------
@@ -263,16 +244,14 @@ func _draw_paved_property(base: Vector2) -> void:
 	# the mash. Whole pixels hold the sampling still between landings, and the
 	# squash still reads — the shape is 132 px tall and the rounding is one.
 	var box := Rect2(Vector2(base.x - w * 0.5, base.y - h).round(), Vector2(w, h).round())
-	draw_texture_rect_region(_terrain_atlas(), box, source, tint)
+	draw_texture_rect_region(CutscenePlates.terrain_atlas(), box, source, tint)
 
 
 ## The atlas row the property is drawn from: the owner's faction row, swapped to
 ## the capturer's at the flip, and the untinted row on terrain that wears nobody's
 ## colours — CutsceneSide._atlas_row's rule, asked here for the same reason.
 func _atlas_row() -> int:
-	if not terrain.team_tinted:
-		return SideIdentity.NEUTRAL_ROW
-	return row_after if flipped else row_before
+	return SideIdentity.terrain_row(terrain, row_after if flipped else row_before)
 
 
 func _prop_base(arena: Rect2) -> Vector2:
@@ -322,14 +301,19 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## One figure, standing on `feet` and facing the property (rightward). A hard
 ## offset shadow, then the art.
 ##
-## `feet` is rounded because the squad art is drawn at 1:1 — FIGURE_PX is
-## UnitSprite.SPRITE_W — so a whole-pixel origin puts one source texel on one
-## screen pixel, while the march, the bob and the per-figure stagger otherwise
-## walk the sprite through fractional offsets and shed a different row of it on
-## every frame. The bob's amplitude is 5 px and the stagger's 4, so both still
-## read; what goes is the shimmer inside them.
+## `feet` is rounded because the squad art is drawn at 1:1 — CutscenePlates.
+## FIGURE_PX is UnitSprite.SPRITE_W — so a whole-pixel origin puts one source
+## texel on one screen pixel, while the march, the bob and the per-figure stagger
+## otherwise walk the sprite through fractional offsets and shed a different row
+## of it on every frame. The bob's amplitude is 5 px and the stagger's 4, so both
+## still read; what goes is the shimmer inside them.
 func _draw_figure(feet: Vector2) -> void:
-	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_H, FIGURE_PX, FIGURE_H)
+	var box := Rect2(
+		-CutscenePlates.FIGURE_PX * 0.5,
+		-CutscenePlates.FIGURE_H,
+		CutscenePlates.FIGURE_PX,
+		CutscenePlates.FIGURE_H
+	)
 	var art := _squad_now()
 	draw_set_transform(feet.round())
 	draw_texture_rect(
@@ -345,7 +329,7 @@ func _draw_figure(feet: Vector2) -> void:
 ## Which pose of the idle clip the squad is marching in, off this cut-in's own
 ## clock at the board's ambient cadence.
 func _squad_now() -> AtlasTexture:
-	return _squad_figures[BoardBeat.frame_at(BoardBeat.AMBIENT_MS, int(clock * 1000.0))]
+	return CutscenePlates.figure_now(_squad_figures, clock)
 
 
 ## A fan of specks kicked up at the building's base on each landing.
@@ -370,14 +354,9 @@ func _draw_plates() -> void:
 		return
 	var slide := -40.0 * (1.0 - plate_p)
 	draw_set_transform(Vector2(slide, 0.0))
-	var top := Rect2(0.0, 0.0, size.x, PLATE_TOP_H)
-	draw_rect(top, Color(CutscenePalette.PLATE, plate_p))
-	draw_rect(Rect2(0.0, PLATE_TOP_H - 2.0, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
-	_draw_name_row(top)
-	var bottom := Rect2(0.0, size.y - PLATE_BOT_H, size.x, PLATE_BOT_H)
-	draw_rect(bottom, Color(CutscenePalette.PLATE, plate_p))
-	draw_rect(Rect2(0.0, bottom.position.y, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
-	_draw_terrain_row(bottom)
+	CutscenePlates.draw_frames(self, size, plate_p)
+	_draw_name_row(Rect2(0.0, 0.0, size.x, CutscenePlates.TOP_H))
+	_draw_terrain_row(Rect2(0.0, size.y - CutscenePlates.BOT_H, size.x, CutscenePlates.BOT_H))
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -419,12 +398,10 @@ func _draw_terrain_row(plate: Rect2) -> void:
 		Color(CutscenePalette.PLATE_TEXT, CutscenePalette.PLATE_TEXT.a * plate_p)
 	)
 	var width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-	var stars := mini(terrain.defense_stars, MAX_STARS)
-	for i in MAX_STARS:
-		var center := Vector2(20.0 + width + 14.0 + STAR_STEP * i, plate.position.y + 10.0)
-		var tint := CutscenePalette.GOLD if i < stars else CutscenePalette.STAR_OFF
-		draw_colored_polygon(CutsceneFx.star_points(center, 4.5), Color(tint, tint.a * plate_p))
-
-
-static func _terrain_atlas() -> Texture2D:
-	return load(BattleView.ATLAS_PATH)
+	CutscenePlates.draw_stars(
+		self,
+		Vector2(20.0 + width + 14.0, plate.position.y + 10.0),
+		CutscenePlates.STAR_STEP,
+		mini(terrain.defense_stars, CutscenePlates.MAX_STARS),
+		plate_p
+	)

@@ -165,6 +165,41 @@ static func _draw_building(canvas: CanvasItem, base: Vector2, height: float, sha
 			canvas.draw_rect(Rect2(at, pane), pane_tint)
 
 
+# --- the sky over it ----------------------------------------------------------
+
+
+## Where a diorama's ground plane starts, measured down its arena. `ground_ratio`
+## is the share the plane fills and stays each stage's own — the two frame their
+## horizons a little differently on purpose.
+static func horizon_of(arena: Rect2, ground_ratio: float) -> float:
+	return arena.position.y + arena.size.y * (1.0 - ground_ratio)
+
+
+## The graded sky above that horizon, in `bands` steps from SKY_TOP to
+## SKY_HORIZON. The band count is the caller's, being how coarse that stage wants
+## its gradient rather than what colour a sky is.
+static func draw_sky_gradient(
+	canvas: CanvasItem, arena: Rect2, width: float, horizon: float, bands: int
+) -> void:
+	for i in bands:
+		var top := arena.position.y + (horizon - arena.position.y) * float(i) / bands
+		var bottom := arena.position.y + (horizon - arena.position.y) * float(i + 1) / bands
+		var shade := CutscenePalette.SKY_TOP.lerp(
+			CutscenePalette.SKY_HORIZON, float(i) / float(bands - 1)
+		)
+		canvas.draw_rect(Rect2(0.0, top, width, bottom - top + 1.0), shade)
+
+
+## One blocky cloud. Where the clouds hang is each stage's own; what a cloud
+## looks like is not.
+static func draw_cloud(canvas: CanvasItem, at: Vector2, scale: float) -> void:
+	var white := Color(1.0, 1.0, 1.0, 0.85)
+	canvas.draw_rect(Rect2(at.x - 30.0 * scale, at.y, 60.0 * scale, 9.0 * scale), white)
+	canvas.draw_circle(at + Vector2(-14.0, 1.0) * scale, 9.0 * scale, white)
+	canvas.draw_circle(at + Vector2(2.0, -3.0) * scale, 13.0 * scale, white)
+	canvas.draw_circle(at + Vector2(18.0, 0.0) * scale, 8.0 * scale, white)
+
+
 # --- colours sampled off the board's own art ----------------------------------
 
 
