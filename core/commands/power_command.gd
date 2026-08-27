@@ -22,8 +22,9 @@ var commander: CommanderType
 
 
 func validate(state: GameState) -> String:
-	if state.winner != 0:
-		return "the match is over"
+	var gate := Command.decided_error(state)
+	if gate != "":
+		return gate
 	var co_state := state.commander_state(state.current_team)
 	if not co_state.type.has_power():
 		return "this commander has no Command Power"

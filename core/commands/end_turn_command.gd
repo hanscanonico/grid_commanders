@@ -5,8 +5,9 @@ extends Command
 
 
 func validate(state: GameState) -> String:
-	if state.winner != 0:
-		return "the match is over"
+	var gate := Command.decided_error(state)
+	if gate != "":
+		return gate
 	return ""
 
 

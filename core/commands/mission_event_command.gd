@@ -37,8 +37,9 @@ func _init(p_event: MissionEvent, p_team: int) -> void:
 ## nobody is playing — an event with nothing to apply, and whatever each effect
 ## says would corrupt the board it is looking at.
 func validate(state: GameState) -> String:
-	if state.winner != 0:
-		return "the match is over"
+	var gate := Command.decided_error(state)
+	if gate != "":
+		return gate
 	if event == null:
 		return "no event to fire"
 	if event.effects.is_empty():
