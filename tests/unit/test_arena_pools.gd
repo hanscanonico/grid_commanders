@@ -82,6 +82,21 @@ func test_the_pool_plan_is_the_split_it_will_be_read_against() -> void:
 	assert_eq(ArenaPools.DAYS, ArenaFitness.HORIZON, "scored against the cap it was played at")
 
 
+## The report's bucket list and the leaderboard's ranking order are the same
+## three buckets said twice, on purpose: the report reads a run in play order
+## and an ordering reads the held-out pool first. Neither may hold a bucket the
+## other does not, or a match lands somewhere nothing prints.
+func test_the_reported_buckets_are_the_ranked_ones_in_a_different_order() -> void:
+	assert_eq(
+		ArenaPools.REPORTED, [ArenaPools.TRAINING, ArenaPools.VALIDATION, ArenaPools.OFF_POOL]
+	)
+	var ranked: Array[String] = ArenaLeaderboard.RANKING_POOLS.duplicate()
+	var reported: Array[String] = ArenaPools.REPORTED.duplicate()
+	ranked.sort()
+	reported.sort()
+	assert_eq(ranked, reported, "the ranking order is a permutation of the report order")
+
+
 func _builds_hulls(map: MapData) -> bool:
 	for y in map.height:
 		for x in map.width:

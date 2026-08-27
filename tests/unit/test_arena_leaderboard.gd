@@ -81,6 +81,29 @@ func test_a_half_seated_pairing_and_a_malformed_record_are_both_refused() -> voi
 	assert_string_contains(ArenaLeaderboard.record_error(short), "seat")
 
 
+## A mirror is a candidate against itself: the Balance Lab plays it from one
+## seat on purpose to measure what the seat is worth, so it is refused by name
+## rather than counted as a run that lost half its seatings.
+func test_a_mirror_is_refused_as_a_calibration_not_as_a_missing_seat() -> void:
+	var records: Array = []
+	for seat in 2:
+		records.append(_record(BOARD, 0, seat, RED, RED, ArenaFitness.RED_TEAM))
+	var board := ArenaLeaderboard.build(records)
+	assert_eq(board.mirrored.size(), 1)
+	assert_true(board.unpaired.is_empty(), "a mirror is not a half-seated pairing")
+	assert_string_contains(board.problem(), "against itself")
+	assert_string_contains(board.problem(), "calibration")
+	assert_eq(board.to_dict()["mirrored"], board.mirrored)
+
+
+## A mirror-free run says nothing about mirrors: the report's JSON is what it
+## always was, so an existing leaderboard.json is byte-identical.
+func test_a_mirror_free_run_reports_no_mirror_key() -> void:
+	var board := ArenaLeaderboard.build(_both_seats(BOARD, RED, BLUE, 0))
+	assert_true(board.mirrored.is_empty())
+	assert_false(board.to_dict().has("mirrored"))
+
+
 ## A candidate that never played the held-out pool is an absent measurement,
 ## never a mean of zero — standing zero in would sort it above a candidate that
 ## met the held-out boards and lost, which is the exact inversion the held-out

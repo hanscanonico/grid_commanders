@@ -28,6 +28,12 @@ const VALIDATION := "validation"
 const OFF_POOL := "unpooled"
 ## The two pools a reported result carries, in report order (R1).
 const POOLS: Array[String] = [TRAINING, VALIDATION]
+## Every bucket a played match can land in, in report order. Stated here rather
+## than assembled by a reader, so the report's sections and `pool_of`'s answers
+## cannot drift apart. Deliberately not the same list as
+## `ArenaLeaderboard.RANKING_POOLS`, whose held-out-first order is a decision of
+## its own.
+const REPORTED: Array[String] = [TRAINING, VALIDATION, OFF_POOL]
 
 ## The fixed anchor set (D7). Paths rather than tier ids, because a candidate is
 ## a profile and the anchors have to be seatable the same way every rival is.

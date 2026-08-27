@@ -117,9 +117,7 @@ func _print(board: ArenaLeaderboard, played: int) -> void:
 			]
 		)
 	)
-	var buckets: Array[String] = ArenaPools.POOLS.duplicate()
-	buckets.append(ArenaPools.OFF_POOL)
-	for pool: String in buckets:
+	for pool: String in ArenaPools.REPORTED:
 		var listed := board.rows.filter(
 			func(row: ArenaLeaderboard.Row) -> bool: return row.matches(pool) > 0
 		)
