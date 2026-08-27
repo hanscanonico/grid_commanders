@@ -64,3 +64,22 @@ func test_the_default_seed_is_pinned() -> void:
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_eq(defender.hp, 28, "seed %d's roll on a fixed matchup" % Fixture.DEFAULT_SEED)
+
+
+## The from-disk sibling owes the same two things `state` does — the pinned seed
+## and, additionally, the `map_path` a save, a replay and a resume read the board
+## back through.
+func test_a_board_from_disk_is_seeded_and_knows_where_it_came_from() -> void:
+	var state := Fixture.state_from_file("res://maps/first_steps.txt")
+	assert_not_null(state)
+	assert_eq(state.map_path, "res://maps/first_steps.txt")
+	assert_eq(state.rng.seed, Fixture.DEFAULT_SEED)
+	assert_false(state.units.is_empty(), "the board on disk brought its army")
+
+
+## A board that does not parse is refused rather than handed to `GameState.create`,
+## which dereferences the map it is given — so a typo in a test's board reads as a
+## failed assertion naming the board instead of a null dereference in the sim.
+func test_a_board_that_does_not_parse_is_refused() -> void:
+	assert_null(Fixture.state("this is not a board"))
+	assert_push_error("line outside a known section")

@@ -42,6 +42,8 @@ static var _chart: DamageChart
 ## dictionary leaves both sides neutral, which is what most boards want.
 static func state(map_text: String, commanders: Dictionary = {}) -> GameState:
 	var map := MapData.parse(map_text, terrain_db())
+	if map == null:
+		return null  # MapData.parse has already named the line it refused
 	var game := GameState.create(map, unit_db(), chart())
 	if game == null:
 		push_error("Fixture: the board does not build a GameState:\n%s" % map_text)
