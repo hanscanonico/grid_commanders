@@ -529,3 +529,27 @@ static func load_default() -> AIProfile:
 		push_error("AIProfile: cannot load %s; using built-in defaults" % DEFAULT_PATH)
 		return AIProfile.new()
 	return profile
+
+
+## Whether any dial that builds the threat map is live, and the one place the
+## four are listed: each gates its own read in AIUnitActionPlanner, while
+## AIPlanCache asks the same question of a plan it is about to keep. A fifth
+## dial stated in one of those two and not the other would let the cache keep a
+## plan made before the map existed.
+##
+## `dive_score` is deliberately not a fifth, and reads the map only where one of
+## these four already warrants it. It is live in every profile, so listing it
+## would keep nothing on any board — including every board with no submarine on
+## it — for a read only a submarine makes. Where a dial does warrant the map, the
+## dive's read is the last branch of a plan whose earlier branches decide whether
+## it is reached, so a re-score the cache skipped would have taken the same
+## branch and the moment the map is built cannot move; where none does, the dive
+## reads no map at all and there is nothing to guard. The narrow sea in
+## tests/unit/test_ai_plan_cache.gd is what holds that.
+func builds_threat_map() -> bool:
+	return (
+		threat_aversion > 0.0
+		or advance_threat_tiles > 0.0
+		or withdraw_weight > 0.0
+		or capture_threat_aversion > 0.0
+	)

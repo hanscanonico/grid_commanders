@@ -112,31 +112,8 @@ static func _turn_signature(context: AIPlanningContext) -> String:
 func _may_keep(context: AIPlanningContext) -> bool:
 	if context.state.fog_enabled or profile.focus_fire_bonus > 0.0:
 		return false
-	return not _weighs_threat() or context.threat_map_built()
-
-
-## The four dials that build a threat map, and the reason this is stated twice:
-## each of them gates its own read in AIUnitActionPlanner, and a fifth one added
-## there has to be added here too or the cache would keep plans made before the
-## map existed.
-##
-## `dive_score` is deliberately not a fourth, and now reads the map only where
-## one of these three already warrants it — AIUnitActionPlanner mirrors this
-## same check before it builds one for a dive. It is live in every profile, so
-## listing it here would keep nothing on any board — including every board with
-## no submarine on it — for a read only a submarine makes. Where a dial does
-## warrant the map, the dive's read is the last branch of a plan whose earlier
-## branches decide whether it is reached, so a re-score the cache skipped would
-## have taken the same branch and the moment the map is built cannot move; where
-## none does, the dive reads no map at all and there is nothing here to guard.
-## The narrow sea in tests/unit/test_ai_plan_cache.gd is what holds that.
-func _weighs_threat() -> bool:
-	return (
-		profile.threat_aversion > 0.0
-		or profile.advance_threat_tiles > 0.0
-		or profile.withdraw_weight > 0.0
-		or profile.capture_threat_aversion > 0.0
-	)
+	# Asked here of a plan about to be *kept*, which may not predate the map.
+	return not profile.builds_threat_map() or context.threat_map_built()
 
 
 ## Walks the board against the last snapshot, dropping the plans whose ground
@@ -192,7 +169,7 @@ func _drop_what_changed(context: AIPlanningContext) -> bool:
 		for unit: Unit in _plans.keys():
 			if unit.type.can_dive:
 				_plans.erase(unit)
-	if enemy_moved and _weighs_threat():
+	if enemy_moved and profile.builds_threat_map():
 		return false
 	_drop_inside(state, touched)
 	return true
