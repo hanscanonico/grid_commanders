@@ -305,7 +305,7 @@ func test_live_focus_fire_plays_command_for_command() -> void:
 ## banked on every exchange, powers fire mid-turn, and Sable Wren prices ground
 ## off the meter itself.
 func test_commanders_play_command_for_command() -> void:
-	var db := CommanderDB.load_default()
+	var db := Fixture.commander_db()
 	for pairing: Array in [[&"sable_wren", &"gideon_holt"], [&"iris_colt", &"mara_voss"]]:
 		var seated := {1: db.by_id(pairing[0]), 2: db.by_id(pairing[1])}
 		assert_not_null(seated[1], "commander %s must load" % pairing[0])

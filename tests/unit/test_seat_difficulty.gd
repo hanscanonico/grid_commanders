@@ -13,7 +13,7 @@ const TEST_PATH := "user://test_seat_difficulty.json"
 
 func _built(request: MatchRequest) -> BattleSetup.BuiltMatch:
 	return BattleSetup.build(
-		request, Fixture.terrain_db(), Fixture.unit_db(), CommanderDB.load_default(), TEST_PATH
+		request, Fixture.terrain_db(), Fixture.unit_db(), Fixture.commander_db(), TEST_PATH
 	)
 
 

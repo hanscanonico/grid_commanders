@@ -145,7 +145,7 @@ func test_counter_bounds_come_from_the_countering_side() -> void:
 ## rolls never come up short, so the HP bounds must start above it.
 func test_a_lucky_floor_raises_the_defender_bounds() -> void:
 	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
-	var lyra: LyraQuill = CommanderDB.load_default().by_id(&"lyra_quill")
+	var lyra: LyraQuill = Fixture.commander_db().by_id(&"lyra_quill")
 	state.set_commander(1, lyra)
 	var attacker := state.units[0]
 	var defender := state.units[1]

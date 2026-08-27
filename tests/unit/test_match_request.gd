@@ -201,9 +201,9 @@ func test_a_device_preference_never_enters_the_request() -> void:
 
 
 func test_the_rematch_adapter_replays_the_running_match_not_the_menus() -> void:
-	var terrain_db := TerrainDB.load_default()
-	var unit_db := UnitDB.load_default()
-	var chart: DamageChart = load("res://data/damage_chart.tres")
+	var terrain_db := Fixture.terrain_db()
+	var unit_db := Fixture.unit_db()
+	var chart: DamageChart = Fixture.chart()
 	var map := MapData.load_from_file(MatchRequest.DEFAULT_MAP_PATH, terrain_db)
 	var game := GameState.create(map, unit_db, chart, {})
 	game.map_path = "res://maps/fixtures/whatever.txt"

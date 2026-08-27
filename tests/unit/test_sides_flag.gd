@@ -22,7 +22,7 @@ func _staged(map_path: String, spec: String) -> GameState:
 	request.map_path = map_path
 	request.apply_cmdline(Fixture.args(["--sides=" + spec]))
 	var built := BattleSetup.build(
-		request, TerrainDB.load_default(), UnitDB.load_default(), CommanderDB.load_default()
+		request, Fixture.terrain_db(), Fixture.unit_db(), Fixture.commander_db()
 	)
 	assert_not_null(built, "the board builds")
 	return built.game if built != null else null

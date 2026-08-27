@@ -222,7 +222,7 @@ func test_a_mixed_tally_is_alphabetical_rather_than_the_order_it_was_built_in() 
 
 func test_bounty_plunder_is_signed_and_closes_the_turn_s_funds() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
-	state.set_commander(1, CommanderDB.load_default().by_id(&"dane_ferrow"))
+	state.set_commander(1, Fixture.commander_db().by_id(&"dane_ferrow"))
 	state.units[1].hp = 10
 	state.funds[2] = 5000
 	var recorder := _recorder(state)
@@ -243,7 +243,7 @@ func test_bounty_plunder_is_signed_and_closes_the_turn_s_funds() -> void:
 ## starting a turn poorer than it ended the last one, for no recorded reason.
 func test_a_stolen_bounty_is_carried_to_the_victim_s_next_row() -> void:
 	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n2 T 1 0\n2 i 3 0")
-	state.set_commander(1, CommanderDB.load_default().by_id(&"dane_ferrow"))
+	state.set_commander(1, Fixture.commander_db().by_id(&"dane_ferrow"))
 	state.units[1].hp = 10
 	state.funds[2] = 5000
 	var recorder := _recorder(state)

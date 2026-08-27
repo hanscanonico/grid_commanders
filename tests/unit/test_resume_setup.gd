@@ -49,7 +49,7 @@ func _resumed() -> BattleSetup.BuiltMatch:
 	var request := MatchRequest.from_menu(
 		SCRIMMAGE, [2] as Array[int], false, Difficulty.DEFAULT_ID, {}, true
 	)
-	return BattleSetup.build(request, terrain_db, unit_db, CommanderDB.load_default(), TEST_PATH)
+	return BattleSetup.build(request, terrain_db, unit_db, Fixture.commander_db(), TEST_PATH)
 
 
 func test_a_resume_plays_the_saved_match() -> void:

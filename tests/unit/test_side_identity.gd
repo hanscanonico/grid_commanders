@@ -169,8 +169,8 @@ func test_unknown_faction_string_falls_to_generic() -> void:
 
 
 func test_for_game_reads_commander_of() -> void:
-	var terrain_db := TerrainDB.load_default()
-	var unit_db := UnitDB.load_default()
+	var terrain_db := Fixture.terrain_db()
+	var unit_db := Fixture.unit_db()
 	var map := MapData.parse("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", terrain_db)
 	var state := GameState.create(map, unit_db)
 	state.set_commander(1, _co(IRON))

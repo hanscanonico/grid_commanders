@@ -26,7 +26,7 @@ func _state(map_text: String, fog: bool = true) -> GameState:
 ## Fires Sable Wren's Vanish for team 2, the doctrine that hides a unit even from
 ## an adjacent viewer — a hidden enemy whose position does not depend on distance.
 func _vanish(state: GameState) -> void:
-	state.set_commander(2, CommanderDB.load_default().by_id(&"sable_wren"))
+	state.set_commander(2, Fixture.commander_db().by_id(&"sable_wren"))
 	state.add_charge(2, state.commander_of(2).power_cost)
 	state.current_team = 2
 	assert_eq(PowerCommand.new().validate(state), "")

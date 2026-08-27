@@ -357,7 +357,7 @@ const COAST_ROAD := "[terrain]\nSSSSSSSS\n........\n[units]\n1 s 0 0\n2 t 7 1"
 ## invisible and the sub sits on the surface waiting for a tank it never saw coming.
 func test_a_sub_dives_from_a_threat_a_move_bonus_creates() -> void:
 	var state := Fixture.state(COAST_ROAD)
-	state.set_commander(2, CommanderDB.load_default().by_id(&"cass_orlov"))
+	state.set_commander(2, Fixture.commander_db().by_id(&"cass_orlov"))
 	assert_false(
 		AIController.new(unit_db).plan_next_command(state) is DiveCommand,
 		"without the power the tank stops a cell short of the shore"

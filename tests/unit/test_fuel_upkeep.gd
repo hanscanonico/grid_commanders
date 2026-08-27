@@ -115,7 +115,7 @@ func test_cargo_burns_nothing_and_dies_with_its_carrier() -> void:
 ## Otherwise starving your own air force would be a way to feed a Command Power.
 func test_a_crash_banks_no_command_power_charge() -> void:
 	var state := Fixture.state("[terrain]\n..\n..\n[units]\n1 b 0 0\n1 i 1 0\n2 i 0 1")
-	var commanders := CommanderDB.load_default()
+	var commanders := Fixture.commander_db()
 	state.set_commander(1, commanders.by_id(&"mara_voss"))
 	state.set_commander(2, commanders.by_id(&"mara_voss"))
 	var bomber := state.units[0]

@@ -4,7 +4,7 @@ extends GutTest
 ## without a profile on disk — and every part is the mission's own authored fact,
 ## the antagonist through the same by-side read the briefing's picture uses.
 
-var _commanders := CommanderDB.load_default()
+var _commanders := Fixture.commander_db()
 
 
 func _mission() -> MissionDefinition:

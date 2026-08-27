@@ -26,7 +26,7 @@ func _staged(map_path: String, flags: Array) -> BattleSetup.BuiltMatch:
 	request.map_path = map_path
 	request.apply_cmdline(Fixture.args(flags))
 	return BattleSetup.build(
-		request, TerrainDB.load_default(), UnitDB.load_default(), CommanderDB.load_default()
+		request, Fixture.terrain_db(), Fixture.unit_db(), Fixture.commander_db()
 	)
 
 
@@ -103,9 +103,9 @@ func test_the_menu_adapter_carries_the_seating_the_strip_set() -> void:
 ## A rematch of a *reduced* match is that match again — the same corner of the same
 ## board, not the full roster the file could have seated.
 func test_the_rematch_adapter_replays_the_seating_it_was_played_at() -> void:
-	var chart: DamageChart = load("res://data/damage_chart.tres")
-	var map := MapData.load_from_file(QUARTET, TerrainDB.load_default())
-	var game := GameState.create(map, UnitDB.load_default(), chart, {}, [1, 3] as Array[int])
+	var chart: DamageChart = Fixture.chart()
+	var map := MapData.load_from_file(QUARTET, Fixture.terrain_db())
+	var game := GameState.create(map, Fixture.unit_db(), chart, {}, [1, 3] as Array[int])
 	assert_not_null(game)
 	var request := MatchRequest.from_match(game, [3] as Array[int], &"normal")
 	assert_eq(request.seats, [1, 3] as Array[int], "the table it was actually played at")
