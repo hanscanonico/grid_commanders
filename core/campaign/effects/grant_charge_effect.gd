@@ -16,14 +16,13 @@ func apply(state: GameState, _team: int) -> void:
 
 
 func board_error(state: GameState, _team: int) -> String:
-	if not state.teams.has(team):
-		return "charge is banked for army %d, which is not at this table" % team
-	return ""
+	return MissionBoardCheck.absent_team(state, team, "charge is banked for")
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if not map.teams().has(team):
-		return "charge is banked for army %d, which this board does not seat" % team
+	var seat_error := MissionBoardCheck.unseated_team(map, team, "charge is banked for")
+	if seat_error != "":
+		return seat_error
 	if points <= 0:
 		return "charge grant banks %d points" % points
 	return ""

@@ -32,8 +32,9 @@ func is_met(
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if not map.teams().has(team):
-		return "force-strength trigger names army %d, which this board does not seat" % team
+	var seat_error := MissionBoardCheck.unseated_team(map, team, "force-strength trigger names")
+	if seat_error != "":
+		return seat_error
 	if count < 0:
 		return "force-strength trigger counts to %d units" % count
 	return ""

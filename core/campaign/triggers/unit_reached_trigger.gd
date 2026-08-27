@@ -31,8 +31,7 @@ func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if cells.is_empty():
 		return "unit-reached trigger names no ground for '%s' to reach" % tag
 	for cell: Vector2i in cells:
-		if not map.in_bounds(cell):
-			return (
-				"unit-reached trigger names %s, off a %dx%d board" % [cell, map.width, map.height]
-			)
+		var bounds_error := MissionBoardCheck.off_board(map, cell, "unit-reached trigger names")
+		if bounds_error != "":
+			return bounds_error
 	return ""

@@ -33,8 +33,9 @@ func marker_cells() -> Array[Vector2i]:
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if days <= 0:
 		return "hold objective asks for %d days" % days
-	if not map.in_bounds(cell):
-		return "hold objective names %s, off a %dx%d board" % [cell, map.width, map.height]
+	var bounds_error := MissionBoardCheck.off_board(map, cell, "hold objective names")
+	if bounds_error != "":
+		return bounds_error
 	if not map.terrain_at(cell).is_property:
 		return (
 			"hold objective names %s, which is %s and not a property"

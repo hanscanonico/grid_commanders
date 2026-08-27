@@ -39,10 +39,12 @@ func apply(state: GameState, _team: int) -> void:
 
 
 func board_error(state: GameState, _team: int) -> String:
-	if not state.teams.has(from_team):
-		return "defection takes units from army %d, which is not at this table" % from_team
-	if not state.teams.has(to_team):
-		return "defection gives units to army %d, which is not at this table" % to_team
+	var from_error := MissionBoardCheck.absent_team(state, from_team, "defection takes units from")
+	if from_error != "":
+		return from_error
+	var to_error := MissionBoardCheck.absent_team(state, to_team, "defection gives units to")
+	if to_error != "":
+		return to_error
 	if state.is_eliminated(to_team):
 		return "defection gives units to army %d, which has already fallen" % to_team
 	return ""
@@ -51,10 +53,12 @@ func board_error(state: GameState, _team: int) -> String:
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if from_team == to_team:
 		return "defection moves units from army %d to itself" % from_team
-	if not map.teams().has(from_team):
-		return "defection takes units from army %d, which this board does not seat" % from_team
-	if not map.teams().has(to_team):
-		return "defection gives units to army %d, which this board does not seat" % to_team
+	var from_error := MissionBoardCheck.unseated_team(map, from_team, "defection takes units from")
+	if from_error != "":
+		return from_error
+	var to_error := MissionBoardCheck.unseated_team(map, to_team, "defection gives units to")
+	if to_error != "":
+		return to_error
 	if tags.is_empty():
 		return "defection names no units"
 	for tag: StringName in tags:
