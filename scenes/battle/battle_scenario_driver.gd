@@ -115,7 +115,7 @@ func run() -> void:
 	# day-1 banner may sit on top, except the flow whose subject is that banner.
 	_battle.leave_handoff()
 	if _demo != "turn_banner_build_attempt":
-		_battle.hide_banner()
+		_battle.animator.hide_banner()
 	if _demo != "":
 		await _run_demo(_demo)
 	elif _select_cell.x >= 0:

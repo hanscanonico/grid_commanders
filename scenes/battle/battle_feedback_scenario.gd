@@ -466,7 +466,7 @@ func _run_guard_commit() -> String:
 	# A player may open the menu once the incoming banner has retired. The
 	# capture skips that presentation wait, just as the driver hid day one's
 	# banner before this flow began.
-	_battle.hide_banner()
+	_battle.animator.hide_banner()
 	await _battle.get_tree().process_frame
 	var next_team := _battle.game.current_team
 	await _open_end_turn()
@@ -493,7 +493,7 @@ func _run_guard_commit() -> String:
 	# frame this mode photographs.
 	if _battle.state == Battle.State.HANDOFF:
 		_battle.leave_handoff()
-	_battle.hide_banner()
+	_battle.animator.hide_banner()
 	await _battle.get_tree().process_frame
 	await _open_end_turn()
 	if not guard.visible:
