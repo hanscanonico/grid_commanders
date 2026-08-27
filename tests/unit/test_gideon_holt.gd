@@ -132,6 +132,23 @@ func test_the_power_costs_no_funds() -> void:
 	assert_eq(state.funds[1], 0)
 
 
+## A passenger is not part of the fielded army, so a worn one is not a second
+## reason to open the depots — the carrier filter every doctrine counting its own
+## units shares.
+func test_the_depots_do_not_count_a_passenger() -> void:
+	var state := _state("[terrain]\n====\n[units]\n1 p 0 0\n1 i 1 0")
+	var apc := state.units[0]
+	var infantry := state.units[1]
+	infantry.carrier = apc
+	infantry.cell = apc.cell
+	infantry.hp = 50
+	apc.hp = 50
+	var co := state.commander_of(1)
+	assert_false(co.wants_power(state, 1), "one worn unit on the board and one riding is still one")
+	infantry.carrier = null
+	assert_true(co.wants_power(state, 1), "set down, the same unit is the second")
+
+
 # --- economy advice ----------------------------------------------------------
 
 
