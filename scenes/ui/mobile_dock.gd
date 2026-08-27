@@ -12,7 +12,7 @@ extends PanelContainer
 ## every one of those is a branch `Battle._cancel` already has.
 ##
 ## Every chip dispatches the action the keyboard dispatches, through
-## `HudTopBar.chip_button`'s idiom — so which states honour it and what it then
+## `UiKit.action_chip`'s idiom — so which states honour it and what it then
 ## does are the key path's and cannot drift from it (D2). Nothing here calls a
 ## `Battle` branch of its own and nothing here knows what a `Battle` is.
 ##
@@ -151,7 +151,7 @@ func back_word() -> String:
 
 
 func _chip(text: String, action: StringName) -> Button:
-	var chip := HudTopBar.chip_button(text, action)
+	var chip := UiKit.action_chip(text, action)
 	chip.add_theme_color_override("font_disabled_color", UiTheme.SLATE_700)
 	chip.size_flags_vertical = Control.SIZE_FILL
 	_chips[action] = chip
