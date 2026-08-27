@@ -178,19 +178,13 @@ func _parse_args() -> bool:
 		elif arg.begins_with("--scenarios="):
 			_scenario_names = _parse_scenario_list(arg.get_slice("=", 1))
 		elif arg.begins_with("--seeds="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 1)
-			if parsed < 0:
-				push_error("balance: --seeds must be a positive integer (got '%s')" % value)
+			_seed_count = BalanceHarness.positive_flag("balance", "--seeds", arg.get_slice("=", 1))
+			if _seed_count < 0:
 				return false
-			_seed_count = parsed
 		elif arg.begins_with("--days="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 1)
-			if parsed < 0:
-				push_error("balance: --days must be a positive integer (got '%s')" % value)
+			_days_cap = BalanceHarness.positive_flag("balance", "--days", arg.get_slice("=", 1))
+			if _days_cap < 0:
 				return false
-			_days_cap = parsed
 		elif arg.begins_with("--out="):
 			_out_dir = arg.get_slice("=", 1)
 		elif arg == "--neutral":
@@ -199,12 +193,8 @@ func _parse_args() -> bool:
 			_difficulty_check = true
 	if _out_dir == "":
 		_out_dir = "reports/difficulty_check" if _difficulty_check else "reports/commander_balance"
-	var resolved := BalanceReportWriter.resolve_out(_out_dir)
-	if resolved == "":
-		push_error("balance: --out is a directory under reports/ (got '%s')" % _out_dir)
-		return false
-	_out_dir = resolved
-	return true
+	_out_dir = BalanceHarness.out_flag("balance", _out_dir)
+	return _out_dir != ""
 
 
 ## The matrix measures doctrines against each other, so the roster is the

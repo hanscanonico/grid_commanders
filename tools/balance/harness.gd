@@ -43,8 +43,9 @@ static func load_default() -> BalanceHarness:
 ## `--seeds=four` and `--days=-5` refuse out loud instead of the old
 ## `maxi(1, int(...))` quietly landing on 1.
 ##
-## The three drivers share the check and keep their own refusal, because the
-## message names the flag and the tool that read it.
+## The refusal itself is `positive_flag` / `count_flag` below: the message names
+## the flag and the tool that read it, so a driver passes both rather than
+## spelling the block again.
 static func int_flag(value: String, min_value: int) -> int:
 	if not value.is_valid_int():
 		return -1
@@ -79,3 +80,41 @@ func map_of(name: String) -> MapData:
 		return null
 	_maps[name] = map
 	return map
+
+
+## `--seeds=`, `--days=`, `--appends=`: an integer of at least 1, or -1 with the
+## refusal already pushed. `tool_name` and `flag` are what the message names, so
+## a driver keeps its own vocabulary and loses only the block that spelled the
+## same check a seventh time.
+static func positive_flag(tool_name: String, flag: String, value: String) -> int:
+	return _bounded_flag(tool_name, flag, value, 1, "a positive integer")
+
+
+## The non-negative variant — `--seed-offset=`, `--seed=` — where 0 is a legal
+## answer and only a negative or a non-number is not.
+static func count_flag(tool_name: String, flag: String, value: String) -> int:
+	return _bounded_flag(tool_name, flag, value, 0, "a non-negative integer")
+
+
+## `--out=`: the directory a run may write to, or "" with the refusal pushed.
+## BalanceReportWriter.resolve_out is still the single authority on where that
+## is; what this adds is the one wording every driver refuses a stray path with.
+static func out_flag(tool_name: String, value: String) -> String:
+	var resolved := BalanceReportWriter.resolve_out(value.strip_edges())
+	if resolved == "":
+		push_error(
+			(
+				"%s: --out is a directory under %s/ (got '%s')"
+				% [tool_name, BalanceReportWriter.REPORTS_ROOT, value]
+			)
+		)
+	return resolved
+
+
+static func _bounded_flag(
+	tool_name: String, flag: String, value: String, min_value: int, shape: String
+) -> int:
+	var parsed := int_flag(value.strip_edges(), min_value)
+	if parsed < 0:
+		push_error("%s: %s must be %s (got '%s')" % [tool_name, flag, shape, value])
+	return parsed

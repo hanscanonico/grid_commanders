@@ -178,39 +178,29 @@ func _parse_args() -> bool:
 		elif arg.begins_with("--commander="):
 			_sweep_commander = StringName(arg.get_slice("=", 1).strip_edges())
 		elif arg.begins_with("--seeds="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 1)
-			if parsed < 0:
-				push_error("balance-sim: --seeds must be a positive integer (got '%s')" % value)
+			_seed_count = BalanceHarness.positive_flag(
+				"balance-sim", "--seeds", arg.get_slice("=", 1)
+			)
+			if _seed_count < 0:
 				return false
-			_seed_count = parsed
 		elif arg.begins_with("--seed="):
 			# Watch mode's spelling, accepted here too: a suspicious row's flags
 			# copied verbatim off the CSV replay that seed headlessly. It pins the
 			# seed and nothing else, so both seatings are still played and watch
 			# mode — which seats --red as red — reproduces the seat-0 row of the two.
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 0)
-			if parsed < 0:
-				push_error("balance-sim: --seed must be a non-negative integer (got '%s')" % value)
+			_pinned_seed = BalanceHarness.count_flag("balance-sim", "--seed", arg.get_slice("=", 1))
+			if _pinned_seed < 0:
 				return false
-			_pinned_seed = parsed
 		elif arg.begins_with("--seed-offset="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 0)
-			if parsed < 0:
-				push_error(
-					"balance-sim: --seed-offset must be a non-negative integer (got '%s')" % value
-				)
+			_seed_offset = BalanceHarness.count_flag(
+				"balance-sim", "--seed-offset", arg.get_slice("=", 1)
+			)
+			if _seed_offset < 0:
 				return false
-			_seed_offset = parsed
 		elif arg.begins_with("--days="):
-			var value := arg.get_slice("=", 1)
-			var parsed := BalanceHarness.int_flag(value, 1)
-			if parsed < 0:
-				push_error("balance-sim: --days must be a positive integer (got '%s')" % value)
+			_days_cap = BalanceHarness.positive_flag("balance-sim", "--days", arg.get_slice("=", 1))
+			if _days_cap < 0:
 				return false
-			_days_cap = parsed
 		elif arg.begins_with("--out="):
 			_out_dir = arg.get_slice("=", 1).strip_edges()
 		elif arg == "--no-commands":
@@ -221,11 +211,9 @@ func _parse_args() -> bool:
 			push_error("balance-sim: unknown flag '%s'" % arg)
 			return false
 	if _out_dir != "":
-		var resolved := BalanceReportWriter.resolve_out(_out_dir)
-		if resolved == "":
-			push_error("balance-sim: --out is a directory under reports/ (got '%s')" % _out_dir)
+		_out_dir = BalanceHarness.out_flag("balance-sim", _out_dir)
+		if _out_dir == "":
 			return false
-		_out_dir = resolved
 	if _sweep != "" and _sweep not in ["commanders", "maps", "tiers"]:
 		push_error("balance-sim: --sweep must be commanders, maps or tiers (got '%s')" % _sweep)
 		return false

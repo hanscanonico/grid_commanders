@@ -137,11 +137,9 @@ func _parse_args() -> bool:
 		push_error("replay-report: name a recording — make replay-report REPLAY=<file>")
 		return false
 	if _out_dir != "":
-		var resolved := BalanceReportWriter.resolve_out(_out_dir)
-		if resolved == "":
-			push_error("replay-report: --out is a directory under reports/ (got '%s')" % _out_dir)
+		_out_dir = BalanceHarness.out_flag("replay-report", _out_dir)
+		if _out_dir == "":
 			return false
-		_out_dir = resolved
 	return true
 
 
