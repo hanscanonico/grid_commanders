@@ -230,18 +230,13 @@ func test_the_punch_scales_about_the_cameras_own_anchor() -> void:
 	assert_eq(anchor.y, floorf(anchor.y), "a fractional anchor would resample the still")
 
 
-## The capture cut-in's squad is board art at 1:1, so its draw origin has to be a
-## whole pixel however the march, the bob and the stagger place it.
-func test_the_capture_squad_is_drawn_at_one_to_one() -> void:
-	assert_eq(CaptureStage.FIGURE_PX, UnitSprite.SPRITE_W)
-	assert_eq(CaptureStage.FIGURE_H, UnitSprite.SPRITE_H)
-
-
-## Same rule for the combat cut-in's figures: both stages blow the board's own
-## cell up at 1:1, so a box shaped anything but the cell's would rescale it.
-func test_the_combat_figures_are_drawn_at_one_to_one() -> void:
-	assert_eq(CutsceneSide.FIGURE_PX, UnitSprite.SPRITE_W)
-	assert_eq(CutsceneSide.FIGURE_H, UnitSprite.SPRITE_H)
+## Both cut-ins blow the board's own cell up at 1:1 — the capture squad's draw
+## origin has to be a whole pixel however the march, the bob and the stagger
+## place it, and a box shaped anything but the cell's would rescale either. One
+## rule, so one constant: CutscenePlates is where both stages read it.
+func test_the_cut_in_figures_are_drawn_at_one_to_one() -> void:
+	assert_eq(CutscenePlates.FIGURE_PX, UnitSprite.SPRITE_W)
+	assert_eq(CutscenePlates.FIGURE_H, UnitSprite.SPRITE_H)
 
 
 ## A unit's art hangs off its footprint, so a cell taller than it is wide lifts the

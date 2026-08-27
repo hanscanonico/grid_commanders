@@ -17,10 +17,10 @@ extends Control
 ## horizon ridge's colour, which is averaged off the terrain tile so a new
 ## terrain needs no entry anywhere.
 
-const PLATE_TOP_H := 26
-const PLATE_BOT_H := 20
 ## Share of the arena the ground plane fills, measured up from the bottom.
 const GROUND_RATIO := 0.45
+## How many steps the sky is graded in over what is left above it.
+const SKY_BANDS := 32
 ## The same plane as a top edge and a depth, both measured *down* the arena —
 ## the frame the scenery's depth shading is written in.
 const _GROUND_TOP := 1.0 - GROUND_RATIO
@@ -39,13 +39,6 @@ const SCENERY_SLOTS: Array[Vector3] = [
 	Vector3(0.63, 0.66, 0.92),
 	Vector3(0.85, 0.74, 1.0),
 ]
-## Figures are the atlas art at its own resolution — nearest-neighbour scaling
-## of pixel art to a fractional size drops rows unevenly, so it isn't. The cell
-## is taller than it is wide and anchored by its footprint, so FIGURE_H is drawn
-## *above* the feet and a raised silhouette gets its headroom here too;
-## test_texel_stability.gd pins both to UnitSprite's cell.
-const FIGURE_PX := 64
-const FIGURE_H := 96
 ## How far in from the outer edge the squad's *middle* sits. Squads are centred
 ## on this whatever their size, so a lone 1 HP straggler holds the same ground a
 ## full five did rather than standing off at the edge of the frame where the
@@ -102,8 +95,6 @@ const CHIP_PAD := Vector2(4.0, 3.0)
 const CHIP_GAP := 8.0
 const CHIP_BORDER := Color(1.0, 1.0, 1.0, 0.25)
 const CHIP_TEXT := Color(1.0, 1.0, 1.0, 0.68)
-const MAX_STARS := 4
-const STAR_STEP := 11.0
 ## How far plate content is held off the frame's outer edge. Generous on purpose:
 ## the band pushes in slightly over the exchange, so a few pixels either side are
 ## outside the viewport at the moment the volley lands.
@@ -277,7 +268,7 @@ func center_point() -> Vector2:
 
 
 func _arena() -> Rect2:
-	return Rect2(0.0, PLATE_TOP_H, size.x, size.y - PLATE_TOP_H - PLATE_BOT_H)
+	return CutscenePlates.arena(size)
 
 
 func _draw() -> void:
@@ -299,16 +290,13 @@ func _draw() -> void:
 ## horizon. All of it above the ground line.
 func _draw_sky(arena: Rect2) -> void:
 	var horizon := _horizon(arena)
-	var bands := 32
-	for i in bands:
-		var top := arena.position.y + (horizon - arena.position.y) * float(i) / bands
-		var bottom := arena.position.y + (horizon - arena.position.y) * float(i + 1) / bands
-		var shade := CutscenePalette.SKY_TOP.lerp(
-			CutscenePalette.SKY_HORIZON, float(i) / float(bands - 1)
-		)
-		draw_rect(Rect2(0.0, top, size.x, bottom - top + 1.0), shade)
-	_draw_cloud(Vector2(_outward(0.30), arena.position.y + arena.size.y * 0.17), 1.0)
-	_draw_cloud(Vector2(_outward(0.74), arena.position.y + arena.size.y * 0.07), 0.62)
+	CutsceneScenery.draw_sky_gradient(self, arena, size.x, horizon, SKY_BANDS)
+	CutsceneScenery.draw_cloud(
+		self, Vector2(_outward(0.30), arena.position.y + arena.size.y * 0.17), 1.0
+	)
+	CutsceneScenery.draw_cloud(
+		self, Vector2(_outward(0.74), arena.position.y + arena.size.y * 0.07), 0.62
+	)
 	# Distant country, not scenery: the ridge is the ground's own colour washed
 	# most of the way toward the sky, so it sits behind the horizon instead of
 	# competing with the field the fight is on.
@@ -329,7 +317,7 @@ func _draw_ground(arena: Rect2) -> void:
 	var horizon := _horizon(arena)
 	var floor_y := arena.position.y + arena.size.y
 	var depth := floor_y - horizon
-	var atlas := _terrain_atlas()
+	var atlas := CutscenePlates.terrain_atlas()
 	var source := _cell_region(ground, _ground_row())
 	var y := horizon
 	var row_h := depth * 0.05
@@ -358,15 +346,7 @@ func _tile_row(atlas: Texture2D, source: Rect2, top: float, row_h: float, shade:
 
 
 func _horizon(arena: Rect2) -> float:
-	return arena.position.y + arena.size.y * (1.0 - GROUND_RATIO)
-
-
-func _draw_cloud(at: Vector2, scale: float) -> void:
-	var white := Color(1.0, 1.0, 1.0, 0.85)
-	draw_rect(Rect2(at.x - 30.0 * scale, at.y, 60.0 * scale, 9.0 * scale), white)
-	draw_circle(at + Vector2(-14.0, 1.0) * scale, 9.0 * scale, white)
-	draw_circle(at + Vector2(2.0, -3.0) * scale, 13.0 * scale, white)
-	draw_circle(at + Vector2(18.0, 0.0) * scale, 8.0 * scale, white)
+	return CutsceneScenery.horizon_of(arena, GROUND_RATIO)
 
 
 func _draw_hill(base_y: float, center_x: float, width: float, height: float, tint: Color) -> void:
@@ -498,7 +478,12 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## A figure already on its way down does not flash: it has taken its hit.
 func _draw_figure(feet: Vector2, fall: float, hittable: bool) -> void:
 	var flip := Vector2(-1.0 if mirror else 1.0, 1.0)
-	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_H, FIGURE_PX, FIGURE_H)
+	var box := Rect2(
+		-CutscenePlates.FIGURE_PX * 0.5,
+		-CutscenePlates.FIGURE_H,
+		CutscenePlates.FIGURE_PX,
+		CutscenePlates.FIGURE_H
+	)
 	var lift := 0.0
 	var spin := 0.0
 	var alpha := squad_alpha
@@ -523,7 +508,7 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool) -> void:
 ## Which pose of the idle clip the squad is standing in, off this cut-in's own
 ## clock at the board's ambient cadence.
 func _figure_now() -> AtlasTexture:
-	return _figures[BoardBeat.frame_at(BoardBeat.AMBIENT_MS, int(clock * 1000.0))]
+	return CutscenePlates.figure_now(_figures, clock)
 
 
 # --- plates ------------------------------------------------------------------
@@ -537,15 +522,11 @@ func _draw_plates() -> void:
 		return
 	var slide := _inward(-40.0 * (1.0 - plate_p))
 	draw_set_transform(Vector2(slide, 0.0))
-	var top := Rect2(0.0, 0.0, size.x, PLATE_TOP_H)
-	draw_rect(top, Color(CutscenePalette.PLATE, plate_p))
-	draw_rect(Rect2(0.0, PLATE_TOP_H - 2.0, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
+	CutscenePlates.draw_frames(self, size, plate_p)
+	var top := Rect2(0.0, 0.0, size.x, CutscenePlates.TOP_H)
 	_draw_name_row(top)
 	_draw_pips(top)
-	var bottom := Rect2(0.0, size.y - PLATE_BOT_H, size.x, PLATE_BOT_H)
-	draw_rect(bottom, Color(CutscenePalette.PLATE, plate_p))
-	draw_rect(Rect2(0.0, bottom.position.y, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
-	_draw_terrain_row(bottom)
+	_draw_terrain_row(Rect2(0.0, size.y - CutscenePlates.BOT_H, size.x, CutscenePlates.BOT_H))
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -577,7 +558,7 @@ func _draw_weapon_chip(font: Font, plate: Rect2, from_edge: float) -> void:
 	var text := font.get_string_size(weapon_label, HORIZONTAL_ALIGNMENT_LEFT, -1, CHIP_FONT_PX)
 	var box := Vector2(text.x + CHIP_PAD.x * 2.0, CHIP_FONT_PX + CHIP_PAD.y * 2.0)
 	var left := _outward_px(from_edge) - (box.x if mirror else 0.0)
-	var top := plate.position.y + (PLATE_TOP_H - box.y) * 0.5 - 1.0
+	var top := plate.position.y + (CutscenePlates.TOP_H - box.y) * 0.5 - 1.0
 	var frame := Rect2(left, top, box.x, box.y)
 	draw_rect(frame, Color(CutscenePalette.STROKE, 0.35 * plate_p))
 	draw_rect(frame, Color(CHIP_BORDER, CHIP_BORDER.a * plate_p), false, 1.0)
@@ -630,12 +611,13 @@ func _draw_terrain_row(plate: Rect2) -> void:
 	# Beside the name and reading inward, the way the tile panel already writes
 	# "DEF ★☆☆☆" — anchored to the seam instead, the two sides' rows grow toward
 	# each other and collide in the middle of the frame.
-	var first := _outward_px(PLATE_MARGIN + width + 12.0)
-	var stars := mini(terrain.defense_stars, MAX_STARS)
-	for i in MAX_STARS:
-		var center := Vector2(first + _inward(STAR_STEP * i), plate.position.y + 10.0)
-		var tint := CutscenePalette.GOLD if i < stars else CutscenePalette.STAR_OFF
-		draw_colored_polygon(CutsceneFx.star_points(center, 4.5), Color(tint, tint.a * plate_p))
+	CutscenePlates.draw_stars(
+		self,
+		Vector2(_outward_px(PLATE_MARGIN + width + 12.0), plate.position.y + 10.0),
+		_inward(CutscenePlates.STAR_STEP),
+		mini(terrain.defense_stars, CutscenePlates.MAX_STARS),
+		plate_p
+	)
 
 
 # --- mirroring helpers -------------------------------------------------------
@@ -661,13 +643,13 @@ func _inward(delta: float) -> float:
 ## The terrain atlas row this cell's own art is drawn from: the owner's faction
 ## row on a property, the untinted row 0 on plain terrain and on anything unowned.
 func _atlas_row() -> int:
-	return owner_row if terrain.team_tinted else SideIdentity.NEUTRAL_ROW
+	return SideIdentity.terrain_row(terrain, owner_row)
 
 
 ## And the row the paved floor is drawn from — asked of the *paving* terrain, not
 ## the cell's. A city stands on road, and road wears nobody's colours.
 func _ground_row() -> int:
-	return owner_row if ground.team_tinted else SideIdentity.NEUTRAL_ROW
+	return SideIdentity.terrain_row(ground, owner_row)
 
 
 ## One cell of the terrain atlas, as a source rect.
@@ -678,7 +660,3 @@ static func _cell_region(of: TerrainType, row: int) -> Rect2:
 		BattleView.TERRAIN_PX,
 		BattleView.TERRAIN_PX
 	)
-
-
-static func _terrain_atlas() -> Texture2D:
-	return load(BattleView.ATLAS_PATH)
