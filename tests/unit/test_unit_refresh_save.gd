@@ -14,10 +14,7 @@ func before_each() -> void:
 
 
 func _state() -> GameState:
-	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	state.map_path = "res://maps/first_steps.txt"
-	return state
+	return Fixture.state_from_file("res://maps/first_steps.txt")
 
 
 func test_refreshable_round_trips() -> void:

@@ -1,17 +1,8 @@
 extends GutTest
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-
 
 func _state(map_text: String, fog := true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db)
+	var state := Fixture.state(map_text)
 	assert_not_null(state)
 	state.fog_enabled = fog
 	return state

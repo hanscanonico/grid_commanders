@@ -20,17 +20,13 @@ func before_each() -> void:
 
 
 func _state() -> GameState:
-	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	state.map_path = "res://maps/first_steps.txt"
-	return state
+	return Fixture.state_from_file("res://maps/first_steps.txt")
 
 
 ## A board with one named unit and one unnamed, so the default is pinned beside
 ## the feature rather than assumed.
 func _named_state() -> GameState:
-	var map := MapData.parse("[terrain]\n....\n[units]\n1 i 0 0 courier\n2 t 3 0", terrain_db)
-	return GameState.create(map, unit_db, chart)
+	return Fixture.state("[terrain]\n....\n[units]\n1 i 0 0 courier\n2 t 3 0")
 
 
 ## The optional fifth column, which every board that shipped before it omits.

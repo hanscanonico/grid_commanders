@@ -29,18 +29,15 @@ CCQ.
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
 	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 func _state(map_text: String = ROW, allies: Array = []) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
+	var state := Fixture.state(map_text)
 	assert_not_null(state)
 	for team: int in allies:
 		state.sides[team] = 0
