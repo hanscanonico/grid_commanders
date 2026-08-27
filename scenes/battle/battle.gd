@@ -233,6 +233,9 @@ var exit: BattleExit
 ## Owns the pause menu's Auto row and its submenu: handing the seat on turn to
 ## the computer at a chosen tier, or taking it back. See BattleAuto.
 var _battle_auto: BattleAuto
+## Owns aiming and firing a Command Power — the F key, the HUD's Fire button and
+## the map menu's Power row. BattlePower's flow half; see BattlePowerFlow.
+var power: BattlePowerFlow
 
 
 func _ready() -> void:
@@ -243,6 +246,7 @@ func _ready() -> void:
 	_ai_runner = BattleAiRunner.new(self)
 	exit = BattleExit.new(self)
 	_battle_auto = BattleAuto.new(self)
+	power = BattlePowerFlow.new(self)
 	BattleCampaign.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
 	# scene just runs it. The menu (or a rematch) stages a request; a run that
@@ -301,7 +305,7 @@ func _ready() -> void:
 	action_menu.action_chosen.connect(_on_menu_action)
 	end_turn_guard.review_requested.connect(_review_ready_units)
 	end_turn_guard.end_requested.connect(_end_turn_anyway)
-	view.fire_pressed.connect(_fire_command_power)
+	view.fire_pressed.connect(power.fire)
 	view.end_turn_pressed.connect(_request_end_turn)
 	victory_screen.rematch_button.pressed.connect(_request_rematch)
 	victory_screen.menu_button.pressed.connect(_request_main_menu)
@@ -448,12 +452,6 @@ func rest_state() -> State:
 	return State.PAUSED if _paused else State.IDLE
 
 
-## The banner belongs to the animator, but dismissing it is something a caller
-## asks the *scene* to do — the scenario driver clears it before a capture.
-func hide_banner() -> void:
-	animator.hide_banner()
-
-
 ## Status banners use the same blocking/skip convention as the day and ambush
 ## cards. Public because BattleExit owns the save result text it presents.
 func present_banner(text: String) -> void:
@@ -589,7 +587,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"show_objectives"):
 		view.mission_panel.toggle(game)  # chrome the card owns; nothing here has state in it
 	elif event.is_action_pressed(&"fire_power"):
-		_fire_command_power()  # the shortcut the charged meter advertises
+		power.fire()  # the shortcut the charged meter advertises
 	elif event.is_action_pressed(&"end_turn") and BattleLegend.commands_board(_legend_for(state)):
 		_request_end_turn()  # the bar's button by key: one gate, so they cannot disagree
 	elif not dir.is_empty():
@@ -658,7 +656,7 @@ func confirm_at(cell: Vector2i) -> void:
 			else:
 				_reject("Cannot unload there.", cell)
 		State.POWER_TARGETING:
-			_fire_aimed_power(cell)
+			await power.fire_at(cell)
 		State.AI_TURN:
 			_reject("CPU turn.", cell)
 
@@ -682,7 +680,7 @@ func _cancel() -> void:
 	if state == State.IDLE:
 		_open_map_menu()  # nothing to back out of; what the resting legend's ESC names
 	elif state == State.UNIT_SELECTED:
-		_clear_selection()
+		clear_selection()
 	elif state == State.PREVIEW:
 		_clear_preview()
 	elif state == State.TARGETING:
@@ -693,10 +691,7 @@ func _cancel() -> void:
 		_drop_option = null
 		_on_move_animation_done()  # back to the unit menu
 	elif state == State.POWER_TARGETING:
-		# Nothing to back out *to*: aiming already abandoned whatever the HUD
-		# button was pressed over, and the meter has not been spent.
-		overlays.paint_attack([])
-		state = rest_state()
+		power.cancel_aim()
 
 
 func _select(unit: Unit) -> void:
@@ -714,7 +709,9 @@ func _select(unit: Unit) -> void:
 	state = State.UNIT_SELECTED
 
 
-func _clear_selection(refresh_board: bool = true) -> void:
+## Puts the board back to rest: nothing in hand, no overlay, no route. Public
+## because BattlePowerFlow ends a firing on it, the way a committed command does.
+func clear_selection(refresh_board: bool = true) -> void:
 	selected = null
 	move_range = null
 	planned_path = []
@@ -899,7 +896,7 @@ func _commit(action: StringName, command: Command) -> void:
 		push_error("%s rejected: %s" % [action, receipt.validation_error])
 		_undo_move_preview()
 		return
-	_clear_selection(false)
+	clear_selection(false)
 	await conclude_command(receipt)
 
 
@@ -920,7 +917,7 @@ func _handle_build_action(action: StringName) -> void:
 func _handle_map_action(action: StringName) -> void:
 	state = rest_state()
 	if action == &"power":
-		_fire_command_power()
+		power.fire()
 		return
 	if action == &"commanders":
 		_open_commander_info()
@@ -995,69 +992,6 @@ func _commit_end_turn() -> void:
 		push_error("EndTurnCommand rejected: %s" % receipt.validation_error)
 		return
 	await conclude_command(receipt)
-
-
-## Fires the current team's Command Power, or says why it cannot: which refusal a
-## press has earned is BattlePower's, settled up front for aimed and unaimed powers
-## alike so nobody is sent off to aim a meter they have not filled. Only a board
-## the player is playing gets the chip; the rest of them get nothing.
-func _fire_command_power() -> void:
-	if state not in [State.IDLE, State.MENU]:
-		if state in [State.UNIT_SELECTED, State.PREVIEW, State.TARGETING, State.DROP_TARGETING]:
-			_reject(BattlePower.MID_ACTION, cursor_cell)
-		return
-	var refusal := BattlePower.refusal_for(game, ai_teams)
-	if refusal != "":
-		_reject(refusal, cursor_cell)
-		return
-	# Close the menu the HUD button may sit over before the card or the aim takes it.
-	action_menu.close()
-	if game.commander_of(game.current_team).aims_power():
-		_enter_power_targeting()
-		return
-	await _fire_power(PowerCommand.new())
-
-
-## Applies a Command Power and settles the board around it. A power can change
-## movement, vision and HP at once, so the whole board is redrawn, and the
-## selection — plus any menu the HUD button fired over, whose rows would otherwise
-## act on it — belongs to rules that no longer apply.
-func _fire_power(command: PowerCommand) -> void:
-	state = State.ANIMATING
-	var receipt := await execute_command(command)
-	if receipt.rejected():
-		state = rest_state()
-		return
-	_clear_selection(false)
-	await conclude_command(receipt)
-
-
-## Aims a Command Power at a square of ground (plan D2). The power abandons
-## whatever move the HUD button was pressed over exactly as firing an unaimed one
-## does — and it does so now rather than after the strike, so cancelling the aim
-## lands on a board with nothing half-moved on it.
-func _enter_power_targeting() -> void:
-	if selected != null:
-		view.refresh_sprite(selected)  # the previewed move is off; put the sprite back
-	_clear_selection()
-	state = State.POWER_TARGETING
-	_paint_blast(cursor_cell)
-
-
-## Repaints the square under the aim. Asked of the doctrine every time (plan D3):
-## the overlay shows exactly what the strike will take, because it is the same
-## function that takes it. Unfogged on purpose — every cell of the board is a legal
-## aim, and what fog costs the player is knowing what was standing there.
-func _paint_blast(cell: Vector2i) -> void:
-	var team := game.current_team
-	overlays.paint_attack(game.commander_of(team).power_blast_cells(game, team, cell))
-
-
-func _fire_aimed_power(cell: Vector2i) -> void:
-	var command := PowerCommand.new()
-	command.target = cell
-	overlays.paint_attack([])
-	await _fire_power(command)
 
 
 ## Locks input and shows the already-decided winner. Public because the AI turn
@@ -1350,7 +1284,7 @@ func _execute_drop(drop_cell: Vector2i) -> void:
 		return
 	_drop_options = []
 	_drop_option = null
-	_clear_selection(false)
+	clear_selection(false)
 	await conclude_command(receipt)
 
 
@@ -1366,7 +1300,7 @@ func _execute_attack(target_cell: Vector2i) -> void:
 		push_error("AttackCommand rejected: %s" % receipt.validation_error)
 		_exit_targeting_to_menu()
 		return
-	_clear_selection(false)
+	clear_selection(false)
 	await conclude_command(receipt)
 
 
@@ -1395,7 +1329,7 @@ func set_cursor_cell(cell: Vector2i) -> void:
 	elif state == State.TARGETING:
 		_update_damage_preview()
 	elif state == State.POWER_TARGETING:
-		_paint_blast(cell)
+		power.repaint(cell)
 
 
 func refresh_panel() -> void:
