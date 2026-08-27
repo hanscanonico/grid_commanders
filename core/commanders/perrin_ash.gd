@@ -30,7 +30,7 @@ func wants_power(state: GameState, team: int) -> bool:
 ## already acted still collects the bonus on its counters through the opposing
 ## turn.
 func _has_air_unit(state: GameState, team: int) -> bool:
-	for unit in state.units_of(team):
-		if unit.carrier == null and unit.type.domain == superiority_domain:
+	for unit in _fielded_units(state, team):
+		if unit.type.domain == superiority_domain:
 			return true
 	return false

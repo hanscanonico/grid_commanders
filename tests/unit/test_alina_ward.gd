@@ -44,6 +44,19 @@ func test_a_neighbour_of_the_same_class_does_not() -> void:
 	assert_eq(_damage(state, state.units[0], state.units[2]), 68)
 
 
+## The infantry riding that APC is on the APC's cell but is not on the board, so
+## a ferried squad does not make the line mixed — the carrier filter, from the
+## side that would otherwise pay a bonus for a unit nobody can see.
+func test_a_passenger_is_not_a_neighbour() -> void:
+	var state := _state("[terrain]\n...\n...\n[units]\n1 t 0 0\n1 p 0 1\n1 i 2 1\n2 i 1 0")
+	var infantry := state.units[2]
+	infantry.carrier = state.units[1]
+	infantry.cell = state.units[1].cell
+	assert_eq(_damage(state, state.units[0], state.units[3]), 68)
+	infantry.carrier = null
+	assert_eq(_damage(state, state.units[0], state.units[3]), 74, "set down, it counts")
+
+
 ## Infantry is foot and Mech is boot: separate movement classes, and these
 ## two count as different even though both walk.
 func test_infantry_and_mech_count_as_mixed() -> void:

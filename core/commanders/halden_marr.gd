@@ -67,8 +67,7 @@ func wants_power(state: GameState, team: int) -> bool:
 func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 	if not _is_shore(state, cell):
 		return 0
-	var co_state := state.commander_state(unit.team)
-	if co_state.power_active or co_state.is_ready():
+	if _power_banked(state, unit.team):
 		return shore_ready_stand_tiles
 	return shore_stand_tiles
 
