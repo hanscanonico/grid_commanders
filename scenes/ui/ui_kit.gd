@@ -39,6 +39,41 @@ const _BUST_MIN_H := 64
 const _BUST_ART := &"Bust"
 
 
+## The veil a full-screen page is laid over, added to `page` as its first child.
+##
+## Anchors *and* offsets on the page itself: set_anchors_preset alone rewrites the
+## offsets to preserve the rect the control already has, which for a page built in
+## code and added to an already-sized menu is 0x0. That is what left commander
+## select laid out at its content's minimum size in the top-left corner, with
+## nothing bounded by the viewport — the ground COM-31's missing Confirm button
+## grew from.
+static func page_veil(page: Control, alpha: float = 0.985) -> ColorRect:
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var veil := ColorRect.new()
+	veil.color = UiTheme.veil(alpha)
+	veil.set_anchors_preset(Control.PRESET_FULL_RECT)
+	page.add_child(veil)
+	return veil
+
+
+## The margin a full-screen page's content sits inside, and the column it stacks in.
+## Added to `page`, so call it after anything that belongs under the content.
+static func page_body(
+	page: Control, separation: int, bottom: int = UiTheme.PAGE_MARGIN
+) -> VBoxContainer:
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for edge in ["left", "right", "top"]:
+		margin.add_theme_constant_override("margin_" + edge, UiTheme.PAGE_MARGIN)
+	margin.add_theme_constant_override("margin_bottom", bottom)
+	page.add_child(margin)
+
+	var main := VBoxContainer.new()
+	main.add_theme_constant_override("separation", separation)
+	margin.add_child(main)
+	return main
+
+
 ## Wraps `child` (may be null) in a MarginContainer with even h/v padding.
 static func pad(child: Control, h: int, v: int) -> MarginContainer:
 	var margin := MarginContainer.new()

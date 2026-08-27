@@ -172,22 +172,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var bg := ColorRect.new()
-	bg.color = UiTheme.veil(0.985)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
-
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for edge in ["left", "right", "top"]:
-		margin.add_theme_constant_override("margin_" + edge, UiTheme.PAGE_MARGIN)
-	margin.add_theme_constant_override("margin_bottom", UiTheme.PAGE_BUTTON_MARGIN)
-	add_child(margin)
-
-	var main := VBoxContainer.new()
-	main.add_theme_constant_override("separation", 5)
-	margin.add_child(main)
+	UiKit.page_veil(self)
+	var main := UiKit.page_body(self, 5, UiTheme.PAGE_BUTTON_MARGIN)
 
 	_verdict = Label.new()
 	_verdict.add_theme_font_override("font", UiTheme.display(true))
