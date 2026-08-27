@@ -1,5 +1,5 @@
 class_name CombatCutscene
-extends CanvasLayer
+extends CutsceneDirector
 ## The battle cut-in: when an attack resolves, the board gives way to a
 ## full-screen versus frame — attacker on the left, defender on the right, each
 ## posed over its own terrain — the volley crosses, HP ticks down, the counter
@@ -11,23 +11,14 @@ extends CanvasLayer
 ## units themselves are read only for what they *are*: type, team, cell. Nothing
 ## here touches the damage chart, the RNG, or a rule.
 ##
-## One clock, one exit — both `CutscenePlayback`'s, held rather than repeated.
+## One clock, one exit — both `CutsceneDirector`'s, held rather than repeated.
 ## Every visual below is a pure function of `_play.t`, so skipping is the clock
 ## jumping to its end rather than a race between cancelled tweens, and the
 ## awaitable `play()` resolves exactly once whatever the player presses (plan R2).
 ## The randomness in the shake is a function of the clock too, so a posed frame is
 ## the same frame every run (R4). This file owns the beat sheet and what goes in
-## the band; the shell around it — letterbox, dim, camera punch, cue ledger — is
-## shared with CaptureCutscene.
-##
-## Owned by Battle, which assigns `view` and hands it to the animator — the same
-## assignment-not-constructor shape BattleView and BattleAnimator use, so the
-## cut-in never learns what a Battle is either.
-
-## Emitted once per cut-in, when the wipe has cleared and control belongs to the
-## caller again. Every branch funnels through `_finish`, which is the only place
-## that emits it.
-signal finished
+## the band; the lifecycle and the shell around it — letterbox, dim, camera punch,
+## cue ledger — are shared with CaptureCutscene.
 
 ## Beat budgets, in seconds. A clean kill runs ~1.8 s and a full exchange with a
 ## counter ~2.3 s, which is the tempo the plan's beat sheet asks for: long enough
@@ -84,26 +75,6 @@ class Beats:
 	var total := 0.0
 
 
-## The board the exchange is fought on. Assigned by Battle before first use. The
-## cut-in reads exactly two things off it — the terrain each side stands on and
-## who owns that cell — which is what dresses each half's ground strip.
-var view: BattleView
-## Playback rate, and how much of the closing hold and wipe is kept. Both are
-## the AI-pacing levers (BA4): a side attacking over and over gets a faster
-## cut-in with most of its ceremony cut away, while the beats that carry the
-## information — the volley, the impact, the tick — keep their full length at
-## every setting, because those are what the animation is *for*. The animator
-## sets them; see BattleAnimator.animate_combat.
-var speed := 1.0
-var tail_scale := 1.0
-
-## The clock, the letterbox and the single exit, shared with CaptureCutscene. It
-## also owns the board's return to rest: the cut-in eases the entry flinch's zoom
-## back out over the closing wipe, so the board is already at rest on the
-## frame it is uncovered — no snap when `play` returns, and a skip lands the zoom
-## home exactly as it lands every other value, because it too is a pure function
-## of the clock.
-var _play := CutscenePlayback.new()
 var _atk: CutsceneSide
 var _def: CutsceneSide
 var _fx: CutsceneFx
@@ -121,7 +92,6 @@ func _ready() -> void:
 	_build()
 	_styles = BattleStyleDB.shared()
 	_play.root.hide()
-	set_process(false)
 
 
 # --- playing -----------------------------------------------------------------
@@ -134,12 +104,7 @@ func _ready() -> void:
 ## back out over the closing wipe, through the view (see CutscenePlayback).
 func play(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	_pose(result, attacker, defender)
-	_play.begin(_beats.total, view)
-	_play.layout()
-	_apply()
-	_play.root.show()
-	set_process(true)
-	set_process_unhandled_input(true)
+	run()
 	await finished
 
 
@@ -153,11 +118,7 @@ func pose_at(
 	result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit, at: float
 ) -> void:
 	_pose(result, attacker, defender)
-	# A still never punched the board; `pose` keeps `_apply` off its zoom.
-	_play.pose(_beats.total, at)
-	_play.layout()
-	_apply()
-	_play.root.show()
+	hold(at)
 
 
 ## The two halves, so a posed still can be read back. Dev-only, like `pose_at`
@@ -172,37 +133,6 @@ func defender_side() -> CutsceneSide:
 	return _def
 
 
-## Fast-forwards every remaining beat to its end state. Never aborts: the clock
-## is simply set to the end, the final tableau is applied, and the same exit runs
-## — which is what makes a skip at any beat land on the right board.
-func skip() -> void:
-	_play.skip()
-
-
-func _process(delta: float) -> void:
-	if not _play.playing:
-		return
-	var done := _play.advance(delta * speed)
-	_apply()
-	if done:
-		_finish()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if _play.consume_skip(event):
-		get_viewport().set_input_as_handled()
-
-
-## The single exit. Every branch reaches it, and it emits once.
-func _finish() -> void:
-	if not _play.playing:
-		return
-	_play.end()
-	set_process(false)
-	set_process_unhandled_input(false)
-	finished.emit()
-
-
 # --- staging -----------------------------------------------------------------
 
 
@@ -211,7 +141,7 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 	_result = result
 	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
 	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
-	_play.accent = _accent_of(attacker.team)
+	_play.accent = accent_of(attacker.team)
 	var atk_terrain := _terrain_at(attacker.cell)
 	var def_terrain := _terrain_at(defender.cell)
 	_atk.bind(
@@ -230,7 +160,7 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 		_paving_for(def_terrain),
 		_owner_row_at(defender.cell),
 		true,
-		_accent_of(defender.team)
+		accent_of(defender.team)
 	)
 	# The chip names the weapon the *rules* selected, read straight off the style
 	# the snapshotted slot resolved to. A defender that never answered gets none:
@@ -255,17 +185,6 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 static func _squads(side: CutsceneSide, before: int, after: int, died: bool) -> void:
 	side.squad_was = CutsceneSide.figures_for(before)
 	side.squad_now = side.squad_was if died else CutsceneSide.figures_for(after)
-
-
-## A side's accent colour, asked of the identity that resolved the match rather
-## than of the commander directly. SideIdentity gives a commanded side its own
-## faction's colour and a commander-less one the classic its slot falls back to —
-## the same two answers as before — and it is the only one that knows about the
-## mirror borrow: in an Iron v Iron the later side's army is drawn in a borrowed
-## classic, so asking CommanderVisuals for its general's faction would put slate
-## on both name plates, in the very frame the borrow exists to tell apart.
-func _accent_of(team: int) -> Color:
-	return view.identity.theme(team).color_light
 
 
 ## The atlas row a side's army is drawn in. Resolved here, beside the accent, and
@@ -338,12 +257,16 @@ static func _plan(
 	return beats
 
 
+## How long this exchange runs: the beat sheet's own end.
+func _total() -> float:
+	return _beats.total
+
+
 # --- the frame ---------------------------------------------------------------
 
 
-## Everything the cut-in shows, as a pure function of `_play.t`. Called once per
-## frame while playing and once more by `skip`, which is why it may never do
-## anything that only makes sense the first time — sounds go through `_play.cue`.
+## Everything the cut-in shows — sounds go through `_play.cue`, which is what
+## keeps a beat crossed twice heard once.
 func _apply() -> void:
 	var present := clampf(
 		_play.window(Vector2(0.0, WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
