@@ -265,11 +265,12 @@ cascade='Compile Error: Failed to compile depended scripts'
 failed=0
 checked=0
 
-# bash 3.2 (macOS system bash) has no mapfile, so stream the paths instead.
-# NUL-delimited, matching project_scripts, so a path with a space survives
-# this loop too.
-while IFS= read -r -d '' file; do
-	checked=$((checked + 1))
+# One engine boot per file, sharing nothing, so the files are checked in
+# parallel. xargs starts a fresh shell per file, which is why the worker is an
+# exported function over an exported environment rather than an inline body.
+check_one() {
+	local file="$1"
+	local raw output
 	# Strip the leading './' so reported paths line up with res:// paths.
 	raw="$("$GODOT" --headless --path . --check-only -s "${file#./}" 2>&1)"
 	output="$(grep -vE "$ignore" <<<"$raw")"
@@ -277,16 +278,43 @@ while IFS= read -r -d '' file; do
 		output="$(grep -vE "$cascade" <<<"$output")"
 	fi
 	if grep -qE 'SCRIPT ERROR|Parse Error' <<<"$output"; then
-		grep -E 'SCRIPT ERROR|Parse Error|^ +at:' <<<"$output"
-		failed=$((failed + 1))
+		grep -E 'SCRIPT ERROR|Parse Error|^ +at:' <<<"$output" >"$REPORTS/${file//\//%}"
+		return 1
 	fi
-done < <(
-	if (($#)); then
-		printf '%s\0' "$@"
-	else
-		project_scripts
-	fi
-)
+	return 0
+}
+export -f check_one
+export GODOT ignore cascade
+
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+REPORTS="$WORK/reports"
+export REPORTS
+mkdir -p "$REPORTS"
+
+# bash 3.2 (macOS system bash) has no mapfile, so stream the paths through a
+# file instead — read twice, once to check and once to report. NUL-delimited,
+# matching project_scripts, so a path with a space survives both passes.
+queue="$WORK/queue"
+if (($#)); then
+	printf '%s\0' "$@" >"$queue"
+else
+	project_scripts >"$queue"
+fi
+
+xargs -0 -P "${CHECK_JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc)}" -n1 \
+	bash -c 'check_one "$0"' <"$queue"
+
+# A count kept inside the workers would die with the pipeline's subshells, so
+# the failures are read back off disk — in queue order, so a parallel run says
+# exactly what a serial one said and two failures never interleave.
+while IFS= read -r -d '' file; do
+	checked=$((checked + 1))
+	report="$REPORTS/${file//\//%}"
+	[[ -f "$report" ]] || continue
+	cat "$report"
+	failed=$((failed + 1))
+done <"$queue"
 
 # Repository invariants. Kept in the full-project audit rather than a subset
 # check: each is cross-file drift, so a run over the files somebody just edited
