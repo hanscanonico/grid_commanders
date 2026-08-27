@@ -344,6 +344,27 @@ func retreat_hp_delta(_state: GameState, _unit: Unit) -> int:
 # --- subclass toolkit --------------------------------------------------------
 
 
+## `team`'s units that are standing on the board, in `units_of`'s scan order. The
+## carrier filter is what every doctrine counting its own army wants and is easy
+## to forget: a passenger's cell is stale, so a doctrine reading one grades a
+## square its unit is not on. `_is_target` states the same rule from the other
+## side of the fight.
+func _fielded_units(state: GameState, team: int) -> Array[Unit]:
+	var fielded: Array[Unit] = []
+	for unit in state.units_of(team):
+		if unit.carrier == null:
+			fielded.append(unit)
+	return fielded
+
+
+## True when `team`'s power is running or is paid for and waiting. The read a
+## doctrine's ground advice weighs its own power with, so "banked or up" is one
+## answer rather than one per commander.
+func _power_banked(state: GameState, team: int) -> bool:
+	var co_state := state.commander_state(team)
+	return co_state.power_active or co_state.is_ready()
+
+
 ## Every army hostile to this one, in seat order — asked of the one allegiance
 ## authority rather than worked out here (four-players plan D2). One element in a
 ## duel, which is what pins every shipped doctrine to the behaviour it had.

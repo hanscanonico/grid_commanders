@@ -62,7 +62,7 @@ func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
 
 func _ready_guns(state: GameState, team: int) -> int:
 	var guns := 0
-	for unit in state.units_of(team):
-		if unit.carrier == null and not unit.acted and AttackRange.is_indirect(unit):
+	for unit in _fielded_units(state, team):
+		if not unit.acted and AttackRange.is_indirect(unit):
 			guns += 1
 	return guns

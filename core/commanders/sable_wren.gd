@@ -65,15 +65,14 @@ func wants_power(state: GameState, team: int) -> bool:
 func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 	if not _is_cover(state, cell):
 		return 0
-	var co_state := state.commander_state(unit.team)
-	if co_state.power_active or co_state.is_ready():
+	if _power_banked(state, unit.team):
 		return vanish_stand_tiles
 	return cover_stand_tiles
 
 
 func _has_unit_in_cover(state: GameState, team: int) -> bool:
-	for unit in state.units_of(team):
-		if unit.carrier == null and _is_cover(state, unit.cell):
+	for unit in _fielded_units(state, team):
+		if _is_cover(state, unit.cell):
 			return true
 	return false
 

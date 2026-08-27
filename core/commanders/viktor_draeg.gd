@@ -53,8 +53,8 @@ func wants_power(state: GameState, team: int) -> bool:
 ## Ready-only: the power lasts this turn alone, so a unit that has already
 ## spent its turn collects neither the move nor the pierce.
 func _has_ready_breakthrough_unit(state: GameState, team: int) -> bool:
-	for unit in state.units_of(team):
-		if unit.carrier == null and not unit.acted and unit.type.move_class == breakthrough_class:
+	for unit in _fielded_units(state, team):
+		if not unit.acted and unit.type.move_class == breakthrough_class:
 			return true
 	return false
 

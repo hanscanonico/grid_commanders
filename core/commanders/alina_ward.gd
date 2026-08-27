@@ -46,16 +46,16 @@ func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 ## therefore skipped: it is still sitting on its old cell, and finding itself
 ## there would never count anyway (same team, same class).
 ##
-## One pass over `state.units` rather than four `unit_at` scans (each itself a
+## One pass over her fielded army rather than four `unit_at` scans (each itself a
 ## walk of every unit): `stand_value` asks this once per candidate cell an
 ## advancing unit is weighing, so the four-scan shape was quartering the board's
 ## unit list on every cell of every sweep for no answer `unit_at` gives that a
 ## single pass testing the four offsets does not.
 func _has_mixed_neighbour(state: GameState, unit: Unit, from: Vector2i) -> bool:
-	for other in state.units:
-		# `!= unit.team`, deliberately not `allied` (four-players plan D2): combined
-		# arms is what *her* army fields beside itself, not what stands nearby.
-		if other == unit or other.carrier != null or other.team != unit.team:
+	# `unit.team`, deliberately not the side (four-players plan D2): combined arms
+	# is what *her* army fields beside itself, not what stands nearby.
+	for other in _fielded_units(state, unit.team):
+		if other == unit:
 			continue
 		if other.type.move_class == unit.type.move_class:
 			continue

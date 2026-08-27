@@ -46,8 +46,8 @@ func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2
 ## thing it actually fixes, an army that is worn down.
 func wants_power(state: GameState, team: int) -> bool:
 	var worn := 0
-	for unit in state.units_of(team):
-		if unit.carrier != null or not _wants_depot(unit):
+	for unit in _fielded_units(state, team):
+		if not _wants_depot(unit):
 			continue
 		worn += 1
 		if worn >= depot_want_units:
