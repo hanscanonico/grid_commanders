@@ -9,6 +9,15 @@ Copied verbatim from the sibling `sprite_generator` repo (`ed042c4`, plus its
 two cross-repo paths are qualified with that repo's name so they cannot be read
 as paths in this one; nothing else is changed.
 
+This game has moved twice since the reading, and neither move touches the
+finding: a playtest dropped `window/stretch/scale_mode = "integer"`, which is
+absent from `project.godot` again, and the unit cell is 64x96
+(`UnitSprite.SPRITE_W` / `SPRITE_H`), which is what
+`tests/unit/test_texel_stability.gd` pins both directors' `FIGURE_PX` /
+`FIGURE_H` to. What cancels is logical resolution per tile, so the verdict is
+unaffected — but section 1's reachable-scale example and section 2's constant
+names describe the configuration of the day rather than the current one.
+
 **Verdict: no. 64 stays.** Not because 128 looks worse — because at 128 the
 board shows *fewer* of the sheet's pixels than at 64 does, the art gains zero
 logical pixels, and the emission that comes out of the generator today is
