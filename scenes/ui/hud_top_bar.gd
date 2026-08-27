@@ -15,7 +15,7 @@ extends PanelContainer
 ## (SPEC "Content — read it from COMMANDERS").
 ##
 ## The three lens chips are the one thing here a player can press. See
-## `chip_button`: they answer the mouse with the key they already name, so a
+## `UiKit.action_chip`: they answer the mouse with the key they already name, so a
 ## board that is otherwise fully playable with the mouse no longer advertises
 ## three affordances a mouse cannot reach.
 
@@ -85,18 +85,20 @@ func _build() -> void:
 	# which a legend line, swapped per context and already full, cannot do. The copy
 	# is still ControlHints', which is also what answers for the finger: on a touch
 	# build a chip drops the key it names and keeps the word it does.
-	_threat_chip = chip_button(ControlHints.chip_for(ControlHints.THREAT_CHIP), &"show_threat")
+	_threat_chip = UiKit.action_chip(
+		ControlHints.chip_for(ControlHints.THREAT_CHIP), &"show_threat"
+	)
 	row.add_child(_threat_chip)
 	# The fire ring, the same way: R answers for whatever the cursor is on in every
 	# board context, so it is a lens rather than a legend entry. Beside T, and lit the
 	# same way, because the two are one pair of questions — where can this unit shoot,
 	# and where can anything shoot me.
-	_range_chip = chip_button(ControlHints.chip_for(ControlHints.RANGE_CHIP), &"show_range")
+	_range_chip = UiKit.action_chip(ControlHints.chip_for(ControlHints.RANGE_CHIP), &"show_range")
 	row.add_child(_range_chip)
 	# The mission card's chip, beside the two lenses because O is the same kind of
 	# key. Off the bar until a campaign mission says otherwise, so a skirmish's bar
 	# is laid out exactly as it was before this chip existed.
-	_objectives_chip = chip_button(
+	_objectives_chip = UiKit.action_chip(
 		ControlHints.chip_for(ControlHints.OBJECTIVES_CHIP), &"show_objectives"
 	)
 	_objectives_chip.hide()
@@ -169,35 +171,6 @@ func show_objectives_lens(available: bool, on: bool) -> void:
 func _light(chip: Button, on: bool) -> void:
 	if chip != null:
 		UiTheme.hud_chip_ink(chip, UiTheme.DANGER if on else UiTheme.INK_3)
-
-
-## A chip that answers the mouse as well as the key it names. Pressing it feeds
-## the board the very action the keyboard sends, so which states honour it and
-## what it then does are the key path's and cannot drift from it — the chips are
-## the one part of the board a mouse-only player could not reach at all.
-##
-## Public because the touch dock builds its chips here too: one idiom for "a
-## control that says a key and then presses it", rather than a second copy of the
-## synthesised event below (mobile plan D2).
-static func chip_button(text: String, action: StringName) -> Button:
-	var chip := UiTheme.hud_chip(text, UiTheme.SIZE_STAT, UiTheme.INK_3)
-	chip.pressed.connect(_send_action.bind(action))
-	# A chip is the smallest control in the game — 7 px of ink on a 23 px bar — so
-	# on a touch build it answers a finger-sized rectangle it does not draw. The
-	# bar's height is untouched, which is what leaves the zoom ladder where it is.
-	return UiKit.touchable(chip)
-
-
-## Pressed and released, the way the key itself arrives. Only the press does
-## anything today — every reader of these three asks `is_action_pressed` on the
-## event — but an action fed in and never let go stays held in `Input` for the
-## rest of the match, and that is a trap laid for the first line that polls one.
-static func _send_action(action: StringName) -> void:
-	for pressed in [true, false]:
-		var event := InputEventAction.new()
-		event.action = action
-		event.pressed = pressed
-		Input.parse_input_event(event)
 
 
 ## Swaps the key legend for the interaction the player is now in. Called on every

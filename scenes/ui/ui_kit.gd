@@ -161,6 +161,23 @@ static func text_link(text: String) -> Button:
 	return link
 
 
+## A chip that answers the mouse as well as the key it names. Pressing it feeds
+## the board the very action the keyboard sends, so which states honour it and
+## what it then does are the key path's and cannot drift from it — the chips are
+## the one part of the board a mouse-only player could not reach at all.
+##
+## Both docked screens build their chips here: the top bar's three lenses and the
+## touch dock's row are one idiom for "a control that says a key and then presses
+## it", rather than two copies of the synthesised event below (mobile plan D2).
+static func action_chip(text: String, action: StringName) -> Button:
+	var chip := UiTheme.hud_chip(text, UiTheme.SIZE_STAT, UiTheme.INK_3)
+	chip.pressed.connect(_send_action.bind(action))
+	# A chip is the smallest control in the game — 7 px of ink on a 23 px bar — so
+	# on a touch build it answers a finger-sized rectangle it does not draw. The
+	# bar's height is untouched, which is what leaves the zoom ladder where it is.
+	return touchable(chip)
+
+
 ## A segmented control: a Silkscreen micro-label over a bordered row of toggle
 ## buttons, the active one carrying the faction fill. Labels come from the
 ## authority that owns them (GameSpeed / DifficultyDB), never typed in, so the
@@ -424,6 +441,18 @@ static func bind_bust(bust: Panel, commander: CommanderType, tint: Color) -> voi
 
 
 # --- internals ---------------------------------------------------------------
+
+
+## Pressed and released, the way the key itself arrives. Only the press does
+## anything today — every reader of these three asks `is_action_pressed` on the
+## event — but an action fed in and never let go stays held in `Input` for the
+## rest of the match, and that is a trap laid for the first line that polls one.
+static func _send_action(action: StringName) -> void:
+	for pressed in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = pressed
+		Input.parse_input_event(event)
 
 
 ## What a field of this shape shows of a general, and the one statement of it.
