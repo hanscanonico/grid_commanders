@@ -1,7 +1,13 @@
 extends GutTest
-## The three Difficult-tier planner capabilities (plan DF3), each on a crafted
-## state, each proved by the same board reaching a different command with the
-## capability on than with it off.
+## The Difficult tier's threat dials (plan DF3): advance_threat_tiles and
+## threat_aversion, each on a crafted board, each proved by the same board
+## reaching a different command with the dial up than with it down. The Normal
+## pin at the foot of the file is here for the same reason: it is a claim about
+## what a profile plans.
+##
+## The threat map those dials read is tests/unit/test_ai_smarts_threat_map.gd's,
+## focus fire is tests/unit/test_ai_smarts_focus_fire.gd's and counter-building
+## is tests/unit/test_ai_smarts_building.gd's.
 ##
 ## Almost every test builds its own profile rather than leaning on
 ## data/ai/hard.tres: these pin the *behaviour* of each smart, so retuning a
@@ -13,6 +19,7 @@ extends GutTest
 ## anything. So one test loads the real Difficult profile and asserts the shipped
 ## configuration reaches the behaviour the tier claims.
 
+## Twin of the const in tests/unit/test_ai_smarts_threat_map.gd.
 const ARTILLERY_RING_BOARD := "[terrain]\n..........\n[units]\n1 t 0 0\n2 g 9 0"
 
 ## A shot barely worth taking, offered from a cell an artillery has ranged. The
@@ -26,14 +33,12 @@ const RANGED_SHOT_BOARD := "[terrain]\n..M.\n..M.\n[units]\n1 t 0 0\n2 i 1 0\n2 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
-var commander_db: CommanderDB
 
 
 func before_each() -> void:
 	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
 	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
 
 
 func _profile() -> AIProfile:
@@ -234,325 +239,6 @@ func _ranged_shot_state() -> GameState:
 	var state := Fixture.state(RANGED_SHOT_BOARD)
 	state.units_of(2)[0].hp = 5
 	return state
-
-
-## The threat map reads the board through the same authorities as everything
-## else, so a unit that cannot be hurt at all registers no threat.
-func test_an_unreachable_enemy_threatens_nothing() -> void:
-	# Sea splits the board: the enemy tank can never reach the left half.
-	var map_text := "[terrain]\n...S...\n[units]\n1 t 0 0\n2 t 6 0"
-	var wary_profile := _profile()
-	wary_profile.threat_aversion = 5.0
-	wary_profile.advance_threat_tiles = 5.0
-	var wary := AIController.new(unit_db, wary_profile).plan_next_command(Fixture.state(map_text))
-	var blind := AIController.new(unit_db, _profile()).plan_next_command(Fixture.state(map_text))
-	assert_true(wary is MoveCommand and blind is MoveCommand)
-	assert_eq(
-		(wary as MoveCommand).path,
-		(blind as MoveCommand).path,
-		"with nothing able to shoot us, threat awareness changes nothing"
-	)
-
-
-## The map measures a cell by asking what the damage would be with the defender
-## *at* it — the terrain it would move onto is exactly what changes the number —
-## and asks through an effective cell rather than by moving anything. Scoring a
-## move must leave no trace on the board at all.
-func test_measuring_a_cell_never_moves_the_unit() -> void:
-	var state := Fixture.state(ARTILLERY_RING_BOARD)
-	var tank := state.units_of(1)[0]
-	var origin := tank.cell
-	var before := _board_snapshot(state)
-	var map := ThreatMap.build(state, state.units_of(2))
-	assert_gt(
-		map.incoming_damage(state, tank, Vector2i(7, 0)), 0, "the ring must actually threaten"
-	)
-	assert_eq(_board_snapshot(state), before, "measuring a cell changed the board")
-	assert_eq(state.unit_at(origin), tank, "and the board still finds it where it was")
-
-
-## A battleship on the surface threatens a sea cell, and the map routes its
-## who-may-shoot question through AttackRange.can_engage — so a dived friendly sub
-## sitting in that cell is charged nothing. The battleship has a chart entry
-## against subs but cannot hit a submerged one, exactly the shot AttackCommand
-## would refuse; pricing it in would make the boat flee threats that do not exist.
-func test_a_battleship_does_not_threaten_a_dived_sub() -> void:
-	var state := Fixture.state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 B 3 0")
-	var sub := state.units_of(1)[0]
-	sub.dived = true
-	var map := ThreatMap.build(state, state.units_of(2))
-	assert_eq(
-		map.incoming_damage(state, sub, Vector2i(0, 0)),
-		0,
-		"a battleship cannot hit a submerged sub, so it threatens it with nothing",
-	)
-
-
-## The gate is the dive and only the dive: a cruiser can hit submerged, so going
-## under does not hide the boat from it and the map still prices its forecast.
-func test_a_cruiser_still_threatens_a_dived_sub() -> void:
-	var state := Fixture.state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 c 3 0")
-	var sub := state.units_of(1)[0]
-	sub.dived = true
-	var map := ThreatMap.build(state, state.units_of(2))
-	assert_gt(
-		map.incoming_damage(state, sub, Vector2i(0, 0)),
-		0,
-		"a cruiser can hit submerged, so a dive does not hide the sub from it",
-	)
-
-
-## And an undived sub is an ordinary battleship target, so the gate leaves the
-## surfaced number untouched: routing through can_engage changed nothing here.
-func test_an_undived_sub_still_takes_the_battleships_forecast() -> void:
-	var state := Fixture.state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 B 3 0")
-	var sub := state.units_of(1)[0]
-	var map := ThreatMap.build(state, state.units_of(2))
-	assert_gt(
-		map.incoming_damage(state, sub, Vector2i(0, 0)),
-		0,
-		"a surfaced sub is a legal battleship target and takes its forecast",
-	)
-
-
-## COM-176: the map's "any in-range origin gives the same number" claim is false
-## against Alina Ward, whose combined_arms_pct reads the firing cell. This tank
-## has two legal firing cells for the same target — its own cell, beside a
-## mixed-class friendly, and a cell it could walk to with no friendly beside it
-## — and CombatResolver.forecast_at genuinely disagrees between them. The map
-## still prices the cell from the enemy's current position (threat_map.gd), so
-## it happens to agree with the mixed origin here; that is the approximation
-## being pinned, not a claim that the map is right in general.
-func test_ward_combined_arms_makes_the_firing_cell_matter_to_the_map() -> void:
-	var state := Fixture.state("[terrain]\n......\n......\n[units]\n1 t 3 0\n1 i 3 1\n2 i 4 0")
-	state.rng.seed = 1
-	state.set_commander(1, commander_db.by_id(&"alina_ward"))
-	var tank := state.units[0]
-	var defender := state.units[2]
-	var mixed_origin := tank.cell  # (3,0): the infantry at (3,1) stands beside it
-	var lone_origin := Vector2i(5, 0)  # reachable, and nothing stands beside it
-	assert_true(
-		lone_origin in AttackRange.firing_cells(state, tank),
-		"both cells are legal firing positions for this tank"
-	)
-	var mixed := CombatResolver.forecast_at(state, tank, mixed_origin, defender, defender.cell)
-	var lone := CombatResolver.forecast_at(state, tank, lone_origin, defender, defender.cell)
-	assert_eq(mixed.attack_damage, 74, "combined arms lifts the shot fired beside the infantry")
-	assert_eq(lone.attack_damage, 68, "the neutral number from a firing cell with no neighbour")
-
-	var map := ThreatMap.build(state, [tank])
-	assert_eq(
-		map.incoming_damage(state, defender, defender.cell),
-		mixed.attack_damage,
-		(
-			"the map prices every threat from the enemy's current cell, so it matches"
-			+ " the mixed origin here rather than the (also legal) lone one"
-		)
-	)
-
-
-## The same guarantee across a whole Difficult turn on a real board: the sim
-## changes when a command is *applied*, never while one is being planned. Guards
-## the pure read above from anything a future capability adds beside it.
-func test_planning_a_difficult_turn_leaves_the_board_untouched() -> void:
-	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	state.rng.seed = 7
-	EndTurnCommand.new().apply(state)  # Blue, the AI side, is to move
-	var ai := AIController.new(unit_db, DifficultyDB.load_default().by_id(&"hard").profile())
-	var planned := 0
-	for i in 60:
-		var before := _board_snapshot(state)
-		var command := ai.plan_next_command(state)
-		assert_eq(_board_snapshot(state), before, "planning moved or hurt something")
-		command.apply(state)
-		planned += 1
-		if command is EndTurnCommand:
-			break
-	assert_gt(planned, 3, "the reference turn should be more than a formality")
-
-
-## Every unit's side, kind, position and HP, in the order the sim holds them.
-func _board_snapshot(state: GameState) -> Array[String]:
-	var rows: Array[String] = []
-	for unit in state.units:
-		rows.append("%d %s %s hp=%d" % [unit.team, unit.type.id, unit.cell, unit.hp])
-	return rows
-
-
-# --- S2 · focus fire ----------------------------------------------------------
-
-
-## Two identical targets, both in reach of the acting tank. The far one is the
-## one a second tank could also pile onto this turn; the near one nobody can
-## follow up on. The base planner takes the near one because it is cheaper to
-## reach; focus fire takes the one the team can finish together.
-func test_focus_fire_picks_the_target_the_team_can_finish() -> void:
-	var map_text := "[terrain]\n................\n[units]\n1 t 5 0\n1 t 15 0\n2 t 3 0\n2 t 8 0"
-
-	var scattered := AIController.new(unit_db, _profile()).plan_next_command(
-		Fixture.state(map_text)
-	)
-	assert_true(scattered is AttackCommand, "expected an attack, got %s" % scattered)
-	assert_eq(
-		(scattered as AttackCommand).target_cell,
-		Vector2i(3, 0),
-		"the base planner takes the cheapest shot it can reach"
-	)
-
-	var focused_profile := _profile()
-	focused_profile.focus_fire_bonus = 0.4
-	var focused_state := Fixture.state(map_text)
-	var focused := AIController.new(unit_db, focused_profile).plan_next_command(focused_state)
-	assert_true(focused is AttackCommand, "expected an attack, got %s" % focused)
-	assert_eq(
-		(focused as AttackCommand).target_cell,
-		Vector2i(8, 0),
-		"focus fire prefers the target a second tank can still add damage to"
-	)
-	assert_eq(focused.validate(focused_state), "")
-
-
-## A shot that already kills needs no follow-up, so focus fire must not inflate
-## it — otherwise the AI would rate finished targets above fresh ones.
-func test_focus_fire_adds_nothing_to_a_shot_that_already_kills() -> void:
-	var map_text := "[terrain]\n....\n[units]\n1 t 0 0\n2 i 1 0\n2 i 3 0"
-	var state := Fixture.state(map_text)
-	state.units[1].hp = 10  # one shot finishes it
-	var focused_profile := _profile()
-	focused_profile.focus_fire_bonus = 5.0
-	var command := AIController.new(unit_db, focused_profile).plan_next_command(state)
-	assert_true(command is AttackCommand)
-	assert_eq(
-		(command as AttackCommand).target_cell, Vector2i(1, 0), "the kill is still the best shot"
-	)
-
-
-## The follow-up total credits only friendlies that could actually land a shot,
-## so it routes who-may-shoot through AttackRange.can_engage — not the damage
-## chart raw. A battleship has a chart entry against subs but cannot hit a
-## submerged one, exactly the shot AttackCommand.validate would refuse; crediting
-## its follow-up would over-rank a cruiser's attack on a dived sub. The gate is
-## the dive and only the dive: a cruiser hits submerged and a surfaced sub is an
-## ordinary target, so both of those still count in full.
-##
-## One function rather than three because test_ai_smarts.gd is at the lint's
-## public-method ceiling; the three scenarios read as one claim about the gate.
-func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
-	var planner := AIUnitActionPlanner.new(_profile())
-	var context := AIPlanningContext.new(unit_db)
-	var battleship_board := "[terrain]\nSSSSSSSS\n[units]\n1 c 0 0\n1 B 4 0\n2 s 7 0"
-
-	# A battleship cannot hit a submerged sub, so it adds no follow-up.
-	var dived := Fixture.state(battleship_board)
-	var dived_sub := dived.units_of(2)[0]
-	dived_sub.dived = true
-	context.begin(dived)
-	assert_eq(
-		planner._follow_up_damage(context, dived.units_of(1)[0], dived_sub),
-		0,
-		"a battleship threatens a dived sub with nothing it could legally land",
-	)
-
-	# The same battleship against a surfaced sub is unchanged: an ordinary target.
-	var surfaced := Fixture.state(battleship_board)
-	context.begin(surfaced)
-	assert_gt(
-		planner._follow_up_damage(context, surfaced.units_of(1)[0], surfaced.units_of(2)[0]),
-		0,
-		"a surfaced sub is a legal battleship target, so its follow-up still counts",
-	)
-
-	# A cruiser can hit submerged, so a dive does not hide the sub from its follow-up.
-	var hunted := Fixture.state("[terrain]\nSSSSSSSS\n[units]\n1 B 0 0\n1 c 6 0\n2 s 7 0")
-	var hunted_sub := hunted.units_of(2)[0]
-	hunted_sub.dived = true
-	context.begin(hunted)
-	assert_gt(
-		planner._follow_up_damage(context, hunted.units_of(1)[0], hunted_sub),
-		0,
-		"a cruiser hits submerged, so its follow-up still counts against a dive",
-	)
-
-
-# --- S3 · counter-building ----------------------------------------------------
-
-
-## An armour-heavy enemy roster with the heavy hammer priced out of reach. The
-## static list buys the next thing on it; reactivity buys what the damage chart
-## says actually hurts tanks.
-func test_reactive_building_answers_an_armour_roster() -> void:
-	var map_text := (
-		"[terrain]\nB.......\n[owners]\n1 0 0\n"
-		+ "[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0\n2 t 5 0\n2 t 6 0\n2 t 7 0"
-	)
-
-	var static_pick := _build_pick(map_text, _profile())
-	assert_eq(
-		static_pick, &"tank", "the static list buys the best thing on it that the funds allow"
-	)
-
-	var reactive_profile := _profile()
-	reactive_profile.build_reactivity = 1.0
-	assert_eq(
-		_build_pick(map_text, reactive_profile),
-		&"rockets",
-		"against tank spam the chart's answer is rockets, which the list never names"
-	)
-
-
-## Reactivity re-ranks the buy; it never buys something the funds do not cover.
-func test_reactive_building_still_respects_the_purse() -> void:
-	var map_text := (
-		"[terrain]\nB.......\n[owners]\n1 0 0\n"
-		+ "[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0\n2 t 5 0\n2 t 6 0\n2 t 7 0"
-	)
-	var reactive_profile := _profile()
-	reactive_profile.build_reactivity = 1.0
-	var state := Fixture.state(map_text)
-	state.funds[1] = 6500  # rockets and tank both out of reach
-	for unit in state.units:
-		unit.acted = true
-	var command := AIController.new(unit_db, reactive_profile).plan_next_command(state)
-	assert_true(command is BuildCommand, "expected a build, got %s" % command)
-	var built: UnitType = (command as BuildCommand).unit_type
-	assert_lt(built.cost, 6500, "never buys what it cannot pay for")
-	assert_eq(built.id, &"artillery", "the best affordable answer to armour")
-	assert_eq(command.validate(state), "")
-
-
-## Before contact there is no roster to answer, so reactivity must fall back to
-## the order the profile already ships rather than picking off a table of zeroes.
-func test_reactive_building_falls_back_to_the_list_with_no_enemy_seen() -> void:
-	var map_text := "[terrain]\nB...\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0"
-	var reactive_profile := _profile()
-	reactive_profile.build_reactivity = 1.0
-	assert_eq(
-		_build_pick(map_text, reactive_profile),
-		_build_pick(map_text, _profile()),
-		"with no enemy in sight the static list decides, exactly as it always did"
-	)
-
-
-## Plans the one build the given profile makes on `map_text` with 15,000 in the
-## bank — enough for everything but the md_tank, which is where counter-building
-## has anything to say.
-##
-## Saving up is switched off because it would answer a different question: with
-## the md_tank one turn of income out of reach, the planner would rightly bank
-## rather than buy, and these tests pin *what* the team buys, not *when*.
-func _build_pick(map_text: String, profile: AIProfile) -> StringName:
-	var state := Fixture.state(map_text)
-	profile.save_up_turns = 0
-	state.funds[1] = 15000
-	for unit in state.units:
-		unit.acted = true
-	var command := AIController.new(unit_db, profile).plan_next_command(state)
-	assert_true(command is BuildCommand, "expected a build, got %s" % command)
-	if not (command is BuildCommand):
-		return &""
-	assert_eq(command.validate(state), "")
-	return (command as BuildCommand).unit_type.id
 
 
 # --- the Normal pin -----------------------------------------------------------
