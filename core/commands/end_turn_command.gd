@@ -5,10 +5,7 @@ extends Command
 
 
 func validate(state: GameState) -> String:
-	var gate := Command.decided_error(state)
-	if gate != "":
-		return gate
-	return ""
+	return Command.decided_error(state)
 
 
 func apply(state: GameState) -> void:
