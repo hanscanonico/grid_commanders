@@ -6,7 +6,7 @@ extends RefCounted
 ## A cell off the board and an army the board never dealt are facts about the
 ## board rather than about the condition asking, so sixteen call sites were
 ## assembling the same two sentences by hand — and its fire-time sibling, an army
-## that is not at this table, four more. CD8 puts the check in `core/` for the
+## that is not at this table, six more. CD8 puts the check in `core/` for the
 ## tool and the suite to share; this is that rule read one step further, so the
 ## sentence cannot drift either.
 ##
