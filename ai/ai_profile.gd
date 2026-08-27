@@ -172,7 +172,7 @@ const BANK_SCOPE_FACILITY := 1
 ## How many tiles of forward progress a unit will give up to dodge a would-be
 ## lethal incoming shot when it is only advancing (S1, same threat map).
 ##
-## Denominated in TILES, because _position_rank is: the advance score steps by
+## Denominated in TILES, because AIAdvance.position_rank is: the advance score steps by
 ## whole integers of distance, so a value-denominated dial small enough to keep
 ## threat_aversion sane on the attack path can only ever break ties here. That
 ## scale difference is the entire reason this is a second field rather than a
@@ -513,7 +513,7 @@ const BANK_SCOPE_FACILITY := 1
 ## Maximum stand-off is measured against a nearest-enemy goal recomputed every
 ## turn, so it is a potential that repels up close and attracts from afar — a
 ## battleship was observed cycling between two cells for eight days. Flat inside
-## the band lets _advance_command's own cost tie-break hold the unit still.
+## the band lets AIAdvance.command_for's own cost tie-break hold the unit still.
 ##
 ## The cost is real and is the reason this ships inert: stand-off is a tactical
 ## preference, and a gun content at minimum range is a gun easier to close on.

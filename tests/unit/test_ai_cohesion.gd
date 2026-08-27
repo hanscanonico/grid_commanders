@@ -1,7 +1,7 @@
 extends GutTest
 ## AJ3 · the army travels together.
 ##
-## `_advance_goal` gave every unit its own goal and never once read where the
+## `AIAdvance.goal_for` gave every unit its own goal and never once read where the
 ## other friendlies were, so a tank, an artillery and a mech handed the same
 ## objective travelled at their own speeds and the fast one arrived alone. The
 ## cohesion term is one penalty on the advance path (D5) — no groups, no
