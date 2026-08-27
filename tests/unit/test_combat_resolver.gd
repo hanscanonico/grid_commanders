@@ -162,7 +162,7 @@ func test_resolve_is_deterministic_for_same_seed() -> void:
 
 
 func test_resolve_kill_removes_defender_and_skips_counter() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	state.rng.seed = 7
 	var defender := state.units[1]
 	defender.hp = 10  # any hit kills
@@ -189,7 +189,7 @@ func test_resolve_counter_can_kill_attacker() -> void:
 
 func test_resolve_no_counter_beyond_adjacency() -> void:
 	# artillery fires from range 2; the tank defender cannot counter
-	var state := Fixture.state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	var state := Fixture.state(Fixture.ARTILLERY_VS_TANK)
 	state.rng.seed = 3
 	var result := CombatResolver.resolve(state, state.units[0], state.units[1])
 	assert_gt(result.attack_damage, 0)

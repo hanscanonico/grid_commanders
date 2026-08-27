@@ -129,7 +129,7 @@ func test_an_unnamed_passenger_stays_unnamed() -> void:
 
 
 func test_end_turn_names_nothing_but_itself() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	assert_eq(ReplayCodec.encode_command(state, EndTurnCommand.new()), {"c": "end_turn"})
 	assert_true(_round_trip(state, EndTurnCommand.new()) is EndTurnCommand)
 
@@ -139,7 +139,7 @@ func test_end_turn_names_nothing_but_itself() -> void:
 ## records the origin, which is what its command carried and what every commander
 ## but Radek Morn ignores.
 func test_a_power_names_the_cell_it_was_aimed_at() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	var aimed := PowerCommand.new()
 	aimed.target = Vector2i(1, 0)
 	assert_eq(ReplayCodec.encode_command(state, aimed), {"c": "power", "target": [1, 0]})
@@ -206,13 +206,13 @@ func test_a_scripted_beat_this_build_cannot_resolve_is_refused_by_name() -> void
 
 
 func test_a_kind_this_build_does_not_know_is_refused() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	assert_null(ReplayCodec.command_from(state, unit_db, {"c": "teleport"}))
 	assert_push_error("'teleport' is not a command")
 
 
 func test_a_line_missing_a_field_is_refused_rather_than_guessed() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	assert_null(ReplayCodec.command_from(state, unit_db, {"c": "move"}), "no path")
 	assert_push_error("a move line names no path")
 	assert_null(
@@ -224,7 +224,7 @@ func test_a_line_missing_a_field_is_refused_rather_than_guessed() -> void:
 
 
 func test_a_line_acting_from_an_empty_cell_is_refused() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	assert_null(ReplayCodec.command_from(state, unit_db, {"c": "move", "path": [[1, 0]]}))
 	assert_push_error("where nothing stands")
 
@@ -241,7 +241,7 @@ func test_a_build_of_a_type_this_build_no_longer_has_is_refused() -> void:
 
 
 func test_a_header_states_the_format_and_the_opening() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	var head := ReplayCodec.header(SaveCodec.encode(state, [2] as Array[int]), "a label", "now")
 	assert_eq(ReplayCodec.header_error(head), "")
 	assert_eq(head["label"], "a label")
@@ -269,7 +269,7 @@ func test_an_older_format_is_refused_rather_than_read() -> void:
 ## the line it has always been, so nothing about a match outside a campaign
 ## changed shape when the ids arrived.
 func test_a_header_names_a_mission_only_when_there_is_one() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY)
 	var opening := SaveCodec.encode(state, [2] as Array[int])
 	var skirmish := ReplayCodec.header(opening, "a label", "now")
 	assert_false(skirmish.has("campaign"), "a skirmish is a recording of no mission")

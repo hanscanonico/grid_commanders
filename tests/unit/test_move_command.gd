@@ -2,7 +2,7 @@ extends GutTest
 
 
 func test_valid_move_applies() -> void:
-	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY_WIDE)
 	var unit := state.units[0]
 	var command := MoveCommand.new(
 		unit, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
@@ -14,7 +14,7 @@ func test_valid_move_applies() -> void:
 
 
 func test_wait_in_place_is_a_single_cell_path() -> void:
-	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY_WIDE)
 	var unit := state.units[0]
 	var command := MoveCommand.new(unit, Fixture.path([Vector2i(0, 0)]))
 	assert_eq(command.validate(state), "")
@@ -24,7 +24,7 @@ func test_wait_in_place_is_a_single_cell_path() -> void:
 
 
 func test_acted_unit_is_rejected() -> void:
-	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY_WIDE)
 	var unit := state.units[0]
 	unit.acted = true
 	var command := MoveCommand.new(unit, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]))
@@ -32,13 +32,13 @@ func test_acted_unit_is_rejected() -> void:
 
 
 func test_path_must_start_at_unit_cell() -> void:
-	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY_WIDE)
 	var command := MoveCommand.new(state.units[0], Fixture.path([Vector2i(1, 0), Vector2i(2, 0)]))
 	assert_eq(command.validate(state), "path must start at the unit's cell")
 
 
 func test_non_contiguous_path_is_rejected() -> void:
-	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0")
+	var state := Fixture.state(Fixture.LONE_INFANTRY_WIDE)
 	var command := MoveCommand.new(state.units[0], Fixture.path([Vector2i(0, 0), Vector2i(2, 0)]))
 	assert_eq(command.validate(state), "path is not contiguous")
 

@@ -18,7 +18,7 @@ func _ids(rows: Array[Dictionary]) -> Array[StringName]:
 
 
 func _game() -> GameState:
-	return Fixture.state("[terrain]\nB.")
+	return Fixture.state(Fixture.NEUTRAL_BASE)
 
 
 func test_live_turn_offers_auto() -> void:

@@ -52,7 +52,7 @@ func test_it_is_a_value_row_the_menu_offers() -> void:
 		Settings.END_TURN_ROW in Settings.VALUE_ROWS,
 		"the pause menu cycles it like the two beside it"
 	)
-	var ids: Array = BattleMenus.map_actions(Fixture.state("[terrain]\nB.")).map(
+	var ids: Array = BattleMenus.map_actions(Fixture.state(Fixture.NEUTRAL_BASE)).map(
 		func(row: Dictionary) -> StringName: return row["id"]
 	)
 	assert_eq(ids.count(Settings.END_TURN_ROW), 1, "exactly one End-turn check row")

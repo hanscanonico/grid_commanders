@@ -22,7 +22,7 @@ func before_each() -> void:
 ## Displayed HP, like every other HP the player is shown — not the internal
 ## 0-100 the formula subtracts in.
 func test_forecast_snapshots_displayed_hp_for_both_sides() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	var attacker := state.units[0]
 	var defender := state.units[1]
 	attacker.hp = 55  # 6 displayed
@@ -36,7 +36,7 @@ func test_forecast_snapshots_displayed_hp_for_both_sides() -> void:
 ## The bounds are the luck range, and the luck-free percentage is its floor: the
 ## best the defender walks away with is exactly what the percentage alone says.
 func test_defender_bounds_span_the_luck_range() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	var attacker := state.units[0]
 	var defender := state.units[1]
 	var forecast := CombatResolver.forecast(state, attacker, attacker.cell, defender)
@@ -57,7 +57,7 @@ func test_defender_bounds_span_the_luck_range() -> void:
 ## every damage the resolver can actually roll has to land inside the bounds.
 func test_bounds_contain_every_roll_the_resolver_can_produce() -> void:
 	for seed_value in range(40):
-		var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+		var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 		state.rng.seed = seed_value
 		var attacker := state.units[0]
 		var defender := state.units[1]
@@ -144,7 +144,7 @@ func test_counter_bounds_come_from_the_countering_side() -> void:
 ## Lyra Quill's floor is the case the luck-free percentage alone gets wrong: her
 ## rolls never come up short, so the HP bounds must start above it.
 func test_a_lucky_floor_raises_the_defender_bounds() -> void:
-	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state(Fixture.TANK_VS_INFANTRY)
 	var lyra: LyraQuill = Fixture.commander_db().by_id(&"lyra_quill")
 	state.set_commander(1, lyra)
 	var attacker := state.units[0]
