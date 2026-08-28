@@ -92,15 +92,6 @@ var mobile_dock: MobileDock
 ## the one writer of `camera.zoom` and `camera.offset` from there on.
 var board_camera := BoardCamera.new()
 
-## The transient jitter the animator lays over the board's docking shift. Set —
-## and tweened — by BattleAnimator.shake_camera rather than written to the
-## camera, so the two can never be the same property's second owner; see
-## `BoardCamera`, which composes both and is the only writer.
-var shake_offset := Vector2.ZERO:
-	set(value):
-		shake_offset = value
-		board_camera.shake_offset = value
-
 ## The transient flinch the cut-in's entry lays over the board — 1.0 at rest. It
 ## is a scale on a still of the board rather than on the camera, because the zoom
 ## ladder is whole rungs and a camera walked through 1.00 … 1.14 drops and doubles
@@ -624,7 +615,7 @@ func _cover_stars_of(unit: Unit, cell: Vector2i) -> int:
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing
 ## worth previewing under the cursor — hides the panel. What the lines say is the
-## panel's own; where they land is this view's, which owns the board's geometry.
+## panel's own; where they land is this view's, asked of `BoardCamera`.
 func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) -> void:
 	damage_preview.visible = forecast != null and forecast.can_attack
 	if not damage_preview.visible:
