@@ -162,7 +162,7 @@ What it is **not** is fine detail. This projection puts one voxel of height at
 tank — that was rendered on the md tank and rejected — and a mast thin enough
 to look right is one source pixel wide, which the board's 4:1 decimation at
 rung 1 draws or drops depending on the sampling phase. That is the same lesson
-`docs/density_128.md` records: at board scale the win is silhouette, not
+`../../docs/density_128.md` records: at board scale the win is silhouette, not
 greebling. `tests/test_raised_armour.py` holds both halves — only the family
 reaches out of its tile, and what it gained still draws at every rung-1
 sampling phase.
