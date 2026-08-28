@@ -149,19 +149,17 @@ func test_a_shapeless_save_is_refused() -> void:
 		"save names no campaign",
 		"version 1 is a legal older profile, so what is missing is the campaign's name"
 	)
-	assert_ne(
+	assert_eq(
 		CampaignSaveCodec.validate(
 			{"version": 1, "campaign_id": "", "unlocked": [], "records": {}}
 		),
-		"",
-		"a campaign with no name"
+		"save names an empty campaign"
 	)
-	assert_ne(
+	assert_eq(
 		CampaignSaveCodec.validate(
 			{"version": 1, "campaign_id": "probe", "unlocked": [], "records": {}}
 		),
-		"",
-		"nothing unlocked and nothing cleared is no profile at all"
+		"save has neither an unlocked mission nor a cleared one"
 	)
 
 
