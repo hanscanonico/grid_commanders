@@ -118,7 +118,7 @@ The two alternatives were rendered against it at rungs 1, 2 and 4 rather than
 argued: a **logical-pixel checker** (4px blocks, the round-10 rule applied to
 the dither) reads as a chequered flag under an aircraft at 1:1 and as a dashed
 line at rung 2, and a **solid core with a dithered fringe** reads as debris.
-`tests/test_generated_output.py::CastShadow` is what holds the shipped shape
+`tests/test_shadows.py::CastShadow` is what holds the shipped shape
 to it. The sub's **wake** followed: it ran on the shadow's own parity so that
 it showed exactly where the checkerboard did not reach, so it is now drawn
 solid and over the shadow — foam is what the surface does over the

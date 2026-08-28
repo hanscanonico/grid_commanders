@@ -22,12 +22,9 @@ from spritegen.palette import FACTIONS, ROCK_RAMP, SNOW_RAMP
 from spritegen.terrain import CELL, TERRAIN_MEDIAN_CEILING, TERRAIN_VALUE_CEILING
 from spritegen.voxel import SHADOW_OFFSET, render_indexed_gbuffer
 
-from test_generated_output import (
-    TerrainPalette,
-    ValueCeiling,
-    opaque_pixels,
-    share_above,
-)
+from pixel_helpers import opaque_pixels, share_above
+from test_terrain_paint import TerrainPalette
+from test_value_bands import ValueCeiling
 
 # The row the massif's lowest rock pixel lands on: `terrain.MOUNTAIN_GROUND`
 # less the 2px margin `voxel._bounds` leaves under a sprite, and less the one

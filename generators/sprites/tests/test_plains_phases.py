@@ -30,12 +30,9 @@ from spritegen.terrain import (
     TERRAIN_VALUE_CEILING,
 )
 
-from test_generated_output import (
-    TerrainPalette,
-    ValueCeiling,
-    opaque_pixels,
-    share_above,
-)
+from pixel_helpers import opaque_pixels, share_above
+from test_terrain_paint import TerrainPalette
+from test_value_bands import ValueCeiling
 
 
 # The widest decal the table may place, as a square: the box a decal's pixels
