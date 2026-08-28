@@ -6,7 +6,8 @@ three "is it one the file can draw?" lints existed to catch.
 
 The handoff drew every feature against one skull, in a 110x134 viewBox that
 bakes to the pinned 220x268 raster. Its drawing is transcribed here in portrait
-pixels — its own units, doubled — and `Frame` fits that one drawing to whatever
+pixels — its own units, doubled, over `REFERENCE_BOX`, which is where that one
+skull sits on this raster — and `Frame` fits that one drawing to whatever
 skull `head.outline` actually cut, so a narrow face wears narrow features
 without any of them being authored twice.
 
@@ -41,8 +42,8 @@ EYE_DEFAULT = 1.0
 EYE_SINGLE_CATCHLIGHT = 0.92
 
 # The tones features carry that are neither skin nor hair: the design system's
-# own kit colours (UiTheme SLATE_800 and AMMO), the handoff's goggle glass, and
-# the one flesh tone a scar and a freckle are marked in.
+# own kit colours (UiTheme SLATE_700, SLATE_800 and AMMO), the handoff's goggle
+# glass, and the one flesh tone a scar is cut in.
 SCLERA: RGB = (255, 255, 255)
 IRIS: RGB = (58, 63, 69)
 KIT: RGB = (43, 47, 52)
@@ -136,9 +137,12 @@ def eyes(canvas: Canvas, skull: Skull, kind: str, *, scale: float) -> None:
     frame = Frame.of(skull)
     for x in _eye_xs(skull):
         if shape.closed:
-            lash = [(x - 4.5 * scale, EYE_LINE), (x, EYE_LINE + 3.5 * scale)]
-            lash.append((x + 4.5 * scale, EYE_LINE))
-            canvas.stroke(frame.path(lash), INK_FEATURE, INK)
+            shut = [
+                (x - 4.5 * scale, EYE_LINE),
+                (x, EYE_LINE + 3.5 * scale),
+                (x + 4.5 * scale, EYE_LINE),
+            ]
+            canvas.stroke(frame.path(shut), INK_FEATURE, INK)
             continue
         rx, ry = EYE_RX * scale, shape.ry * scale
         _ringed_ellipse(canvas, frame, (x, EYE_LINE), (rx, ry), SCLERA, INK_FEATURE)
@@ -152,8 +156,8 @@ def eyes(canvas: Canvas, skull: Skull, kind: str, *, scale: float) -> None:
             lid = [(x - rx, edge), (x, EYE_LINE - ry * 1.2), (x + rx, edge)]
             canvas.stroke(frame.path(lid), INK_FEATURE, INK)
         if shape.lash:
-            brow = [(x - 10.0, 135.2), (x, 130.4), (x + 10.0, 135.2)]
-            canvas.stroke(frame.path(brow), INK_DETAIL, INK)
+            lash = [(x - 10.0, 135.2), (x, 130.4), (x + 10.0, 135.2)]
+            canvas.stroke(frame.path(lash), INK_DETAIL, INK)
 
 
 def _catchlights(canvas: Canvas, frame: Frame, x: float, scale: float) -> None:

@@ -5,10 +5,11 @@ sequence over it, each taking its own band from the ramp. That is what turns a
 single dark hex into hair.
 
 The masses are the handoff's own, transcribed in portrait pixels (its units,
-doubled) and fitted to the general's skull by `features.Frame`, so hair and the
-face it sits on can never be cut to two different heads. Which band a cluster
-takes is decided by where it lies, not by a roll: the light is fixed upper left,
-so the clusters on that side are the lit ones on every bust.
+doubled, over `features.REFERENCE_BOX` like every other feature) and fitted to
+the general's skull by `features.Frame`, so hair and the face it sits on can
+never be cut to two different heads. Which band a cluster takes is decided by
+where it lies, not by a roll: the light is fixed upper left, so the clusters on
+that side are the lit ones on every bust.
 
 The mass is drawn in two halves because the head is painted between them: `back`
 is the fall behind the skull, `front` the fringe and the crown over it. `draw`
