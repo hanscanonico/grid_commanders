@@ -18,7 +18,7 @@ extends RefCounted
 ## mid-mission save is refused at that same door.
 const UNLOCK_ARG := "--unlock-missions"
 
-## How far `pose_hub_deep` walks a war, and what each mission cost it. Thirteen is
+## How far `_pose_hub_deep` walks a war, and what each mission cost it. Thirteen is
 ## the first count whose open mission the list has to *scroll* to reach — twelve
 ## rows fit the page, so a shorter walk photographs a list that never moved and
 ## would read the same with `follow_focus` off.
@@ -161,11 +161,11 @@ func _after_interlude() -> void:
 		_show_hub(_campaign)
 
 
-func chrome_picker() -> Dictionary[String, Control]:
+func _chrome_picker() -> Dictionary[String, Control]:
 	return _picker.chrome()
 
 
-func chrome_hub() -> Dictionary[String, Control]:
+func _chrome_hub() -> Dictionary[String, Control]:
 	return _hub.chrome()
 
 
@@ -175,27 +175,27 @@ func chrome_hub() -> Dictionary[String, Control]:
 ## not carry a copy of that per page.
 func pose(driver: MenuCaptureDriver) -> Callable:
 	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGNS):
-		pose_picker()
-		return chrome_picker
+		_pose_picker()
+		return _chrome_picker
 	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_DEBRIEF):
-		pose_debrief(true)
-		return chrome_debrief
+		_pose_debrief(true)
+		return _chrome_debrief
 	if driver.poses_campaign_hub():
-		pose_hub(driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_BRIEF))
-		return chrome_hub
+		_pose_hub(driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_BRIEF))
+		return _chrome_hub
 	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_DEEP):
-		pose_hub_deep()
-		return chrome_hub
+		_pose_hub_deep()
+		return _chrome_hub
 	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_INTERLUDE):
-		pose_interlude()
-		return chrome_interlude
+		_pose_interlude()
+		return _chrome_interlude
 	return Callable()
 
 
 ## Dev captures only: the war list on a fresh profile for every campaign, the way
-## `pose_hub` poses its own — the rows carry how far each war has got, so an
+## `_pose_hub` poses its own — the rows carry how far each war has got, so an
 ## `open()` here would photograph how much of the game this machine has played.
-func pose_picker() -> void:
+func _pose_picker() -> void:
 	_menu_root.hide()
 	var campaigns := CampaignDB.load_default().all()
 	var fresh: Dictionary[StringName, CampaignState] = {}
@@ -204,7 +204,7 @@ func pose_picker() -> void:
 	_picker.begin(campaigns, fresh)
 
 
-func pose_debrief(won: bool) -> void:
+func _pose_debrief(won: bool) -> void:
 	var posed := CampaignDB.load_default().all()
 	if posed.is_empty():
 		return
@@ -244,14 +244,14 @@ func pose_debrief(won: bool) -> void:
 	)
 
 
-func chrome_debrief() -> Dictionary[String, Control]:
+func _chrome_debrief() -> Dictionary[String, Control]:
 	return _debrief.chrome()
 
 
 ## Dev captures only: poses the first interlude the shipped content authors, on a
 ## profile that has played nothing — so the picture is the page every player sees
 ## rather than the one this machine's own war earned.
-func pose_interlude() -> void:
+func _pose_interlude() -> void:
 	for campaign: CampaignDefinition in CampaignDB.load_default().all():
 		for page: CampaignInterlude in campaign.interludes:
 			if page == null:
@@ -261,14 +261,14 @@ func pose_interlude() -> void:
 			return
 
 
-func chrome_interlude() -> Dictionary[String, Control]:
+func _chrome_interlude() -> Dictionary[String, Control]:
 	return _interlude.chrome()
 
 
 ## Dev captures only: poses the hub — and optionally its first briefing — on a
 ## *fresh* profile, so the picture does not depend on how far the machine that
 ## took it happens to have played.
-func pose_hub(open_briefing: bool) -> void:
+func _pose_hub(open_briefing: bool) -> void:
 	var posed := CampaignDB.load_default().all()
 	if posed.is_empty():
 		return
@@ -284,7 +284,7 @@ func pose_hub(open_briefing: bool) -> void:
 ## a fresh ledger, then one `complete` per mission — so the route, the unlocks and
 ## the counts are the ones a real profile would hold, and nothing is written to
 ## disk or read off this machine's own wars.
-func pose_hub_deep() -> void:
+func _pose_hub_deep() -> void:
 	var posed := CampaignDB.load_default().all()
 	if posed.is_empty():
 		return
