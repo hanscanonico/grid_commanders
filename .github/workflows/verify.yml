@@ -170,9 +170,10 @@ jobs:
           python sprite_generator.py -o /tmp/gen_b
           diff -r /tmp/gen_a /tmp/gen_b
 
-      # The committed snapshot set, compared pixel by pixel (the PNGs may have
-      # been encoded by a different Pillow than CI's) and in both directions, so
-      # a new output cannot land compared against nothing.
-      - name: Committed snapshots match a fresh generation
+      # The art the game loads, compared pixel by pixel (the PNGs may have been
+      # encoded by a different Pillow than CI's) and in both directions, so a
+      # regeneration that forgot `make tiles` cannot stay green and a new output
+      # cannot land compared against nothing.
+      - name: Installed art matches a fresh generation
         working-directory: generators/sprites
-        run: python tests/check_snapshots.py /tmp/gen_a .lavish/assets
+        run: python tests/check_snapshots.py /tmp/gen_a

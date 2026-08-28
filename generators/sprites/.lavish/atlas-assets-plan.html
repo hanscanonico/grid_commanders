@@ -85,9 +85,9 @@
   .spr { display: inline-block; image-rendering: pixelated; background-repeat: no-repeat; flex: none;
          width: calc(64px * var(--s, 2)); height: calc(64px * var(--s, 2));
          background-position: calc(-64px * var(--c, 0) * var(--s, 2)) calc(-64px * var(--r, 0) * var(--s, 2)); }
-  .spr.units    { background-image: url(assets/units_atlas.png);       background-size: calc(1152px * var(--s, 2)) calc(320px * var(--s, 2)); }
+  .spr.units    { background-image: url(../../../assets/tiles/units_atlas.png);       background-size: calc(1152px * var(--s, 2)) calc(320px * var(--s, 2)); }
   .spr.oldunits { background-image: url(assets/old_units_atlas.png);   background-size: calc(1152px * var(--s, 2)) calc(320px * var(--s, 2)); }
-  .spr.terr     { background-image: url(assets/terrain_atlas.png);     background-size: calc(896px * var(--s, 2)) calc(320px * var(--s, 2)); }
+  .spr.terr     { background-image: url(../../../assets/tiles/terrain_atlas.png);     background-size: calc(896px * var(--s, 2)) calc(320px * var(--s, 2)); }
   .spr.oldterr  { background-image: url(assets/old_terrain_atlas.png); background-size: calc(896px * var(--s, 2)) calc(320px * var(--s, 2)); }
 
   /* roster cards */
@@ -226,7 +226,7 @@
   <div class="sub" style="margin-bottom:12px">Hero sprites show the meridian row; the strip under
   each card is all five faction rows straight from the atlas. Weapon silhouettes follow each
   unit's <code>battle_style</code>.</div>
-  <div class="checker scroller" style="margin-bottom:16px"><img src="assets/units_atlas.png" width="1152" height="320" alt="units atlas"></div>
+  <div class="checker scroller" style="margin-bottom:16px"><img src="../../../assets/tiles/units_atlas.png" width="1152" height="320" alt="units atlas"></div>
   <div id="units-land" class="roster"></div>
   <h3 style="margin:18px 0 10px">Air</h3>
   <div id="units-air" class="roster"></div>
@@ -238,7 +238,7 @@
   <div class="sec-head"><span class="n">3</span><h2>Terrain roster</h2></div>
   <div class="sub" style="margin-bottom:12px">Grounds keep <code>generate_tiles.gd</code>'s palette
   and the darkened-edge grid convention; property tiles show all five tinted rows.</div>
-  <div class="checker scroller" style="margin-bottom:16px"><img src="assets/terrain_atlas.png" width="896" height="320" alt="terrain atlas"></div>
+  <div class="checker scroller" style="margin-bottom:16px"><img src="../../../assets/tiles/terrain_atlas.png" width="896" height="320" alt="terrain atlas"></div>
   <div id="terrain-roster" class="roster"></div>
 </section>
 
@@ -477,7 +477,7 @@ for (const b of ["city", "base", "hq", "airport", "port"]) {
   for (const t of TEAMS) {
     const f = document.createElement("div");
     f.className = "checker cf";
-    f.innerHTML = `<img src="assets/iso_buildings/${b}_${t}.png" alt="${b} ${t}" title="${t}">`;
+    f.innerHTML = `<img src="../../../assets/sprites/iso_buildings/${b}_${t}.png" alt="${b} ${t}" title="${t}">`;
     row.appendChild(f);
   }
   bgrid.appendChild(col);
