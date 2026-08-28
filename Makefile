@@ -1,6 +1,7 @@
 # The vendored macOS engine (README's setup step) is the default, not the rule:
-# CI fetches the Linux build of the same version and points GODOT at it, the way
-# tools/check_scripts.sh and tools/smoke_scenarios.sh already allow.
+# CI fetches the Linux build of the same version and points GODOT at it, by
+# path or by a name on PATH — require-godot below and every gate script accept
+# both, through the one test in tools/lib/require_godot.sh.
 GODOT ?= bin/Godot.app/Contents/MacOS/Godot
 # Windowed launches go through a wrapper that hands window focus straight back
 # when the launch came from a script or an agent (no tty); from an interactive
@@ -27,10 +28,10 @@ IOS_EXPORT_OPTIONS ?= build/ios/grid_commanders/export_options.plist
 # DevelopmentTeam attribute, and teamID in export_options.plist.
 IOS_TEAM_PLACEHOLDER := AAAAAAAAAA
 
-# The two things a gate can be missing. tools/check_scripts.sh and
-# tools/check_determinism.sh already say this for themselves; a target that
-# runs the tool directly says it here, so a fresh machine reads the setup line
-# instead of a bare "No such file or directory".
+# The two things a gate can be missing. The gate scripts say the first for
+# themselves, through tools/lib/require_godot.sh; a target that runs the tool
+# directly says it here, in the same two lines, so a fresh machine reads the
+# setup line instead of a bare "No such file or directory".
 require-godot = @test -x "$(GODOT)" || command -v "$(GODOT)" >/dev/null || { \
 	echo "$@: Godot binary not found at $(GODOT)" >&2; \
 	echo "$@: see README.md for engine setup, or pass GODOT=<path>" >&2; \

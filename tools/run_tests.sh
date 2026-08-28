@@ -25,6 +25,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
+source "$(dirname "$0")/lib/require_godot.sh"
 GUT_CONFIG=".gutconfig.json"
 TEST_DIR="tests/unit"
 
@@ -36,11 +37,7 @@ SLOW_TESTS=(
 	"$TEST_DIR/test_campaign_soak.gd"
 )
 
-if [[ ! -x "$GODOT" ]] && ! command -v "$GODOT" >/dev/null; then
-	echo "test: Godot binary not found at $GODOT" >&2
-	echo "test: see README.md for engine setup, or pass GODOT=<path>" >&2
-	exit 1
-fi
+require_godot test
 
 if [[ ${TEST_JOBS:-} == "1" || ${SERIAL:-} == "1" ]]; then
 	exec "$GODOT" --headless --path . -s res://addons/gut/gut_cmdln.gd

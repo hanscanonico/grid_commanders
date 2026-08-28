@@ -30,6 +30,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
+source "$(dirname "$0")/lib/require_godot.sh"
 
 GOLDEN_DIR="tests/fixtures/determinism"
 OUT_DIR="reports/determinism"
@@ -97,11 +98,7 @@ elif (($#)); then
 	exit 2
 fi
 
-if [[ ! -x "$GODOT" ]]; then
-	echo "determinism: Godot binary not found at $GODOT" >&2
-	echo "determinism: see README.md for engine setup, or pass GODOT=<path>" >&2
-	exit 1
-fi
+require_godot determinism
 
 rm -rf "$OUT_DIR"
 if ! log="$("$GODOT" --headless --path . -s res://tools/run_balance_sim.gd -- "${SIM_ARGS[@]}" 2>&1)"; then

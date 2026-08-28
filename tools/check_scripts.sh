@@ -24,6 +24,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
+source "$(dirname "$0")/lib/require_godot.sh"
 
 # Per-file line budgets, tighter than gdlintrc's repo-wide max-file-lines.
 #
@@ -212,11 +213,7 @@ ai/ai_unit_action_planner.gd 665
 scenes/battle/battle_scenario_driver.gd 737
 "
 
-if [[ ! -x "$GODOT" ]]; then
-	echo "check: Godot binary not found at $GODOT" >&2
-	echo "check: see README.md for engine setup, or pass GODOT=<path>" >&2
-	exit 1
-fi
+require_godot check
 
 # Every project script, in a stable order, NUL-separated so a path with a
 # space or newline in it survives every pipeline below. .claude/worktrees
