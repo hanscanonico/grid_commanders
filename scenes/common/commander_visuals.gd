@@ -7,7 +7,7 @@ extends RefCounted
 ##
 ## This is the single authority on commander styling. The card, the battle HUD
 ## chip, and the power banner all ask here rather than each keeping their own
-## copy of the four faction colours, exactly as the resolvers each own one rule.
+## copy of the five faction colours, exactly as the resolvers each own one rule.
 ## The offline portrait generator asks here too, so the art it bakes and the art
 ## the UI expects can never disagree about which colour a faction is.
 ##
@@ -113,6 +113,7 @@ const _FACTION_KEYS := {
 	"Iron Dominion": &"iron",
 	"Aurora Compact": &"aurora",
 	"Verdant League": &"verdant",
+	"Gilded Concord": &"gold",
 }
 
 static var _themes: Dictionary = {}
@@ -160,6 +161,15 @@ static func _build_themes() -> void:
 			Color(0.310, 0.659, 0.353),
 			Color(0.949, 0.965, 0.945)
 		),
+		&"gold":
+		FactionTheme.new(
+			&"gold",
+			"Gilded Concord",
+			Color(0.914, 0.788, 0.157),
+			Color(0.694, 0.600, 0.118),
+			Color(0.953, 0.863, 0.400),
+			Color(0.114, 0.094, 0.024)
+		),
 		NEUTRAL_KEY:
 		FactionTheme.new(
 			NEUTRAL_KEY,
@@ -196,7 +206,7 @@ static func theme_for(commander: CommanderType) -> FactionTheme:
 static func faction_themes() -> Array[FactionTheme]:
 	_build_themes()
 	var ordered: Array[FactionTheme] = []
-	for key: StringName in [&"meridian", &"iron", &"aurora", &"verdant"]:
+	for key: StringName in [&"meridian", &"iron", &"aurora", &"verdant", &"gold"]:
 		ordered.append(_themes[key])
 	return ordered
 

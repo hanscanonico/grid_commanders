@@ -86,7 +86,7 @@ const CUTIN_VIEW := "cutin"
 ## Faction row -> the name that row's paint goes by. The rows themselves are
 ## SideIdentity's contract with the art pipeline; this is only how the report
 ## spells them.
-const ROW_NAMES: Array[String] = ["neutral", "meridian", "aurora", "iron", "verdant"]
+const ROW_NAMES: Array[String] = ["neutral", "meridian", "aurora", "iron", "verdant", "gold"]
 ## The eight fields that name one composite, in the order `--dump` spells them.
 ## `variant` is which tile of its family the terrain drew — a phase of the sea
 ## sheet, a connection mask, or LegibilityArt.ATLAS_VARIANT for a base-atlas

@@ -3,13 +3,15 @@ extends GutTest
 ## mirror collision orders included. Node-free, like the resolver it exercises.
 ##
 ## Rows are the atlas order the art pipeline writes and SideIdentity maps to:
-## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant. Names are the
+## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant, 5 gold. Names
+## are the
 ## faction display strings CommanderVisuals maps.
 
 const MERIDIAN := "Meridian Coalition"
 const IRON := "Iron Dominion"
 const AURORA := "Aurora Compact"
 const VERDANT := "Verdant League"
+const GOLD := "Gilded Concord"
 
 
 ## A commander with just the one field the resolver reads. An empty faction is
@@ -64,6 +66,15 @@ func test_two_distinct_factions_keep_their_colours() -> void:
 	assert_eq(identity.display_name(2), VERDANT)
 
 
+func test_gold_keeps_its_own_colour_and_row() -> void:
+	var identity := _resolve(GOLD, AURORA)
+	assert_eq(_key(identity, 1), &"gold")
+	assert_eq(_key(identity, 2), &"aurora")
+	assert_eq(identity.atlas_row(1), 5)
+	assert_eq(identity.atlas_row(2), 2)
+	assert_eq(identity.display_name(1), GOLD)
+
+
 func test_faction_colour_matches_commander_visuals() -> void:
 	var identity := _resolve(VERDANT, IRON)
 	assert_eq(identity.theme(1).color, CommanderVisuals.theme_for_key(&"verdant").color)
@@ -103,6 +114,15 @@ func test_verdant_mirror_borrows_blue() -> void:
 	var identity := _resolve(VERDANT, VERDANT)
 	assert_eq(_key(identity, 1), &"verdant")
 	assert_eq(_key(identity, 2), &"aurora")
+
+
+func test_gold_mirror_borrows_blue() -> void:
+	var identity := _resolve(GOLD, GOLD)
+	assert_eq(_key(identity, 1), &"gold")
+	assert_eq(_key(identity, 2), &"aurora", "the mirror order still tries the classics first")
+	assert_eq(identity.atlas_row(1), 5)
+	assert_eq(identity.atlas_row(2), 2)
+	assert_eq(identity.display_name(2), GOLD)
 
 
 # --- generic sides resolve after factions, never steal a colour --------------

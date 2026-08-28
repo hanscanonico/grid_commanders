@@ -259,7 +259,7 @@ def _parser() -> argparse.ArgumentParser:
     ap.add_argument(
         "--team",
         default="red",
-        help="faction row for --only previews (neutral/red/blue/iron/verdant)",
+        help="faction row for --only previews (neutral/red/blue/iron/verdant/gold)",
     )
     ap.add_argument(
         "--zoom", type=int, default=6, help="zoom factor for --only previews"

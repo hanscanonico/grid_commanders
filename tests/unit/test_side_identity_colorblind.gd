@@ -1,11 +1,11 @@
 extends GutTest
-## The four faction hues, read the way a red-green colourblind player reads them.
+## The five faction hues, read the way a red-green colourblind player reads them.
 ##
 ## test_side_identity.gd proves no two sides ever draw in the same theme, and
 ## every hue is plainly distinct as raw RGB. Neither says the pair is still
 ## distinct once red and green have collapsed onto one axis, which is what the
 ## faction-identity plan's D5 leaves unproven — so this suite simulates
-## deuteranopia (the common red-green form, ~1 in 16 men) and measures the four
+## deuteranopia (the common red-green form, ~1 in 16 men) and measures the five
 ## hues against each other again in that space.
 ##
 ## ## The simulation
@@ -28,19 +28,26 @@ extends GutTest
 ##
 ## ## THE FINDING: Meridian and Verdant nearly collide
 ##
-## The six pairs read (CIE76, normal sight -> simulated deuteranopia):
+## The ten pairs read (CIE76, normal sight -> simulated deuteranopia):
 ##
+##   aurora   / gold      146.8 -> 156.6
 ##   meridian / aurora    108.4 -> 121.9
 ##   aurora   / verdant   119.6 -> 106.9
+##   iron     / gold       93.4 ->  97.3
 ##   iron     / aurora     65.5 ->  69.9
 ##   meridian / iron       74.9 ->  57.7
+##   verdant  / gold       65.9 ->  57.5
 ##   iron     / verdant    59.3 ->  40.9
+##   meridian / gold       75.4 ->  40.7
 ##   meridian / verdant    99.6 ->  17.0   <-- red and green, both olive
 ##
 ## Meridian red and Verdant green simulate to two olive tones that differ mostly
 ## in lightness. 17 is far above the ~2.3 a trained eye can just tell apart, so
-## it is not a true collision, but it is a quarter of what the other five pairs
+## it is not a true collision, but it is a quarter of what the other nine pairs
 ## keep and the two armies would read as shades of one colour on a busy board.
+## Gold, the fifth hue, was chosen against this table: its worst pair is 40.7,
+## a shade under the iron/verdant pair, and it left meridian/verdant the pair to
+## watch.
 ##
 ## That is a design decision for a human, not a test's to force, so the gate here
 ## is MIN_DISTANCE — a floor that says "still two colours", which today's hues
