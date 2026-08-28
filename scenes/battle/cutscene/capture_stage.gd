@@ -66,6 +66,11 @@ const GRASS := Color(0.471, 0.784, 0.314)
 const GRASS_DARK := Color(0.353, 0.651, 0.235)
 const DUST := Color(0.941, 0.925, 0.886)
 
+## Where the lower plate's defence row starts, and the space it leaves between the
+## terrain's name and its first star.
+const TERRAIN_ROW_X := 20.0
+const TERRAIN_STAR_GAP := 14.0
+
 # --- pose, written every frame by CaptureCutscene -----------------------------
 
 var unit: Unit
@@ -232,12 +237,7 @@ func _draw_property(arena: Rect2) -> void:
 func _draw_paved_property(base: Vector2) -> void:
 	var w := PROP_PX * (1.0 + squash * 0.4)
 	var h := PROP_PX * (1.0 - squash)
-	var source := Rect2(
-		prop_col * BattleView.TERRAIN_PX,
-		_atlas_row() * BattleView.TERRAIN_PX,
-		BattleView.TERRAIN_PX,
-		BattleView.TERRAIN_PX
-	)
+	var source := BattleView.terrain_cell_region(prop_col, _atlas_row())
 	var tint := Color(1.0, 1.0, 1.0).lerp(Color(3.0, 3.0, 3.0), brightness)
 	# Snapped: an atlas cell drawn at a continuously animated fractional size and
 	# offset resamples itself every frame, so the building's own rows crawl through
@@ -386,22 +386,14 @@ func _draw_name_row(plate: Rect2) -> void:
 
 
 func _draw_terrain_row(plate: Rect2) -> void:
-	var font := get_theme_font(&"font", &"Label")
-	var label := terrain.display_name.to_upper()
-	draw_string(
-		font,
-		Vector2(20.0, plate.position.y + 14.0),
-		label,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		9,
-		Color(CutscenePalette.PLATE_TEXT, CutscenePalette.PLATE_TEXT.a * plate_p)
-	)
-	var width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-	CutscenePlates.draw_stars(
+	CutscenePlates.draw_terrain_row(
 		self,
-		Vector2(20.0 + width + 14.0, plate.position.y + 10.0),
-		CutscenePlates.STAR_STEP,
-		mini(terrain.defense_stars, CutscenePlates.MAX_STARS),
+		get_theme_font(&"font", &"Label"),
+		plate.position.y,
+		terrain.display_name.to_upper(),
+		TERRAIN_ROW_X,
+		1.0,
+		TERRAIN_STAR_GAP,
+		terrain.defense_stars,
 		plate_p
 	)

@@ -173,6 +173,15 @@ static func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell * TILE) + Vector2(TILE, TILE) / 2.0
 
 
+## One cell of the terrain atlas, as a source rect: a terrain's `atlas_col` and
+## the row an identity resolved. Asked by every surface that blits a cell outside
+## the TileMap — the two cut-ins and the tile chip — because the atlas and its
+## cell size are this class's, and a second copy of the arithmetic is how a bar
+## comes to cut a cell the board has moved.
+static func terrain_cell_region(column: int, row: int) -> Rect2:
+	return Rect2(column * TERRAIN_PX, row * TERRAIN_PX, TERRAIN_PX, TERRAIN_PX)
+
+
 # --- terrain -----------------------------------------------------------------
 
 
