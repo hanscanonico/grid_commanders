@@ -14,16 +14,8 @@ var _by_id: Dictionary[StringName, CommanderType] = {}
 static func load_default() -> CommanderDB:
 	var db := CommanderDB.new()
 	db.register(CommanderType.neutral())
-	var dir := DirAccess.open(COMMANDER_DIR)
-	if dir == null:
-		push_error("CommanderDB: cannot open %s" % COMMANDER_DIR)
-		return db
-	for file in dir.get_files():
-		# Exported builds list .tres files as .tres.remap.
-		var file_name := file.trim_suffix(".remap")
-		if not file_name.ends_with(".tres"):
-			continue
-		var commander: CommanderType = load(COMMANDER_DIR.path_join(file_name))
+	for path in ResourceDir.files(COMMANDER_DIR, ".tres", "CommanderDB"):
+		var commander: CommanderType = load(path)
 		if commander != null:
 			db.register(commander)
 	return db

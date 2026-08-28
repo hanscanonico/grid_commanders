@@ -26,16 +26,8 @@ var _warned: Dictionary = {}
 
 static func load_default() -> BattleStyleDB:
 	var db := BattleStyleDB.new()
-	var dir := DirAccess.open(STYLE_DIR)
-	if dir == null:
-		push_error("BattleStyleDB: cannot open %s" % STYLE_DIR)
-		return db
-	for file in dir.get_files():
-		# Exported builds list .tres files as .tres.remap.
-		var file_name := file.trim_suffix(".remap")
-		if not file_name.ends_with(".tres"):
-			continue
-		var style: BattleStyle = load(STYLE_DIR.path_join(file_name))
+	for path in ResourceDir.files(STYLE_DIR, ".tres", "BattleStyleDB"):
+		var style: BattleStyle = load(path)
 		if style != null:
 			db.register(style)
 	return db

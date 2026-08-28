@@ -10,16 +10,8 @@ var _by_symbol: Dictionary[String, UnitType] = {}
 
 static func load_default() -> UnitDB:
 	var db := UnitDB.new()
-	var dir := DirAccess.open(UNIT_DIR)
-	if dir == null:
-		push_error("UnitDB: cannot open %s" % UNIT_DIR)
-		return db
-	for file in dir.get_files():
-		# Exported builds list .tres files as .tres.remap.
-		var name := file.trim_suffix(".remap")
-		if not name.ends_with(".tres"):
-			continue
-		var unit_type: UnitType = load(UNIT_DIR.path_join(name))
+	for path in ResourceDir.files(UNIT_DIR, ".tres", "UnitDB"):
+		var unit_type: UnitType = load(path)
 		if unit_type != null:
 			db.register(unit_type)
 	return db

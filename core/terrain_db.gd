@@ -19,16 +19,8 @@ var _by_symbol: Dictionary[String, TerrainType] = {}
 
 static func load_default() -> TerrainDB:
 	var db := TerrainDB.new()
-	var dir := DirAccess.open(TERRAIN_DIR)
-	if dir == null:
-		push_error("TerrainDB: cannot open %s" % TERRAIN_DIR)
-		return db
-	for file in dir.get_files():
-		# Exported builds list .tres files as .tres.remap.
-		var name := file.trim_suffix(".remap")
-		if not name.ends_with(".tres"):
-			continue
-		var terrain: TerrainType = load(TERRAIN_DIR.path_join(name))
+	for path in ResourceDir.files(TERRAIN_DIR, ".tres", "TerrainDB"):
+		var terrain: TerrainType = load(path)
 		if terrain != null:
 			db.register(terrain)
 	return db
