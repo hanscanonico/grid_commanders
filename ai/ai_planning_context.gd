@@ -37,6 +37,17 @@ var unit_types: Array[UnitType] = []
 var enemy_roster: Array[Array] = []
 ## Unit -> AdvanceGoal, populated only when that unit reaches its fallback move.
 var goals: Dictionary[Unit, AdvanceGoal] = {}
+## Unit -> the advance on the enemy that unit is orienting on, or null when it can
+## see nobody. Exactly `goals`' lifetime, cleared by `begin` — the enemy set is
+## fixed for one command, and a stale answer would orient a unit on an enemy the
+## board has moved on from.
+##
+## A null answer is memoised as null and read back through `has`, because "nobody
+## to advance on" is as expensive to work out as an answer and is asked as often.
+## The goal itself is handed out shared rather than copied: an AdvanceGoal is built
+## complete and nothing mutates one afterwards — `keeps_formation` and `errand` are
+## set where the goal is made.
+var enemy_goals: Dictionary[Unit, AdvanceGoal] = {}
 ## Unit -> claimed property cell, settled for every capturer at once the first
 ## time one asks. Exactly `goals`' lifetime — cleared by `begin`, so it is one
 ## command deep and nothing about a claim survives the board moving, which is
@@ -89,6 +100,7 @@ func begin(p_state: GameState) -> void:
 	for enemy in visible_enemies:
 		enemy_roster.append([enemy.type.cost, enemy.type.id])
 	goals.clear()
+	enemy_goals.clear()
 	capture_claims.clear()
 	_capturable_properties_ready = false
 	_servicing_properties.clear()
@@ -134,7 +146,7 @@ func besieged_home_hqs() -> Array[Vector2i]:
 			var owner := state.owner_at(enemy.cell)
 			if not state.allied(owner, team):
 				continue
-			if state.home_hq.has(owner) and state.home_hq[owner] == enemy.cell:
+			if Seating.is_home(state.home_hq, owner, enemy.cell):
 				_besieged_home_hqs.append(enemy.cell)
 		_besieged_home_hqs_ready = true
 	return _besieged_home_hqs

@@ -263,7 +263,7 @@ func _ends_the_match(objective: MissionObjective, state: GameState) -> bool:
 ## The army this cell is the home headquarters of, or 0.
 static func _home_of(state: GameState, cell: Vector2i) -> int:
 	for team: int in state.home_hq:
-		if state.home_hq[team] == cell:
+		if Seating.is_home(state.home_hq, team, cell):
 			return team
 	return 0
 

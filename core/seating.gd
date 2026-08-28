@@ -70,6 +70,18 @@ static func owners_of(map: MapData, roster: Array[int]) -> Dictionary[Vector2i, 
 	return owners
 
 
+## Whether `cell` is the seat `team` can be beheaded through, read off
+## `GameState.home_hq` — `home_hqs`' own answer, asked back. The one spelling of
+## the question, so a caller never writes the has-and-equals pair itself and can
+## never read a team with no home as standing on one.
+##
+## It lives here rather than on `GameState` because that class is at the repo's
+## public-method ceiling, and because the derivation it reads is already this
+## class's.
+static func is_home(homes: Dictionary[int, Vector2i], team: int, cell: Vector2i) -> bool:
+	return homes.get(team) == cell
+
+
 ## Where each of `roster` starts: `team -> HQ cell`, for the seats a board deals an
 ## HQ. **The one derivation of a home HQ**, shared by `GameState.create` and by the
 ## codec reading a save written before the field existed — which is exact, because
