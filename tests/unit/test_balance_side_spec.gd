@@ -40,10 +40,9 @@ func test_each_half_defaults_on_its_own() -> void:
 func test_the_omitted_flag_is_the_neutral_side_on_the_shipped_planner() -> void:
 	var spec := _parse(BalanceSideSpec.DEFAULT_TEXT)
 	assert_eq(spec.error, "")
-	assert_eq(spec.commander, CommanderType.NEUTRAL_ID)
+	assert_eq(spec.commander, CommanderType.NEUTRAL_ID, "'none' is the absence of a doctrine")
 	assert_eq(spec.tier, Difficulty.DEFAULT_ID)
-	assert_false(spec.has_commander(), "'none' is the absence of a doctrine")
-	assert_true(_parse("gideon_holt").has_commander())
+	assert_eq(_parse("gideon_holt").commander, &"gideon_holt", "and a named one is seated")
 
 
 ## Every way the grammar is refused, each naming what it choked on. A spec that

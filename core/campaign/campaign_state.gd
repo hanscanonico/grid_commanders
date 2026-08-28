@@ -278,21 +278,6 @@ static func _in_order(staged: Dictionary[String, int]) -> Array:
 	return names
 
 
-## Where a returning player is put: the mission they were in, else the furthest
-## unlocked mission they have not cleared, else the last one they did.
-func resume_point(campaign: CampaignDefinition) -> StringName:
-	if active_mission != &"" and is_unlocked(active_mission):
-		return active_mission
-	var furthest := campaign.first_mission_id()
-	for entry: MissionDefinition in campaign.missions:
-		if not is_unlocked(entry.id):
-			continue
-		furthest = entry.id
-		if not is_cleared(entry.id):
-			return entry.id
-	return furthest
-
-
 ## Has the war run out of missions to offer? Only the ones the route actually
 ## opened count (campaign-depth D7): one it walked past is a road not taken, and a
 ## player who was never offered it has finished the campaign.

@@ -216,7 +216,7 @@ func test_a_decided_match_is_due_no_beats_though_the_mission_is_still_unjudged()
 
 func test_save_battle_is_refused_outside_a_campaign() -> void:
 	assert_false(CampaignSession.save_battle({"day": 1}))
-	assert_false(CampaignProfile.has_profile(PROBE))
+	assert_null(CampaignProfile.load_progress(PROBE))
 
 
 ## The whole mid-mission loop: the save lands in the campaign's profile with the
@@ -248,7 +248,7 @@ func test_a_won_mission_is_written_to_the_profile() -> void:
 	var state := _state()
 	assert_true(CampaignSession.decide(state))
 	CampaignSession.record(state)
-	assert_true(CampaignProfile.has_profile(PROBE))
+	assert_not_null(CampaignProfile.load_progress(PROBE))
 
 
 ## A mission won through the override banks nothing at all. Recording it would
@@ -262,12 +262,12 @@ func test_a_mission_won_through_the_override_writes_nothing() -> void:
 	var state := _state()
 	assert_true(CampaignSession.decide(state))
 	CampaignSession.record(state)
-	assert_false(CampaignProfile.has_profile(PROBE), "the win is not banked")
+	assert_null(CampaignProfile.load_progress(PROBE), "the win is not banked")
 	assert_false(
 		CampaignSession.save_battle(SaveCodec.encode(state, [2] as Array[int])),
 		"and a mid-mission save is refused by the same door"
 	)
-	assert_false(CampaignProfile.has_profile(PROBE))
+	assert_null(CampaignProfile.load_progress(PROBE))
 
 
 ## A campaign resume with nothing to resume is a refusal, never a quiet fresh

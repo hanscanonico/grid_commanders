@@ -81,7 +81,7 @@ func test_unarmed_units_have_a_style_that_fires_nothing() -> void:
 				armed = true
 				break
 		assert_eq(
-			styles.for_unit(type).fires(),
+			styles.for_weapon(type, DamageChart.PRIMARY).fires(),
 			armed,
 			(
 				"%s is %s but its style %s"
@@ -160,7 +160,11 @@ func test_a_transport_selects_no_weapon_against_anything() -> void:
 				chart.select_shot(id, other.id, type.max_ammo, type.max_ammo),
 				"%s should have no shot at %s" % [id, other.id]
 			)
-		assert_eq(styles.for_unit(type).label, &"", "%s should announce no weapon" % id)
+		assert_eq(
+			styles.for_weapon(type, DamageChart.PRIMARY).label,
+			&"",
+			"%s should announce no weapon" % id
+		)
 
 
 ## The fallback is the safety net BattleStyleDB's whole contract rests on, so it

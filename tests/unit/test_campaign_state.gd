@@ -89,20 +89,6 @@ func test_stars_and_days_are_judged_separately() -> void:
 	assert_eq(state.records[&"one"].best_day, 4)
 
 
-func test_the_resume_point_is_the_first_unlocked_mission_not_yet_cleared() -> void:
-	var state := CampaignState.begin(campaign)
-	assert_eq(state.resume_point(campaign), &"one")
-	state.complete(campaign, &"one", 1, 3)
-	assert_eq(state.resume_point(campaign), &"two")
-
-
-func test_a_mission_in_progress_is_where_a_returning_player_lands() -> void:
-	var state := CampaignState.begin(campaign)
-	state.complete(campaign, &"one", 1, 3)
-	state.active_mission = &"two"
-	assert_eq(state.resume_point(campaign), &"two")
-
-
 # --- the save envelope ------------------------------------------------------
 
 
