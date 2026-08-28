@@ -329,31 +329,7 @@ func layout_error() -> String:
 ## walks the table rather than photographing one arrangement of it — the same
 ## reason the difficulty rule is asked of the seats and not of a mode flag.
 func set_human(index: int, human: bool) -> void:
-	set_seat(index, Seat.HUMAN if human else Seat.CPU)
-
-
-## Puts `who` in the seat at `index`. Refuses to close the seat when that would
-## leave too few armies to play — the same rule the Empty button is greyed by, held
-## here as well because this is the door the capture driver comes in through.
-func set_seat(index: int, who: int) -> void:
-	if index < 0 or index >= _who.size():
-		return
-	if who == Seat.EMPTY and not can_close(index):
-		return
-	_who[index] = who
-	_settle_seats()
-	changed.emit()
-
-
-## Whether the seat at `index` may be closed: only while at least `MIN_FILLED`
-## armies would be left at the table. False for every seat of a duel board, which
-## is why every Empty button on one is built dead.
-func can_close(index: int) -> bool:
-	if index < 0 or index >= _who.size():
-		return false
-	if _who[index] == Seat.EMPTY:
-		return true  # already closed; re-closing takes nobody off the table
-	return seats().size() > MIN_FILLED
+	_set_seat(index, Seat.HUMAN if human else Seat.CPU)
 
 
 ## Applies PRESETS[index]. Public for the dev capture that photographs the strip
@@ -412,6 +388,17 @@ static func reopened_seats(who_in: Array[int], closable: bool) -> Array[int]:
 	return settled
 
 
+## Whether the seat at `index` may be closed: only while at least `MIN_FILLED`
+## armies would be left at the table. False for every seat of a duel board, which
+## is why every Empty button on one is built dead.
+func _can_close(index: int) -> bool:
+	if index < 0 or index >= _who.size():
+		return false
+	if _who[index] == Seat.EMPTY:
+		return true  # already closed; re-closing takes nobody off the table
+	return seats().size() > MIN_FILLED
+
+
 ## How many sides the *filled* seats stand on. A closed seat brings no side to the
 ## table, so counting it would let three armies on one side read as a match.
 func _distinct_sides() -> int:
@@ -444,7 +431,7 @@ func _settle_seats() -> void:
 		_side[filled[i]] = settled[i]
 	for i in _who_buttons.size():
 		var empty: Button = _who_buttons[i][Seat.EMPTY]
-		empty.disabled = not can_close(i)
+		empty.disabled = not _can_close(i)
 	for i in _tier_buttons.size():
 		_tier_buttons[i].disabled = not tier_operable(i)
 	for i in _side_buttons.size():
@@ -740,11 +727,15 @@ func _apply_preset(preset: Dictionary) -> void:
 	changed.emit()
 
 
+## The one writer for who sits at `index` — the segment control and `set_human`
+## both come through here, so a refusal reads the same whichever door it arrived
+## by. The Empty button is greyed rather than absent when the table is at its
+## minimum, so a press can still arrive — from a keyboard, or from the frame
+## before `_settle_seats` ran — and is answered by putting the row back.
 func _set_seat(index: int, who: int) -> void:
-	# The Empty button is greyed rather than absent when the table is at its
-	# minimum, so a press can still arrive here — from a keyboard, or from the
-	# frame before `_settle_seats` ran — and is answered by putting the row back.
-	if who == Seat.EMPTY and not can_close(index):
+	if index < 0 or index >= _who.size():
+		return
+	if who == Seat.EMPTY and not _can_close(index):
 		_repaint_seats()
 		return
 	_who[index] = who
