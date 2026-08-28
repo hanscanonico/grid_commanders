@@ -28,7 +28,7 @@ func _fire(state: GameState) -> void:
 
 
 func test_all_combat_is_ten_percent_softer() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := _state(Fixture.TANK_VS_INFANTRY)
 	var fight := Engagement.create(
 		state.units[0], Vector2i.ZERO, 10, state.units[1], Vector2i(1, 0), 10
 	)
@@ -71,7 +71,7 @@ func test_a_refreshed_attacker_may_fire_again() -> void:
 
 
 func test_a_new_build_is_never_refreshed() -> void:
-	var state := _state("[terrain]\nB.\n[owners]\n1 0 0")
+	var state := _state(Fixture.OWNED_BASE)
 	state.funds[1] = 1000
 	var build := BuildCommand.new(1, unit_db.by_id(&"infantry"), Vector2i.ZERO)
 	assert_eq(build.validate(state), "")

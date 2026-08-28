@@ -167,7 +167,7 @@ func test_his_power_trades_damage_for_movement() -> void:
 
 
 func test_she_hits_nearly_dead_units_harder() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", &"cass_orlov")
+	var state := _state(Fixture.TANK_VS_INFANTRY, &"cass_orlov")
 	var target := state.units[1]
 	# Healthy: no bonus. 75 * 0.9 = 67.5 -> 68.
 	assert_eq(
@@ -196,7 +196,7 @@ func test_her_own_units_defend_normally() -> void:
 
 ## No Escape widens "damaged" from nearly-dead to anything short of full.
 func test_her_power_widens_what_counts_as_damaged() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", &"cass_orlov")
+	var state := _state(Fixture.TANK_VS_INFANTRY, &"cass_orlov")
 	var target := state.units[1]
 	target.hp = 90  # 9 displayed: outside the passive, inside the power
 	var fight := Engagement.create(state.units[0], Vector2i(0, 0), 10, target, Vector2i(1, 0), 9)

@@ -38,7 +38,7 @@ func _context(map_text: String) -> AIPlanningContext:
 ## scored, carrying a legal command — on the trivial board a tank standing next
 ## to an infantry it can simply shoot.
 func test_best_unit_plan_returns_a_typed_plan_with_a_command() -> void:
-	var context := _context("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var context := _context(Fixture.TANK_VS_INFANTRY)
 	var planner := AIUnitActionPlanner.new(AIProfile.new())
 	var unit := context.friendly_units[0]
 	var plan := planner._best_unit_plan(context, unit)
@@ -51,7 +51,7 @@ func test_best_unit_plan_returns_a_typed_plan_with_a_command() -> void:
 ## The planner's own public entry, `plan_next`, called on a context built the
 ## same way — the seam AIController delegates to rather than a duplicate of it.
 func test_plan_next_returns_the_best_scored_command() -> void:
-	var context := _context("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var context := _context(Fixture.TANK_VS_INFANTRY)
 	var planner := AIUnitActionPlanner.new(AIProfile.new())
 	var command := planner.plan_next(context)
 	assert_true(command is AttackCommand)

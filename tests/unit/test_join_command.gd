@@ -102,7 +102,7 @@ func test_join_answers_the_move_rules_first() -> void:
 
 
 func test_join_rejects_an_empty_destination() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := _state(Fixture.LONE_TANK)
 	assert_eq(
 		JoinCommand.new(state.units[0], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).validate(
 			state
@@ -113,7 +113,7 @@ func test_join_rejects_an_empty_destination() -> void:
 
 ## Standing still is the Wait action, never a merge with yourself.
 func test_join_rejects_a_unit_joining_itself() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := _state(Fixture.LONE_TANK)
 	assert_eq(
 		JoinCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)])).validate(state),
 		"no unit to join at the destination"

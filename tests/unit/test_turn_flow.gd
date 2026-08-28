@@ -78,6 +78,6 @@ func test_no_repair_on_neutral_or_enemy_property() -> void:
 
 
 func test_end_turn_rejected_after_victory() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := _state(Fixture.LONE_INFANTRY)
 	state.winner = 1
 	assert_ne(EndTurnCommand.new().validate(state), "")
