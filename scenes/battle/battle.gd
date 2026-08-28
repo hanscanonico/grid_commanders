@@ -336,7 +336,6 @@ func _ready() -> void:
 	animator.start_cursor_pulse()
 	await BattleCampaign.fire_due(self)  # the opening board: the one boundary with no command
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn
-	camera.position = cursor.position
 	if _capturing:
 		_scenario_driver.run()
 
@@ -570,8 +569,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _outcome.consume_input(event):
 			get_viewport().set_input_as_handled()
 		return
-	if state in [State.ANIMATING, State.MENU, State.CONFIRM, State.VICTORY, State.INFO]:
-		return  # the menu, guard and info sheet handle their own input; the rest block it
+	if not BattleLegend.dock_live(_legend_for(state)):
+		# One statement of which contexts already own the input — a banner, an open
+		# menu, the guard, the sheet — read by the key path and the touch dock alike,
+		# so a finger and a key can never disagree about which of them are dead.
+		return
 	if _zoom.handle_input(event) or pointer.handle(event):
 		return
 	if event.is_action_pressed(&"confirm"):
@@ -618,8 +620,8 @@ func confirm_at(cell: Vector2i) -> void:
 			else:
 				_open_map_menu()  # empty, or an unseen occupant — same face, never probe fog
 		State.PREVIEW:
-			var unit := game.unit_at(cell)
-			if unit == null or not perspective.can_see_unit(unit):
+			var unit := perspective.visible_unit_at(cell)
+			if unit == null:
 				_clear_preview()  # empty, or an unseen occupant — dismiss, never probe fog
 			elif unit.team == game.current_team and not unit.acted:
 				_clear_preview()
@@ -720,7 +722,7 @@ func clear_selection(refresh_board: bool = true) -> void:
 	overlays.paint_attack([])
 	overlays.trace_path([])
 	view.update_damage_preview(null, cursor_cell)
-	state = State.IDLE
+	state = rest_state()
 	if refresh_board:
 		refresh_fog()
 
@@ -745,7 +747,7 @@ func _clear_preview() -> void:
 	_range_shown = false
 	overlays.paint_move([])
 	overlays.paint_attack([])
-	state = State.IDLE
+	state = rest_state()
 
 
 ## R toggles the red fire ring for the unit the cursor is on. A momentary lens; it
@@ -905,15 +907,15 @@ func _run_command(command: Command, on_reject: Callable, clears_selection: bool 
 
 func _handle_build_action(action: StringName) -> void:
 	if action == &"cancel":
-		state = State.IDLE
+		state = rest_state()
 		return
 	var command := BuildCommand.new(game.current_team, unit_db.by_id(action), _build_cell)
 	var receipt := await execute_command(command)
 	if receipt.rejected():
 		push_error("BuildCommand rejected: %s" % receipt.validation_error)
-		state = State.IDLE
+		state = rest_state()
 		return
-	state = State.IDLE
+	state = rest_state()
 	await conclude_command(receipt)
 
 
@@ -967,12 +969,12 @@ func _request_end_turn() -> void:
 
 
 func _review_ready_units() -> void:
-	state = State.IDLE
+	state = rest_state()
 	_cycle_ready_unit()  # Review walks the guard's list rather than pinning its first entry
 
 
 func _end_turn_anyway() -> void:
-	state = State.IDLE
+	state = rest_state()
 	_commit_end_turn()
 
 
@@ -1162,7 +1164,7 @@ func leave_handoff() -> void:
 ## the perspective; working out what is visible is Vision's job, deciding what
 ## this viewer may act on is the perspective's, and drawing it is the view's.
 func refresh_fog() -> void:
-	perspective.refresh(handoff.viewing_team(), state == State.HANDOFF)
+	perspective.refresh(handoff.viewer_for_turn(), state == State.HANDOFF)
 	view.refresh_fog()
 	# Every mark below rides this one pass rather than growing a refresh path of
 	# its own: it already reruns after every committed command and turn change,

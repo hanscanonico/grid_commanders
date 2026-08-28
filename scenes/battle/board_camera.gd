@@ -54,7 +54,7 @@ func move_cursor_to(cell: Vector2i) -> void:
 	# The mission card parks in a board corner, so a cursor walking under it would
 	# be working blind; it steps aside from here rather than polling for the cell.
 	mission_panel.follow_cursor(
-		cell, roundi(BattleView.TILE * camera.zoom.x), board_origin_on_screen(), viewport_size()
+		cell, roundi(BattleView.TILE * camera.zoom.x), _board_origin_on_screen(), viewport_size()
 	)
 
 
@@ -79,9 +79,8 @@ func screen_pos_for_cell(cell: Vector2i) -> Vector2:
 
 
 ## Where the board's first cell lands on screen, in the same transform
-## `screen_pos_for_cell` uses and without its tooltip nudge — the anchor a screen
-## rect for any cell is measured from.
-func board_origin_on_screen() -> Vector2:
+## `screen_pos_for_cell` uses and without its tooltip nudge.
+func _board_origin_on_screen() -> Vector2:
 	return -_screen_center() * camera.zoom + viewport_size() / 2.0
 
 
