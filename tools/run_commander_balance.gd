@@ -444,13 +444,7 @@ func _write_reports(rows: Array[Dictionary], summary: Dictionary) -> bool:
 	var dir := BalanceReportWriter.prepare_dir(_out_dir)
 	if dir == "":
 		return false
-	var ok := BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
-	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
-	if not ok:
-		push_error("balance: failed to write matches.csv and summary.json to %s" % _out_dir)
-		return false
-	print("balance: wrote matches.csv and summary.json to %s" % _out_dir)
-	return true
+	return BalanceReportWriter.write_run("balance", dir, "matches.csv", rows, CSV_COLUMNS, summary)
 
 
 ## Says out loud when the shared engine had to cut a turn short. Neither report
@@ -652,20 +646,12 @@ func _write_difficulty_reports(
 	var dir := BalanceReportWriter.prepare_dir(_out_dir)
 	if dir == "":
 		return false
-	var ok := BalanceReportWriter.write_csv(
-		dir.path_join("matches.csv"), rows, DIFFICULTY_CSV_COLUMNS
+	var ok := BalanceReportWriter.write_run(
+		"difficulty", dir, "matches.csv", rows, DIFFICULTY_CSV_COLUMNS, summary
 	)
-	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
-	ok = (
+	return (
 		BalanceReportWriter.write_json(dir.path_join("timing.json"), {"turn_ms": turn_times}) and ok
 	)
-	if not ok:
-		push_error(
-			"difficulty: failed to write matches.csv, summary.json and timing.json to %s" % _out_dir
-		)
-		return false
-	print("difficulty: wrote matches.csv, summary.json and timing.json to %s" % _out_dir)
-	return true
 
 
 func _print_difficulty_summary(summary: Dictionary, turn_times: Array) -> void:
