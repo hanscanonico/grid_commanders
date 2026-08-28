@@ -6,7 +6,8 @@ extends GutTest
 ##
 ## Pure and static like the rest of LegibilityMetric, so the reading the offline
 ## sweep is judged on is checked without reading an atlas or composing a cell.
-## Its sibling suite, test_legibility_metric.gd, holds the medians and the ramp.
+## Its sibling suite, test_legibility_metric.gd, holds the medians and the ramp,
+## and test_stats.gd holds the rank the p25 is taken at.
 
 
 func _sample(values: Array) -> PackedFloat32Array:
@@ -34,14 +35,6 @@ func _cell(side: int, figure_side: int, ground: Color, figure: Color) -> Array:
 			pixels.append(figure if inside else ground)
 			covered.append(1 if inside else 0)
 	return [pixels, covered]
-
-
-func test_percentile_is_nearest_rank_and_ignores_order() -> void:
-	var sample := _sample([4.0, 1.0, 3.0, 2.0])
-	assert_almost_eq(LegibilityMetric.percentile(sample, 0.25), 1.0, 0.0001)
-	assert_almost_eq(LegibilityMetric.percentile(sample, 0.5), 2.0, 0.0001)
-	assert_almost_eq(LegibilityMetric.percentile(sample, 1.0), 4.0, 0.0001)
-	assert_eq(LegibilityMetric.percentile(PackedFloat32Array(), 0.25), 0.0, "an empty perimeter")
 
 
 func test_in_steps_is_unsigned_and_survives_a_sheet_with_no_ramp() -> void:

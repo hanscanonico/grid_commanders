@@ -168,7 +168,7 @@ func _measure(campaign: CampaignDefinition, mission: MissionDefinition) -> Dicti
 		"losses": losses,
 		"undecided": undecided,
 		"win_pct": 100.0 * float(wins) / float(_seed_count),
-		"median_win_day": _median(win_days),
+		"median_win_day": _upper_middle(win_days),
 		"deadline": _deadline_of(mission),
 		"par_day": mission.par_day,
 		"opening_odds": float(opening["odds"]),
@@ -290,7 +290,10 @@ func _deadline_of(mission: MissionDefinition) -> int:
 	return 0
 
 
-func _median(values: Array[int]) -> int:
+## The upper of a sorted sample's two middles, as a whole day. Deliberately not
+## `Stats.median`, which averages them: this column is a day a mission was won
+## on, and docs/campaign_difficulty.md's committed table has no half days in it.
+func _upper_middle(values: Array[int]) -> int:
 	if values.is_empty():
 		return 0
 	var sorted := values.duplicate()

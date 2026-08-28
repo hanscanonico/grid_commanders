@@ -18,6 +18,10 @@ extends RefCounted
 ## perimeter — in luminance, which `in_steps` states in ramp steps, and in the
 ## same chroma-plane CIE76 distance `hue_distance` states.
 ##
+## The p25 is `Stats.nearest_rank`: a rank the perimeter really holds rather
+## than an interpolation between two, and the rank docs/sprite_legibility.md's
+## committed readings were taken at.
+##
 ## p25 rather than a median or a mean, and this is the whole reason the round-7
 ## ruler had to be superseded: a figure can carry a bright back and a side that
 ## vanishes into the ground, and both a median and a mean of the perimeter score
@@ -102,7 +106,10 @@ static func edge_reading(pixels: PackedColorArray, covered: PackedByteArray, siz
 		var ground := median_colour(band)
 		lightness.append(absf(luminance(pixels[index]) - luminance(ground)))
 		chroma.append(hue_distance(pixels[index], ground))
-	return Vector2(percentile(lightness, EDGE_PERCENTILE), percentile(chroma, EDGE_PERCENTILE))
+	return Vector2(
+		Stats.nearest_rank(Array(lightness), EDGE_PERCENTILE),
+		Stats.nearest_rank(Array(chroma), EDGE_PERCENTILE)
+	)
 
 
 ## Every figure pixel with ground directly beside it — the silhouette's contour,
@@ -122,18 +129,6 @@ static func boundary_pixels(covered: PackedByteArray, size: int) -> PackedInt32A
 		):
 			found.append(index)
 	return found
-
-
-## The value `fraction` of the way through a sample, by nearest rank — never an
-## interpolation between two, so the number reported is a gap some pixel of the
-## contour really has. 0.0 for an empty sample, as `median` answers.
-static func percentile(values: PackedFloat32Array, fraction: float) -> float:
-	if values.is_empty():
-		return 0.0
-	var sorted := values.duplicate()
-	sorted.sort()
-	var rank := clampi(ceili(fraction * float(sorted.size())) - 1, 0, sorted.size() - 1)
-	return sorted[rank]
 
 
 ## A luminance gap in ramp steps, unsigned. 0.0 without a ramp to state it
@@ -168,7 +163,7 @@ static func luminances(colours: PackedColorArray) -> PackedFloat32Array:
 ## bar's median is the luminance of, so the two measures compare the same pair.
 ## Black for an empty sample. Ties are settled by the components rather than by
 ## the order the pixels were collected, and an even sample averages its two
-## middles exactly as `median` does, which is what keeps the two in step.
+## middles exactly as `Stats.median` does, which is what keeps the two in step.
 static func median_colour(colours: PackedColorArray) -> Color:
 	if colours.is_empty():
 		return Color.BLACK
@@ -202,26 +197,13 @@ static func hue_distance(a: Color, b: Color) -> float:
 	return Vector2(first.y - second.y, first.z - second.z).length()
 
 
-## Median of a sample, 0.0 for an empty one. Sorts a copy: a caller's sample is
-## the order it collected the pixels in and nothing may depend on that.
-static func median(values: PackedFloat32Array) -> float:
-	if values.is_empty():
-		return 0.0
-	var sorted := values.duplicate()
-	sorted.sort()
-	var middle := sorted.size() / 2
-	if sorted.size() % 2 == 1:
-		return sorted[middle]
-	return (sorted[middle - 1] + sorted[middle]) * 0.5
-
-
 ## Separation between a figure sample and a ground sample, in ramp steps.
 ## Unsigned: a figure that is darker than its ground reads as well as one that
 ## is lighter, and the sweep records the two medians beside it either way.
 static func separation(
 	figure: PackedFloat32Array, ground: PackedFloat32Array, step: float
 ) -> float:
-	return in_steps(median(figure) - median(ground), step)
+	return in_steps(Stats.median(Array(figure)) - Stats.median(Array(ground)), step)
 
 
 ## The ground inside the band around one boundary pixel, in scan order.

@@ -334,8 +334,8 @@ func _summarise(label: String, sides: Dictionary[int, int], rows: Array[Dictiona
 		# Over the matches that resolved only: an undecided match has no length
 		# to average, only a horizon it outlived, so counting it as `days_cap`
 		# would report the horizon as a measurement.
-		"mean_day": FourArmyLoop.mean(decided_days),
-		"median_day": FourArmyLoop.median(decided_days),
+		"mean_day": Stats.mean(decided_days),
+		"median_day": Stats.median(decided_days),
 		"winners": winners,
 		"allied_falls": allied_falls,
 		"days_cap": _days_cap,

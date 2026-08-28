@@ -125,41 +125,9 @@ static func seed_at(offset: int, index: int) -> int:
 	return offset + index + 1
 
 
-## Mean, median, percentile and max over the values a run banked — the match
-## lengths that resolved, the milliseconds a command took. An empty sample
-## reports 0.0, which the count reported beside it is what tells apart from a
-## real average.
-static func mean(values: Array) -> float:
-	if values.is_empty():
-		return 0.0
-	var total := 0.0
-	for value in values:
-		total += float(value)
-	return total / float(values.size())
-
-
-static func median(values: Array) -> float:
-	if values.is_empty():
-		return 0.0
-	var sorted := values.duplicate()
-	sorted.sort()
-	var mid := sorted.size() / 2
-	if sorted.size() % 2 == 1:
-		return float(sorted[mid])
-	return 0.5 * (float(sorted[mid - 1]) + float(sorted[mid]))
-
-
-## The value `fraction` of the way through the sorted sample — the tail a clock
-## is read by, where a mean hides the worst turn of a run.
-static func percentile(values: Array, fraction: float) -> float:
-	if values.is_empty():
-		return 0.0
-	var sorted := values.duplicate()
-	sorted.sort()
-	var index := int(floor(fraction * float(sorted.size() - 1)))
-	return float(sorted[clampi(index, 0, sorted.size() - 1)])
-
-
+## The worst value in a sample a run banked — the slowest turn of a planner
+## clock, where a mean hides it. The mean, the median and the two ranks a report
+## reads beside it are `Stats`'.
 static func max_of(values: Array) -> float:
 	var top := 0.0
 	for value in values:
