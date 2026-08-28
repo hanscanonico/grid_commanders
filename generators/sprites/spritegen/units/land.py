@@ -501,7 +501,7 @@ def rockets(pose: Pose = Pose.A) -> Model:
     truck has the sheet's tightest cast-shadow margin — its rack overhangs the
     cell centre to the screen left, so the shadow's centroid sits 0.37px right
     of the hull's against a 0.2px floor (`OneSun` in
-    `tests/test_generated_output.py`). Lifting the NOSE deletes the pixels the
+    `tests/test_shadows.py`). Lifting the NOSE deletes the pixels the
     front of the bed was standing on, and in this projection the front is the
     screen-left end: the hull centroid walks right past the shadow's and the
     frame reads as lit from the wrong shoulder (-0.14px, a failure). Lifting
