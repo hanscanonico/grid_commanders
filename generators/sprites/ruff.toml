@@ -1,0 +1,20 @@
+# Pins ruff so `ruff check .` and `ruff format --check .` give the same answer
+# on every machine and every ruff release. The generator targets Python 3.10+
+# and depends only on Pillow.
+target-version = "py310"
+line-length = 88
+
+# .venv/ and out/ are gitignored (ruff skips them by default); repeat them here
+# so the checks still behave with --no-respect-gitignore.
+extend-exclude = [".venv", "out"]
+
+[lint]
+# ruff's default rule set, written out so a future default change cannot
+# silently add or drop rules: pycodestyle errors + Pyflakes.
+select = ["E4", "E7", "E9", "F"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false

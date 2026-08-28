@@ -4,10 +4,10 @@ The sprite programme's last open item, taken as a measurement rather than
 decided as a taste (design review rounds 6–11). This is a dated reading: a
 later campaign supersedes it wholesale rather than edits it.
 
-Copied verbatim from the sibling `sprite_generator` repo (`ed042c4`, plus its
-`676a58c` outline note), which is where the instrument and the models live. Its
-two cross-repo paths are qualified with that repo's name so they cannot be read
-as paths in this one; nothing else is changed.
+Copied verbatim from the sprite generator (`ed042c4`, plus its `676a58c` outline
+note), which is where the instrument and the models live — a sibling repository
+when this was written, and `generators/sprites` in this one since 2026-08-28.
+Nothing but those two paths is changed.
 
 This game has moved twice since the reading, and neither move touches the
 finding: a playtest dropped `window/stretch/scale_mode = "integer"`, which is
@@ -26,8 +26,9 @@ knob; it is a re-authoring of every model, and even fully re-authored it pays
 nothing below the rung above the default one, and nothing at all in the
 cut-in.
 
-Take the readings again from that repo's own harness,
-`sprite_generator/tests/measure_128.py`, under its `.venv`.
+Take the readings again from the generator's own harness,
+`generators/sprites/tests/measure_128.py`, under `make generators-venv`'s
+interpreter.
 
 ## 1. The arithmetic, which settles it before any art is drawn
 
@@ -64,7 +65,7 @@ under is stated in logical pixels, and 128 buys none of them.
 
 (`CONTOUR_WEIGHT` is gone: units are outlined 1px per pixel off the G-buffer
 now, and the edge is carried by a dark/light contrast pair rather than by a
-band the board can resolve. See `sprite_generator/docs/outlines.md`. The finding above is
+band the board can resolve. See `generators/sprites/docs/outlines.md`. The finding above is
 unaffected — it is about logical resolution, not about the outline — but the
 worked example no longer describes the code.)
 

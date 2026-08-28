@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deterministic Atlas — generated assets &amp; adoption plan</title>
+<style>
+  @font-face { font-family: "Silkscreen"; src: url(assets/Silkscreen-Regular.ttf); font-weight: 400; }
+  @font-face { font-family: "Silkscreen"; src: url(assets/Silkscreen-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: "Pixelify Sans"; src: url(assets/PixelifySans-Variable.ttf); font-weight: 400 700; }
+
+  :root {
+    --bg: #14171c;            /* grid_commanders outline/HARD_BORDER family */
+    --panel: #1d2127;
+    --panel-2: #232830;
+    --line: #333a44;
+    --ink: #e8e4d8;
+    --ink-dim: #a9a698;
+    --paper: #eee7d6;         /* CommanderVisuals.PAPER */
+    --paper-ink: #252b30;
+    --meridian: #db4a3b;
+    --aurora: #3865d8;
+    --iron: #4a5258;
+    --verdant: #2c8636;
+    --neutral: #606a71;
+    --amber: #ebb33f;
+    --zoom: 3;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  h1, h2 { font-family: "Silkscreen", monospace; letter-spacing: 0; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h2 { font-size: 17px; margin: 0; color: var(--ink); }
+  h3 { font-family: "Pixelify Sans", sans-serif; font-size: 17px; margin: 0 0 8px; color: var(--ink); }
+  .sub { color: var(--ink-dim); max-width: 78ch; }
+  a { color: #8fb4f0; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; background: #10131a; padding: 1px 5px; border-radius: 4px; color: #cfd6e4; }
+
+  header.page {
+    border: 2px solid #000; background: linear-gradient(180deg, #232a33, #1a1f26);
+    border-radius: 10px; padding: 22px 24px; margin-bottom: 26px;
+    box-shadow: 0 4px 0 #000;
+  }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .badge {
+    font-family: "Silkscreen", monospace; font-size: 10px; padding: 5px 9px 4px;
+    border-radius: 5px; border: 1px solid #000; background: var(--panel-2); color: var(--ink);
+    white-space: nowrap;
+  }
+  .badge.ok { background: #1d3323; color: #8fe0a1; border-color: #0c1a10; }
+  .badge.warn { background: #38301a; color: var(--amber); border-color: #1a1508; }
+
+  section { margin: 34px 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .sec-head .n {
+    font-family: "Silkscreen", monospace; font-size: 12px; color: var(--bg);
+    background: var(--paper); border-radius: 4px; padding: 3px 7px 2px; border: 1px solid #000;
+  }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 900px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
+
+  table.contract { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.contract th, table.contract td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.contract th { font-family: "Pixelify Sans", sans-serif; color: var(--ink-dim); font-weight: 500; white-space: nowrap; }
+  table.contract td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; white-space: nowrap; }
+
+  /* checkerboard behind transparent pixels */
+  .checker {
+    background: repeating-conic-gradient(#252a31 0% 25%, #2b313a 0% 50%) 0 0 / 16px 16px;
+    border: 1px solid var(--line); border-radius: 8px;
+  }
+  .scroller { overflow-x: auto; padding: 14px; }
+  .scroller img { display: block; image-rendering: pixelated; }
+
+  /* atlas-region sprites */
+  .spr { display: inline-block; image-rendering: pixelated; background-repeat: no-repeat; flex: none;
+         width: calc(64px * var(--s, 2)); height: calc(64px * var(--s, 2));
+         background-position: calc(-64px * var(--c, 0) * var(--s, 2)) calc(-64px * var(--r, 0) * var(--s, 2)); }
+  .spr.units    { background-image: url(assets/units_atlas.png);       background-size: calc(1152px * var(--s, 2)) calc(320px * var(--s, 2)); }
+  .spr.oldunits { background-image: url(assets/old_units_atlas.png);   background-size: calc(1152px * var(--s, 2)) calc(320px * var(--s, 2)); }
+  .spr.terr     { background-image: url(assets/terrain_atlas.png);     background-size: calc(896px * var(--s, 2)) calc(320px * var(--s, 2)); }
+  .spr.oldterr  { background-image: url(assets/old_terrain_atlas.png); background-size: calc(896px * var(--s, 2)) calc(320px * var(--s, 2)); }
+
+  /* roster cards */
+  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .unit-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  .heroframe { display: block; overflow-x: auto; padding: 6px; margin-top: 10px; }
+  .heroframe .spr { --s: var(--zoom); display: block; margin: 0 auto; }
+  .u-meta { min-width: 0; }
+  .u-name { font-family: "Pixelify Sans", sans-serif; font-size: 18px; font-weight: 600; }
+  .u-id { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--ink-dim); margin: 1px 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 11.5px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink-dim); white-space: nowrap; }
+  .chip.w { color: var(--amber); border-color: #4a3d1c; }
+  .facstrip { display: flex; gap: 4px; margin-top: 10px; overflow-x: auto; padding: 5px; }
+  .facstrip .spr { --s: 1.5; }
+  .u-note { font-size: 12.5px; color: var(--ink-dim); margin-top: 9px; }
+
+  .zoombar { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+  .zoombar span { font-size: 12px; color: var(--ink-dim); }
+  .zoombar button {
+    font-family: "Silkscreen", monospace; font-size: 10px; color: var(--ink);
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; cursor: pointer;
+  }
+  .zoombar button.on { background: var(--paper); color: var(--paper-ink); border-color: #000; }
+
+  /* faction legend */
+  .fac-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; }
+  .fac-legend .f { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-dim); }
+  .fac-legend .dot { width: 13px; height: 13px; border-radius: 3px; border: 1px solid #000; }
+
+  /* buildings grid */
+  .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .bcol { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+  .bcol .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bcol img { width: 96px; height: 96px; image-rendering: pixelated; }
+  .bcol .cf { padding: 2px; }
+
+  /* before / after */
+  .ba-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .ba { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  .ba .pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .ba .col { text-align: center; min-width: 0; }
+  .ba .col .lab { font-family: "Silkscreen", monospace; font-size: 9px; color: var(--ink-dim); margin-top: 6px; }
+  .ba .checker { padding: 4px; }
+  .ba .spr { --s: 2; display: block; }
+
+  /* options */
+  .opt { border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; background: var(--panel); position: relative; min-width: 0; }
+  .opt.reco { border-color: var(--verdant); box-shadow: 0 0 0 1px var(--verdant); }
+  .opt .tag { display: inline-block; margin-bottom: 8px; font-family: "Silkscreen", monospace; font-size: 9px; background: var(--verdant); color: #eaf5ea; padding: 3px 8px 2px; border-radius: 4px; border: 1px solid #000; }
+  .opt h3 { margin-bottom: 6px; }
+  .opt ul { margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-dim); }
+  .opt li { margin: 3px 0; }
+  .opt .cost { color: #d99a90; }
+
+  .q-list { display: grid; gap: 10px; }
+  .q { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--amber); border-radius: 8px; padding: 12px 16px; }
+  .q b { font-family: "Pixelify Sans", sans-serif; font-weight: 600; }
+  .q p { margin: 4px 0 0; font-size: 13.5px; color: var(--ink-dim); }
+  .risk { border-left-color: var(--meridian); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>Deterministic Atlas — generated assets</h1>
+  <div class="sub">Everything below is real output of <code>sprite_generator.py</code> on branch
+  <code>deterministic-atlas</code>: the complete unit and terrain atlases for
+  <b>grid_commanders</b>, rendered as authored isometric-voxel models with zero randomness.
+  Annotate any sprite, tile, or decision you want changed.</div>
+  <div class="badges">
+    <span class="badge ok">UNITS 1152x320 RGBA — matches game</span>
+    <span class="badge ok">TERRAIN 896x320 RGB — matches game</span>
+    <span class="badge ok">RERUNS BYTE-IDENTICAL</span>
+    <span class="badge">18 UNITS x 5 ROWS</span>
+    <span class="badge">14 TERRAINS x 5 ROWS</span>
+    <span class="badge">90 + 25 CELL PNGS</span>
+    <span class="badge warn">NOT YET COMMITTED / INSTALLED</span>
+  </div>
+</header>
+
+<section>
+  <div class="grid3">
+    <div class="card">
+      <h3>Goal</h3>
+      <div class="sub" style="font-size:13.5px">Replace the mixed PixVoxel-pack + hand-vendored
+      art with one generator that deterministically produces every unit and terrain sprite in a
+      single, higher-detail style — so adding or retuning art is a code edit, not an asset hunt.</div>
+    </div>
+    <div class="card">
+      <h3>Current state</h3>
+      <div class="sub" style="font-size:13.5px">Generator rewritten and validated: contract sizes
+      match the game's atlases, two independent runs hash identically, and a demo map proves the
+      sheet in context. The game still builds its atlases via <code>make tiles</code>
+      (ImageMagick + pack sprites).</div>
+    </div>
+    <div class="card">
+      <h3>This page</h3>
+      <div class="sub" style="font-size:13.5px">Full asset review (sections 1–5), before/after
+      against the shipped art (6), and the adoption plan with one recommended integration route
+      plus open questions (7–8).</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">1</span><h2>Deliverables</h2></div>
+  <div class="card">
+    <table class="contract">
+      <tr><th>File</th><th>Contract</th><th>Consumed by</th></tr>
+      <tr><td class="mono">out/units_atlas.png</td><td>1152x320 RGBA — 18 unit columns in <code>atlas_col</code> order x 5 faction rows</td><td class="mono">assets/tiles/units_atlas.png</td></tr>
+      <tr><td class="mono">out/terrain_atlas.png</td><td>896x320 RGB — 14 terrain columns x 5 rows; properties tinted per row</td><td class="mono">assets/tiles/terrain_atlas.png</td></tr>
+      <tr><td class="mono">out/units/&lt;id&gt;_&lt;team&gt;.png</td><td>90 cells, 64x64 RGBA</td><td class="mono">tools/paste_unit_sprites.gd</td></tr>
+      <tr><td class="mono">out/iso_buildings/&lt;id&gt;_&lt;team&gt;.png</td><td>25 property-building cells, 64x64 RGBA</td><td class="mono">assets/sprites/iso_buildings</td></tr>
+      <tr><td class="mono">out/preview_*.png</td><td>review sheets + authored demo map</td><td>humans</td></tr>
+    </table>
+    <div class="fac-legend">
+      <span class="f"><span class="dot" style="background:var(--neutral)"></span>row 0 neutral</span>
+      <span class="f"><span class="dot" style="background:var(--meridian)"></span>row 1 meridian</span>
+      <span class="f"><span class="dot" style="background:var(--aurora)"></span>row 2 aurora</span>
+      <span class="f"><span class="dot" style="background:var(--iron)"></span>row 3 iron</span>
+      <span class="f"><span class="dot" style="background:var(--verdant)"></span>row 4 verdant</span>
+      <span class="f" style="margin-left:auto">colors mirror <code>CommanderVisuals</code>; rows mirror <code>SideIdentity</code></span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="n">2</span><h2>Unit roster</h2>
+    <div class="zoombar"><span>sprite zoom</span>
+      <button data-z="2">2x</button><button data-z="3" class="on">3x</button><button data-z="4">4x</button>
+    </div>
+  </div>
+  <div class="sub" style="margin-bottom:12px">Hero sprites show the meridian row; the strip under
+  each card is all five faction rows straight from the atlas. Weapon silhouettes follow each
+  unit's <code>battle_style</code>.</div>
+  <div class="checker scroller" style="margin-bottom:16px"><img src="assets/units_atlas.png" width="1152" height="320" alt="units atlas"></div>
+  <div id="units-land" class="roster"></div>
+  <h3 style="margin:18px 0 10px">Air</h3>
+  <div id="units-air" class="roster"></div>
+  <h3 style="margin:18px 0 10px">Sea</h3>
+  <div id="units-sea" class="roster"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">3</span><h2>Terrain roster</h2></div>
+  <div class="sub" style="margin-bottom:12px">Grounds keep <code>generate_tiles.gd</code>'s palette
+  and the darkened-edge grid convention; property tiles show all five tinted rows.</div>
+  <div class="checker scroller" style="margin-bottom:16px"><img src="assets/terrain_atlas.png" width="896" height="320" alt="terrain atlas"></div>
+  <div id="terrain-roster" class="roster"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">4</span><h2>Property-building cells</h2></div>
+  <div class="sub" style="margin-bottom:12px">The transparent 64px building sprites exported for
+  <code>assets/sprites/iso_buildings</code> — the same models the terrain tiles compose, shown here
+  on their own so the silhouettes are inspectable.</div>
+  <div class="bgrid" id="bgrid"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">5</span><h2>In context — authored demo map</h2></div>
+  <div class="sub" style="margin-bottom:12px">A little battle map assembled purely from the two
+  atlases: mixed factions, every unit placed once, properties of both armies. This is the
+  readability check — units pop, the grid stays legible, factions never rely on hue alone.</div>
+  <div class="checker scroller"><img src="assets/preview_map.png" width="1280" height="896" alt="demo map"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">6</span><h2>Before / after</h2></div>
+  <div class="sub" style="margin-bottom:12px">Left: the shipped atlas (PixVoxel pack + vendored
+  fills). Right: this generator. Same projection and facing, one consistent scale, light and
+  outline across the whole roster.</div>
+  <div class="ba-grid" id="ba-grid"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">7</span><h2>Adoption plan</h2></div>
+  <div class="sub" style="margin-bottom:12px">Decision: how grid_commanders consumes this art.
+  The hazard to design around: the game's <code>make tiles</code> currently rebuilds both atlases
+  from its own pipeline and would silently overwrite anything installed.</div>
+  <div class="grid3">
+    <div class="opt">
+      <h3>A — Commit atlases directly</h3>
+      <div class="sub" style="font-size:13px">Run <code>--install</code>, commit the two PNGs in the
+      game repo, delete the <code>ground / sprites / unit-sprites / unit-placeholders</code> steps
+      from <code>make tiles</code>.</div>
+      <ul>
+        <li>Smallest diff, art becomes plain committed assets</li>
+        <li class="cost">Game repo loses the ability to rebuild its own art</li>
+        <li class="cost">Art edits require touching two repos by hand</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h3>B — Feed the paste pipeline</h3>
+      <div class="sub" style="font-size:13px">Drop the 90 + 25 cell PNGs into
+      <code>assets/sprites/…</code> and let the existing compositor keep assembling atlases.</div>
+      <ul>
+        <li>No Makefile changes at all</li>
+        <li class="cost">Land units' neutral/red/blue rows still come from the old pack —
+        two art styles on one sheet</li>
+        <li class="cost">Keeps the ImageMagick + pack dependency alive</li>
+      </ul>
+    </div>
+    <div class="opt reco">
+      <span class="tag">RECOMMENDED</span>
+      <h3>C — Make tiles calls this generator</h3>
+      <div class="sub" style="font-size:13px">Replace the atlas steps of <code>make tiles</code> with
+      <code>sprite_generator.py --install</code> (path configurable), keep the game's
+      <code>import</code> step.</div>
+      <ul>
+        <li>One source of truth; a rebuild in either repo converges</li>
+        <li>Retires ImageMagick and the PixVoxel compositing entirely</li>
+        <li>Atlases become fully project-original art (licensing simplifies)</li>
+        <li class="cost">Game build grows a Python + Pillow dev dependency</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">8</span><h2>Risks &amp; open questions</h2></div>
+  <div class="q-list">
+    <div class="q risk"><b>Overwrite hazard until route C lands.</b>
+      <p>Installing atlases today and later running <code>make tiles</code> in the game repo reverts
+      them to pack art. Mitigation: adopt C (or A with the Make steps deleted) in the same change.</p></div>
+    <div class="q risk"><b>Byte-stability is pinned to Pillow's PNG encoder.</b>
+      <p>Pixels are deterministic forever; the exact bytes could shift on a Pillow major upgrade.
+      If CI ever asserts atlas hashes, pin <code>pillow</code> in this repo's requirements.</p></div>
+    <div class="q risk"><b>Zoom-1 downsampling.</b>
+      <p>On screen at 1x the 64px cells sample 4:1 nearest, softening 2px detail. Grounds were
+      authored at ≥4px granularity for this; units carry 2px detail exactly like the shipped pack
+      already did, so nothing regresses — but battle-zoom is where the new detail pays off.</p></div>
+    <div class="q"><b>Q1 — Any unit or tile for another design pass?</b>
+      <p>Every sprite is one small model function now. Annotate the card above (shape, weapon,
+      stance, color balance) and it's a targeted edit.</p></div>
+    <div class="q"><b>Q2 — Neutral row styling. <i>Answered:</i> the UI's slate theme.</b>
+      <p>Neutral now uses <code>CommanderVisuals</code>' slate ramp like every other row, instead of
+      the pack's white/grey. See <code>.lavish/sprite-upgrade-review.html</code> section 4 for the
+      shipped ramps and the neutral-vs-iron tradeoff that choice carries.</p></div>
+    <div class="q"><b>Q3 — Baked-in hover shadows for air units.</b>
+      <p>Air units carry their detached drop shadow inside the cell, like the shipped art. If the
+      game ever animates altitude, shadows should move to a separate layer instead.</p></div>
+  </div>
+</section>
+
+<div class="sub" style="margin-top:30px; font-size:12.5px">
+  Regenerate everything: <code>.venv/bin/python sprite_generator.py</code> · iterate on one sprite:
+  <code>--only tank,city --team verdant --zoom 8</code> · install into the game:
+  <code>--install ../grid_commanders</code>
+</div>
+
+</div>
+
+<script>
+const UNITS = [
+  { col:0,  id:"infantry",  name:"Infantry",  grp:"land", move:"foot",   weapon:"small arms",
+    note:"Chibi rifleman: dome helmet, face, rifle at the ready." },
+  { col:1,  id:"mech",      name:"Mech",      grp:"land", move:"boot",   weapon:"rocket + small arms",
+    note:"Armoured trooper, shoulder bazooka with amber warhead, glass visor." },
+  { col:2,  id:"recon",     name:"Recon",     grp:"land", move:"tires",  weapon:"small arms",
+    note:"Scout car: sloped hood, pintle MG on a ring mount, whip antenna, spare tire." },
+  { col:3,  id:"tank",      name:"Tank",      grp:"land", move:"treads", weapon:"cannon + small arms",
+    note:"MBT: link-textured treads, glacis, cupola, bore evacuator and muzzle brake." },
+  { col:4,  id:"md_tank",   name:"Md Tank",   grp:"land", move:"treads", weapon:"cannon + small arms",
+    note:"Heavier everything: skirted tracks, two-tier turret, long sleeved gun, twin exhausts." },
+  { col:5,  id:"anti_air",  name:"Anti-Air",  grp:"land", move:"treads", weapon:"autocannon",
+    note:"Flak battery: twin raked tubes with suppressors, search-radar panel." },
+  { col:6,  id:"artillery", name:"Artillery", grp:"land", move:"treads", weapon:"cannon",
+    note:"SPG: rear casemate, 45-degree howitzer with double-baffle brake, dug-in recoil spade." },
+  { col:7,  id:"rockets",   name:"Rockets",   grp:"land", move:"tires",  weapon:"rocket",
+    note:"Six-wheel MLRS: raked pod terraces with visible tube mouths, cab forward." },
+  { col:8,  id:"apc",       name:"APC",       grp:"land", move:"treads", weapon:"unarmed",
+    note:"Tall tracked box: troop hatch, rear door, cargo crate, driver visor slit." },
+  { col:13, id:"missiles",  name:"Missiles",  grp:"land", move:"tires",  weapon:"rocket",
+    note:"SAM truck: three white missiles with seeker tips on a raked rack, fire-control radar." },
+  { col:9,  id:"fighter",   name:"Fighter",   grp:"air", weapon:"autocannon",
+    note:"Swept wings, canopy, wingtip missiles, twin canted fins, dark nozzles." },
+  { col:10, id:"bomber",    name:"Bomber",    grp:"air", weapon:"bomb",
+    note:"Deep fuselage, four podded engines, bomb-bay seam, tall fin with tail turret." },
+  { col:11, id:"b_copter",  name:"B-Copter",  grp:"air", weapon:"autocannon",
+    note:"Gunship: chin gun, stub-wing rocket pods, tail rotor, four-blade main rotor." },
+  { col:12, id:"t_copter",  name:"T-Copter",  grp:"air", weapon:"unarmed",
+    note:"Tandem-rotor transport: boxy hold, side door, rear ramp, fixed wheels." },
+  { col:14, id:"battleship",name:"Battleship",grp:"sea", weapon:"cannon",
+    note:"Two twin-gun turrets, bridge tower, funnel, mast radar, dark waterline." },
+  { col:15, id:"cruiser",   name:"Cruiser",   grp:"sea", weapon:"autocannon",
+    note:"Escort: raked AA mounts, glazed bridge, aft helipad, depth-charge rack." },
+  { col:16, id:"sub",       name:"Sub",       grp:"sea", weapon:"torpedo",
+    note:"Running surfaced: sail with periscopes, dive planes, bow wake foam." },
+  { col:17, id:"lander",    name:"Lander",    grp:"sea", weapon:"unarmed",
+    note:"Flat cargo well with tie-down lane, raised bow ramp, aft wheelhouse." },
+];
+
+const TERRAIN = [
+  { col:0,  id:"road",     name:"Road",     prop:false, note:"Lane dashes, tire-wear bands, embedded stones. Connects in any direction." },
+  { col:1,  id:"plains",   name:"Plains",   prop:false, note:"Block-grain grass with tuft clusters — 4px features survive zoom-1 downsampling." },
+  { col:2,  id:"woods",    name:"Woods",    prop:false, note:"Two voxel trees with shaded skirts and contact shadows over grass." },
+  { col:3,  id:"mountain", name:"Mountain", prop:false, note:"Painted twin-peak massif: light/dark faces, jagged snow line, scree foot." },
+  { col:4,  id:"river",    name:"River",    prop:false, note:"Light water with two-tone flow streaks — deliberately brighter than sea." },
+  { col:5,  id:"city",     name:"City",     prop:true,  note:"Three towers on a plaza; window grids with hash-lit ambers per faction." },
+  { col:6,  id:"base",     name:"Base",     prop:true,  note:"Factory: sawtooth roof with skylights, chimney, hazard-striped vehicle door." },
+  { col:7,  id:"hq",       name:"HQ",       prop:true,  note:"Fortress: crenellated walls, corner towers, gatehouse, keep with faction banner." },
+  { col:8,  id:"sea",      name:"Sea",      prop:false, note:"Deep water, layered swells, whitecap flecks." },
+  { col:9,  id:"airport",  name:"Airport",  prop:true,  note:"Arched hangar + glass-cab tower on an apron with painted runway markings." },
+  { col:10, id:"port",     name:"Port",     prop:true,  note:"Quay on pilings: warehouse, gantry crane over the water, container stack." },
+  { col:11, id:"shoal",    name:"Shoal",    prop:false, note:"Beach meeting water with a breaking-foam line and wet-sand lip." },
+  { col:12, id:"bridge",   name:"Bridge",   prop:false, note:"Road deck with railings and posts; pier shadows in the water below." },
+  { col:13, id:"reef",     name:"Reef",     prop:false, note:"Voxel outcrops breaking the surface inside foam rings." },
+];
+
+const FACROWS = ["neutral", "meridian", "aurora", "iron", "verdant"];
+const TEAMS = ["neutral", "red", "blue", "iron", "verdant"];
+
+function sprDiv(cls, col, row) {
+  const d = document.createElement("div");
+  d.className = "spr " + cls;
+  d.style.setProperty("--c", col);
+  d.style.setProperty("--r", row);
+  return d;
+}
+
+function unitCard(u) {
+  const card = document.createElement("div");
+  card.className = "unit-card";
+  card.id = "unit-" + u.id;
+  const chips = [u.move ? `<span class="chip">${u.move}</span>` : "",
+                 `<span class="chip w">${u.weapon}</span>`,
+                 `<span class="chip">col ${u.col}</span>`].join("");
+  card.innerHTML = `
+    <div class="u-meta">
+      <div class="u-name">${u.name}</div>
+      <div class="u-id">${u.id}</div>
+      <div class="chips">${chips}</div>
+    </div>
+    <div class="checker heroframe"></div>
+    <div class="facstrip checker"></div>
+    <div class="u-note">${u.note}</div>`;
+  card.querySelector(".heroframe").appendChild(sprDiv("units", u.col, 1));
+  const strip = card.querySelector(".facstrip");
+  for (let r = 0; r < 5; r++) {
+    const s = sprDiv("units", u.col, r);
+    s.title = FACROWS[r];
+    strip.appendChild(s);
+  }
+  return card;
+}
+
+for (const u of UNITS) document.getElementById("units-" + u.grp).appendChild(unitCard(u));
+
+const troster = document.getElementById("terrain-roster");
+for (const t of TERRAIN) {
+  const card = document.createElement("div");
+  card.className = "unit-card";
+  card.id = "terrain-" + t.id;
+  card.innerHTML = `
+    <div class="u-meta">
+      <div class="u-name">${t.name}</div>
+      <div class="u-id">${t.id}</div>
+      <div class="chips"><span class="chip">col ${t.col}</span>
+        ${t.prop ? '<span class="chip w">property · team-tinted</span>' : '<span class="chip">same on all rows</span>'}</div>
+    </div>
+    <div class="checker heroframe"></div>
+    ${t.prop ? '<div class="facstrip checker"></div>' : ""}
+    <div class="u-note">${t.note}</div>`;
+  card.querySelector(".heroframe").appendChild(sprDiv("terr", t.col, t.prop ? 1 : 0));
+  if (t.prop) {
+    const strip = card.querySelector(".facstrip");
+    for (let r = 0; r < 5; r++) {
+      const s = sprDiv("terr", t.col, r);
+      s.title = FACROWS[r];
+      strip.appendChild(s);
+    }
+  }
+  troster.appendChild(card);
+}
+
+const bgrid = document.getElementById("bgrid");
+for (const b of ["city", "base", "hq", "airport", "port"]) {
+  const col = document.createElement("div");
+  col.className = "bcol";
+  col.id = "bcell-" + b;
+  col.innerHTML = `<h3 style="margin-bottom:8px">${b}</h3><div class="row"></div>`;
+  const row = col.querySelector(".row");
+  for (const t of TEAMS) {
+    const f = document.createElement("div");
+    f.className = "checker cf";
+    f.innerHTML = `<img src="assets/iso_buildings/${b}_${t}.png" alt="${b} ${t}" title="${t}">`;
+    row.appendChild(f);
+  }
+  bgrid.appendChild(col);
+}
+
+const BA = [
+  ["Infantry", "units", 0], ["Tank", "units", 3], ["Rockets", "units", 7],
+  ["Fighter", "units", 9], ["B-Copter", "units", 11], ["Battleship", "units", 14],
+  ["Woods", "terr", 2], ["Mountain", "terr", 3], ["City", "terr", 5],
+  ["HQ", "terr", 7], ["Airport", "terr", 9], ["Port", "terr", 10],
+];
+const bag = document.getElementById("ba-grid");
+for (const [name, kind, col] of BA) {
+  const row = kind === "units" ? 1 : (["terr"].includes(kind) && [5,7,9,10].includes(col) ? 1 : 0);
+  const d = document.createElement("div");
+  d.className = "ba";
+  d.id = "ba-" + name.toLowerCase().replace(/[^a-z]/g, "");
+  d.innerHTML = `
+    <h3>${name}</h3>
+    <div class="pair">
+      <div class="col"><div class="checker of"></div><div class="lab">SHIPPED</div></div>
+      <div class="col"><div class="checker nf"></div><div class="lab">GENERATED</div></div>
+    </div>`;
+  d.querySelector(".of").appendChild(sprDiv(kind === "units" ? "oldunits" : "oldterr", col, row));
+  d.querySelector(".nf").appendChild(sprDiv(kind, col, row));
+  bag.appendChild(d);
+}
+
+document.querySelectorAll(".zoombar button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".zoombar button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    document.documentElement.style.setProperty("--zoom", b.dataset.z);
+  });
+});
+</script>
+</body>
+</html>

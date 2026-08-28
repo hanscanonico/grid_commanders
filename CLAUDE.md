@@ -147,9 +147,14 @@ plan is stated in full below and has no copy there.
   side's colour or name. Its fallbacks are load-bearing and total: a no-CO match is
   board-identical to before factions. The atlas-row order (`0 neutral, 1 meridian, 2 aurora,
   3 iron, 4 verdant`) is a contract between `SideIdentity._ROW_FOR_KEY` and the art pipeline —
-  since 2026-08-14 the sibling `sprite_generator` repo, whose `FACTIONS` tuple mirrors it row for
+  since 2026-08-14 `generators/sprites`, whose `palette.FACTIONS` tuple mirrors it row for
   row and reads this game's own `CommanderVisuals` themes; the original "rows 0–2 stay
-  byte-for-byte" clause retired with the PixVoxel art it froze.
+  byte-for-byte" clause retired with the PixVoxel art it froze. **That mirror is a test rather
+  than a comment** — `generators/sprites/tests/test_palette_mirror.py`, run by `make sprites-test`,
+  parses `commander_visuals.gd` and `side_identity.gd` and fails on the drifted key by name.
+  **The generator lives at `generators/sprites` since 2026-08-28** and every "generator `<hash>`"
+  citation below names a commit of the archived sibling repo, now also this repo's history through
+  the subtree; a change to the art is an ordinary PR here from that date on.
   **A property column of that atlas is a transparent overlay** (generator `e26154e`, adopted
   2026-08-18): the building, its plinth and an opaque shadow (solid since the clause below), alpha
   everywhere else, so a
@@ -1602,8 +1607,9 @@ res://
 │              # (tools/arena/), replay analyser (tools/replay/), art, sfx & music
 │              # pipeline
 ├─ generators/ # the asset pipelines that live in this repo rather than beside it —
-│              # audio/ is Python (make audio installs its output; make audio-test
-│              # is its gate). generators/.gdignore keeps the engine out entirely
+│              # audio/ and sprites/ are Python (make audio / make tiles install
+│              # their output; make audio-test / make sprites-test are their
+│              # gates). generators/.gdignore keeps the engine out entirely
 ├─ docs/        # the offline instruments' committed records (the Balance Lab, the
 │              # commander matrix, the difficulty ladder, the arena, Bulwark's spread,
 │              # the mobile soak), and how to author a campaign mission
