@@ -108,10 +108,8 @@ func _build() -> void:
 	# screen pushes both its ends off, which is how the Close button used to leave
 	# the viewport (COM-31, the same overflow the select page had). Here the cards
 	# row absorbs the slack and the title and button keep their edges.
-	var margin := MarginContainer.new()
+	var margin := UiKit.pad(null, UiTheme.PAGE_MARGIN, UiTheme.PAGE_MARGIN)
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, UiTheme.PAGE_MARGIN)
 	add_child(margin)
 
 	var rows := VBoxContainer.new()

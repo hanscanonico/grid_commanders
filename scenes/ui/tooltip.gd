@@ -177,6 +177,8 @@ func _build() -> void:
 	_slab.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_slab)
 
+	# Built by hand rather than through UiKit.pad: UiKit depends on Tooltip, so
+	# folding this one in would close a class_name cycle.
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", PAD_H)
 	pad.add_theme_constant_override("margin_right", PAD_H)

@@ -21,11 +21,7 @@ var _built_this_turn: Dictionary[Unit, bool] = {}
 func _ready() -> void:
 	add_theme_stylebox_override("panel", _panel_box())
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", PAD_X)
-	margin.add_theme_constant_override("margin_top", PAD_Y)
-	margin.add_theme_constant_override("margin_right", PAD_X)
-	margin.add_theme_constant_override("margin_bottom", PAD_Y)
+	var margin := UiKit.pad(null, PAD_X, PAD_Y)
 	add_child(margin)
 
 	_label = UiTheme.hud_label("", UiTheme.SIZE_TIP, UiTheme.WHITE)

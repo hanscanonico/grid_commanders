@@ -50,9 +50,7 @@ func layout_error() -> String:
 
 func _build() -> void:
 	add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
-	var margin := MarginContainer.new()
-	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, _PAD)
+	var margin := UiKit.pad(null, _PAD, _PAD)
 	add_child(margin)
 
 	_rows = VBoxContainer.new()
