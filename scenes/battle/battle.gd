@@ -159,11 +159,6 @@ var _range_shown := false:
 ## the board, and one that switched itself off whenever a unit was picked up would
 ## be off exactly when the question it answers is being asked.
 var _threat_shown := false
-var _attack_targets: Array[Vector2i] = []
-## Viewer-safe cargo choices for the open unit menu, and the one being targeted.
-## Each typed option keeps its passenger and cells together.
-var _drop_options: Array[BattlePerspective.DropOption] = []
-var _drop_option: BattlePerspective.DropOption
 var _pending_special_actions: Array[Dictionary] = []
 var _menu_context: StringName = &"unit"
 var _build_cell := Vector2i.ZERO
@@ -233,6 +228,9 @@ var _battle_auto: BattleAuto
 ## Owns aiming and firing a Command Power — the F key, the HUD's Fire button and
 ## the map menu's Power row. BattlePower's flow half; see BattlePowerFlow.
 var power: BattlePowerFlow
+## Aiming and shooting: the Fire row's targets, a transport's drop squares, and
+## the two commands they commit. Holds the only state this flow keeps of its own.
+var targeting: BattleTargeting
 ## Owns the hot-seat blackout and the viewer the board is drawn through; see
 ## BattleHandoff.
 var handoff: BattleHandoff
@@ -247,6 +245,7 @@ func _ready() -> void:
 	exit = BattleExit.new(self)
 	_battle_auto = BattleAuto.new(self)
 	power = BattlePowerFlow.new(self)
+	targeting = BattleTargeting.new(self, _run_command, _on_move_animation_done)
 	handoff = BattleHandoff.new(self)
 	BattleCampaign.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
@@ -647,16 +646,8 @@ func confirm_at(cell: Vector2i) -> void:
 					_reject("Occupied.", cell)
 			else:
 				_reject("Out of reach.", cell)
-		State.TARGETING:
-			if cell in _attack_targets:
-				_execute_attack(cell)
-			else:
-				_reject("No target there.", cell)
-		State.DROP_TARGETING:
-			if _drop_option != null and cell in _drop_option.cells:
-				_execute_drop(cell)
-			else:
-				_reject("Cannot unload there.", cell)
+		State.TARGETING, State.DROP_TARGETING:
+			targeting.confirm_at(cell)
 		State.POWER_TARGETING:
 			await power.fire_at(cell)
 		State.AI_TURN:
@@ -685,10 +676,8 @@ func _cancel() -> void:
 		clear_selection()
 	elif state == State.PREVIEW:
 		_clear_preview()
-	elif state == State.TARGETING:
-		_exit_targeting_to_menu()
-	elif state == State.DROP_TARGETING:
-		_exit_drop_targeting_to_menu()
+	elif state in [State.TARGETING, State.DROP_TARGETING]:
+		targeting.exit_to_menu()
 	elif state == State.POWER_TARGETING:
 		power.cancel_aim()
 
@@ -714,9 +703,7 @@ func clear_selection(refresh_board: bool = true) -> void:
 	selected = null
 	move_range = null
 	planned_path = []
-	_attack_targets = []
-	_drop_options = []
-	_drop_option = null
+	targeting.clear()
 	_range_shown = false
 	overlays.paint_move([])
 	overlays.paint_attack([])
@@ -828,11 +815,7 @@ func _on_move_animation_done() -> void:
 		special.append(BattleMenus.CANCEL)
 		action_menu.open(special, view.board_camera.screen_pos_for_cell(dest))
 		return
-	_attack_targets = perspective.attackable_cells(selected, dest, planned_path.size() > 1)
-	_drop_options = perspective.drop_options(selected, dest)
-	var actions := BattleMenus.unit_actions(
-		game, selected, planned_path, not _attack_targets.is_empty(), _drop_options
-	)
+	var actions := targeting.arm(selected, planned_path)
 	action_menu.open(actions, view.board_camera.screen_pos_for_cell(dest))
 
 
@@ -854,11 +837,11 @@ func _on_menu_action(action: StringName) -> void:
 func _handle_unit_action(action: StringName) -> void:
 	if String(action).begins_with("drop_"):
 		# The row's id carries which passenger it unloads (see BattleMenus).
-		_enter_drop_targeting(String(action).trim_prefix("drop_").to_int())
+		targeting.enter_drop(String(action).trim_prefix("drop_").to_int())
 		return
 	match action:
 		&"fire":
-			_enter_targeting()
+			targeting.enter_fire()
 		&"load":
 			# The refresh inside the pipeline hides the boarded sprite.
 			_run_command(LoadCommand.new(selected, planned_path), _undo_move_preview)
@@ -883,9 +866,10 @@ func _handle_unit_action(action: StringName) -> void:
 
 ## Every committed human flow but the power's shares this wrapper. Validation,
 ## application, snapshots and presentation belong to the pipeline; a caller owns
-## only the `on_reject` recovery its own interaction backs out to.
-## (`BattlePowerFlow._fire` still spells its own: sharing this one would need a
-## public seam and Battle is at its `max-public-methods` ceiling.)
+## only the `on_reject` recovery its own interaction backs out to. BattleTargeting
+## is handed it as a Callable for the same reason `BattlePowerFlow._fire` still
+## spells its own: a public seam would put Battle over its `max-public-methods`
+## ceiling.
 ##
 ## ANIMATING before the await, because the pipeline's presentation can hold this
 ## flow for seconds — the capture cut-in does — and MENU is a state the HUD's
@@ -1191,66 +1175,6 @@ func _undo_move_preview() -> void:
 	overlays.trace_path(planned_path)
 
 
-# --- attack flow -------------------------------------------------------------
-
-
-func _enter_targeting() -> void:
-	state = State.TARGETING
-	overlays.paint_attack(_attack_targets)
-	set_cursor_cell(_attack_targets[0])
-
-
-func _exit_targeting_to_menu() -> void:
-	overlays.paint_attack([])
-	view.update_damage_preview(null, cursor_cell)
-	_on_move_animation_done()  # recomputes targets and reopens the menu
-
-
-func _exit_drop_targeting_to_menu() -> void:
-	overlays.paint_move([])
-	_drop_options = []
-	_drop_option = null
-	_on_move_animation_done()  # recomputes targets and reopens the menu
-
-
-# --- transport flow ----------------------------------------------------------
-
-
-## The menu row names one typed option; its passenger and viewer-safe drop cells
-## stay paired from menu construction through command creation.
-func _enter_drop_targeting(index: int) -> void:
-	state = State.DROP_TARGETING
-	_drop_option = _drop_options[index]
-	overlays.paint_move(_drop_option.cells)
-	set_cursor_cell(_drop_option.cells[0])
-
-
-# The UI only offers legal drops and legal attacks, so the two recoveries below
-# are bug guards; each backs its own targeting state out to the unit menu.
-func _execute_drop(drop_cell: Vector2i) -> void:
-	var command := DropCommand.new(selected, planned_path, drop_cell, _drop_option.passenger)
-	_run_command(command, _exit_drop_targeting_to_menu)
-
-
-func _execute_attack(target_cell: Vector2i) -> void:
-	var command := AttackCommand.new(selected, planned_path, target_cell)
-	overlays.paint_attack([])
-	view.update_damage_preview(null, cursor_cell)
-	overlays.trace_path([])
-	_run_command(command, _exit_targeting_to_menu)
-
-
-## Whether a damage forecast applies at all is a flow question — only the
-## targeting state, with a real target under the cursor, has one to show.
-func _update_damage_preview() -> void:
-	var target := game.unit_at(cursor_cell)
-	if state != State.TARGETING or target == null or cursor_cell not in _attack_targets:
-		view.update_damage_preview(null, cursor_cell)
-		return
-	var dest: Vector2i = planned_path[planned_path.size() - 1]
-	view.update_damage_preview(CombatResolver.forecast(game, selected, dest, target), cursor_cell)
-
-
 # --- cursor ------------------------------------------------------------------
 
 
@@ -1263,7 +1187,7 @@ func set_cursor_cell(cell: Vector2i) -> void:
 			planned_path = move_range.path_to(cell)
 		overlays.trace_path(planned_path)
 	elif state == State.TARGETING:
-		_update_damage_preview()
+		targeting.refresh_forecast(cell)
 	elif state == State.POWER_TARGETING:
 		power.repaint(cell)
 
