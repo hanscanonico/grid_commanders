@@ -70,6 +70,7 @@ from spritegen.units import (
     Pose,
     build_model,
 )
+from spritegen import cell as cell_mod
 from spritegen import voxel
 from spritegen.voxel import (
     CAST,
@@ -2233,7 +2234,7 @@ class OneSun(unittest.TestCase):
             for pose in self._sheet_poses(uid):
                 with self.subTest(unit=uid, pose=pose.name):
                     lit, _ = self._split(atlas.unit_cell(uid, fac, pose), voxel.SHADOW)
-                    with mock.patch.object(voxel, "SHADOW_OFFSET", (0, 0)):
+                    with mock.patch.object(cell_mod, "SHADOW_OFFSET", (0, 0)):
                         bare, _ = self._split(
                             atlas.unit_cell(uid, fac, pose), voxel.SHADOW
                         )
@@ -2273,9 +2274,11 @@ class OneSun(unittest.TestCase):
                     cell = atlas.unit_cell(uid, fac, pose)
                     lit, hull = self._split(cell, voxel.SHADOW)
                     self.assertTrue(lit)
-                    with mock.patch.object(voxel, "SHADOW_OFFSET", (0, self.OFFSET[1])):
+                    with mock.patch.object(
+                        cell_mod, "SHADOW_OFFSET", (0, self.OFFSET[1])
+                    ):
                         no_throw = atlas.unit_cell(uid, fac, pose)
-                    with mock.patch.object(voxel, "SHADOW_OFFSET", (0, 0)):
+                    with mock.patch.object(cell_mod, "SHADOW_OFFSET", (0, 0)):
                         bare, _ = self._split(
                             atlas.unit_cell(uid, fac, pose), voxel.SHADOW
                         )
