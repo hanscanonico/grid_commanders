@@ -121,7 +121,7 @@ func test_a_run_with_the_override_open_writes_no_profile() -> void:
 	state.unlock_all = true
 	state.complete(campaign, &"three", 3, 4)
 	assert_false(CampaignProfile.save_progress(state), "the write is refused")
-	assert_null(CampaignProfile.load_progress(PROBE), "and nothing is on disk")
+	assert_false(FileAccess.file_exists(CampaignProfile.path_for(PROBE)), "and nothing is on disk")
 
 
 func test_the_override_leaves_the_profile_the_player_earned_exactly_as_it_was() -> void:
@@ -150,7 +150,7 @@ func test_erase_takes_the_siblings_with_it() -> void:
 	backup.store_string("{}")
 	backup.close()
 	CampaignProfile.erase(PROBE)
-	assert_null(CampaignProfile.load_progress(PROBE))
+	assert_false(FileAccess.file_exists(path))
 	assert_false(FileAccess.file_exists(path + CampaignProfile.BACKUP_SUFFIX))
 
 
