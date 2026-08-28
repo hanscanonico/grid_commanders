@@ -12,7 +12,11 @@ shoulder block and a flat field — the least a bust can be and still show wheth
 the four bands, the rim, the occlusion band and the cast shadow are doing their
 jobs. `uniform_props_backdrop` dresses that stand-in in every collar, chest
 treatment, prop and window field. `features_hair` puts one cell on the sheet per
-key of every vocabulary the face and the hair answer for.
+key of every vocabulary the face and the hair answer for. `sheet` is the whole
+roster as the game will load it: all twenty-three busts at 220 over one row per
+faction, and the 31px face-crop strip under them, which is the diagnostic
+image — a bust that cannot be told from its neighbour at chip size has not been
+drawn yet.
 
 Run it from the package root, the way the suite is run, so `portraitgen` is on
 the path.
@@ -29,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PIL import Image  # noqa: E402
 
+from portraitgen import bust as painter  # noqa: E402
 from portraitgen import (  # noqa: E402
     backdrop,
     features,
@@ -36,6 +41,7 @@ from portraitgen import (  # noqa: E402
     head,
     light,
     props,
+    roster,
     uniform,
 )
 from portraitgen.canvas import (  # noqa: E402
@@ -262,6 +268,33 @@ def _grid(cells: list[Canvas]) -> Image.Image:
     return page
 
 
+def _sheet(out: Path) -> list[Path]:
+    """The roster itself: one row per faction, and the chip strip under it."""
+    rows = [
+        [roster.FACES[key] for key in sorted(roster.FACES) if _army(key) == army]
+        for army in ("meridian", "iron", "aurora", "verdant")
+    ]
+    painted = [[painter.paint(face) for face in row] for row in rows]
+    painted.append([painter.paint(roster.NEUTRAL)])
+    width, height = PORTRAIT_SIZE
+    page = Image.new(
+        "RGBA",
+        (width * max(map(len, painted)), height * len(painted)),
+        (35, 39, 43, 255),
+    )
+    for index, row in enumerate(painted):
+        page.alpha_composite(_row(row), (0, index * height))
+    every = [drawn for row in painted for drawn in row]
+    return [
+        _write(out / "contact_sheet.png", page),
+        _write(out / "face_crops.png", _chips(every)),
+    ]
+
+
+def _army(key: str) -> str:
+    return painter.FACTION_OF[key]
+
+
 def _features_hair(out: Path) -> list[Path]:
     """Every eye, brow, nose, mouth, beard, accessory and hairstyle, once."""
     skin = light.build_ramp(SKIN)
@@ -279,6 +312,7 @@ PARTS = {
     "light_head": _light_head,
     "uniform_props_backdrop": _uniform_props_backdrop,
     "features_hair": _features_hair,
+    "sheet": _sheet,
 }
 
 

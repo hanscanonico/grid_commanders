@@ -51,6 +51,13 @@ CHEST_DEFAULT = "plain"
 # UiTheme.AMMO, the one gold the portraits borrow.
 GOLD: RGB = (224, 169, 46)
 
+# The two patches the sheet's one light is measured on
+# (`tests/unit/test_commander_portraits.gd`) are the outer shoulder wedges, and
+# a payload dark enough to cover one of them turns a bust's light around. So a
+# chest treatment is worn on the chest: nothing below the collar line reaches
+# further out than this, at any zoom the roster poses at.
+PAYLOAD_INBOARD = 52.0
+
 # The uniform mass every bust rises out of, in portrait pixels: the handoff's
 # shoulder path, its two quadratics cut into chamfers so the whole outline is
 # one polygon the ink and the shade can both follow.
@@ -191,11 +198,12 @@ _COLLARS: dict[str, Callable[[Canvas, Faction, Ramp], None]] = {
 
 def _plain(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     """No payload: a breast pocket and its flap, in seam and shade alone."""
+    left, right = PAYLOAD_INBOARD, PAYLOAD_INBOARD + 38.0
     canvas.polygon(
-        [(40.0, 236.0), (78.0, 236.0), (78.0, 262.0), (40.0, 262.0)],
+        [(left, 236.0), (right, 236.0), (right, 262.0), (left, 262.0)],
         (*ramp.shade, 255),
     )
-    canvas.stroke([(40.0, 244.0), (78.0, 244.0)], INK_DETAIL, (*ramp.deep, 255))
+    canvas.stroke([(left, 244.0), (right, 244.0)], INK_DETAIL, (*ramp.deep, 255))
 
 
 def _sash(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
@@ -224,15 +232,16 @@ def _bandolier(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _pouch(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    canvas.rect((36.0, 230.0, 78.0, 266.0), (*ramp.deep, 255))
-    canvas.rect((36.0, 230.0, 78.0, 242.0), (*faction.body_dk, 255))
+    left, right = PAYLOAD_INBOARD, PAYLOAD_INBOARD + 42.0
+    canvas.rect((left, 230.0, right, 266.0), (*ramp.deep, 255))
+    canvas.rect((left, 230.0, right, 242.0), (*faction.body_dk, 255))
     _ink(
         canvas,
-        [(36.0, 230.0), (78.0, 230.0), (78.0, 266.0), (36.0, 266.0)],
+        [(left, 230.0), (right, 230.0), (right, 266.0), (left, 266.0)],
         INK_DETAIL,
         closed=True,
     )
-    _stud(canvas, (57.0, 248.0), 4.0, GOLD)
+    _stud(canvas, (left + 21.0, 248.0), 4.0, GOLD)
 
 
 def _mapcase(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:

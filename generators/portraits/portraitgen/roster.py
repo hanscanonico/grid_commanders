@@ -1,6 +1,6 @@
 """The FACES table: one row per general, the columns the painter draws from.
 
-Transcribed from `tools/commander_faces.gd` column for column — it is a port,
+Transcribed column for column off the GDScript face table it replaced — it is a port,
 not a re-art — and the vocabularies each column is drawn from are owned by the
 module that draws them, never restated here. Rows are in the GDScript table's
 own order so the two read side by side.
@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .head import HEAD_DEFAULT, Skull
+from .head import HEAD_DEFAULT, SKIN_BASES, Skull
+from .uniform import CHEST_DEFAULT
 
 Pose = tuple[float, float, bool]
 
@@ -20,9 +21,15 @@ class Face:
     """One general's spec.
 
     `skin` and `hair` name a ramp, `style` a hair mass, `brow`/`eyes`/`mouth`/
-    `nose`/`facial`/`acc` a feature glyph, `collar` a cut, `bg` a backdrop and
-    `prop` a signature prop; `eye` scales the eyes (0.82-1.06), `head` is the
-    skull's four dials and `pose` is [tilt degrees, zoom, mirrored].
+    `nose`/`facial`/`acc` a feature glyph, `collar` a cut, `chest` what is worn
+    under it, `bg` a backdrop and `prop` a signature prop; `eye` scales the eyes
+    (0.82-1.06), `head` is the skull's four dials and `pose` is
+    [tilt degrees, zoom, mirrored].
+
+    `chest` is the one column the GDScript table had no field for: it wore one
+    diagonal sash five times over, and the review's own bar is that no chest
+    treatment is shared by more than two. It is named per row here for the
+    same reason every other column is.
     """
 
     id: str
@@ -41,6 +48,7 @@ class Face:
     pose: Pose
     bg: str
     prop: str
+    chest: str = CHEST_DEFAULT
     pip: bool = False
     earring: bool = False
     freckles: bool = False
@@ -61,7 +69,8 @@ class EmptySeat:
     bg: str
 
 
-SKIN_TONES = frozenset({"dark", "light", "medium", "pale", "tan"})
+# The skins the head module can paint; named there because it paints them.
+SKIN_TONES = frozenset(SKIN_BASES)
 
 NEUTRAL_ID = "none"
 NEUTRAL = EmptySeat(head=Skull(*HEAD_DEFAULT), pose=(0.0, 1.18, False), bg="bars")
@@ -71,6 +80,7 @@ FACES: dict[str, Face] = {
     for face in (
         Face(
             id="alina_ward",
+            chest="sash",
             skin="light",
             hair="auburn",
             style="long",
@@ -90,6 +100,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="gideon_holt",
+            chest="placket",
             skin="medium",
             hair="grey",
             style="short",
@@ -108,6 +119,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="rhea_sol",
+            chest="loops",
             skin="tan",
             hair="black",
             style="ponytail",
@@ -126,6 +138,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="cass_orlov",
+            chest="crossbelt",
             skin="light",
             hair="brown",
             style="buzz",
@@ -144,6 +157,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="mara_voss",
+            chest="bandolier",
             skin="medium",
             hair="black",
             style="bun",
@@ -162,6 +176,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="viktor_draeg",
+            chest="boards",
             skin="light",
             hair="grey",
             style="bald",
@@ -180,6 +195,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="cassian_rook",
+            chest="lanyard",
             skin="light",
             hair="blonde",
             style="sidepart",
@@ -198,6 +214,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="lyra_quill",
+            chest="placket",
             skin="pale",
             hair="platinum",
             style="bob",
@@ -216,6 +233,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="orin_flux",
+            chest="lanyard",
             skin="medium",
             hair="black",
             style="spiky",
@@ -234,6 +252,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="nia_rowan",
+            chest="pouch",
             skin="tan",
             hair="brown",
             style="braid",
@@ -253,6 +272,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="sable_wren",
+            chest="scarf",
             skin="pale",
             hair="black",
             style="hood",
@@ -271,6 +291,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="tomas_reed",
+            chest="pouch",
             skin="dark",
             hair="black",
             style="curly",
@@ -289,6 +310,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="ines_calder",
+            chest="mapcase",
             skin="dark",
             hair="black",
             style="bun",
@@ -307,6 +329,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="konrad_vale",
+            chest="boards",
             skin="pale",
             hair="platinum",
             style="sidepart",
@@ -325,6 +348,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="perrin_ash",
+            chest="crossbelt",
             skin="tan",
             hair="auburn",
             style="short",
@@ -343,6 +367,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="halden_marr",
+            chest="epaulette",
             skin="medium",
             hair="grey",
             style="curly",
@@ -361,6 +386,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="dane_ferrow",
+            chest="plain",
             skin="dark",
             hair="black",
             style="buzz",
@@ -379,6 +405,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="iris_colt",
+            chest="scarf",
             skin="light",
             hair="blonde",
             style="ponytail",
@@ -398,6 +425,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="sera_lark",
+            chest="mapcase",
             skin="dark",
             hair="darkbrown",
             style="ponytail",
@@ -416,6 +444,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="iona_vance",
+            chest="epaulette",
             skin="tan",
             hair="brown",
             style="bob",
@@ -435,6 +464,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="ivar_thorne",
+            chest="sash",
             skin="light",
             hair="darkbrown",
             style="long",
@@ -454,6 +484,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="radek_morn",
+            chest="bandolier",
             skin="medium",
             hair="darkbrown",
             style="bald",

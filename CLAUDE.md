@@ -123,12 +123,14 @@ res://
 ├─ maps/        # map scenes / map resources (campaign boards under maps/campaign/)
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
-│              # (tools/arena/), replay analyser (tools/replay/), art, sfx & music
-│              # pipeline
+│              # (tools/arena/), replay analyser (tools/replay/), the UI-chrome
+│              # art pipeline
 ├─ generators/ # the asset pipelines that live in this repo rather than beside it —
-│              # audio/ and sprites/ are Python (make audio / make tiles install
-│              # their output; make audio-test / make sprites-test are their
-│              # gates). generators/.gdignore keeps the engine out entirely
+│              # audio/, sprites/ and portraits/ are Python (make audio / make tiles /
+│              # make portraits install their output; make audio-test /
+│              # make sprites-test / make portraits-test are their gates, and
+│              # make portraits-snapshot re-reads the installed art).
+│              # generators/.gdignore keeps the engine out entirely
 ├─ docs/        # the offline instruments' committed records (the Balance Lab, the
 │              # commander matrix, the difficulty ladder, the arena, Bulwark's spread,
 │              # the mobile soak), and how to author a campaign mission

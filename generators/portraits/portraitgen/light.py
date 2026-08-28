@@ -248,8 +248,23 @@ def _shifted(mask: Image.Image, dx: int, dy: int) -> Image.Image:
     return moved
 
 
+def _step(mirrored: bool) -> tuple[int, int]:
+    """Which way the light falls for a layer, in that layer's own x.
+
+    A layer the pose is about to mirror is drawn with its light pre-flipped in
+    x, so the band lands on the screen's shadow side once the layer is turned
+    over. The sun itself never moves; this is the flip a mirror owes it.
+    """
+    return (-SHADOW_STEP[0] if mirrored else SHADOW_STEP[0], SHADOW_STEP[1])
+
+
 def occlusion(
-    occluder: Image.Image, target: Image.Image, *, depth: float, scale: int = 1
+    occluder: Image.Image,
+    target: Image.Image,
+    *,
+    depth: float,
+    scale: int = 1,
+    mirrored: bool = False,
 ) -> Image.Image:
     """The AO pass: where an occluder's own shape lands on what is under it.
 
@@ -262,7 +277,8 @@ def occlusion(
     is stated in portrait pixels at every call site.
     """
     step = max(1, round(depth * scale))
-    below = _shifted(occluder, SHADOW_STEP[0] * step, SHADOW_STEP[1] * step)
+    away = _step(mirrored)
+    below = _shifted(occluder, away[0] * step, away[1] * step)
     return ImageChops.multiply(ImageChops.subtract(below, occluder), target)
 
 
@@ -273,6 +289,7 @@ def rim_light(
     weight: float,
     inset: float = 0.0,
     scale: int = 1,
+    mirrored: bool = False,
 ) -> Image.Image:
     """The kicker along the shadow-side silhouette run, as an RGBA layer.
 
@@ -284,8 +301,9 @@ def rim_light(
     """
     step = max(1, round(weight * scale))
     walked = round(inset * scale)
-    outer = _shifted(silhouette, -SHADOW_STEP[0] * walked, -SHADOW_STEP[1] * walked)
-    inner = _shifted(outer, -SHADOW_STEP[0] * step, -SHADOW_STEP[1] * step)
+    away = _step(mirrored)
+    outer = _shifted(silhouette, -away[0] * walked, -away[1] * walked)
+    inner = _shifted(outer, -away[0] * step, -away[1] * step)
     band = ImageChops.subtract(outer, inner)
     layer = Image.new("RGBA", silhouette.size, (0, 0, 0, 0))
     layer.paste(Image.new("RGBA", silhouette.size, (*ramp.rim, 255)), (0, 0), band)

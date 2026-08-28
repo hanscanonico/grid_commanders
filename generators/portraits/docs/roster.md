@@ -1,7 +1,7 @@
 # The roster
 
 `portraitgen/roster.py` is the only per-general data in this pipeline: eighteen
-columns per bust, transcribed from the game's old `tools/commander_faces.gd`
+columns per bust, transcribed from the game's retired GDScript face table
 column for column. Every column names into a vocabulary owned by the module that
 draws it, so this table says *which* mark a general wears and never *how* it is
 drawn. `tests/test_roster.py` holds it to the lints the GUT suite used to carry,

@@ -5,7 +5,7 @@ a couple of Manhattan diamonds and bands, drawn **at 1x with integer geometry**
 rather than through the supersampled canvas the busts use. That is a decision,
 not an oversight — the shapes are axis-aligned and 45-degree, so a supersample
 buys nothing but a soft edge, and drawing them the way
-`tools/generate_portraits.gd::_draw_emblem` did keeps the committed PNGs pixel
+the retired GDScript bake's `_draw_emblem` did keeps the committed PNGs pixel
 for pixel what they already are.
 """
 
