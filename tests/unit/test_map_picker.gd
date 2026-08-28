@@ -55,13 +55,26 @@ func _rng(seed_value: int) -> RandomNumberGenerator:
 	return rng
 
 
+## The board in hand is never the teaching one here, so only the pool's own
+## filter can keep the tutorial out of the draw.
 func test_random_never_draws_the_teaching_board() -> void:
 	var maps := MapCatalog.ordered(Fixture.terrain_db())
 	for s in 40:
-		var index := MapPicker.random_index(maps, 0, _rng(s))
+		var index := MapPicker.random_index(maps, 1 + s % (maps.size() - 1), _rng(s))
 		assert_false(
 			MapCatalog.teaches(maps[index].source_path), "seed %d drew the tutorial board" % s
 		)
+
+
+## The same exclusion, pinned rather than sampled: on a three-board roster whose
+## first is the tutorial and whose second is in hand, the third is the only legal
+## draw at any seed.
+func test_a_three_board_roster_leaves_one_legal_draw() -> void:
+	var roster := MapCatalog.ordered(Fixture.terrain_db())
+	assert_true(MapCatalog.teaches(roster[0].source_path), "the roster leads with the tutorial")
+	var maps: Array[MapData] = [roster[0], roster[1], roster[2]]
+	for s in 20:
+		assert_eq(MapPicker.random_index(maps, 1, _rng(s)), 2, "seed %d" % s)
 
 
 func test_random_never_draws_the_board_in_hand() -> void:
