@@ -38,21 +38,6 @@ static func load_default() -> BalanceHarness:
 	return harness
 
 
-## Validates a numeric flag's raw text before coercing it: an integer at least
-## `min_value`, or -1 (never legal for any flag that asks) otherwise — so
-## `--seeds=four` and `--days=-5` refuse out loud instead of the old
-## `maxi(1, int(...))` quietly landing on 1.
-##
-## The refusal itself is `positive_flag` / `count_flag` below: the message names
-## the flag and the tool that read it, so a driver passes both rather than
-## spelling the block again.
-static func int_flag(value: String, min_value: int) -> int:
-	if not value.is_valid_int():
-		return -1
-	var parsed := value.to_int()
-	return parsed if parsed >= min_value else -1
-
-
 ## A board by name — a fixture for the commander matrix, a shipped map for the
 ## difficulty ladder or the Lab — read once per run and shared across every match
 ## played on it. Safe to share: GameState.create copies the ownership it needs
@@ -96,6 +81,19 @@ static func count_flag(tool_name: String, flag: String, value: String) -> int:
 	return _bounded_flag(tool_name, flag, value, 0, "a non-negative integer")
 
 
+## `--fog=on`, `--fog=off`: 1 or 0, or -1 with the refusal pushed. A switch is
+## the one flag shape where a typo has no shape of its own — anything that is
+## not "on" reads as off — so it is refused by name like every number beside it.
+static func bool_flag(tool_name: String, flag: String, value: String) -> int:
+	var text := value.strip_edges().to_lower()
+	if text in ["on", "true", "1"]:
+		return 1
+	if text in ["off", "false", "0"]:
+		return 0
+	push_error("%s: %s is on/true/1 or off/false/0 (got '%s')" % [tool_name, flag, value])
+	return -1
+
+
 ## `--out=`: the directory a run may write to, or "" with the refusal pushed.
 ## BalanceReportWriter.resolve_out is still the single authority on where that
 ## is; what this adds is the one wording every driver refuses a stray path with.
@@ -111,10 +109,23 @@ static func out_flag(tool_name: String, value: String) -> String:
 	return resolved
 
 
+static func _int_flag(value: String, min_value: int) -> int:
+	if not value.is_valid_int():
+		return -1
+	var parsed := value.to_int()
+	return parsed if parsed >= min_value else -1
+
+
+## Validates a numeric flag's raw text before coercing it: an integer at least
+## `min_value`, or -1 (never legal for any flag that asks) otherwise — so
+## `--seeds=four` and `--days=-5` refuse out loud instead of the old
+## `maxi(1, int(...))` quietly landing on 1. The message names the flag and the
+## tool that read it, so a driver passes both rather than spelling the block
+## again.
 static func _bounded_flag(
 	tool_name: String, flag: String, value: String, min_value: int, shape: String
 ) -> int:
-	var parsed := int_flag(value.strip_edges(), min_value)
+	var parsed := _int_flag(value.strip_edges(), min_value)
 	if parsed < 0:
 		push_error("%s: %s must be %s (got '%s')" % [tool_name, flag, shape, value])
 	return parsed

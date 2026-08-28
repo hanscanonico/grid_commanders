@@ -75,3 +75,13 @@ func test_out_flag_refuses_a_path_outside_reports() -> void:
 func test_flags_strip_padding() -> void:
 	assert_eq(BalanceHarness.positive_flag("balance", "--days", " 20 "), 20)
 	assert_eq(BalanceHarness.out_flag("balance", " reports/flag_test "), "reports/flag_test")
+
+
+## A switch is the one flag shape where a typo has no shape of its own, so
+## `--fog=of` refused by name rather than reading as off.
+func test_bool_flag_refuses_a_word_it_does_not_know() -> void:
+	assert_eq(BalanceHarness.bool_flag("mobile-soak", "--fog", "on"), 1)
+	assert_eq(BalanceHarness.bool_flag("mobile-soak", "--fog", " TRUE "), 1, "stripped and cased")
+	assert_eq(BalanceHarness.bool_flag("mobile-soak", "--fog", "0"), 0)
+	assert_eq(BalanceHarness.bool_flag("mobile-soak", "--fog", "of"), -1)
+	assert_push_error("mobile-soak: --fog is on/true/1 or off/false/0 (got 'of')")

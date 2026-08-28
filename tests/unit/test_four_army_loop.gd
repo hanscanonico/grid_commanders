@@ -107,3 +107,32 @@ func test_the_mean_and_median_answer_both_sample_sizes() -> void:
 	assert_almost_eq(FourArmyLoop.median([6, 1, 2]), 2.0, 0.001, "sorted before the middle")
 	assert_almost_eq(FourArmyLoop.median([1, 2, 3, 6]), 2.5, 0.001, "the two middles, averaged")
 	assert_almost_eq(FourArmyLoop.mean([1.5, 2.5]), 2.0, 0.001, "floats too")
+
+
+## The grouping grammar both drivers state their sides in, read once: `ffa` and
+## the empty grammar are the free-for-all `GameState.allied` reads as an empty
+## dictionary, and everything else is seats.
+func test_a_grouping_reads_as_the_sides_a_match_is_played_under() -> void:
+	assert_eq(FourArmyLoop.sides_of(""), {} as Dictionary[int, int], "the empty grammar")
+	assert_eq(FourArmyLoop.sides_of("ffa"), {} as Dictionary[int, int], "both spellings")
+	assert_eq(FourArmyLoop.sides_of("1+2+3v4"), {1: 0, 2: 0, 3: 0, 4: 1} as Dictionary[int, int])
+	assert_eq(FourArmyLoop.sides_of("1+3v2+4"), {1: 0, 3: 0, 2: 1, 4: 1} as Dictionary[int, int])
+
+
+## docs/bulwark_balance.md's committed readings are this arithmetic's, so it is
+## pinned by value: the first match is seed 1, and `--seed-offset=` skips a
+## prefix of the same run rather than moving it to another stream.
+func test_the_seed_is_the_offset_plus_the_index_plus_one() -> void:
+	assert_eq(FourArmyLoop.seed_at(0, 0), 1, "the first match of a fresh run")
+	assert_eq(FourArmyLoop.seed_at(0, 29), 30)
+	assert_eq(FourArmyLoop.seed_at(30, 0), 31, "a rerun extends the sample")
+
+
+## The tail a clock is read by, and the worst value in it.
+func test_the_percentile_and_the_max_read_the_sorted_sample() -> void:
+	assert_eq(FourArmyLoop.percentile([], 0.9), 0.0, "an empty sample")
+	assert_eq(FourArmyLoop.max_of([]), 0.0)
+	assert_almost_eq(FourArmyLoop.percentile([5, 1, 3, 2, 4], 0.5), 3.0, 0.001, "sorted first")
+	assert_almost_eq(FourArmyLoop.percentile([5, 1, 3, 2, 4], 0.9), 4.0, 0.001)
+	assert_almost_eq(FourArmyLoop.percentile([5, 1, 3, 2, 4], 1.0), 5.0, 0.001, "the top")
+	assert_almost_eq(FourArmyLoop.max_of([1.5, 9.25, 2.0]), 9.25, 0.001)

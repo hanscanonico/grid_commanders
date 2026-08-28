@@ -188,20 +188,9 @@ func _plan(
 	return {
 		"label": label,
 		"slug": slug,
-		"sides": _sides_of(grammar),
+		"sides": FourArmyLoop.sides_of(grammar),
 		"side_names": side_names,
 	}
-
-
-## `MatchRequest.parse_sides_flag` is the one reader of the grouping grammar —
-## the flag a launch states its sides with, so a measured grouping and a played
-## one can never be two different readings of the same string.
-func _sides_of(grammar: String) -> Dictionary[int, int]:
-	var sides: Dictionary[int, int] = {}
-	var parsed := MatchRequest.parse_sides_flag(grammar)
-	for seat: int in parsed:
-		sides[seat] = int(parsed[seat])
-	return sides
 
 
 func _tier_names(tiers: DifficultyDB) -> Array[String]:
@@ -221,7 +210,7 @@ func _run(run: Dictionary) -> bool:
 	print("%s: %s — %d seeds, %d-day horizon" % [_map_name, label, _seed_count, _days_cap])
 	var rows: Array[Dictionary] = []
 	for i in _seed_count:
-		var seed_val := _seed_offset + i + 1
+		var seed_val := FourArmyLoop.seed_at(_seed_offset, i)
 		var row := _play(run, seed_val)
 		if row.is_empty():
 			push_error(
