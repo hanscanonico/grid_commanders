@@ -23,6 +23,10 @@
 
 set -uo pipefail
 
+# Sourced before the cd: $0 may be a relative path, and it is the caller's
+# working directory that makes it resolve.
+source "$(dirname "$0")/lib/require_godot.sh" || exit 1
+
 # Every path below is repo-relative, and OUT_DIR is rm -rf'd — run from
 # anywhere else and that either fells a stranger's reports/determinism or
 # silently no-ops. cd to the repo root derived from $0, not
@@ -97,11 +101,7 @@ elif (($#)); then
 	exit 2
 fi
 
-if [[ ! -x "$GODOT" ]]; then
-	echo "determinism: Godot binary not found at $GODOT" >&2
-	echo "determinism: see README.md for engine setup, or pass GODOT=<path>" >&2
-	exit 1
-fi
+require_godot determinism
 
 rm -rf "$OUT_DIR"
 if ! log="$("$GODOT" --headless --path . -s res://tools/run_balance_sim.gd -- "${SIM_ARGS[@]}" 2>&1)"; then

@@ -19,6 +19,10 @@
 
 set -uo pipefail
 
+# Sourced before the cd: $0 may be a relative path, and it is the caller's
+# working directory that makes it resolve.
+source "$(dirname "$0")/lib/require_godot.sh" || exit 1
+
 # Repo-relative throughout, and the generated configs are written to a mktemp
 # directory rather than the tree — a config in res:// would be a second, stale
 # statement of what the suite is.
@@ -36,11 +40,7 @@ SLOW_TESTS=(
 	"$TEST_DIR/test_campaign_soak.gd"
 )
 
-if [[ ! -x "$GODOT" ]] && ! command -v "$GODOT" >/dev/null; then
-	echo "test: Godot binary not found at $GODOT" >&2
-	echo "test: see README.md for engine setup, or pass GODOT=<path>" >&2
-	exit 1
-fi
+require_godot test
 
 if [[ ${TEST_JOBS:-} == "1" || ${SERIAL:-} == "1" ]]; then
 	exec "$GODOT" --headless --path . -s res://addons/gut/gut_cmdln.gd

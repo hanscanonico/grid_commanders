@@ -41,6 +41,7 @@
 set -uo pipefail
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
+source "$(dirname "$0")/lib/require_godot.sh" || exit 1
 BATTLE="${BATTLE:-scenes/battle/battle.tscn}"
 # Every boot opens a window — one per group, not one per scenario. Launching
 # through the wrapper keeps a scripted/agent run (no tty) from stealing the
@@ -351,11 +352,7 @@ DEFAULT_MODES=(
 # `make smoke MODES=mobile_back`. It drives the touch dock out of all four
 # targeting states and through a paused computer turn (mobile plan MB3).
 
-if [[ ! -x "$GODOT" ]]; then
-	echo "smoke: Godot binary not found at $GODOT" >&2
-	echo "smoke: see README.md for engine setup, or pass GODOT=<path>" >&2
-	exit 1
-fi
+require_godot smoke
 
 modes=("$@")
 if ((${#modes[@]} == 0)); then

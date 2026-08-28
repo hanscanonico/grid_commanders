@@ -17,6 +17,10 @@
 
 set -uo pipefail
 
+# Sourced before the cd: $0 may be a relative path, and it is the caller's
+# working directory that makes it resolve.
+source "$(dirname "$0")/lib/require_godot.sh" || exit 1
+
 # Every path below (project.godot, .godot/*, the res://-relative scripts
 # themselves) is repo-relative — run from anywhere else and the sweep
 # silently checks nothing. cd to the repo root derived from $0, not
@@ -212,11 +216,7 @@ ai/ai_unit_action_planner.gd 665
 scenes/battle/battle_scenario_driver.gd 737
 "
 
-if [[ ! -x "$GODOT" ]]; then
-	echo "check: Godot binary not found at $GODOT" >&2
-	echo "check: see README.md for engine setup, or pass GODOT=<path>" >&2
-	exit 1
-fi
+require_godot check
 
 # Every project script, in a stable order, NUL-separated so a path with a
 # space or newline in it survives every pipeline below. .claude/worktrees
