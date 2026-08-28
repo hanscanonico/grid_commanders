@@ -542,11 +542,26 @@ def self_check():
         for index, (label, shards, agree) in enumerate(MERGE_CASES):
             sources = []
             for number, text in enumerate(shards):
-                path = os.path.join(scratch, "m%d_%d.csv" % (index, number))
+                shard = os.path.join(scratch, "m%d" % index, "shard_%d" % number)
+                os.makedirs(shard)
+                path = os.path.join(shard, "matches.csv")
                 with open(path, "w") as f:
                     f.write(text)
                 sources.append(path)
-            ok = bool(header_mismatch(sources)) != agree
+            dest = os.path.join(scratch, "m%d" % index, "matches.csv")
+            rows, error = merge_csv(dest, sources)
+            if agree:
+                ok = not error and rows == len(sources) and os.path.exists(dest)
+            else:
+                ## The refusal has to name the shard and both headers, or the
+                ## reader cannot tell which run to throw away.
+                ok = (
+                    rows == 0
+                    and not os.path.exists(dest)
+                    and "shard_1" in error
+                    and shards[0].strip() in error
+                    and shards[1].strip() in error
+                )
             failures += 0 if ok else 1
             print("%-4s merge: %s" % ("ok" if ok else "FAIL", label))
 
