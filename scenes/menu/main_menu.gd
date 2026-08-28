@@ -168,7 +168,7 @@ func _ready() -> void:
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
 	_quit_button.pressed.connect(get_tree().quit)
-	if _capture_driver.poses_setup_context():
+	if _capture_driver.poses(MenuCaptureDriver.DEMO_SETUP_CONTEXT):
 		# The frame that photographs the dimmed Difficulty: a table of nothing but
 		# people has no computer to tune. Posed by seating everyone rather than by
 		# focusing a mode button, because the seats are the rule's subject now.
@@ -177,16 +177,12 @@ func _ready() -> void:
 		_refresh_seats()
 	_start_button.grab_focus()
 
-	# Dev captures of the seat strip: `--menu-map=<name>` selects a board by the
-	# name MapCatalog knows it by, and `--menu-preset=<n>` applies one of
-	# SeatStrip.PRESETS by index. Together they photograph the strip at four seats
-	# in each grouping, which is the frame a two-army board cannot show.
-	await _pose_seats(CmdArgs.user())
+	await _pose_seats()
 
 	# The replays page photographs a posed list over a hidden menu, exactly as the
 	# selection page below does, so it hands in its own chrome for the same reason:
 	# the menu's geometry is not what that picture claims.
-	if _capture_driver.poses_replays():
+	if _capture_driver.poses(MenuCaptureDriver.DEMO_REPLAYS):
 		_open_replays()
 		await _capture_driver.capture(shot_path, _replay_panel.chrome)
 		return
@@ -220,62 +216,23 @@ func _ready() -> void:
 		await _capture_driver.capture(shot_path, chrome)
 
 
-## Dev captures only: selects a board and applies a grouping preset, so the seat
-## strip can be photographed at more seats than the default board deals. Not on
-## any play path — a run that asks for none of them does nothing here.
-##
-## A miss on either flag is said out loud rather than posed quietly: the capture
-## would then be taken on the default board in the default grouping and look
-## exactly like a correct run, which is the failure `debug_preview` and
-## `apply_cmdline`'s `--map` both refuse for the same reason — a typo has to be
-## visible in the output or the shot proves the wrong thing.
-func _pose_seats(args: PackedStringArray) -> void:
-	# `menu_four_seats` asks for the same thing by mode rather than by board: the
-	# picker's `· NP` mark and a strip of more than two rows, which every other
-	# menu scenario's tutorial board says neither of.
-	if _capture_driver.poses_four_seats():
+## Dev captures only: selects the board and applies the grouping the driver read
+## off the command line, so the seat strip can be photographed at more seats than
+## the default board deals. Not on any play path — a run that asks for none of
+## them does nothing here.
+func _pose_seats() -> void:
+	# `menu_four_seats` asks for a board by mode rather than by name: the picker's
+	# `· NP` mark and a strip of more than two rows, which every other menu
+	# scenario's tutorial board says neither of.
+	if _capture_driver.poses(MenuCaptureDriver.DEMO_FOUR_SEATS):
 		await _map_picker.show_map(_capture_driver.four_seat_map(_map_picker.maps()))
-	var wanted := CmdArgs.value(args, "--menu-map")
-	if wanted != "":
-		var path := MapCatalog.resolve(wanted)
-		var maps := _map_picker.maps()
-		var found := -1
-		for i in maps.size():
-			if maps[i].source_path == path:
-				found = i
-				break
-		if found < 0:
-			var shown := _map_picker.selected_map()
-			push_error(
-				(
-					"main menu: no board '%s'; this capture shows %s. Known: %s"
-					% [
-						wanted,
-						"no board" if shown == null else MapCatalog.display_name(shown.source_path),
-						", ".join(MapCatalog.resolvable_names()),
-					]
-				)
-			)
-		await _map_picker.show_map(found)
-	if not CmdArgs.has(args, "--menu-preset"):
-		return
-	var wanted_preset := CmdArgs.value(args, "--menu-preset")
-	if not wanted_preset.is_valid_int():
-		push_error(
-			(
-				"main menu: '%s' is not a grouping preset; this capture shows the grouping in hand"
-				% wanted_preset
-			)
-		)
-		return
-	var preset := int(wanted_preset)
-	if preset < 0 or preset >= SeatStrip.PRESETS.size():
-		push_error(
-			"main menu: no grouping preset %d; this capture shows the grouping in hand" % preset
-		)
-		return
-	_seat_strip.apply_preset_at(preset)
-	_refresh_seats()
+	var wanted := _capture_driver.menu_map_index(_map_picker.maps(), _map_picker.selected_map())
+	if wanted >= 0:
+		await _map_picker.show_map(wanted)
+	var preset := _capture_driver.menu_preset()
+	if preset >= 0:
+		_seat_strip.apply_preset_at(preset)
+		_refresh_seats()
 
 
 # --- layout ------------------------------------------------------------------
@@ -688,7 +645,11 @@ func _on_selection_cancelled() -> void:
 func _open_replays() -> void:
 	_menu_root.hide()
 	_replay_panel.begin(
-		_capture_driver.posed_replays() if _capture_driver.poses_replays() else ReplayFile.list()
+		(
+			_capture_driver.posed_replays()
+			if _capture_driver.poses(MenuCaptureDriver.DEMO_REPLAYS)
+			else ReplayFile.list()
+		)
 	)
 
 
