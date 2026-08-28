@@ -101,9 +101,34 @@ static func grouping_readable(tool: String, grouping: String, options: String) -
 	return true
 
 
-## Mean and median over the values a run banked — the match lengths that
-## resolved, the milliseconds a command took. An empty sample reports 0.0, which
-## the count reported beside it is what tells apart from a real average.
+## The grouping a run plays, as `GameState.sides` wants it.
+## `MatchRequest.parse_sides_flag` is the one reader of the grammar — the flag a
+## launch states its sides with, so a measured grouping and a played one can
+## never be two different readings of the same string — and `ffa` is what a
+## reader types for the free-for-all it answers the empty grammar with.
+static func sides_of(grouping: String) -> Dictionary[int, int]:
+	var sides: Dictionary[int, int] = {}
+	if grouping == "" or grouping == "ffa":
+		return sides
+	var parsed := MatchRequest.parse_sides_flag(grouping)
+	for seat: int in parsed:
+		sides[seat] = int(parsed[seat])
+	return sides
+
+
+## The seed a run's `index`-th match is played on. Deliberately not
+## `BalanceMatchSchedule.seed_at`, which keys on the board so two maps in one
+## sweep play different streams: here `--seed-offset=` skips a prefix of one
+## board's own run so a rerun extends a sample instead of repeating it, and
+## docs/bulwark_balance.md's committed readings are this arithmetic's.
+static func seed_at(offset: int, index: int) -> int:
+	return offset + index + 1
+
+
+## Mean, median, percentile and max over the values a run banked — the match
+## lengths that resolved, the milliseconds a command took. An empty sample
+## reports 0.0, which the count reported beside it is what tells apart from a
+## real average.
 static func mean(values: Array) -> float:
 	if values.is_empty():
 		return 0.0
@@ -122,3 +147,21 @@ static func median(values: Array) -> float:
 	if sorted.size() % 2 == 1:
 		return float(sorted[mid])
 	return 0.5 * (float(sorted[mid - 1]) + float(sorted[mid]))
+
+
+## The value `fraction` of the way through the sorted sample — the tail a clock
+## is read by, where a mean hides the worst turn of a run.
+static func percentile(values: Array, fraction: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted := values.duplicate()
+	sorted.sort()
+	var index := int(floor(fraction * float(sorted.size() - 1)))
+	return float(sorted[clampi(index, 0, sorted.size() - 1)])
+
+
+static func max_of(values: Array) -> float:
+	var top := 0.0
+	for value in values:
+		top = maxf(top, float(value))
+	return top

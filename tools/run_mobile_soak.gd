@@ -46,9 +46,6 @@ extends SceneTree
 const TOOL := "mobile-soak"
 const DEFAULT_MAP := "bulwark"
 const DEFAULT_GROUPING := "1+2+3v4"
-## The one grouping that is not seats: `MatchRequest.parse_sides_flag` reads the
-## empty grammar as a free-for-all, and `ffa` is what a reader types for it.
-const FREE_FOR_ALL := "ffa"
 const ALL_SECTIONS: Array[String] = ["planner", "replay"]
 ## Where the storage clock writes: `user://`, the storage the recorder writes to,
 ## but deliberately beside the player's rotating slots rather than inside them —
@@ -130,7 +127,10 @@ func _parse_args() -> bool:
 			if _append_count < 0:
 				return false
 		elif arg.begins_with("--fog="):
-			_fog = arg.get_slice("=", 1) in ["on", "true", "1"]
+			var fog := BalanceHarness.bool_flag(TOOL, "--fog", arg.get_slice("=", 1))
+			if fog < 0:
+				return false
+			_fog = fog == 1
 		else:
 			push_error("%s: unknown flag '%s'" % [TOOL, arg])
 			return false
@@ -175,7 +175,7 @@ func _planner_section() -> void:
 		var turns: Array[float] = []
 		var seats := 0
 		for i in _seed_count:
-			seats = _play(id, profile, i + 1, commands, turns)
+			seats = _play(id, profile, FourArmyLoop.seed_at(0, i), commands, turns)
 		print(
 			(
 				"%-9s %5d %9d %9.1f %8.1f %8.1f %8.1f %10.1f %9.1f"
@@ -184,11 +184,11 @@ func _planner_section() -> void:
 					seats,
 					commands.size(),
 					FourArmyLoop.mean(commands),
-					_percentile(commands, 0.5),
-					_percentile(commands, 0.9),
-					_max(commands),
+					FourArmyLoop.percentile(commands, 0.5),
+					FourArmyLoop.percentile(commands, 0.9),
+					FourArmyLoop.max_of(commands),
 					FourArmyLoop.mean(turns),
-					_max(turns)
+					FourArmyLoop.max_of(turns)
 				]
 			)
 		)
@@ -202,10 +202,7 @@ func _planner_section() -> void:
 func _play(
 	tier: String, profile: AIProfile, seed_val: int, commands: Array[float], turns: Array[float]
 ) -> int:
-	var sides: Dictionary[int, int] = {}
-	var parsed := MatchRequest.parse_sides_flag("" if _grouping == FREE_FOR_ALL else _grouping)
-	for seat: int in parsed:
-		sides[seat] = int(parsed[seat])
+	var sides := FourArmyLoop.sides_of(_grouping)
 	_turn_ms = 0.0
 	var clock := func(spent_usec: int, ends_turn: bool) -> void:
 		var spent := float(spent_usec) / 1000.0
@@ -259,29 +256,10 @@ func _replay_section() -> void:
 			"append ms  mean %.3f  p50 %.3f  p90 %.3f  p99 %.3f  max %.3f"
 			% [
 				FourArmyLoop.mean(spents),
-				_percentile(spents, 0.5),
-				_percentile(spents, 0.9),
-				_percentile(spents, 0.99),
-				_max(spents)
+				FourArmyLoop.percentile(spents, 0.5),
+				FourArmyLoop.percentile(spents, 0.9),
+				FourArmyLoop.percentile(spents, 0.99),
+				FourArmyLoop.max_of(spents)
 			]
 		)
 	)
-
-
-# --- arithmetic --------------------------------------------------------------
-
-
-func _max(values: Array[float]) -> float:
-	var top := 0.0
-	for value in values:
-		top = maxf(top, value)
-	return top
-
-
-func _percentile(values: Array[float], fraction: float) -> float:
-	if values.is_empty():
-		return 0.0
-	var sorted := values.duplicate()
-	sorted.sort()
-	var index := int(floor(fraction * float(sorted.size() - 1)))
-	return sorted[clampi(index, 0, sorted.size() - 1)]
