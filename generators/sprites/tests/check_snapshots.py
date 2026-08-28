@@ -78,10 +78,16 @@ def _installed() -> dict[Path, Path]:
         for p in (REPO_ROOT / install_dir).glob("*.png"):
             if p.name not in NOT_GENERATED:
                 pairs[Path(rel_dir) / p.name] = p
+    # A named baseline that is not on disk is left out of the pairs, so its
+    # generated twin fails the "no baseline" direction rather than crashing.
     for name in BYTE_COMPARED:
-        pairs[Path(name)] = REPO_ROOT / INSTALL_MAP["."] / name
+        installed = REPO_ROOT / INSTALL_MAP["."] / name
+        if installed.exists():
+            pairs[Path(name)] = installed
     for name in NOT_INSTALLED:
-        pairs[Path(name)] = GALLERY_ASSETS / name
+        gallery = GALLERY_ASSETS / name
+        if gallery.exists():
+            pairs[Path(name)] = gallery
     return pairs
 
 
