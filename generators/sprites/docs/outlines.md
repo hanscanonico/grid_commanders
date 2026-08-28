@@ -140,8 +140,8 @@ Both are consequences of the band, not of taste, and neither is a threshold:
 
 The line is one SOURCE pixel at any `k`, not one logical pixel: at `k = 2` it
 is half a logical pixel, where the band doubled to stay one (see
-`docs/density_128.md`). That follows the same finding — 128 buys no logical
-resolution — from the other side: an outline the board resolves is not what
+`../../../docs/density_128.md`). That follows the same finding — 128 buys no
+logical resolution — from the other side: an outline the board resolves is not what
 carries this sheet's edge any more, the contrast pair is, and the pair is
 authored in slots rather than in pixels.
 

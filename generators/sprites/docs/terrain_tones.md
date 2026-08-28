@@ -3,9 +3,9 @@
 The units have been lit by a named sky since the ramp rewrite: every shadow
 rung is rotated toward `palette.AMBIENT` (86, 112, 190) and mixed with it, so
 an army's unlit faces are all the same colour of shade. The ground they stand
-on was not. `terrain.py` held ten hand-typed tones, and what its shadows said
-about the light was nothing at all — the dark tone was the lit tone with the
-value pulled down and the hue left where it was:
+on was not. `spritegen/terrain/` — one file then — held ten hand-typed tones,
+and what its shadows said about the light was nothing at all — the dark tone
+was the lit tone with the value pulled down and the hue left where it was:
 
 | pair | hue rotation, lit -> dark, before |
 | --- | --- |

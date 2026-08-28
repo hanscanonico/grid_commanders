@@ -13,10 +13,16 @@ from __future__ import annotations
 
 import statistics
 import sys
+from pathlib import Path
 
-from spritegen import atlas
-from spritegen.palette import FACTIONS, faction_by_key
-from spritegen.units import ATLAS_ORDER
+# The package is not installed, and a file run by path puts its own directory
+# on sys.path rather than the repo root, so put the root there ourselves and
+# `.venv/bin/python tests/measure_livery.py` works from a bare checkout.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from spritegen import atlas  # noqa: E402
+from spritegen.palette import FACTIONS, faction_by_key  # noqa: E402
+from spritegen.units import ATLAS_ORDER  # noqa: E402
 
 
 def saturation(rgb: tuple[int, int, int]) -> float:
