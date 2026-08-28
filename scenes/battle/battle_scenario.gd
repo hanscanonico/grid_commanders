@@ -14,6 +14,12 @@ extends RefCounted
 
 var _battle: Battle
 
+## Raised by any mid-scenario check that fails, and read before anything is
+## written: a capture saved after a failed check would take the exit code down
+## with it — ScreenshotUtil quits zero — and that code is the entire signal the
+## smoke sweep reads.
+var _failed := false
+
 
 func _init(battle: Battle) -> void:
 	_battle = battle
@@ -59,13 +65,6 @@ func _press_action(action: StringName) -> void:
 	event.pressed = true
 	Input.parse_input_event(event)
 	await _battle.get_tree().process_frame
-
-
-## Raised by any mid-scenario check that fails, and read before anything is
-## written: a capture saved after a failed check would take the exit code down
-## with it — ScreenshotUtil quits zero — and that code is the entire signal the
-## smoke sweep reads.
-var _failed := false
 
 
 ## Reports a scenario failure. The push_error and the flag are not separable: an
