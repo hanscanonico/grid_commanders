@@ -18,14 +18,14 @@ func before_each() -> void:
 	db = Fixture.terrain_db()
 
 
-func test_dimensions() -> void:
+func test_the_terrain_block_states_the_board_size() -> void:
 	var map := MapData.parse(SAMPLE, db)
 	assert_eq(map.width, 4)
 	assert_eq(map.height, 4)
 	assert_eq(map.size(), Vector2i(4, 4))
 
 
-func test_terrain_at() -> void:
+func test_each_symbol_reads_back_as_its_terrain() -> void:
 	var map := MapData.parse(SAMPLE, db)
 	assert_eq(map.terrain_at(Vector2i(0, 0)).id, &"sea")
 	assert_eq(map.terrain_at(Vector2i(1, 1)).id, &"plains")
@@ -34,13 +34,13 @@ func test_terrain_at() -> void:
 	assert_eq(map.terrain_at(Vector2i(2, 2)).id, &"road")
 
 
-func test_owners() -> void:
+func test_an_unclaimed_property_is_neutral_rather_than_unowned() -> void:
 	var map := MapData.parse(SAMPLE, db)
 	assert_eq(map.owner_at(Vector2i(2, 1)), 1)
 	assert_eq(map.owner_at(Vector2i(1, 2)), MapData.NEUTRAL)
 
 
-func test_out_of_bounds() -> void:
+func test_a_cell_off_the_board_is_out_of_bounds_and_has_no_terrain() -> void:
 	var map := MapData.parse(SAMPLE, db)
 	assert_false(map.in_bounds(Vector2i(-1, 0)))
 	assert_false(map.in_bounds(Vector2i(4, 0)))
@@ -91,7 +91,7 @@ func test_owner_non_numeric_coordinate_rejected() -> void:
 	assert_push_error("owner cell (0, -1) out of bounds")
 
 
-func test_units_section_parsed() -> void:
+func test_a_units_row_names_a_team_a_type_and_a_cell() -> void:
 	var text := "[terrain]\n....\n[units]\n1 i 0 0\n2 t 3 0"
 	var map := MapData.parse(text, db)
 	assert_not_null(map)

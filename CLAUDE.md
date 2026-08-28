@@ -1651,8 +1651,9 @@ Follow the official Godot GDScript style guide. Key points:
   objectives put a mark on the board without staging a battle.
   `TutorialHints` and `ControlHints` are Node-free copy registries for the same reason `GameSpeed`
   is: which mission step is next and which key legend a context prints are each a pure function of
-  state the suite can hand them without a scene, so `test_tutorial_copy.gd` holds both to their
-  character caps directly. `CommanderVisuals` and `SideIdentity` are the single authority for a
+  state the suite can hand them without a scene, so `test_tutorial_copy.gd` and
+  `test_control_hints.gd` hold each to its character caps directly — one suite each, the two being
+  two subjects. `CommanderVisuals` and `SideIdentity` are the single authority for a
   side's presentation — a portrait, a faction theme, an atlas row, resolved once from the match's
   commander picks with no `Node` and no scene path — so `test_side_identity.gd` and
   `test_side_identity_roster.gd` resolve an identity and assert its colours and rows directly.
