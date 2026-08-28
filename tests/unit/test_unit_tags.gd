@@ -107,3 +107,17 @@ func test_a_version_8_save_loads_with_every_unit_unnamed() -> void:
 	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.units[0].tag, &"")
+
+
+## The parser asks about one name at a time and the codec about a whole list, so
+## the two refusals have to be one refusal — same verdict, same words.
+func test_taken_error_and_duplicate_error_agree() -> void:
+	var taken: Array[StringName] = [&"relay", &"courier"]
+	assert_eq(
+		UnitTag.taken_error(&"relay", taken),
+		UnitTag.duplicate_error([&"relay", &"courier", &"relay"] as Array[StringName]),
+		"a name already on the board is refused in the same words"
+	)
+	assert_ne(UnitTag.taken_error(&"relay", taken), "")
+	assert_eq(UnitTag.taken_error(&"scout", taken), "", "a free name is free")
+	assert_eq(UnitTag.taken_error(&"", taken), "", "and an unnamed unit takes nothing")

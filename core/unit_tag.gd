@@ -11,6 +11,8 @@ extends RefCounted
 ## An empty tag is the ordinary unnamed unit and is always legal, so neither a board
 ## nor a save is held to naming anything.
 
+const _TAKEN := "unit tag '%s' names two units"
+
 
 ## "" when `tag` may name a unit, else why it may not. An identifier because a tag
 ## is authored in a `.tres` beside code.
@@ -29,6 +31,20 @@ static func duplicate_error(tags: Array[StringName]) -> String:
 		if tag == &"":
 			continue
 		if seen.has(tag):
-			return "unit tag '%s' names two units" % tag
+			return _TAKEN % tag
 		seen[tag] = true
+	return ""
+
+
+## "" when `tag` is free beside the names already `taken`, else why it is not.
+## `duplicate_error` answers for a whole list at once, which is what a decoded
+## save hands it; a parser reading one row at a time is asking about one name,
+## and asking the list question per row rescans every earlier name into a fresh
+## dictionary. Same refusal, same words, so neither door can grow its own wording.
+static func taken_error(tag: StringName, taken: Array[StringName]) -> String:
+	if tag == &"":
+		return ""
+	for other: StringName in taken:
+		if other == tag:
+			return _TAKEN % tag
 	return ""

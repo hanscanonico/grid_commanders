@@ -88,6 +88,10 @@ var _terrain: Array[TerrainType] = []  # row-major, width * height entries
 var _owners: Dictionary[Vector2i, int] = {}  # missing key = neutral
 var _property_cells: Array[Vector2i] = []  # cached by property_cells()
 var _property_cells_built := false
+## The names taken so far, appended beside each tagged `starting_units` row, so a
+## row asks what is free without rebuilding the list. Parse scratch: `parse` makes
+## a MapData per board, so it never outlives the one read that fills it.
+var _tags: Array[StringName] = []
 ## The seats this board deals, built by `_build_roster` when `parse` finishes.
 ## Empty on a MapData nothing has parsed into; `teams()` answers for that.
 var _teams: Array[int] = []
@@ -273,6 +277,8 @@ func _append_unit_from_line(line: String) -> bool:
 	starting_units.append(
 		{"team": team, "symbol": parts[1], "cell": cell, "tag": tag, "carry": carry}
 	)
+	if tag != &"":
+		_tags.append(tag)
 	return true
 
 
@@ -284,10 +290,7 @@ func _append_unit_from_line(line: String) -> bool:
 func _tag_error(tag: StringName, line: String) -> String:
 	var error := UnitTag.name_error(tag)
 	if error == "":
-		var tags: Array[StringName] = [tag]
-		for entry: Dictionary in starting_units:
-			tags.append(entry.tag)
-		error = UnitTag.duplicate_error(tags)
+		error = UnitTag.taken_error(tag, _tags)
 	if error == "":
 		return ""
 	return "MapData: %s in '%s'" % [error, line]
