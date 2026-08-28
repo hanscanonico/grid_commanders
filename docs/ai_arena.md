@@ -146,7 +146,11 @@ Two rules keep it out, and they are separate rules in separate places:
 2. **The scorer refuses a pairing it did not see from both seats**
    (`ArenaLeaderboard.problem`). It does not care who asked for the match; it
    checks that every (board, seed, pair) appears from seat 0 and seat 1, and
-   reports the run as unreadable if any does not.
+   reports the run as unreadable if any does not. A pairing whose two sides are
+   the *same* candidate is refused first and **by name as a mirror**
+   (`ArenaLeaderboard.mirrored`) — merging a calibration into a leaderboard is
+   its own mistake, and "played from one seat only" would describe a broken run
+   instead.
 
 That split is what lets a mirror be run **on purpose** as a calibration — which
 is the demonstration below — while the generator still never produces one.

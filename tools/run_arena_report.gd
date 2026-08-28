@@ -11,10 +11,10 @@ extends SceneTree
 ##     --out=<dir>                 where leaderboard.json goes (default: the
 ##                                 first input's own directory)
 ##
-## Exits 1 when the run cannot be read as a leaderboard — a pairing played from
-## one seat only, a candidate that never played a pool the others did, or a match
-## the AI and the rules disagreed about. Each is reported rather than quietly
-## averaged away.
+## Exits 1 when the run cannot be read as a leaderboard — a mirror merged in, a
+## pairing played from one seat only, a candidate that never played a pool the
+## others did, or a match the AI and the rules disagreed about. Each is reported
+## rather than quietly averaged away.
 
 const RECORD_FILE := "matches.json"
 const LEADERBOARD_FILE := "leaderboard.json"
@@ -117,9 +117,7 @@ func _print(board: ArenaLeaderboard, played: int) -> void:
 			]
 		)
 	)
-	var buckets: Array[String] = ArenaPools.POOLS.duplicate()
-	buckets.append(ArenaPools.OFF_POOL)
-	for pool: String in buckets:
+	for pool: String in ArenaPools.REPORTED:
 		var listed := board.rows.filter(
 			func(row: ArenaLeaderboard.Row) -> bool: return row.matches(pool) > 0
 		)

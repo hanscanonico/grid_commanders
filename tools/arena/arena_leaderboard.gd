@@ -12,7 +12,9 @@ extends RefCounted
 ## from one seat on purpose — with both sides the same, the first seat's win
 ## rate *is* what the seat is worth — and that reading is a bias measurement.
 ## Letting it into a leaderboard is exactly the failure D5 names, so it is
-## refused here rather than documented.
+## refused here rather than documented — and refused **as a mirror**, by name,
+## because "played from one seat only" describes a broken run and a calibration
+## merged by mistake is not one.
 ##
 ## Node-free, so GUT tallies records without a process.
 
@@ -44,6 +46,10 @@ var invalid := 0
 ## Pairings seen from one seat only, as readable keys. Any at all and the run is
 ## not reportable.
 var unpaired: Array[String] = []
+## Pairings a candidate played against itself, as readable keys. A mirror is a
+## seat-bias calibration rather than a leaderboard input, so it is named on its
+## own rather than counted as a run that lost half its seats.
+var mirrored: Array[String] = []
 ## Pools a candidate never played while another candidate did, as readable keys.
 ## "Never measured here" and "measured badly here" are different facts, and a run
 ## holding both cannot be read as one table.
@@ -107,8 +113,11 @@ static func build(records: Array) -> ArenaLeaderboard:
 	var board := ArenaLeaderboard.new()
 	var by_candidate: Dictionary = {}
 	var seats_seen: Dictionary = {}
+	var mirrors: Dictionary = {}
 	for record: Dictionary in records:
 		var pairing := _pairing_key(record)
+		if String(record["red"]) == String(record["blue"]):
+			mirrors[pairing] = true
 		var seats: Array = seats_seen.get(pairing, [])
 		seats.append(int(record["seat"]))
 		seats_seen[pairing] = seats
@@ -125,9 +134,14 @@ static func build(records: Array) -> ArenaLeaderboard:
 			var row: Row = by_candidate[candidate]
 			_count(row.tally(pool), record, team)
 	for pairing: String in seats_seen:
+		if pairing in mirrors:
+			continue
 		var seats: Array = seats_seen[pairing]
 		if not (0 in seats and 1 in seats):
 			board.unpaired.append(pairing)
+	for pairing: String in mirrors:
+		board.mirrored.append(pairing)
+	board.mirrored.sort()
 	board.unpaired.sort()
 	board.rows = _ordered(by_candidate.values())
 	board.uncovered = _uncovered(board.rows)
@@ -149,6 +163,15 @@ static func record_error(entry: Variant) -> String:
 
 ## Empty when the run can be read as a leaderboard; otherwise why it cannot.
 func problem() -> String:
+	if not mirrored.is_empty():
+		return (
+			(
+				"%d pairing(s) seat a candidate against itself: a mirror measures "
+				+ "what the seat is worth, not what a candidate is, so it is a bias "
+				+ "calibration rather than a leaderboard input: %s"
+			)
+			% [mirrored.size(), ", ".join(mirrored.slice(0, 3))]
+		)
 	if not unpaired.is_empty():
 		return (
 			"%d pairing(s) were played from one seat only, so the seat has not cancelled: %s"
@@ -168,7 +191,7 @@ func to_dict() -> Dictionary:
 	var listed: Array[Dictionary] = []
 	for row in rows:
 		listed.append(row.to_dict())
-	return {
+	var reported := {
 		"fitness":
 		{
 			"decisive": ArenaFitness.DECISIVE,
@@ -182,6 +205,9 @@ func to_dict() -> Dictionary:
 		"ranked_on": _comparable_pools(rows),
 		"candidates": listed,
 	}
+	if not mirrored.is_empty():
+		reported["mirrored"] = mirrored
+	return reported
 
 
 static func _count(tally: Tally, record: Dictionary, team: int) -> void:
