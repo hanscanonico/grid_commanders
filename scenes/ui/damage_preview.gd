@@ -10,7 +10,8 @@ extends PanelContainer
 ## It speaks HP out of 10, the unit every other HP display in the game speaks (UX
 ## recovery plan D4). Every number was handed over by the forecast: this formats
 ## and never computes, which is the cut-in's "replays, never decides" rule applied
-## to text. Where it lands is BattleView's, which owns the board's geometry.
+## to text. Where it lands is BattleView's, which asks BoardCamera for the board's
+## geometry.
 
 const _PAD_X := 5
 const _PAD_Y := 3

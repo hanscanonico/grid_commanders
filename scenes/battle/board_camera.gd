@@ -20,7 +20,7 @@ var map: MapData
 var mission_panel: MissionObjectivesPanel
 
 ## The transient jitter the animator lays over the board's docking shift. Set —
-## and tweened — through `BattleView.shake_offset` rather than written to the
+## and tweened — by `BattleAnimator.shake_camera` rather than written to the
 ## camera, so the two can never be the same property's second owner; see
 ## `_apply_board_offset`, which composes both and is the only writer.
 var shake_offset := Vector2.ZERO:

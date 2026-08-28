@@ -180,7 +180,7 @@ plan is stated in full below and has no copy there.
   width at zero and each bar is inset by its own gap; one `HUD_PAD` of 7 is what both had always
   drawn. The terrain chip asks `BattleView` for the atlas and its cell size rather than mirroring
   them. `BoardCamera._apply_board_offset` is the **only writer**
-  of `camera.offset` (the combat shake composes through `BattleView.shake_offset`), and both bars
+  of `camera.offset` (the combat shake composes through `BoardCamera.shake_offset`), and both bars
   swallow the pointer (`MOUSE_FILTER_STOP`) so events can't fall through to cells rendered behind
   them.
 - `battle-animations-plan.html` — the combat cut-in BA1–BA4, all shipped. D1: **the cut-in replays

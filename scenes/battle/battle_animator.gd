@@ -393,6 +393,11 @@ func animate_join(command: Command, mover: Unit, survivor: Unit) -> void:
 ## field by field after construction, so there is no moment at which a
 ## constructor could have them all. The signals stay here as relays, because
 ## Battle and the scenarios know the animator rather than its cards.
+##
+## Only the turn banner is put down by name (`hide_banner`). The power card and
+## the speech card come down when their own hold runs out — and the pause menu's
+## re-read has no hold at all — so `consume_banner_skip` is the only other way
+## either is retired.
 func _blocking_cards() -> Array[BlockingCard]:
 	if _cards.is_empty():
 		_cards = [
@@ -441,10 +446,6 @@ func show_power_banner(commander: CommanderType, team: int) -> void:
 		Settings.speed.power_banner_seconds(),
 		func() -> void: power_banner.bind(commander, team)
 	)
-
-
-func hide_power_banner() -> void:
-	_blocking_cards()[_POWER_CARD].dismiss()
 
 
 ## Who the power just touched, said on the board rather than only on the card: a
@@ -530,10 +531,6 @@ func _fill_speech(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	mission_speech.reset_size()
 
 
-func hide_speech() -> void:
-	_blocking_cards()[_SPEECH_CARD].dismiss()
-
-
 ## Any keyboard, mouse or controller press retires the visible blocking card.
 ## Returns whether it claimed the event so Battle can stop it over-landing on
 ## the board or a newly revealed action.
@@ -561,19 +558,17 @@ func consume_banner_skip(event: InputEvent) -> bool:
 ## Skipped under Instant too, which is the one tier where it is theatre rather
 ## than feedback: there is no hit animation left for it to punctuate.
 ##
-## Tweened through `BattleView.shake_offset`, never `camera.offset` directly. The
-## view uses that property to dock the board in the band between the two HUD
-## bars, so a shake written straight to the camera would settle at Vector2.ZERO
-## and leave the board half a bar low for the rest of the match. The view
-## composes the two; the shake only ever says how far it is jittering.
+## Tweened through `BoardCamera.shake_offset`, never `camera.offset` directly:
+## `BoardCamera._apply_board_offset` composes the jitter with the board's
+## docking shift and is that property's only writer.
 func shake_camera(strength: float = 3.0) -> void:
 	if capturing or Settings.speed.instant:
 		return
 	var tween := node.create_tween()
 	for i in 4:
 		var offset := Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
-		tween.tween_property(view, "shake_offset", offset, SHAKE_STEP_SECONDS)
-	tween.tween_property(view, "shake_offset", Vector2.ZERO, SHAKE_STEP_SECONDS)
+		tween.tween_property(view.board_camera, "shake_offset", offset, SHAKE_STEP_SECONDS)
+	tween.tween_property(view.board_camera, "shake_offset", Vector2.ZERO, SHAKE_STEP_SECONDS)
 
 
 ## Skipped while capturing, for the same reason as `shake_camera`: a loop has
