@@ -370,3 +370,27 @@ func test_a_match_derives_its_own_ceiling_unless_one_is_forced_on_it() -> void:
 	assert_true(cut.cap_stall, "an override binds")
 	assert_eq(cut.commands, 5)
 	assert_eq(cut.termination, "command_cap")
+
+
+## Three drivers merge their own keys over this one dictionary, so what it says
+## about the closing board is asserted against the board itself — a drifted key
+## writes blank CSV cells rather than failing a run.
+func test_the_shared_outcome_row_reads_the_board_the_match_closed_on() -> void:
+	var outcome := BalanceMatchEngine.play(_setup(42))
+	var state := outcome.state
+	var row := BalanceMatchEngine.outcome_row(outcome)
+	assert_eq(row["winner"], outcome.winner)
+	assert_eq(row["termination"], outcome.termination)
+	assert_eq(row["day_ended"], outcome.day_ended)
+	assert_eq(row["commands"], outcome.commands)
+	assert_eq(row["rejected"], outcome.rejected)
+	assert_eq(row["cap_stall"], 1 if outcome.cap_stall else 0, "the CSV presets carry 1/0")
+	assert_eq(row["turn_cap_hits"], outcome.turn_cap_hits)
+	assert_eq(row["red_units"], state.units_of(1).size())
+	assert_eq(row["blue_units"], state.units_of(2).size())
+	assert_eq(row["red_props"], state.properties_of(1).size())
+	assert_eq(row["blue_props"], state.properties_of(2).size())
+	assert_eq(row["red_funds"], int(state.funds.get(1, 0)))
+	assert_eq(row["blue_funds"], int(state.funds.get(2, 0)))
+	assert_eq(row["red_army_value"], BalanceMatchEngine.army_value(state, 1))
+	assert_eq(row["blue_army_value"], BalanceMatchEngine.army_value(state, 2))
