@@ -532,6 +532,10 @@ person in every seat is the old hot-seat game. A four-army board additionally of
 grouping together (**Duel** seats the opposite pair, 1 and 3). **Start** greys out, and says why, if
 fewer than two armies are seated or the badges leave nobody with anyone to fight.
 
+The picker's first cell is **Random**: pressing it picks a board for you — any in the roster but the
+teaching board and the one already in hand — and selects it, so the panel below shows the board the
+match will actually be played on.
+
 Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
 count, property count and pitch beneath the grid, and **Speed**, **Fog of war**, **Battle
 animations** and **Menu motion** each carry a permanent one-line explanation. How well the computer

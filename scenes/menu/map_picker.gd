@@ -25,6 +25,9 @@ signal map_selected(index: int)
 const MAP_CAPTION_LINES := 2
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
+## A cell's picture. The Random cell has none and is sized off it anyway, so the
+## grid's two columns are one height whichever cell is in them.
+const THUMB := Vector2(132.0 - 2 * CARD_PAD, 60)
 
 ## The panel's header-right "name · size". Built here and parented by the setup
 ## panel's title bar, so the words and the label that sets them stay together.
@@ -33,6 +36,11 @@ var _map_caption: Label
 var _map_scroll: ScrollContainer
 var _map_cells: Array[Button] = []
 var _map_marks: Array[Label] = []
+## The roll. Deliberately outside `_map_cells`, so the cell arrays stay aligned
+## to `_maps` and nothing that walks the roster has to skip it: Random is an
+## action that resolves to a board, never a selection state of its own.
+var _random_cell: Button
+var _rng := RandomNumberGenerator.new()
 var _selected_map := 0
 ## The roster in menu order, parsed once so the tooltips, the header and the
 ## caption quote real numbers off the board rather than a hand-kept table.
@@ -71,6 +79,8 @@ func configure(db: TerrainDB) -> void:
 
 	if _maps.is_empty():
 		push_error("map picker: no maps found in %s" % MapCatalog.MAPS_DIR)
+	_random_cell = _make_random_cell()
+	grid.add_child(_random_cell)
 	for i in _maps.size():
 		grid.add_child(_make_map_cell(i, _maps[i]))
 	_map_caption = UiKit.help_label("")
@@ -221,6 +231,23 @@ static func armies_label(seats: int) -> String:
 	return "%d–%d armies" % [SeatStrip.MIN_FILLED, seats]
 
 
+## The board Random lands on: any in the roster but the teaching one, which a
+## player asking for a surprise is not asking for, and but the one already in
+## hand, which would read as a dead press. A pool that empties under both falls
+## back to the whole roster, so a one-board install still rolls something.
+static func random_index(maps: Array[MapData], current: int, rng: RandomNumberGenerator) -> int:
+	var pool: Array[int] = []
+	for i in maps.size():
+		if i != current and not MapCatalog.teaches(maps[i].source_path):
+			pool.append(i)
+	if pool.is_empty():
+		for i in maps.size():
+			pool.append(i)
+	if pool.is_empty():
+		return -1
+	return pool[rng.randi_range(0, pool.size() - 1)]
+
+
 # --- cells -------------------------------------------------------------------
 
 
@@ -229,7 +256,6 @@ static func armies_label(seats: int) -> String:
 ## picture no longer crosses it. The thumbnail is a truthful miniature — real
 ## terrain, real property colours — of the board this cell launches (plan D5).
 func _make_map_cell(index: int, map: MapData) -> Button:
-	const THUMB := Vector2(132.0 - 2 * CARD_PAD, 60)
 	var button := Button.new()
 	var name_height := UiTheme.display().get_height(UiTheme.SIZE_BODY)
 	button.custom_minimum_size = THUMB + Vector2(2 * CARD_PAD, 2 * CARD_PAD + name_height + 1)
@@ -272,6 +298,56 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	_map_cells.append(button)
 	_map_marks.append(name_label)
 	return button
+
+
+## The roll's cell: the grid's first, so it is reachable without scrolling the
+## viewport, and wearing the unselected cell's frame — it is never ticked,
+## because pressing it leaves a real board selected.
+func _make_random_cell() -> Button:
+	var button := Button.new()
+	var name_height := UiTheme.display().get_height(UiTheme.SIZE_BODY)
+	button.custom_minimum_size = THUMB + Vector2(2 * CARD_PAD, 2 * CARD_PAD + name_height + 1)
+	Tooltip.attach(
+		button,
+		"Picks a board for you.",
+		"Any board but the tutorial and the one in hand",
+		Tooltip.Side.BOTTOM
+	)
+
+	var label := Label.new()
+	label.text = "RANDOM"
+	label.set_anchors_and_offsets_preset(
+		Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, CARD_PAD
+	)
+	label.add_theme_font_override("font", UiTheme.display())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
+	label.add_theme_color_override("font_color", UiTheme.INK)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	button.add_child(label)
+	UiTheme.make_decoration(label)
+
+	# A soft outline rather than the selection's meridian one: a map cell reads as
+	# a cell because it holds a picture and this one holds a word, so it needs a
+	# frame to read as pressable — and it may never read as the board in hand.
+	var box := _map_cell_box(Color(0, 0, 0, 0))
+	box.border_color = UiTheme.BORDER_SOFT
+	box.set_border_width_all(UiTheme.BORDER)
+	button.add_theme_stylebox_override("normal", box)
+	var hover := _map_cell_box(UiTheme.HOVER_WASH)
+	hover.border_color = UiTheme.BORDER_SOFT
+	hover.set_border_width_all(UiTheme.BORDER)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", box)
+	button.add_theme_stylebox_override("focus", UiTheme.focus_box())
+	# On press alone: a map cell selects on focus so the keyboard can preview the
+	# roster, and a roll on focus would draw a new board on every arrow pass.
+	button.pressed.connect(_roll_map)
+	return button
+
+
+func _roll_map() -> void:
+	select(random_index(_maps, _selected_map, _rng))
 
 
 func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool) -> void:
