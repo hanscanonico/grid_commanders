@@ -40,6 +40,10 @@ const DEFAULT_END_TURN_CONFIRM := true
 ## toggle's own checkmark is on the menu a capture photographs, so a machine that
 ## turned the motion off must not change the frame.
 const DEFAULT_MENU_ANIMATIONS := true
+## What a fresh install cuts to a battle with, and what `pin` stands it back at
+## for the reason menu motion stands back: the toggle's own checkmark is on a
+## photographed menu.
+const DEFAULT_BATTLE_ANIMATIONS := true
 const HINTS_KEY := "hints_retired"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
@@ -69,6 +73,10 @@ const VOLUME_STEPS: Array[Dictionary] = [
 ## no step falls back to, and the silent one, which mutes rather than attenuates.
 const FULL_ID := &"full"
 const OFF_ID := &"off"
+## What a fresh install plays at, and what `pin` stands the volume back at: the
+## pause menu's Sound row reads its label off this preference and that row is in
+## every photographed map menu, so a quiet machine must not change the frame.
+const DEFAULT_VOLUME := FULL_ID
 ## The bus every step is applied to. Index 0 is Master, which always exists, so
 ## the game needs no bus layout resource of its own.
 const MASTER_BUS := 0
@@ -96,7 +104,7 @@ var speed: GameSpeed = GameSpeed.default_speed()
 ## Whether a resolved attack plays the full-screen battle cut-in. Off falls back
 ## to the on-map hit flash and shake, which is how combat looked before the
 ## cut-in existed — see BattleAnimator.animate_combat.
-var battle_animations := true
+var battle_animations := DEFAULT_BATTLE_ANIMATIONS
 
 ## Whether the menus move at all — the main menu's drifting board backdrop and
 ## blinking PRESS START, and the staggered reveals on the campaign pages. Off
@@ -107,7 +115,7 @@ var menu_animations := DEFAULT_MENU_ANIMATIONS
 ## Which step of VOLUME_STEPS the game plays at. Never a stranger: a stored id
 ## nothing answers to falls back to the loudest step, the same shape
 ## GameSpeed.by_id answers an unknown tier with.
-var volume: StringName = FULL_ID
+var volume: StringName = DEFAULT_VOLUME
 
 ## Whether ending the day stops to confirm while units can still act. On is what
 ## the game has always done — EndTurnGuard names what the day would discard —
@@ -128,6 +136,12 @@ var _persistent := true
 ## explicit flag outranks even that: it is the most specific thing anyone said,
 ## and asking for a capture *of* a tier is how you look at one you are tuning.
 var _flag_wins := false
+## True once --no-battle-anim or --mute has spoken, each guarding its own
+## preference against the pin below on _flag_wins' terms: an explicit flag is the
+## most specific thing anyone said, and both flags exist to be used on the runs
+## that pin.
+var _anim_flag_wins := false
+var _volume_flag_wins := false
 
 
 func _ready() -> void:
@@ -291,13 +305,24 @@ func pin_hints(all_retired: bool) -> void:
 ## The end-turn check stands back at its shipped default for the same reason: it
 ## decides whether a scripted End Turn opens the guard or hands the day over, so
 ## a machine whose player turned it off would drive a scenario differently from
-## one that never touched it. Menu motion stands back for the plainer half of the
-## same reason: a capture poses the menu still whatever this preference says, so
-## all a stored "off" could reach is the toggle's own checkmark in the frame.
+## one that never touched it. The volume, the cut-in toggle and menu motion stand
+## back for the plainer half of the same reason: a capture poses the menu still
+## and suppresses the cut-in whatever these preferences say, so all a stored
+## "off" or "Quiet" could reach is the map menu's own Sound row and the toggles'
+## own checkmarks in the frame.
+##
+## --no-battle-anim and --mute outrank the pin exactly as --speed= does, each on
+## its own latch: both are per-launch overrides asked for on the very runs that
+## pin, so a pin that stood them back would leave neither flag anything to do.
 func pin(id: StringName) -> void:
 	_persistent = false
 	end_turn_confirm = DEFAULT_END_TURN_CONFIRM
 	menu_animations = DEFAULT_MENU_ANIMATIONS
+	if not _anim_flag_wins:
+		battle_animations = DEFAULT_BATTLE_ANIMATIONS
+	if not _volume_flag_wins:
+		volume = DEFAULT_VOLUME
+		_apply_volume()
 	if not _flag_wins:
 		speed = GameSpeed.by_id(id)
 
@@ -424,10 +449,17 @@ func _set_aside() -> bool:
 
 
 func _apply_cmdline() -> void:
+	apply_args(CmdArgs.user())
+
+
+## The flag walk, over the arguments it is handed rather than the ones this
+## process was launched with — the terms MatchRequest.apply_cmdline is on, and for
+## the same reason: which flags outrank a pin is checkable without a command line.
+func apply_args(args: PackedStringArray) -> void:
 	# Walked in order rather than read through CmdArgs' last-wins lookups: the
 	# pin below latches, so here the *first* valid --speed= is the one that
 	# lands, and --reset-hints has to see the writes the flags before it made.
-	for arg in CmdArgs.user():
+	for arg in args:
 		if arg.begins_with(SPEED_ARG):
 			var wanted := StringName(arg.get_slice("=", 1).strip_edges())
 			# Checked here rather than inside pin(), which is only ever handed an
@@ -470,8 +502,10 @@ func _apply_cmdline() -> void:
 			# capture run cannot rewrite what the player chose.
 			_persistent = false
 			battle_animations = false
+			_anim_flag_wins = true
 		elif arg == MUTE_ARG:
 			# Same terms as --no-battle-anim. _ready applies the volume once this
 			# walk is over, so nothing here has to touch the bus itself.
 			_persistent = false
 			volume = OFF_ID
+			_volume_flag_wins = true
