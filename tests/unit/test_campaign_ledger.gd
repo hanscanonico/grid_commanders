@@ -13,6 +13,10 @@ extends GutTest
 ##
 ## What may name a fact, what a profile may carry it in, and the campaign-wide
 ## check that every name is one the war writes are `test_campaign_ledger_names.gd`'s.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 const PROBE := &"__probe_ledger_campaign"
 const HELD := &"greenwater_held"
@@ -135,8 +139,11 @@ func test_a_condition_outside_a_campaign_reads_every_fact_as_zero() -> void:
 
 
 func test_a_band_nothing_can_hold_is_refused() -> void:
-	assert_ne(_condition(HELD, 3, 2).definition_error(), "")
-	assert_ne(_condition(&"").definition_error(), "")
+	assert_eq(
+		_condition(HELD, 3, 2).definition_error(),
+		"flag 'greenwater_held' asks for 3 to 2, which nothing can hold"
+	)
+	assert_eq(_condition(&"").definition_error(), "a flag with no name")
 	assert_eq(_condition(HELD, 1, 3).definition_error(), "")
 
 

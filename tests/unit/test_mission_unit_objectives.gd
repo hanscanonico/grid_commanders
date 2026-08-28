@@ -11,6 +11,10 @@ extends GutTest
 ## **side**, so an ally standing in the exit zone has got there for both of you;
 ## `DefeatTeam` is the one deliberate exception in the whole library and names a
 ## single army, which is why its own test says so.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 ## Four cells of open ground under a row of properties, two named units, and a
 ## third army so an ally has somebody to be.
@@ -130,7 +134,10 @@ func test_protect_unit_refuses_a_name_the_board_never_gives() -> void:
 	var map := _map()
 	var objective := ProtectUnitObjective.new()
 	objective.tag = &"the_courier"
-	assert_ne(objective.definition_error(map, 1, unit_db), "")
+	assert_eq(
+		objective.definition_error(map, 1, unit_db),
+		"protect objective names 'the_courier', which no unit on this board carries"
+	)
 	objective.tag = &"relay"
 	assert_eq(objective.definition_error(map, 1, unit_db), "")
 

@@ -8,6 +8,10 @@ extends GutTest
 ## silent ones — a misspelled flag reads zero forever, so the variant line simply
 ## never speaks and the gated beat never fires, and only the whole campaign can see
 ## that nothing writes the name.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 const PROBE := &"__probe_ledger_names_campaign"
 const HELD := &"greenwater_held"
@@ -159,8 +163,14 @@ func test_a_cleared_mission_is_a_fact_read_off_the_record_it_already_is() -> voi
 
 func test_a_beat_may_not_write_the_campaigns_own_record() -> void:
 	var map := MapData.parse(ROW, Fixture.terrain_db())
-	assert_ne(_writes(&"cleared:probe_one").definition_error(map, 1, Fixture.unit_db()), "")
-	assert_ne(_writes(&"a flag with spaces").definition_error(map, 1, Fixture.unit_db()), "")
+	assert_eq(
+		_writes(&"cleared:probe_one").definition_error(map, 1, Fixture.unit_db()),
+		"'cleared:probe_one' is the campaign's own record of a mission, not a fact a beat writes"
+	)
+	assert_eq(
+		_writes(&"a flag with spaces").definition_error(map, 1, Fixture.unit_db()),
+		"'a flag with spaces' is not an identifier"
+	)
 	assert_eq(_writes(HELD).definition_error(map, 1, Fixture.unit_db()), "")
 
 

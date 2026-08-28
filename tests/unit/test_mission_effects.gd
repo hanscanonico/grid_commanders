@@ -11,6 +11,10 @@ extends GutTest
 ##
 ## The four that touch no board — the two grants, the reveal and the ending —
 ## are `test_mission_grants.gd`'s.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 const FIELD := """
 [terrain]
@@ -127,9 +131,12 @@ func test_removal_banks_nothing_to_either_meter() -> void:
 
 func test_removal_refuses_a_name_the_board_never_gave() -> void:
 	var effect := RemoveUnitsEffect.new()
-	assert_ne(effect.definition_error(_map(), 1, Fixture.unit_db()), "", "it names nobody")
+	assert_eq(effect.definition_error(_map(), 1, Fixture.unit_db()), "removal names no units")
 	effect.tags = [&"nobody"]
-	assert_ne(effect.definition_error(_map(), 1, Fixture.unit_db()), "")
+	assert_eq(
+		effect.definition_error(_map(), 1, Fixture.unit_db()),
+		"removal names 'nobody', which no unit on this board carries"
+	)
 	effect.tags = [&"garrison"]
 	assert_eq(effect.definition_error(_map(), 1, Fixture.unit_db()), "")
 

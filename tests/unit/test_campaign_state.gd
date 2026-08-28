@@ -8,6 +8,10 @@ extends GutTest
 ##
 ## Which mission a war opens next, and when it has run out of them, is the route's
 ## and lives in `test_campaign_route.gd`.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 var campaign: CampaignDefinition
 
@@ -49,7 +53,7 @@ func test_blocks_that_do_not_cover_the_campaign_are_refused() -> void:
 
 func test_a_campaign_naming_one_mission_twice_is_refused() -> void:
 	campaign.missions.append(CampaignFixture.mission(&"one"))
-	assert_ne(campaign.definition_error(), "")
+	assert_eq(campaign.definition_error(), "campaign 'probe' names mission 'one' twice")
 
 
 # --- progress ---------------------------------------------------------------
@@ -129,12 +133,22 @@ func test_a_battle_with_no_mission_to_belong_to_is_refused() -> void:
 func test_a_save_from_a_later_build_is_refused_rather_than_guessed_at() -> void:
 	var data := CampaignSaveCodec.encode(CampaignState.begin(campaign))
 	data["version"] = CampaignSaveCodec.VERSION + 1
-	assert_ne(CampaignSaveCodec.validate(data), "")
+	assert_eq(
+		CampaignSaveCodec.validate(data),
+		(
+			"save claims version %d; this build writes %d"
+			% [CampaignSaveCodec.VERSION + 1, CampaignSaveCodec.VERSION]
+		)
+	)
 
 
 func test_a_shapeless_save_is_refused() -> void:
-	assert_ne(CampaignSaveCodec.validate({}), "")
-	assert_ne(CampaignSaveCodec.validate({"version": 1}), "")
+	assert_eq(CampaignSaveCodec.validate({}), "save has no version")
+	assert_eq(
+		CampaignSaveCodec.validate({"version": 1}),
+		"save names no campaign",
+		"version 1 is a legal older profile, so what is missing is the campaign's name"
+	)
 	assert_ne(
 		CampaignSaveCodec.validate(
 			{"version": 1, "campaign_id": "", "unlocked": [], "records": {}}

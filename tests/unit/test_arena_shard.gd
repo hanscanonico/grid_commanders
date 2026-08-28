@@ -8,6 +8,10 @@ extends GutTest
 ## itself rather than against a transcription of them, because "the arena and the
 ## Lab play the same matches" is only true while the arena adds no schedule and
 ## no loop of its own.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 const MAP := "clash"
 const DEFAULT_PROFILE := "data/ai/default.tres"
@@ -201,7 +205,7 @@ func test_a_candidate_against_itself_is_played_once() -> void:
 func test_a_pairing_nobody_can_play_stops_the_shard() -> void:
 	var records := shard.play([_pairing(DEFAULT_PROFILE, "data/ai/champion.tres")])
 	assert_true(records.is_empty(), "a skipped pairing would score over fewer matches")
-	assert_ne(shard.error, "")
+	assert_eq(shard.error, "no profile at 'res://data/ai/champion.tres'")
 
 
 func test_a_flawed_match_is_counted_rather_than_scored() -> void:

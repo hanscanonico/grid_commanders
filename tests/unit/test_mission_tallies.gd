@@ -12,6 +12,10 @@ extends GutTest
 ## The fourth is the resume: only the counters are saved, so the tally has to
 ## re-baseline against the board it is handed and can neither forget what it had
 ## counted nor count it again.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 ## Two properties and an HQ over open ground, two armies for the player's side to
 ## be split across, and a second unit for team 1 so a loss is not a rout.
@@ -221,7 +225,7 @@ func test_loss_limit_refuses_a_bill_that_cannot_be_run_up() -> void:
 	var map := MapData.parse(BOARD, terrain_db)
 	var objective := LossLimitObjective.new()
 	objective.max_losses = -1
-	assert_ne(objective.definition_error(map, 1, unit_db), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "loss limit allows -1 losses")
 	objective.max_losses = 0
 	assert_eq(
 		objective.definition_error(map, 1, unit_db),
