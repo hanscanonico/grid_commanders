@@ -223,7 +223,7 @@ class Condition:
 	var ammo := 0
 	## Whether the unit had already committed its action when the power fired. A
 	## refresh power is the only thing that can hand it a second one, so nothing
-	## else in the roster can be credited by `acted_again`.
+	## else in the roster can be credited by `_acted_again`.
 	var acted := false
 	var cell := Vector2i.ZERO
 
@@ -236,10 +236,10 @@ class Condition:
 		was.cell = unit.cell
 		return was
 
-	func topped_up(unit: Unit) -> bool:
+	func _topped_up(unit: Unit) -> bool:
 		return unit.hp > hp or unit.fuel > fuel or unit.ammo > ammo
 
-	func acted_again(unit: Unit) -> bool:
+	func _acted_again(unit: Unit) -> bool:
 		return acted and unit.cell != cell
 
 
@@ -737,7 +737,7 @@ static func _power_bought_something(walk: Walk, state: GameState, spend: Spend) 
 		var was: Condition = spend.condition.get(unit)
 		if was == null:
 			continue
-		if was.topped_up(unit) or was.acted_again(unit):
+		if was._topped_up(unit) or was._acted_again(unit):
 			return true
 		var reach: Variant = spend.reach.get(unit)
 		if unit.carrier == null and reach != null and not (reach as Dictionary).has(unit.cell):
