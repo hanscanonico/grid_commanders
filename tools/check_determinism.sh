@@ -23,6 +23,10 @@
 
 set -uo pipefail
 
+# Sourced before the cd: $0 may be a relative path, and it is the caller's
+# working directory that makes it resolve.
+source "$(dirname "$0")/lib/require_godot.sh" || exit 1
+
 # Every path below is repo-relative, and OUT_DIR is rm -rf'd — run from
 # anywhere else and that either fells a stranger's reports/determinism or
 # silently no-ops. cd to the repo root derived from $0, not
@@ -30,7 +34,6 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
-source "$(dirname "$0")/lib/require_godot.sh"
 
 GOLDEN_DIR="tests/fixtures/determinism"
 OUT_DIR="reports/determinism"

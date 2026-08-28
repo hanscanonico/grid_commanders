@@ -19,13 +19,16 @@
 
 set -uo pipefail
 
+# Sourced before the cd: $0 may be a relative path, and it is the caller's
+# working directory that makes it resolve.
+source "$(dirname "$0")/lib/require_godot.sh" || exit 1
+
 # Repo-relative throughout, and the generated configs are written to a mktemp
 # directory rather than the tree — a config in res:// would be a second, stale
 # statement of what the suite is.
 cd "$(dirname "$0")/.." || exit 1
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
-source "$(dirname "$0")/lib/require_godot.sh"
 GUT_CONFIG=".gutconfig.json"
 TEST_DIR="tests/unit"
 

@@ -41,7 +41,7 @@
 set -uo pipefail
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
-source "$(dirname "$0")/lib/require_godot.sh"
+source "$(dirname "$0")/lib/require_godot.sh" || exit 1
 BATTLE="${BATTLE:-scenes/battle/battle.tscn}"
 # Every boot opens a window — one per group, not one per scenario. Launching
 # through the wrapper keeps a scripted/agent run (no tty) from stealing the
