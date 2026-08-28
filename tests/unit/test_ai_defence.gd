@@ -26,15 +26,11 @@ const FAR_SIEGE_BOARD := (
 	+ "[units]\n1 t 15 1\n2 i 0 0\n2 i 25 1"
 )
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 func _state(map_text: String, hq_points_left: int = GameState.CAPTURE_POINTS) -> GameState:

@@ -8,16 +8,12 @@ extends GutTest
 ## and a fatter target — an enemy tank — the same distance the other way.
 const HQ_SIEGE := "[terrain]\nQ....\n.....\n[owners]\n1 0 0\n[units]\n1 t 1 1\n2 i 0 0\n2 t 2 1"
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 var db: DifficultyDB
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 	db = DifficultyDB.load_default()
 
 

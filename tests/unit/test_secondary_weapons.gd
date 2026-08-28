@@ -3,15 +3,11 @@ extends GutTest
 ## have their own focused files; these pin the two callers most likely to retain
 ## the old global dry-ammo shortcut.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 func test_ai_uses_a_dry_tanks_secondary() -> void:

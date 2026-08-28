@@ -15,15 +15,11 @@ extends GutTest
 ## The defensive doctrine both gating cases below are measured with.
 const MARA_VOSS := "res://data/commanders/mara_voss.tres"
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 ## A board with `sides` applied. `allies` is a list of teams sharing side 0; every

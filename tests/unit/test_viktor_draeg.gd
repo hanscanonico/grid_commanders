@@ -2,18 +2,6 @@ extends GutTest
 ## Viktor Draeg: the armour bonus and the foot penalty that pays for it, and
 ## Armoured Breakthrough's star pierce.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
-
 
 func _state(map_text: String, with_viktor: bool = true) -> GameState:
 	return Fixture.state(map_text, {1: &"viktor_draeg"} if with_viktor else {})

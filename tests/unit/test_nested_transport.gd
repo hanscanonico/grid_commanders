@@ -4,15 +4,11 @@ extends GutTest
 ## erase capture progress at that stale cell — so a loaded carrier is refused, and
 ## remove_unit never lets a passenger's stale cell wipe a live capture.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 func test_load_refuses_a_transport_that_is_itself_carrying_cargo() -> void:

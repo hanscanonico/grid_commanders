@@ -8,16 +8,6 @@ extends GutTest
 ## pinned separately here. Movement fuel, ammo and field supply live next door in
 ## test_fuel_and_ammo.gd; this file is only what upkeep added.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-
 
 func test_ground_units_burn_no_fuel_standing_still() -> void:
 	var state := Fixture.state(Fixture.LONE_TANK)

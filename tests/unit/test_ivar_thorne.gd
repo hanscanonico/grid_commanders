@@ -3,18 +3,6 @@ extends GutTest
 ## the Engagement rather than the unit, which is D7 — and Cut Both Ways, two pips
 ## off every unit standing on the board and nothing off it.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
-
 
 func _state(map_text: String, thorne_team: int = 1) -> GameState:
 	return Fixture.state(map_text, {} if thorne_team == 0 else {thorne_team: &"ivar_thorne"})

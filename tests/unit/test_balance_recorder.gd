@@ -10,15 +10,11 @@ extends GutTest
 ##
 ## The recorder is Node-free precisely so these can be plain unit tests.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 func _state(map_text: String) -> GameState:

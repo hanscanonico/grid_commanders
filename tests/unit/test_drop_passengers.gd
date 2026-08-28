@@ -4,15 +4,11 @@ extends GutTest
 ## only one that could stand beside the transport — a Lander's two riders need
 ## not share a move class.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 func test_drop_judges_each_passenger_not_just_the_first() -> void:

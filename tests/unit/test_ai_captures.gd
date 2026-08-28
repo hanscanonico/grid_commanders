@@ -8,16 +8,12 @@ extends GutTest
 ## the home-HQ authority for the same question twenty lines up; this pins
 ## `_consider_captures` asking it too.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 var ai: AIController
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 	ai = AIController.new(unit_db)
 
 
