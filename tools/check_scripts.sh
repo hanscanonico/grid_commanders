@@ -516,6 +516,29 @@ if (($# == 0)); then
 			failed=$((failed + 1))
 		fi
 	done <<<"$cited_paths"
+
+	# The generators' own docs are citers too, and they write their citations
+	# from inside their package — `tests/measure_motion.py` means the sprite
+	# generator's tests, `assets/LICENSES.md` means the game's. So a token is
+	# resolved against the citing file's generator root first and the repo root
+	# second, and only a token no root answers for is a citation nobody can
+	# follow.
+	for doc in generators/*/README.md generators/*/docs/*.md; do
+		[[ -f "$doc" ]] || continue
+		root="${doc#generators/}"
+		root="generators/${root%%/*}"
+		doc_citations="$(
+			grep -ohE '(^|[^A-Za-z0-9_./~-])(spritegen|tests|docs|assets)/[A-Za-z0-9_./-]*\.(md|gd|gdignore|txt|tres|tscn|png|sh|py|json|cfg)' \
+				"$doc" | sed -E 's/^[^A-Za-z0-9_]//' | sort -u
+		)"
+		while read -r cited; do
+			[[ -z "$cited" ]] && continue
+			if [[ ! -e "$root/$cited" && ! -e "$cited" ]]; then
+				echo "check: $doc cites $cited, which exists neither under $root/ nor at the repo root" >&2
+				failed=$((failed + 1))
+			fi
+		done <<<"$doc_citations"
+	done
 fi
 
 if ((failed > 0)); then
