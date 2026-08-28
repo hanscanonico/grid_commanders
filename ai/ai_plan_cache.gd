@@ -51,10 +51,13 @@ func sync(context: AIPlanningContext) -> void:
 	_stale_claims = false
 	_stale_columns.clear()
 	var turn := _turn_signature(context)
-	if turn != _turn_key or not _may_keep(context) or not _drop_what_changed(context):
+	# Filled by the diff and read back by the record, so a unit's condition is
+	# snapshotted once per sync rather than once per pass over the board.
+	var conditions: Dictionary[Unit, Array] = {}
+	if turn != _turn_key or not _may_keep(context) or not _drop_what_changed(context, conditions):
 		_plans.clear()
 	_turn_key = turn
-	_record(context)
+	_record(context, conditions)
 
 
 ## The plan still good for `unit`, or null when it has to be scored afresh.
@@ -130,7 +133,7 @@ func _may_keep(context: AIPlanningContext) -> bool:
 ##   the moment the set it was keyed on changes.
 ##
 ## Everything else is a cell, or the fallback advance, or both.
-func _drop_what_changed(context: AIPlanningContext) -> bool:
+func _drop_what_changed(context: AIPlanningContext, conditions: Dictionary[Unit, Array]) -> bool:
 	var state := context.state
 	if _owners != state.property_owners or _meters != _read_meters(state):
 		return false
@@ -142,13 +145,14 @@ func _drop_what_changed(context: AIPlanningContext) -> bool:
 	var present: Dictionary[Unit, bool] = {}
 	for unit in state.units:
 		present[unit] = true
-		var before: Array = _units.get(unit, [])
-		if before == _condition(unit):
-			continue
+		var now := _condition(unit)
+		conditions[unit] = now
 		# A unit that was not there last time is one a base has just put on the
 		# board: new company for its domain, wherever it stands.
-		var arrived := before.is_empty()
-		var was: Vector2i = unit.cell if arrived else before[0]
+		var arrived := not _units.has(unit)
+		if not arrived and _units[unit] == now:
+			continue
+		var was: Vector2i = unit.cell if arrived else _units[unit][0]
 		touched.append(was)
 		touched.append(unit.cell)
 		if _note_change(unit, context, arrived or was != unit.cell):
@@ -219,11 +223,11 @@ func _drop_inside(state: GameState, cells: Array[Vector2i]) -> void:
 				break
 
 
-func _record(context: AIPlanningContext) -> void:
+func _record(context: AIPlanningContext, conditions: Dictionary[Unit, Array]) -> void:
 	var state := context.state
 	_units.clear()
 	for unit in state.units:
-		_units[unit] = _condition(unit)
+		_units[unit] = conditions[unit] if conditions.has(unit) else _condition(unit)
 	_owners = state.property_owners.duplicate()
 	_meters = _read_meters(state)
 	_enemies = context.visible_enemies.duplicate()
