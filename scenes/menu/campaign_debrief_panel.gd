@@ -175,10 +175,7 @@ func _build() -> void:
 	UiKit.page_veil(self)
 	var main := UiKit.page_body(self, 5, UiTheme.PAGE_BUTTON_MARGIN)
 
-	_verdict = Label.new()
-	_verdict.add_theme_font_override("font", UiTheme.display(true))
-	_verdict.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
-	_verdict.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_verdict = UiKit.page_title()
 	main.add_child(_verdict)
 
 	_title = _micro("")
@@ -203,10 +200,7 @@ func _build() -> void:
 	_unlocked = _micro("")
 	main.add_child(_unlocked)
 
-	_continue_button = Button.new()
-	_continue_button.text = "Continue"
-	UiTheme.apply_button(_continue_button, UiTheme.ButtonVariant.PRIMARY, null, UiTheme.SIZE_BUTTON)
-	_continue_button.custom_minimum_size = Vector2(140, 20)
+	_continue_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.PRIMARY, null, 140)
 	_continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_continue_button.pressed.connect(_leave)
 	main.add_child(_continue_button)

@@ -208,10 +208,10 @@ func _build_topbar() -> HBoxContainer:
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 6)
 
-	_title = Label.new()
-	_title.text = "SELECT COMMANDER"
-	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
+	_title = UiKit.page_title("SELECT COMMANDER")
+	# Read from the left: this one heads a bar it shares with the seat chips
+	# rather than standing over the page on its own.
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_title)
