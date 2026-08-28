@@ -79,10 +79,7 @@ func _build() -> void:
 	var copy := VBoxContainer.new()
 	copy.add_theme_constant_override("separation", 4)
 	copy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var wrap := MarginContainer.new()
-	for edge in ["left", "right", "top", "bottom"]:
-		wrap.add_theme_constant_override("margin_" + edge, 14)
-	wrap.add_child(copy)
+	var wrap := UiKit.pad(copy, 14, 14)
 	row.add_child(wrap)
 
 	_eyebrow = UiTheme.hud_label("", _EYEBROW_SIZE, _EYEBROW_INK)

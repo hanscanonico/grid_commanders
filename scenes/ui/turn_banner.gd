@@ -23,11 +23,7 @@ func _ready() -> void:
 func _build() -> void:
 	add_theme_stylebox_override("panel", UiTheme.panel_box())
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", _PAD_X)
-	margin.add_theme_constant_override("margin_right", _PAD_X)
-	margin.add_theme_constant_override("margin_top", _PAD_Y)
-	margin.add_theme_constant_override("margin_bottom", _PAD_Y)
+	var margin := UiKit.pad(null, _PAD_X, _PAD_Y)
 	add_child(margin)
 
 	_label = UiTheme.hud_label("", UiTheme.SIZE_BANNER, UiTheme.INK)

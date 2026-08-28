@@ -56,11 +56,7 @@ func _build() -> void:
 	_band_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_band.add_child(_band_label)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", _PAD_X)
-	margin.add_theme_constant_override("margin_right", _PAD_X)
-	margin.add_theme_constant_override("margin_top", _PAD_Y)
-	margin.add_theme_constant_override("margin_bottom", _PAD_Y)
+	var margin := UiKit.pad(null, _PAD_X, _PAD_Y)
 	column.add_child(margin)
 
 	var rows := VBoxContainer.new()

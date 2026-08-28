@@ -97,10 +97,10 @@ func _build() -> void:
 	# through. This keeps the authored "veil over the board" reading without the bleed.
 	bg.color = UiTheme.veil(0.995)
 	# set_anchors_preset alone rewrites the offsets to preserve the rect a control
-	# already has, so it only bites a node that is *already* parented to a sized
-	# parent — the sheet's own call above, added to a full-size battle scene. bg and
-	# the margin below are freshly created and still parentless when their preset
-	# runs: the parent rect is empty, the offsets stay 0, and either form covers.
+	# already has, so both of these take the offsets form: a rect is never smaller
+	# than the control's minimum size, and the padded margin below has one the
+	# moment its constants are set. Measured, not argued — the anchors-only form
+	# moved the commander_info capture.
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
@@ -108,10 +108,8 @@ func _build() -> void:
 	# screen pushes both its ends off, which is how the Close button used to leave
 	# the viewport (COM-31, the same overflow the select page had). Here the cards
 	# row absorbs the slack and the title and button keep their edges.
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, UiTheme.PAGE_MARGIN)
+	var margin := UiKit.pad(null, UiTheme.PAGE_MARGIN, UiTheme.PAGE_MARGIN)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(margin)
 
 	var rows := VBoxContainer.new()
