@@ -126,7 +126,7 @@ static func encode(
 	auto_tiers: Dictionary[int, StringName] = {},
 	seat_tiers: Dictionary[int, StringName] = {}
 ) -> Dictionary:
-	var carrier_indices := _unit_indices(state)
+	var carrier_indices := Unit.indices_of(state.units)
 	var units: Array = []
 	for unit in state.units:
 		(
@@ -194,18 +194,6 @@ static func encode(
 		"capture_progress": progress,
 		"units": units,
 	}
-
-
-## `unit -> index` in `state.units`, built once per `encode` call rather than
-## re-scanned for every one of the n units it writes out — the same shape
-## MovementResolver._occupants is waived for (CLAUDE.md). A unit with no
-## carrier is simply absent as a key, so the lookup above falls back to
-## `NO_CARRIER` exactly as `Array.find` did.
-static func _unit_indices(state: GameState) -> Dictionary[Unit, int]:
-	var indices: Dictionary[Unit, int] = {}
-	for i in state.units.size():
-		indices[state.units[i]] = i
-	return indices
 
 
 ## Rebuilds a match from a parsed save. Returns null (with a pushed error
