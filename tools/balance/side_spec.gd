@@ -61,7 +61,3 @@ func text() -> String:
 ## Filename-safe, for the run directory and report labels: `gideon_holt-normal`.
 func slug() -> String:
 	return "%s-%s" % [commander, tier]
-
-
-func has_commander() -> bool:
-	return commander != CommanderType.NEUTRAL_ID

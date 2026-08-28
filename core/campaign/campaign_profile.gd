@@ -44,10 +44,6 @@ static func path_for(campaign_id: StringName) -> String:
 	return "%s/%s.json" % [DIR, campaign_id]
 
 
-static func has_profile(campaign_id: StringName) -> bool:
-	return FileAccess.file_exists(_slot_path(path_for(campaign_id)))
-
-
 ## Whichever copy is the live one. A replacement parks the previous profile at
 ## the backup for a moment, so a reader that opened `path` blindly would see
 ## nothing exactly then.
