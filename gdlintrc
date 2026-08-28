@@ -381,4 +381,12 @@ max-public-methods: 22
 # 1415 -> 1402, tracking battle.gd down: the board's pointer moved out to
 # scenes/battle/board_pointer.gd so that a finger's pan and pinch had somewhere to
 # land. See the same entry in tools/check_scripts.sh.
-max-file-lines: 1402
+#
+# 1402 -> 1272, and the ceiling is tools/commander_face_svg.gd's rather than
+# battle.gd's: five splits took battle.gd to 1196 — BattlePowerFlow, BattleHandoff,
+# the commit-and-settle fold, the authorities it now asks rather than re-decides,
+# and BattleTargeting — so the face drawer, which has grown back to 1272 since the
+# FACES table came out of it, is the longest file in the tree again. battle.gd is
+# pinned at its own length in tools/check_scripts.sh and takes none of this slack.
+# Adding to the face drawer still means moving something out first.
+max-file-lines: 1272
