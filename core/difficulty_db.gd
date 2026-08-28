@@ -16,16 +16,8 @@ var _by_id: Dictionary[StringName, Difficulty] = {}
 
 static func load_default() -> DifficultyDB:
 	var db := DifficultyDB.new()
-	var dir := DirAccess.open(DIFFICULTY_DIR)
-	if dir == null:
-		push_error("DifficultyDB: cannot open %s" % DIFFICULTY_DIR)
-		return db
-	for file in dir.get_files():
-		# Exported builds list .tres files as .tres.remap.
-		var file_name := file.trim_suffix(".remap")
-		if not file_name.ends_with(".tres"):
-			continue
-		var tier: Difficulty = load(DIFFICULTY_DIR.path_join(file_name))
+	for path in ResourceDir.files(DIFFICULTY_DIR, ".tres", "DifficultyDB"):
+		var tier: Difficulty = load(path)
 		if tier != null:
 			db.register(tier)
 	return db

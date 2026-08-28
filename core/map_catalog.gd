@@ -46,19 +46,8 @@ static func fixture_paths() -> Array[String]:
 ## order that does not depend on the filesystem's. Shared by `paths()` and
 ## `fixture_paths()`, which differ only in which directory they scan.
 static func _txt_paths(dir_path: String) -> Array[String]:
-	var result: Array[String] = []
-	var dir := DirAccess.open(dir_path)
-	if dir == null:
-		push_error("MapCatalog: cannot open %s" % dir_path)
-		return result
-	var files := dir.get_files()
-	files.sort()
-	for file in files:
-		# Exported builds list .txt files with a .remap suffix.
-		var map_file := file.trim_suffix(".remap")
-		if not map_file.ends_with(".txt"):
-			continue
-		result.append(dir_path.path_join(map_file))
+	var result := ResourceDir.files(dir_path, ".txt", "MapCatalog")
+	result.sort()
 	return result
 
 
