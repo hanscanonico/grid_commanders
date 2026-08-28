@@ -51,3 +51,24 @@ static func is_press(event: InputEvent) -> bool:
 		return true
 	var action := event as InputEventAction
 	return action != null and action.pressed
+
+
+## Whether a cancel press dismisses this page: the visible guard, the test, and
+## the receipt, in the one place the convention is stated. A page's
+## `_unhandled_input` is then the two lines that say what dismissing it does —
+## re-asserting the shape per page is how one of them ends up without the
+## receipt and double-fires on a touch build.
+static func dismissed_by_cancel(page: Control, event: InputEvent) -> bool:
+	return _dismissed(page, event.is_action_pressed(&"cancel"))
+
+
+## The same, for a page any press retires rather than cancel alone.
+static func dismissed_by_press(page: Control, event: InputEvent) -> bool:
+	return _dismissed(page, is_press(event))
+
+
+static func _dismissed(page: Control, pressed: bool) -> bool:
+	if not page.visible or not pressed:
+		return false
+	page.get_viewport().set_input_as_handled()
+	return true
