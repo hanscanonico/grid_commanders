@@ -1,0 +1,10 @@
+# Bounded at both ends because byte-stable rendering is this pipeline's promise.
+# Floor: the art committed under assets/portraits is byte for byte what Pillow
+# 12.3 encodes — 11.3 draws identical pixels but deflates them differently, so
+# the regeneration diff only comes back clean from 12.3 up. Ceiling: Pillow 14
+# (2027-10-15) removes Image.getdata.
+pillow>=12.3,<14
+# The lint gate's own tool, so `make generators-venv` builds an interpreter that
+# can run it. Same pin as .github/workflows/verify.yml and the other two
+# generators' requirements — move the three together.
+ruff==0.16.2

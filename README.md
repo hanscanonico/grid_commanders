@@ -42,9 +42,11 @@ make ui-art          # the second alone: the overlay, cursor and icon this repo 
 make audio           # reinstall the sound effects + music from generators/audio
 make audio-test      # that generator's own gate: rosters, mix, loop seams, determinism
 make sprites-test    # the sprite generator's own gate: geometry, ramps, palette mirror
-make generators-venv # one-off: the Python interpreters the two generators need
-make portraits       # regenerate the commander portraits + faction emblems
-make portraits-check # bake them in memory and byte-diff against the committed PNGs
+make generators-venv # one-off: the Python interpreters the three generators need
+make portraits       # regenerate the faction emblems from generators/portraits + import
+make portraits-test  # that generator's own gate: the palette mirror and determinism
+make portraits-snapshot   # a fresh generation against the art installed under assets/
+make portraits-check # bake the busts in memory and byte-diff against the committed PNGs
 make import          # (re)import assets headless
 make export-android  # package a debug APK -> build/android/ (setup below)
 make export-ios      # package an Xcode project -> build/ios/ (setup below)
