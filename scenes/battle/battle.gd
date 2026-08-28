@@ -381,9 +381,9 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 		enter_victory()
 
 
-## Asks for the board back while the computer is playing. Public because the Esc
-## the AI-turn legend advertises is one route to it and a scripted driver is the
-## other. The answer is immediate even though the pause is not: the runner stops
+## Asks for the board back while the computer is playing. Private: the only route
+## in is the Esc arm below, which the AI-turn legend advertises and a scripted
+## driver presses. The answer is immediate even though the pause is not: the runner stops
 ## at its next command boundary, up to one animation away, so the press says it
 ## landed rather than leaving the player pressing it again. A second press re-arms
 ## nothing, but it is answered again: the chip fades on a clock of its own, and a
@@ -868,8 +868,8 @@ func _handle_unit_action(action: StringName) -> void:
 ## application, snapshots and presentation belong to the pipeline; a caller owns
 ## only the `on_reject` recovery its own interaction backs out to. BattleTargeting
 ## is handed it as a Callable for the same reason `BattlePowerFlow._fire` still
-## spells its own: a public seam would put Battle over its `max-public-methods`
-## ceiling.
+## spells its own: a public seam each would spend the whole of Battle's
+## `max-public-methods` headroom on two callers' recovery.
 ##
 ## ANIMATING before the await, because the pipeline's presentation can hold this
 ## flow for seconds — the capture cut-in does — and MENU is a state the HUD's
