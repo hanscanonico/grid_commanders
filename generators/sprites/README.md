@@ -2,8 +2,9 @@
 
 Deterministic sprite pipeline for this game, living in the repository it feeds
 (`generators/sprites`, an offline instrument the engine never sees — the
-sibling `generators/.gdignore` keeps Godot out of it). It generates the game's complete **units atlas** (18 units x 5 faction rows)
-and **terrain atlas** (14 terrains x 5 rows) as curated isometric-voxel pixel
+sibling `generators/.gdignore` keeps Godot out of it). It generates the game's
+complete **units atlas** (18 units x 5 faction rows) and **terrain atlas**
+(14 terrains x 5 rows) as curated isometric-voxel pixel
 art, in the same dimetric style as the PixVoxel pack the game shipped with —
 but with more detail: finer voxels, baked ambient occlusion, front-edge rim
 light, per-part outlines, and consistent scale, light and palette across the
