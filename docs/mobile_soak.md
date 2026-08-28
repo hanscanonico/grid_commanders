@@ -23,7 +23,8 @@ Two clocks are read on the desktop by a new instrument,
 than a gate: out of `make verify` and `make test`, writing nothing but the
 scratch file its storage clock times and then removes, and touching nothing
 under `core/` or `ai/`. Its planner loop is
-`tools/run_bulwark_measure.gd::_play`'s — one `AIController` per army, neutral
+`tools/balance/four_army_loop.gd` (`FourArmyLoop.play`), the loop the board
+measurement plays too — one `AIController` per army, neutral
 commanders, the same per-turn safety net — with a clock around
 `plan_next_command` and the result thrown away.
 

@@ -30,7 +30,7 @@ make hotseat         # skip the menu: straight into a two-player hot-seat match 
 make verify          # the merge gate: check + lint + format-check + test + determinism, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless, two engines; TEST_JOBS=1 for one)
-make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
+make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check (parallel; CHECK_JOBS=1 for one)
 make campaigns       # the campaign content gate (what it refuses: docs/campaign_authoring.md)
 make determinism     # replay one pinned balance match; byte-diff it against the committed golden
 make lint            # gdlint — style and smells (config: gdlintrc)
@@ -47,7 +47,7 @@ make export-android  # package a debug APK -> build/android/ (setup below)
 make export-ios      # package an Xcode project -> build/ios/ (setup below)
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
-make gallery-screenshot   # render all twenty-three commander cards (the G1 gate)
+make gallery-screenshot   # render all twenty-two commander cards (the G1 gate)
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make bulwark-measure      # Bulwark's win spread over N seeds -> reports/ (docs/bulwark_balance.md)
@@ -1270,7 +1270,7 @@ already failing would muddy both readings.
   way for exactly this reason.
 - `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT), with one local
   patch: `summary.gd` no longer prints the end-of-run version banner, which claimed on every
-  `make test` that this GUT "may not be compatible with Godot 4.7.1" over 1098 passing tests
+  `make test` that this GUT "may not be compatible with Godot 4.7.1" over 2221 passing tests
   (9.6.1's own `versions.json` stops at 4.6.999, and no config or CLI switch turns the banner
   off). It reads no network — the detector only fetches for the editor plugin and for
   `-gcheck_update`. The patch site names the ticket; re-apply or drop it on the next upgrade,
