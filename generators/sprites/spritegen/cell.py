@@ -13,6 +13,7 @@ from __future__ import annotations
 from PIL import Image
 
 from .palette import RGB
+from .sun import SHADOW, SHADOW_OFFSET
 
 
 # The cell's vertical landmarks, each stated as a height ABOVE its bottom
@@ -21,13 +22,6 @@ from .palette import RGB
 GROUND_BOTTOM = 9
 AIR_BOTTOM = 20
 AIR_SHADOW_BOTTOM = 6
-# One sun, one shadow direction. Every model on the sheet is lit from the
-# top-left, so every shadow it drops falls DOWN-RIGHT by this much — a land
-# hull, a ship's displacement and a building's silhouette alike
-# (`terrain.SHADOW_OFFSET` is the same offset on the tile drawer). An
-# airborne caster drops further, because the gap between unit and shadow is
-# the altitude cue, but never in another direction.
-SHADOW_OFFSET = (2, 2)
 
 
 def compose_cell(
@@ -209,7 +203,6 @@ def place_in_cell(cell_img: Image.Image, sprite: Image.Image, x0: int, y0: int) 
 
 FOAM_ROWS = 4
 FOAM: RGB = (226, 240, 250)
-SHADOW: RGB = (16, 18, 24)
 # What a composed shadow pixel and an untouched one look like. One statement,
 # because three passes ask: the ellipse writes CAST, the wake may take a CAST
 # pixel back, and `_erase_shadow` turns whatever is still CAST into EMPTY.

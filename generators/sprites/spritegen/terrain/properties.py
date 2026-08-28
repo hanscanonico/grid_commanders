@@ -6,9 +6,10 @@ from __future__ import annotations
 from PIL import Image
 
 from .. import buildings
-from ..palette import AMBIENT, Faction
-from ..voxel import SHADOW_OFFSET, place_in_cell, render
-from .tones import CELL, _tone
+from ..palette import Faction
+from ..sun import SHADOW, SHADOW_OFFSET
+from ..voxel import place_in_cell, render
+from .tones import CELL
 
 # ---------------------------------------------------------------------------
 # property tiles
@@ -34,24 +35,6 @@ PROPERTY_ANCHOR: dict[str, tuple[int, int]] = {
     "airport": (32, 61),
     "port": (32, 61),
 }
-
-# The shadow a building drops on whatever ground it is standing on: the
-# building's own silhouette, shifted down-right away from the light every
-# model is lit from, in the same tone AND by the same offset the unit cells
-# cast (`voxel.SHADOW_OFFSET`, re-exported here — one sun for the sheet).
-#
-# The tone is the sky, keyed down: a cast shadow is the one surface on the
-# sheet lit by AMBIENT and nothing else, so it is stated as AMBIENT's hue at a
-# third of its chroma at L18 rather than as a near-black literal — a black
-# shadow reads as a hole punched in the board rather than as shade on it, and
-# a typed triple gives no way to tell which of the two it is.
-#
-# It evaluates to (16, 18, 24), the exact literal it replaces: the shadow was
-# already the sky at S0.33, which nothing said out loud. So `voxel.SHADOW`,
-# the unit cells' copy of the same triple, still agrees with it byte for byte
-# — one sun and one sky for the sheet. If this derivation is ever retuned,
-# that constant has to move with it.
-SHADOW = _tone(AMBIENT, 0.34, 18.0)
 
 
 def _drop_shadow(cell: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
