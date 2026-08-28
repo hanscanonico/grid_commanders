@@ -506,7 +506,7 @@ if (($# == 0)); then
 	# repo and carries a file extension — which is what keeps prose, a glob and a
 	# sibling repo's path (qualified with that repo's name) out of it.
 	cited_paths="$(
-		grep -ohE '(^|[^A-Za-z0-9_./~-])(core|ai|scenes|data|tools|docs|tests|maps|assets|autoload|addons)/[A-Za-z0-9_./-]*\.(md|gd|txt|tres|tscn|png|sh|py|json|cfg)' \
+		grep -ohE '(^|[^A-Za-z0-9_./~-])(core|ai|scenes|data|tools|docs|tests|maps|assets|autoload|addons|generators)/[A-Za-z0-9_./-]*\.(md|gd|gdignore|txt|tres|tscn|png|sh|py|json|cfg)' \
 			CLAUDE.md README.md docs/*.md | sed -E 's/^[^A-Za-z0-9_]//' | sort -u
 	)"
 	while read -r cited; do

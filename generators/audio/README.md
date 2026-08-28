@@ -8,9 +8,9 @@ as authored synthesis recipes over a small numpy DSP toolkit, and its two
 looping music tracks — `autoload/music.gd`'s `Music.NAMES` — as authored song
 data played by a deterministic sequencer. The direction is 16-bit-era
 chiptune-plus: layered synthesis with punchy envelopes and filtered noise,
-built to sit beside the game's dimetric
-pixel art (whose pipeline this one deliberately mirrors — see
-[`../sprite_generator`](../../../sprite_generator)).
+built to sit beside the game's dimetric pixel art (whose pipeline this one
+deliberately mirrors — see [`sprite_generator`](../../../sprite_generator),
+still a sibling checkout beside this repository).
 
 There is **no RNG outside per-sound seeds**: noise comes from seeded PCG64
 generators, so every run reproduces the same bytes on every platform.
