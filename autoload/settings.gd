@@ -157,9 +157,9 @@ func set_speed(id: StringName) -> void:
 		_save()
 
 
-## Changes the volume, applies it to the master bus and writes it back. Reached
-## through `cycle_row`'s Sound row, the one thing that moves it. Mirrors set_speed,
-## and like it a pinned or scripted launch (see --mute) never touches the file.
+## Changes the volume, applies it to the master bus and writes it back. Its one
+## caller is `cycle_row`'s Sound row; `pin` and `--mute` stand the field itself.
+## Mirrors set_speed, and like it a pinned or scripted launch never writes the file.
 func set_volume(id: StringName) -> void:
 	volume = id if volume_index(id) >= 0 else FULL_ID
 	_apply_volume()
