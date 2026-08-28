@@ -10,7 +10,9 @@ module only ever reads the four tones and the rim off whatever it is handed.
 
 from __future__ import annotations
 
+import re
 import unittest
+from pathlib import Path
 
 from PIL import Image, ImageChops
 
@@ -18,6 +20,12 @@ from portraitgen import uniform
 from portraitgen.canvas import Canvas
 from portraitgen.light import Ramp
 from portraitgen.palette import faction_by_key
+
+GAME = Path(__file__).resolve().parents[3]
+UI_THEME = GAME / "scenes/common/ui_theme.gd"
+# `const AMMO := Color(r, g, b)` — the one gold the portraits borrow, read back
+# out of the game the way the faction themes are.
+_AMMO = re.compile(r"const AMMO := Color\(([^)]*)\)")
 
 FACTION = faction_by_key("aurora")
 RAMP = Ramp(
@@ -96,6 +104,22 @@ class TheChestCarriesSomething(unittest.TestCase):
     def test_an_unknown_treatment_raises(self):
         with self.assertRaises(KeyError):
             uniform.chest(Canvas(), "cape", FACTION, RAMP)
+
+
+class TheGoldIsTheGame(unittest.TestCase):
+    """`GOLD` is `UiTheme.AMMO` restated, so it is read back out of the game.
+
+    The engine writes a `Color` to hex by rounding, which is what the shipped
+    busts' `_gold` carries; a drift here means the pip and the HUD's ammo
+    readout have stopped being the same gold.
+    """
+
+    def test_the_gold_is_ui_themes_ammo(self):
+        self.assertTrue(UI_THEME.is_file(), UI_THEME)
+        found = _AMMO.search(UI_THEME.read_text())
+        self.assertIsNotNone(found, f"no AMMO constant in {UI_THEME}")
+        channels = tuple(float(v) for v in found.group(1).split(",")[:3])
+        self.assertEqual(uniform.GOLD, tuple(round(v * 255.0) for v in channels))
 
 
 class TheGoldIsTheRankPip(unittest.TestCase):

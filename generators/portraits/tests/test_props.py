@@ -37,7 +37,7 @@ def _figure() -> Image.Image:
     canvas = Canvas()
     uniform.draw(canvas, FACTION, uniform.COLLAR_DEFAULT, RAMP)
     canvas.ellipse(HEAD, (*RAMP.base, 255))
-    return canvas.image.getchannel("A")
+    return canvas.silhouette()
 
 
 def _prop(key: str, *, layer: str = "all") -> Canvas:
@@ -63,10 +63,12 @@ class EveryPropDraws(unittest.TestCase):
 
 class EveryPropTouchesTheBust(unittest.TestCase):
     def test_no_prop_floats(self):
+        """Silhouette against silhouette: a prop whose *shadow* is all that
+        reaches the bust is exactly the float this measures."""
         figure = _figure()
         for key in sorted(props.PROPS):
             with self.subTest(prop=key):
-                overlap = ImageChops.multiply(_prop(key).image.getchannel("A"), figure)
+                overlap = ImageChops.multiply(_prop(key).silhouette(), figure)
                 self.assertIsNotNone(overlap.getbbox(), "the prop meets nothing")
 
 
@@ -83,6 +85,11 @@ class EveryPropCasts(unittest.TestCase):
         canvas = _prop("book")
         colours = {colour for _, colour in canvas.image.getcolors(maxcolors=1 << 16)}
         self.assertIn(props.PROP_CAST_TONE, colours)
+
+
+class ThePropsBorrowTheUniformsGold(unittest.TestCase):
+    def test_there_is_one_gold_on_the_sheet(self):
+        self.assertEqual(props.GOLD, uniform.GOLD)
 
 
 class TheFrameIsRespected(unittest.TestCase):
