@@ -33,6 +33,11 @@ from audiogen import measure, music, sfx
 from audiogen.dsp import RATE, seconds, to_int16
 from audiogen.ogg import ogg_bytes
 
+# This generator lives at generators/audio/ inside the game repository, so the
+# checkout the soundboard reads from is two levels up — resolved from __file__
+# rather than from the working directory, which a `make` target may set anywhere.
+GAME_ROOT = Path(__file__).resolve().parents[2]
+
 
 def wav_bytes(x) -> bytes:
     buf = io.BytesIO()
@@ -178,7 +183,7 @@ def main() -> None:
     ap.add_argument(
         "--game",
         type=Path,
-        default=Path("../grid_commanders"),
+        default=GAME_ROOT,
         help="game checkout the soundboard reads current sounds from (read-only)",
     )
     ap.add_argument(

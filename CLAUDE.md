@@ -1512,8 +1512,9 @@ plan is stated in full below and has no copy there.
   (QOA), so the real package cost was 2.36 MB. What the re-encode buys is **−29% of on-device audio
   storage and resident RAM** (2,357,070 → 1,680,280 B) and −86% of the committed bytes, against
   −45 KB of APK — Ogg does not deflate, QOA did; **not the tenfold cut the plan estimated**. **The
-  format is the sibling `audio_generator`'s to emit, never this repo's to convert** — `make audio`
-  installs it and `audiogen/ogg.py` owns the compression level, and that module pins the Ogg serial
+  format is the audio generator's to emit, never the game's to convert** — `make audio`
+  installs it and `generators/audio/audiogen/ogg.py` owns the compression level, and that module
+  pins the Ogg serial
   number and recomputes the page CRCs, libsndfile stamping a random one against a pipeline whose
   promise is byte-stability. **The autoload owns looping** — `Music` sets `stream.loop` the way it
   used to set `loop_mode`, so the `.import` files stay at their defaults. **The effects stay PCM**:
@@ -1600,6 +1601,9 @@ res://
 ├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
 │              # (tools/arena/), replay analyser (tools/replay/), art, sfx & music
 │              # pipeline
+├─ generators/ # the asset pipelines that live in this repo rather than beside it —
+│              # audio/ is Python (make audio installs its output; make audio-test
+│              # is its gate). generators/.gdignore keeps the engine out entirely
 ├─ docs/        # the offline instruments' committed records (the Balance Lab, the
 │              # commander matrix, the difficulty ladder, the arena, Bulwark's spread,
 │              # the mobile soak), and how to author a campaign mission

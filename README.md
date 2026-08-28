@@ -39,7 +39,9 @@ make format-check    # gdformat --check — report what it would rewrite, change
 make tiles           # rebuild the art: generator atlases (SPRITEGEN=<path>), UI chrome, import
 make atlases         # the first half alone: the generator's sheets (SPRITEGEN=<path>)
 make ui-art          # the second alone: the overlay, cursor and icon this repo draws itself
-make audio           # reinstall the sound effects + music from the sibling audio_generator repo
+make audio           # reinstall the sound effects + music from generators/audio
+make audio-test      # that generator's own gate: rosters, mix, loop seams, determinism
+make generators-venv # one-off: the Python interpreter make audio and make audio-test need
 make portraits       # regenerate the commander portraits + faction emblems
 make portraits-check # bake them in memory and byte-diff against the committed PNGs
 make import          # (re)import assets headless
@@ -1291,10 +1293,11 @@ by `tools/generate_tiles.gd`. The commander portraits and faction emblems are
 generated too (`make portraits`) — project-original vector art drawn to the "Heroic Commander
 Portraits" design handoff's spec, no third-party pixels. All sound — the nine effects and two
 project-original looping marches, `parade` for the menu and `advance` for the battle — is composed
-and rendered deterministically in the sibling
-[audio_generator](https://github.com/hanscanonico/audio_generator) repo, gated there (determinism,
-loop-seam, loudness and distinctness measurements), and installed here by `make audio` — the
-effects as committed WAVs, the two marches as Ogg Vorbis. Third-party asset licenses must be
+and rendered deterministically by `generators/audio`, a Python pipeline living in this
+repository and gated by `make audio-test` (determinism, loop-seam, loudness and distinctness
+measurements), and installed by `make audio` — the effects as committed WAVs, the two marches as
+Ogg Vorbis. `generators/.gdignore` keeps the engine out of the directory, so nothing there is
+imported or exported. Third-party asset licenses must be
 tracked in `assets/LICENSES.md`. No Nintendo assets or names may ever be used.
 
 `make tiles` rebuilds the art in three ordered steps: `atlases` regenerates both sheets in the
@@ -1304,6 +1307,13 @@ reimports the result — Godot caches image imports by size, so skipping the las
 rebuild that changes atlas dimensions renders a blank map. A clone without the generator still
 plays and still passes every gate: the atlases are committed art, and only `make tiles` needs the
 sibling repo (plus its `.venv` — see its README; Python + Pillow, no ImageMagick).
+
+`make audio` and `make audio-test` need a Python interpreter with numpy and soundfile, and
+`make generators-venv` builds one at `~/.cache/grid_commanders/venv-audio`. It sits **outside** the
+checkout on purpose: a git worktree shares no ignored files with the main checkout, so a venv under
+the tree would be one install per worktree. Point `AUDIOGEN_PY=<python>` at another interpreter, or
+`AUDIOGEN_VENV=<dir>` at another place to build it. Committed audio is the pipeline's exact output,
+so a clone without the venv still plays and still passes `make verify`.
 
 ### The menu design system
 

@@ -85,3 +85,44 @@ jobs:
       # match against its committed golden (balance plan D1's merge bar).
       - name: determinism
         run: make determinism
+
+  # The audio generator's own gate. Its own job rather than a step of `verify`:
+  # it needs a Python venv instead of the engine, and at ~20 s of rendering it
+  # is too slow to sit in the local merge command (`make audio-test` runs it by
+  # hand). Unconditional — it is faster than working out whether it applies.
+  audio:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: generators/audio
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: generators/audio/requirements.txt
+
+      # Pinned so a new ruff release cannot change the verdict; the settings are
+      # pinned separately in generators/audio/ruff.toml.
+      - name: Install ruff and the generator's dependencies
+        run: pip install ruff==0.16.2 -r requirements.txt
+
+      - name: ruff check
+        run: ruff check .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+      - name: Generator contract tests
+        run: python -m unittest discover tests
+
+      # The pipeline's headline promise: the same bytes on every run.
+      - name: Generate twice, assert byte determinism
+        run: |
+          python audio_generator.py -o /tmp/gen_a
+          python audio_generator.py -o /tmp/gen_b
+          diff -r /tmp/gen_a/sfx /tmp/gen_b/sfx
+          diff -r /tmp/gen_a/music /tmp/gen_b/music

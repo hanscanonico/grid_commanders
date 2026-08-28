@@ -1,14 +1,16 @@
 # Audio Generator
 
-Deterministic sound pipeline for [`../grid_commanders`](../grid_commanders):
-it renders the game's complete sound-effect roster — the nine names
-`autoload/sfx.gd`'s `Sfx.NAMES` plays — as authored synthesis recipes over a
-small numpy DSP toolkit, and its two looping music tracks — `autoload/
-music.gd`'s `Music.NAMES` — as authored song data played by a deterministic
-sequencer. The direction is 16-bit-era chiptune-plus: layered synthesis with
-punchy envelopes and filtered noise, built to sit beside the game's dimetric
-pixel art (whose pipeline this repo deliberately mirrors — see
-[`../sprite_generator`](../sprite_generator)).
+Deterministic sound pipeline for this game, living in the repository it feeds
+(`generators/audio`, an offline instrument the engine never sees — the sibling
+`generators/.gdignore` keeps Godot out of it). It renders the game's complete
+sound-effect roster — the nine names `autoload/sfx.gd`'s `Sfx.NAMES` plays —
+as authored synthesis recipes over a small numpy DSP toolkit, and its two
+looping music tracks — `autoload/music.gd`'s `Music.NAMES` — as authored song
+data played by a deterministic sequencer. The direction is 16-bit-era
+chiptune-plus: layered synthesis with punchy envelopes and filtered noise,
+built to sit beside the game's dimetric
+pixel art (whose pipeline this one deliberately mirrors — see
+[`../sprite_generator`](../../../sprite_generator)).
 
 There is **no RNG outside per-sound seeds**: noise comes from seeded PCG64
 generators, so every run reproduces the same bytes on every platform.
@@ -55,19 +57,31 @@ file.
 
 ## Usage
 
+`make audio` from the repository root is the whole of it: it renders and
+installs in one step, and `make generators-venv` is the one-off interpreter
+setup it needs. The venv is deliberately kept **outside** the checkout
+(`~/.cache/grid_commanders/venv-audio` by default, overridable as
+`AUDIOGEN_PY=<python>`), because a git worktree shares no ignored files with
+the main checkout and a per-worktree venv is a per-worktree reinstall.
+
+To drive the script directly:
+
 ```sh
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+py=~/.cache/grid_commanders/venv-audio/bin/python
 
 # render everything + the A/B boards into ./out
-.venv/bin/python audio_generator.py
+"$py" audio_generator.py
 
 # audition: open out/soundboard.html (effects) and out/musicboard.html
 # (music, both players loop) — the game's current take beside this run's,
 # with the measurements
 
 # install into a game checkout — the path is REQUIRED, never defaulted
-.venv/bin/python audio_generator.py --install /path/to/grid_commanders
+"$py" audio_generator.py --install /path/to/grid_commanders
 ```
+
+`--game`, which the boards read the current sounds from, defaults to the
+repository this generator sits in.
 
 `--install` requiring an explicit path is a scar, not an oversight: a
 defaulted destination in the sprite pipeline once overwrote uncommitted work
@@ -77,7 +91,7 @@ leftover would ship beside its replacement.
 
 ## The gates
 
-`.venv/bin/python -m unittest discover tests` — the merge bar:
+`make audio-test` from the repository root — the merge bar:
 
 - **Contract** — the rosters are `Sfx.NAMES` and `Music.NAMES` verbatim;
   every duration fits its authored budget (a UI blip stays a blip, a music
@@ -101,9 +115,8 @@ them, so the tool and the suite cannot disagree about what "loud" means.
 
 ## Adoption
 
-The game still generates its placeholders (`make sfx` → `tools/
-generate_sfx.gd`, `make music` → `tools/generate_music.gd`). The route-C
-switch — those targets calling this repo — happens **after** human ears
-approve the soundboard and the musicboard, not before: the gates hold
-consistency and technical quality, but whether an explosion feels right or
-a march is worth humming is not measurable here.
+The game ships this pipeline's exact output: `make audio` installs the nine
+effects into `assets/sfx/` and the two marches into `assets/music/`, and
+those bytes are what is committed. The gates above hold consistency and
+technical quality; whether an explosion feels right or a march is worth
+humming stays a human verdict on the soundboard.
