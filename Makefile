@@ -347,18 +347,38 @@ ui-art:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_tiles.gd
 
-# The sound effects and the two music loops are composed and gated in the
-# sibling audio_generator repo (see assets/LICENSES.md) and installed here as
-# committed WAVs. Override AUDIOGEN when that checkout lives elsewhere — a
-# worktree's ../ is not the main checkout's.
-AUDIOGEN ?= ../audio_generator
+# The sound effects and the two music loops are composed and gated in
+# generators/audio (see assets/LICENSES.md) and installed here as committed
+# WAVs and Oggs. The interpreter deliberately lives OUTSIDE the checkout: a git
+# worktree shares no ignored files with the main checkout, so a venv under the
+# tree is one reinstall per worktree. `make generators-venv` creates it.
+AUDIOGEN ?= generators/audio
+AUDIOGEN_VENV ?= $(HOME)/.cache/grid_commanders/venv-audio
+AUDIOGEN_PY ?= $(AUDIOGEN_VENV)/bin/python
+
+define require-audiogen
+	@test -x "$(AUDIOGEN_PY)" || { \
+		echo "$@: no interpreter at $(AUDIOGEN_PY) — run \`make generators-venv\`," >&2; \
+		echo "$@: or pass AUDIOGEN_PY=<python with numpy and soundfile>" >&2; \
+		exit 1; }
+endef
+
+generators-venv:
+	python3 -m venv "$(AUDIOGEN_VENV)"
+	"$(AUDIOGEN_PY)" -m pip install --quiet --requirement "$(AUDIOGEN)/requirements.txt"
 
 audio:
-	@test -x "$(AUDIOGEN)/.venv/bin/python" || { \
-		echo "$@: no venv at $(AUDIOGEN) — see its README for setup," >&2; \
-		echo "$@: or pass AUDIOGEN=<path to an audio_generator checkout>" >&2; \
-		exit 1; }
-	cd "$(AUDIOGEN)" && .venv/bin/python audio_generator.py --install "$(CURDIR)"
+	$(call require-audiogen)
+	"$(AUDIOGEN_PY)" "$(AUDIOGEN)/audio_generator.py" \
+		-o "$(AUDIOGEN)/out" --install "$(CURDIR)"
+
+# The generator's own merge bar: rosters, determinism, mix levels, loop seams
+# and pairwise distinctness. Out of `make verify` because it costs ~20 s and
+# needs a Python venv a clone of this repo does not have; CI runs it as its own
+# job, so nothing about the audio pipeline merges unmeasured.
+audio-test:
+	$(call require-audiogen)
+	cd "$(AUDIOGEN)" && "$(abspath $(AUDIOGEN_PY))" -m unittest discover tests
 
 # Holds every shipped campaign to the bar a playable mission clears. Run it after
 # authoring a mission; what it refuses is listed in docs/campaign_authoring.md.
@@ -455,7 +475,7 @@ mobile-soak:
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	audio portraits portraits-check import campaign-difficulty export-android export-ios \
+	audio audio-test generators-venv portraits portraits-check import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns legibility-check mobile-soak
