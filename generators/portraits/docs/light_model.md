@@ -85,7 +85,7 @@ unknown band name: the vocabulary is the dispatch table.
 
 - **Unique colours.** The brief's bar is 48 RGBA per raster. A 3x box
   downsample blends across every edge it smooths, so a finished raster carries
-  a few hundred values whatever it is painted in — the stand-in measures 189
+  a few hundred values whatever it is painted in — the stand-in row measures 202 to 213
   against the shipped sheet's 528 to 2,877. The bar is therefore read as what
   it was written for: `tests/test_geometry.py` counts the tones a raster is
   *painted* in — colours covering at least a thousandth of it — and holds that
