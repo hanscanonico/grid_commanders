@@ -5,7 +5,7 @@ What the sweep finds on the sheets shipped by generator `0d87068`, which weighs 
 page wholesale rather than editing it, the way `docs/bulwark_balance.md` and
 `docs/replay_survey.md` are superseded.
 
-## Re-read 2026-08-19, after the solid cast shadow (generator `f07e77c`)
+## Re-read 2026-08-19, after the solid cast shadow (generator `55d2b65`)
 
 The board's cast shadow became solid and the sub's wake with it, so board pixels moved and this
 page was re-read rather than re-authored: **1,284 failing (15.9%) clear and 123 (6.8%) fogged**,
@@ -39,7 +39,7 @@ sea cells, phase 2 wins the worst-of 151 times and fails 16.6% of them against p
 phase is worth naming even now. Nothing was tuned in response, and no other terrain, unit,
 faction or class moved by a cell.
 
-## Re-read 2026-08-20, after plains gained phases (generator `4ba6a83`)
+## Re-read 2026-08-20, after plains gained phases (generator `21175fc`)
 
 Plains is now a phase-keyed family like the sea — three tiles, phase 0 the atlas column byte for
 byte — so the ruler reads it three ways and reports the worst. It is the reference ground most
@@ -49,7 +49,7 @@ re-read's numbers to the cell, and `plains/0`, `plains/1` and `plains/2` each fa
 cells**, as the single plains tile did. No unit, faction, overlay or other terrain moved by a cell,
 and nothing was tuned in response. Only the `terrain/variant` table gained rows.
 
-## Re-read 2026-08-20, after mountain gained phases (generator `5efec88`)
+## Re-read 2026-08-20, after mountain gained phases (generator `8569ba4`)
 
 Mountain is phase-keyed now for the reason plains is, read at its loudest: it is the most
 silhouette-dominant tile on the board, so a range drawn from one of them is a wall of the same peak.
