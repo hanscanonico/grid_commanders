@@ -879,9 +879,11 @@ func _handle_unit_action(action: StringName) -> void:
 			_undo_move_preview()
 
 
-## Every committed human flow shares this wrapper. Validation, application,
-## snapshots and presentation belong to the pipeline; a caller owns only the
-## `on_reject` recovery its own interaction backs out to.
+## Every committed human flow but the power's shares this wrapper. Validation,
+## application, snapshots and presentation belong to the pipeline; a caller owns
+## only the `on_reject` recovery its own interaction backs out to.
+## (`BattlePowerFlow._fire` still spells its own: sharing this one would need a
+## public seam and Battle is at its `max-public-methods` ceiling.)
 ##
 ## ANIMATING before the await, because the pipeline's presentation can hold this
 ## flow for seconds — the capture cut-in does — and MENU is a state the HUD's
