@@ -85,3 +85,47 @@ func test_bool_flag_refuses_a_word_it_does_not_know() -> void:
 	assert_eq(BalanceHarness.bool_flag("mobile-soak", "--fog", "0"), 0)
 	assert_eq(BalanceHarness.bool_flag("mobile-soak", "--fog", "of"), -1)
 	assert_push_error("mobile-soak: --fog is on/true/1 or off/false/0 (got 'of')")
+
+
+## The loop arm six drivers used to spell: a flag the sample offers is consumed,
+## anything else is handed back for the driver's own arms to answer.
+func test_take_consumes_the_sample_flags_and_leaves_the_rest() -> void:
+	var flags := BalanceHarness.sample("balance", 4, 20, BalanceHarness.SAMPLE_FLAGS)
+	assert_eq(BalanceHarness.take(flags, "balance", "--seeds=12"), BalanceHarness.TAKEN)
+	assert_eq(BalanceHarness.take(flags, "balance", "--seed-offset=8"), BalanceHarness.TAKEN)
+	assert_eq(BalanceHarness.take(flags, "balance", "--days=40"), BalanceHarness.TAKEN)
+	assert_eq(BalanceHarness.take(flags, "balance", "--out= reports/x "), BalanceHarness.TAKEN)
+	assert_eq(BalanceHarness.take(flags, "balance", "--map=atoll"), BalanceHarness.NOT_MINE)
+	assert_eq(flags.seeds, 12)
+	assert_eq(flags.seed_offset, 8)
+	assert_eq(flags.days_cap, 40)
+	assert_eq(flags.out_dir, "reports/x", "the raw text, stripped and not yet resolved")
+
+
+## A refusal stops the run, and it is the same wording the drivers pushed before
+## they shared the arm.
+func test_take_refuses_a_malformed_value_by_name() -> void:
+	var flags := BalanceHarness.sample("board-measure", 4, 20, BalanceHarness.SAMPLE_FLAGS)
+	assert_eq(BalanceHarness.take(flags, "board-measure", "--seeds=x"), BalanceHarness.REFUSED)
+	assert_push_error("board-measure: --seeds must be a positive integer (got 'x')")
+	assert_eq(BalanceHarness.take(flags, "board-measure", "--days=0"), BalanceHarness.REFUSED)
+	assert_push_error("board-measure: --days must be a positive integer (got '0')")
+
+
+## A driver's grammar is what it lists: `run_mobile_soak.gd` has no
+## `--seed-offset=` and no `--out=`, so sharing the arm may not give it either —
+## both fall through to its own unknown-flag refusal exactly as they did.
+func test_take_offers_only_the_flags_the_driver_lists() -> void:
+	var flags := BalanceHarness.sample("mobile-soak", 2, 20, ["--seeds", "--days"])
+	assert_eq(BalanceHarness.take(flags, "mobile-soak", "--seed-offset=4"), BalanceHarness.NOT_MINE)
+	assert_eq(BalanceHarness.take(flags, "mobile-soak", "--out=reports/x"), BalanceHarness.NOT_MINE)
+	assert_eq(flags.seed_offset, 0)
+	assert_eq(flags.out_dir, "")
+
+
+## A flag name nothing reads is a typo in the driver, not a flag a run silently
+## never takes.
+func test_sample_refuses_a_flag_it_does_not_know() -> void:
+	var flags := BalanceHarness.sample("board-measure", 4, 20, ["--seedz"])
+	assert_push_error("board-measure: '--seedz' is not a sample flag")
+	assert_eq(BalanceHarness.take(flags, "board-measure", "--seedz=9"), BalanceHarness.NOT_MINE)

@@ -19,6 +19,15 @@ extends RefCounted
 ## Paired seed count when a run's flags do not say. Each seed plays both seats.
 const DEFAULT_SEEDS := 4
 
+## What `take` did with an argument: consumed it, refused the run over it, or
+## left it to the driver's own arms.
+enum { NOT_MINE, TAKEN, REFUSED }
+
+## Every flag `take` knows. A sample lists the ones its own driver offers, so
+## sharing the loop can never widen a grammar — `run_mobile_soak.gd` and
+## `run_commander_balance.gd` have no `--seed-offset=` and keep none.
+const SAMPLE_FLAGS: Array[String] = ["--seeds", "--seed-offset", "--days", "--out"]
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -107,6 +116,57 @@ static func out_flag(tool_name: String, value: String) -> String:
 			)
 		)
 	return resolved
+
+
+## The sample one offline run plays: how many seeds, from where in the range,
+## under what day horizon, writing where. Every default is the caller's — the
+## widths and horizons two committed documents cite are each driver's own — and
+## so is the `--out=` fallback and the `out_flag` finish, which is why `out_dir`
+## is the raw text and nothing here resolves it.
+class SampleFlags:
+	extends RefCounted
+
+	var seeds := 0
+	var seed_offset := 0
+	var days_cap := 0
+	var out_dir := ""
+	var offers: Array[String] = []
+
+
+## A sample with this driver's own defaults and this driver's own grammar.
+## Refuses a flag name nothing reads rather than quietly never taking it, naming
+## the driver whose list it is.
+static func sample(
+	tool_name: String, seeds: int, days_cap: int, offers: Array[String]
+) -> SampleFlags:
+	for flag in offers:
+		if not flag in SAMPLE_FLAGS:
+			push_error("%s: '%s' is not a sample flag" % [tool_name, flag])
+	var flags := SampleFlags.new()
+	flags.seeds = seeds
+	flags.days_cap = days_cap
+	flags.offers = offers
+	return flags
+
+
+## The loop arm six offline drivers each spelled: the four flags that state a
+## sample, validated by the three checks above and each followed by the same
+## refusal. A driver's own flags go in the NOT_MINE arm, so what it lost is the
+## copy rather than its grammar.
+static func take(flags: SampleFlags, tool_name: String, arg: String) -> int:
+	if flags.offers.has("--seeds") and arg.begins_with("--seeds="):
+		flags.seeds = positive_flag(tool_name, "--seeds", arg.get_slice("=", 1))
+		return REFUSED if flags.seeds < 0 else TAKEN
+	if flags.offers.has("--seed-offset") and arg.begins_with("--seed-offset="):
+		flags.seed_offset = count_flag(tool_name, "--seed-offset", arg.get_slice("=", 1))
+		return REFUSED if flags.seed_offset < 0 else TAKEN
+	if flags.offers.has("--days") and arg.begins_with("--days="):
+		flags.days_cap = positive_flag(tool_name, "--days", arg.get_slice("=", 1))
+		return REFUSED if flags.days_cap < 0 else TAKEN
+	if flags.offers.has("--out") and arg.begins_with("--out="):
+		flags.out_dir = arg.get_slice("=", 1).strip_edges()
+		return TAKEN
+	return NOT_MINE
 
 
 static func _int_flag(value: String, min_value: int) -> int:

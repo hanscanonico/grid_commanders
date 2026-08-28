@@ -26,25 +26,12 @@ func _init() -> void:
 			push_error("arena-blocks: unknown flag '%s'" % arg)
 			quit(2)
 			return
-	var profile := _profile(base)
+	var profile := ArenaRequest.load_profile("arena-blocks", base)
 	if profile == null:
 		quit(2)
 		return
 	print(JSON.stringify(_plan(base, profile)))
 	quit(0)
-
-
-func _profile(base: String) -> AIProfile:
-	var path := ArenaRequest.project_path(base)
-	if path == "" or not ResourceLoader.exists(path):
-		push_error("arena-blocks: no profile at '%s'" % base)
-		return null
-	var loaded: Resource = load(path)
-	if not (loaded is AIProfile):
-		push_error("arena-blocks: '%s' is not an AIProfile" % base)
-		return null
-	var profile: AIProfile = loaded
-	return profile
 
 
 func _plan(base: String, profile: AIProfile) -> Dictionary:

@@ -103,15 +103,16 @@ var _blue_text := BalanceSideSpec.DEFAULT_TEXT
 var _sweep := ""
 var _sweep_tier := Difficulty.DEFAULT_ID
 var _sweep_commander := CommanderType.NEUTRAL_ID
-var _seed_count := BalanceHarness.DEFAULT_SEEDS
-## Where in the seed range `--seeds=` starts counting. 0 unless a shard of a
-## parallel run asked for a later slice of it.
-var _seed_offset := 0
+## `--seeds=`, `--seed-offset=`, `--days=` and `--out=`, with the Lab's defaults.
+var _sample := BalanceHarness.sample(
+	"balance-sim",
+	BalanceHarness.DEFAULT_SEEDS,
+	BalanceMatchEngine.DEFAULT_DAYS,
+	["--seeds", "--seed-offset", "--days", "--out"]
+)
 ## -1 unless `--seed=` pinned one, in which case the run is that single seed —
 ## the same one a watch-mode launch replays.
 var _pinned_seed := -1
-var _days_cap := BalanceMatchEngine.DEFAULT_DAYS
-var _out_dir := ""
 var _log_commands := true
 var _write_replays := false
 ## Where this run's artifacts go, resolved once at startup rather than at write
@@ -139,7 +140,9 @@ func _init() -> void:
 	if not _parse_args():
 		quit(2)
 		return
-	_artifact_dir = _out_dir if _out_dir != "" else DEFAULT_OUT_ROOT.path_join(_run_name())
+	_artifact_dir = (
+		_sample.out_dir if _sample.out_dir != "" else DEFAULT_OUT_ROOT.path_join(_run_name())
+	)
 	var jobs := _build_jobs()
 	if jobs.is_empty():
 		push_error("balance-sim: nothing to play")
@@ -170,6 +173,11 @@ func _parse_args() -> bool:
 ## One guard per malformed value, each naming the flag it read.
 func _read_flags() -> bool:
 	for arg in CmdArgs.user():
+		var taken := BalanceHarness.take(_sample, "balance-sim", arg)
+		if taken == BalanceHarness.REFUSED:
+			return false
+		if taken == BalanceHarness.TAKEN:
+			continue
 		if arg.begins_with("--map="):
 			_map_name = arg.get_slice("=", 1).strip_edges()
 		elif arg.begins_with("--red="):
@@ -182,12 +190,6 @@ func _read_flags() -> bool:
 			_sweep_tier = StringName(arg.get_slice("=", 1).strip_edges())
 		elif arg.begins_with("--commander="):
 			_sweep_commander = StringName(arg.get_slice("=", 1).strip_edges())
-		elif arg.begins_with("--seeds="):
-			_seed_count = BalanceHarness.positive_flag(
-				"balance-sim", "--seeds", arg.get_slice("=", 1)
-			)
-			if _seed_count < 0:
-				return false
 		elif arg.begins_with("--seed="):
 			# Watch mode's spelling, accepted here too: a suspicious row's flags
 			# copied verbatim off the CSV replay that seed headlessly. It pins the
@@ -196,18 +198,6 @@ func _read_flags() -> bool:
 			_pinned_seed = BalanceHarness.count_flag("balance-sim", "--seed", arg.get_slice("=", 1))
 			if _pinned_seed < 0:
 				return false
-		elif arg.begins_with("--seed-offset="):
-			_seed_offset = BalanceHarness.count_flag(
-				"balance-sim", "--seed-offset", arg.get_slice("=", 1)
-			)
-			if _seed_offset < 0:
-				return false
-		elif arg.begins_with("--days="):
-			_days_cap = BalanceHarness.positive_flag("balance-sim", "--days", arg.get_slice("=", 1))
-			if _days_cap < 0:
-				return false
-		elif arg.begins_with("--out="):
-			_out_dir = arg.get_slice("=", 1).strip_edges()
 		elif arg == "--no-commands":
 			_log_commands = false
 		elif arg == "--replays":
@@ -221,9 +211,9 @@ func _read_flags() -> bool:
 ## The checks that need every flag read first — a value against the databases,
 ## and the two flags that cannot be given together.
 func _flags_agree() -> bool:
-	if _out_dir != "":
-		_out_dir = BalanceHarness.out_flag("balance-sim", _out_dir)
-		if _out_dir == "":
+	if _sample.out_dir != "":
+		_sample.out_dir = BalanceHarness.out_flag("balance-sim", _sample.out_dir)
+		if _sample.out_dir == "":
 			return false
 	if _sweep != "" and _sweep not in ["commanders", "maps", "tiers"]:
 		push_error("balance-sim: --sweep must be commanders, maps or tiers (got '%s')" % _sweep)
@@ -234,7 +224,7 @@ func _flags_agree() -> bool:
 	if not _harness.commander_db.has(_sweep_commander):
 		push_error("balance-sim: unknown commander '%s'" % _sweep_commander)
 		return false
-	if _pinned_seed >= 0 and _seed_offset > 0:
+	if _pinned_seed >= 0 and _sample.seed_offset > 0:
 		push_error("balance-sim: --seed= pins one seed; --seed-offset= slices a range")
 		return false
 	if _sweep != "maps" and _harness.map_of(_map_name) == null:
@@ -329,7 +319,7 @@ func _pair(
 	var jobs: Array[Job] = []
 	var mirror := red.text() == blue.text()
 	var slots: Array = BalanceMatchSchedule.slots(
-		map_name, _seed_count, _seed_offset, mirror, _pinned_seed
+		map_name, _sample.seeds, _sample.seed_offset, mirror, _pinned_seed
 	)
 	for slot: BalanceMatchSchedule.Slot in slots:
 		var job := Job.new()
@@ -349,7 +339,7 @@ func _run(jobs: Array[Job], recorder: BalanceMatchRecorder) -> Array[Dictionary]
 	print(
 		(
 			"balance-sim: %s, %d seeds, day cap %d -> %d matches"
-			% [_axis_label(), _seeds_played(), _days_cap, jobs.size()]
+			% [_axis_label(), _seeds_played(), _sample.days_cap, jobs.size()]
 		)
 	)
 	var rows: Array[Dictionary] = []
@@ -374,7 +364,7 @@ func _play(job: Job, recorder: BalanceMatchRecorder) -> Dictionary:
 	setup.unit_db = unit_db
 	setup.chart = _harness.chart
 	setup.seed_val = job.seed_val
-	setup.days_cap = _days_cap
+	setup.days_cap = _sample.days_cap
 	setup.match_id = (
 		"%s#%s_vs_%s#s%d" % [job.map_name, job.red.slug(), job.blue.slug(), job.seed_val]
 	)
@@ -464,8 +454,8 @@ func _config() -> Dictionary:
 		"blue": _blue_text,
 		"seeds": _seeds_played(),
 		"seed": _pinned_seed,
-		"seed_offset": _seed_offset,
-		"days_cap": _days_cap,
+		"seed_offset": _sample.seed_offset,
+		"days_cap": _sample.days_cap,
 		"command_log": _log_commands,
 	}
 
@@ -474,7 +464,7 @@ func _config() -> Dictionary:
 ## `--seeds=` default beside a single played match would be a number the run
 ## never measured.
 func _seeds_played() -> int:
-	return 1 if _pinned_seed >= 0 else _seed_count
+	return 1 if _pinned_seed >= 0 else _sample.seeds
 
 
 func _axis_label() -> String:
@@ -510,10 +500,10 @@ func _run_name() -> String:
 	if _pinned_seed >= 0:
 		parts.append("seed%d" % _pinned_seed)
 	else:
-		parts.append("s%d" % _seed_count)
-		if _seed_offset > 0:
-			parts.append("o%d" % _seed_offset)
-	parts.append("d%d" % _days_cap)
+		parts.append("s%d" % _sample.seeds)
+		if _sample.seed_offset > 0:
+			parts.append("o%d" % _sample.seed_offset)
+	parts.append("d%d" % _sample.days_cap)
 	return "_".join(parts).replace(":", "-").replace(" ", "").replace("(", "").replace(")", "")
 
 
