@@ -204,6 +204,24 @@ func board_error(state: GameState) -> String:
 	return _free_goals_error(state, tally)
 
 
+## Why a scripted beat of this mission could not land on the board it opens on,
+## or "". Deliberately beside `board_error` rather than inside it: that one is the
+## mission's own opening-board verdict and is asked where a verdict is wanted,
+## while this walks the beats.
+##
+## `definition_error` has already held every effect to the *map*; this is the one
+## question it cannot ask, because a map deals every seat it names while a mission
+## may have closed some of them — reinforcements for a seat nobody is playing
+## parse perfectly and land nowhere.
+func events_board_error(state: GameState) -> String:
+	for event: MissionEvent in events:
+		for effect: MissionEffect in event.effects:
+			var error := effect.board_error(state, player_team)
+			if error != "":
+				return "event '%s': %s" % [event.id, error]
+	return ""
+
+
 ## Why a primary of this mission could never be judged, or "".
 ##
 ## `MissionRuntime` reaches tactical victory before it walks the objective list,
