@@ -1,17 +1,20 @@
-"""A look at what the light model and the head module draw, for a human.
+"""A look at what a slice draws, for a reviewer rather than for a gate.
 
 Not a test — `unittest discover` matches `test*.py`, so this file is never
-collected. It renders the stand-in bust `test_geometry.py` measures over a row
-of stand-in specs, at 1x and at 4x nearest-neighbour beside it, and writes one
-PNG a reviewer can open.
+collected. Each part renders one slice's layers over a stand-in of the ones it
+does not own, at the pinned raster and again at four times nearest-neighbour,
+because what a portrait does under decimation is the whole argument.
 
-The stand-in is deliberately not a general: the roster is slice D's and the
-uniform, hair and features are slice C's. It is a skull, a neck, a plain
-shoulder block and a flat field — the least a bust can be and still show
-whether the four bands, the rim, the occlusion band and the cast shadow are
-doing their jobs.
+    .venv/bin/python tests/preview_sheet.py --part light_head -o /tmp/look
 
-Run: .venv/bin/python tests/preview_sheet.py [-o OUT.png]
+`light_head` is the bust `test_geometry.py` measures: a skull, a neck, a plain
+shoulder block and a flat field — the least a bust can be and still show whether
+the four bands, the rim, the occlusion band and the cast shadow are doing their
+jobs. `uniform_props_backdrop` dresses that stand-in in every collar, chest
+treatment, prop and window field.
+
+Run it from the package root, the way the suite is run, so `portraitgen` is on
+the path.
 """
 
 from __future__ import annotations
@@ -25,12 +28,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PIL import Image  # noqa: E402
 
-from portraitgen import head, light  # noqa: E402
-from portraitgen.canvas import INK_FEATURE, Canvas  # noqa: E402
-from portraitgen.palette import INK, faction_by_key  # noqa: E402
+from portraitgen import backdrop, head, light, props, uniform  # noqa: E402
+from portraitgen.canvas import (  # noqa: E402
+    INK_FEATURE,
+    PORTRAIT_SIZE,
+    Canvas,
+)
+from portraitgen.palette import (  # noqa: E402
+    FACTIONS,
+    INK,
+    Faction,
+    faction_by_key,
+)
 
-# A skin base and a cloth base to build ramps off. Both are stand-ins: the
-# roster's five skins and the faction cloth arrive with slices C and D.
+ZOOM = 4
+
+# A skin base to build a ramp off, and the flat field the light part poses on.
+# The skin is a stand-in: the roster's five skins arrive with slice D.
 SKIN: tuple[int, int, int] = (217, 160, 102)
 FIELD: tuple[int, int, int] = (43, 47, 52)
 
@@ -54,6 +68,10 @@ ROW: tuple[tuple[str, head.Skull], ...] = (
     ("square-wide", head.Skull(1.14, "square", 0.0, 1.0)),
     ("tapered-lifted", head.Skull(0.9, "tapered", 3.0, 1.0)),
 )
+
+# The stand-in skull for the dressed part, so a prop that reaches for a jaw has
+# one to reach for.
+HEAD = (54.0, 84.0, 166.0, 196.0)
 
 
 def bust(
@@ -91,20 +109,122 @@ def contact_sheet() -> Image.Image:
         x = index * width * 5
         sheet.paste(cell, (x, 0))
         sheet.paste(
-            cell.resize((width * 4, height * 4), Image.Resampling.NEAREST),
+            cell.resize((width * ZOOM, height * ZOOM), Image.Resampling.NEAREST),
             (x + width, 0),
         )
     return sheet
 
 
+def _dressed(
+    faction: Faction, collar: str, treatment: str, prop: str, kind: str
+) -> Image.Image:
+    ramp = light.build_ramp(faction.body, rim_hue=faction.body_lt)
+    canvas = Canvas()
+    backdrop.draw(canvas, kind, faction)
+    props.draw(canvas, prop, faction, ramp, layer="back")
+    uniform.draw(canvas, faction, collar, ramp)
+    canvas.ellipse(HEAD, (*ramp.base, 255))
+    uniform.chest(canvas, treatment, faction, ramp)
+    uniform.pip(canvas, ramp)
+    props.draw(canvas, prop, faction, ramp, layer="front")
+    return canvas.resolve()
+
+
+def _row(busts: list[Image.Image]) -> Image.Image:
+    width, height = PORTRAIT_SIZE
+    sheet = Image.new("RGBA", (width * len(busts), height), (35, 39, 43, 255))
+    for index, drawn in enumerate(busts):
+        sheet.alpha_composite(drawn, (index * width, 0))
+    return sheet
+
+
+def _chips(busts: list[Image.Image]) -> Image.Image:
+    chips = [
+        drawn.crop((16, 25, 206, 215)).resize((31, 31), Image.Resampling.BOX)
+        for drawn in busts
+    ]
+    strip = Image.new("RGBA", (31 * len(chips), 31), (35, 39, 43, 255))
+    for index, chip in enumerate(chips):
+        strip.alpha_composite(chip, (index * 31, 0))
+    return strip.resize(
+        (strip.width * ZOOM, strip.height * ZOOM), Image.Resampling.NEAREST
+    )
+
+
+def _light_head(out: Path) -> list[Path]:
+    """The bare bust the light model and the head module are read off."""
+    return [_write(out / "light_head.png", contact_sheet())]
+
+
+def _uniform_props_backdrop(out: Path) -> list[Path]:
+    """One bust per faction over every backdrop, then a pass down the props."""
+    kinds = sorted(backdrop.KINDS)
+    collars = sorted(uniform.COLLAR_CUTS)
+    treatments = sorted(uniform.CHEST_TREATMENTS)
+    every = sorted(props.PROPS)
+    written: list[Path] = []
+
+    dressed = [
+        _dressed(
+            faction,
+            collars[index % len(collars)],
+            treatments[index % len(treatments)],
+            every[index % len(every)],
+            kinds[index % len(kinds)],
+        )
+        for index, faction in enumerate(FACTIONS)
+    ]
+    written.append(_write(out / "factions.png", _row(dressed)))
+    written.append(_write(out / "faction_chips.png", _chips(dressed)))
+
+    meridian = faction_by_key("meridian")
+    fields = [_dressed(meridian, "v", "plain", "book", kind) for kind in kinds]
+    written.append(_write(out / "backdrops.png", _row(fields)))
+
+    for start in range(0, len(every), 6):
+        batch = every[start : start + 6]
+        drawn = [
+            _dressed(
+                faction_by_key("iron"),
+                collars[index % len(collars)],
+                treatments[index % len(treatments)],
+                prop,
+                "grid",
+            )
+            for index, prop in enumerate(batch, start)
+        ]
+        written.append(_write(out / f"props_{start // 6}.png", _row(drawn)))
+    return written
+
+
+def _write(path: Path, image: Image.Image) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(path)
+    return path
+
+
+PARTS = {
+    "light_head": _light_head,
+    "uniform_props_backdrop": _uniform_props_backdrop,
+}
+
+
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("-o", "--out", type=Path, default=None, help="where to write")
-    args = ap.parse_args()
-    out = args.out or Path(tempfile.gettempdir()) / "portrait_preview.png"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    contact_sheet().save(out)
-    print(f"wrote {out}")
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--part", default="uniform_props_backdrop", choices=sorted(PARTS)
+    )
+    parser.add_argument(
+        "-o", "--out", default=None, help="where to write (default: a temp dir)"
+    )
+    args = parser.parse_args()
+    out = (
+        Path(args.out)
+        if args.out
+        else Path(tempfile.mkdtemp(prefix="portrait-preview-"))
+    )
+    for path in PARTS[args.part](out):
+        print(path)
     return 0
 
 
