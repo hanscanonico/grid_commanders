@@ -92,12 +92,11 @@ static func _reaches_depth(attacker: Unit, dived: bool) -> bool:
 ## the submerged target rule.
 ##
 ## It shares that rule with can_engage through _reaches_depth rather than routing
-## through it, because can_engage's other half — the chart covering the pair — is
-## already implied by select_shot returning a weapon: the selector answers null
-## exactly when neither matrix covers the pair, or the primary is dry with no
-## secondary, which is a shot this returns null for either way. can_engage stays
-## the who-may-shoot authority; this is the same answer with the selection paid
-## for once instead of the chart being read twice.
+## through it: can_engage's other half — the chart covering the pair — is already
+## implied by select_shot returning a weapon, the selector answering null exactly
+## when neither matrix covers the pair or the primary is dry with no secondary.
+## can_engage stays the who-may-shoot authority; this is its answer with the
+## chart read once.
 ##
 ## Returned rather than merely counted so a caller that needs the slot or its
 ## base damage — the resolver, on every shot and every counter — pays for the
