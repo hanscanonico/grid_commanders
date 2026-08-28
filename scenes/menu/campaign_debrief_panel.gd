@@ -206,12 +206,10 @@ func _build() -> void:
 	main.add_child(_continue_button)
 
 
+## The debrief's quiet lines, centred over the page. The ink is the panel's own:
+## these sit on the dark veil rather than on a row's plate.
 func _micro(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	var label := ListRow.detail(text, UiTheme.NEUTRAL_LIGHT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
 

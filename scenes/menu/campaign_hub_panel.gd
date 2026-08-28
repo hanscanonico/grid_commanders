@@ -34,6 +34,7 @@ signal cancelled
 
 const _ROW_HEIGHT := 26
 const _ROW_WIDTH := 420
+const _ROW_INSET := 6
 const _BUST := 44
 ## How dark the scrim over the establishing shot runs, top to bottom: enough to
 ## read a title against at the top, enough to sit the speech band on at the foot.
@@ -441,14 +442,10 @@ func _block_summary(block: int) -> Button:
 	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
 	button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var face := HBoxContainer.new()
-	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = 6
-	face.offset_right = -6
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var face := ListRow.face(_ROW_INSET)
 	var title := _campaign.block_titles[block].to_upper()
 	var length: int = _campaign.block_lengths[block]
-	face.add_child(_row_cell("%s   ·   0/%d   ·   LOCKED" % [title, length], _locked_ink()))
+	face.add_child(ListRow.cell("%s   ·   0/%d   ·   LOCKED" % [title, length], _locked_ink()))
 	button.add_child(face)
 	return button
 
@@ -472,42 +469,35 @@ static func _locked_ink() -> Color:
 ## and where it is are the mission's own facts to give away, and a road nobody
 ## has reached must not leak them.
 func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
-	var face := HBoxContainer.new()
-	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = 6
-	face.offset_right = -6
-	face.add_theme_constant_override("separation", 6)
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var face := ListRow.face(_ROW_INSET)
 	var cleared := open and _progress.is_cleared(mission.id)
 	var skipped := not open and _progress.is_skipped(_campaign, mission.id)
 	var ink := UiTheme.INK if open else _locked_ink()
 	if cleared:
-		face.add_child(_row_cell("✓", UiTheme.CAPTURE))
-	var words := VBoxContainer.new()
-	words.add_theme_constant_override("separation", 0)
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var title := _row_cell("%02d · %s" % [index + 1, mission.title], ink)
+		face.add_child(ListRow.cell("✓", UiTheme.CAPTURE))
+	var words := ListRow.words()
+	var title := ListRow.cell("%02d · %s" % [index + 1, mission.title], ink)
 	title.clip_text = true
 	words.add_child(title)
 	if open:
 		var record: CampaignState.MissionRecord = _progress.records.get(mission.id)
 		var detail := row_detail(mission, _commanders, record)
 		if detail != "":
-			words.add_child(_row_detail(detail))
+			var line := ListRow.detail(detail, UiTheme.INK_3)
+			line.clip_text = true
+			words.add_child(line)
 	face.add_child(words)
 	if not open:
-		face.add_child(_row_cell("NOT TAKEN" if skipped else "LOCKED", _locked_ink()))
+		face.add_child(ListRow.cell("NOT TAKEN" if skipped else "LOCKED", _locked_ink()))
 		return face
 	if mission.fog_enabled:
-		face.add_child(_row_cell("FOG", UiTheme.AMMO))
+		face.add_child(ListRow.cell("FOG", UiTheme.AMMO))
 	var most := MissionRuntime.new(mission).max_stars()
 	var earned := _progress.stars_for(mission.id) if cleared else 0
 	if earned > 0:
-		face.add_child(_row_cell("★".repeat(earned), UiTheme.SELECT_GOLD))
+		face.add_child(ListRow.cell("★".repeat(earned), UiTheme.SELECT_GOLD))
 	if most - earned > 0:
-		face.add_child(_row_cell("☆".repeat(most - earned), UiTheme.INK_3))
+		face.add_child(ListRow.cell("☆".repeat(most - earned), UiTheme.INK_3))
 	return face
 
 
@@ -531,28 +521,6 @@ static func row_detail(
 	if record != null and record.best_day > 0:
 		parts.append("BEST %d" % record.best_day)
 	return "   ·   ".join(parts)
-
-
-func _row_detail(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	label.add_theme_color_override("font_color", UiTheme.INK_3)
-	label.clip_text = true
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return label
-
-
-func _row_cell(text: String, ink: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
-	label.add_theme_color_override("font_color", ink)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return label
 
 
 # --- the briefing ------------------------------------------------------------

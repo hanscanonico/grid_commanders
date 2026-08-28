@@ -25,6 +25,7 @@ signal cancelled
 const _ROW_HEIGHT := 43
 const _ROW_WIDTH := 460
 const _THUMB := Vector2(88, 36)
+const _ROW_INSET := 6
 const _PAGE_SEPARATION := 4
 const _CARD_SEPARATION := 2
 ## The card's two micro lines are the button's own ink, faded — full ink is the
@@ -157,21 +158,14 @@ func _fill(
 ## cream rows and dark on the flagship's red. `UiTheme.apply_button` is still the
 ## one authority for that colour.
 func _row_face(campaign: CampaignDefinition, progress: CampaignState, ink: Color) -> Control:
-	var face := HBoxContainer.new()
-	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = 6
-	face.offset_right = -6
-	face.add_theme_constant_override("separation", 6)
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var face := ListRow.face(_ROW_INSET)
 	var thumb := _thumbnail(campaign)
 	if thumb != null:
 		face.add_child(thumb)
-	var words := VBoxContainer.new()
-	words.add_theme_constant_override("separation", 0)
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	words.add_child(_headline(row_text(campaign, progress), ink))
+	var words := ListRow.words()
+	var headline := ListRow.cell(row_text(campaign, progress), ink)
+	headline.clip_text = true
+	words.add_child(headline)
 	if not campaign.antagonist.is_empty():
 		words.add_child(_micro(campaign.antagonist.to_upper(), _faded(ink, _ANTAGONIST_FADE), 1))
 	if not campaign.premise.is_empty():
@@ -192,17 +186,6 @@ func _thumbnail(campaign: CampaignDefinition) -> MapThumbnail:
 	thumb.setup(map, UiTheme.menu_identity(map.player_count()), _THUMB)
 	thumb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return thumb
-
-
-func _headline(text: String, ink: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
-	label.add_theme_color_override("font_color", ink)
-	label.clip_text = true
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return label
 
 
 ## The card's ink, faded — never a grey of its own, so the fade is right on cream
