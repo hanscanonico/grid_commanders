@@ -1,5 +1,5 @@
 class_name BattleMobileScenario
-extends RefCounted
+extends BattleScenario
 ## The touch dock, driven (mobile plan MB3). It runs only under `--mobile`, which
 ## MobileProfile resolves once per process, so this mode can never share the
 ## sweep's one boot with a desktop scenario — `make smoke MODES=mobile_back` runs
@@ -29,14 +29,9 @@ const WAIT_FRAMES := 900
 ## — the two bars and the dock swallow anything aimed at them.
 const _BAND := Vector2(320, 160)
 
-var _battle: Battle
 ## Where each pushed finger last was, so a slide can state its own relative travel
 ## the way the engine states a real one's.
 var _finger_at: Dictionary[int, Vector2] = {}
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
 
 
 func run(mode: String) -> String:
@@ -342,16 +337,16 @@ func _on_screen(at: Vector2) -> Vector2:
 ## The right thumb: both ends of the ladder, and the walk to the next ready unit.
 func _walk_the_board() -> String:
 	var opened_at := _battle.view.camera.zoom.x
-	await _press(&"zoom_out")
+	await _press_chip(&"zoom_out")
 	if _battle.view.camera.zoom.x >= opened_at:
 		return "the dock's minus never stepped the ladder"
-	await _press(&"zoom_in")
+	await _press_chip(&"zoom_in")
 	if not is_equal_approx(_battle.view.camera.zoom.x, opened_at):
 		return "the dock's plus did not step back to the opening rung"
 	var wanted := ReadyUnits.after(_battle.game, _battle.cursor_cell)
 	if wanted == null:
 		return "no unit was ready for the dock's next-unit chip to walk to"
-	await _press(&"next_unit")
+	await _press_chip(&"next_unit")
 	if _battle.cursor_cell != wanted.cell:
 		return "the dock's next-unit chip left the cursor at %s" % _battle.cursor_cell
 	return ""
@@ -457,7 +452,7 @@ func _pause_and_resume_a_computer_turn() -> String:
 		return flaw
 	if _word() != ControlHints.DOCK_PAUSE:
 		return "a computer turn reads %s" % _word()
-	await _press(&"cancel")
+	await _press_chip(&"cancel")
 	flaw = await _reach(Battle.State.MENU)
 	if flaw != "":
 		return "the dock's pause never reached the menu: %s" % flaw
@@ -469,7 +464,7 @@ func _pause_and_resume_a_computer_turn() -> String:
 		return "a paused turn offered no Resume"
 	if not _chip(&"replay_step").disabled:
 		return "a paused computer turn offered Step, which only a replay has"
-	await _press(&"confirm")
+	await _press_chip(&"confirm")
 	if _battle.state == Battle.State.PAUSED:
 		return "Resume left the turn parked"
 	while _battle.game.winner == 0 and _battle.state == Battle.State.AI_TURN:
@@ -488,16 +483,17 @@ func _open_unit_menu(from: Vector2i, to: Vector2i) -> String:
 
 
 func _press_back(wanted: Battle.State) -> String:
-	await _press(&"cancel")
+	await _press_chip(&"cancel")
 	if _battle.state != wanted:
 		return "Back left state %d, not %d" % [_battle.state, wanted]
 	return ""
 
 
-## A real press on the chip: the dispatched action is the keyboard's, so it lands
-## through the same `_unhandled_input` a key would — which is why this waits for
-## the engine to flush it rather than calling a Battle branch.
-func _press(action: StringName) -> void:
+## A real press on the chip, a different mechanism from the inherited
+## `_press_action` and deliberately so: what a check here proves is that the
+## dock's own button reaches the action, so the press is the button's and the
+## wait is for the engine to flush what it dispatched.
+func _press_chip(action: StringName) -> void:
 	var chip := _chip(action)
 	if chip != null and not chip.disabled:
 		chip.pressed.emit()

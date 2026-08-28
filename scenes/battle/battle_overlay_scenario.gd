@@ -1,5 +1,5 @@
 class_name BattleOverlayScenario
-extends RefCounted
+extends BattleScenario
 ## The field overlays, posed together: a capture chip counting down on the city,
 ## the arrowed route from a selected unit to the cell under the cursor, and the
 ## threat lens shading everywhere the other side could shoot.
@@ -24,12 +24,6 @@ const CAPTURER_CELL := Vector2i(4, 3)
 const MOVER_CELL := Vector2i(5, 2)
 const MOVER_STOP := Vector2i(8, 5)
 
-var _battle: Battle
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
-
 
 func run() -> String:
 	# The same capture the `capture` demo runs, on the same city: it leaves the
@@ -44,7 +38,7 @@ func run() -> String:
 	# Raised through the key rather than by calling `toggle_threat` — this is the
 	# one scenario that can prove the new binding reaches the flow at all, and a
 	# lens nothing on a keyboard opens is a lens nobody has.
-	await _press(KEY_T)
+	await _push_key(KEY_T)
 	# Checked, not trusted: an overlay that paints nothing photographs as a
 	# perfectly good board, so every claim this frame makes is asserted first.
 	if _battle.overlays.threat_layer.get_used_cells().is_empty():
@@ -62,18 +56,19 @@ func run() -> String:
 	return ""
 
 
-## Sends one press of `key` through the viewport, the way a keyboard would: it
-## reaches Battle's `_unhandled_input` past every guard in front of it, and it is
-## resolved to an action by the InputMap rather than named as one — so what this
-## proves is the whole chain from the keycode, project.godot's binding included.
-func _press(key: Key) -> void:
+## Pushes one press of `key` straight at the viewport, the way a keyboard would:
+## it reaches Battle's `_unhandled_input` past every guard in front of it, and it
+## is resolved to an action by the InputMap rather than named as one — so what
+## this proves is the whole chain from the keycode, project.godot's binding
+## included.
+##
+## Its own mechanism rather than the inherited `_press_key`, which goes through
+## Input.parse_input_event and sends the release as well: the lens `T` raises is
+## held down here for the frame the scenario photographs, and the two press paths
+## are left apart rather than unified behind one name that would hide it.
+func _push_key(key: Key) -> void:
 	var event := InputEventKey.new()
 	event.keycode = key
 	event.pressed = true
 	_battle.get_tree().root.push_input(event)
 	await _battle.get_tree().process_frame
-
-
-func _until_state(target: Battle.State) -> void:
-	while _battle.state != target:
-		await _battle.get_tree().process_frame

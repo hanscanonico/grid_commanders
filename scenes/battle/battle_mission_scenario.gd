@@ -1,5 +1,5 @@
 class_name BattleMissionScenario
-extends RefCounted
+extends BattleScenario
 ## The four captures that play a campaign mission: the in-battle objective card
 ## (campaign-depth CD2), a scripted beat landing on the board, a scripted beat
 ## changing a unit's allegiance (CD3) and the pause menu opened over a mission,
@@ -54,12 +54,6 @@ const GARRISON_ARMY := 2
 ## garrison on our side, and with the fact missing the beat does not fire and
 ## `_run_defection` says so.
 const GARRISON_FLAG := &"wardens_wavered"
-
-var _battle: Battle
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
 
 
 ## Stages this scenario's launch, if this boot is one of its three. Called from
@@ -132,7 +126,7 @@ func run(mode: String) -> String:
 ## carrying it somewhere else, photographs perfectly well.
 func _run_map_menu() -> String:
 	_battle.confirm_at(OPEN_GROUND)
-	await BattleScenarioDriver.until_state_of(_battle, Battle.State.MENU)
+	await _until_state(Battle.State.MENU)
 	var ids: Array[StringName] = []
 	for row in BattleMenus.map_actions(_battle.game):
 		ids.append(row["id"])
