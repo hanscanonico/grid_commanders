@@ -59,3 +59,41 @@ func _press_action(action: StringName) -> void:
 	event.pressed = true
 	Input.parse_input_event(event)
 	await _battle.get_tree().process_frame
+
+
+## Raised by any mid-scenario check that fails, and read before anything is
+## written: a capture saved after a failed check would take the exit code down
+## with it — ScreenshotUtil quits zero — and that code is the entire signal the
+## smoke sweep reads.
+var _failed := false
+
+
+## Reports a scenario failure. The push_error and the flag are not separable: an
+## error printed without the flag photographs a board the scenario never staged
+## and still passes.
+func _fail(message: String) -> void:
+	push_error(message)
+	_failed = true
+
+
+## Reports whatever a scenario class handed back, which is its complaint or ""
+## for a clean run.
+func _fail_if(error: String) -> void:
+	if error != "":
+		_fail(error)
+
+
+## A live control sits inside the *board band* — the strip of the 640x360 frame the
+## docked bars leave over, which is what ActionMenu clamps against and what
+## MissionStrip centres itself in. Read off the live rects rather than recomputed.
+## The touch dock is one of those bars, so the band is MobileDock.board_band's
+## answer and a --mobile run of this check measures the band a finger plays in.
+## Static and complaint-returning so the scenario classes, which report by return
+## value, share the one measurement rather than keeping a second copy of it.
+static func band_error(battle: Battle, what: String, control: Control) -> String:
+	var rect := control.get_global_rect()
+	var frame := battle.get_viewport().get_visible_rect().size
+	var band := MobileDock.board_band(frame)
+	if band.encloses(rect):
+		return ""
+	return "the %s %s does not fit the board band %s" % [what, rect, band]

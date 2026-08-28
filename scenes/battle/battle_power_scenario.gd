@@ -306,4 +306,4 @@ func _check_map_menu_readable() -> String:
 	var rows := BattleMenus.map_actions(_battle.game)
 	if rows.is_empty() or rows[0].id != &"power":
 		return "map menu opened without the Command Power as its first row"
-	return BattleScenarioDriver.band_error(_battle, "map menu", _battle.action_menu)
+	return BattleScenario.band_error(_battle, "map menu", _battle.action_menu)

@@ -53,11 +53,6 @@ const FOUR_ARMY_PROBE_COMMANDERS: Array[StringName] = [
 var _shot_path := ""
 var _select_cell := NO_CELL
 var _demo := ""
-## Raised by any mid-scenario check that fails. `run` reads it before it writes
-## anything: a capture saved after a failed check would take the exit code down
-## with it — ScreenshotUtil quits zero — and that code is the entire signal the
-## smoke sweep reads.
-var _failed := false
 
 
 func _init(battle: Battle) -> void:
@@ -434,24 +429,6 @@ func _check_overlay_scouted(what: String, layer: TileMapLayer) -> int:
 	return cells.size()
 
 
-## Reports a scenario failure and makes the run's exit code say so. Every
-## reporting path in this driver goes through here, because the two halves are
-## not separable: `run` refuses to write a capture once the flag is up, and a
-## capture written anyway quits zero (ScreenshotUtil) — which is the whole signal
-## the smoke sweep reads. A scenario that printed an error and still photographed
-## a board it never staged is a scenario that passes while proving nothing.
-func _fail(message: String) -> void:
-	push_error(message)
-	_failed = true
-
-
-## Reports whatever a scenario class handed back, which is its complaint or ""
-## for a clean run — the shape every `run()` dispatch arm above shares.
-func _fail_if(error: String) -> void:
-	if error != "":
-		_fail(error)
-
-
 ## The route out of a running match (COM-16), walked the way a player walks it: the
 ## map menu, which now carries both exits, and then the second press the unsaved
 ## one asks for. Reached through the real row rather than by opening the
@@ -533,22 +510,8 @@ func _check_rows(what: String, rows: Array[Dictionary], wanted: Array[StringName
 			_fail("the %s offers %s, with no '%s' row" % [what, ids, id])
 
 
-## A live control sits inside the *board band* — the strip of the 640x360 frame the
-## docked bars leave over, which is what ActionMenu clamps against and what
-## MissionStrip centres itself in. Read off the live rects rather than recomputed.
-## The touch dock is one of those bars, so the band is MobileDock.board_band's
-## answer and a --mobile run of this check measures the band a finger plays in.
-## Static and complaint-returning so the scenario classes, which report by return
-## value, share the one measurement rather than keeping a second copy of it.
-static func band_error(battle: Battle, what: String, control: Control) -> String:
-	var rect := control.get_global_rect()
-	var frame := battle.get_viewport().get_visible_rect().size
-	var band := MobileDock.board_band(frame)
-	if band.encloses(rect):
-		return ""
-	return "the %s %s does not fit the board band %s" % [what, rect, band]
-
-
+## The reporting wrapper over the shared ruler: this driver reports by flag
+## rather than by return value, so it is where band_error's complaint is raised.
 func _check_in_band(what: String, control: Control) -> void:
 	_fail_if(band_error(_battle, what, control))
 

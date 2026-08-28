@@ -11,10 +11,8 @@ extends BattleScenario
 ## otherwise identical captures differ. Then checks the frame it posed: the
 ## atlas rows (COM-10), and the skip-spam risk R2.
 ##
-## Owns its own failure flag rather than reaching into the driver's: every
-## reporting path here goes through `_fail`, exactly as the driver's does, and
-## `run` hands the flag back rather than the driver's `_fail` owning a second
-## class's push_error.
+## Reports through the base's `_fail`, and `run` hands the flag back rather than
+## the driver reaching in for it.
 
 ## Where on the cut-in's clock the `cutin` capture is posed: late in the
 ## defender's impact, so the plates are up, the HP has ticked, and the damage
@@ -103,11 +101,6 @@ const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
 	PARTIAL_SUFFIX + SKIP_SUFFIX,
 	PARTIAL_SUFFIX + FACTION_SUFFIX,
 ]
-
-## Raised by any mid-scenario check that fails. `run` hands it back rather than
-## writing straight to the driver's own flag, the same separation of concerns
-## `stage_rout` and `until_state_of` already keep at the class boundary.
-var _failed := false
 
 
 ## Dispatches on the mode's prefix — the cut-in families carry a matchup in the
@@ -536,12 +529,3 @@ func _known_variant(name_part: String, prefix: String, known: Array[String]) -> 
 		legal.append(prefix + suffix)
 	_fail("%s demo: unknown variant '%s'; it takes %s" % [prefix, name_part, ", ".join(legal)])
 	return false
-
-
-## Reports a scenario failure. The driver's `_fail` owns the push_error and the
-## exit-code flag together, and this is that same pairing kept local: `run`
-## hands `_failed` back rather than reaching across the class boundary to flip a
-## flag that is not this class's to own.
-func _fail(message: String) -> void:
-	push_error(message)
-	_failed = true

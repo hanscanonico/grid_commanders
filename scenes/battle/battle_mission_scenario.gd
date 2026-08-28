@@ -19,7 +19,7 @@ extends BattleScenario
 ## Its own class rather than more methods on BattleScenarioDriver, the way
 ## BattleOverlayScenario and BattleVictoryScenario are: that file is at its
 ## length ratchet. Returns an error string rather than reporting one, because the
-## driver's `_fail` owns the push_error and the exit-code flag together.
+## driver is what raises a complaint made of a whole scenario.
 
 const MODE := "objective_panel"
 const EVENT_MODE := "mission_event"
@@ -141,7 +141,7 @@ func _run_map_menu() -> String:
 	var said := _menu_label(&"Objectives: ")
 	if said != "Objectives: On":
 		return "the open card's row reads '%s'" % said
-	return _in_band("map menu", _battle.action_menu)
+	return BattleScenario.band_error(_battle, "map menu", _battle.action_menu)
 
 
 ## What the menu on screen says on the row starting with `prefix`, minus the
@@ -177,7 +177,7 @@ func _run_panel() -> String:
 	var error := panel.layout_error()
 	if error != "":
 		return error
-	return _in_band("objective panel", panel)
+	return BattleScenario.band_error(_battle, "objective panel", panel)
 
 
 ## The depot changes hands and Ferrow's raider arrives — the mission's own beat,
@@ -200,7 +200,7 @@ func _run_event() -> String:
 	var error := card.layout_error()
 	if error != "":
 		return error
-	return _in_band("mission speech card", card)
+	return BattleScenario.band_error(_battle, "mission speech card", card)
 
 
 ## Morn's garrison changes sides, and the frame is what it is wearing afterwards.
@@ -238,14 +238,4 @@ func _board_error() -> String:
 				"the %s at %s is drawn in row %d rather than army %d's"
 				% [unit.type.id, unit.cell, sprite.atlas_row, unit.team]
 			)
-	return ""
-
-
-## The board band the docked bars leave over — the touch dock included, asked of
-## MobileDock.board_band — which is what every floating surface is checked against.
-func _in_band(what: String, control: Control) -> String:
-	var frame := _battle.get_viewport().get_visible_rect().size
-	var band := MobileDock.board_band(frame)
-	if not band.encloses(control.get_global_rect()):
-		return "the %s %s does not fit the board band %s" % [what, control.get_global_rect(), band]
 	return ""
