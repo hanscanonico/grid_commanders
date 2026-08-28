@@ -39,10 +39,7 @@ func run() -> void:
 	await _battle.pause_gate()
 	if _left_auto(game):
 		return
-	# Battle awaits the day banner itself before handing the turn over, so this is
-	# only the pacing padding that follows it, not a wait for the banner.
-	var start_delay := Settings.speed.start_delay_seconds()
-	await _battle.get_tree().create_timer(start_delay).timeout
+	await TurnBeat.opening(_battle.get_tree())
 	for i in MAX_COMMANDS_PER_TURN:
 		if game.winner != 0:
 			_leave()
@@ -58,7 +55,7 @@ func run() -> void:
 			return
 		if receipt.winner != 0 or receipt.turn_changed:
 			return
-		await _think()
+		await TurnBeat.between_commands(_battle.get_tree())
 		# The one place a computer turn can be held: between two commands, with the
 		# board settled and no banner or cut-in of its own on screen. A watched match
 		# would otherwise have no way back to the menu at all, since every turn in it
@@ -66,26 +63,6 @@ func run() -> void:
 		await _battle.pause_gate()
 	push_error("AI hit the per-turn command cap; forcing end of turn")
 	await _execute(EndTurnCommand.new())
-
-
-## The think-beat between two commands, so the turn reads as decisions rather
-## than a slideshow. Paced off Settings, the same tier the animations it sits
-## between run at — a computer turn and a player's move obey one setting.
-##
-## Instant drops the wait to a single frame rather than to nothing: the board
-## still repaints once per command, so a forty-command turn is forty frames the
-## eye can track as a fast flicker, the window keeps pumping events, and the
-## per-turn safety cap above keeps meaning what it says.
-##
-## The held fast-forward key shortens the beat that is about to be waited, so a
-## key let go is felt on the next command rather than inside this one — which is
-## also what keeps Instant's single frame untouched at any rate.
-func _think() -> void:
-	var delay := Settings.speed.command_delay_seconds() / FastForward.rate()
-	if delay <= 0.0:
-		await _battle.get_tree().process_frame
-		return
-	await _battle.get_tree().create_timer(delay).timeout
 
 
 ## True when the team on turn left `ai_teams` while this pause was held — the

@@ -5,7 +5,7 @@ extends RefCounted
 ##
 ## `BattleAiRunner`'s sibling, with the planner swapped for a cursor into a file.
 ## Everything else is deliberately the same — the same `Battle.execute_command`,
-## the same `conclude_command`, the same `Settings.speed` pacing, the same
+## the same `conclude_command`, the same `TurnBeat` pacing, the same
 ## `Battle.pause_gate` between commands — so a replay animates exactly as the
 ## match did, cut-ins, banners, ambush cues and eliminations included. That is the
 ## whole reason playback lives in the battle scene rather than in a viewer of its
@@ -30,7 +30,7 @@ func _init(battle: Battle, replay: ReplayPlayer) -> void:
 ## runner is.
 func run() -> void:
 	await _battle.pause_gate()
-	await _battle.get_tree().create_timer(Settings.speed.start_delay_seconds()).timeout
+	await TurnBeat.opening(_battle.get_tree())
 	while true:
 		if _battle.game.winner != 0:
 			_battle.enter_victory()
@@ -59,7 +59,7 @@ func run() -> void:
 			return
 		if receipt.winner != 0 or receipt.turn_changed:
 			return  # conclude_command has already opened the next turn, which re-enters
-		await _think()
+		await TurnBeat.between_commands(_battle.get_tree())
 		await _battle.pause_gate()
 
 
@@ -70,14 +70,3 @@ func _finish(reason: String) -> void:
 	if _battle.game.winner == 0:
 		await _battle.present_banner(reason)
 	_battle.enter_victory()
-
-
-## The beat between two commands, paced off the same tier the animations run at
-## and shortened by the same held key, so watching a recording hurries along
-## exactly as watching a computer turn does.
-func _think() -> void:
-	var delay := Settings.speed.command_delay_seconds() / FastForward.rate()
-	if delay <= 0.0:
-		await _battle.get_tree().process_frame
-		return
-	await _battle.get_tree().create_timer(delay).timeout
