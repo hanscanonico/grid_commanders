@@ -480,8 +480,12 @@ campaign-difficulty:
 # Regenerates the art under assets/portraits with generators/portraits and
 # re-imports so the new PNGs register. Committed art, so this only needs
 # rerunning when the generator changes or a commander is added. The four faction
-# emblems are the whole of it today; the 220x268 busts are still baked by
-# tools/generate_portraits.gd (below) until the painter can draw one.
+# emblems are the whole of it today, and they are already pixel for pixel what
+# the generator draws: the 220x268 busts are still baked by
+# `godot --headless -s res://tools/generate_portraits.gd`, which portraits-check
+# gates, until the painter can draw one. Running this before then re-encodes the
+# emblems with Pillow — no pixel moves, but portraits-check byte-diffs against
+# the engine's own encode and goes red, so leave it alone until the busts land.
 portraits:
 	$(call require-portraitgen)
 	"$(PORTRAITGEN_PY)" "$(PORTRAITGEN)/portrait_generator.py" \
