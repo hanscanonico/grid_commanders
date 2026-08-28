@@ -177,3 +177,53 @@ jobs:
       - name: Installed art matches a fresh generation
         working-directory: generators/sprites
         run: python tests/check_snapshots.py /tmp/gen_a
+
+  # The portrait generator's gate, cloned from the sprite one: same Pillow-only
+  # stack, same pixel-compare snapshot, same byte-determinism run.
+  portraits:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: generators/portraits/requirements.txt
+
+      # Pinned so a new ruff release cannot change the verdict; the settings are
+      # pinned separately in generators/portraits/ruff.toml.
+      - name: Install ruff and the generator's dependencies
+        run: pip install ruff==0.16.2 -r generators/portraits/requirements.txt
+
+      - name: ruff check
+        working-directory: generators/portraits
+        run: ruff check .
+
+      - name: ruff format --check
+        working-directory: generators/portraits
+        run: ruff format --check .
+
+      # Includes the palette mirror, which reads the game's own
+      # scenes/common/*.gd — so this job checks out the whole repository rather
+      # than working inside the generator alone.
+      - name: Generator contract tests
+        working-directory: generators/portraits
+        run: python -m unittest discover tests
+
+      # The pipeline's headline promise: the same bytes on every run.
+      - name: Generate twice, assert byte determinism
+        working-directory: generators/portraits
+        run: |
+          python portrait_generator.py -o /tmp/portraits_a
+          python portrait_generator.py -o /tmp/portraits_b
+          diff -r /tmp/portraits_a /tmp/portraits_b
+
+      # The art the game loads, compared pixel by pixel (the PNGs may have been
+      # encoded by a different Pillow than CI's) and in both directions, so a
+      # regeneration that forgot `make portraits` cannot stay green and a new
+      # output cannot land compared against nothing.
+      - name: Installed art matches a fresh generation
+        working-directory: generators/portraits
+        run: python tests/check_snapshots.py /tmp/portraits_a
