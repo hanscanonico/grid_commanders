@@ -253,7 +253,7 @@ plan is stated in full below and has no copy there.
   easier to see. All seventeen combat cut-in frames and all four capture ones moved; every board and
   menu frame is byte-identical.
   **The board's cast shadow is SOLID, and it is solid because the board was measured through it**
-  (generator `f07e77c`, adopted 2026-08-19; this clause is its record). The board draws the 64px
+  (generator `55d2b65`, adopted 2026-08-19; this clause is its record). The board draws the 64px
   cell onto a 16px grid with nearest filtering at whole rungs 1–5, so it keeps one source pixel in
   4/z — 4:1 at rung 1, 2:1 at rung 2, **1:1 at rung 4**. A shadow with 1px structure therefore had a
   different read at every rung, and the checkerboard's was: a sampling phase drew between 0% and
@@ -273,7 +273,7 @@ plan is stated in full below and has no copy there.
   over from this change. Every menu frame, every capture cut-in and every combat cut-in of a land
   or air unit is byte-identical, which is the figure sheet's subtraction proving itself.
   The legibility ruler was re-run this time and `docs/sprite_legibility.md` carries the re-read.
-  **The buildings' drop shadow is solid on the same reading** (generator `cdc2a57`, adopted
+  **The buildings' drop shadow is solid on the same reading** (generator `88245bb`, adopted
   2026-08-19; this clause retires the one that recorded it as the remaining checkerboard) —
   `terrain._drop_shadow` is a different drawer and that pass left it behind, which is why a city
   wore a stippled fringe at 1:1. Over the five property cells the dither drew 0%–276% of its own
@@ -473,7 +473,7 @@ plan is stated in full below and has no copy there.
   exists to protect; Instant draws nothing (`flash_in_seconds()` is 0 there), which is also why
   every smoke frame is byte-identical across the slice.
   **The milestone's fifth slice is the 64x96 unit cell, and the armour family is its first user**
-  (generator `e451095`, adopted 2026-08-20; this clause is its record). A tank has to read as
+  (generator `f818157`, adopted 2026-08-20; this clause is its record). A tank has to read as
   heavier than the grass tile it is parked on, and the tile is 64px, so the generator's unit cell is
   one tile wide and half a tile taller — `UnitSprite.SPRITE_H` is 96 — with every vertical landmark
   in `compose_cell` measured up from the cell's **bottom** edge. The extra rows are therefore sky:
@@ -857,8 +857,8 @@ plan is stated in full below and has no copy there.
   one statement of which families are keyed by position and how many phases each holds**, so
   `variant`, `sheet_cells` and `atlas_coords` cannot disagree about which is which. Three families
   are keyed by position today — open water (generator `1216fd5`, adopted 2026-08-18), plains
-  (`4ba6a83` at five phases, **eight since the animation install's `e16d261`**, the shipped maps
-  being about 56% plains) and mountain (generator `5efec88`, both adopted 2026-08-20) — because what
+  (`21175fc` at five phases, **eight since the animation install's `e16d261`**, the shipped maps
+  being about 56% plains) and mountain (generator `8569ba4`, both adopted 2026-08-20) — because what
   a field of one tile repeats at is the tile, so the glints, the tufts or the peaks line up however
   they are spread inside it. The generator emits the
   phases and the game places them, `TerrainAutotiles.phase(cell, count)` hashing the cell so the
