@@ -527,8 +527,16 @@ if (($# == 0)); then
 		[[ -f "$doc" ]] || continue
 		root="${doc#generators/}"
 		root="generators/${root%%/*}"
+		# What counts as a citation is the generator's own top-level directories —
+		# `spritegen/`, `audiogen/`, `tests/` — read off the tree rather than named
+		# here, so a second generator's package is linted the day it arrives, plus
+		# the game's `docs/` and `assets/`.
+		citable="assets|docs"
+		for package in "$root"/*/; do
+			citable="$citable|$(basename "$package")"
+		done
 		doc_citations="$(
-			grep -ohE '(^|[^A-Za-z0-9_./~-])(spritegen|tests|docs|assets)/[A-Za-z0-9_./-]*\.(md|gd|gdignore|txt|tres|tscn|png|sh|py|json|cfg)' \
+			grep -ohE "(^|[^A-Za-z0-9_./~-])($citable)/[A-Za-z0-9_./-]*\.(md|gd|gdignore|txt|tres|tscn|png|sh|py|json|cfg)" \
 				"$doc" | sed -E 's/^[^A-Za-z0-9_]//' | sort -u
 		)"
 		while read -r cited; do
