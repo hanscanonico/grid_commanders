@@ -1,7 +1,8 @@
 # Sprite Generator
 
-Deterministic sprite pipeline for [`../grid_commanders`](../grid_commanders):
-it generates the game's complete **units atlas** (18 units x 5 faction rows)
+Deterministic sprite pipeline for this game, living in the repository it feeds
+(`generators/sprites`, an offline instrument the engine never sees — the
+sibling `generators/.gdignore` keeps Godot out of it). It generates the game's complete **units atlas** (18 units x 5 faction rows)
 and **terrain atlas** (14 terrains x 5 rows) as curated isometric-voxel pixel
 art, in the same dimetric style as the PixVoxel pack the game shipped with —
 but with more detail: finer voxels, baked ambient occlusion, front-edge rim
@@ -280,25 +281,30 @@ All 18 units author the clip (`units.MOVES`), by family:
 `docs/move_clip.md` is the consumer contract: sheet names, region maths, the
 flip policy, when the clip starts and stops, and the game-side task.
 
-## Setup
-
-```sh
-python3 -m venv .venv
-.venv/bin/pip install pillow
-```
-
 ## Usage
 
+`make tiles` from the repository root is the whole of it: it regenerates the
+sheets, installs them, draws the UI chrome this pipeline has no home for and
+reimports, and `make generators-venv` is the one-off interpreter setup it
+needs. The venv is deliberately kept **outside** the checkout
+(`~/.cache/grid_commanders/venv-sprites` by default, overridable as
+`SPRITEGEN_PY=<python>`), because a git worktree shares no ignored files with
+the main checkout and a per-worktree venv is a per-worktree reinstall.
+`make sprites-test` is this pipeline's own gate.
+
+To drive the script directly:
+
 ```sh
+py=~/.cache/grid_commanders/venv-sprites/bin/python
+
 # everything: atlases + per-cell sprites + review sheets, into ./out
-.venv/bin/python sprite_generator.py
+"$py" sprite_generator.py
 
 # iterate on specific sprites at high zoom while editing models
-.venv/bin/python sprite_generator.py --only tank,city --team verdant --zoom 8
+"$py" sprite_generator.py --only tank,city --team verdant --zoom 8
 
-# copy atlases and cells into the game checkout
-.venv/bin/python sprite_generator.py --install            # ../grid_commanders
-.venv/bin/python sprite_generator.py --install ~/somewhere/grid_commanders
+# copy atlases and cells into a game checkout — the path is required
+"$py" sprite_generator.py --install ../..
 ```
 
 | Flag | Meaning |
@@ -308,7 +314,7 @@ python3 -m venv .venv
 | `--team` | faction row for `--only` (neutral/red/blue/iron/verdant) |
 | `--zoom` | zoom factor for `--only` previews (default 6) |
 | `--no-cells` | skip the 115 per-cell PNGs, write only atlases + previews |
-| `--install` | copy outputs into a grid_commanders checkout |
+| `--install` | copy outputs into a grid_commanders checkout (explicit path; no default) |
 
 ## Outputs
 
@@ -742,7 +748,7 @@ with no snapshot is a failure rather than a silence. The single exception is
 `units/<id>_<team>.png` — instead of committing 90 duplicates of art the
 atlas already carries, each exported cell must be pixel for pixel one of the
 cells of the committed `units_atlas.png`. Run it against your own output
-with `.venv/bin/python tests/check_snapshots.py out`.
+with `~/.cache/grid_commanders/venv-sprites/bin/python tests/check_snapshots.py out`.
 
 ## Cell density
 

@@ -12,7 +12,7 @@ knob; it is a re-authoring of every model, and even fully re-authored it pays
 nothing below the rung above the default one, and nothing at all in the
 cut-in.
 
-Take the readings again with `.venv/bin/python tests/measure_128.py`.
+Take the readings again with `~/.cache/grid_commanders/venv-sprites/bin/python tests/measure_128.py`.
 
 ## 1. The arithmetic, which settles it before any art is drawn
 

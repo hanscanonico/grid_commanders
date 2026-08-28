@@ -1,18 +1,16 @@
 # The `move` clip — the contract the game implements against
 
 The board has one clip today: `ambient`, two sheets half a second apart, played
-by every unit all the time. A unit walking a path plays it too, so a tank
-crossing four cells is a parked tank sliding. This is the second clip — the
-gait the tween has never had — written down before either side builds it, so
-that the generator and `grid_commanders` can land it in the same batch without
-guessing at each other.
+by every unit all the time. A unit walking a path used to play it too, so a
+tank crossing four cells was a parked tank sliding. This is the second clip —
+the gait the tween never had — and it is the contract both sides implement
+against.
 
-Status: the `move` clip is **not yet in `anim.json`**. Every ambient number
-below is what `spritegen.anim.dumps()` emits on `main` today; every `move`
-number is the decision this batch lands, in the same batch as the sheets. A
-game-side reader that finds no `move` key in the manifest is reading a
-manifest from before that batch and must fall back to `ambient` — which is the
-`fallback` field saying so in the file rather than in a comment.
+Status: **shipped on both sides.** `move` is in `anim.json` beside `ambient`,
+`ambient_figures` and `sea`, and the game plays it for exactly the length of
+`BattleAnimator.animate_path`'s tween. A reader that finds no `move` key is
+reading a manifest from before that batch and falls back to `ambient` — which
+is the `fallback` field saying so in the file rather than in a comment.
 
 ## 1. What the clip is
 
@@ -217,9 +215,10 @@ Verification:
   `CELL_GROUND_PX`, `SPRITE_OVERFLOW`; the ambient clip's `ms_per_frame` must
   equal `UnitSprite.AMBIENT_MS`; and every `UnitType.atlas_col` must match the
   manifest's `columns` entry for that id, with the same count (18).
-- `tests/unit/test_move_clip.gd` — the move sheets are the ambient grid, the
-  clip resolves, `clip_frame` returns A under `ambient_frozen` and under
-  Instant, and `face_step` holds facing on a vertical leg.
+- `tests/unit/test_move_frames.gd` — the game's gate: the move sheets are the
+  ambient grid, an unauthored column's move frames equal its ambient ones, the
+  cadence and the two stills hold, and `UnitSprite.facing_for` holds facing on
+  a vertical leg.
 - `make smoke` — all 85 capture modes byte-identical. Captures pin Instant, so
   nothing in this change may move a single frame of them.
 - Manual: walk a unit left and right across the board and check the sprite,
@@ -251,6 +250,6 @@ and the sim — no file under `core/` or `ai/` sees any of this.
   and `process/fix_alpha_border=true`. That last one rewrites the RGB of fully
   transparent pixels at import, so any comparison against a shipped sheet —
   here or in the game's tests — must look at drawn pixels only.
-- **Manifest and sheets ship together.** `sprite_generator --install` copies
+- **Manifest and sheets ship together.** `sprite_generator.py --install` copies
   `anim.json` with the atlases it describes; a checkout with new sheets and
   last run's manifest is exactly the coupling the manifest exists to end.

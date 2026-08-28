@@ -124,12 +124,10 @@ def main() -> None:
     )
     ap.add_argument(
         "--install",
-        nargs="?",
-        const=Path("../grid_commanders"),
         type=Path,
         metavar="GAME_DIR",
-        help="copy atlases and cells into a grid_commanders "
-        "checkout (default ../grid_commanders)",
+        help="copy the atlases and cells into a grid_commanders checkout "
+        "(explicit path required — no default destination, deliberately)",
     )
     args = ap.parse_args()
 
