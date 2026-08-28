@@ -131,6 +131,30 @@ class OneSun(unittest.TestCase):
                 self.assertGreater(landed.getextrema()[1], 0)
 
 
+class TheShadowFallsOneWay(unittest.TestCase):
+    """The two bands that read the key read it the same way round: away from
+    the sun. A block is enough to say which side of a shape each landed on."""
+
+    def _block(self) -> Image.Image:
+        layer = Canvas((60, 60), 1)
+        layer.rect((10.0, 10.0, 50.0, 50.0), (255, 255, 255, 255))
+        return layer.silhouette()
+
+    def test_the_occlusion_band_lands_away_from_the_key(self):
+        band = light.occlusion(self._block(), Image.new("L", (60, 60), 255), depth=4.0)
+        self.assertEqual(band.getpixel((51, 30)), 255)
+        self.assertEqual(band.getpixel((30, 51)), 255)
+        self.assertEqual(band.getpixel((8, 30)), 0)
+        self.assertEqual(band.getpixel((30, 8)), 0)
+
+    def test_the_rim_runs_along_the_shadow_side_edge(self):
+        alpha = light.rim_light(self._block(), _skin_ramp(), weight=2.0).getchannel("A")
+        self.assertEqual(alpha.getpixel((48, 30)), 255)
+        self.assertEqual(alpha.getpixel((30, 48)), 255)
+        self.assertEqual(alpha.getpixel((10, 30)), 0)
+        self.assertEqual(alpha.getpixel((30, 10)), 0)
+
+
 def _nonzero(image: Image.Image, *, invert: bool = False) -> Image.Image:
     """A difference image as a one-bit mask — where it differs, or where it
     does not."""

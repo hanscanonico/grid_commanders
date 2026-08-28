@@ -32,9 +32,10 @@ from .palette import RGB
 # The key, in portrait space: x right, y down, so the sun sits up and to the
 # left. The sprite sheet's own sun (generators/sprites) lights the board from the same corner.
 KEY = (-0.64, -0.77)
-# Which way everything the key does not reach falls: down and to the right, on
-# every bust, mirrored poses included.
-SHADOW_STEP = (1, 1)
+# Which way everything the key does not reach falls — away from it, so down and
+# to the right, on every bust, mirrored poses included. Derived from the key
+# rather than typed beside it: one statement of where the sun is.
+SHADOW_STEP: tuple[int, int] = (-1 if KEY[0] > 0 else 1, -1 if KEY[1] > 0 else 1)
 # The four bands every material is painted in, plus the rim. Naming them is the
 # palette discipline: a tone is chosen from a ramp, never mixed at the call.
 BANDS = ("deep", "shade", "base", "lit")
