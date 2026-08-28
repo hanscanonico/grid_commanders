@@ -43,7 +43,7 @@ the same tick, so the board never blinks at once.
 
 **`facing`.** `voxel.py`'s projection is `x = (vx - vy) * 2`,
 `y = (vx + vy) - vz * 2`, so **+y runs toward screen lower-LEFT**, and every
-model on the sheet faces +y (`units.py` header). The art therefore faces
+model on the sheet faces +y (`spritegen/units/__init__.py` header). The art therefore faces
 **screen-left**, the manifest carries `"facing": "left"`, and the consumer
 mirrors for the other one: `"flip_x_for": ["right"]`.
 
@@ -186,10 +186,10 @@ If the board wants dust it belongs on the tile, game-side.
 
 Files:
 
-- `scenes/battle/anim_manifest.gd` — **new**. A static loader for
-  `res://assets/tiles/anim.json`: parse once, cache, expose `cell`, `columns`,
-  `rows` and `clip(name)`. Resolves `fallback` when a clip's sheets do not
-  load, and returns `null` for an unknown clip.
+- A manifest loader beside `scenes/battle/unit_sprite.gd` — proposed here,
+  **not built**. The game hardcodes the cell and the cadences and *pins*
+  `assets/tiles/anim.json` against them in `tests/unit/test_anim_manifest.gd`
+  instead, so no JSON parse sits in the draw path.
 - `scenes/battle/unit_sprite.gd` — `set_clip(name)`, `clip_frame(now_ms)` and
   `face_step(delta: Vector2i)`. `set_clip` swaps the sheet the existing
   `AtlasTexture` points at and leaves the region alone; `clip_frame` is

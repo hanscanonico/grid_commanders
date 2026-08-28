@@ -1,9 +1,9 @@
 """Dev instrument for the 128px question — not a test, a readout.
 
 The sprite programme's last open item is whether the sheet should be emitted
-at a 128px cell instead of 64. `docs/density_128.md` is the verdict; this is
-where its numbers come from, so a later campaign can re-take them rather than
-trust them.
+at a 128px cell instead of 64. The game's `docs/density_128.md` is the
+verdict; this is where its numbers come from, so a later campaign can re-take
+them rather than trust them.
 
 Three readouts:
 
@@ -22,12 +22,18 @@ Run: .venv/bin/python tests/measure_128.py [board|models|render ...]
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from PIL import Image
 
-from spritegen import units
-from spritegen.palette import faction_by_key
-from spritegen.voxel import render_indexed
+# The package is not installed, and a file run by path puts its own directory
+# on sys.path rather than the repo root, so put the root there ourselves and
+# `.venv/bin/python tests/measure_128.py` works from a bare checkout.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from spritegen import units  # noqa: E402
+from spritegen.palette import faction_by_key  # noqa: E402
+from spritegen.voxel import render_indexed  # noqa: E402
 
 # The game's side of the arithmetic, read off grid_commanders and restated
 # here so this file runs without a Godot checkout beside it:

@@ -4,10 +4,12 @@ The sprite programme's last open item, taken as a measurement rather than
 decided as a taste (design review rounds 6–11). This is a dated reading: a
 later campaign supersedes it wholesale rather than edits it.
 
-Copied verbatim from the sprite generator (`ed042c4`, plus its `676a58c` outline
-note), which is where the instrument and the models live — a sibling repository
-when this was written, and `generators/sprites` in this one since 2026-08-28.
-Nothing but those two paths is changed.
+This file is the record. The instrument behind it is
+`generators/sprites/tests/measure_128.py` and the models it measures are
+`generators/sprites/spritegen/units/` — the generator was a sibling repository
+when this was written and has been `generators/sprites` in this one since
+2026-08-28, so `generators/sprites/docs/density_128.md` is a stub pointing here
+rather than a second copy to keep in step.
 
 This game has moved twice since the reading, and neither move touches the
 finding: a playtest dropped `window/stretch/scale_mode = "integer"`, which is

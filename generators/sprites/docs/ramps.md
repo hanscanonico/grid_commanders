@@ -134,4 +134,4 @@ turn toward the sun, and `build_ramp` landing on its ladder to within 0.6 of
 a luminance step. Every one of the six shipped hex ramps fails at least one
 of those, which is what the gate is for.
 
-Re-measure with `PYTHONPATH=. ~/.cache/grid_commanders/venv-sprites/bin/python tests/measure_livery.py`.
+Re-measure with `~/.cache/grid_commanders/venv-sprites/bin/python tests/measure_livery.py`.

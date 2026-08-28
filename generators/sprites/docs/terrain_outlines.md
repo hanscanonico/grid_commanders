@@ -78,7 +78,7 @@ Per tile (the property tiles are per faction row, worst row shown):
 | reef | 44 | 38 |
 | every other nature tile | 24-73 | unchanged |
 
-The nature tiles other than reef are drawn flat in `terrain.py` and never
+The nature tiles other than reef are drawn flat in `spritegen/terrain/` and never
 touched the shading path, so they do not move; reef falls because its rock
 outcrops are `voxel.render` props. `TerrainPalette.PROPERTY_CEILING` comes down
 from **220 to 90** with that; the remaining spend is the shading arithmetic

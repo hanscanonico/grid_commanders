@@ -11,8 +11,8 @@ light, per-part outlines, and consistent scale, light and palette across the
 whole roster.
 
 There are **no seeds and no randomness**. Every sprite is a hand-authored
-voxel model (`spritegen/units.py`, `spritegen/buildings.py`) or tile painter
-(`spritegen/terrain.py`); texture "noise" comes from a fixed hash, so every
+voxel model (`spritegen/units/`, `spritegen/buildings.py`) or tile painter
+(`spritegen/terrain/`); texture "noise" comes from a fixed hash, so every
 run reproduces the same bytes. Regenerating after an edit changes exactly the
 sprites you edited.
 
@@ -223,6 +223,22 @@ frames beside their mirror, because that mirror is the only place a
 screen-handed silhouette would show; `--no-flip` turns it off and `--flip`
 forces it on for any clip.
 
+The generator's four dev instruments — `tests/measure_motion.py`,
+`tests/preview_motion.py`, `tests/measure_livery.py` (`docs/ramps.md`) and
+`tests/measure_128.py` (`../../docs/density_128.md`) — all run under the one
+interpreter `make generators-venv` builds, from this directory, with nothing on
+`PYTHONPATH`:
+
+```sh
+py=~/.cache/grid_commanders/venv-sprites/bin/python
+"$py" tests/measure_motion.py --clip move
+"$py" tests/preview_motion.py OUTDIR
+```
+
+None of them is a test — `unittest discover`'s `test*.py` pattern does not
+match a `measure_` or `preview_` name — and none writes into `out/`, so
+`make sprites-test` and the snapshot gate never see one.
+
 ### A move clip is a gait, not a translation
 
 The texel rule above is the same one, unchanged: one board texel is 4 atlas px,
@@ -327,7 +343,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `units_atlas_move.png` | 1152x480 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 5 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
 | `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
 | `terrain_atlas.png` | 896x320 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
-| `units/<id>_<team>.png` | 90 cells, the inputs `tools/paste_unit_sprites.gd` reads |
+| `units/<id>_<team>.png` | 90 cells, installed to `assets/sprites/units` as the atlas's own art exported cell by cell |
 | `iso_buildings/<id>_<team>.png` | 25 property-building cells for `assets/sprites/iso_buildings` |
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
 | `preview_map.png` | an authored little battle map proving the sheet in context: the shipped maps' terrain mix, autotiled, phased by the game's own coordinate hash |
@@ -625,11 +641,15 @@ that pipeline's paste step can be pointed at this art instead.
    table units are painted from, the faction colours mirroring the game's
    `CommanderVisuals`, fixed materials (gunmetal, track, glass, skin, ...),
    the older shading math, and the deterministic hash noise.
-3. **`spritegen/units.py`** — 18 authored models, all facing +y
-   (screen lower-left) like the game's art. Land units get a contact
-   shadow, ships sit in a flat displacement shadow with foam hugging the
-   waterline, air units hover high over a small detached one.
-4. **`spritegen/buildings.py` / `spritegen/terrain.py`** — voxel property
+3. **`spritegen/units/`** — 18 authored models, all facing +y
+   (screen lower-left) like the game's art, split by what they are:
+   `foot.py` (rifleman, mech), `land.py` (the eight vehicles), `air.py`
+   (two jets, two helicopters), `sea.py` (the four hulls), with the
+   chassis parts they share in `parts.py` and the clips and their frames
+   in `pose.py`. The package's `__init__.py` is the roster — the atlas
+   order, the builder table and the header that states what a key pose may
+   move — so every importer still reads `spritegen.units`.
+4. **`spritegen/buildings.py` / `spritegen/terrain/`** — voxel property
    buildings and nature props composed onto 64px tile grounds. The grounds
    keep `tools/generate_tiles.gd`'s hues but not its values: every tone is
    authored under `terrain.TERRAIN_VALUE_CEILING` so the top of the ramp
@@ -721,10 +741,17 @@ that pipeline's paste step can be pointed at this art instead.
    shallower stretches — a wing root, a hull front, the shoulders of a foot
    unit — 146 pixels across the whole sheet. `ENABLED` turns the pass off;
    `MIN_RUN` is the knob that decides what counts as a staircase.
-7. **`spritegen/atlas.py`** — assembles atlases, exports cells, renders the
-   preview sheets and the demo map (which resolves roads, the river, the
-   bridge, every coastline and every wood's tree line through the autotile
-   variants).
+7. **`spritegen/cell.py`** — where a rendered sprite is placed in its 64x96
+   atlas cell: the vertical landmarks measured up from the cell's bottom
+   edge, the cast shadow, and the foam, wake and bow wave a hull needs to
+   read as being in the water rather than on it. It imports no renderer, so
+   nothing here can be a second opinion about how a voxel is shaded.
+8. **`spritegen/atlas.py`** — assembles the atlases and exports the cells.
+9. **`spritegen/demo.py`** — the review pictures, which are not shipped
+   assets: the checkerboard sheet backdrop and the demo map, which resolves
+   roads, the river, the bridge, every coastline and every wood's tree line
+   through the autotile variants, so it shows the CELLS the board would
+   paint rather than the tiles the atlas holds.
 
 Python 3.10+, no dependencies beyond Pillow. The old seed-driven generator
 (creatures/ships/items/robots/tanks) lives in git history before this
@@ -732,24 +759,25 @@ rewrite.
 
 ## Checks
 
-`.github/workflows/ci.yml` runs on every push to `main` and every pull
+The repository's `sprites` CI job runs on every push to `main` and every pull
 request: `ruff check` and `ruff format --check` (ruff pinned in the workflow,
 style settings in `ruff.toml`), the contract tests
-(`python -m unittest discover tests`), two generator runs diffed against each
-other for byte determinism, and a pixel comparison of the committed
-`.lavish/assets` snapshots — atlases, previews, autotile sheets and
-`iso_buildings` cells — against fresh generator output. Change what the
-generator draws and those snapshots have to be regenerated in the same
-commit, or CI fails.
+(`python -m unittest discover tests`, which is what `make sprites-test` runs
+locally), two generator runs diffed against each other for byte determinism,
+and a pixel comparison of the art the game has installed — `assets/tiles/**`
+and `assets/sprites/**` — against fresh generator output. Change what the
+generator draws without running `make tiles` in the same commit and CI fails.
 
 That comparison is `tests/check_snapshots.py`, and it enumerates nothing by
-hand: it pairs off every PNG the generator emitted with the committed file of
+hand: it pairs off every PNG the generator emitted with the installed file of
 the same relative path, and fails in both directions, so a new output landing
-with no snapshot is a failure rather than a silence. The single exception is
-`units/<id>_<team>.png` — instead of committing 90 duplicates of art the
+with no home is a failure rather than a silence. The single exception is
+`units/<id>_<team>.png` — instead of installing 90 duplicates of art the
 atlas already carries, each exported cell must be pixel for pixel one of the
-cells of the committed `units_atlas.png`. Run it against your own output
-with `~/.cache/grid_commanders/venv-sprites/bin/python tests/check_snapshots.py out`.
+cells of the installed `units_atlas.png`. The previews are the one thing the
+game does not load, so they stay compared against the review gallery's own
+copies under `.lavish/assets`. Run it against your own output with
+`~/.cache/grid_commanders/venv-sprites/bin/python tests/check_snapshots.py out`.
 
 ## Cell density
 
@@ -759,9 +787,9 @@ drawn at, over the shipped 4x4 cube — so a 128px candidate (`k = 2`) can be
 emitted and measured. It defaults to 1 and the 64px output is byte-identical
 with it.
 
-**`docs/density_128.md` is the committed measurement of whether 128 should
-ship, and the verdict is no** — the board's own arithmetic gives a 128 cell
-the same 16 logical pixels per tile that 64 has, decimates it 2:1 at the
+**`../../docs/density_128.md` is the committed measurement of whether 128
+should ship, and the verdict is no** — the board's own arithmetic gives a 128
+cell the same 16 logical pixels per tile that 64 has, decimates it 2:1 at the
 default rung where 64 lands exactly 1:1, and the emission the models produce
 today is 93.3% a nearest 2x upscale of the 64px art. Read that document before
 re-opening the question; it also records the order a future attempt should
