@@ -88,6 +88,11 @@ class EveryGeneralIsDrawnOnASkullOfTheirOwn(unittest.TestCase):
     def test_the_empty_seat_stands_on_the_default_head(self):
         self.assertEqual(roster.NEUTRAL.head, head.Skull(*head.HEAD_DEFAULT))
 
+    def test_the_empty_seat_is_named_for_the_file_the_game_falls_back_to(self):
+        # CommanderVisuals.NEUTRAL_PORTRAIT_PATH is .../commanders/none.png.
+        self.assertEqual(roster.NEUTRAL_ID, "none")
+        self.assertNotIn(roster.NEUTRAL_ID, roster.FACES)
+
 
 class NoExpressionIsWornByTheWholeRoster(unittest.TestCase):
     """Five brows over twenty-two generals cannot go below five apiece, which is
@@ -142,6 +147,9 @@ class EveryColumnNamesSomethingDrawable(unittest.TestCase):
         for key, face in roster.FACES.items():
             with self.subTest(commander=key):
                 self.assertIn(face.bg, backdrop.KINDS)
+
+    def test_the_empty_seat_stands_against_the_bars(self):
+        self.assertEqual(roster.NEUTRAL.bg, "bars")
         self.assertIn(roster.NEUTRAL.bg, backdrop.KINDS)
 
     def test_all_seven_backdrops_are_used_and_none_carries_the_sheet(self):
