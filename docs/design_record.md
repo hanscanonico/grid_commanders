@@ -1185,8 +1185,8 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
 ## The zoom ladder and the animation milestone
 
 Two entries of the index in one block, exactly as it carried them: the zoom ladder and the
-milestone's nine slices, followed by the next-ready-unit key, whose opening words the index
-had lost. Reproduced verbatim.
+milestone's nine slices, followed by the next-ready-unit key, whose heading the index had lost
+and which is given one back here. Reproduced otherwise verbatim.
 
 - **The zoom ladder is integers above its floor** (no plan artifact; this entry is its record, and it is the
   animation milestone's first slice) — the board is sampled with nearest filtering, so a rung that
@@ -1401,7 +1401,7 @@ had lost. Reproduced verbatim.
   (`cutin_ko` and the six `cutin_volley*`) are posed at a `t` inside a frame-A half beat, which is
   the derivation proving itself; every board and menu frame is byte-identical, `commander_info`
   included — re-measured at review over three sweeps of the unchanged tree and two of this one.
-  (no plan artifact; this entry is its record) — `N` walks the cursor
+- **The next-ready-unit key** (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
   still act and for the order they are walked in** — `of()` is the list the End Turn guard prints
