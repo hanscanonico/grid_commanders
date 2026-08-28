@@ -518,11 +518,11 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   number is retuned. If the AI ever does visibly cower on a crowded board the fix is an `AIProfile`
   weight, not code.
   D5: **four armies get four faces, and every face is presentation.** Both of `SideIdentity`'s
-  fallback orders hold all four theme keys with their first two entries untouched, so every
-  two-army resolution is byte-identical to before and iron/verdant only ever come up on a board
-  seating a third or fourth army — which is what makes "no two sides share a colour" *provable*
-  (four keys against at most four armies) rather than true so far, and `_fallback`'s neutral escape
-  unreachable. Unreachable matters: `BattleView._last_seen_owner` maps an atlas row back to a team,
+  fallback orders hold every theme key with their first two entries untouched, so every
+  two-army resolution is byte-identical to before and iron, verdant and gold only ever come up on a
+  board seating a third or fourth army — which is what makes "no two sides share a colour"
+  *provable* (four keys against at most four armies; five since the Gilded Concord took row 5)
+  rather than true so far, and `_fallback`'s neutral escape unreachable. Unreachable matters: `BattleView._last_seen_owner` maps an atlas row back to a team,
   so two sides sharing row 0 would name the wrong owner. An army falling is announced through the
   ordinary turn banner — the pipeline reports it on `BattleCommandReceipt.fallen`, the flow layer
   says it: `Battle.conclude_command` awaits the banner **before** the turn hands over, so it lands

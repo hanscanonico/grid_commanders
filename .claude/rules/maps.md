@@ -58,8 +58,8 @@ forms named in the root index are in `docs/design_record.md`.
   `matches.csv` moves only in the loser's `blue_props` / `red_props` / `blue_units`, always to 0).
   `BalanceMatchEngine.termination` is **told** an HQ fell rather than inferring it. D5: **four
   armies get four faces, and every face is presentation** — both `SideIdentity` fallback orders
-  hold all four theme keys with their first two entries untouched, which is what makes "no two sides
-  share a colour" *provable* and `_fallback`'s neutral escape unreachable (`BattleView`'s
+  hold every theme key (four then, five since the Gilded Concord) with their first two entries
+  untouched, which is what makes "no two sides share a colour" *provable* and `_fallback`'s neutral escape unreachable (`BattleView`'s
   `_last_seen_owner` maps a row back to a team). A fallen army is announced through the ordinary
   turn banner, awaited **before** the turn hands over so it lands on the board that produced it and
   suppressed while `animator.capturing`; elimination is public information, fog or no fog. The
