@@ -310,17 +310,12 @@ func _first_line(text: String, color: Color) -> Label:
 	return label
 
 
-## Parks the card under the top bar, in whichever corner `_dock` names. Measured a
-## frame late for the reason MissionStrip measures itself: a PanelContainer's size
-## is only valid once its labels have been laid out, and these change with every
-## command.
+## Parks the card under the top bar, in whichever corner `_dock` names. Its lines
+## change with every command, so it measures a frame late through `UiKit.settled`,
+## which owns that wait.
 func _place() -> void:
-	await get_tree().process_frame
-	if not is_inside_tree():  # rematch, menu exit or a batch scene change freed the card
+	if not await UiKit.settled(self):
 		return
-	if not visible:
-		return
-	reset_size()
 	position = _dock_position(_dock, get_viewport_rect().size, size)
 
 
