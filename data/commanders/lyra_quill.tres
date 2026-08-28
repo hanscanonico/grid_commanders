@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"lyra_quill"
 display_name = "Lyra Quill"
-faction = "Aurora Compact"
+faction = "Gilded Concord"
 doctrine_text = "Combat luck rolls 4-9 instead of 0-9. All units -5% defence."
 power_name = "Perfect Solution"
 power_text = "Every attack rolls maximum luck and gains +10% attack this turn."

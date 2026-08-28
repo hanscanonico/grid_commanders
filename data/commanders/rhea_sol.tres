@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"rhea_sol"
 display_name = "Rhea Sol"
-faction = "Meridian Coalition"
+faction = "Gilded Concord"
 doctrine_text = "Artillery and Rockets +10% attack, -10% defence."
 power_name = "Grid Saturation"
 power_text = "Indirect units +1 maximum range and +20% attack this turn."

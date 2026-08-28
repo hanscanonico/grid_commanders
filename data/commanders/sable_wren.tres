@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"sable_wren"
 display_name = "Sable Wren"
-faction = "Verdant League"
+faction = "Gilded Concord"
 doctrine_text = "Units in Woods and Reefs get +1 defence star. Units on Roads -10% defence."
 power_name = "Vanish"
 power_text = "Her units in Woods and Reefs become invisible, even to adjacent enemies, and attack from there at +40% until her next turn."
