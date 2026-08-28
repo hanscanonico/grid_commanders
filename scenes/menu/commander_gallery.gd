@@ -13,28 +13,14 @@ const _COLUMNS := 4
 
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = UiTheme.SLATE_900
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Dev-only page, out of the smoke sweep (tools/smoke_scenarios.sh never boots
+	# this scene), so it wears the shell every other full-screen page wears —
+	# opaque veil, page margin, page title — and is free to move a pixel doing it.
+	UiKit.page_veil(self, 1.0)
+	var rows := UiKit.page_body(self, 6)
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 8)
-	add_child(margin)
-
-	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 6)
-	margin.add_child(rows)
-
-	# Dev-only page, out of the smoke sweep (tools/smoke_scenarios.sh never
-	# boots this scene), so dressing the title off UiTheme rather than the
-	# stock OS font is free to move a pixel here.
-	var title := Label.new()
-	title.text = "COMMANDER CARD GALLERY"
-	title.add_theme_font_override("font", UiTheme.display(true))
-	title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
+	var title := UiKit.page_title("COMMANDER CARD GALLERY")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	rows.add_child(title)
 
 	var grid := GridContainer.new()

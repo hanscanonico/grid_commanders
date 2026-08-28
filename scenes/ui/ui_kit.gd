@@ -75,6 +75,20 @@ static func page_body(
 	return main
 
 
+## A full-screen page's headline: the display face at page-title size, centred.
+## A page that reads its title from the left (the gallery, commander select's
+## topbar) sets `horizontal_alignment` back, and a page that recolours it (the
+## debrief's verdict) sets `font_color` after — the dress is what is shared here,
+## not the two things a page has its own answer to.
+static func page_title(text: String = "") -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.display(true))
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return label
+
+
 ## Wraps `child` (may be null) in a MarginContainer with even h/v padding.
 static func pad(child: Control, h: int, v: int) -> MarginContainer:
 	var margin := MarginContainer.new()
@@ -189,17 +203,24 @@ static func vscroll() -> ScrollContainer:
 ## A faction-tinted or cream action button with an optional suffix ("MATCH"),
 ## appended to the label rather than set as a second run: one Button draws one
 ## string in one font, so the suffix wears the same Pixelify the label does.
+##
+## `width` 0 is the main menu's stack: the button takes the column's whole width.
+## A width names a page footer's button instead, which stands at its own size —
+## how that button is then placed in its row is the page's own answer, so the
+## size flag is left where the caller set it.
 static func action_button(
 	text: String,
 	suffix: String,
 	variant: UiTheme.ButtonVariant,
-	theme: CommanderVisuals.FactionTheme
+	theme: CommanderVisuals.FactionTheme,
+	width: int = 0
 ) -> Button:
 	var button := Button.new()
 	button.text = text if suffix.is_empty() else "%s  %s" % [text, suffix]
 	UiTheme.apply_button(button, variant, theme, UiTheme.SIZE_BUTTON)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0, 20)
+	if width <= 0:
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = Vector2(maxi(width, 0), 20)
 	return button
 
 

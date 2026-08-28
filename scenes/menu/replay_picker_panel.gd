@@ -86,11 +86,7 @@ func _build() -> void:
 	UiKit.page_veil(self)
 	var main := UiKit.page_body(self, 6)
 
-	_title = Label.new()
-	_title.text = "REPLAYS"
-	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title = UiKit.page_title("REPLAYS")
 	main.add_child(_title)
 
 	# This page is the only surface that tells a player their matches are being
@@ -101,10 +97,7 @@ func _build() -> void:
 
 	main.add_child(_build_frame())
 
-	_back_button = Button.new()
-	_back_button.text = "Back"
-	UiTheme.apply_button(_back_button, UiTheme.ButtonVariant.GHOST, null, UiTheme.SIZE_BUTTON)
-	_back_button.custom_minimum_size = Vector2(_LIST_WIDTH, 20)
+	_back_button = UiKit.action_button("Back", "", UiTheme.ButtonVariant.GHOST, null, _LIST_WIDTH)
 	_back_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_back_button.pressed.connect(_leave)
 	main.add_child(_back_button)

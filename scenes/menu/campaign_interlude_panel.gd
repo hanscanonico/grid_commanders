@@ -108,10 +108,7 @@ func _build() -> void:
 	_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(_heading)
 
-	_title = Label.new()
-	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title = UiKit.page_title()
 	main.add_child(_title)
 
 	var frame := UiKit.vscroll()
@@ -122,10 +119,7 @@ func _build() -> void:
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	frame.add_child(_body)
 
-	_continue_button = Button.new()
-	_continue_button.text = "Continue"
-	UiTheme.apply_button(_continue_button, UiTheme.ButtonVariant.PRIMARY, null, UiTheme.SIZE_BUTTON)
-	_continue_button.custom_minimum_size = Vector2(140, 20)
+	_continue_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.PRIMARY, null, 140)
 	_continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_continue_button.pressed.connect(_advance)
 	main.add_child(_continue_button)

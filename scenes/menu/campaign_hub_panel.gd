@@ -166,10 +166,7 @@ func _build() -> void:
 	_header.add_theme_constant_override("separation", 5)
 	main.add_child(_header)
 
-	_title = Label.new()
-	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title = UiKit.page_title()
 	_header.add_child(_title)
 
 	_subtitle = UiKit.page_note("")
@@ -260,10 +257,7 @@ func _build_list(parent: VBoxContainer) -> void:
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list_scroll.add_child(_rows)
 
-	_back_button = Button.new()
-	_back_button.text = "Back"
-	UiTheme.apply_button(_back_button, UiTheme.ButtonVariant.GHOST, null, UiTheme.SIZE_BUTTON)
-	_back_button.custom_minimum_size = Vector2(_ROW_WIDTH, 20)
+	_back_button = UiKit.action_button("Back", "", UiTheme.ButtonVariant.GHOST, null, _ROW_WIDTH)
 	_back_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_back_button.pressed.connect(_leave)
 	parent.add_child(_back_button)
@@ -319,17 +313,11 @@ func _build_briefing(parent: VBoxContainer) -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	parent.add_child(buttons)
 
-	_deploy_button = Button.new()
-	_deploy_button.text = "Deploy"
-	UiTheme.apply_button(_deploy_button, UiTheme.ButtonVariant.PRIMARY, null, UiTheme.SIZE_BUTTON)
-	_deploy_button.custom_minimum_size = Vector2(120, 20)
+	_deploy_button = UiKit.action_button("Deploy", "", UiTheme.ButtonVariant.PRIMARY, null, 120)
 	_deploy_button.pressed.connect(_deploy)
 	buttons.add_child(_deploy_button)
 
-	_brief_back = Button.new()
-	_brief_back.text = "Back"
-	UiTheme.apply_button(_brief_back, UiTheme.ButtonVariant.GHOST, null, UiTheme.SIZE_BUTTON)
-	_brief_back.custom_minimum_size = Vector2(90, 20)
+	_brief_back = UiKit.action_button("Back", "", UiTheme.ButtonVariant.GHOST, null, 90)
 	_brief_back.pressed.connect(_show_list)
 	buttons.add_child(_brief_back)
 
