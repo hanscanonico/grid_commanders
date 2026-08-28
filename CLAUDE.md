@@ -1640,7 +1640,9 @@ Follow the official Godot GDScript style guide. Key points:
   with), and `MatchConfig`'s staging, which is reachable without a scene and is where `take()`
   clearing is held. `TransitionInput` joins them on the same terms: a pure static answer over an
   `InputEvent`, so the boundary convention every banner and the victory lockup obey is checked
-  without a scene. `DirectionalInput` joins it on the same terms: a pure answer over an
+  without a scene — and its two `dismissed_by_*` readings, which also stamp the receipt on the
+  page's viewport, are checked under a `SubViewport` per case in `test_page_dismissal.gd`
+  rather than by booting a scene. `DirectionalInput` joins it on the same terms: a pure answer over an
   `InputEvent` and the `InputMap`, so the one-step-per-gesture convention the board cursor and
   every menu obey is checked without a pad. `SeatStrip.normalised_sides` and
   `SeatStrip.reopened_seats` join them on the same terms and for the same reason: the grouping and
