@@ -1,8 +1,9 @@
 class_name UiKit
 extends RefCounted
 ## The widgets the design system's screens are assembled from: the padded box, the
-## micro-label, the divider, the action button, the segmented control, the toggle
-## row, the identity chip, the scroll frame and the commander bust. Every one of them
+## micro-label, the page note and its key legend, the divider, the action button,
+## the segmented control, the toggle row, the identity chip, the scroll frame and
+## the commander bust. Every one of them
 ## is drawn out of UiTheme's colours, fonts and styleboxes and holds no state of its own.
 ##
 ## UiTheme's sibling, and the split between them is what each answers. UiTheme owns
@@ -133,6 +134,36 @@ static func help_label(text: String) -> Label:
 	label.add_theme_color_override("font_color", UiTheme.NEUTRAL)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return label
+
+
+## A full-screen page's centred explanatory line: what this page is, or what it
+## would hold if it held anything. Unlike `micro_label`/`help_label` it reads as a
+## sentence rather than a caption, so it keeps its own case and centres — and it
+## resets `hud_label`'s vertical centring, which is a bar row's answer rather than
+## a page's.
+static func page_note(text: String) -> Label:
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_STAT, UiTheme.NEUTRAL_LIGHT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	return label
+
+
+## The key legend a full-screen page closes with. `page_note`'s dress, flush with
+## the page's left margin rather than centred: it is a rail of key-and-verb pairs
+## read from the left, not a sentence about the page.
+static func key_legend(text: String) -> Label:
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_STAT, UiTheme.NEUTRAL_LIGHT)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	return label
+
+
+## `filled` of `of` stars, the rest hollow — a terrain's defence and a mission's
+## award are counted the same way, so they are spelled once. Clamped at both ends
+## because `String.repeat` answers a negative count with an empty string, which
+## would silently draw a bar of the wrong length instead of failing.
+static func star_bar(filled: int, of: int) -> String:
+	var lit := clampi(filled, 0, maxi(of, 0))
+	return "★".repeat(lit) + "☆".repeat(maxi(of, 0) - lit)
 
 
 ## A thin ink divider between a panel's rows (handoff --border-soft).

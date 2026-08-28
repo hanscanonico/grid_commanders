@@ -172,7 +172,7 @@ func _build() -> void:
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_header.add_child(_title)
 
-	_subtitle = _note("")
+	_subtitle = UiKit.page_note("")
 	_header.add_child(_subtitle)
 
 	_war = VBoxContainer.new()
@@ -191,12 +191,9 @@ func _build() -> void:
 	main.add_child(_brief_view)
 	_build_briefing(_brief_view)
 
-	var footer := Label.new()
-	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", 8)
-	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	footer.text = "UP/DOWN  BROWSE      ENTER  OPEN      ESC  BACK      MOUSE OK"
-	main.add_child(footer)
+	main.add_child(
+		UiKit.key_legend("UP/DOWN  BROWSE      ENTER  OPEN      ESC  BACK      MOUSE OK")
+	)
 
 
 ## The establishing shot the briefing is read over: the mission's board, filling
@@ -279,7 +276,7 @@ func _build_briefing(parent: VBoxContainer) -> void:
 	_brief_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	parent.add_child(_brief_title)
 
-	_brief_where = _note("")
+	_brief_where = UiKit.page_note("")
 	parent.add_child(_brief_where)
 
 	# Open ground between the title block and the band: the board showing through
@@ -346,16 +343,6 @@ func _column(control: Control) -> Control:
 	return control
 
 
-func _note(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	return label
-
-
 func _body_line(text: String, dim: bool = false) -> Label:
 	return MissionSpeech.paragraph(text, dim)
 
@@ -374,11 +361,11 @@ func _fill_war() -> void:
 	_war.visible = not notes.is_empty() or army != ""
 	if not _war.visible:
 		return
-	_war.add_child(_note("THE WAR SO FAR"))
+	_war.add_child(UiKit.page_note("THE WAR SO FAR"))
 	for note: String in notes:
-		_war.add_child(_note(note))
+		_war.add_child(UiKit.page_note(note))
 	if army != "":
-		_war.add_child(_note("VETERANS   %s" % army))
+		_war.add_child(UiKit.page_note("VETERANS   %s" % army))
 
 
 ## The army the war carries, as condition and identity — "TANK 40 · RECON 55" —
@@ -430,7 +417,11 @@ func _fill() -> void:
 		if at != block and titled:
 			block = at
 			_rows.add_child(
-				_block_summary(at) if collapsed else _note(_campaign.block_titles[at].to_upper())
+				(
+					_block_summary(at)
+					if collapsed
+					else UiKit.page_note(_campaign.block_titles[at].to_upper())
+				)
 			)
 		if collapsed:
 			continue
@@ -689,7 +680,7 @@ func _foe_card(commander: CommanderType) -> Control:
 	var bust := MissionSpeech.bust_of(commander, _BUST)
 	bust.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.add_child(bust)
-	card.add_child(_note("VS %s" % commander.display_name.to_upper()))
+	card.add_child(UiKit.page_note("VS %s" % commander.display_name.to_upper()))
 	return card
 
 
