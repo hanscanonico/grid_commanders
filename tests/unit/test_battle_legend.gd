@@ -46,7 +46,9 @@ func test_only_the_two_rest_states_command_the_board() -> void:
 
 
 ## The dock is disabled exactly where the board already refuses input, and live in
-## the two contexts it exists for — a computer turn and a paused one.
+## the two contexts it exists for — a computer turn and a paused one. Battle's own
+## `_unhandled_input` reads the same answer, so this is the one statement of which
+## contexts a key press and a finger tap are both refused in.
 func test_the_dock_is_dead_only_where_another_surface_owns_the_input() -> void:
 	for context: StringName in [
 		ControlHints.ANIMATING,

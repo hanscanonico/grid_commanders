@@ -100,7 +100,11 @@ func leave() -> bool:
 ## scouted. With one human at the table this is their fog all match, exactly as
 ## before. The AI sees everything bar one thing: a unit a doctrine hides is hidden
 ## from it too — see Vision.is_hidden_from.
-func viewing_team() -> int:
+##
+## Named apart from BattlePerspective.viewing_team(): this decides whose eyes the
+## board is drawn through, and that one reports the answer once it has been handed
+## over.
+func viewer_for_turn() -> int:
 	var game := _battle.game
 	var ai_teams := _battle.ai_teams
 	if game.current_team not in ai_teams:
