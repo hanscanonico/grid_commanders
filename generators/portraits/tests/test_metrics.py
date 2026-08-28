@@ -176,9 +176,15 @@ class ThePaletteIsBounded(unittest.TestCase):
 
     def test_the_raw_unique_count_is_recorded(self):
         """Not a bar — the shipped sheet ran 528 to 2,877 and the number is
-        worth having in the log. What is gated is the tone count above."""
+        worth having in the log, so it is printed. What is gated is the tone
+        count above."""
         counts = {key: len(_colours(_painted(key))) for key, _ in _specs()}
         self.assertEqual(len(counts), len(roster.FACES) + 1)
+        low, high = min(counts, key=counts.get), max(counts, key=counts.get)
+        print(
+            f"raw unique RGBA per raster: {counts[low]} ({low}) "
+            f"to {counts[high]} ({high})"
+        )
 
 
 class OneLightOnEveryFace(unittest.TestCase):
