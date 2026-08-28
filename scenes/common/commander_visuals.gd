@@ -161,6 +161,12 @@ static func _build_themes() -> void:
 			Color(0.310, 0.659, 0.353),
 			Color(0.949, 0.965, 0.945)
 		),
+		# The shell already spends a gold on "chosen" (`UiTheme.SELECT_GOLD`), and a
+		# fifth army wearing one cannot avoid it: this hue reads 11.5 CIE76 from that
+		# token, so the select page's pick mark is faint on a Gilded Concord tile. The
+		# hue is 50 rather than the amber 43 SELECT_GOLD sits at because warmer is
+		# both nearer that token AND nearer neutral's khaki (hue 39) — this is the far
+		# end of the room the row has, not a colour picked past the collision.
 		&"gold":
 		FactionTheme.new(
 			&"gold",

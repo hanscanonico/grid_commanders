@@ -496,7 +496,7 @@ campaign-difficulty:
 	$(GODOT) --headless --path . -s res://tools/run_campaign_difficulty.gd -- $(CAMPAIGN)
 
 # Regenerates the art under assets/portraits with generators/portraits and
-# re-imports so the new PNGs register: the four faction emblems and the
+# re-imports so the new PNGs register: the five faction emblems and the
 # twenty-three commander busts, which is the whole of it — nothing else bakes
 # this art. Committed art, so this only needs rerunning when the generator
 # changes or a commander is added. `make portraits-snapshot` is its gate.
