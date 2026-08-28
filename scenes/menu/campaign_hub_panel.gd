@@ -142,14 +142,12 @@ func _shown_row() -> Button:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+	if not TransitionInput.dismissed_by_cancel(self, event):
 		return
-	if event.is_action_pressed(&"cancel"):
-		get_viewport().set_input_as_handled()
-		if _brief_view.visible:
-			_show_list()
-		else:
-			_leave()
+	if _brief_view.visible:
+		_show_list()
+	else:
+		_leave()
 
 
 # --- build -------------------------------------------------------------------
