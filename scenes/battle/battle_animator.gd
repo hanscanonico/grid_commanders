@@ -394,9 +394,10 @@ func animate_join(command: Command, mover: Unit, survivor: Unit) -> void:
 ## constructor could have them all. The signals stay here as relays, because
 ## Battle and the scenarios know the animator rather than its cards.
 ##
-## Only the turn banner is put down by name (`hide_banner`); the power card and
-## the speech card are retired by their own hold, and early only through
-## `consume_banner_skip`.
+## Only the turn banner is put down by name (`hide_banner`). The power card and
+## the speech card come down when their own hold runs out — and the pause menu's
+## re-read has no hold at all — so `consume_banner_skip` is the only other way
+## either is retired.
 func _blocking_cards() -> Array[BlockingCard]:
 	if _cards.is_empty():
 		_cards = [
