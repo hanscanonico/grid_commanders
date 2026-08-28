@@ -1,17 +1,11 @@
 extends GutTest
 ## Konrad Vale: the full surcharge curve and the elite stats that purchase it.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
 
 
 func _state() -> GameState:

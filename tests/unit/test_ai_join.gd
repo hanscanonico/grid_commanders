@@ -27,15 +27,11 @@ const TWIN := Vector2i(1, 0)
 const OUR_TANK := Vector2i(2, 0)
 const ENEMY_TANK := Vector2i(4, 0)
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 ## Normal's shipped numbers with the join dial moved. `kill_bonus` is exposed

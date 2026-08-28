@@ -2,17 +2,11 @@ extends GutTest
 ## Rhea Sol, and with her the R3 guard: rules, AI and UI must agree on how far
 ## an indirect unit can shoot once a doctrine has moved the answer.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, with_rhea: bool = true) -> GameState:

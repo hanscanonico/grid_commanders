@@ -1,18 +1,6 @@
 extends GutTest
 ## PowerCommand and the two places a Command Power expires.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
-
 
 func _state() -> GameState:
 	return Fixture.state("[terrain]\n...\n...\n[units]\n1 t 0 0\n2 i 2 0")

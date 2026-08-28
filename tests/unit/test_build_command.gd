@@ -1,14 +1,10 @@
 extends GutTest
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 func test_build_spawns_exhausted_unit_and_charges() -> void:

@@ -2,16 +2,12 @@ extends GutTest
 ## Ines Calder: the full price curve, the standing attack tax and the active
 ## swing Weight of Numbers promises.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 	commander_db = Fixture.commander_db()
 
 

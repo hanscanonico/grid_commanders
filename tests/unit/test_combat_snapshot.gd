@@ -10,16 +10,6 @@ extends GutTest
 ## Worth its own tests because a wrong snapshot is invisible in play: the cut-in
 ## would tick down from the wrong number and still look perfectly plausible.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-
 
 ## The animation is handed the result *after* the command applied, so both units
 ## already hold their post-combat HP. The snapshot is the only record of what

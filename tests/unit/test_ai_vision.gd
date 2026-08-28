@@ -8,17 +8,11 @@ extends GutTest
 ## computer opponent ignores is inert in the only match most people play. So the
 ## planner asks Vision.is_hidden_from, and nothing else.
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
 
 
 ## Team 2 plays Sable Wren and hides in woods; team 1 is the AI hunting them.

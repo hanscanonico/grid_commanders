@@ -29,15 +29,11 @@ const DARK_DIALS := {
 	"bank_rank_margin": "zero banks for a one-place improvement, which is the shipped planner",
 }
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 ## Every profile the game ships, discovered rather than listed, so a tier added

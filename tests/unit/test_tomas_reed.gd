@@ -1,18 +1,6 @@
 extends GutTest
 ## Tomas Reed: the infantry attack bonus, capture strength, and Popular Uprising.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
-
 
 func _state(map_text: String, with_tomas: bool = true) -> GameState:
 	return Fixture.state(map_text, {1: &"tomas_reed"} if with_tomas else {})

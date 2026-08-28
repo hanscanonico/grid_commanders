@@ -1,18 +1,6 @@
 extends GutTest
 ## Alina Ward: combined-arms adjacency, and Coordinated Push.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-	commander_db = Fixture.commander_db()
-
 
 func _state(map_text: String) -> GameState:
 	return Fixture.state(map_text, {1: &"alina_ward"})

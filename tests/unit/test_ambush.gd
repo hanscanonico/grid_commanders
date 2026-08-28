@@ -6,16 +6,6 @@ extends GutTest
 ## still spends the turn, and any follow-on bound to the move (attack, capture, …)
 ## is dropped. No RNG anywhere: the whole mechanic is deterministic.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-
 
 func _state(map_text: String, fog: bool = true) -> GameState:
 	var state := Fixture.state(map_text)

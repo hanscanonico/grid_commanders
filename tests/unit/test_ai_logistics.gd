@@ -40,15 +40,11 @@ const FUNDED_BASE_WITH_APC := FUNDED_BASE + "\n1 p 4 1"
 
 const LIVE := 0.25
 
-var terrain_db: TerrainDB
 var unit_db: UnitDB
-var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
 	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 
 
 ## Normal's shipped numbers with both logistics dials off, so a test turns on

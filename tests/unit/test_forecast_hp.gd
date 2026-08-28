@@ -8,16 +8,6 @@ extends GutTest
 ## now it prints HP, and a wrong bound here is invisible in play — the panel
 ## would promise a kill it cannot land and still look perfectly plausible.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-
-
-func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
-
 
 ## Displayed HP, like every other HP the player is shown — not the internal
 ## 0-100 the formula subtracts in.
