@@ -19,6 +19,10 @@ extends RefCounted
 ## other two lacked; that guard is the version below, because a caller passing null
 ## wants an empty box and not an error.
 ##
+## `settled` is the odd one out and is here for the same reason: it is the
+## deferred-measure preamble every floating card opens `_place` with, and it was
+## five identical lines in two files.
+##
 ## Presentation only, and no Node held: every builder hands its control back to the
 ## screen that asked for it and keeps no reference.
 
@@ -525,6 +529,20 @@ static func bind_bust(bust: Panel, commander: CommanderType, tint: Color) -> voi
 		art.texture = CommanderVisuals.face_for(commander)
 	else:
 		art.texture = CommanderVisuals.portrait_for(commander)
+
+
+## Waits a frame for a floating card to be laid out, then answers whether it is
+## still there to be placed. A `PanelContainer`'s size is only true once its labels
+## have been laid out, so a card that positions itself off its own size has to
+## measure a frame late — and by then a rematch, a menu exit or a batch scene change
+## may have freed it, or a `hide` may have left its size stale. `false` means place
+## nothing.
+static func settled(card: Control) -> bool:
+	await card.get_tree().process_frame
+	if not card.is_inside_tree() or not card.visible:
+		return false
+	card.reset_size()
+	return true
 
 
 # --- internals ---------------------------------------------------------------

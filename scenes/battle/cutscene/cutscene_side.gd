@@ -99,6 +99,8 @@ const CHIP_TEXT := Color(1.0, 1.0, 1.0, 0.68)
 ## the band pushes in slightly over the exchange, so a few pixels either side are
 ## outside the viewport at the moment the volley lands.
 const PLATE_MARGIN := 26.0
+## The space left between the terrain's name and its first defence star.
+const TERRAIN_STAR_GAP := 12.0
 ## The matching hold-off from the seam, for the content that sits against it.
 const SEAM_MARGIN := 18.0
 
@@ -318,7 +320,7 @@ func _draw_ground(arena: Rect2) -> void:
 	var floor_y := arena.position.y + arena.size.y
 	var depth := floor_y - horizon
 	var atlas := CutscenePlates.terrain_atlas()
-	var source := _cell_region(ground, _ground_row())
+	var source := BattleView.terrain_cell_region(ground.atlas_col, _ground_row())
 	var y := horizon
 	var row_h := depth * 0.05
 	while y < floor_y:
@@ -594,28 +596,19 @@ func _draw_pips(plate: Rect2) -> void:
 		)
 
 
+## Anchored to this half's outer edge and reading inward, the way the tile panel
+## already writes "DEF ★☆☆☆" — anchored to the seam instead, the two sides' rows
+## grow toward each other and collide in the middle of the frame.
 func _draw_terrain_row(plate: Rect2) -> void:
-	var font := get_theme_font(&"font", &"Label")
-	var label := terrain.display_name.to_upper()
-	var width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-	var text_x := _outward_px(PLATE_MARGIN) - (width if mirror else 0.0)
-	draw_string(
-		font,
-		Vector2(text_x, plate.position.y + 14.0),
-		label,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		9,
-		Color(CutscenePalette.PLATE_TEXT, CutscenePalette.PLATE_TEXT.a * plate_p)
-	)
-	# Beside the name and reading inward, the way the tile panel already writes
-	# "DEF ★☆☆☆" — anchored to the seam instead, the two sides' rows grow toward
-	# each other and collide in the middle of the frame.
-	CutscenePlates.draw_stars(
+	CutscenePlates.draw_terrain_row(
 		self,
-		Vector2(_outward_px(PLATE_MARGIN + width + 12.0), plate.position.y + 10.0),
-		_inward(CutscenePlates.STAR_STEP),
-		mini(terrain.defense_stars, CutscenePlates.MAX_STARS),
+		get_theme_font(&"font", &"Label"),
+		plate.position.y,
+		terrain.display_name.to_upper(),
+		_outward_px(PLATE_MARGIN),
+		_inward(1.0),
+		TERRAIN_STAR_GAP,
+		terrain.defense_stars,
 		plate_p
 	)
 
@@ -650,13 +643,3 @@ func _atlas_row() -> int:
 ## the cell's. A city stands on road, and road wears nobody's colours.
 func _ground_row() -> int:
 	return SideIdentity.terrain_row(ground, owner_row)
-
-
-## One cell of the terrain atlas, as a source rect.
-static func _cell_region(of: TerrainType, row: int) -> Rect2:
-	return Rect2(
-		of.atlas_col * BattleView.TERRAIN_PX,
-		row * BattleView.TERRAIN_PX,
-		BattleView.TERRAIN_PX,
-		BattleView.TERRAIN_PX
-	)

@@ -179,16 +179,11 @@ func _build() -> void:
 	_built = true
 
 
-## Centres the strip under the top bar. Measured rather than anchored, for the
-## same reason ActionMenu measures itself: a PanelContainer's size is only valid
-## a frame after its labels changed, and this one's width changes with every step
-## it teaches.
+## Centres the strip under the top bar. Measured rather than anchored, because its
+## width changes with every step it teaches, and measured a frame late through
+## `UiKit.settled`, which owns that wait.
 func _place() -> void:
-	await get_tree().process_frame
-	if not is_inside_tree():  # rematch, menu exit or a batch scene change freed the strip
+	if not await UiKit.settled(self):
 		return
-	if not visible:
-		return
-	reset_size()
 	var view_w := get_viewport().get_visible_rect().size.x
 	position = Vector2(roundf((view_w - size.x) / 2.0), UiTheme.HUD_TOP_H + _MARGIN)
