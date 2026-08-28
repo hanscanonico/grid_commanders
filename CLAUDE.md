@@ -1671,7 +1671,9 @@ Follow the official Godot GDScript style guide. Key points:
   builds — so build one through it rather than re-rolling a local `_state` helper, and set
   `state.rng.seed` yourself only when the test wants a different stream.
 
-Run the suite with `make test` — it runs GUT headless against `tests/unit` via `.gutconfig.json`.
+Run the suite with `make test` — `tools/run_tests.sh` runs GUT headless as two engines (the two
+soaks in one, everything else in the other), a partition of `tests/unit` it checks is complete
+before launching; `TEST_JOBS=1` is the verbatim single-engine `.gutconfig.json` pass.
 See README.md for engine setup and the other `make` targets.
 
 Before a change is done, run `make verify` — the aggregate gate it chains, in order: `check`
@@ -1680,8 +1682,12 @@ Before a change is done, run `make verify` — the aggregate gate it chains, in 
 against its committed golden). `make format` rewrites files to satisfy `format-check`,
 and any gate also runs alone (`make lint`, `make test`, …). GDScript is tab-indented — let
 `gdformat` settle whitespace rather than hand-aligning, and a green `make verify` is the bar a
-change clears before it ships. `check`'s full-project run is where the Node-free, RNG-free and
-pacing-free rules above are enforced over `core/` and `ai/`, rather than only stated here.
+change clears before it ships. `check`'s full-project run is where the repository invariants are
+enforced rather than only stated here — the Node-free, RNG-free and pacing-free rules over
+`core/` and `ai/`, the per-file line budgets, the one-apply/one-validate seam, and two lints a
+contributor otherwise meets blind: no class may reach another's `_`-prefixed member, and every
+file path this file, README.md or `docs/*.md` cites must exist. `tools/check_scripts.sh` is the
+list; the sweep itself is parallel (`CHECK_JOBS=1` for the serial path).
 
 ## Running the game
 
