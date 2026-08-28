@@ -302,8 +302,8 @@ class Walk:
 	## second lapse is a second finding and a standing one is said once.
 	var hq_exposed: Dictionary = {}
 
-	# --- cleared each turn: `begin_turn` empties these, and `_open_turn` refills
-	# `openings` and `partial` for the side taking over ---------------------------
+	# --- nothing here outlives a turn: `begin_turn` empties the tallies below it,
+	# and `_open_turn` rebuilds `openings` and `partial` for the side taking over --
 	## Unit -> the `Opening` its turn began on, which is the only board the capture
 	## question has an answer on: by the end of the turn the unit has moved and its
 	## budget is spent, so a reach measured there is a reading of next turn.
