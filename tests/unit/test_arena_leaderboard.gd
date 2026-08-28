@@ -1,7 +1,8 @@
 extends GutTest
 ## The named home for ArenaLeaderboard regressions: `build()`'s ordering, and
-## the two ways a run refuses to be read as a table (a pairing seen from one
-## seat only, a pool a candidate never played). test_arena_fitness.gd already
+## the three ways a run refuses to be read as a table (a mirror merged in, a
+## pairing seen from one seat only, a pool a candidate never played).
+## test_arena_fitness.gd already
 ## exercises the class in depth alongside the score it tallies; this file is
 ## where a future ArenaLeaderboard-only bug gets a test, discoverable by name.
 ##
