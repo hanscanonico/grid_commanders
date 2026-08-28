@@ -44,3 +44,50 @@ func test_the_caption_quotes_the_board() -> void:
 	assert_string_contains(caption, MapPicker.armies_label(map.player_count()).to_upper())
 	assert_string_contains(caption, map.description.to_upper())
 	assert_eq(caption, caption.to_upper(), "the caption is set in caps")
+
+
+## Random is an action, not a selection: it draws a board from the roster the
+## picker already holds. The arithmetic is static, so what it may land on is
+## checked without building the grid.
+func _rng(seed_value: int) -> RandomNumberGenerator:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	return rng
+
+
+func test_random_never_draws_the_teaching_board() -> void:
+	var maps := MapCatalog.ordered(Fixture.terrain_db())
+	for s in 40:
+		var index := MapPicker.random_index(maps, 0, _rng(s))
+		assert_false(
+			MapCatalog.teaches(maps[index].source_path), "seed %d drew the tutorial board" % s
+		)
+
+
+func test_random_never_draws_the_board_in_hand() -> void:
+	var maps := MapCatalog.ordered(Fixture.terrain_db())
+	for s in 40:
+		var current := s % maps.size()
+		assert_ne(MapPicker.random_index(maps, current, _rng(s)), current, "seed %d" % s)
+
+
+func test_random_lands_on_a_board_that_exists() -> void:
+	var maps := MapCatalog.ordered(Fixture.terrain_db())
+	for s in 40:
+		var index := MapPicker.random_index(maps, s % maps.size(), _rng(s))
+		assert_between(index, 0, maps.size() - 1, "seed %d" % s)
+
+
+## The pool empties on a one-board install — that board is both the tutorial and
+## the one in hand — and the fall back to the whole roster is what keeps the
+## press from being a refusal.
+func test_a_single_board_roster_draws_that_board() -> void:
+	var maps: Array[MapData] = [
+		MapData.load_from_file(MapCatalog.TUTORIAL_MAP_PATH, Fixture.terrain_db())
+	]
+	assert_eq(MapPicker.random_index(maps, 0, _rng(1)), 0)
+
+
+func test_an_empty_roster_draws_nothing() -> void:
+	var maps: Array[MapData] = []
+	assert_eq(MapPicker.random_index(maps, 0, _rng(1)), -1)
