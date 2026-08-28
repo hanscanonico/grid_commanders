@@ -686,10 +686,7 @@ func _cancel() -> void:
 	elif state == State.TARGETING:
 		_exit_targeting_to_menu()
 	elif state == State.DROP_TARGETING:
-		overlays.paint_move([])
-		_drop_options = []
-		_drop_option = null
-		_on_move_animation_done()  # back to the unit menu
+		_exit_drop_targeting_to_menu()
 	elif state == State.POWER_TARGETING:
 		power.cancel_aim()
 
@@ -861,42 +858,46 @@ func _handle_unit_action(action: StringName) -> void:
 		&"fire":
 			_enter_targeting()
 		&"load":
-			# The refresh inside _commit hides the boarded sprite.
-			_commit(action, LoadCommand.new(selected, planned_path))
+			# The refresh inside the pipeline hides the boarded sprite.
+			_run_command(LoadCommand.new(selected, planned_path), _undo_move_preview)
 		&"supply":
-			_commit(action, SupplyCommand.new(selected, planned_path))
+			_run_command(SupplyCommand.new(selected, planned_path), _undo_move_preview)
 		&"dive", &"surface":
 			# Going under changes what the *other* side can see, so the fog pass
 			# the command pipeline ends with is load-bearing here rather than incidental:
 			# without it the boat would keep the look it had.
-			_commit(action, DiveCommand.new(selected, planned_path, action == &"dive"))
+			_run_command(
+				DiveCommand.new(selected, planned_path, action == &"dive"), _undo_move_preview
+			)
 		&"wait":
-			_commit(action, MoveCommand.new(selected, planned_path))
+			_run_command(MoveCommand.new(selected, planned_path), _undo_move_preview)
 		&"join":
-			_commit(action, JoinCommand.new(selected, planned_path))
+			_run_command(JoinCommand.new(selected, planned_path), _undo_move_preview)
 		&"capture":
-			_commit(action, CaptureCommand.new(selected, planned_path))
+			_run_command(CaptureCommand.new(selected, planned_path), _undo_move_preview)
 		&"cancel":
 			_undo_move_preview()
 
 
-## Every committed unit-menu action shares this interaction wrapper. Validation,
-## application, snapshots, and presentation belong to the pipeline; this method
-## only decides how the human menu recovers or closes around its receipt.
+## Every committed human flow shares this wrapper. Validation, application,
+## snapshots and presentation belong to the pipeline; a caller owns only the
+## `on_reject` recovery its own interaction backs out to.
 ##
-## ANIMATING before the await, exactly as _execute_attack sets it, because the
-## pipeline's presentation can hold this flow for seconds — the capture cut-in
-## does — and MENU is a state the HUD's Fire button reaches a command from. Left
-## in MENU, a power fired mid-cut-in entered the pipeline re-entrantly and cleared
-## the selection this flow comes back to (COM-50).
-func _commit(action: StringName, command: Command) -> void:
+## ANIMATING before the await, because the pipeline's presentation can hold this
+## flow for seconds — the capture cut-in does — and MENU is a state the HUD's
+## Fire button reaches a command from. Left in an interactive state, a power fired
+## mid-cut-in entered the pipeline re-entrantly and cleared the selection this
+## flow comes back to (COM-50).
+func _run_command(command: Command, on_reject: Callable, clears_selection: bool = true) -> void:
 	state = State.ANIMATING
 	var receipt := await execute_command(command)
 	if receipt.rejected():
-		push_error("%s rejected: %s" % [action, receipt.validation_error])
-		_undo_move_preview()
+		var kind: StringName = command.get_script().get_global_name()
+		push_error("%s rejected: %s" % [kind, receipt.validation_error])
+		on_reject.call()
 		return
-	clear_selection(false)
+	if clears_selection:
+		clear_selection(false)
 	await conclude_command(receipt)
 
 
@@ -985,13 +986,14 @@ func _cycle_ready_unit() -> void:
 	set_cursor_cell(unit.cell)
 
 
+## An EndTurnCommand is refused only on a board that is already decided, so the
+## recovery is handing the board back rather than backing an interaction out.
+func _back_to_rest() -> void:
+	state = rest_state()
+
+
 func _commit_end_turn() -> void:
-	var command := EndTurnCommand.new()
-	var receipt := await execute_command(command)
-	if receipt.rejected():
-		push_error("EndTurnCommand rejected: %s" % receipt.validation_error)
-		return
-	await conclude_command(receipt)
+	_run_command(EndTurnCommand.new(), _back_to_rest, false)
 
 
 ## Locks input and shows the already-decided winner. Public because the AI turn
@@ -1200,6 +1202,13 @@ func _exit_targeting_to_menu() -> void:
 	_on_move_animation_done()  # recomputes targets and reopens the menu
 
 
+func _exit_drop_targeting_to_menu() -> void:
+	overlays.paint_move([])
+	_drop_options = []
+	_drop_option = null
+	_on_move_animation_done()  # recomputes targets and reopens the menu
+
+
 # --- transport flow ----------------------------------------------------------
 
 
@@ -1212,18 +1221,11 @@ func _enter_drop_targeting(index: int) -> void:
 	set_cursor_cell(_drop_option.cells[0])
 
 
+# The UI only offers legal drops and legal attacks, so the two recoveries below
+# are bug guards; each backs its own targeting state out to the unit menu.
 func _execute_drop(drop_cell: Vector2i) -> void:
 	var command := DropCommand.new(selected, planned_path, drop_cell, _drop_option.passenger)
-	var receipt := await execute_command(command)
-	if receipt.rejected():
-		# The UI only offers legal drops, so this is a bug guard.
-		push_error("DropCommand rejected: %s" % receipt.validation_error)
-		_cancel()
-		return
-	_drop_options = []
-	_drop_option = null
-	clear_selection(false)
-	await conclude_command(receipt)
+	_run_command(command, _exit_drop_targeting_to_menu)
 
 
 func _execute_attack(target_cell: Vector2i) -> void:
@@ -1231,15 +1233,7 @@ func _execute_attack(target_cell: Vector2i) -> void:
 	overlays.paint_attack([])
 	view.update_damage_preview(null, cursor_cell)
 	overlays.trace_path([])
-	state = State.ANIMATING
-	var receipt := await execute_command(command)
-	if receipt.rejected():
-		# The UI only offers legal attacks, so this is a bug guard.
-		push_error("AttackCommand rejected: %s" % receipt.validation_error)
-		_exit_targeting_to_menu()
-		return
-	clear_selection(false)
-	await conclude_command(receipt)
+	_run_command(command, _exit_targeting_to_menu)
 
 
 ## Whether a damage forecast applies at all is a flow question — only the
