@@ -11,7 +11,8 @@ because what a portrait does under decimation is the whole argument.
 shoulder block and a flat field — the least a bust can be and still show whether
 the four bands, the rim, the occlusion band and the cast shadow are doing their
 jobs. `uniform_props_backdrop` dresses that stand-in in every collar, chest
-treatment, prop and window field.
+treatment, prop and window field. `features_hair` puts one cell on the sheet per
+key of every vocabulary the face and the hair answer for.
 
 Run it from the package root, the way the suite is run, so `portraitgen` is on
 the path.
@@ -28,7 +29,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PIL import Image  # noqa: E402
 
-from portraitgen import backdrop, head, light, props, uniform  # noqa: E402
+from portraitgen import (  # noqa: E402
+    backdrop,
+    features,
+    hair,
+    head,
+    light,
+    props,
+    uniform,
+)
 from portraitgen.canvas import (  # noqa: E402
     INK_FEATURE,
     PORTRAIT_SIZE,
@@ -68,6 +77,10 @@ ROW: tuple[tuple[str, head.Skull], ...] = (
     ("square-wide", head.Skull(1.14, "square", 0.0, 1.0)),
     ("tapered-lifted", head.Skull(0.9, "tapered", 3.0, 1.0)),
 )
+
+# The face the vocabulary sheet is drawn on, and how wide that sheet runs.
+SKULL = head.Skull(*head.HEAD_DEFAULT)
+COLUMNS = 10
 
 # The stand-in skull for the dressed part, so a prop that reaches for a jaw has
 # one to reach for.
@@ -197,6 +210,65 @@ def _uniform_props_backdrop(out: Path) -> list[Path]:
     return written
 
 
+def _face(skin: light.Ramp) -> Canvas:
+    """A cell: the field, and the head every feature is drawn onto."""
+    cell = Canvas()
+    cell.fill((*FIELD, 255))
+    head.draw(cell, SKULL, skin)
+    return cell
+
+
+def _worn(skin: light.Ramp, mane: light.Ramp) -> list[Canvas]:
+    """One cell per key of every vocabulary the two modules answer for."""
+    cells: list[Canvas] = []
+    for kind in sorted(features.EYE_KINDS):
+        cell = _face(skin)
+        features.eyes(cell, SKULL, kind, scale=features.EYE_DEFAULT)
+        cells.append(cell)
+    for kind in sorted(features.BROW_KINDS):
+        cell = _face(skin)
+        features.brow(cell, SKULL, kind, mane)
+        cells.append(cell)
+    for kind in sorted(features.NOSE_KINDS):
+        cell = _face(skin)
+        features.nose(cell, SKULL, kind, skin)
+        cells.append(cell)
+    for kind in sorted(features.MOUTH_KINDS):
+        cell = _face(skin)
+        features.mouth(cell, SKULL, kind)
+        cells.append(cell)
+    for kind in sorted(features.FACIAL_KINDS):
+        cell = _face(skin)
+        features.facial_hair(cell, SKULL, kind, mane)
+        cells.append(cell)
+    for kind in sorted(features.ACCESSORY_KINDS):
+        cell = _face(skin)
+        features.accessory(cell, SKULL, kind)
+        cells.append(cell)
+    for style in sorted(hair.STYLES):
+        cell = _face(skin)
+        hair.draw(cell, SKULL, style, mane, skin=skin)
+        cells.append(cell)
+    return cells
+
+
+def _grid(cells: list[Canvas]) -> Image.Image:
+    width, height = PORTRAIT_SIZE
+    rows = -(-len(cells) // COLUMNS)
+    page = Image.new("RGBA", (width * COLUMNS, height * rows), (0, 0, 0, 255))
+    for index, cell in enumerate(cells):
+        spot = (index % COLUMNS * width, index // COLUMNS * height)
+        page.paste(cell.resolve(), spot)
+    return page
+
+
+def _features_hair(out: Path) -> list[Path]:
+    """Every eye, brow, nose, mouth, beard, accessory and hairstyle, once."""
+    skin = light.build_ramp(SKIN)
+    mane = hair.ramp_for("brown")
+    return [_write(out / "features_hair.png", _grid(_worn(skin, mane)))]
+
+
 def _write(path: Path, image: Image.Image) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     image.save(path)
@@ -206,6 +278,7 @@ def _write(path: Path, image: Image.Image) -> Path:
 PARTS = {
     "light_head": _light_head,
     "uniform_props_backdrop": _uniform_props_backdrop,
+    "features_hair": _features_hair,
 }
 
 
