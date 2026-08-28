@@ -86,9 +86,10 @@ func _mark_ring(
 		if seen.has(cell):
 			continue
 		seen[cell] = true
-		var here: Array = _by_cell.get(cell, [])
-		here.append(enemy)
-		_by_cell[cell] = here
+		if _by_cell.has(cell):
+			_by_cell[cell].append(enemy)
+		else:
+			_by_cell[cell] = [enemy]
 
 
 ## Expected luck-free damage `defender` would take standing on `cell`, summed
@@ -113,9 +114,9 @@ func _mark_ring(
 ## tests/unit/test_ai_smarts.gd's
 ## test_ward_combined_arms_makes_the_firing_cell_matter_to_the_map.
 func incoming_damage(state: GameState, defender: Unit, cell: Vector2i) -> int:
-	var enemies: Array = _by_cell.get(cell, [])
-	if enemies.is_empty():
+	if not _by_cell.has(cell):
 		return 0
+	var enemies: Array = _by_cell[cell]
 	var total := 0
 	for enemy: Unit in enemies:
 		if not AttackRange.can_fire(state, enemy, defender):
