@@ -199,12 +199,9 @@ func _build() -> void:
 
 	# The control legend in Silkscreen — a key-hint badge is the textbook home for
 	# the design system's stat face, and it brings the second font onto the page.
-	var footer := Label.new()
-	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	footer.text = "ARROWS / TAB  BROWSE      ENTER  CONFIRM      ESC  BACK      MOUSE OK"
-	main.add_child(footer)
+	main.add_child(
+		UiKit.key_legend("ARROWS / TAB  BROWSE      ENTER  CONFIRM      ESC  BACK      MOUSE OK")
+	)
 
 
 func _build_topbar() -> HBoxContainer:

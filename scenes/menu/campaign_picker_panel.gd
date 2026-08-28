@@ -95,9 +95,9 @@ func _build() -> void:
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(_title)
 
-	main.add_child(_note("Six wars against the Iron Dominion. Eighteen missions each."))
+	main.add_child(UiKit.page_note("Six wars against the Iron Dominion. Eighteen missions each."))
 
-	_empty = _note("No campaigns installed.")
+	_empty = UiKit.page_note("No campaigns installed.")
 	main.add_child(_empty)
 
 	var frame := UiKit.vscroll()
@@ -116,22 +116,9 @@ func _build() -> void:
 	_back_button.pressed.connect(_leave)
 	main.add_child(_back_button)
 
-	var footer := Label.new()
-	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", 8)
-	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	footer.text = "UP/DOWN  BROWSE      ENTER  OPEN      ESC  BACK      MOUSE OK"
-	main.add_child(footer)
-
-
-func _note(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	return label
+	main.add_child(
+		UiKit.key_legend("UP/DOWN  BROWSE      ENTER  OPEN      ESC  BACK      MOUSE OK")
+	)
 
 
 func _fill(

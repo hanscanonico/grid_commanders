@@ -86,8 +86,7 @@ func show_terrain(terrain: TerrainType, owner_team: int, capture_left: int) -> v
 func _stars(count: int) -> String:
 	if count <= 0:
 		return "0"
-	var filled := mini(count, MAX_DEFENSE_STARS)
-	return "★".repeat(filled) + "☆".repeat(MAX_DEFENSE_STARS - filled)
+	return UiKit.star_bar(count, MAX_DEFENSE_STARS)
 
 
 ## The same artwork the board draws: one cell of the terrain atlas, in the

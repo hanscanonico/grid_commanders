@@ -95,7 +95,9 @@ func _build() -> void:
 
 	# This page is the only surface that tells a player their matches are being
 	# kept, so it says so whether or not the list has anything in it yet.
-	main.add_child(_note("Every match records itself. The last %d are kept." % ReplayFile.KEEP))
+	main.add_child(
+		UiKit.page_note("Every match records itself. The last %d are kept." % ReplayFile.KEEP)
+	)
 
 	main.add_child(_build_frame())
 
@@ -107,12 +109,9 @@ func _build() -> void:
 	_back_button.pressed.connect(_leave)
 	main.add_child(_back_button)
 
-	var footer := Label.new()
-	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	footer.text = "UP/DOWN  BROWSE      ENTER  WATCH      ESC  BACK      MOUSE OK"
-	main.add_child(footer)
+	main.add_child(
+		UiKit.key_legend("UP/DOWN  BROWSE      ENTER  WATCH      ESC  BACK      MOUSE OK")
+	)
 
 
 ## The list's frame: a titled slate panel of a fixed width taking whatever height
@@ -150,7 +149,7 @@ func _build_frame() -> Control:
 	padded.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(padded)
 
-	_empty = _note("Nothing recorded yet — play a match and it will be here.")
+	_empty = UiKit.page_note("Nothing recorded yet — play a match and it will be here.")
 	body.add_child(_empty)
 
 	# Scrolled because ten rows are more than the frame holds, and focus-following
@@ -165,19 +164,6 @@ func _build_frame() -> Control:
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_rows)
 	return panel
-
-
-## A centred Silkscreen micro-line, the panel's one kind of explanatory text.
-## Unlike `UiKit.micro_label`/`help_label`, this reads a sentence rather than a
-## caption, so it keeps its own case and centres rather than uppercasing —
-## `UiTheme.hud_label` still carries the shared font/size/colour build, reset
-## to this page's own alignment (hud_label centres vertically, for a bar row;
-## this note wants that horizontally instead).
-func _note(text: String) -> Label:
-	var label := UiTheme.hud_label(text, UiTheme.SIZE_STAT, UiTheme.NEUTRAL_LIGHT)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	return label
 
 
 ## Rebuilds the rows for `summaries`. The buttons are made fresh each time rather

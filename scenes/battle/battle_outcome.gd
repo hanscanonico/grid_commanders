@@ -309,7 +309,7 @@ func _day_text() -> String:
 		if outcome.status != MissionRuntime.Status.SUCCESS:
 			return "%s  ·  %s" % [day, outcome.reason]
 		var most := CampaignSession.max_stars()
-		var stars := "★".repeat(outcome.stars) + "☆".repeat(maxi(0, most - outcome.stars))
+		var stars := UiKit.star_bar(outcome.stars, most)
 		return "%s  ·  %s" % [day, stars]
 	var clauses := PackedStringArray([day])
 	if _result_winner != 0 and _human_team() != 0:
