@@ -72,9 +72,6 @@ const DIR_ACTIONS: Dictionary = {
 @onready var camera: Camera2D = $Camera2D
 @onready var action_menu: ActionMenu = %ActionMenu
 @onready var victory_screen: VictoryLockup = %VictoryScreen
-@onready var handoff_screen: Panel = %HandoffScreen
-@onready var handoff_label: Label = %HandoffLabel
-@onready var handoff_button: Button = %HandoffButton
 @onready var commander_info_sheet: CommanderInfoSheet = %CommanderInfoSheet
 @onready var action_feedback: ActionFeedback = %ActionFeedback
 @onready var end_turn_guard: EndTurnGuard = %EndTurnGuard
@@ -236,6 +233,9 @@ var _battle_auto: BattleAuto
 ## Owns aiming and firing a Command Power — the F key, the HUD's Fire button and
 ## the map menu's Power row. BattlePower's flow half; see BattlePowerFlow.
 var power: BattlePowerFlow
+## Owns the hot-seat blackout and the viewer the board is drawn through; see
+## BattleHandoff.
+var handoff: BattleHandoff
 
 
 func _ready() -> void:
@@ -247,6 +247,7 @@ func _ready() -> void:
 	exit = BattleExit.new(self)
 	_battle_auto = BattleAuto.new(self)
 	power = BattlePowerFlow.new(self)
+	handoff = BattleHandoff.new(self)
 	BattleCampaign.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
 	# scene just runs it. The menu (or a rematch) stages a request; a run that
@@ -309,8 +310,7 @@ func _ready() -> void:
 	view.end_turn_pressed.connect(_request_end_turn)
 	victory_screen.rematch_button.pressed.connect(_request_rematch)
 	victory_screen.menu_button.pressed.connect(_request_main_menu)
-	handoff_button.pressed.connect(leave_handoff)
-	HandoffScreen.dress(%HandoffBackdrop, handoff_label, %HandoffHint, handoff_button)
+	handoff.setup(%HandoffScreen, %HandoffBackdrop, %HandoffLabel, %HandoffHint, %HandoffButton)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view.board_camera)
 	_zoom.setup()
@@ -1075,8 +1075,8 @@ func start_turn() -> void:
 	# the sprite table is resynced before set_active_team walks it.
 	view.sync_sprites()
 	view.set_active_team(game.current_team)
-	if _needs_handoff():
-		_enter_handoff()
+	if handoff.needed():
+		handoff.enter()
 		return
 	_begin_turn()
 
@@ -1143,74 +1143,12 @@ func announce_fallen(fallen: Array[int]) -> void:
 		state = was
 
 
-## Fogged hot-seat only: two humans sharing one screen must not see each other's
-## vision, so the incoming player confirms before anything is painted. AI turns
-## and fog-off matches never gate.
-##
-## Two halves. The seat count is why a solo player is never asked: one human at
-## the table means nobody to hand the device to, so that match gates exactly as
-## it did before four armies. The last-human comparison on top of it is the
-## four-players plan's D7 refinement: with two humans and two computers the
-## device still changes hands across intervening AI turns, and asking only "was
-## the previous turn another person's" would hand player B a board still painted
-## with player A's vision. Nobody having played yet counts as a change of hands —
-## `last_human_team` is 0 there, which differs from any seat — so a fresh match
-## gates on day one and a resumed save gates for whoever loaded it. The same
-## player taking two turns in a row, everyone else having fallen, is not a
-## handoff and is not asked for one.
-func _needs_handoff() -> bool:
-	# Nobody is being handed the device during a replay, and the board is drawn
-	# omniscient anyway — a blackout would blank a match that has no secrets left.
-	if _replay != null:
-		return false
-	if not game.fog_enabled or game.winner != 0:
-		return false
-	if game.current_team in ai_teams:
-		return false
-	var humans := 0
-	for team in game.teams:
-		if team not in ai_teams:
-			humans += 1
-	if humans <= 1:
-		return false
-	return last_human_team != game.current_team
-
-
-func _enter_handoff() -> void:
-	state = State.HANDOFF
-	animator.hide_banner()
-	refresh_fog()  # blanks the outgoing team's vision before the panel goes up
-	handoff_label.text = (
-		"%s — press confirm when ready" % view.identity.display_name(game.current_team)
-	)
-	handoff_screen.show()
-	handoff_button.grab_focus()
-
-
+## The handoff panel's "I'm ready", and every driven stand-in for it. Public
+## because it is an entry point player input arrives at; the blackout itself is
+## BattleHandoff's, and the turn it opens onto is Battle's.
 func leave_handoff() -> void:
-	if state != State.HANDOFF:
-		return
-	handoff_screen.hide()
-	state = State.IDLE  # _begin_turn paints the incoming team's vision, not a blackout
-	_begin_turn()
-
-
-## The perspective fog is drawn from: the human whose turn it is, or — while the
-## computer plays — the human who played last (four-players plan D7). Information
-## they already had, which is the whole test: rendering through *any other*
-## human's fog while an AI turn runs would show one player what another had
-## scouted. With one human at the table this is their fog all match, exactly as
-## before. The AI sees everything bar one thing: a unit a doctrine hides is hidden
-## from it too — see Vision.is_hidden_from.
-func _viewing_team() -> int:
-	if game.current_team not in ai_teams:
-		return game.current_team
-	if last_human_team != 0 and last_human_team not in ai_teams:
-		return last_human_team
-	for team in game.teams:
-		if team not in ai_teams:
-			return team
-	return game.current_team
+	if handoff.leave():
+		_begin_turn()
 
 
 ## Refreshes the shared perspective and repaints fog after every committed
@@ -1220,7 +1158,7 @@ func _viewing_team() -> int:
 ## the perspective; working out what is visible is Vision's job, deciding what
 ## this viewer may act on is the perspective's, and drawing it is the view's.
 func refresh_fog() -> void:
-	perspective.refresh(_viewing_team(), state == State.HANDOFF)
+	perspective.refresh(handoff.viewing_team(), state == State.HANDOFF)
 	view.refresh_fog()
 	# Every mark below rides this one pass rather than growing a refresh path of
 	# its own: it already reruns after every committed command and turn change,
