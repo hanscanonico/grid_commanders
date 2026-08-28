@@ -12,8 +12,8 @@ enough seeds and enough days for a match to actually resolve.
 armies, grouped or not — cannot go through `make commander-balance` or
 `make difficulty-check`, and both those reports stay byte-identical across this
 change. The instrument is its own runner, `tools/run_bulwark_measure.gd`
-(`make bulwark-measure`), which plays the same loop
-`test_alliance_soak.gd::_soak` does — `MapData.load_from_file` ->
+(`make bulwark-measure`), which plays `FourArmyLoop`, the loop
+`make mobile-soak` plays too — `BalanceHarness.map_of` ->
 `GameState.create` -> `state.sides` set directly, one `AIController` per army —
 at a seed count and a day horizon meant to read a **direction**, not a
 **gate**. It is not a `make verify` or `make test` instrument, and it tunes

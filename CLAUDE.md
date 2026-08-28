@@ -124,7 +124,8 @@ plan is stated in full below and has no copy there.
   and `make difficulty-check` are byte-stable presets over it, and the merge bar for touching it
   is a fixed-seed byte-diff of both reports. Its one exception is a board that engine structurally
   cannot play — it plays two sides — and the asymmetric-board entry below owns it
-  (`tools/run_bulwark_measure.gd`, which reuses only the generic `command_ceiling`).
+  (`tools/run_bulwark_measure.gd`, which reuses `BalanceHarness`, `tools/balance/four_army_loop.gd`
+  (`FourArmyLoop`) and the generic `command_ceiling`, but not the two-side match engine).
   `docs/balance_sim.md` is how to run and read it.
 - `game-speed-plan.html` — the game-speed setting GS1–GS3. D1: a device preference in
   `user://settings.cfg`, never the `MatchRequest` a launch is staged as and never a save. Standing
@@ -376,7 +377,7 @@ plan is stated in full below and has no copy there.
   ladder used to be anchored on the per-map fit ratio ceil'd to two decimals, so **every** board's
   floor was fractional (0.57 on Bulwark up to 3.64 on the smallest fixture) and so was every rung
   above it. **`BattleZoom` is the one statement of what rungs exist**: `rungs_for` is the ladder a
-  board offers and `floor_for` its furthest-out rung, so `BattleView.min_zoom` hands the ladder a
+  board offers and `floor_for` its furthest-out rung, so `BoardCamera.min_zoom` hands the ladder a
   board and asks rather than deriving a second answer. `set_zoom` settles on the nearest rung and a
   press steps one place, so nothing anywhere else can invent a level.
   **A PLAYTEST HAS SINCE OVERRULED HALF OF THIS SLICE, and the half it kept is the half a match is
@@ -701,7 +702,7 @@ plan is stated in full below and has no copy there.
   spends on a big one — no banking code moved, and `save_up_turns` is deliberately left alone
   (its comment carries the first-side-bias measurement a retune would trade away). D3: **a capture
   goal is claimed by derivation, never by stored state** — `capture_claim_depth` is how many units
-  may claim one property, `AIUnitActionPlanner._claimed_property` is the one place that answers,
+  may claim one property, `AIAdvance._claimed_property` is the one place that answers,
   and at 0 it is the shipped `_nearest` call untouched. **D3's arithmetic is superseded and its
   decision is not**: what ships is an **assignment** — closest unit-property pair settles first —
   settled once per command into `AIPlanningContext.capture_claims` and cleared by `begin`, exactly
@@ -715,7 +716,7 @@ plan is stated in full below and has no copy there.
   On the shipped terrain they never both apply (`hq.tres` builds nothing), which supersedes the
   plan's AE3 card. **One judgement, two readings, and they cannot disagree**: the same multiplier
   feeds the goal side through `capture_goal_value_tiles`, because a unit that walks to a factory
-  because it is valuable must still want it when it arrives. `_produces` asks
+  because it is valuable must still want it when it arrives. `AIAdvance.produces` asks
   `TerrainType.builds`, so **AE3 adds no terrain id to `ai/`**.
 - `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
   AIs, so a planner weight is *measured* rather than argued. AR1–AR6 shipped (the harness seats any
@@ -871,10 +872,10 @@ plan is stated in full below and has no copy there.
   select, the sheet and the gallery together, which is why it was one pass. What stays card-local
   is one size and one colour, each named and each with its reason on the constant: `_NAME_SIZE`,
   the card's headline, because the shell has no size between a button's and a banner's; and
-  `_MICRO_INK`, faint ink on *cream*, where the shell's `INK_3` is mixed for slate. The select
-  page's own `_TITLE_SIZE` stays page-local for the same reason, and the replays page states the
-  same value — a page title is not a shell token. Fonts (Pixelify Sans, Silkscreen) are vendored,
-  OFL, recorded in `assets/LICENSES.md`.
+  `_MICRO_INK`, faint ink on *cream*, where the shell's `INK_3` is mixed for slate. A page
+  title, by contrast, *is* a shell token — `UiKit.page_title` off `UiTheme.SIZE_PAGE_TITLE`, built
+  by every full-screen page rather than sized page by page. Fonts (Pixelify Sans, Silkscreen) are
+  vendored, OFL, recorded in `assets/LICENSES.md`.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
   slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
   end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`), the transition-input
@@ -899,8 +900,11 @@ plan is stated in full below and has no copy there.
   burn steps of a tutorial its player has not opened. `maps/boot_camp.txt` is shaped to the promise
   — turn one can reach a neutral property and afford a build, checked by `tests/unit/test_maps.gd`.
   A capture pins the hint set (`Settings.pin_hints`, from `Battle._ready`) so
-  `make smoke` frames don't depend on play history; `--reset-hints` is the one `Settings` flag
-  that deliberately writes. The key legend (`scenes/ui/control_hints.gd`) is printed by
+  `make smoke` frames don't depend on play history; its sibling `Settings.pin` does the same for
+  the speed tier and stands the end-turn check, menu motion, battle animations and volume back at
+  their defaults, so no preference stored on the capturing machine reaches a frame. `--reset-hints`
+  is the one `Settings` flag that deliberately writes. The key legend
+  (`scenes/ui/control_hints.gd`) is printed by
   **`Battle.state`'s setter** via `Battle.STATE_CONTEXT` — never refreshed from the dozen sites
   that assign the state.
 - `focus-steal-plan.html` — developer ergonomics: the smoke sweep and the desktop's window
@@ -976,7 +980,8 @@ plan is stated in full below and has no copy there.
   turn banner, awaited **before** the turn hands over so it lands on the board that produced it and
   suppressed while `animator.capturing`; elimination is public information, fog or no fog. The
   victory lockup reads `winners()` and the standings line reads `eliminated` in **match order**.
-  D7: **`Battle._last_human_team` is the one key for both the viewer and the handoff** — while a
+  D7: **`Battle.last_human_team` is the one key for both the viewer and the handoff**, read by
+  `scenes/battle/battle_handoff.gd` (`BattleHandoff`), which owns the blackout — while a
   computer plays, the board renders through the fog of the human who played last, and a human turn
   blacks out whenever the previous *human* seat was someone else, so one human is never asked to
   hand the device to themselves. D6: **`scenes/menu/seat_strip.gd` (`SeatStrip`) is the menu's one
@@ -1057,9 +1062,10 @@ plan is stated in full below and has no copy there.
   while every HQ has a living owner and no army holds two, and this milestone breaks the first while
   a conqueror already broke the second: a vacant seat's HQ has nobody to fell, and a survivor
   holding a conquered HQ must not be beheadable through it. Recorded by `create` from the map's
-  starting ownership (`GameState.home_hqs`, the one derivation, read off the *map* because
-  mid-match "the HQ this team owns" has two answers exactly when it matters), and carried in save
-  v7 — the map derives the same answer, so what persisting it buys is the **pin**: a save whose
+  starting ownership (`Seating.home_hqs` is the one derivation, read off the *map* because
+  mid-match "the HQ this team owns" has two answers exactly when it matters, and stored as
+  `GameState.home_hq`), and carried in save v7 — the map derives the same answer, so what
+  persisting it buys is the **pin**: a save whose
   board has since moved an HQ is refused rather than silently re-homed, which
   `SaveBoardCheck._home_hq_board_error` enforces cell by cell. Every other HQ is a high-value
   property with HQ terrain stars, captured like a city.
@@ -1312,8 +1318,10 @@ plan is stated in full below and has no copy there.
   (`MissionDefinition.difficulty_error`, because `DifficultyDB.by_id` falls back to Normal
   silently — right for a save naming a retired tier, invisible for a typo in a mission file),
   every story line's speaker is on the roster (`story_error`), the launch builds, every
-  scripted effect is asked `board_error` against the board the mission **opens on** — the one
-  question `definition_error` cannot ask, a map dealing every seat it names while a mission may
+  scripted effect is asked `MissionDefinition.events_board_error` against the board the mission
+  **opens on** — an authority `tests/unit/test_campaign_content.gd` asks too, so `make verify` sees
+  it as well — the one question `definition_error` cannot ask, a map dealing every seat it names
+  while a mission may
   have closed some of them — and the campaign is asked `ledger_error` for the facts its content
   reads (CD4, above) and `carry_error` for a mission that carries an army in behind one that carries
   none out (CD5, above; the per-mission half — a refit floor no unit could reach, a carry slot on
@@ -1457,7 +1465,7 @@ plan is stated in full below and has no copy there.
   only behind `MobileProfile` — Back / Resume / Step and `−` `+` `NEXT` — and its headline is the
   abort: in `POWER_TARGETING` any tap on the board fires the aimed power, so without Back a touch
   player must spend Hammerfall on a square they did not choose. **Every chip dispatches the action
-  the keyboard dispatches, through `HudTopBar.chip_button`**, so which states honour a press is the
+  the keyboard dispatches, through `UiKit.action_chip`**, so which states honour a press is the
   key path's. **This supersedes D2's pause/resume exception**: `request_pause()` / `resume_turn()`
   are not called from the dock, because `cancel` in `AI_TURN` and `confirm` in `PAUSED` already reach
   them and a second door to one transition is what a single authority exists to prevent — Resume and
@@ -1753,8 +1761,9 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   inside this transport at all** (transport, cargo class, capacity, no second level of nesting,
   same team), asked by `LoadCommand.validate` before a board and by `SaveCodec` per wired carrier
   link — while the codec kept its own opinion, a hand-edited save could seat a battleship in an
-  infantry. `core/grid.gd` (`Grid.manhattan`) is the smallest of them and the one every layer
-  touches: this board measures distance four-directionally everywhere — movement, every firing
+  infantry. `core/grid.gd` (`Grid.manhattan`, and `Grid.ring_offsets` for the Manhattan diamond
+  every ring is cut to) is the smallest of them and the one every layer touches: this board
+  measures distance four-directionally everywhere — movement, every firing
   ring, sight, supply reach, the planner's goals — so ask it rather than spelling the arithmetic
   again.
 - **Movement domains are data, not code.** A move class is a key in each terrain's `move_costs`
@@ -1775,8 +1784,9 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   adapter from that rule authority to viewer policy: viewing team plus hot-seat blackout, firing
   geometry delegated to `AttackRange`, typed transport drop options, and how much of a unit's reach
   and fire ring an overlay may show (that rule is the range-preview plan's, above). `Battle`,
-  `BattleView`, `BattleAnimator`, `BattleCommandPipeline` and `BattleScenarioDriver` ask it; none
-  re-derives visibility or reaches through a sibling's private helper, and the runner drives AI
+  `BattleView`, `BattleAnimator`, `BattleCommandPipeline`, `BattleTargeting`, `BattleHandoff` and
+  `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private
+  helper, and the runner drives AI
   turns through `Battle`'s own named entry points.
 - **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`
   (`BattleCommandPipeline`) is the only live-scene owner of command validation, application and

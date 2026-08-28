@@ -82,8 +82,8 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
   times — the plan's R3 — so **tune them together and never alone**.
   AJ3's one decision: **cohesion is a term on the advance path, not a formation manager** (D5).
-  `_cohesion_penalty` charges a unit `cohesion_tiles` per tile it is adrift of the nearest unit in
-  its **own movement domain** beyond `cohesion_radius` — in *tiles*, which is what
+  `AIAdvance._cohesion_penalty` charges a unit `cohesion_tiles` per tile it is adrift of the
+  nearest unit in its **own movement domain** beyond `cohesion_radius` — in *tiles*, which is what
   `_advance_value` is denominated in. There are no groups, no leaders and **no waiting state**: the
   goal term still pulls forward, so the equilibrium is a column advancing at the speed of its rear,
   and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls — which is D5's
@@ -96,8 +96,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   `_defend_bonus` reaches across the alliance through `GameState.allied` and this does not. The
   term taxes the **advance on the enemy** and nothing else, which is the one goal D5 describes it
   for: `AIPlanningContext.AdvanceGoal.keeps_formation` defaults to **false** and only that goal
-  turns it on, so every errand `_advance_goal` computes before it — refit, repair, the besieged home
-  HQ and a property to capture — goes untaxed by construction rather than by a list of exceptions,
+  turns it on, so every errand `AIAdvance.goal_for` computes before it (`_errand_goal`) — refit,
+  repair, the besieged home HQ and a property to capture — goes untaxed by construction rather than
+  by a list of exceptions,
   and `_cohesion_penalty` returns zero for them. Both terms count in tiles and the column's pull is
   the stronger, so charging an errand cancels it outright: a wounded unit trails the column and
   never repairs, an infantry sits at the column's edge and takes no ground, and AJ1's diversion
@@ -164,7 +165,7 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   number.** `AIProfile.capture_unit_target` is now the *floor* rather than the answer and
   `capture_units_per_property` is what raises it — the target is
   `max(capture_unit_target, ceil(rate × unowned))`, where `unowned` counts property cells this
-  team's **side** does not hold, asked of `GameState.allied` exactly as `_advance_goal` already
+  team's **side** does not hold, asked of `GameState.allied` exactly as `AIAdvance.goal_for` already
   reads it. That flat target happened to equal the roster every shipped board deals, so the urgent
   build tier was empty before the first command of every match and the AI opened by banking on a
   board covered in neutral ground. It counts what is *left* rather than the size of the board,
@@ -190,8 +191,8 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   somebody's, so units standing near each other took the same tile together — and on a board dense
   in properties there is always a nearer tile than the far corner, so the far corner was never
   anybody's goal at any point in the match. `capture_claim_depth` is how many units may claim one
-  property; `AIUnitActionPlanner._claimed_property` is the one place that answers, inside the
-  capture clause of `_advance_goal`, and at 0 it is the shipped `_nearest` call untouched.
+  property; `AIAdvance._claimed_property` is the one place that answers, inside the capture
+  clause of `AIAdvance.goal_for`, and at 0 it is the shipped `_nearest` call untouched.
   **D3's arithmetic is superseded and its decision is not.** The formula it offered — drop a
   property when that many rivals are strictly closer to it — cannot produce the outcome D3 itself
   states ("the nearest unit still takes the nearest property; the second one is pushed to the
@@ -228,7 +229,7 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   `_attack_score`, a goal is chosen in **tiles**, and that is the same split `threat_aversion` and
   `advance_threat_tiles` already live on. A unit that walks to a factory because it is valuable must
   still want it when it arrives, or it turns round on the doorstep.
-  `AIUnitActionPlanner._produces` is the one place that answers "does this ground build", and it
+  `AIAdvance.produces` is the one place that answers "does this ground build", and it
   asks `TerrainType.builds` — the field `BuildCommand`, the build menu and the production planner's
   facility scan already read — so **AE3 adds no terrain id to `ai/`**. `_goal_steps` is the one
   place that converts the judgement into tiles, read by both the plain walk (`_worth_walking_to`)
@@ -296,8 +297,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   AR6d departs from its own ticket in the same recorded way: the ticket asks for a
   boolean "can it still fire" key, which scores maximum standoff and one tile short of it
   identically and so would not have fixed the reported board — what ships is a **rank**
-  (`_position_rank` against the enemy the unit is orienting on), under safety and over repair,
-  reaching indirect units only. `withdraw_weight` keeps its shipped `0.0` throughout (the
+  (`AIAdvance.position_rank` against the enemy the unit is orienting on, reached from the
+  planner's `_standoff_rank`), under safety and over repair, reaching indirect units only.
+  `withdraw_weight` keeps its shipped `0.0` throughout (the
   difficulty plan's D2 owns tier numbers), so AR6d is inert in every shipped tier.
   AR6a–AR6c are the rest of that shelf, three dials on `AIProfile` — `cover_tiles`,
   `condition_weight`, `join_weight` — on the AI Judgement D1 contract they inherit whole: **`0.0` on
@@ -532,8 +534,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   size, and a sheet with collapsed columns wrote a healthy PNG. The bar's unit card gains one
   allegiance word, asked of `GameState.allied` and relative to `BattlePerspective.viewing_team()`,
   never to whoever holds the turn.
-  D7: **`Battle._last_human_team` is the one key for both the viewer and the handoff** — while a
-  computer plays, the board renders through the fog of the human who played last, information they
+  D7: **`Battle.last_human_team` is the one key for both the viewer and the handoff**, read by
+  `BattleHandoff`, which owns the blackout — while a computer plays, the board renders through the
+  fog of the human who played last, information they
   already had; a human turn blacks out whenever the previous *human* seat was someone else, across
   any number of intervening AI turns. One human at the table is never asked to hand the device to
   themselves, and two humans hot-seating gate exactly as they did before four armies.
@@ -705,7 +708,8 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   rejected command, no stall) rather than a fairness one — while **`tools/run_bulwark_measure.gd`
   (`make bulwark-measure`) is the win spread**, many seeds at a 100-day horizon, and it lives in
   `tools/` because R3 says the dial when the suite's wall clock bites is the measurement's seed
-  count, never the board. It plays `_soak`'s own loop rather than a preset over the balance engine,
+  count, never the board. It plays `FourArmyLoop` — the loop `make mobile-soak` plays too — rather
+  than a preset over the balance engine, loading its board through `BalanceHarness.map_of`,
   writes through `BalanceReportWriter.resolve_out` like every other tool, seats **no commander** (the
   soak seats doctrines on purpose; this measures the board), and states `sides` directly — never off
   the tag, which stays the lint's alone (D2). **`docs/bulwark_balance.md` is the committed record**

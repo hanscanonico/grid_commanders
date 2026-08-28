@@ -62,7 +62,7 @@ max-returns: 11
 # to trim. Adding to BattleView still means moving something out first.
 #
 # core/commander_type.gd carries the one per-file ignore: it is the doctrine
-# hook contract, so its public count is the roster of rule seams twelve
+# hook contract, so its public count is the roster of rule seams twenty-two
 # subclasses override, and splitting it would mean the mirror hook tree the
 # commander plan's D1 rejects. It crossed the ceiling at 23 when the AI-advice
 # hooks landed (stand_value, build_bias, retreat_hp_delta). The ceiling itself
