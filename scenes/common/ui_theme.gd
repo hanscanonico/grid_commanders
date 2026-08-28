@@ -407,6 +407,33 @@ static func hud_bar_box(edge_on_top: bool) -> StyleBoxFlat:
 	return box
 
 
+## The shell every docked bar opens with: a fixed height, the slate slab, and the
+## row its contents are laid into, already inset by the bar's leading pad. Close
+## the row with `hud_bar_pad()`.
+##
+## Chrome swallows the pointer. The board is deliberately allowed to render
+## *behind* the bars (BoardCamera._apply_camera_limits), so a bar that let mouse
+## events fall through to Battle._unhandled_input would walk the game cursor onto
+## a cell hidden under opaque paint — and a click there would select it. A child
+## button keeps its own hit-testing.
+static func hud_bar_row(bar: PanelContainer, height: int, edge_on_top: bool) -> HBoxContainer:
+	bar.custom_minimum_size = Vector2(0, height)
+	bar.add_theme_stylebox_override("panel", hud_bar_box(edge_on_top))
+	bar.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", HUD_GAP)
+	bar.add_child(row)
+	row.add_child(hud_bar_pad())
+	return row
+
+
+## The pad at either end of a docked bar's row, less the separation the row
+## already puts between its children.
+static func hud_bar_pad() -> Control:
+	return hud_spacer(HUD_PAD - HUD_GAP)
+
+
 ## A vertical rule between two groups inside a docked bar. The height is the
 ## rule's own rather than the bar's, so each bar keeps the inset it wants from
 ## its own fixed height.
@@ -439,6 +466,16 @@ static func hud_label(text: String, font_size: int, color: Color, display_face :
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return label
+
+
+## The headline on a card that stops the board: bold Pixelify at the banner size,
+## centred. The turn banner and the victory lockup are one recipe — the lockup
+## calls itself the turn banner's card one size up.
+static func banner_label(text: String, color: Color) -> Label:
+	var label := hud_label(text, SIZE_BANNER, color, true)
+	label.add_theme_font_override("font", display(true))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
 
 
