@@ -14,7 +14,6 @@ from collections.abc import Callable
 from PIL import Image
 
 from . import autotile, terrain
-from .atlas import CELL_H, CELL_W, unit_cell
 from .palette import FACTIONS
 
 
@@ -173,6 +172,11 @@ def _neighbours(
 
 
 def build_demo() -> Image.Image:
+    # `atlas` re-exports this module, so the unit cell is imported here rather
+    # than at the top: a top-level import would make the cycle an import error
+    # for anyone reaching `spritegen.demo` first.
+    from .atlas import CELL_H, CELL_W, unit_cell
+
     rows = [[_DEMO_LEGEND[c] for c in r] for r in _DEMO_MAP]
     h, w = len(rows), len(rows[0])
     img = Image.new("RGBA", (w * terrain.CELL, h * terrain.CELL))
