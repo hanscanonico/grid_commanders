@@ -381,14 +381,14 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 		enter_victory()
 
 
-## Asks for the board back while the computer is playing. Public because the Esc
-## the AI-turn legend advertises is one route to it and a scripted driver is the
-## other. The answer is immediate even though the pause is not: the runner stops
+## Asks for the board back while the computer is playing. Private: the only route
+## in is the Esc arm below, which the AI-turn legend advertises and a scripted
+## driver presses. The answer is immediate even though the pause is not: the runner stops
 ## at its next command boundary, up to one animation away, so the press says it
 ## landed rather than leaving the player pressing it again. A second press re-arms
 ## nothing, but it is answered again: the chip fades on a clock of its own, and a
 ## slow command outlives it, so the key would otherwise read as dead.
-func request_pause() -> void:
+func _request_pause() -> void:
 	if _paused:
 		return
 	_pause_requested = true
@@ -415,7 +415,7 @@ func pause_gate() -> void:
 ## Plays exactly one recorded command and parks again: the whole of a step is
 ## asking for the pause the runner is about to clear, so playback gains no second
 ## route in and nothing has to be kept in step with the pause a player asks for.
-func step_replay() -> void:
+func _step_replay() -> void:
 	if _replay != null and _paused:
 		_stepping = true
 		_pause_requested = true
@@ -542,7 +542,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if state == State.AI_TURN:
 		# Esc is the one key that does something here: it asks for the board back.
 		if event.is_action_pressed(&"cancel"):
-			request_pause()
+			_request_pause()
 			return
 		# The computer's turn refuses play, but it says so rather than going quiet.
 		if TransitionInput.is_confirm(event):
@@ -562,7 +562,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		# Only a replay steps: a paused computer turn has no next command yet.
 		if _replay != null and event.is_action_pressed(&"replay_step"):
-			step_replay()
+			_step_replay()
 			return
 	if state == State.VICTORY:
 		if _outcome.consume_input(event):
@@ -868,8 +868,8 @@ func _handle_unit_action(action: StringName) -> void:
 ## application, snapshots and presentation belong to the pipeline; a caller owns
 ## only the `on_reject` recovery its own interaction backs out to. BattleTargeting
 ## is handed it as a Callable for the same reason `BattlePowerFlow._fire` still
-## spells its own: a public seam would put Battle over its `max-public-methods`
-## ceiling.
+## spells its own: a public seam each would spend the whole of Battle's
+## `max-public-methods` headroom on two callers' recovery.
 ##
 ## ANIMATING before the await, because the pipeline's presentation can hold this
 ## flow for seconds — the capture cut-in does — and MENU is a state the HUD's

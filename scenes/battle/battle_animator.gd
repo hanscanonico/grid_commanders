@@ -140,7 +140,7 @@ func animate_path(sprite: UnitSprite, path: Array[Vector2i]) -> void:
 ## nothing to see.
 func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	if result == null:
-		await show_ambush(attacker)
+		await _show_ambush(attacker)
 		return
 	var defender_sprite := view.sprite_for(defender)
 	var attacker_sprite := view.sprite_for(attacker)
@@ -160,7 +160,7 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 	if result.defender_died:
 		Sfx.play(&"explosion")
 		view.release_sprite(defender)
-		await fade_out(defender_sprite)
+		await _fade_out(defender_sprite)
 	else:
 		view.refresh_sprite(defender)
 	if result.countered:
@@ -169,7 +169,7 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		await flash_hit(attacker_sprite)
 	if result.attacker_died:
 		view.release_sprite(attacker)
-		await fade_out(attacker_sprite)
+		await _fade_out(attacker_sprite)
 	else:
 		view.refresh_sprite(attacker)
 	view.sync_sprites()
@@ -217,7 +217,7 @@ func flash_hit(sprite: UnitSprite) -> void:
 ## Fades a sprite out and frees it, at the active tier's pace. Awaitable, and
 ## the single place a death fade's length is decided — Battle's Join merge fades
 ## a sprite outside combat entirely and comes through here for that reason.
-func fade_out(sprite: UnitSprite) -> void:
+func _fade_out(sprite: UnitSprite) -> void:
 	await sprite.die(Settings.speed.death_fade_seconds())
 
 
@@ -359,7 +359,7 @@ func _capture_cut_in_applies(unit: Unit) -> bool:
 ## mover's sprite back where the sim actually left it — the preview walked it
 ## further — and name the trap. Shared by every move-family action, combat too,
 ## where the shot simply never fires.
-func show_ambush(unit: Unit) -> void:
+func _show_ambush(unit: Unit) -> void:
 	view.refresh_sprite(unit)
 	await show_banner("Ambush!")
 
@@ -370,7 +370,7 @@ func show_ambush(unit: Unit) -> void:
 ## trap reads the same however the move was going to end.
 func settle_move(command: Command, unit: Unit) -> void:
 	if command.ambushed:
-		await show_ambush(unit)
+		await _show_ambush(unit)
 	else:
 		view.refresh_sprite(unit)
 
@@ -380,9 +380,9 @@ func settle_move(command: Command, unit: Unit) -> void:
 ## which case nobody merged and the mover is simply back on its own cell.
 func animate_join(command: Command, mover: Unit, survivor: Unit) -> void:
 	if command.ambushed:
-		await show_ambush(mover)
+		await _show_ambush(mover)
 		return
-	fade_out(view.release_sprite(mover))  # merged-away twin; fire and forget
+	_fade_out(view.release_sprite(mover))  # merged-away twin; fire and forget
 	view.refresh_sprite(survivor)
 
 

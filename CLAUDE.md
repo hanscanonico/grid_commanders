@@ -1466,7 +1466,7 @@ plan is stated in full below and has no copy there.
   abort: in `POWER_TARGETING` any tap on the board fires the aimed power, so without Back a touch
   player must spend Hammerfall on a square they did not choose. **Every chip dispatches the action
   the keyboard dispatches, through `UiKit.action_chip`**, so which states honour a press is the
-  key path's. **This supersedes D2's pause/resume exception**: `request_pause()` / `resume_turn()`
+  key path's. **This supersedes D2's pause/resume exception**: `_request_pause()` / `resume_turn()`
   are not called from the dock, because `cancel` in `AI_TURN` and `confirm` in `PAUSED` already reach
   them and a second door to one transition is what a single authority exists to prevent — Resume and
   Step are live only where `BattleLegend.paused_in` / `steppable` say so, `confirm` at rest meaning
