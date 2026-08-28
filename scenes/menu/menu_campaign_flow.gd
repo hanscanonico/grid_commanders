@@ -174,19 +174,19 @@ func chrome_hub() -> Dictionary[String, Control]:
 ## none. One entry point because the pages pose identically and the menu should
 ## not carry a copy of that per page.
 func pose(driver: MenuCaptureDriver) -> Callable:
-	if driver.poses_campaigns():
+	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGNS):
 		pose_picker()
 		return chrome_picker
-	if driver.poses_campaign_debrief():
+	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_DEBRIEF):
 		pose_debrief(true)
 		return chrome_debrief
 	if driver.poses_campaign_hub():
-		pose_hub(driver.poses_campaign_brief())
+		pose_hub(driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_BRIEF))
 		return chrome_hub
-	if driver.poses_campaign_deep():
+	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_DEEP):
 		pose_hub_deep()
 		return chrome_hub
-	if driver.poses_campaign_interlude():
+	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_INTERLUDE):
 		pose_interlude()
 		return chrome_interlude
 	return Callable()

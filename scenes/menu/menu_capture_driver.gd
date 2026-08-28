@@ -52,9 +52,13 @@ const DEMO_FOUR_SEATS := "menu_four_seats"
 const DEMO_REPLAYS := "menu_replays"
 const DEMO_CAMPAIGNS := "menu_campaigns"
 const DEMO_CAMPAIGN_HUB := "menu_campaign_hub"
+## The hub pose that opens its first mission's briefing rather than the list.
 const DEMO_CAMPAIGN_BRIEF := "menu_campaign_brief"
 const DEMO_CAMPAIGN_DEBRIEF := "menu_campaign_debrief"
 const DEMO_CAMPAIGN_INTERLUDE := "menu_campaign_interlude"
+## The hub pose a war is most of the way through: the one frame the list is
+## scrolled in, so the row the keyboard lands on is a row the page had to move to
+## show.
 const DEMO_CAMPAIGN_DEEP := "menu_campaign_deep"
 const DEMO_COMMANDER_SELECT := "menu_commander_select"
 const DEMO_MODES: Array[String] = [
@@ -81,6 +85,12 @@ const DEMO_MODES: Array[String] = [
 const CO_SELECT_ARG := "--co-select"
 const CO_SELECT_FIRST_SEAT := "red"
 const CO_SELECT_SECOND_SEAT := "blue"
+## Dev captures of the seat strip: `--menu-map=<name>` selects a board by the name
+## MapCatalog knows it by, and `--menu-preset=<n>` applies one of SeatStrip.PRESETS
+## by index. Together they photograph the strip at four seats in each grouping,
+## which is the frame a two-army board cannot show.
+const MENU_MAP_ARG := "--menu-map"
+const MENU_PRESET_ARG := "--menu-preset"
 ## The day `menu_with_save` poses. Three digits because days are uncapped and the
 ## caption is set at micro size in the 122px action column — a capture that only
 ## ever photographs "DAY 4" proves nothing about a long campaign. The board it
@@ -137,44 +147,15 @@ func poses_slot() -> bool:
 	return DEMO_MODES.has(_demo)
 
 
-func poses_setup_context() -> bool:
-	return _demo == DEMO_SETUP_CONTEXT
-
-
-func poses_four_seats() -> bool:
-	return _demo == DEMO_FOUR_SEATS
-
-
-func poses_replays() -> bool:
-	return _demo == DEMO_REPLAYS
-
-
-func poses_campaigns() -> bool:
-	return _demo == DEMO_CAMPAIGNS
+## True when this run asked for that mode by name. One question for every mode a
+## caller poses by equality; the readings that are more than an equality —
+## `poses_slot`, `poses_campaign_hub`, `poses_selection` — stay their own.
+func poses(mode: String) -> bool:
+	return _demo == mode
 
 
 func poses_campaign_hub() -> bool:
 	return _demo == DEMO_CAMPAIGN_HUB or _demo == DEMO_CAMPAIGN_BRIEF
-
-
-## The hub pose that opens its first mission's briefing rather than the list.
-func poses_campaign_brief() -> bool:
-	return _demo == DEMO_CAMPAIGN_BRIEF
-
-
-func poses_campaign_debrief() -> bool:
-	return _demo == DEMO_CAMPAIGN_DEBRIEF
-
-
-func poses_campaign_interlude() -> bool:
-	return _demo == DEMO_CAMPAIGN_INTERLUDE
-
-
-## The hub pose a war is most of the way through: the one frame the list is
-## scrolled in, so the row the keyboard lands on is a row the page had to move to
-## show.
-func poses_campaign_deep() -> bool:
-	return _demo == DEMO_CAMPAIGN_DEEP
 
 
 ## True when `--co-select` or `menu_commander_select` asked for the selection
@@ -230,6 +211,60 @@ func four_seat_map(maps: Array[MapData]) -> int:
 	return -1
 
 
+## Which board `--menu-map` names, or -1 when it names none this run can show —
+## absent, or a name no shipped board answers to. The miss is said out loud rather
+## than posed quietly: the capture would then be taken on the default board and
+## look exactly like a correct run, which is the failure `debug_preview` and
+## `apply_cmdline`'s `--map` both refuse for the same reason.
+##
+## The board in hand is handed in for the message rather than read off the picker:
+## the driver states what a flag asked for, and what is on screen is the menu's.
+func menu_map_index(maps: Array[MapData], shown: MapData) -> int:
+	var wanted := CmdArgs.value(CmdArgs.user(), MENU_MAP_ARG)
+	if wanted == "":
+		return -1
+	var path := MapCatalog.resolve(wanted)
+	for i in maps.size():
+		if maps[i].source_path == path:
+			return i
+	push_error(
+		(
+			"main menu: no board '%s'; this capture shows %s. Known: %s"
+			% [
+				wanted,
+				"no board" if shown == null else MapCatalog.display_name(shown.source_path),
+				", ".join(MapCatalog.resolvable_names()),
+			]
+		)
+	)
+	return -1
+
+
+## Which grouping preset `--menu-preset` names, or -1 when it names none this run
+## can apply — absent, not a number, or off the end of SeatStrip.PRESETS. Both
+## refusals are said out loud for `menu_map_index`'s reason.
+func menu_preset() -> int:
+	var args := CmdArgs.user()
+	if not CmdArgs.has(args, MENU_PRESET_ARG):
+		return -1
+	var wanted := CmdArgs.value(args, MENU_PRESET_ARG)
+	if not wanted.is_valid_int():
+		push_error(
+			(
+				"main menu: '%s' is not a grouping preset; this capture shows the grouping in hand"
+				% wanted
+			)
+		)
+		return -1
+	var preset := int(wanted)
+	if preset < 0 or preset >= SeatStrip.PRESETS.size():
+		push_error(
+			"main menu: no grouping preset %d; this capture shows the grouping in hand" % preset
+		)
+		return -1
+	return preset
+
+
 ## The slot the current mode poses: a resumable match on `menu_with_save`, and an
 ## empty slot on `menu_no_save`, whatever the running machine has saved. The match
 ## named is on the roster's longest-named board, so the posed caption is the widest
@@ -275,7 +310,7 @@ func posed_slot(maps: Array[MapData]) -> SaveGame.Slot:
 ## written. The walk is not wrong; the picture was early.
 func capture(path: String, chrome_source: Callable) -> void:
 	var context_ok := true
-	if poses_setup_context():
+	if poses(DEMO_SETUP_CONTEXT):
 		for i in ScreenshotUtil.SETTLE_FRAMES:
 			await _menu.get_tree().process_frame
 		context_ok = _menu.setup_context_ready()
