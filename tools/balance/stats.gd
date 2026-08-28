@@ -3,14 +3,17 @@ extends RefCounted
 ## The arithmetic every offline instrument reads a sample with. It lived four
 ## times over — a median in `FourArmyLoop`, another in `LegibilityMetric`, a
 ## third in `tools/run_campaign_difficulty.gd` — and the two percentiles had
-## drifted into two different ranks, so two committed reports said "the p95"
-## meaning two different numbers.
+## drifted into two different ranks.
 ##
 ## The two ranks are both here and both named, because which one a report is on
 ## is a fact about that report rather than a preference: `nearest_rank` returns a
 ## value the sample really holds at `ceil(fraction * n)`, and `floor_rank` the
 ## one at `floor(fraction * (n - 1))`. A committed reading is on exactly one of
 ## them, so moving an instrument between the two owes a regenerated document.
+## The drift was latent rather than manifest, and that is worth knowing before
+## either instrument moves: at p25 and p50 the two ranks answer identically for
+## every sample size, so the legibility ruler's p25 is the same number on
+## either, and only the soak's p90 and p99 are a rank apart.
 ##
 ## Node-free like the rest of `tools/balance/`. An empty sample reports 0.0 —
 ## the count a report prints beside it is what tells that apart from a real

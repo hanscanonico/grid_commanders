@@ -63,6 +63,24 @@ func test_the_two_ranks_part_company_in_the_tail() -> void:
 	assert_almost_eq(Stats.nearest_rank(ten, 0.0), Stats.floor_rank(ten, 0.0), 0.001, "the bottom")
 
 
+## The other half of that: at the two fractions the legibility ruler reads its
+## perimeter with, the ranks agree at every sample size, which is what makes
+## `docs/sprite_legibility.md`'s p25 the same number on either and its
+## byte-stability structural rather than a coincidence of one atlas.
+func test_the_two_ranks_agree_at_a_quarter_and_a_half() -> void:
+	for size in range(1, 41):
+		var sample: Array = []
+		for value in range(size):
+			sample.append(float(size - value))
+		for fraction: float in [0.25, 0.5]:
+			assert_almost_eq(
+				Stats.nearest_rank(sample, fraction),
+				Stats.floor_rank(sample, fraction),
+				0.001,
+				"n=%d at %.2f" % [size, fraction]
+			)
+
+
 ## A caller's sample is the order it collected its values in, and nothing here
 ## may reorder it under them.
 func test_reading_a_sample_leaves_it_in_the_order_it_arrived() -> void:
