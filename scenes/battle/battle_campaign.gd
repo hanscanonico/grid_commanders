@@ -137,7 +137,7 @@ static func briefing_lines() -> Array[MissionLine]:
 ## player's own and a briefing they stopped to read must not also be a board they
 ## can act on. `rest_state()` is what hands it back, so a briefing read from a
 ## paused computer turn returns to that paused turn.
-static func say_briefing(battle: Battle) -> void:
+static func _say_briefing(battle: Battle) -> void:
 	battle.state = Battle.State.ANIMATING
 	await battle.animator.speak_until_dismissed(briefing_lines(), battle.commander_db)
 	battle.state = battle.rest_state()
@@ -152,7 +152,7 @@ static func say_briefing(battle: Battle) -> void:
 ## state and the card stays its owner.
 static func run_row(battle: Battle, action: StringName) -> bool:
 	if action == &"briefing":
-		await say_briefing(battle)
+		await _say_briefing(battle)
 		return true
 	if action == &"objectives":
 		battle.view.mission_panel.toggle(battle.game)

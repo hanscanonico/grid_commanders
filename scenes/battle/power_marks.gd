@@ -64,7 +64,7 @@ func _draw() -> void:
 
 
 func _draw_mark(font: Font, origin: Vector2, mark: PowerEffects.Mark) -> void:
-	var colour := colour_for(mark.kind)
+	var colour := _colour_for(mark.kind)
 	var pen := origin - Vector2(NUMBER_SHIFT if mark.pips > 0 else 0.0, 0.0)
 	if mark.kind == PowerEffects.Kind.DESTROYED:
 		_draw_cross(pen, colour)
@@ -81,7 +81,7 @@ func _draw_mark(font: Font, origin: Vector2, mark: PowerEffects.Mark) -> void:
 ## amber every ammo bar and charge meter is already drawn with, a refreshed unit
 ## takes the reach overlay's blue because that is what it just got back, and a
 ## doctrine mark takes the gold that means "chosen" everywhere else in the shell.
-static func colour_for(kind: PowerEffects.Kind) -> Color:
+static func _colour_for(kind: PowerEffects.Kind) -> Color:
 	match kind:
 		PowerEffects.Kind.HEALED:
 			return UiTheme.CAPTURE

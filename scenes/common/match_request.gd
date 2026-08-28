@@ -221,7 +221,7 @@ func apply_cmdline(args: PackedStringArray) -> void:
 	if CmdArgs.has(args, "--seats"):
 		seats = parse_seats_flag(CmdArgs.value(args, "--seats"))
 	if CmdArgs.has(args, "--co"):
-		commanders = parse_co_flag(CmdArgs.value(args, "--co"), filled_roster())
+		commanders = parse_co_flag(CmdArgs.value(args, "--co"), _filled_roster())
 	if CmdArgs.has(args, "--difficulty"):
 		var tiers := parse_difficulty_flag(CmdArgs.value(args, "--difficulty"))
 		if tiers.has("default"):
@@ -330,7 +330,7 @@ static func parse_sides_flag(value: String) -> Dictionary:
 ## every seat the rules recognise when it fills them all. Not the board's roster —
 ## no board is loaded when the flags are read — which costs nothing, because
 ## `parse_co_flag` drops anything past the last seat either way.
-func filled_roster() -> Array[int]:
+func _filled_roster() -> Array[int]:
 	return seats if not seats.is_empty() else GameState.TEAMS
 
 
