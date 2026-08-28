@@ -77,20 +77,33 @@ static func can_engage_dived(state: GameState, attacker: Unit, target: Unit, div
 		return false
 	if not state.damage_chart.can_attack(attacker.type.id, target.type.id):
 		return false
+	return _reaches_depth(attacker, dived)
+
+
+## Whether the attacker's weapon reaches the depth the target is at. One
+## statement of the dive rule, shared by can_engage and ready_shot, so the two
+## cannot come apart over it.
+static func _reaches_depth(attacker: Unit, dived: bool) -> bool:
 	return not dived or attacker.type.can_hit_submerged
 
 
 ## The weapon `attacker` would fire at `target` right now, or null when none is
 ## ready. Weapon choice and ammo ownership stay in DamageChart; this adds only
-## the submerged target rule that already makes can_engage the who-may-shoot
-## authority.
+## the submerged target rule.
+##
+## It shares that rule with can_engage through _reaches_depth rather than routing
+## through it: can_engage's other half — the chart covering the pair — is already
+## implied by select_shot returning a weapon, the selector answering null exactly
+## when neither matrix covers the pair or the primary is dry with no secondary.
+## can_engage stays the who-may-shoot authority; this is its answer with the
+## chart read once.
 ##
 ## Returned rather than merely counted so a caller that needs the slot or its
 ## base damage — the resolver, on every shot and every counter — pays for the
 ## selection once instead of asking whether it exists and then asking again what
 ## it was.
 static func ready_shot(state: GameState, attacker: Unit, target: Unit) -> DamageChart.Shot:
-	if not can_engage(state, attacker, target):
+	if state.damage_chart == null or not _reaches_depth(attacker, target.dived):
 		return null
 	return state.damage_chart.select_shot(
 		attacker.type.id, target.type.id, attacker.ammo, attacker.type.max_ammo
