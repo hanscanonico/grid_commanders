@@ -1,4 +1,9 @@
 extends GutTest
+## The turn rotation, the day, income and repair.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 
 func _state(map_text: String) -> GameState:
@@ -80,4 +85,4 @@ func test_no_repair_on_neutral_or_enemy_property() -> void:
 func test_end_turn_rejected_after_victory() -> void:
 	var state := _state(Fixture.LONE_INFANTRY)
 	state.winner = 1
-	assert_ne(EndTurnCommand.new().validate(state), "")
+	assert_eq(EndTurnCommand.new().validate(state), "the match is over")

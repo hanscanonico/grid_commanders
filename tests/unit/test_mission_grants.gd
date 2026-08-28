@@ -7,6 +7,10 @@ extends GutTest
 ## two are facts rather than mutations, which is the whole of their design: a
 ## `Command` is handed a board, so a hidden objective coming out of hiding and a
 ## mission ending are declared and collected rather than written.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 const RIDGE := "res://maps/fixtures/ridge.txt"
 
@@ -104,7 +108,7 @@ func test_charge_grant_refuses_banking_nothing() -> void:
 	var effect := GrantChargeEffect.new()
 	effect.team = 1
 	effect.points = 0
-	assert_ne(effect.definition_error(_map(), 1, Fixture.unit_db()), "")
+	assert_eq(effect.definition_error(_map(), 1, Fixture.unit_db()), "charge grant banks 0 points")
 	effect.points = 500
 	assert_eq(effect.definition_error(_map(), 1, Fixture.unit_db()), "")
 
@@ -125,7 +129,7 @@ func test_reveal_declares_an_objective_and_touches_no_board() -> void:
 
 func test_reveal_refuses_naming_nothing() -> void:
 	var effect := RevealObjectiveEffect.new()
-	assert_ne(effect.definition_error(_map(), 1, Fixture.unit_db()), "")
+	assert_eq(effect.definition_error(_map(), 1, Fixture.unit_db()), "reveal names no objective")
 	effect.objective_id = &"the_real_target"
 	assert_eq(effect.definition_error(_map(), 1, Fixture.unit_db()), "")
 

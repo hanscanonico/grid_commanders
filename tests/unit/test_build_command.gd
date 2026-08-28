@@ -1,4 +1,9 @@
 extends GutTest
+## What a base builds, what it costs and what it refuses.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 var unit_db: UnitDB
 
@@ -105,4 +110,7 @@ func test_missiles_are_built_at_a_base() -> void:
 	var state := Fixture.state("[terrain]\nBA\n[owners]\n1 0 0\n1 1 0")
 	state.funds[1] = 99999
 	assert_eq(BuildCommand.new(1, unit_db.by_id(&"missiles"), Vector2i(0, 0)).validate(state), "")
-	assert_ne(BuildCommand.new(1, unit_db.by_id(&"missiles"), Vector2i(1, 0)).validate(state), "")
+	assert_eq(
+		BuildCommand.new(1, unit_db.by_id(&"missiles"), Vector2i(1, 0)).validate(state),
+		"airport does not build missiles"
+	)

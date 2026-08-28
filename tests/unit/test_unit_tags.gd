@@ -7,6 +7,10 @@ extends GutTest
 ## single point of it: the board names a unit, `GameState.create` carries the name
 ## onto the live one, and the save brings it back — a mission that is about one
 ## unit has to find that unit again after a resume.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -118,6 +122,6 @@ func test_taken_error_and_duplicate_error_agree() -> void:
 		UnitTag.duplicate_error([&"relay", &"courier", &"relay"] as Array[StringName]),
 		"a name already on the board is refused in the same words"
 	)
-	assert_ne(UnitTag.taken_error(&"relay", taken), "")
+	assert_eq(UnitTag.taken_error(&"relay", taken), "unit tag 'relay' names two units")
 	assert_eq(UnitTag.taken_error(&"scout", taken), "", "a free name is free")
 	assert_eq(UnitTag.taken_error(&"", taken), "", "and an unnamed unit takes nothing")

@@ -9,6 +9,10 @@ extends GutTest
 ##
 ## The conjunction the triggers are combined under is `MissionEvent`'s, and so is
 ## `test_mission_events.gd`'s.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 ## Two cities, an HQ, a base and four named units, so every trigger here has
 ## something on the board to name.
@@ -68,10 +72,16 @@ func test_day_before_expires_and_is_only_useful_in_conjunction() -> void:
 func test_the_calendar_triggers_refuse_a_day_before_the_match() -> void:
 	var reached := DayReachedTrigger.new()
 	reached.day = 0
-	assert_ne(reached.definition_error(_map(), 1, Fixture.unit_db()), "")
+	assert_eq(
+		reached.definition_error(_map(), 1, Fixture.unit_db()),
+		"day-reached trigger waits for day 0, before the match begins"
+	)
 	var before := DayBeforeTrigger.new()
 	before.day = 0
-	assert_ne(before.definition_error(_map(), 1, Fixture.unit_db()), "")
+	assert_eq(
+		before.definition_error(_map(), 1, Fixture.unit_db()),
+		"day-before trigger expires on day 0, before the match begins"
+	)
 
 
 # --- ground -----------------------------------------------------------------
@@ -128,9 +138,15 @@ func test_unit_destroyed_fires_once_the_tag_has_left_the_board() -> void:
 
 func test_unit_destroyed_refuses_a_name_the_board_never_gave() -> void:
 	var trigger := UnitDestroyedTrigger.new()
-	assert_ne(trigger.definition_error(_map(), 1, Fixture.unit_db()), "", "it names nobody")
+	assert_eq(
+		trigger.definition_error(_map(), 1, Fixture.unit_db()),
+		"unit-destroyed trigger names no unit"
+	)
 	trigger.tag = &"nobody"
-	assert_ne(trigger.definition_error(_map(), 1, Fixture.unit_db()), "")
+	assert_eq(
+		trigger.definition_error(_map(), 1, Fixture.unit_db()),
+		"unit-destroyed trigger names 'nobody', which no unit on this board carries"
+	)
 	trigger.tag = &"siege_gun"
 	assert_eq(trigger.definition_error(_map(), 1, Fixture.unit_db()), "")
 
@@ -156,16 +172,38 @@ func test_unit_reached_says_a_passenger_has_arrived_nowhere() -> void:
 	assert_false(trigger.is_met(state, 1, null), "it rides until the truck sets it down")
 
 
-func test_unit_reached_refuses_an_unnamed_unit_or_no_ground() -> void:
+func test_unit_reached_refuses_a_trigger_that_names_no_unit() -> void:
+	var trigger := UnitReachedTrigger.new()
+	trigger.cells = [Vector2i(0, 1)]
+	assert_eq(
+		trigger.definition_error(_map(), 1, Fixture.unit_db()), "unit-reached trigger names no unit"
+	)
+
+
+func test_unit_reached_refuses_a_name_the_board_never_gave() -> void:
+	var trigger := UnitReachedTrigger.new()
+	trigger.tag = &"nobody"
+	trigger.cells = [Vector2i(0, 1)]
+	assert_eq(
+		trigger.definition_error(_map(), 1, Fixture.unit_db()),
+		"unit-reached trigger names 'nobody', which no unit on this board carries"
+	)
+
+
+func test_unit_reached_refuses_ground_the_board_does_not_hold() -> void:
 	var trigger := UnitReachedTrigger.new()
 	trigger.tag = &"courier"
-	assert_ne(trigger.definition_error(_map(), 1, Fixture.unit_db()), "", "it names no ground")
+	assert_eq(
+		trigger.definition_error(_map(), 1, Fixture.unit_db()),
+		"unit-reached trigger names no ground for 'courier' to reach"
+	)
 	trigger.cells = [Vector2i(99, 0)]
-	assert_ne(trigger.definition_error(_map(), 1, Fixture.unit_db()), "", "off the board")
+	assert_eq(
+		trigger.definition_error(_map(), 1, Fixture.unit_db()),
+		"unit-reached trigger names (99, 0), off a 6x2 board"
+	)
 	trigger.cells = [Vector2i(0, 1)]
 	assert_eq(trigger.definition_error(_map(), 1, Fixture.unit_db()), "")
-	trigger.tag = &"nobody"
-	assert_ne(trigger.definition_error(_map(), 1, Fixture.unit_db()), "")
 
 
 # --- force ------------------------------------------------------------------
@@ -197,7 +235,10 @@ func test_force_strength_answers_upward_as_well() -> void:
 func test_force_strength_refuses_an_army_the_board_never_seats() -> void:
 	var trigger := ForceStrengthTrigger.new()
 	trigger.team = 4
-	assert_ne(trigger.definition_error(_map(), 1, Fixture.unit_db()), "")
+	assert_eq(
+		trigger.definition_error(_map(), 1, Fixture.unit_db()),
+		"force-strength trigger names army 4, which this board does not seat"
+	)
 	trigger.team = 2
 	assert_eq(trigger.definition_error(_map(), 1, Fixture.unit_db()), "")
 

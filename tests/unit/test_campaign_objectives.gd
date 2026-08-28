@@ -12,6 +12,10 @@ extends GutTest
 ## convenience: these four read one board and nothing else. The two that read the
 ## mission's tally are `test_mission_tallies.gd`'s, and the four that read units
 ## rather than ground are `test_mission_unit_objectives.gd`'s.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 ## Two cities and an HQ on one row, so a property can change hands without any
 ## unit having to walk anywhere.
@@ -161,7 +165,10 @@ func test_ally_survives_refuses_an_army_the_board_never_seats() -> void:
 	var map := MapData.parse(ROW, terrain_db)
 	var objective := AllySurvivesObjective.new()
 	objective.team = 4
-	assert_ne(objective.definition_error(map, 1, unit_db), "")
+	assert_eq(
+		objective.definition_error(map, 1, unit_db),
+		"ally-survives objective names army 4, which this board does not seat"
+	)
 	objective.team = 2
 	assert_eq(objective.definition_error(map, 1, unit_db), "")
 

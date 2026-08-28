@@ -8,6 +8,10 @@ extends GutTest
 ## them. And a `once` event fires exactly once **including across a reload**: the
 ## board does not remember having had a column landed on it, so the fired set is
 ## recorded in the mission's tally and saved with it.
+##
+## Every rejection asserts the exact reason string: a bare `assert_ne(error, "")`
+## passes on any refusal, so a branch that started answering with its neighbour's
+## message would have kept the suite green.
 
 const RIDGE := "res://maps/fixtures/ridge.txt"
 
@@ -144,8 +148,14 @@ func test_the_fired_and_revealed_sets_survive_a_save_and_a_resume() -> void:
 
 
 func test_a_tally_refuses_a_flag_no_writer_could_have_produced() -> void:
-	assert_ne(MissionProgress.tally_error({"fired:not an id": 1}), "")
-	assert_ne(MissionProgress.tally_error({"revealed:": 1}), "")
+	assert_eq(
+		MissionProgress.tally_error({"fired:not an id": 1}),
+		"tally holds 'fired:not an id', which is not a counter"
+	)
+	assert_eq(
+		MissionProgress.tally_error({"revealed:": 1}),
+		"tally holds 'revealed:', which is not a counter"
+	)
 	assert_eq(MissionProgress.tally_error({"fired:iron_relief": 1, "revealed:the_hq": 1}), "")
 
 
@@ -203,8 +213,8 @@ func test_the_command_refuses_an_event_that_does_nothing() -> void:
 	var state := _state()
 	var event := _event(&"empty", [_day(1)])
 	event.effects = []
-	assert_ne(MissionEventCommand.new(event, 1).validate(state), "")
-	assert_ne(MissionEventCommand.new(null, 1).validate(state), "")
+	assert_eq(MissionEventCommand.new(event, 1).validate(state), "event 'empty' does nothing")
+	assert_eq(MissionEventCommand.new(null, 1).validate(state), "no event to fire")
 
 
 # --- the authoring gate -----------------------------------------------------
@@ -213,7 +223,10 @@ func test_the_command_refuses_an_event_that_does_nothing() -> void:
 func test_a_mission_refuses_two_events_with_one_name() -> void:
 	var mission := _mission()
 	mission.events = [_event(&"iron_relief", [_day(3)]), _event(&"iron_relief", [_day(5)])]
-	assert_ne(mission.definition_error(_map(), Fixture.unit_db()), "")
+	assert_eq(
+		mission.definition_error(_map(), Fixture.unit_db()),
+		"mission 'fixture' has two events called 'iron_relief'"
+	)
 	mission.events[1].id = &"second_wave"
 	assert_eq(mission.definition_error(_map(), Fixture.unit_db()), "")
 
