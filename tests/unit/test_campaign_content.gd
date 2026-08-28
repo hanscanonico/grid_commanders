@@ -160,6 +160,22 @@ func test_every_mission_is_still_being_played_on_the_board_it_opens_on() -> void
 			assert_eq(mission.board_error(state), "", "%s/%s" % [campaign.id, mission.id])
 
 
+## The question `definition_error` cannot ask of a scripted beat: a map deals
+## every seat it names while a mission may have closed some of them, so
+## reinforcements for a seat nobody is playing parse perfectly and land nowhere.
+func test_every_scripted_beat_lands_on_the_board_its_mission_opens_on() -> void:
+	for campaign in db.all():
+		for mission: MissionDefinition in campaign.missions:
+			var map := _map_of(mission)
+			if map == null:
+				continue
+			var seats: Array[int] = mission.seats.duplicate()
+			var state := GameState.create(map, unit_db, chart, {}, seats)
+			if state == null:
+				continue
+			assert_eq(mission.events_board_error(state), "", "%s/%s" % [campaign.id, mission.id])
+
+
 ## A speaker who is not on the roster prints as a blank name beside real
 ## dialogue, which reads as a rendering fault rather than a typo in a data file.
 func test_every_spoken_line_names_a_general_who_exists() -> void:

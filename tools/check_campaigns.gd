@@ -141,17 +141,6 @@ func _check_mission(
 	var board := mission.board_error(state)
 	if board != "":
 		_fail("%s: %s" % [where, board])
-	_check_events(where, mission, state)
-
-
-## Every scripted effect against the board the mission actually opens on. The
-## mission's own `definition_error` has already held them to the *map*; this is
-## the one question it cannot ask, because a map deals every seat it names while
-## a mission may have closed some of them — reinforcements for a seat nobody is
-## playing parse perfectly and land nowhere.
-func _check_events(where: String, mission: MissionDefinition, state: GameState) -> void:
-	for event: MissionEvent in mission.events:
-		for effect: MissionEffect in event.effects:
-			var error := effect.board_error(state, mission.player_team)
-			if error != "":
-				_fail("%s: event '%s': %s" % [where, event.id, error])
+	var beats := mission.events_board_error(state)
+	if beats != "":
+		_fail("%s: %s" % [where, beats])
