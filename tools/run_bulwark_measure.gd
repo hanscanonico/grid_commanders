@@ -85,11 +85,8 @@ var _profile: AIProfile
 
 var _map_name := DEFAULT_MAP
 var _tier_id := DEFAULT_TIER
-var _seed_count := 30
-var _seed_offset := 0
-var _days_cap := 100
 var _grouping := "both"
-var _out_dir := ""
+var _sample := BalanceHarness.sample(30, 100, ["--seeds", "--seed-offset", "--days", "--out"])
 
 
 func _init() -> void:
@@ -120,35 +117,26 @@ func _init() -> void:
 ## otherwise spend half an hour measuring a sample width nobody asked for.
 func _parse_args() -> bool:
 	for arg in CmdArgs.user():
+		var taken := BalanceHarness.take(_sample, TOOL, arg)
+		if taken == BalanceHarness.REFUSED:
+			return false
+		if taken == BalanceHarness.TAKEN:
+			continue
 		if arg.begins_with("--map="):
 			_map_name = arg.get_slice("=", 1)
 		elif arg.begins_with("--tier="):
 			_tier_id = StringName(arg.get_slice("=", 1))
-		elif arg.begins_with("--seeds="):
-			_seed_count = BalanceHarness.positive_flag(TOOL, "--seeds", arg.get_slice("=", 1))
-			if _seed_count < 0:
-				return false
-		elif arg.begins_with("--seed-offset="):
-			_seed_offset = BalanceHarness.count_flag(TOOL, "--seed-offset", arg.get_slice("=", 1))
-			if _seed_offset < 0:
-				return false
-		elif arg.begins_with("--days="):
-			_days_cap = BalanceHarness.positive_flag(TOOL, "--days", arg.get_slice("=", 1))
-			if _days_cap < 0:
-				return false
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
-		elif arg.begins_with("--out="):
-			_out_dir = arg.get_slice("=", 1)
 		else:
 			push_error("%s: unknown flag '%s'" % [TOOL, arg])
 			return false
 	if not _grouping_readable():
 		return false
-	if _out_dir == "":
-		_out_dir = "reports".path_join(_map_name)
-	_out_dir = BalanceHarness.out_flag(TOOL, _out_dir)
-	return _out_dir != ""
+	if _sample.out_dir == "":
+		_sample.out_dir = "reports".path_join(_map_name)
+	_sample.out_dir = BalanceHarness.out_flag(TOOL, _sample.out_dir)
+	return _sample.out_dir != ""
 
 
 ## `alliance` and `both` name Bulwark's own preset, so they say nothing about
@@ -203,14 +191,14 @@ func _tier_names(tiers: DifficultyDB) -> Array[String]:
 ## Plays one grouping over the whole seed range and reports whether anything
 ## broke — a rejected command or a genuine stall — which is the "no rejected
 ## command, no stall" half of AB3's gate. A match that simply has not resolved
-## by `_days_cap` is neither: it is the other half of the gate's answer.
+## by `--days=` is neither: it is the other half of the gate's answer.
 func _run(run: Dictionary) -> bool:
 	var label: String = run["label"]
 	var sides: Dictionary[int, int] = run["sides"]
-	print("%s: %s — %d seeds, %d-day horizon" % [_map_name, label, _seed_count, _days_cap])
+	print("%s: %s — %d seeds, %d-day horizon" % [_map_name, label, _sample.seeds, _sample.days_cap])
 	var rows: Array[Dictionary] = []
-	for i in _seed_count:
-		var seed_val := FourArmyLoop.seed_at(_seed_offset, i)
+	for i in _sample.seeds:
+		var seed_val := FourArmyLoop.seed_at(_sample.seed_offset, i)
 		var row := _play(run, seed_val)
 		if row.is_empty():
 			push_error(
@@ -240,7 +228,7 @@ func _run(run: Dictionary) -> bool:
 func _play(run: Dictionary, seed_val: int) -> Dictionary:
 	var sides: Dictionary[int, int] = run["sides"]
 	var played := FourArmyLoop.play(
-		_map, _harness, _profile, sides, seed_val, _days_cap, run["label"]
+		_map, _harness, _profile, sides, seed_val, _sample.days_cap, run["label"]
 	)
 	if played.is_empty():
 		return {}
@@ -259,7 +247,7 @@ func _play(run: Dictionary, seed_val: int) -> Dictionary:
 	}
 
 
-## "undecided" while the match runs past `_days_cap` with nobody eliminated
+## "undecided" while the match runs past the `--days=` horizon with nobody eliminated
 ## down to one side; the winning side's own name under a grouping — Bulwark's
 ## two are "alliance" and "bulwark", any other grouping's are its seats — and
 ## "seat_<n>" under the free-for-all, where nothing groups the winner at all.
@@ -338,7 +326,7 @@ func _summarise(label: String, sides: Dictionary[int, int], rows: Array[Dictiona
 		"median_day": Stats.median(decided_days),
 		"winners": winners,
 		"allied_falls": allied_falls,
-		"days_cap": _days_cap,
+		"days_cap": _sample.days_cap,
 	}
 
 
@@ -354,7 +342,7 @@ func _allied_seats(sides: Dictionary[int, int]) -> Array[int]:
 
 
 func _write(slug: String, rows: Array[Dictionary], summary: Dictionary) -> bool:
-	var dir := BalanceReportWriter.prepare_dir(_out_dir.path_join(slug))
+	var dir := BalanceReportWriter.prepare_dir(_sample.out_dir.path_join(slug))
 	if dir == "":
 		return false
 	return BalanceReportWriter.write_run(TOOL, dir, "matches.csv", rows, CSV_COLUMNS, summary)

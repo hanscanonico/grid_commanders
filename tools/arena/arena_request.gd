@@ -200,6 +200,27 @@ static func project_path(path: String) -> String:
 	return path if path.contains("://") else "res://".path_join(path)
 
 
+## The `AIProfile` at `path`, or null with the refusal already pushed naming the
+## tool that asked. The two profile-writing drivers both spelled this; a run that
+## quietly fell back to the shipped defaults would measure the tier the arena is
+## trying to beat, so it is refused rather than guessed.
+##
+## `ArenaShard.profile` is deliberately not folded in with them: it caches, it
+## tells an outside path from a missing one, and it answers through `error`
+## rather than pushing, a shard reporting its own refusals.
+static func load_profile(tool_name: String, path: String) -> AIProfile:
+	var res_path := project_path(path)
+	if res_path == "" or not ResourceLoader.exists(res_path):
+		push_error("%s: no profile at '%s'" % [tool_name, path])
+		return null
+	var loaded: Resource = load(res_path)
+	if not (loaded is AIProfile):
+		push_error("%s: '%s' is not an AIProfile" % [tool_name, path])
+		return null
+	var profile: AIProfile = loaded
+	return profile
+
+
 func _check() -> void:
 	if pairings_path != "" and (red_path != "" or blue_path != ""):
 		error = "--pairings= names its own profiles; drop --red-profile/--blue-profile"

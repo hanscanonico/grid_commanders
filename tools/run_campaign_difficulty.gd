@@ -67,10 +67,7 @@ var _db: CampaignDB
 
 var _campaigns: Array[String] = []
 var _missions: Array[String] = []
-var _seed_count := 6
-var _seed_offset := 0
-var _days_cap := 24
-var _out_dir := ""
+var _sample := BalanceHarness.sample(6, 24, ["--seeds", "--seed-offset", "--days", "--out"])
 
 
 func _initialize() -> void:
@@ -109,31 +106,22 @@ func _initialize() -> void:
 ## costs the whole 108-mission sweep.
 func _parse_args() -> bool:
 	for arg in CmdArgs.user():
+		var taken := BalanceHarness.take(_sample, TOOL, arg)
+		if taken == BalanceHarness.REFUSED:
+			return false
+		if taken == BalanceHarness.TAKEN:
+			continue
 		if arg.begins_with("--campaign="):
 			_campaigns.append(arg.get_slice("=", 1))
 		elif arg.begins_with("--mission="):
 			_missions.append(arg.get_slice("=", 1))
-		elif arg.begins_with("--seeds="):
-			_seed_count = BalanceHarness.positive_flag(TOOL, "--seeds", arg.get_slice("=", 1))
-			if _seed_count < 0:
-				return false
-		elif arg.begins_with("--seed-offset="):
-			_seed_offset = BalanceHarness.count_flag(TOOL, "--seed-offset", arg.get_slice("=", 1))
-			if _seed_offset < 0:
-				return false
-		elif arg.begins_with("--days="):
-			_days_cap = BalanceHarness.positive_flag(TOOL, "--days", arg.get_slice("=", 1))
-			if _days_cap < 0:
-				return false
-		elif arg.begins_with("--out="):
-			_out_dir = arg.get_slice("=", 1)
 		else:
 			push_error("%s: unknown flag '%s'" % [TOOL, arg])
 			return false
-	if _out_dir == "":
-		_out_dir = DEFAULT_OUT
-	_out_dir = BalanceHarness.out_flag(TOOL, _out_dir)
-	return _out_dir != ""
+	if _sample.out_dir == "":
+		_sample.out_dir = DEFAULT_OUT
+	_sample.out_dir = BalanceHarness.out_flag(TOOL, _sample.out_dir)
+	return _sample.out_dir != ""
 
 
 ## One mission over the whole seed range, folded into the row the table prints.
@@ -144,8 +132,8 @@ func _measure(campaign: CampaignDefinition, mission: MissionDefinition) -> Dicti
 	var win_days: Array[int] = []
 	var reasons: Dictionary[String, int] = {}
 	var opening := _opening(mission)
-	for i in _seed_count:
-		var play := _play(campaign, mission, _seed_offset + i + 1)
+	for i in _sample.seeds:
+		var play := _play(campaign, mission, _sample.seed_offset + i + 1)
 		if play.is_empty():
 			return {}
 		match String(play["status"]):
@@ -163,11 +151,11 @@ func _measure(campaign: CampaignDefinition, mission: MissionDefinition) -> Dicti
 		"campaign": String(campaign.id),
 		"mission": String(mission.id),
 		"tier": String(mission.difficulty),
-		"seeds": _seed_count,
+		"seeds": _sample.seeds,
 		"wins": wins,
 		"losses": losses,
 		"undecided": undecided,
-		"win_pct": 100.0 * float(wins) / float(_seed_count),
+		"win_pct": 100.0 * float(wins) / float(_sample.seeds),
 		"median_win_day": _upper_middle(win_days),
 		"deadline": _deadline_of(mission),
 		"par_day": mission.par_day,
@@ -234,9 +222,9 @@ func _play(campaign: CampaignDefinition, mission: MissionDefinition, seed_val: i
 	var planners: Dictionary[int, AIController] = {}
 	for team in game.teams:
 		planners[team] = AIController.new(_unit_db, built.difficulty.profile())
-	var ceiling := BalanceMatchEngine.command_ceiling(_days_cap, game.teams.size())
+	var ceiling := BalanceMatchEngine.command_ceiling(_sample.days_cap, game.teams.size())
 	var commands := 0
-	while _session.outcome == null and game.winner == 0 and game.day <= _days_cap:
+	while _session.outcome == null and game.winner == 0 and game.day <= _sample.days_cap:
 		if commands >= ceiling:
 			break
 		var command := planners[game.current_team].plan_next_command(game)
@@ -337,20 +325,20 @@ func _report(rows: Array[Dictionary]) -> void:
 			flagged.append(row)
 	var summary := {
 		"missions": rows.size(),
-		"seeds": _seed_count,
-		"seed_offset": _seed_offset,
-		"days_cap": _days_cap,
+		"seeds": _sample.seeds,
+		"seed_offset": _sample.seed_offset,
+		"days_cap": _sample.days_cap,
 		"never_won": rows.filter(func(r: Dictionary) -> bool: return int(r["wins"]) == 0).size(),
 		"flagged": flagged.map(func(r: Dictionary) -> String: return r["mission"]),
 	}
-	var dir := BalanceReportWriter.prepare_dir(_out_dir)
+	var dir := BalanceReportWriter.prepare_dir(_sample.out_dir)
 	if dir != "":
 		BalanceReportWriter.write_run(TOOL, dir, "missions.csv", rows, CSV_COLUMNS, summary)
 	print("")
 	print(
 		(
 			"%s: %d missions, %d seeds each, %d-day horizon"
-			% [TOOL, rows.size(), _seed_count, _days_cap]
+			% [TOOL, rows.size(), _sample.seeds, _sample.days_cap]
 		)
 	)
 	print("%s: %d never won by the planner" % [TOOL, summary["never_won"]])

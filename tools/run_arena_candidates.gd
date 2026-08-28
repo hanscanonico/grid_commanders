@@ -34,7 +34,10 @@ func _init() -> void:
 	if spec.is_empty():
 		quit(2)
 		return
-	var base := _base(String(spec.get("base", "")))
+	# The profile every candidate is a step away from: a candidate is that vector
+	# with a handful of dials moved, so everything the search is not looking at
+	# stays exactly what shipped (plan R5).
+	var base := ArenaRequest.load_profile("arena-candidates", String(spec.get("base", "")))
 	if base == null:
 		quit(2)
 		return
@@ -81,22 +84,6 @@ func _spec() -> Dictionary:
 		push_error("arena-candidates: 'candidates' is a list of {path, overrides}")
 		return {}
 	return spec
-
-
-## The profile every candidate is a step away from. Loaded once: a candidate is
-## the base vector with a handful of dials moved, so everything the search is not
-## looking at stays exactly what shipped (plan R5).
-func _base(path: String) -> AIProfile:
-	var res_path := ArenaRequest.project_path(path)
-	if res_path == "" or not ResourceLoader.exists(res_path):
-		push_error("arena-candidates: no base profile at '%s'" % path)
-		return null
-	var loaded: Resource = load(res_path)
-	if not (loaded is AIProfile):
-		push_error("arena-candidates: '%s' is not an AIProfile" % path)
-		return null
-	var base: AIProfile = loaded
-	return base
 
 
 ## 1 when the profile was written, 0 when it was already there, -1 when the

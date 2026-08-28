@@ -68,8 +68,9 @@ var _sections: Array[String] = ALL_SECTIONS.duplicate()
 var _map_name := DEFAULT_MAP
 var _tier_id := "all"
 var _grouping := DEFAULT_GROUPING
-var _seed_count := 2
-var _days_cap := 20
+## Neither `--seed-offset=` nor `--out=`: a soak prints its reading and
+## `docs/mobile_soak.md` is written by hand from it.
+var _sample := BalanceHarness.sample(2, 20, ["--seeds", "--days"])
 var _fog := true
 var _append_count := 200
 
@@ -99,6 +100,11 @@ func _init() -> void:
 
 func _parse_args() -> bool:
 	for arg in CmdArgs.user():
+		var taken := BalanceHarness.take(_sample, TOOL, arg)
+		if taken == BalanceHarness.REFUSED:
+			return false
+		if taken == BalanceHarness.TAKEN:
+			continue
 		if arg.begins_with("--sections="):
 			_sections.clear()
 			for name in arg.get_slice("=", 1).split(",", false):
@@ -118,14 +124,6 @@ func _parse_args() -> bool:
 			_tier_id = arg.get_slice("=", 1)
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
-		elif arg.begins_with("--seeds="):
-			_seed_count = BalanceHarness.positive_flag(TOOL, "--seeds", arg.get_slice("=", 1))
-			if _seed_count < 0:
-				return false
-		elif arg.begins_with("--days="):
-			_days_cap = BalanceHarness.positive_flag(TOOL, "--days", arg.get_slice("=", 1))
-			if _days_cap < 0:
-				return false
 		elif arg.begins_with("--appends="):
 			_append_count = BalanceHarness.positive_flag(TOOL, "--appends", arg.get_slice("=", 1))
 			if _append_count < 0:
@@ -166,7 +164,7 @@ func _planner_section() -> void:
 	print(
 		(
 			"\n== planner clock — %s, %s, fog %s, %d seeds x %d days =="
-			% [_map_name, _grouping, "on" if _fog else "off", _seed_count, _days_cap]
+			% [_map_name, _grouping, "on" if _fog else "off", _sample.seeds, _sample.days_cap]
 		)
 	)
 	print("tier      seats  commands  cmd_mean  cmd_p50  cmd_p90  cmd_max  turn_mean  turn_max")
@@ -178,7 +176,7 @@ func _planner_section() -> void:
 		var commands: Array[float] = []
 		var turns: Array[float] = []
 		var seats := 0
-		for i in _seed_count:
+		for i in _sample.seeds:
 			seats = _play(id, profile, FourArmyLoop.seed_at(0, i), commands, turns)
 		print(
 			(
@@ -216,7 +214,7 @@ func _play(
 			turns.append(_turn_ms)
 			_turn_ms = 0.0
 	var played := FourArmyLoop.play(
-		_map, _harness, profile, sides, seed_val, _days_cap, tier, clock, _fog
+		_map, _harness, profile, sides, seed_val, _sample.days_cap, tier, clock, _fog
 	)
 	if played.is_empty():
 		return 0

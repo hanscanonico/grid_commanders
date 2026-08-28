@@ -132,11 +132,13 @@ var _harness: BalanceHarness
 
 var _commander_ids: Array[StringName] = []
 var _scenario_names: Array[String] = []
-var _seed_count := BalanceHarness.DEFAULT_SEEDS
-var _days_cap := DEFAULT_DAYS
+## No `--seed-offset=`: this matrix has never sharded, and one committed report
+## stands behind the seeds it plays.
+var _sample := BalanceHarness.sample(
+	BalanceHarness.DEFAULT_SEEDS, DEFAULT_DAYS, ["--seeds", "--days", "--out"]
+)
 var _include_neutral := false
 var _difficulty_check := false
-var _out_dir := ""
 ## Turns the shared engine cut short at MAX_COMMANDS_PER_TURN, across the whole
 ## run. Must stay zero: a cut turn resolves differently from the committed report
 ## this gate stands behind, and neither CSV has a column that would say so.
@@ -173,28 +175,25 @@ func _parse_args() -> bool:
 	_commander_ids = _all_commander_ids()
 	_scenario_names = SCENARIO_NAMES.duplicate()
 	for arg in CmdArgs.user():
+		var taken := BalanceHarness.take(_sample, "balance", arg)
+		if taken == BalanceHarness.REFUSED:
+			return false
+		if taken == BalanceHarness.TAKEN:
+			continue
 		if arg.begins_with("--commanders="):
 			_commander_ids = _parse_commander_list(arg.get_slice("=", 1))
 		elif arg.begins_with("--scenarios="):
 			_scenario_names = _parse_scenario_list(arg.get_slice("=", 1))
-		elif arg.begins_with("--seeds="):
-			_seed_count = BalanceHarness.positive_flag("balance", "--seeds", arg.get_slice("=", 1))
-			if _seed_count < 0:
-				return false
-		elif arg.begins_with("--days="):
-			_days_cap = BalanceHarness.positive_flag("balance", "--days", arg.get_slice("=", 1))
-			if _days_cap < 0:
-				return false
-		elif arg.begins_with("--out="):
-			_out_dir = arg.get_slice("=", 1)
 		elif arg == "--neutral":
 			_include_neutral = true
 		elif arg == "--difficulty-check":
 			_difficulty_check = true
-	if _out_dir == "":
-		_out_dir = "reports/difficulty_check" if _difficulty_check else "reports/commander_balance"
-	_out_dir = BalanceHarness.out_flag("balance", _out_dir)
-	return _out_dir != ""
+	if _sample.out_dir == "":
+		_sample.out_dir = (
+			"reports/difficulty_check" if _difficulty_check else "reports/commander_balance"
+		)
+	_sample.out_dir = BalanceHarness.out_flag("balance", _sample.out_dir)
+	return _sample.out_dir != ""
 
 
 ## The matrix measures doctrines against each other, so the roster is the
@@ -280,18 +279,18 @@ func _fatal(message: String) -> bool:
 
 func _run_all() -> Array[Dictionary]:
 	var pairings := _pairings()
-	var total := pairings.size() * _scenario_names.size() * _seed_count
+	var total := pairings.size() * _scenario_names.size() * _sample.seeds
 	print(
 		(
 			"balance: %d commanders, %d scenarios, %d seeds -> %d matches"
-			% [_commander_ids.size(), _scenario_names.size(), _seed_count, total]
+			% [_commander_ids.size(), _scenario_names.size(), _sample.seeds, total]
 		)
 	)
 	var rows: Array[Dictionary] = []
 	var done := 0
 	for scenario in _scenario_names:
 		for pair in pairings:
-			for s in _seed_count:
+			for s in _sample.seeds:
 				# Paired seeds: the same seed set for every pairing, so A-vs-B and
 				# B-vs-A (ordered pairs) meet on identical luck and the side-swap is
 				# clean. Seeds vary by scenario so the two boards are not correlated.
@@ -330,7 +329,7 @@ func _play(scenario: String, red: StringName, blue: StringName, seed_val: int) -
 	setup.unit_db = unit_db
 	setup.chart = _harness.chart
 	setup.seed_val = seed_val
-	setup.days_cap = _days_cap
+	setup.days_cap = _sample.days_cap
 	setup.commanders = {
 		1: _harness.commander_db.by_id(red),
 		2: _harness.commander_db.by_id(blue),
@@ -441,7 +440,7 @@ func _credit(per_co: Dictionary, id: String, won: bool) -> void:
 
 
 func _write_reports(rows: Array[Dictionary], summary: Dictionary) -> bool:
-	var dir := BalanceReportWriter.prepare_dir(_out_dir)
+	var dir := BalanceReportWriter.prepare_dir(_sample.out_dir)
 	if dir == "":
 		return false
 	return BalanceReportWriter.write_run("balance", dir, "matches.csv", rows, CSV_COLUMNS, summary)
@@ -526,11 +525,11 @@ func _run_difficulty_check() -> void:
 				_fatal("unknown difficulty tier '%s'" % id)
 				return
 
-	var total := DIFFICULTY_PAIRINGS.size() * DIFFICULTY_MAPS.size() * _seed_count * 2
+	var total := DIFFICULTY_PAIRINGS.size() * DIFFICULTY_MAPS.size() * _sample.seeds * 2
 	print(
 		(
 			"difficulty: %d pairings x %d maps x %d seeds x 2 sides -> %d matches"
-			% [DIFFICULTY_PAIRINGS.size(), DIFFICULTY_MAPS.size(), _seed_count, total]
+			% [DIFFICULTY_PAIRINGS.size(), DIFFICULTY_MAPS.size(), _sample.seeds, total]
 		)
 	)
 	var rows: Array[Dictionary] = []
@@ -538,7 +537,7 @@ func _run_difficulty_check() -> void:
 	var done := 0
 	for map_name in DIFFICULTY_MAPS:
 		for pair: Array in DIFFICULTY_PAIRINGS:
-			for s in _seed_count:
+			for s in _sample.seeds:
 				# Paired seeds, same shape as the commander run: both seatings of a
 				# pairing meet on identical luck, so the side-swap is clean.
 				var seed_val := BalanceMatchSchedule.seed_at(map_name, s)
@@ -578,7 +577,7 @@ func _play_tiers(
 	setup.unit_db = unit_db
 	setup.chart = _harness.chart
 	setup.seed_val = seed_val
-	setup.days_cap = _days_cap
+	setup.days_cap = _sample.days_cap
 	setup.tiers = tiers
 	setup.planners = {
 		1: AIController.new(unit_db, difficulty_db.by_id(red_tier).profile()),
@@ -643,7 +642,7 @@ func _turn_times(timing: Dictionary) -> Array:
 func _write_difficulty_reports(
 	rows: Array[Dictionary], summary: Dictionary, turn_times: Array
 ) -> bool:
-	var dir := BalanceReportWriter.prepare_dir(_out_dir)
+	var dir := BalanceReportWriter.prepare_dir(_sample.out_dir)
 	if dir == "":
 		return false
 	var ok := BalanceReportWriter.write_run(
