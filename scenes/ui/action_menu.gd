@@ -261,9 +261,9 @@ func _update_labels() -> void:
 ## became: with nothing persistent left over the map, the only thing a menu has to
 ## stay clear of is the chrome.
 ##
-## How much chrome sits below the board is `MobileDock`'s answer, not a constant
-## here: on a touch build the bottom bar rides up by the dock's height, and a menu
-## clamped against the desktop band covered both.
+## Where that band is, is `MobileDock.board_band`'s answer and never a sum spelled
+## again here: on a touch build the bottom bar rides up by the dock's height, and a
+## menu clamped against the desktop band covered both.
 func _place() -> void:
 	# A PanelContainer grows to fit its rows and never shrinks back on its own, so
 	# a short menu opened where a tall one just was keeps the tall one's panel
@@ -271,17 +271,15 @@ func _place() -> void:
 	# menu is the flow that shows it. Sizing down is also what makes the clamp below
 	# honest: it then measures the panel the player actually sees.
 	reset_size()
-	var view := get_viewport().get_visible_rect().size
+	var band := MobileDock.board_band(get_viewport().get_visible_rect().size)
 	# A menu the band has room for is placed exactly as it always was. One that has
 	# not — the twelve-row build menu on a touch build, where the dock takes another
 	# 28 rows off the band — is cut to a window that fits with the margins on.
-	var band := MobileDock.board_band(view).size.y
-	if size.y > band:
-		_cut_to(band - 2.0 * MARGIN)
+	if size.y > band.size.y:
+		_cut_to(band.size.y - 2.0 * MARGIN)
 		reset_size()
-	var top_left := Vector2(MARGIN, UiTheme.HUD_TOP_H + MARGIN)
-	var below := UiTheme.HUD_BOTTOM_H + MobileDock.height()
-	var max_pos := (view - size - Vector2(MARGIN, below + MARGIN)).max(top_left)
+	var top_left := band.position + Vector2(MARGIN, MARGIN)
+	var max_pos := (band.end - size - Vector2(MARGIN, MARGIN)).max(top_left)
 	position = position.clamp(top_left, max_pos)
 
 
