@@ -153,3 +153,41 @@ func test_threat_cells_pass_the_sight_team_down_to_the_fill() -> void:
 		_has(AttackRange.threat_cells(state, mover, 1), Vector2i(4, 0)),
 		"a ring keyed to team 1 stops at the picket team 1 can see"
 	)
+
+
+## ready_shot no longer routes through can_engage: it keeps the dive rule and
+## drops the chart's coverage question, which select_shot already answers by
+## handing back nothing. These are the three ways it can answer nothing, and each
+## has to stay a null.
+func test_ready_shot_refuses_a_dry_gun_with_no_secondary() -> void:
+	var state := _state("[terrain]\n....\n[units]\n1 g 0 0\n2 i 2 0")
+	var gun := state.units_of(1)[0]
+	assert_not_null(
+		AttackRange.ready_shot(state, gun, state.units_of(2)[0]), "stocked, the shell is ready"
+	)
+	gun.ammo = 0
+	assert_null(
+		AttackRange.ready_shot(state, gun, state.units_of(2)[0]),
+		"artillery owns no secondary, so a dry gun has nothing to fire",
+	)
+
+
+func test_ready_shot_refuses_a_pair_neither_matrix_covers() -> void:
+	var state := _state("[terrain]\n.SSS\n[units]\n1 i 0 0\n2 s 1 0")
+	assert_null(
+		AttackRange.ready_shot(state, state.units_of(1)[0], state.units_of(2)[0]),
+		"a rifle has no entry against a hull in either matrix",
+	)
+
+
+func test_ready_shot_refuses_a_dived_target_it_cannot_reach() -> void:
+	var state := _state("[terrain]\nSSSS\n[units]\n1 B 0 0\n2 s 2 0")
+	var sub := state.units_of(2)[0]
+	assert_not_null(
+		AttackRange.ready_shot(state, state.units_of(1)[0], sub), "on the surface it is a target"
+	)
+	sub.dived = true
+	assert_null(
+		AttackRange.ready_shot(state, state.units_of(1)[0], sub),
+		"a battleship is not built to hunt a submerged boat",
+	)
