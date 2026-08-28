@@ -106,5 +106,5 @@ func _enter_targeting() -> void:
 
 func _refuse(reason: String) -> void:
 	_battle.action_feedback.show_reason(
-		reason, _battle.view.screen_pos_for_cell(_battle.cursor_cell)
+		reason, _battle.view.board_camera.screen_pos_for_cell(_battle.cursor_cell)
 	)
