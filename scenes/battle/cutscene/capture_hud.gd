@@ -102,9 +102,8 @@ func _draw_chips() -> void:
 		var rise := lerpf(0.0, -52.0, p)
 		var alpha := CutsceneFx.ramp(p, [0.0, 0.15, 0.75, 1.0], [0.0, 1.0, 1.0, 0.0])
 		var text := "-%d" % chip_values[i]
-		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
 		var tint := Color(CutscenePalette.GOLD, alpha)
-		CutsceneFx.stroked(self, font, chip_at + Vector2(-w * 0.5, rise), text, 26, tint)
+		CutsceneFx.stroked_centered(self, font, chip_at + Vector2(0.0, rise), text, 26, tint)
 
 
 ## Bits of confetti thrown up when the property flips, in the capturer's accent
@@ -131,11 +130,9 @@ func _draw_banner() -> void:
 	draw_set_transform(center, 0.0, Vector2(scale, scale))
 	var size_main := 40 if banner_complete else 30
 	var tint := CutscenePalette.GOLD if banner_complete else Color(1.0, 1.0, 1.0)
-	var main_w := font.get_string_size(banner_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size_main).x
-	CutsceneFx.stroked(self, font, Vector2(-main_w * 0.5, 0.0), banner_text, size_main, tint)
+	CutsceneFx.stroked_centered(self, font, Vector2.ZERO, banner_text, size_main, tint)
 	if banner_sub != "":
-		var sub_w := font.get_string_size(banner_sub, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
-		CutsceneFx.stroked(
-			self, font, Vector2(-sub_w * 0.5, 24.0), banner_sub, 18, Color(1.0, 1.0, 1.0)
+		CutsceneFx.stroked_centered(
+			self, font, Vector2(0.0, 24.0), banner_sub, 18, Color(1.0, 1.0, 1.0)
 		)
 	draw_set_transform(Vector2.ZERO)
