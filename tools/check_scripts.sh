@@ -223,12 +223,30 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # battle_scenario_driver.gd 737 -> 705: scenes/battle/battle_scenario.gd, the
 # base class the driven scenarios share, took the staging every one of them was
 # repeating. The driver still keeps only the dispatch arms.
+#
+# A third wave leaves the last three entries here measured back down to what the
+# files are now, so every budget is again exactly its file.
+#
+# main_menu.gd 896 -> 778: the Continue slot and the capture flags.
+# scenes/menu/continue_slot.gd owns whether a saved match may be resumed and the
+# words that say so, and the menu's --capture handling went to
+# scenes/menu/menu_capture_driver.gd, which was already the class driving the
+# menu's captures.
+#
+# save_codec.gd 1106 -> 1094: the unit index. Unit.indices_of is the one answer
+# to which entries of a decoded list a command names, so the codec asks it
+# instead of walking the list itself.
+#
+# battle_scenario_driver.gd 705 -> 668: the failure flag, _fail, _fail_if and
+# band_error, all of which the driver and its own scenario classes were each
+# declaring. They are BattleScenario's now; the driver keeps _check_in_band, the
+# reporting wrapper.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1196
-scenes/menu/main_menu.gd 896
-core/save_codec.gd 1106
+scenes/menu/main_menu.gd 778
+core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
-scenes/battle/battle_scenario_driver.gd 705
+scenes/battle/battle_scenario_driver.gd 668
 "
 
 require_godot check
