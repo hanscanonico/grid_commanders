@@ -1,6 +1,6 @@
 # Pins ruff so `ruff check .` and `ruff format --check .` give the same answer
 # on every machine and every ruff release. The generator targets Python 3.10+
-# and depends only on Pillow.
+# and depends on numpy and soundfile.
 target-version = "py310"
 line-length = 88
 

@@ -1,2 +1,8 @@
-numpy
-soundfile
+# Bounded for the reason the sprite generator's Pillow is: the committed WAVs
+# and Oggs are byte-stable output, so a major version that changes rounding or
+# encoding must be an edit here rather than a surprise.
+numpy>=2.0,<3
+soundfile>=0.13,<0.15
+# The lint gate's own tool, so `make generators-venv` builds an interpreter that
+# can run it. Same pin as .github/workflows/verify.yml — move the two together.
+ruff==0.16.2

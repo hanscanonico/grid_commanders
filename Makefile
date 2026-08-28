@@ -394,11 +394,34 @@ audio-test:
 
 # The sprite generator's own merge bar: cell geometry, ramps, phase sheets, the
 # animation manifest and the palette mirrored off the game's own code. Out of
-# `make verify` for the reason `audio-test` is — a Python venv a clone does not
-# have — and CI runs it as its own job.
+# `make verify` because it needs a Python venv a clone of this repo does not
+# have, and because it costs ~240 s — mostly the terrain and paint contract
+# suites, which render sheets to read them back. CI runs it as its own job.
 sprites-test:
 	$(call require-spritegen)
 	cd "$(SPRITEGEN)" && "$(abspath $(SPRITEGEN_PY))" -m unittest discover tests
+
+# Both generators' Python lint gate, each under its own ruff.toml, and the same
+# two commands CI runs. Out of `make verify` with the suites, for the venv.
+generators-lint:
+	$(call require-audiogen)
+	$(call require-spritegen)
+	cd "$(AUDIOGEN)" && "$(abspath $(AUDIOGEN_PY))" -m ruff check . \
+		&& "$(abspath $(AUDIOGEN_PY))" -m ruff format --check .
+	cd "$(SPRITEGEN)" && "$(abspath $(SPRITEGEN_PY))" -m ruff check . \
+		&& "$(abspath $(SPRITEGEN_PY))" -m ruff format --check .
+
+generators-test: audio-test sprites-test
+
+# The snapshot gate: a fresh generation against the art installed under assets/,
+# so a regeneration nobody ran `make tiles` for fails here. Compared pixel for
+# pixel — a different Pillow encodes the same picture into different bytes.
+sprites-snapshot:
+	$(call require-spritegen)
+	@out=$$(mktemp -d) && \
+		"$(SPRITEGEN_PY)" "$(SPRITEGEN)/sprite_generator.py" -o "$$out" && \
+		"$(SPRITEGEN_PY)" "$(SPRITEGEN)/tests/check_snapshots.py" "$$out"; \
+		status=$$?; rm -rf "$$out"; exit $$status
 
 # Holds every shipped campaign to the bar a playable mission clears. Run it after
 # authoring a mission; what it refuses is listed in docs/campaign_authoring.md.
@@ -495,7 +518,8 @@ mobile-soak:
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	audio audio-test sprites-test generators-venv portraits portraits-check import campaign-difficulty export-android export-ios \
+	audio audio-test sprites-test sprites-snapshot generators-lint generators-test \
+	generators-venv portraits portraits-check import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns legibility-check mobile-soak
