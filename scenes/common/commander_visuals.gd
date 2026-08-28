@@ -245,12 +245,12 @@ static func face_for(commander: CommanderType) -> Texture2D:
 
 ## A faction's emblem. Neutral has none, so callers gate on the theme key; asked
 ## anyway it falls back like a portrait does.
-static func emblem_for_key(key: StringName) -> Texture2D:
+static func _emblem_for_key(key: StringName) -> Texture2D:
 	return _cached("%s/%s.png" % [FACTION_DIR, key], func() -> Texture2D: return _fallback_emblem())
 
 
 static func emblem_for(commander: CommanderType) -> Texture2D:
-	return emblem_for_key(theme_for(commander).key)
+	return _emblem_for_key(theme_for(commander).key)
 
 
 ## Loads `path` through a small cache, calling `on_missing` for the fallback when

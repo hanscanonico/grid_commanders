@@ -49,13 +49,13 @@ func is_narration() -> bool:
 ## Is this line said, on the ledger as it stands? A line with no condition always
 ## is, which is what leaves every mission authored before the ledger rendering
 ## exactly as it did.
-func is_spoken(ledger: CampaignState) -> bool:
+func _is_spoken(ledger: CampaignState) -> bool:
 	if requires != null and not requires.holds(ledger):
 		return false
 	return unless == null or not unless.holds(ledger)
 
 
-func is_conditional() -> bool:
+func _is_conditional() -> bool:
 	return requires != null or unless != null
 
 
@@ -81,7 +81,7 @@ func conditions() -> Array[FlagCondition]:
 static func spoken(lines: Array[MissionLine], ledger: CampaignState) -> Array[MissionLine]:
 	var said: Array[MissionLine] = []
 	for line: MissionLine in lines:
-		if line != null and line.is_spoken(ledger):
+		if line != null and line._is_spoken(ledger):
 			said.append(line)
 	return said
 
@@ -103,12 +103,12 @@ static func list_error(
 	for line: MissionLine in lines:
 		if line == null:
 			return "an empty story line"
-		if line.is_conditional() and not variants_allowed:
+		if line._is_conditional() and not variants_allowed:
 			return "a line the ledger gates; gate the beat with a Flag trigger instead"
 		var error := line.definition_error(commander_db)
 		if error != "":
 			return error
-		always_said = always_said or not line.is_conditional()
+		always_said = always_said or not line._is_conditional()
 	if not lines.is_empty() and not always_said:
 		return (
 			"every line here is gated by the ledger; "

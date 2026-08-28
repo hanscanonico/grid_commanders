@@ -157,9 +157,9 @@ func set_speed(id: StringName) -> void:
 		_save()
 
 
-## Changes the volume, applies it to the master bus and writes it back. The only
-## way the volume ever moves. Mirrors set_speed, and like it a pinned or scripted
-## launch (see --mute) never touches the file.
+## Changes the volume, applies it to the master bus and writes it back. Its one
+## caller is `cycle_row`'s Sound row; `pin` and `--mute` stand the field itself.
+## Mirrors set_speed, and like it a pinned or scripted launch never writes the file.
 func set_volume(id: StringName) -> void:
 	volume = id if volume_index(id) >= 0 else FULL_ID
 	_apply_volume()
@@ -258,8 +258,9 @@ func set_menu_animations(enabled: bool) -> void:
 		_save()
 
 
-## The setter the End-turn check row is wired to. Mirrors set_battle_animations,
-## down to a pinned or scripted launch leaving the file alone.
+## Flips the End-turn check, reached through `cycle_row`'s row of that name.
+## Mirrors set_battle_animations, down to a pinned or scripted launch leaving the
+## file alone.
 func set_end_turn_confirm(enabled: bool) -> void:
 	end_turn_confirm = enabled
 	if _persistent:

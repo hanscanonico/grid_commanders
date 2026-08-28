@@ -234,7 +234,7 @@ func muzzle_points() -> PackedVector2Array:
 	var points := PackedVector2Array()
 	var arena := _arena()
 	for slot in squad_now:
-		var at := figure_point(arena, slot) + Vector2(_inward(22.0), -34.0)
+		var at := _figure_point(arena, slot) + Vector2(_inward(22.0), -34.0)
 		points.append(at + Vector2(0.0, _altitude(slot, 0.0)))
 	return points
 
@@ -244,7 +244,7 @@ func muzzle_points() -> PackedVector2Array:
 ## The formation is laid out from its own middle rather than from its outermost
 ## figure: the posted squad's span is measured off `squad_was` and halved, so
 ## every size stays centred on SQUAD_CENTER.
-func figure_point(arena: Rect2, slot: int) -> Vector2:
+func _figure_point(arena: Rect2, slot: int) -> Vector2:
 	var offset: Vector2 = SLOTS[clampi(slot, 0, SLOTS.size() - 1)]
 	var span: float = SLOTS[clampi(squad_was - 1, 0, SLOTS.size() - 1)].x
 	return Vector2(
@@ -417,7 +417,7 @@ func _draw_squad(arena: Rect2) -> void:
 	# closes, so the run has to be long enough for all of them to finish it.
 	var reach := 1.0 + TOPPLE_STAGGER * maxf(posted - squad_now - 1, 0.0)
 	for slot in range(posted - 1, -1, -1):
-		var ground := figure_point(arena, slot)
+		var ground := _figure_point(arena, slot)
 		var toppling := slot >= squad_now
 		var fall := 0.0
 		if toppling:

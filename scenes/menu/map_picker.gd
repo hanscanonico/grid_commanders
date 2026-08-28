@@ -91,14 +91,14 @@ func maps() -> Array[MapData]:
 	return _maps
 
 
-func map_at(index: int) -> MapData:
+func _map_at(index: int) -> MapData:
 	if index < 0 or index >= _maps.size():
 		return null
 	return _maps[index]
 
 
 func selected_map() -> MapData:
-	return map_at(_selected_map)
+	return _map_at(_selected_map)
 
 
 ## The facts line under the grid. Named in the menu's capture chrome and read
@@ -119,7 +119,7 @@ func select(index: int) -> void:
 		_style_map_cell(_map_cells[i], _map_marks[i], i, i == index)
 	if index < _map_cells.size():
 		_map_scroll.ensure_control_visible(_map_cells[index])
-	refresh_facts()
+	_refresh_facts()
 	map_selected.emit(index)
 
 
@@ -136,7 +136,7 @@ func show_map(index: int) -> void:
 
 ## Header and persistent caption, read off the board itself so no hand-kept table
 ## can drift from it. Tooltips repeat the facts but are never required to choose.
-func refresh_facts() -> void:
+func _refresh_facts() -> void:
 	var map := selected_map()
 	if map == null:
 		_map_header.text = ""
@@ -198,7 +198,7 @@ static func cell_name(map: MapData, selected: bool) -> String:
 	return name_text
 
 
-## The caption `refresh_facts` shows for `map`, factored out so the budget check
+## The caption `_refresh_facts` shows for `map`, factored out so the budget check
 ## can measure every board without touching `_selected_map`.
 static func caption_text(map: MapData) -> String:
 	var parts := [
