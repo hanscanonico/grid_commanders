@@ -208,12 +208,27 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # scenes/battle/battle_power_scenario.gd takes the eleven power modes and their
 # consts, the way BattleFeedbackScenario and BattleMissionScenario already do,
 # and the driver keeps one dispatch arm.
+#
+# A second wave has since landed under the same rule, and these two entries are
+# it measured back down to what the files are now.
+#
+# battle.gd 1402 -> 1196: five splits nobody claimed the slack from.
+# scenes/battle/battle_power_flow.gd owns the aimed power's whole flow, and
+# scenes/battle/battle_handoff.gd the hot-seat blackout; the commit-and-settle
+# sequence every unit action was spelling out is now one `_run_command`; the
+# legend, the perspective and the camera are asked rather than re-decided; and
+# scenes/battle/battle_targeting.gd owns picking a target. What stays is the
+# scene's own state machine.
+#
+# battle_scenario_driver.gd 737 -> 705: scenes/battle/battle_scenario.gd, the
+# base class the driven scenarios share, took the staging every one of them was
+# repeating. The driver still keeps only the dispatch arms.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1402
+scenes/battle/battle.gd 1196
 scenes/menu/main_menu.gd 896
 core/save_codec.gd 1106
 ai/ai_unit_action_planner.gd 665
-scenes/battle/battle_scenario_driver.gd 737
+scenes/battle/battle_scenario_driver.gd 705
 "
 
 require_godot check
