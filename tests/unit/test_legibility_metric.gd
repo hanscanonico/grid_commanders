@@ -44,13 +44,6 @@ func test_over_with_a_clear_wash_leaves_the_ground() -> void:
 	assert_eq(LegibilityMetric.over(Color(1, 0, 0, 0.0), ground), ground)
 
 
-func test_median_ignores_collection_order() -> void:
-	assert_almost_eq(LegibilityMetric.median(_sample([0.9, 0.1, 0.5])), 0.5, 0.0001)
-	assert_almost_eq(LegibilityMetric.median(_sample([0.1, 0.5, 0.9])), 0.5, 0.0001)
-	assert_almost_eq(LegibilityMetric.median(_sample([0.2, 0.4])), 0.3, 0.0001)
-	assert_eq(LegibilityMetric.median(PackedFloat32Array()), 0.0, "an empty sample has no median")
-
-
 func test_separation_counts_ramp_steps_either_way() -> void:
 	var light := _sample([0.8, 0.8, 0.8])
 	var dark := _sample([0.5, 0.5, 0.5])
@@ -119,7 +112,7 @@ func test_median_colour_is_the_colour_the_value_median_reads() -> void:
 	var middle := LegibilityMetric.median_colour(sample)
 	assert_almost_eq(
 		LegibilityMetric.luminance(middle),
-		LegibilityMetric.median(LegibilityMetric.luminances(sample)),
+		Stats.median(Array(LegibilityMetric.luminances(sample))),
 		0.0001
 	)
 

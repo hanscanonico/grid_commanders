@@ -22,6 +22,10 @@ extends SceneTree
 ## records how the frame clock is read instead — the real scene, headless, with
 ## `--print-fps`.
 ##
+## Every percentile it prints is `Stats.floor_rank`, the rank docs/mobile_soak.md's
+## committed figures were read at: moving this instrument onto `Stats.nearest_rank`
+## owes that document a regenerated soak.
+##
 ## It is an instrument, not a gate: out of `make verify` and `make test`, it
 ## tunes nothing, and it writes nothing but the scratch file the storage clock
 ## times and then removes. docs/mobile_soak.md is the committed record, and —
@@ -183,11 +187,11 @@ func _planner_section() -> void:
 					id,
 					seats,
 					commands.size(),
-					FourArmyLoop.mean(commands),
-					FourArmyLoop.percentile(commands, 0.5),
-					FourArmyLoop.percentile(commands, 0.9),
+					Stats.mean(commands),
+					Stats.floor_rank(commands, 0.5),
+					Stats.floor_rank(commands, 0.9),
 					FourArmyLoop.max_of(commands),
-					FourArmyLoop.mean(turns),
+					Stats.mean(turns),
 					FourArmyLoop.max_of(turns)
 				]
 			)
@@ -255,10 +259,10 @@ func _replay_section() -> void:
 		(
 			"append ms  mean %.3f  p50 %.3f  p90 %.3f  p99 %.3f  max %.3f"
 			% [
-				FourArmyLoop.mean(spents),
-				FourArmyLoop.percentile(spents, 0.5),
-				FourArmyLoop.percentile(spents, 0.9),
-				FourArmyLoop.percentile(spents, 0.99),
+				Stats.mean(spents),
+				Stats.floor_rank(spents, 0.5),
+				Stats.floor_rank(spents, 0.9),
+				Stats.floor_rank(spents, 0.99),
 				FourArmyLoop.max_of(spents)
 			]
 		)

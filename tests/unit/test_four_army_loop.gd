@@ -5,9 +5,8 @@ extends GutTest
 ## copy of it and the copies had drifted — one refused an illegal command out
 ## loud and counted it, the other swallowed it — so what this pins is the
 ## contract both drivers now read their reports off: the row `play` hands back,
-## the callback the soak's clock hangs on, and the arithmetic and the refusal
-## that came with them. Node-free like the rest of `tools/balance/`, so no scene
-## is built.
+## the callback the soak's clock hangs on, and the refusal that came with them.
+## Node-free like the rest of `tools/balance/`, so no scene is built.
 
 ## The four-army fixture the alliance soak plays: small enough to run a handful
 ## of days per test, seated for every grouping.
@@ -95,20 +94,6 @@ func test_a_grouping_is_read_or_refused_out_loud() -> void:
 	assert_push_error("t: --grouping is %s (got 'alliance')" % OPTIONS)
 
 
-## An empty sample reports 0.0 rather than dividing by nothing — the count a
-## report prints beside it is what tells that apart from a real average.
-func test_the_arithmetic_reads_an_empty_sample_as_zero() -> void:
-	assert_eq(FourArmyLoop.mean([]), 0.0)
-	assert_eq(FourArmyLoop.median([]), 0.0)
-
-
-func test_the_mean_and_median_answer_both_sample_sizes() -> void:
-	assert_almost_eq(FourArmyLoop.mean([1, 2, 6]), 3.0, 0.001)
-	assert_almost_eq(FourArmyLoop.median([6, 1, 2]), 2.0, 0.001, "sorted before the middle")
-	assert_almost_eq(FourArmyLoop.median([1, 2, 3, 6]), 2.5, 0.001, "the two middles, averaged")
-	assert_almost_eq(FourArmyLoop.mean([1.5, 2.5]), 2.0, 0.001, "floats too")
-
-
 ## The grouping grammar both drivers state their sides in, read once: `ffa` and
 ## the empty grammar are the free-for-all `GameState.allied` reads as an empty
 ## dictionary, and everything else is seats.
@@ -128,11 +113,8 @@ func test_the_seed_is_the_offset_plus_the_index_plus_one() -> void:
 	assert_eq(FourArmyLoop.seed_at(30, 0), 31, "a rerun extends the sample")
 
 
-## The tail a clock is read by, and the worst value in it.
-func test_the_percentile_and_the_max_read_the_sorted_sample() -> void:
-	assert_eq(FourArmyLoop.percentile([], 0.9), 0.0, "an empty sample")
-	assert_eq(FourArmyLoop.max_of([]), 0.0)
-	assert_almost_eq(FourArmyLoop.percentile([5, 1, 3, 2, 4], 0.5), 3.0, 0.001, "sorted first")
-	assert_almost_eq(FourArmyLoop.percentile([5, 1, 3, 2, 4], 0.9), 4.0, 0.001)
-	assert_almost_eq(FourArmyLoop.percentile([5, 1, 3, 2, 4], 1.0), 5.0, 0.001, "the top")
+## The worst value in a run's sample. The mean, the median and the two ranks a
+## report reads beside it are `Stats`', pinned by test_stats.gd.
+func test_the_max_reads_the_whole_sample() -> void:
+	assert_eq(FourArmyLoop.max_of([]), 0.0, "an empty sample")
 	assert_almost_eq(FourArmyLoop.max_of([1.5, 9.25, 2.0]), 9.25, 0.001)
