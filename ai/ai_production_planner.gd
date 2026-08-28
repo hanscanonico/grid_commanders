@@ -59,10 +59,10 @@ class BuildWants:
 		wants.doctrine_bias = p_doctrine_bias
 		return wants
 
-	func count_of(id: StringName) -> int:
+	func _count_of(id: StringName) -> int:
 		return owned.get(id, 0)
 
-	func bias_of(id: StringName) -> int:
+	func _bias_of(id: StringName) -> int:
 		return doctrine_bias.get(id, 0)
 
 
@@ -226,8 +226,8 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 			return answer
 	if unit_type.can_capture and wants.short_of_capture_units:
 		return RANK_SHORTFALL
-	var duplicates := wants.count_of(unit_type.id) * profile.duplicate_priority_cost
-	var bias := wants.bias_of(unit_type.id)
+	var duplicates := wants._count_of(unit_type.id) * profile.duplicate_priority_cost
+	var bias := wants._bias_of(unit_type.id)
 	if wants.reactive_order.has(unit_type.id):
 		var reactive := wants.reactive_order[unit_type.id]
 		return RANK_PRIORITY + maxi(0, reactive + duplicates + bias)

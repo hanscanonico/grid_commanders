@@ -170,7 +170,7 @@ func composite(
 ## Which tiles a terrain is measured on for one view: every variant its family
 ## offers on the board, and the one paved surface in the cut-in, which redraws
 ## nothing and so has no variant to choose.
-func variants_of(terrain_id: StringName, view: String) -> Array[String]:
+func _variants_of(terrain_id: StringName, view: String) -> Array[String]:
 	if view == CUTIN_VIEW:
 		return [LegibilityArt.ATLAS_VARIANT]
 	var names: Array[String] = []
@@ -214,7 +214,7 @@ static func failures(rows: Array[Dictionary]) -> Array[Dictionary]:
 		func(a: Dictionary, b: Dictionary) -> bool:
 			if margin(a) != margin(b):
 				return margin(a) < margin(b)
-			return key_of(a) < key_of(b)
+			return _key_of(a) < _key_of(b)
 	)
 	return failed
 
@@ -232,15 +232,15 @@ static func failures(rows: Array[Dictionary]) -> Array[Dictionary]:
 ## the two readings that decide membership — and a cell is in the failing set on
 ## the value bar alone.
 static func margin(row: Dictionary) -> float:
-	return maxf(float(row["edge_steps"]) / bar_for(row), float(row["edge_hue"]) / HUE_CLEAR)
+	return maxf(float(row["edge_steps"]) / _bar_for(row), float(row["edge_hue"]) / HUE_CLEAR)
 
 
 ## The ramp-step bar a row is judged against: its own, because the fog class has
 ## a different one.
-static func bar_for(row: Dictionary) -> float:
+static func _bar_for(row: Dictionary) -> float:
 	return (
 		FOG_PASS_STEPS
-		if row["overlay"] == overlay_name(LegibilityComposite.Overlay.FOG)
+		if row["overlay"] == _overlay_name(LegibilityComposite.Overlay.FOG)
 		else PASS_STEPS
 	)
 
@@ -267,7 +267,7 @@ static func hue_carried(rows: Array[Dictionary]) -> int:
 
 
 ## `view:unit:faction:state:terrain:overlay`, the way `--dump` names a cell.
-static func key_of(row: Dictionary) -> String:
+static func _key_of(row: Dictionary) -> String:
 	var fields: Array[String] = []
 	for key in KEYS:
 		fields.append(str(row[key]))
@@ -310,7 +310,7 @@ static func _tally_keyed(
 
 static func _with_fog(rows: Array[Dictionary], keep: bool) -> Array[Dictionary]:
 	var picked: Array[Dictionary] = []
-	var fog := overlay_name(LegibilityComposite.Overlay.FOG)
+	var fog := _overlay_name(LegibilityComposite.Overlay.FOG)
 	for row in rows:
 		if (row["overlay"] == fog) == keep:
 			picked.append(row)
@@ -345,7 +345,7 @@ func _worst_row(
 	view: String
 ) -> Dictionary:
 	var worst := {}
-	for variant in variants_of(terrain_id, view):
+	for variant in _variants_of(terrain_id, view):
 		var candidate := _row(unit_type, row, terrain_id, variant, overlay, exhausted, view)
 		if worst.is_empty() or _worse(candidate, worst):
 			worst = candidate
@@ -389,7 +389,7 @@ func _row(
 		"state": "acted" if exhausted else "ready",
 		"terrain": String(terrain_id),
 		"variant": variant,
-		"overlay": overlay_name(overlay),
+		"overlay": _overlay_name(overlay),
 		"figure": "%.4f" % LegibilityMetric.luminance(figure_median),
 		"ground": "%.4f" % LegibilityMetric.luminance(ground_median),
 		"edge_steps": edge_steps,
@@ -398,11 +398,11 @@ func _row(
 		"hue": snappedf(LegibilityMetric.hue_distance(figure_median, ground_median), 0.01),
 		"verdict": "",
 	}
-	# Through bar_for like every other reader, so the verdict and the gallery's
+	# Through _bar_for like every other reader, so the verdict and the gallery's
 	# order can never be told the fog class apart differently.
-	row_out["verdict"] = "PASS" if edge_steps >= bar_for(row_out) else "FAIL"
+	row_out["verdict"] = "PASS" if edge_steps >= _bar_for(row_out) else "FAIL"
 	return row_out
 
 
-static func overlay_name(overlay: int) -> String:
+static func _overlay_name(overlay: int) -> String:
 	return LegibilityComposite.Overlay.keys()[overlay].to_lower()
