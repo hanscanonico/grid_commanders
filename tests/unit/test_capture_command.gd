@@ -89,7 +89,7 @@ func test_own_property_rejected() -> void:
 
 
 func test_non_property_rejected() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := _state(Fixture.LONE_INFANTRY)
 	var command := CaptureCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]))
 	assert_eq(command.validate(state), "destination is not a property")
 

@@ -95,7 +95,7 @@ func test_path_to_is_contiguous_and_cheapest() -> void:
 
 
 func test_path_to_unreachable_is_empty() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := _state(Fixture.LONE_INFANTRY)
 	var result := MovementResolver.reachable(state, state.units[0])
 	assert_eq(result.path_to(Vector2i(9, 9)), [] as Array[Vector2i])
 

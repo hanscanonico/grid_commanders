@@ -40,12 +40,12 @@ func test_air_attack_reaches_twenty_while_the_power_runs() -> void:
 
 
 func test_land_only_combat_is_bit_identical_to_neutral() -> void:
-	var map_text := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+	var map_text := Fixture.TANK_VS_INFANTRY
 	assert_eq(_damage(_state(map_text)), _damage(_state(map_text, false)))
 
 
 func test_air_superiority_holds_with_no_aircraft() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := _state(Fixture.TANK_VS_INFANTRY)
 	assert_true(CommanderType.neutral().wants_power(state, 1), "contact: the default fires here")
 	assert_false(state.commander_of(1).wants_power(state, 1), "no aircraft, nothing to cover")
 
@@ -63,7 +63,7 @@ func _retuned_domain(state: GameState, domain: StringName) -> PerrinAsh:
 
 
 func test_the_gate_follows_the_configured_superiority_domain() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := _state(Fixture.TANK_VS_INFANTRY)
 	var co := _retuned_domain(state, UnitType.LAND)
 	assert_true(co.wants_power(state, 1), "the army is all of the domain the power now covers")
 

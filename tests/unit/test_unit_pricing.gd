@@ -33,7 +33,7 @@ func _state(map_text: String, pct: int = 100) -> GameState:
 
 
 func test_prices_apply_percentage_round_down_and_floor() -> void:
-	var state := _state("[terrain]\nB.", 83)
+	var state := _state(Fixture.NEUTRAL_BASE, 83)
 	assert_eq(UnitPricing.cost_for(state, 1, unit_db.by_id(&"infantry")), 800)
 	assert_eq(UnitPricing.cost_for(state, 1, unit_db.by_id(&"tank")), 5800)
 	state.set_commander(1, PriceCommander.new(1))
@@ -41,7 +41,7 @@ func test_prices_apply_percentage_round_down_and_floor() -> void:
 
 
 func test_build_command_validates_and_charges_the_authoritative_price() -> void:
-	var state := _state("[terrain]\nB.\n[owners]\n1 0 0", 80)
+	var state := _state(Fixture.OWNED_BASE, 80)
 	state.funds[1] = 800
 	var command := BuildCommand.new(1, unit_db.by_id(&"infantry"), Vector2i.ZERO)
 	assert_eq(command.validate(state), "")
@@ -63,7 +63,7 @@ func test_ai_affordability_uses_the_authoritative_price() -> void:
 
 
 func test_build_menu_prints_and_disables_against_the_authoritative_price() -> void:
-	var state := _state("[terrain]\nB.\n[owners]\n1 0 0", 80)
+	var state := _state(Fixture.OWNED_BASE, 80)
 	state.funds[1] = 799
 	var rows := BattleMenus.build_actions(
 		state, unit_db, state.map.terrain_at(Vector2i.ZERO), 1, SideIdentity.for_game(state)

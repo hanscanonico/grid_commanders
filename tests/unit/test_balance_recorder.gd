@@ -313,7 +313,7 @@ func test_an_army_swept_off_by_an_hq_capture_is_forfeited_rather_than_killed() -
 
 
 func test_army_value_prorates_by_hp() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := _state(Fixture.LONE_TANK)
 	var tank := state.units[0]
 	tank.hp = 50
 	var recorder := _recorder(state)
@@ -364,7 +364,7 @@ func test_reconcile_closes_over_a_match_with_a_kill_a_build_and_a_merge() -> voi
 func test_reconcile_reports_a_census_that_does_not_close() -> void:
 	# Lie to the recorder about what the match started with; the closure must
 	# notice rather than publish a number nobody can trust.
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := _state(Fixture.LONE_INFANTRY)
 	var recorder := _recorder(state)
 	_close(recorder, state)
 	assert_ne(recorder.reconcile(state, {1: 99, 2: 0}), "", "a wrong census must be reported")

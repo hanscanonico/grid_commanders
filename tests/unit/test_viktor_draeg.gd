@@ -28,7 +28,7 @@ func _damage(state: GameState, attacker: Unit, defender: Unit) -> int:
 
 ## Tank MG vs Infantry: 75 * 1.15 * 0.9 = 77.625 -> 78, against 68 flat.
 func test_tanks_hit_harder() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := _state(Fixture.TANK_VS_INFANTRY)
 	assert_eq(_damage(state, state.units[0], state.units[1]), 78)
 
 

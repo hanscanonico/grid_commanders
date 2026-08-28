@@ -64,7 +64,7 @@ func test_combat_banks_for_both_the_attack_and_the_counter() -> void:
 ## A kill charges for the HP the victim actually had, not for whatever overkill
 ## the luck roll produced — otherwise a lucky roll would pay a bonus.
 func test_a_kill_charges_only_for_the_hp_on_the_board() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := _state(Fixture.TANK_VS_INFANTRY)
 	state.rng.seed = 7
 	var defender := state.units[1]
 	defender.hp = 10

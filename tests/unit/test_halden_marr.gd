@@ -48,7 +48,7 @@ func test_shoal_reef_and_port_each_grant_the_shore_star() -> void:
 
 
 func test_the_shore_power_holds_on_a_land_only_board() -> void:
-	var map_text := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+	var map_text := Fixture.TANK_VS_INFANTRY
 	var neutral := _state(map_text, false)
 	assert_true(neutral.commander_of(1).wants_power(neutral, 1))
 	var marr := _state(map_text)
@@ -153,7 +153,7 @@ func test_a_zero_doctrine_weight_ignores_the_shore_advice() -> void:
 
 
 func test_land_only_combat_is_bit_identical_to_neutral() -> void:
-	var map_text := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+	var map_text := Fixture.TANK_VS_INFANTRY
 	var marr := _state(map_text)
 	var neutral := _state(map_text, false)
 	assert_eq(

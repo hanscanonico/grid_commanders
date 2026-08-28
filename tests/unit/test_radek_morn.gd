@@ -50,7 +50,7 @@ func _attack_damage(state: GameState) -> int:
 ## base by 1.05 and his defence the whole chain by (200 - 105) / 100 = 0.95 — Iona
 ## Vance's shape at +3/+3, simply turned up.
 func test_the_attack_and_the_defence_halves_both_count() -> void:
-	var board := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+	var board := Fixture.TANK_VS_INFANTRY
 	assert_eq(_attack_damage(_state(board, 0)), 68, "no commander")
 	assert_eq(_attack_damage(_state(board, 1)), 71, "his tank shooting")
 	assert_eq(_attack_damage(_state(board, 2)), 64, "his infantry being shot at")

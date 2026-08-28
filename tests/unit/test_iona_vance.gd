@@ -33,7 +33,7 @@ func _attack_damage(state: GameState) -> int:
 ## base by 1.03 and her defence the whole chain by (200 - 103) / 100 = 0.97, so
 ## the two move the same shot in opposite directions by comparable amounts.
 func test_the_attack_and_the_defence_halves_both_count() -> void:
-	var board := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+	var board := Fixture.TANK_VS_INFANTRY
 	assert_eq(_attack_damage(_state(board, 0)), 68, "no commander")
 	assert_eq(_attack_damage(_state(board, 1)), 70, "her tank shooting")
 	assert_eq(_attack_damage(_state(board, 2)), 65, "her infantry being shot at")

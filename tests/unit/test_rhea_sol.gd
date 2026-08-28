@@ -51,7 +51,7 @@ func test_indirect_units_are_softer() -> void:
 
 
 func test_direct_units_are_untouched() -> void:
-	var map_text := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+	var map_text := Fixture.TANK_VS_INFANTRY
 	var neutral := _state(map_text, false)
 	var rhea := _state(map_text)
 	assert_eq(

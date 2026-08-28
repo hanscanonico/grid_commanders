@@ -37,7 +37,7 @@ func test_foot_units_hit_harder() -> void:
 
 ## Tank MG vs Infantry on plains: 75 * 0.9 * 0.9 = 60.75 -> 61, against 68 flat.
 func test_vehicles_hit_softer() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := _state(Fixture.TANK_VS_INFANTRY)
 	assert_eq(
 		(
 			CombatResolver
