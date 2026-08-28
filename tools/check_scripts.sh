@@ -136,7 +136,7 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 #
 # battle.gd 1420 -> 1423: the pause menu's Briefing row, and the extraction came
 # first as this file's convention asks. Which words a re-read says and what the
-# board does while they are up is BattleCampaign.say_briefing's, holding the card
+# board does while they are up is BattleCampaign._say_briefing's, holding the card
 # until it is dismissed is BattleAnimator's, and what is left here is the three
 # lines of the dispatch branch itself.
 #
