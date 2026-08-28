@@ -40,9 +40,7 @@ func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 		var bounds_error := MissionBoardCheck.off_board(map, cell, "ownership is set on")
 		if bounds_error != "":
 			return bounds_error
-		if not map.terrain_at(cell).is_property:
-			return (
-				"ownership is set on %s, which is %s and belongs to nobody"
-				% [cell, map.terrain_at(cell).id]
-			)
+		var property_error := MissionBoardCheck.property_cell(map, cell, "ownership is set on")
+		if property_error != "":
+			return property_error
 	return ""

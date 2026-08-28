@@ -18,8 +18,4 @@ func is_met(state: GameState, _team: int, _progress: MissionProgress) -> bool:
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if tag == &"":
-		return "destroy objective names no unit"
-	if not board_names(map, tag):
-		return "destroy objective names '%s', which no unit on this board carries" % tag
-	return ""
+	return MissionBoardCheck.named_unit(map, tag, "destroy objective names")

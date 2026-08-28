@@ -62,10 +62,9 @@ func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if tags.is_empty():
 		return "defection names no units"
 	for tag: StringName in tags:
-		if tag == &"":
-			return "defection names an empty tag"
-		if not MissionObjective.board_names(map, tag):
-			return "defection names '%s', which no unit on this board carries" % tag
+		var unit_error := MissionBoardCheck.named_unit(map, tag, "defection names")
+		if unit_error != "":
+			return unit_error
 	return ""
 
 

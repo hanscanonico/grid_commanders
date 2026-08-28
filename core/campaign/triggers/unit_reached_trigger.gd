@@ -24,10 +24,9 @@ func is_met(
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if tag == &"":
-		return "unit-reached trigger names no unit"
-	if not MissionObjective.board_names(map, tag):
-		return "unit-reached trigger names '%s', which no unit on this board carries" % tag
+	var unit_error := MissionBoardCheck.named_unit(map, tag, "unit-reached trigger names")
+	if unit_error != "":
+		return unit_error
 	if cells.is_empty():
 		return "unit-reached trigger names no ground for '%s' to reach" % tag
 	for cell: Vector2i in cells:
