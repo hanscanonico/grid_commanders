@@ -97,7 +97,8 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   term taxes the **advance on the enemy** and nothing else, which is the one goal D5 describes it
   for: `AIPlanningContext.AdvanceGoal.keeps_formation` defaults to **false** and only that goal
   turns it on, so every errand `AIAdvance.goal_for` computes before it (`_errand_goal`) — refit,
-  repair, the besieged home HQ and a property to capture — goes untaxed by construction rather than by a list of exceptions,
+  repair, the besieged home HQ and a property to capture — goes untaxed by construction rather than
+  by a list of exceptions,
   and `_cohesion_penalty` returns zero for them. Both terms count in tiles and the column's pull is
   the stronger, so charging an errand cancels it outright: a wounded unit trails the column and
   never repairs, an infantry sits at the column's edge and takes no ground, and AJ1's diversion
@@ -297,7 +298,8 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   boolean "can it still fire" key, which scores maximum standoff and one tile short of it
   identically and so would not have fixed the reported board — what ships is a **rank**
   (`AIAdvance.position_rank` against the enemy the unit is orienting on, reached from the
-  planner's `_standoff_rank`), under safety and over repair, reaching indirect units only. `withdraw_weight` keeps its shipped `0.0` throughout (the
+  planner's `_standoff_rank`), under safety and over repair, reaching indirect units only.
+  `withdraw_weight` keeps its shipped `0.0` throughout (the
   difficulty plan's D2 owns tier numbers), so AR6d is inert in every shipped tier.
   AR6a–AR6c are the rest of that shelf, three dials on `AIProfile` — `cover_tiles`,
   `condition_weight`, `join_weight` — on the AI Judgement D1 contract they inherit whole: **`0.0` on
@@ -533,7 +535,8 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   allegiance word, asked of `GameState.allied` and relative to `BattlePerspective.viewing_team()`,
   never to whoever holds the turn.
   D7: **`Battle.last_human_team` is the one key for both the viewer and the handoff**, read by
-  `BattleHandoff`, which owns the blackout — while a computer plays, the board renders through the fog of the human who played last, information they
+  `BattleHandoff`, which owns the blackout — while a computer plays, the board renders through the
+  fog of the human who played last, information they
   already had; a human turn blacks out whenever the previous *human* seat was someone else, across
   any number of intervening AI turns. One human at the table is never asked to hand the device to
   themselves, and two humans hot-seating gate exactly as they did before four armies.

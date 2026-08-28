@@ -1064,7 +1064,8 @@ plan is stated in full below and has no copy there.
   holding a conquered HQ must not be beheadable through it. Recorded by `create` from the map's
   starting ownership (`Seating.home_hqs` is the one derivation, read off the *map* because
   mid-match "the HQ this team owns" has two answers exactly when it matters, and stored as
-  `GameState.home_hq`), and carried in save v7 — the map derives the same answer, so what persisting it buys is the **pin**: a save whose
+  `GameState.home_hq`), and carried in save v7 — the map derives the same answer, so what
+  persisting it buys is the **pin**: a save whose
   board has since moved an HQ is refused rather than silently re-homed, which
   `SaveBoardCheck._home_hq_board_error` enforces cell by cell. Every other HQ is a high-value
   property with HQ terrain stars, captured like a city.
@@ -1319,7 +1320,8 @@ plan is stated in full below and has no copy there.
   every story line's speaker is on the roster (`story_error`), the launch builds, every
   scripted effect is asked `MissionDefinition.events_board_error` against the board the mission
   **opens on** — an authority `tests/unit/test_campaign_content.gd` asks too, so `make verify` sees
-  it as well — the one question `definition_error` cannot ask, a map dealing every seat it names while a mission may
+  it as well — the one question `definition_error` cannot ask, a map dealing every seat it names
+  while a mission may
   have closed some of them — and the campaign is asked `ledger_error` for the facts its content
   reads (CD4, above) and `carry_error` for a mission that carries an army in behind one that carries
   none out (CD5, above; the per-mission half — a refit floor no unit could reach, a carry slot on
@@ -1759,7 +1761,8 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   same team), asked by `LoadCommand.validate` before a board and by `SaveCodec` per wired carrier
   link — while the codec kept its own opinion, a hand-edited save could seat a battleship in an
   infantry. `core/grid.gd` (`Grid.manhattan`, and `Grid.ring_offsets` for the Manhattan diamond
-  every ring is cut to) is the smallest of them and the one every layer touches: this board measures distance four-directionally everywhere — movement, every firing
+  every ring is cut to) is the smallest of them and the one every layer touches: this board
+  measures distance four-directionally everywhere — movement, every firing
   ring, sight, supply reach, the planner's goals — so ask it rather than spelling the arithmetic
   again.
 - **Movement domains are data, not code.** A move class is a key in each terrain's `move_costs`
@@ -1781,7 +1784,8 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   geometry delegated to `AttackRange`, typed transport drop options, and how much of a unit's reach
   and fire ring an overlay may show (that rule is the range-preview plan's, above). `Battle`,
   `BattleView`, `BattleAnimator`, `BattleCommandPipeline`, `BattleTargeting`, `BattleHandoff` and
-  `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private helper, and the runner drives AI
+  `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private
+  helper, and the runner drives AI
   turns through `Battle`'s own named entry points.
 - **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`
   (`BattleCommandPipeline`) is the only live-scene owner of command validation, application and
