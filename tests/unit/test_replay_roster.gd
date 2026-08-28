@@ -89,6 +89,27 @@ func test_every_known_name_rebuilds_from_a_line_carrying_only_its_required_keys(
 		)
 
 
+func test_a_command_the_format_cannot_name_is_refused_out_loud() -> void:
+	var state := Fixture.state("[terrain]\n....\n....\n[units]\n1 i 0 0")
+	assert_eq(
+		ReplayCodec.encode_command(state, Command.new()),
+		{},
+		"an unnamed command must encode to nothing rather than to a kindless line"
+	)
+	assert_push_error("has no name in this format")
+
+
+func test_a_command_the_format_cannot_name_records_no_line() -> void:
+	var state := Fixture.state("[terrain]\n....\n....\n[units]\n1 i 0 0")
+	var recorder := ReplayRecorder.new()
+	recorder.begin(state, [])
+	var before := recorder.lines().duplicate()
+	recorder.before_apply(state, Command.new())
+	recorder.after_apply(state)
+	assert_push_error("has no name in this format")
+	assert_eq(recorder.lines(), before, "an unnamed command must leave the recording untouched")
+
+
 ## The smallest line of `kind` this build accepts: `c` plus exactly the fields
 ## `REQUIRED_KEYS` asks for, on the board above — one infantry at the origin, so
 ## every movement kind has an actor to name.

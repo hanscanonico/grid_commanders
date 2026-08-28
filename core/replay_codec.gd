@@ -162,8 +162,21 @@ static func header_error(line: Dictionary) -> String:
 ## Takes the state because of the drop passenger above, and takes it *before*
 ## `apply` for the same reason. Everything else here is read off the command
 ## itself.
+##
+## Empty (with a pushed error) for a command the format does not name: a line
+## with no kind cannot be re-issued, so the recording it would sit in is
+## unplayable, and the caller drops the line rather than writing one.
 static func encode_command(state: GameState, command: Command) -> Dictionary:
-	var entry := {"c": name_of(command)}
+	var kind := name_of(command)
+	if kind.is_empty():
+		push_error(
+			(
+				"ReplayCodec: %s has no name in this format, so the recording would be unplayable"
+				% _class_label(command)
+			)
+		)
+		return {}
+	var entry := {"c": kind}
 	if command is MissionEventCommand:
 		entry["event"] = String((command as MissionEventCommand).event.id)
 		return entry
@@ -316,6 +329,15 @@ static func name_of(command: Command) -> String:
 	return ""
 
 
+## What to call a command in an error. Its `class_name` where it has one, and the
+## engine class behind it otherwise — a subclass with no global name is exactly
+## the case the refusal above exists for.
+static func _class_label(command: Command) -> String:
+	var script: Script = command.get_script()
+	var named := str(script.get_global_name()) if script != null else ""
+	return named if not named.is_empty() else command.get_class()
+
+
 static func _cargo_index(state: GameState, drop: DropCommand) -> int:
 	if drop.passenger == null:
 		return NO_PASSENGER
@@ -363,7 +385,7 @@ static func checkpoint(state: GameState) -> int:
 		var co_state := state.commander_state(team)
 		digest = _mix(digest, co_state.charge)
 		digest = _mix(digest, 1 if co_state.power_active else 0)
-	var carrier_indices := _unit_indices(state)
+	var carrier_indices := Unit.indices_of(state.units)
 	for unit in state.units:
 		digest = _mix_text(digest, String(unit.type.id))
 		for value: int in [
@@ -386,18 +408,6 @@ static func checkpoint(state: GameState) -> int:
 		digest = _mix(digest, key)
 		digest = _mix(digest, int(state.capture_progress[_uncell(key)]))
 	return digest
-
-
-## `unit -> index` in `state.units`, built once per `checkpoint` call rather
-## than re-scanned for every one of the n units it digests — the same shape
-## MovementResolver._occupants is waived for (CLAUDE.md). A unit with no
-## carrier is simply absent as a key, so the lookup below falls back to -1
-## exactly as `Array.find` did.
-static func _unit_indices(state: GameState) -> Dictionary:
-	var indices: Dictionary = {}
-	for i in state.units.size():
-		indices[state.units[i]] = i
-	return indices
 
 
 ## Cell keys of a table as sortable integers, ascending. Packed rather than sorted

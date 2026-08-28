@@ -79,10 +79,16 @@ func begin(
 		_lines.append(_header)
 
 
-## Called once a command has been validated and is about to be applied.
+## Called once a command has been validated and is about to be applied. A command
+## the format cannot name leaves nothing pending, so the line is dropped by
+## `after_apply` rather than written without a kind.
 func before_apply(state: GameState, command: Command) -> void:
+	var encoded := ReplayCodec.encode_command(state, command)
+	if encoded.is_empty():
+		_pending = {}
+		return
 	_pending = {"n": _seq, "d": state.day, "t": state.current_team}
-	_pending.merge(ReplayCodec.encode_command(state, command))
+	_pending.merge(encoded)
 
 
 ## Called once it has been. Silent when nothing is pending, so a caller that

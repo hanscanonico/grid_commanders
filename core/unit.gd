@@ -55,6 +55,18 @@ static func create(p_type: UnitType, p_team: int, p_cell: Vector2i) -> Unit:
 	return unit
 
 
+## `unit -> index` in the list, built once by a caller that would otherwise
+## re-scan for every one of the n units it writes — the same shape
+## MovementResolver._occupants is waived for (CLAUDE.md). Both codecs read a
+## carrier through it, and a unit with no carrier is simply absent as a key, so
+## each caller's own `get` fallback stands in for `Array.find`'s -1.
+static func indices_of(units: Array[Unit]) -> Dictionary[Unit, int]:
+	var indices: Dictionary[Unit, int] = {}
+	for i in units.size():
+		indices[units[i]] = i
+	return indices
+
+
 func displayed_hp() -> int:
 	return ceili(hp / 10.0)
 
