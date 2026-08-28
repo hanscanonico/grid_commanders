@@ -267,6 +267,37 @@ static func army_value(state: GameState, team: int) -> int:
 	return total
 
 
+## The closing board in the column vocabulary every preset over this loop reports
+## it in — the Balance Lab, the commander matrix and the arena shard all merge
+## their own keys over this one dictionary.
+##
+## One spelling because `BalanceReportWriter.write_csv` answers a column no row
+## carries with a blank cell rather than refusing the run, so a key that drifted
+## in one driver writes an hour of empty columns and says nothing.
+##
+## `cap_stall` is 1/0, the form both CSV presets carry. The arena keeps the bool
+## its `matches.json` is read back as (`ArenaFitness`) and overrides this key.
+static func outcome_row(outcome: Outcome) -> Dictionary:
+	var state := outcome.state
+	return {
+		"winner": outcome.winner,
+		"termination": outcome.termination,
+		"day_ended": outcome.day_ended,
+		"commands": outcome.commands,
+		"rejected": outcome.rejected,
+		"cap_stall": 1 if outcome.cap_stall else 0,
+		"turn_cap_hits": outcome.turn_cap_hits,
+		"red_units": state.units_of(1).size(),
+		"blue_units": state.units_of(2).size(),
+		"red_props": state.properties_of(1).size(),
+		"blue_props": state.properties_of(2).size(),
+		"red_funds": int(state.funds.get(1, 0)),
+		"blue_funds": int(state.funds.get(2, 0)),
+		"red_army_value": army_value(state, 1),
+		"blue_army_value": army_value(state, 2),
+	}
+
+
 static func swap_team(team: int) -> int:
 	if team == 1:
 		return 2

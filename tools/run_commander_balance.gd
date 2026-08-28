@@ -253,20 +253,20 @@ func _assert_map_symmetric(name: String, map: MapData) -> bool:
 			var b := Vector2i(w - 1 - x, h - 1 - y)
 			if map.terrain_at(a).id != map.terrain_at(b).id:
 				return _fatal("board '%s' terrain not symmetric at %s vs %s" % [name, a, b])
-			if state.owner_at(a) != _swap_team(state.owner_at(b)):
+			if state.owner_at(a) != BalanceMatchEngine.swap_team(state.owner_at(b)):
 				return _fatal("board '%s' ownership not mirror-symmetric at %s" % [name, a])
 	for unit in state.units:
 		var mirror := Vector2i(w - 1 - unit.cell.x, h - 1 - unit.cell.y)
 		var twin := state.unit_at(mirror)
-		if twin == null or twin.team != _swap_team(unit.team) or twin.type.id != unit.type.id:
+		if (
+			twin == null
+			or twin.team != BalanceMatchEngine.swap_team(unit.team)
+			or twin.type.id != unit.type.id
+		):
 			return _fatal(
 				"board '%s' unit %s at %s has no mirror" % [name, unit.type.id, unit.cell]
 			)
 	return true
-
-
-func _swap_team(team: int) -> int:
-	return BalanceMatchEngine.swap_team(team)
 
 
 func _fatal(message: String) -> bool:
@@ -338,8 +338,7 @@ func _play(scenario: String, red: StringName, blue: StringName, seed_val: int) -
 	setup.planners = {1: AIController.new(unit_db), 2: AIController.new(unit_db)}
 	var outcome := BalanceMatchEngine.play(setup)
 	_turn_cap_hits += outcome.turn_cap_hits
-	var state := outcome.state
-	return {
+	var row := {
 		"scenario": scenario,
 		"seed": seed_val,
 		"red": String(red),
@@ -349,25 +348,15 @@ func _play(scenario: String, red: StringName, blue: StringName, seed_val: int) -
 		# a row is. matches.csv carries the same column in the Balance Lab, so one
 		# reading of "is this a mirror?" serves both.
 		"mirror": 1 if red == blue else 0,
-		"winner": outcome.winner,
-		"termination": outcome.termination,
-		"day_ended": outcome.day_ended,
-		"commands": outcome.commands,
 		"red_powers": outcome.powers[1],
 		"blue_powers": outcome.powers[2],
 		"red_first_ready": outcome.first_ready[1],
 		"red_first_fired": outcome.first_fired[1],
 		"blue_first_ready": outcome.first_ready[2],
 		"blue_first_fired": outcome.first_fired[2],
-		"red_units": state.units_of(1).size(),
-		"blue_units": state.units_of(2).size(),
-		"red_props": state.properties_of(1).size(),
-		"blue_props": state.properties_of(2).size(),
-		"red_funds": int(state.funds.get(1, 0)),
-		"blue_funds": int(state.funds.get(2, 0)),
-		"rejected": outcome.rejected,
-		"cap_stall": 1 if outcome.cap_stall else 0,
 	}
+	row.merge(BalanceMatchEngine.outcome_row(outcome))
+	return row
 
 
 # --- summary -----------------------------------------------------------------

@@ -179,8 +179,7 @@ func _play(
 	if outcome.state == null:
 		error = "could not build a match on '%s' (%s)" % [pairing.map_name, outcome.termination]
 		return {}
-	var state := outcome.state
-	return {
+	var record := {
 		"match_id": setup.match_id,
 		"map": pairing.map_name,
 		"seed": seed_val,
@@ -189,22 +188,13 @@ func _play(
 		"blue": blue_path,
 		"red_co": red_co if red_co != "" else str(CommanderType.NEUTRAL_ID),
 		"blue_co": blue_co if blue_co != "" else str(CommanderType.NEUTRAL_ID),
-		"winner": outcome.winner,
-		"termination": outcome.termination,
-		"day_ended": outcome.day_ended,
-		"commands": outcome.commands,
-		"rejected": outcome.rejected,
-		"cap_stall": outcome.cap_stall,
-		"turn_cap_hits": outcome.turn_cap_hits,
-		"red_units": state.units_of(1).size(),
-		"blue_units": state.units_of(2).size(),
-		"red_props": state.properties_of(1).size(),
-		"blue_props": state.properties_of(2).size(),
-		"red_funds": int(state.funds.get(1, 0)),
-		"blue_funds": int(state.funds.get(2, 0)),
-		"red_army_value": BalanceMatchEngine.army_value(state, 1),
-		"blue_army_value": BalanceMatchEngine.army_value(state, 2),
 	}
+	record.merge(BalanceMatchEngine.outcome_row(outcome))
+	# matches.json is JSON rather than a CSV column list, and ArenaFitness reads
+	# the stall back as a bool — so the arena keeps its own spelling of the one
+	# key the CSV presets carry as 1/0.
+	record["cap_stall"] = outcome.cap_stall
+	return record
 
 
 ## Names the match by what it is: the board, the two seated candidates in seat

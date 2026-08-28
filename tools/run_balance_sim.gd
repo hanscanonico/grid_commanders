@@ -409,7 +409,7 @@ func _play(job: Job, recorder: BalanceMatchRecorder) -> Dictionary:
 		)
 		return {}
 	var subject_team := 1 if job.subject_side == "red" else 2
-	return {
+	var row := {
 		"match_id": setup.match_id,
 		"sweep_axis": _sweep if _sweep != "" else "matchup",
 		"sweep_value": job.value,
@@ -424,24 +424,11 @@ func _play(job: Job, recorder: BalanceMatchRecorder) -> Dictionary:
 		"blue_tier": String(job.blue.tier),
 		"subject_side": job.subject_side,
 		"subject_won": 1 if outcome.winner == subject_team else 0,
-		"winner": outcome.winner,
-		"termination": outcome.termination,
-		"day_ended": outcome.day_ended,
-		"commands": outcome.commands,
-		"rejected": outcome.rejected,
-		"cap_stall": 1 if outcome.cap_stall else 0,
-		"turn_cap_hits": outcome.turn_cap_hits,
-		"red_units": state.units_of(1).size(),
-		"blue_units": state.units_of(2).size(),
-		"red_props": state.properties_of(1).size(),
-		"blue_props": state.properties_of(2).size(),
-		"red_funds": int(state.funds.get(1, 0)),
-		"blue_funds": int(state.funds.get(2, 0)),
-		"red_army_value": BalanceMatchEngine.army_value(state, 1),
-		"blue_army_value": BalanceMatchEngine.army_value(state, 2),
 		"red_powers": outcome.powers[1],
 		"blue_powers": outcome.powers[2],
 	}
+	row.merge(BalanceMatchEngine.outcome_row(outcome))
+	return row
 
 
 ## A board where the naval domain is actually in play — one that can *build* a
