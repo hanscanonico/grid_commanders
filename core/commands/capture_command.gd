@@ -82,7 +82,7 @@ func apply(state: GameState) -> void:
 	# behind it to fall, and a conqueror holding two must not be beheadable through
 	# the one it took. `home_hq` answers both at once, since it is keyed by the army
 	# and neutral never has an entry.
-	if state.home_hq.get(fallen) == dest:
+	if Seating.is_home(state.home_hq, fallen, dest):
 		state.eliminate(fallen)
 
 

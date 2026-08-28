@@ -67,3 +67,36 @@ func test_a_unit_with_nothing_to_engage_still_advances() -> void:
 		blind,
 		"with nothing engageable anywhere the filtered turn must be the blind one"
 	)
+
+
+func _advance_context(map_text: String) -> AIPlanningContext:
+	var state := Fixture.state(map_text)
+	assert_not_null(state, "the fixture board must build")
+	var context := AIPlanningContext.new(Fixture.unit_db())
+	context.begin(state)
+	return context
+
+
+## The goal is worked out once per command. It scans every visible enemy, and the
+## withdrawal's refuge asks for it twice per unit on top of the advance, so a
+## second call has to be the memo rather than a second walk of the board.
+func test_the_advance_goal_is_answered_once_per_command() -> void:
+	var context := _advance_context(A_BEACH_AND_A_BOAT)
+	var advance := AIAdvance.new(AIProfile.new())
+	var unit := context.state.unit_at(OUR_CRUISER)
+	var first := advance.enemy_goal(context, unit)
+	assert_not_null(first, "the cruiser can see two enemies, so it has a goal")
+	assert_true(
+		first == advance.enemy_goal(context, unit),
+		"the second call must hand back the first answer"
+	)
+
+
+## "Nobody to advance on" costs the same scan as an answer does, so it is
+## remembered too — as a stored null, read back through `has`.
+func test_having_no_enemy_to_advance_on_is_remembered() -> void:
+	var context := _advance_context("[terrain]\n" + "....\n" + "[units]\n1 i 0 0")
+	var advance := AIAdvance.new(AIProfile.new())
+	var unit := context.state.unit_at(Vector2i(0, 0))
+	assert_null(advance.enemy_goal(context, unit), "nothing is visible, so there is no goal")
+	assert_true(context.enemy_goals.has(unit), "the empty answer is memoised as well")

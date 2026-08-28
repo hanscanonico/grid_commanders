@@ -89,7 +89,18 @@ func goal_for(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.Advan
 ## at something it can never shoot. Only a narrowed list with somebody on it is
 ## used — a unit with nothing to engage anywhere still advances, because standing
 ## still reads worse than milling.
+##
+## Memoised in `context.enemy_goals` for the command: the walk below is over every
+## visible enemy, and the withdrawal asks it twice per unit on top of the advance.
 func enemy_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
+	if context.enemy_goals.has(unit):
+		return context.enemy_goals[unit]
+	var goal := _scan_enemy_goal(context, unit)
+	context.enemy_goals[unit] = goal
+	return goal
+
+
+func _scan_enemy_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	var enemy_cells: Array[Vector2i] = []
 	var engageable: Array[Vector2i] = []
 	for other in context.visible_enemies:

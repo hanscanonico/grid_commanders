@@ -164,6 +164,24 @@ func test_a_city_is_defended_less_hard_than_the_home_hq() -> void:
 	)
 
 
+## A factory is defended at a city's price on purpose: the production multiplier
+## is the capture list's alone, and `_property_score` is told so. Same board,
+## weight and progress as the city case above, with that multiplier live — were
+## the denial bonus to take it, the doubled price would swing the guns the way
+## the HQ's own multiplier does at a far lower weight.
+func test_a_factory_is_defended_at_a_citys_price() -> void:
+	var board := "[terrain]\nB....\n.....\n[owners]\n1 0 0\n[units]\n1 t 1 1\n2 i 0 0\n2 t 2 1"
+	var profile := _profile(1.0)
+	profile.production_capture_multiplier = 2.0
+	var command := AIController.new(unit_db, profile).plan_next_command(_state(board, 1))
+	assert_true(command is AttackCommand, "expected an attack, got %s" % command)
+	assert_eq(
+		(command as AttackCommand).target_cell,
+		Vector2i(2, 1),
+		"what the enemy takes is the ground, so a factory is worth a city here"
+	)
+
+
 # --- The advance path ---------------------------------------------------------
 
 

@@ -266,12 +266,25 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 	return total
 
 
+## What a property is worth to take or to hold: the base price, multiplied for a
+## home HQ (losing that one ends the army) and again for ground that builds (AI
+## Economy D4), with the progress chipped out of its owner on top unscaled. The
+## one arithmetic the capture list and the denial bonus are both priced in (AI
+## Judgement D3); the step cost stays outside it, pricing the walk not the ground.
+## The home HQ is the authority's answer, never the terrain id.
+func _property_score(state: GameState, cell: Vector2i, owner: int, produces: bool) -> float:
+	var score := profile.capture_score
+	if Seating.is_home(state.home_hq, owner, cell):
+		score *= profile.hq_capture_multiplier
+	if produces:
+		score *= profile.production_capture_multiplier
+	var points: int = state.capture_progress.get(cell, state.rules_config.capture_points)
+	return score + (state.rules_config.capture_points - points) * profile.capture_progress_bonus
+
+
 ## What shooting `enemy` off ground our own side holds is worth, on top of what
-## the shot is worth on its own. Priced off the capture list read backwards (D3),
-## in its arithmetic and its order: the property is worth what taking it is worth,
-## a home HQ multiplies that price because losing that one ends the army, and the
-## progress already chipped out of us rides on top unscaled, exactly as the
-## progress term does in the capture list.
+## the shot is worth on its own. Priced at what taking that ground would be worth
+## (D3), read backwards.
 ##
 ## Only a capture-capable enemy counts. A tank parked on our city takes nothing
 ## from us, and the danger it poses is the threat map's job — paying for it here
@@ -287,14 +300,8 @@ func _defend_bonus(state: GameState, unit: Unit, enemy: Unit) -> float:
 	var owner := state.owner_at(cell)
 	if not state.allied(owner, unit.team):
 		return 0.0
-	var score := profile.capture_score
-	# Asked of the home-HQ authority, never of the terrain id: an HQ a survivor
-	# conquered fells nobody, so defending it is worth a city and no more.
-	if state.home_hq.has(owner) and state.home_hq[owner] == cell:
-		score *= profile.hq_capture_multiplier
-	var points: int = state.capture_progress.get(cell, state.rules_config.capture_points)
-	score += (state.rules_config.capture_points - points) * profile.capture_progress_bonus
-	return profile.defend_weight * score
+	# A factory is priced as a city here: what the enemy takes is the ground.
+	return profile.defend_weight * _property_score(state, cell, owner, false)
 
 
 ## What taking ground is worth, and — under `capture_threat_aversion` — what
@@ -317,16 +324,9 @@ func _consider_captures(
 		# already the side's, and `CaptureCommand` turns the attempt down.
 		if not terrain.is_property or state.allied(owner, unit.team):
 			continue
-		var score := profile.capture_score
-		# Asked of the home-HQ authority, never of the terrain id: an HQ a survivor
-		# conquered fells nobody, so taking it is worth a city and no more.
-		if state.home_hq.has(owner) and state.home_hq[owner] == cell:
-			score *= profile.hq_capture_multiplier
-		if profile.production_capture_multiplier != 1.0 and AIAdvance.produces(terrain):
-			score *= profile.production_capture_multiplier
-		var points: int = state.capture_progress.get(cell, state.rules_config.capture_points)
+		var produces := profile.production_capture_multiplier != 1.0 and AIAdvance.produces(terrain)
+		var score := _property_score(state, cell, owner, produces)
 		var step_cost: int = reachable.costs[cell]
-		score += (state.rules_config.capture_points - points) * profile.capture_progress_bonus
 		score -= profile.step_cost_penalty * step_cost
 		if profile.capture_threat_aversion > 0.0:
 			if threat == null:
