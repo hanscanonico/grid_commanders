@@ -29,7 +29,6 @@ signal fire_pressed
 ## the button, what a press means is Battle's.
 signal end_turn_pressed
 
-const MAX_DEFENSE_STARS := 4
 const CLASS_LABELS: Dictionary = {
 	TerrainType.FOOT: "Foot",
 	TerrainType.BOOT: "Boot",
@@ -42,7 +41,10 @@ const CLASS_LABELS: Dictionary = {
 
 ## How each side is named and tinted. Battle resolves it once and BattleView
 ## hands it over, so the bar tints a unit through the same resolver the board does.
-var identity: SideIdentity
+var identity: SideIdentity:
+	set(value):
+		identity = value
+		_bind_terrain()
 
 ## The rules' own weapon tables, handed over by BattleView. The bar asks them
 ## whether a unit owns an infinite-ammo secondary rather than reading the
@@ -52,7 +54,10 @@ var chart: DamageChart
 ## What a property overlay stands on (TerrainDB.GROUND_ID), handed over by
 ## BattleView. The atlas draws a building with alpha around it, so the chip
 ## composites the same ground under it the board paints beneath the cell.
-var ground: TerrainType
+var ground: TerrainType:
+	set(value):
+		ground = value
+		_bind_terrain()
 
 var _built := false
 ## The charged shortcut, kept on the bar so the fire control sits with the
@@ -78,12 +83,7 @@ var _pips: HpPips
 var _fuel_label: Label
 var _ammo_label: Label
 
-var _terrain_icon: TextureRect
-## The building standing on `_terrain_icon`'s ground, for a property cell. Empty
-## for every other terrain, which draws its own ground in the icon itself.
-var _terrain_building: TextureRect
-var _terrain_name: Label
-var _terrain_def: Label
+var _terrain: TerrainChip
 
 
 func _ready() -> void:
@@ -230,36 +230,14 @@ func _build_unit(row: HBoxContainer) -> void:
 
 
 func _build_terrain(row: HBoxContainer) -> void:
-	var block := HBoxContainer.new()
-	block.add_theme_constant_override("separation", UiTheme.HUD_GAP_WIDE)
-	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(block)
+	_terrain = TerrainChip.new()
+	row.add_child(_terrain)
+	_bind_terrain()
 
-	_terrain_icon = TextureRect.new()
-	_terrain_icon.custom_minimum_size = Vector2(UiTheme.HUD_TILE_ICON, UiTheme.HUD_TILE_ICON)
-	_terrain_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_terrain_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_terrain_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	block.add_child(_terrain_icon)
 
-	# Both sources are one square atlas cell, so filling the icon's rect lands the
-	# building on its ground exactly as the board's two layers do.
-	_terrain_building = TextureRect.new()
-	_terrain_building.texture_filter = _terrain_icon.texture_filter
-	_terrain_building.expand_mode = _terrain_icon.expand_mode
-	_terrain_building.stretch_mode = _terrain_icon.stretch_mode
-	_terrain_building.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_terrain_building.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_terrain_icon.add_child(_terrain_building)
-
-	var data := VBoxContainer.new()
-	data.add_theme_constant_override("separation", UiTheme.HUD_GAP_HAIR)
-	data.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	block.add_child(data)
-	_terrain_name = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
-	data.add_child(_terrain_name)
-	_terrain_def = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
-	data.add_child(_terrain_def)
+func _bind_terrain() -> void:
+	if _terrain != null:
+		_terrain.bind(identity, ground)
 
 
 # --- the commander third ------------------------------------------------------
@@ -443,33 +421,4 @@ func _order_line(
 
 
 func _show_terrain(terrain: TerrainType, owner_team: int, capture_left: int) -> void:
-	var standing := terrain.is_property and ground != null
-	_terrain_icon.texture = _terrain_texture(ground if standing else terrain, owner_team)
-	_terrain_building.texture = _terrain_texture(terrain, owner_team) if standing else null
-	_terrain_name.text = terrain.display_name.to_upper()
-	var line := "DEF %s" % _stars(terrain.defense_stars)
-	if terrain.is_property:
-		line += " · %s" % identity.display_name(owner_team).to_upper()
-	if capture_left >= 0:
-		line += " · CAP %d" % capture_left
-	_terrain_def.text = line
-
-
-func _stars(count: int) -> String:
-	if count <= 0:
-		return "0"
-	var filled := mini(count, MAX_DEFENSE_STARS)
-	return "★".repeat(filled) + "☆".repeat(MAX_DEFENSE_STARS - filled)
-
-
-## The same artwork the board draws: one cell of the terrain atlas, in the
-## owner's resolved faction row (rows 1+ exist only when team_tinted). The atlas
-## and its cell size are asked of BattleView, which owns them, rather than
-## mirrored here — a mirror is how a bar comes to draw a cell the board has moved.
-func _terrain_texture(terrain: TerrainType, owner_team: int) -> AtlasTexture:
-	var atlas := AtlasTexture.new()
-	atlas.atlas = load(BattleView.ATLAS_PATH)
-	var row: int = identity.atlas_row(owner_team) if terrain.team_tinted else 0
-	var px := BattleView.TERRAIN_PX
-	atlas.region = Rect2(terrain.atlas_col * px, row * px, px, px)
-	return atlas
+	_terrain.show_terrain(terrain, owner_team, capture_left)
