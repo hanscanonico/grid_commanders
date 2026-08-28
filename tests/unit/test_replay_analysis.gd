@@ -3,8 +3,8 @@ extends GutTest
 ## the report itself are test_replay_detectors.gd — the seam this file's section
 ## comments already drew, split when the one file crossed the gdlintrc
 ## max-public-methods ceiling. `missed_capture` is test_replay_capture_chance.gd,
-## split off the same ceiling once it grew a family of cases. All three carry their
-## own copy of the fixture helpers, the same as the four save-codec suites.
+## split off the same ceiling once it grew a family of cases. All three build their
+## boards and read their reports through `ReplayFixture`.
 ##
 ## Each case stands exactly the units its detector is about and hands the walk a
 ## recording made by hand, so a finding here can only come from the thing the test
@@ -12,81 +12,18 @@ extends GutTest
 ## whole instrument's value is that a report says something true about the match,
 ## and a false positive costs more than a miss — it sends the reader looking at a
 ## doctrine that was playing correctly.
-##
-## The board is a file rather than an inline one because a replay stores its
-## opening as a save envelope, which names its map by path.
 
-const BOARD := "res://maps/fixtures/analysis.txt"
-
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
 var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = Fixture.terrain_db()
-	unit_db = Fixture.unit_db()
-	chart = Fixture.chart()
 	commander_db = Fixture.commander_db()
 
 
-## The fixture board with no units on it, ready for a test to stand its own.
-func _bare_state() -> GameState:
-	var map := MapData.load_from_file(BOARD, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	state.map_path = BOARD
-	state.units.clear()
-	return state
-
-
-func _stand(state: GameState, id: StringName, team: int, cell: Vector2i) -> Unit:
-	var unit := Unit.create(unit_db.by_id(id), team, cell)
-	state.units.append(unit)
-	return unit
-
-
-## A recording of `entries` played from `state`. No checkpoints: a hand-made
-## fixture is not describing a board some other build produced, and `drift` takes
-## a line with none on trust for exactly that reason.
-func _replay(state: GameState, entries: Array) -> ReplayCodec.Replay:
-	var replay := ReplayCodec.Replay.new()
-	replay.opening = SaveCodec.encode(state, [] as Array[int])
-	for entry: Dictionary in entries:
-		replay.entries.append(entry)
-	return replay
-
-
 func _run(state: GameState, entries: Array) -> ReplayAnalysis.Report:
-	var report := ReplayAnalysis.run(
-		_replay(state, entries), terrain_db, unit_db, chart, commander_db
-	)
+	var report := ReplayFixture.run(state, entries)
 	assert_eq(report.stopped, "", "the fixture recording must re-issue cleanly")
 	return report
-
-
-func _count(report: ReplayAnalysis.Report, kind: String) -> int:
-	return int(report.counts().get(kind, 0))
-
-
-## The first finding of a kind. Asked for by name rather than by index because a
-## board that trips one detector usually trips another — a side with a purse has a
-## purse whatever else is being tested.
-func _first(report: ReplayAnalysis.Report, kind: String) -> ReplayAnalysis.Finding:
-	for finding in report.findings:
-		if finding.kind == kind:
-			return finding
-	return null
-
-
-## Every finding of a kind one side earned. A streak detector counts per side, and
-## a board with two purses on it has two of them.
-func _for_team(report: ReplayAnalysis.Report, kind: String, team: int) -> Array:
-	var found: Array = []
-	for finding in report.findings:
-		if finding.kind == kind and finding.team == team:
-			found.append(finding)
-	return found
 
 
 ## `turns` full rounds of both sides doing nothing but ending their turn.
@@ -101,14 +38,14 @@ func _idle_rounds(turns: int) -> Array:
 
 
 func test_hoarding_is_money_left_on_an_idle_factory() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 9000
 	# Seat 2 opens broke, but its own properties earn over the three turns the floor
 	# asks for, so the case reads seat 1 rather than the whole report.
 	state.funds[2] = 0
 	var report := _run(state, _idle_rounds(3))
-	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
-	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_eq(ReplayFixture.for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = ReplayFixture.for_team(report, "hoarding", 1)[0]
 	assert_gte(finding.magnitude, 9000)
 	assert_string_contains(finding.detail, str(finding.magnitude))
 
@@ -123,18 +60,18 @@ func test_hoarding_is_money_left_on_an_idle_factory() -> void:
 ## past any price if the walk is given enough turns — an absence of findings would
 ## be reporting the floor rather than the rule.
 func test_a_purse_short_of_a_marked_up_price_is_not_hoarding() -> void:
-	var marked_up := _bare_state()
+	var marked_up := ReplayFixture.board()
 	marked_up.set_commander(1, commander_db.by_id(&"konrad_vale"))
 	marked_up.funds[1] = 1100
 	marked_up.funds[2] = 0
-	var short_report := _for_team(_run(marked_up, _idle_rounds(4)), "hoarding", 1)
+	var short_report := ReplayFixture.for_team(_run(marked_up, _idle_rounds(4)), "hoarding", 1)
 	assert_eq(short_report.size(), 1)
 	assert_eq(short_report[0].day, 2, "day one's purse bought nothing at Vale's price")
 	assert_string_contains(short_report[0].detail, "1200")
-	var sticker := _bare_state()
+	var sticker := ReplayFixture.board()
 	sticker.funds[1] = 1100
 	sticker.funds[2] = 0
-	var open_report := _for_team(_run(sticker, _idle_rounds(4)), "hoarding", 1)
+	var open_report := ReplayFixture.for_team(_run(sticker, _idle_rounds(4)), "hoarding", 1)
 	assert_eq(open_report.size(), 1)
 	assert_eq(open_report[0].day, 1, "the same purse covers the price nobody marks up")
 	assert_string_contains(open_report[0].detail, "1000")
@@ -143,10 +80,10 @@ func test_a_purse_short_of_a_marked_up_price_is_not_hoarding() -> void:
 ## A purse under everything on the board is not a turn spent hoarding, so the
 ## streak opens on the first turn income has carried it over the cheapest build.
 func test_a_purse_too_small_for_anything_does_not_open_a_streak() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 100
 	state.funds[2] = 100
-	var report := _for_team(_run(state, _idle_rounds(4)), "hoarding", 1)
+	var report := ReplayFixture.for_team(_run(state, _idle_rounds(4)), "hoarding", 1)
 	assert_eq(report.size(), 1)
 	assert_eq(report[0].day, 2, "day one's 100 buys nothing at all")
 
@@ -158,12 +95,12 @@ func test_a_purse_too_small_for_anything_does_not_open_a_streak() -> void:
 ## Seat 2 is counted separately and only reported once it has earned its way into
 ## a purse of its own, which is why every case here reads one side.
 func test_a_standing_hoard_is_reported_once_for_the_whole_streak() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 9000
 	state.funds[2] = 0
 	var report := _run(state, _idle_rounds(5))
-	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
-	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_eq(ReplayFixture.for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = ReplayFixture.for_team(report, "hoarding", 1)[0]
 	assert_string_contains(finding.detail, "5 turns")
 	assert_eq(finding.day, 1, "the finding is about where the streak began")
 
@@ -172,10 +109,12 @@ func test_a_standing_hoard_is_reported_once_for_the_whole_streak() -> void:
 ## is the most it ever had sitting idle. Seat 1's two properties earn every turn,
 ## so the purse the walk sees only climbs away from the one it opened with.
 func test_a_hoard_carries_the_peak_of_the_streak() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 9000
 	state.funds[2] = 0
-	var finding: ReplayAnalysis.Finding = _for_team(_run(state, _idle_rounds(3)), "hoarding", 1)[0]
+	var finding: ReplayAnalysis.Finding = (
+		ReplayFixture.for_team(_run(state, _idle_rounds(3)), "hoarding", 1)[0]
+	)
 	assert_gt(finding.magnitude, 9000, "the fixture must actually grow the purse")
 	assert_string_contains(finding.detail, str(finding.magnitude))
 
@@ -185,15 +124,15 @@ func test_a_hoard_carries_the_peak_of_the_streak() -> void:
 ## about half of everything the analyser printed on real recordings, nearly all of
 ## it one and two turn streaks.
 func test_a_two_turn_hoard_is_the_planner_saving_up() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 9000
 	state.funds[2] = 0
-	assert_eq(_count(_run(state, _idle_rounds(2)), "hoarding"), 0)
+	assert_eq(ReplayFixture.count(_run(state, _idle_rounds(2)), "hoarding"), 0)
 
 
 ## A streak that ends is released there, and a later one is a second finding.
 func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 9000
 	state.funds[2] = 0
 	var entries: Array = [
@@ -215,19 +154,19 @@ func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 		{"c": "end_turn"},
 		{"c": "end_turn"},
 	]
-	assert_eq(_for_team(_run(state, entries), "hoarding", 1).size(), 2)
+	assert_eq(ReplayFixture.for_team(_run(state, entries), "hoarding", 1).size(), 2)
 
 
 ## The case the detector exists for: a growing purse and nothing bought out of it,
 ## turn after turn. Both numbers the reader needs are in the one line — how long it
 ## went on and the most that sat there while it did.
 func test_a_rich_side_that_buys_nothing_is_the_reported_case() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 13000
 	state.funds[2] = 0
 	var report := _run(state, _idle_rounds(4))
-	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
-	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_eq(ReplayFixture.for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = ReplayFixture.for_team(report, "hoarding", 1)[0]
 	assert_string_contains(finding.detail, "4 turns")
 	assert_string_contains(finding.detail, str(finding.magnitude))
 	assert_gte(finding.magnitude, 13000)
@@ -239,7 +178,7 @@ func test_a_rich_side_that_buys_nothing_is_the_reported_case() -> void:
 ## every multi-base board it was measured on. Seat 1 buys every turn here and the
 ## far base is free and affordable throughout.
 func test_a_side_that_builds_every_turn_is_not_hoarding() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.funds[1] = 50000
 	state.funds[2] = 0
 	state.set_owner(Vector2i(6, 4), 1)
@@ -256,72 +195,76 @@ func test_a_side_that_builds_every_turn_is_not_hoarding() -> void:
 		entries.append({"c": "end_turn"})
 		entries.append({"c": "end_turn"})
 	var report := _run(state, entries)
-	assert_eq(_for_team(report, "hoarding", 1).size(), 0)
+	assert_eq(ReplayFixture.for_team(report, "hoarding", 1).size(), 0)
 
 
 ## Three of its owner's turns, not three end-turns: the streak is per side, and a
 ## detector that counted rounds would report a unit twice as fast as it says.
 func test_idle_unit_needs_three_of_its_owners_turns() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 1, Vector2i(3, 1))
-	_stand(state, &"infantry", 2, Vector2i(4, 1))  # in reach, so there is something to do
-	assert_eq(_count(_run(state, _idle_rounds(2)), "idle_unit"), 0, "two turns is patience")
+	var state := ReplayFixture.board()
+	ReplayFixture.stand(state, &"infantry", 1, Vector2i(3, 1))
+	ReplayFixture.stand(state, &"infantry", 2, Vector2i(4, 1))  # in reach, so there is something to do
+	assert_eq(
+		ReplayFixture.count(_run(state, _idle_rounds(2)), "idle_unit"), 0, "two turns is patience"
+	)
 	# Two, one per side: each infantry has the other in reach, so both are idle and
 	# both are reported. What the case is about is the third turn, not the count.
-	assert_eq(_count(_run(state, _idle_rounds(3)), "idle_unit"), 2, "three is nobody playing")
+	assert_eq(
+		ReplayFixture.count(_run(state, _idle_rounds(3)), "idle_unit"), 2, "three is nobody playing"
+	)
 
 
 ## Something in reach is not something to do. An infantry has no shot at a fighter
 ## at all — the damage chart has no row for it — so a detector reading a loaded
 ## weapon over an occupied cell reports a unit that was out of answers.
 func test_a_unit_that_cannot_engage_what_is_in_reach_is_not_idle() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	# The far corner, so no property is within the infantry's walk and the fighter
 	# is the only thing it could be reported for.
-	_stand(state, &"infantry", 1, Vector2i(0, 4))
-	_stand(state, &"fighter", 2, Vector2i(1, 4))
-	assert_eq(_for_team(_run(state, _idle_rounds(4)), "idle_unit", 1).size(), 0)
+	ReplayFixture.stand(state, &"infantry", 1, Vector2i(0, 4))
+	ReplayFixture.stand(state, &"fighter", 2, Vector2i(1, 4))
+	assert_eq(ReplayFixture.for_team(_run(state, _idle_rounds(4)), "idle_unit", 1).size(), 0)
 
 
 func test_a_unit_with_nothing_in_reach_is_not_idle() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	# A lone tank: it cannot capture, and there is no enemy anywhere to shoot.
-	_stand(state, &"tank", 1, Vector2i(4, 1))
-	assert_eq(_count(_run(state, _idle_rounds(4)), "idle_unit"), 0)
+	ReplayFixture.stand(state, &"tank", 1, Vector2i(4, 1))
+	assert_eq(ReplayFixture.count(_run(state, _idle_rounds(4)), "idle_unit"), 0)
 
 
 func test_banked_power_counts_a_full_meter_nobody_fires() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	var db := Fixture.commander_db()
 	state.set_commander(1, db.by_id(&"alina_ward"))
 	var co_state := state.commander_state(1)
 	co_state.charge = co_state.type.power_cost
 	assert_true(co_state.is_ready(), "the fixture must actually hold a charged power")
-	assert_eq(_count(_run(state, _idle_rounds(2)), "banked_power"), 0)
+	assert_eq(ReplayFixture.count(_run(state, _idle_rounds(2)), "banked_power"), 0)
 	var short_hold := _run(state, _idle_rounds(3))
-	assert_eq(_count(short_hold, "banked_power"), 1)
-	assert_eq(_first(short_hold, "banked_power").magnitude, 3)
+	assert_eq(ReplayFixture.count(short_hold, "banked_power"), 1)
+	assert_eq(ReplayFixture.first(short_hold, "banked_power").magnitude, 3)
 	# One uninterrupted hold is one finding however long it runs: holding a meter
 	# all match is what a benefit-gated doctrine does on purpose. The number it
 	# reports is the length it ran to, released here by the recording ending.
 	var long_hold := _run(state, _idle_rounds(9))
-	assert_eq(_count(long_hold, "banked_power"), 1)
-	assert_eq(_first(long_hold, "banked_power").magnitude, 9)
-	assert_string_contains(_first(long_hold, "banked_power").detail, "for 9 turns")
+	assert_eq(ReplayFixture.count(long_hold, "banked_power"), 1)
+	assert_eq(ReplayFixture.first(long_hold, "banked_power").magnitude, 9)
+	assert_string_contains(ReplayFixture.first(long_hold, "banked_power").detail, "for 9 turns")
 
 
 ## Latched, not silenced: a hold that really breaks is a second finding. Firing
 ## is the only way a meter comes down, so the break here is the whole cycle —
 ## spent, then charged back up by what seat 2's bomber destroys.
 func test_banked_power_reports_again_after_the_hold_breaks() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	state.set_commander(1, commander_db.by_id(&"sera_lark"))
 	var co_state := state.commander_state(1)
 	co_state.charge = co_state.type.power_cost
-	_stand(state, &"tank", 1, Vector2i(4, 1))
-	_stand(state, &"tank", 1, Vector2i(4, 3))
-	_stand(state, &"infantry", 1, Vector2i(0, 4))  # so the kills do not end the match
-	_stand(state, &"bomber", 2, Vector2i(4, 2))
+	ReplayFixture.stand(state, &"tank", 1, Vector2i(4, 1))
+	ReplayFixture.stand(state, &"tank", 1, Vector2i(4, 3))
+	ReplayFixture.stand(state, &"infantry", 1, Vector2i(0, 4))  # so the kills do not end the match
+	ReplayFixture.stand(state, &"bomber", 2, Vector2i(4, 2))
 	var entries := _idle_rounds(3)
 	entries.append_array([{"c": "power", "target": [0, 0]}, {"c": "end_turn"}])
 	# Two runs at the armour: seat 1 banks what it loses, which refills the meter.
@@ -330,67 +273,67 @@ func test_banked_power_reports_again_after_the_hold_breaks() -> void:
 		entries.append({"c": "end_turn"})
 		entries.append({"c": "end_turn"})
 	entries.append_array(_idle_rounds(3))
-	assert_eq(_count(_run(state, entries), "banked_power"), 2)
+	assert_eq(ReplayFixture.count(_run(state, entries), "banked_power"), 2)
 
 
 func test_a_power_that_goes_off_resets_the_count() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	var db := Fixture.commander_db()
 	state.set_commander(1, db.by_id(&"alina_ward"))
 	state.commander_state(1).charge = state.commander_state(1).type.power_cost
 	var entries: Array = [{"c": "power", "target": [0, 0]}, {"c": "end_turn"}]
 	entries.append_array(_idle_rounds(2))
-	assert_eq(_count(_run(state, entries), "banked_power"), 0)
+	assert_eq(ReplayFixture.count(_run(state, entries), "banked_power"), 0)
 
 
 func test_stranded_transport_is_cargo_nobody_puts_down() -> void:
-	var state := _bare_state()
-	var apc := _stand(state, &"apc", 1, Vector2i(4, 1))
-	var rider := _stand(state, &"infantry", 1, Vector2i(4, 1))
+	var state := ReplayFixture.board()
+	var apc := ReplayFixture.stand(state, &"apc", 1, Vector2i(4, 1))
+	var rider := ReplayFixture.stand(state, &"infantry", 1, Vector2i(4, 1))
 	rider.carrier = apc
-	assert_eq(_count(_run(state, _idle_rounds(2)), "stranded_transport"), 0)
-	assert_eq(_count(_run(state, _idle_rounds(3)), "stranded_transport"), 1)
+	assert_eq(ReplayFixture.count(_run(state, _idle_rounds(2)), "stranded_transport"), 0)
+	assert_eq(ReplayFixture.count(_run(state, _idle_rounds(3)), "stranded_transport"), 1)
 
 
 func test_an_empty_transport_is_not_stranded() -> void:
-	var state := _bare_state()
-	_stand(state, &"apc", 1, Vector2i(4, 1))
-	assert_eq(_count(_run(state, _idle_rounds(4)), "stranded_transport"), 0)
+	var state := ReplayFixture.board()
+	ReplayFixture.stand(state, &"apc", 1, Vector2i(4, 1))
+	assert_eq(ReplayFixture.count(_run(state, _idle_rounds(4)), "stranded_transport"), 0)
 
 
 func test_undefended_hq_is_an_enemy_in_reach_of_home_with_no_answer() -> void:
-	var state := _bare_state()
+	var state := ReplayFixture.board()
 	# Seat 2's infantry a step from seat 1's home HQ at (0, 0); seat 1 has nothing
 	# anywhere near it.
-	_stand(state, &"infantry", 2, Vector2i(1, 1))
-	_stand(state, &"infantry", 1, Vector2i(7, 1))
+	ReplayFixture.stand(state, &"infantry", 2, Vector2i(1, 1))
+	ReplayFixture.stand(state, &"infantry", 1, Vector2i(7, 1))
 	var report := _run(state, [{"c": "end_turn"}])
-	assert_eq(_count(report, "undefended_hq"), 1)
-	assert_string_contains(_first(report, "undefended_hq").detail, "(0, 0)")
+	assert_eq(ReplayFixture.count(report, "undefended_hq"), 1)
+	assert_string_contains(ReplayFixture.first(report, "undefended_hq").detail, "(0, 0)")
 
 
 func test_an_hq_something_can_get_back_to_is_not_undefended() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 2, Vector2i(1, 1))
-	_stand(state, &"infantry", 1, Vector2i(0, 1))  # standing on the doorstep
-	assert_eq(_count(_run(state, [{"c": "end_turn"}]), "undefended_hq"), 0)
+	var state := ReplayFixture.board()
+	ReplayFixture.stand(state, &"infantry", 2, Vector2i(1, 1))
+	ReplayFixture.stand(state, &"infantry", 1, Vector2i(0, 1))  # standing on the doorstep
+	assert_eq(ReplayFixture.count(_run(state, [{"c": "end_turn"}]), "undefended_hq"), 0)
 
 
 ## The heaviest severity in the table, so a standing lapse said every turn would
 ## fill the printed summary with one sentence. Latched like `banked_power`.
 func test_a_standing_undefended_hq_is_reported_once() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 2, Vector2i(1, 1))
-	_stand(state, &"infantry", 1, Vector2i(4, 1))  # too far to answer for either HQ
-	assert_eq(_count(_run(state, _idle_rounds(4)), "undefended_hq"), 1)
+	var state := ReplayFixture.board()
+	ReplayFixture.stand(state, &"infantry", 2, Vector2i(1, 1))
+	ReplayFixture.stand(state, &"infantry", 1, Vector2i(4, 1))  # too far to answer for either HQ
+	assert_eq(ReplayFixture.count(_run(state, _idle_rounds(4)), "undefended_hq"), 1)
 
 
 ## Cleared the moment the side can answer for the HQ again, so a second lapse is a
 ## second finding.
 func test_an_hq_covered_and_then_exposed_again_is_reported_twice() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 2, Vector2i(1, 1))
-	_stand(state, &"infantry", 1, Vector2i(3, 1))
+	var state := ReplayFixture.board()
+	ReplayFixture.stand(state, &"infantry", 2, Vector2i(1, 1))
+	ReplayFixture.stand(state, &"infantry", 1, Vector2i(3, 1))
 	var entries: Array = [
 		{"c": "end_turn"},  # exposed: reported
 		{"c": "end_turn"},
@@ -400,4 +343,4 @@ func test_an_hq_covered_and_then_exposed_again_is_reported_twice() -> void:
 		{"c": "move", "path": [[2, 1], [3, 1], [4, 1], [5, 1]]},  # and away again
 		{"c": "end_turn"},
 	]
-	assert_eq(_count(_run(state, entries), "undefended_hq"), 2)
+	assert_eq(ReplayFixture.count(_run(state, entries), "undefended_hq"), 2)
