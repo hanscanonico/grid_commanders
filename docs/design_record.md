@@ -1,18 +1,20 @@
 # Design record — the long form
 
-`CLAUDE.md`'s **Designs of record** index carries every plan's scope and its locked decisions. Nine
-entries had grown far past what an index can hold — 135k characters between them, more than the file
-that is loaded into context on every session can spend on them — so their *long form* lives here
-instead: the rationale, the measurements, the superseded clauses and the risk-register prose.
+`CLAUDE.md`'s **Designs of record** index names every plan's scope and the `.claude/rules/*.md`
+file carrying its locked decisions. Nine entries had grown far past what an index can hold — 135k
+characters between them, more than the file that is loaded into context on every session can spend
+on them — so their *long form* lives here instead: the rationale, the measurements, the superseded
+clauses and the risk-register prose.
 
 **Read the entry for one of these nine areas here before an architectural decision in it.** The
 `.lavish/*.html` plans are still the designs of record; this is the record of what was decided or
 measured *since* they were written, and where those two disagree this file wins.
 
-Only these nine are here. Every other plan is stated in full in `CLAUDE.md` and **has no copy in
-this file** — one entry, one place, because a decision written twice is updated in one of them.
-The text below is verbatim what the index carried before the split, so nothing has been
-re-summarised; an entry that has drifted from the index is a bug in the index, not here.
+Only these nine are here. Every other plan is stated in full in its rule file under
+`.claude/rules/` and **has no copy in this file** — one entry, one place, because a decision
+written twice is updated in one of them. The text below is verbatim what the index carried before
+the split, so nothing has been re-summarised; an entry that has drifted from the index is a bug in
+the index, not here.
 
 Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.html`,
 `four-players-plan.html`, `asymmetric-board-plan.html`, `campaign-depth-plan.html`,

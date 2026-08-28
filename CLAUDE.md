@@ -314,8 +314,9 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   In the live scene, `scenes/battle/battle_perspective.gd` (`BattlePerspective`) is the one
   adapter from that rule authority to viewer policy: viewing team plus hot-seat blackout, firing
   geometry delegated to `AttackRange`, typed transport drop options, and how much of a unit's reach
-  and fire ring an overlay may show (that rule is the range-preview plan's, above). `Battle`,
-  `BattleView`, `BattleAnimator`, `BattleCommandPipeline`, `BattleTargeting`, `BattleHandoff` and
+  and fire ring an overlay may show (that rule is the range-preview plan's, in
+  `.claude/rules/presentation.md`). `Battle`, `BattleView`, `BattleAnimator`,
+  `BattleCommandPipeline`, `BattleTargeting`, `BattleHandoff` and
   `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private
   helper, and the runner drives AI
   turns through `Battle`'s own named entry points.

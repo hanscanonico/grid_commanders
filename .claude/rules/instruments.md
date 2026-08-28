@@ -21,8 +21,9 @@ root index are in `docs/design_record.md`.
   hook for it. D1: `tools/balance/match_engine.gd` is the one match loop; `make commander-balance`
   and `make difficulty-check` are byte-stable presets over it, and the merge bar for touching it
   is a fixed-seed byte-diff of both reports. Its one exception is a board that engine structurally
-  cannot play — it plays two sides — and the asymmetric-board entry below owns it
-  (`tools/run_bulwark_measure.gd`, which reuses `BalanceHarness`, `tools/balance/four_army_loop.gd`
+  cannot play — it plays two sides — and the asymmetric-board entry in `.claude/rules/maps.md`
+  owns it (`tools/run_bulwark_measure.gd`, which reuses `BalanceHarness`,
+  `tools/balance/four_army_loop.gd`
   (`FourArmyLoop`) and the generic `command_ceiling`, but not the two-side match engine).
   `docs/balance_sim.md` is how to run and read it.
 - `focus-steal-plan.html` — developer ergonomics: the smoke sweep and the desktop's window
@@ -70,8 +71,8 @@ root index are in `docs/design_record.md`.
   second opinion about what a match opens as. A line names its actor by the cell it acted from,
   which is unambiguous because a carried unit can never act. **The envelope is the opening, not the
   header**: what a recording is *of* — CD3's campaign and mission ids, beside `label` and
-  `recorded` — rides in the header, and the campaign-depth entry below owns that decision. D2: **the recorder observes at the two
-  brokers that already exist** — `BattleCommandPipeline.execute` and `BalanceMatchEngine.play`,
+  `recorded` — rides in the header, and the campaign-depth entry in `.claude/rules/campaign.md`
+  owns that decision. D2: **the recorder observes at the two brokers that already exist** — `BattleCommandPipeline.execute` and `BalanceMatchEngine.play`,
   each side of `apply` exactly as `BalanceMatchRecorder` is already handed a command; nothing under
   `core/` or `ai/` gains a hook, and `tools/check_scripts.sh` already enforces that the live broker
   is the only one. D3: **a replay verifies itself** — every line carries a 48-bit board digest
