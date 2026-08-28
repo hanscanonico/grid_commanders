@@ -27,7 +27,7 @@ func _campaign(ids: Array) -> CampaignDefinition:
 
 
 func test_the_order_is_the_lists_order() -> void:
-	assert_eq(campaign.first_mission_id(), &"one")
+	assert_eq(campaign.missions[0].id, &"one")
 	assert_eq(campaign.index_of(&"two"), 1)
 	assert_null(campaign.mission(&"nope"))
 

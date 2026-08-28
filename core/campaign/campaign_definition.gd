@@ -43,10 +43,6 @@ func index_of(mission_id: StringName) -> int:
 	return -1
 
 
-func first_mission_id() -> StringName:
-	return missions[0].id if not missions.is_empty() and missions[0] != null else &""
-
-
 ## Which block a mission sits in, or -1. Read by the hub to group its path.
 func block_of(mission_id: StringName) -> int:
 	var index := index_of(mission_id)
