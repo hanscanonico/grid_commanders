@@ -537,15 +537,15 @@ func _write(
 	var dir := BalanceReportWriter.prepare_dir(out)
 	if dir == "":
 		return false
-	var ok := true
-	ok = BalanceReportWriter.write_csv(dir.path_join("matches.csv"), matches, MATCH_COLUMNS) and ok
+	var ok := BalanceReportWriter.write_run(
+		"balance-sim", dir, "matches.csv", matches, MATCH_COLUMNS, summary
+	)
 	ok = (
 		BalanceReportWriter.write_csv(
 			dir.path_join("timeline.csv"), recorder.rows(), BalanceMatchRecorder.TIMELINE_COLUMNS
 		)
 		and ok
 	)
-	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
 	if _log_commands:
 		ok = (
 			BalanceReportWriter.write_jsonl(dir.path_join("commands.jsonl"), recorder.command_log())
@@ -562,7 +562,7 @@ func _write(
 		return false
 	print(
 		(
-			"balance-sim: wrote %d match rows, %d timeline rows%s to %s"
+			"balance-sim: %d match rows, %d timeline rows%s"
 			% [
 				matches.size(),
 				recorder.rows().size(),
@@ -571,7 +571,6 @@ func _write(
 					if _log_commands
 					else ""
 				),
-				out,
 			]
 		)
 	)

@@ -56,6 +56,31 @@ static func prepare_dir(out_dir: String) -> String:
 	return dir
 
 
+## A run's two artifacts — its table and its summary — written into a directory
+## `prepare_dir` has already made, with the one refusal and the one "wrote" line
+## every instrument used to spell for itself. `tool_name` is the caller's own log
+## prefix, and the directory named in both lines is the one written to rather
+## than the one asked for, which is `resolve_out`'s rule read here.
+##
+## An instrument with more to write (a second table, a timing file) calls this
+## and then writes its own, folding this return into its own.
+static func write_run(
+	tool_name: String,
+	dir: String,
+	table: String,
+	rows: Array[Dictionary],
+	columns: Array[String],
+	summary: Variant
+) -> bool:
+	var ok := write_csv(dir.path_join(table), rows, columns)
+	ok = write_json(dir.path_join("summary.json"), summary) and ok
+	if not ok:
+		push_error("%s: failed to write %s and summary.json to %s" % [tool_name, table, dir])
+		return false
+	print("%s: wrote %s and summary.json to %s" % [tool_name, table, dir])
+	return true
+
+
 static func _under_reports(path: String) -> bool:
 	return path == REPORTS_ROOT or path.begins_with(REPORTS_ROOT + "/")
 

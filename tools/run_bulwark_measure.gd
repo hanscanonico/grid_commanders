@@ -357,13 +357,7 @@ func _write(slug: String, rows: Array[Dictionary], summary: Dictionary) -> bool:
 	var dir := BalanceReportWriter.prepare_dir(_out_dir.path_join(slug))
 	if dir == "":
 		return false
-	var ok := BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
-	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
-	if not ok:
-		push_error("%s: failed to write matches.csv and summary.json to %s" % [TOOL, dir])
-		return false
-	print("%s: wrote matches.csv and summary.json to %s" % [TOOL, dir])
-	return true
+	return BalanceReportWriter.write_run(TOOL, dir, "matches.csv", rows, CSV_COLUMNS, summary)
 
 
 func _print(summary: Dictionary) -> void:

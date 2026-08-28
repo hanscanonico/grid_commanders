@@ -342,8 +342,7 @@ func _report(rows: Array[Dictionary]) -> void:
 	}
 	var dir := BalanceReportWriter.prepare_dir(_out_dir)
 	if dir != "":
-		BalanceReportWriter.write_csv(dir.path_join("missions.csv"), rows, CSV_COLUMNS)
-		BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
+		BalanceReportWriter.write_run(TOOL, dir, "missions.csv", rows, CSV_COLUMNS, summary)
 	print("")
 	print(
 		(

@@ -194,6 +194,33 @@ func test_prepare_dir_returns_empty_string_when_the_directory_cannot_be_made() -
 	DirAccess.remove_absolute(blocker_abs)
 
 
+# --- a run's two artifacts ----------------------------------------------------
+
+
+## The sequence four drivers used to spell for themselves: the table under the
+## name the caller asked for, and `summary.json` beside it, both in the
+## directory it was handed.
+func test_write_run_writes_the_named_table_and_the_summary() -> void:
+	var rows: Array[Dictionary] = [{"a": 1, "b": 2}]
+	var ok := BalanceReportWriter.write_run(
+		"campaign-difficulty", DIR, "missions.csv", rows, ["a", "b"], {"missions": 1}
+	)
+	assert_true(ok, "both writes landed")
+	assert_eq(_written("missions.csv"), "a,b\n1,2\n")
+	assert_eq(_written("summary.json"), '{\n\t"missions": 1\n}')
+
+
+## A run that wrote nowhere answers false to its caller, so a driver checking
+## this return cannot print a success line and exit 0 over a missing report.
+func test_write_run_reports_false_when_it_could_not_write() -> void:
+	var rows: Array[Dictionary] = [{"a": 1}]
+	var ok := BalanceReportWriter.write_run(
+		"balance", "user://no_such_dir_here", "matches.csv", rows, ["a"], {"matches": 1}
+	)
+	assert_false(ok, "a failed run must report false")
+	assert_push_error_count(3, "each failed file is named, then the run itself")
+
+
 # --- the page ----------------------------------------------------------------
 
 
