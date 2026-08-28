@@ -57,6 +57,42 @@ static func draw_stars(
 		)
 
 
+## The defence row under a plate: the terrain's name, and its stars beside it.
+## `anchor_x` is the row's outer end and `dir` the direction it reads in — +1
+## rightward, -1 for a mirrored half, whose name is hung back off the anchor so
+## both sides' rows grow toward the seam. `star_gap` is the space left between
+## the name and the first star.
+static func draw_terrain_row(
+	canvas: CanvasItem,
+	font: Font,
+	plate_y: float,
+	label: String,
+	anchor_x: float,
+	dir: float,
+	star_gap: float,
+	stars: int,
+	alpha: float
+) -> void:
+	var width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
+	var text_x := anchor_x - (width if dir < 0.0 else 0.0)
+	canvas.draw_string(
+		font,
+		Vector2(text_x, plate_y + 14.0),
+		label,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		9,
+		Color(CutscenePalette.PLATE_TEXT, CutscenePalette.PLATE_TEXT.a * alpha)
+	)
+	draw_stars(
+		canvas,
+		Vector2(anchor_x + dir * (width + star_gap), plate_y + 10.0),
+		dir * STAR_STEP,
+		mini(stars, MAX_STARS),
+		alpha
+	)
+
+
 static func terrain_atlas() -> Texture2D:
 	return load(BattleView.ATLAS_PATH)
 

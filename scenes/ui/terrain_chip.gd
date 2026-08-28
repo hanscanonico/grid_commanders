@@ -97,6 +97,5 @@ func _terrain_texture(terrain: TerrainType, owner_team: int) -> AtlasTexture:
 	var atlas := AtlasTexture.new()
 	atlas.atlas = load(BattleView.ATLAS_PATH)
 	var row: int = _identity.atlas_row(owner_team) if terrain.team_tinted else 0
-	var px := BattleView.TERRAIN_PX
-	atlas.region = Rect2(terrain.atlas_col * px, row * px, px, px)
+	atlas.region = BattleView.terrain_cell_region(terrain.atlas_col, row)
 	return atlas

@@ -36,6 +36,10 @@ const SPARK_TINT := Color(1.0, 0.878, 0.541)
 ## The puffs it leaves, and how far back along its own arc each one sits.
 const ROCKET_PUFFS := 4
 const ROCKET_PUFF_LAG := 0.09
+## How deep the waists of a muzzle flash's star cut, as a share of its reach: a
+## hair sharper than a spark's, which is what the two were drawn at and so what
+## keeps their pixels where they are.
+const MUZZLE_INNER := 0.32
 ## The backblast cone behind a launch tube, as multiples of the muzzle radius: how
 ## far back it reaches and how wide it has spread by then.
 const BACKBLAST_REACH := 2.6
@@ -73,6 +77,8 @@ const STROBE_HZ := 18.0
 const SPARK_COUNT := 5
 const SPARK_SPREAD := Vector2(9.0, 7.0)
 const SPARK_SIZE := 5.0
+## How deep the waists of a spark's star cut, as a share of its reach.
+const SPARK_INNER := 0.35
 const SPARK_FLICKER := 22.0
 ## Rising smoke behind an impact burst: four squares, thrown out along a fan and
 ## lifted as they go.
@@ -376,12 +382,7 @@ func _draw_muzzle(at: Vector2) -> void:
 		draw_circle(at, muzzle_radius * 0.72, Color(FLASH_GOLD, 0.8))
 		draw_circle(at, muzzle_radius * 0.38, Color(1.0, 1.0, 1.0, 0.95))
 		return
-	var points := PackedVector2Array()
-	for i in 8:
-		var reach := muzzle_radius if i % 2 == 0 else muzzle_radius * 0.32
-		var angle := float(i) * PI / 4.0
-		points.append(at + Vector2(cos(angle), sin(angle)) * reach)
-	draw_colored_polygon(points, FLASH_GOLD)
+	draw_colored_polygon(four_point_star(at, muzzle_radius, MUZZLE_INNER), FLASH_GOLD)
 	draw_circle(at, muzzle_radius * 0.35, Color(1.0, 1.0, 1.0, 0.95))
 
 
@@ -447,7 +448,10 @@ func _draw_sparks() -> void:
 	for i in SPARK_COUNT:
 		if (int(impact_p * SPARK_FLICKER) + i) % 3 == 0:
 			continue
-		draw_colored_polygon(_spark_points(impact_at + _scatter(i)), Color(SPARK_TINT, alpha))
+		draw_colored_polygon(
+			four_point_star(impact_at + _scatter(i), SPARK_SIZE, SPARK_INNER),
+			Color(SPARK_TINT, alpha)
+		)
 
 
 ## Where one tick lands, either way of the hit. Arithmetic off the index with two
@@ -465,14 +469,16 @@ static func _scatter(index: int) -> Vector2:
 	)
 
 
-## One tick: a small four-pointed star, the same silhouette as a muzzle flash and
-## deliberately so — a spark is a round going off where it landed.
-static func _spark_points(at: Vector2) -> PackedVector2Array:
+## The eight points of a four-pointed star: `reach` to the tips and `inner` of it
+## to the waists between them. A muzzle flash and a spark are the one silhouette
+## at two sizes — a spark is a round going off where it landed — and they keep
+## their own waist ratios, which are what each was drawn at.
+static func four_point_star(at: Vector2, reach: float, inner: float) -> PackedVector2Array:
 	var points := PackedVector2Array()
 	for i in 8:
-		var reach := SPARK_SIZE if i % 2 == 0 else SPARK_SIZE * 0.35
+		var length := reach if i % 2 == 0 else reach * inner
 		var angle := float(i) * PI / 4.0
-		points.append(at + Vector2(cos(angle), sin(angle)) * reach)
+		points.append(at + Vector2(cos(angle), sin(angle)) * length)
 	return points
 
 
@@ -550,23 +556,20 @@ func _draw_callout(at: Vector2, amount: int, tag: String, progress: float) -> vo
 	var origin := at + Vector2(0.0, rise)
 	draw_set_transform(origin, 0.0, Vector2(punch, punch))
 	if tag != "":
-		var tag_width := font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 		var tag_tint := KO_RED if tag == KO_TAG else FLASH_GOLD
-		stroked(self, font, Vector2(-tag_width * 0.5, -18.0), tag, 15, Color(tag_tint, alpha))
+		stroked_centered(self, font, Vector2(0.0, -18.0), tag, 15, Color(tag_tint, alpha))
 	if amount > 0:
 		var text := "-%d" % amount
-		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
-		stroked(self, font, Vector2(-width * 0.5, 8.0), text, 26, Color(1.0, 1.0, 1.0, alpha))
+		stroked_centered(self, font, Vector2(0.0, 8.0), text, 26, Color(1.0, 1.0, 1.0, alpha))
 	draw_set_transform(Vector2.ZERO)
 
 
 func _draw_vs() -> void:
 	var font := get_theme_font(&"font", &"Label")
-	var width := font.get_string_size("VS", HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-	stroked(
+	stroked_centered(
 		self,
 		font,
-		Vector2(size.x * 0.5 - width * 0.5, size.y * 0.5 + 8.0),
+		Vector2(size.x * 0.5, size.y * 0.5 + 8.0),
 		"VS",
 		22,
 		Color(1.0, 1.0, 1.0, vs_alpha)
@@ -581,6 +584,16 @@ static func stroked(
 	var ink := Color(CutscenePalette.STROKE, tint.a)
 	canvas.draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, ink)
 	canvas.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, tint)
+
+
+## The same, centred on `at.x` — every string either cut-in prints over the board
+## is centred on something, so the measure-then-halve is stated once rather than
+## at each of them.
+static func stroked_centered(
+	canvas: CanvasItem, font: Font, at: Vector2, text: String, font_size: int, tint: Color
+) -> void:
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	stroked(canvas, font, Vector2(at.x - width * 0.5, at.y), text, font_size, tint)
 
 
 ## The ten points of a five-pointed star, the shape both cut-ins print a defence
