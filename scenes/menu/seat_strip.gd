@@ -727,11 +727,11 @@ func _apply_preset(preset: Dictionary) -> void:
 	changed.emit()
 
 
-## The one writer for who sits at `index` — the segment control and `set_human`
-## both come through here, so a refusal reads the same whichever door it arrived
-## by. The Empty button is greyed rather than absent when the table is at its
-## minimum, so a press can still arrive — from a keyboard, or from the frame
-## before `_settle_seats` ran — and is answered by putting the row back.
+## The one writer for who sits at `index`; the segment control and `set_human`
+## both come through here, and only the segment control can ask for `Seat.EMPTY`.
+## The Empty button is greyed rather than absent when the table is at its minimum,
+## so a press can still arrive — from a keyboard, or from the frame before
+## `_settle_seats` ran — and is answered by putting the row back.
 func _set_seat(index: int, who: int) -> void:
 	if index < 0 or index >= _who.size():
 		return
