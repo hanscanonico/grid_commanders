@@ -27,7 +27,7 @@ static func opening(tree: SceneTree) -> void:
 ##
 ## Instant drops the wait to a single frame rather than to nothing: the board
 ## still repaints once per command, so a forty-command turn is forty frames the
-## eye can track as a fast flicker, the window keeps pumping events, and each
+## eye can track as a fast flicker, the window keeps pumping events, and the AI
 ## runner's per-turn safety cap keeps meaning what it says.
 ##
 ## The held fast-forward key shortens the beat that is about to be waited, so a
