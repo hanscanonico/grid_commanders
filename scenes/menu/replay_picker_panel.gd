@@ -191,20 +191,11 @@ func _row_button(summary: ReplayFile.Summary, index: int) -> Button:
 ## left, the stamp in its own right-hand column. Children of a button, so the face
 ## ignores the mouse and the press stays the button's.
 func _row_face(summary: ReplayFile.Summary) -> Control:
-	var face := HBoxContainer.new()
-	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = _INSET
-	face.offset_right = -_INSET
-	face.add_theme_constant_override("separation", 6)
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var face := ListRow.face(_INSET)
 
-	var words := VBoxContainer.new()
-	words.add_theme_constant_override("separation", 0)
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var words := ListRow.words()
 	var lines := _row_lines(summary)
-	var board := UiTheme.hud_label(lines[0], UiTheme.SIZE_BUTTON, UiTheme.INK, true)
+	var board := ListRow.cell(lines[0], UiTheme.INK)
 	board.clip_text = true
 	words.add_child(board)
 	if lines.size() > 1:
