@@ -67,7 +67,7 @@ var _db: CampaignDB
 
 var _campaigns: Array[String] = []
 var _missions: Array[String] = []
-var _sample := BalanceHarness.sample(6, 24, ["--seeds", "--seed-offset", "--days", "--out"])
+var _sample := BalanceHarness.sample(TOOL, 6, 24, ["--seeds", "--seed-offset", "--days", "--out"])
 
 
 func _initialize() -> void:

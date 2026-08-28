@@ -105,6 +105,7 @@ var _sweep_tier := Difficulty.DEFAULT_ID
 var _sweep_commander := CommanderType.NEUTRAL_ID
 ## `--seeds=`, `--seed-offset=`, `--days=` and `--out=`, with the Lab's defaults.
 var _sample := BalanceHarness.sample(
+	"balance-sim",
 	BalanceHarness.DEFAULT_SEEDS,
 	BalanceMatchEngine.DEFAULT_DAYS,
 	["--seeds", "--seed-offset", "--days", "--out"]

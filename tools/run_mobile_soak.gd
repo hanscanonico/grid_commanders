@@ -70,7 +70,7 @@ var _tier_id := "all"
 var _grouping := DEFAULT_GROUPING
 ## Neither `--seed-offset=` nor `--out=`: a soak prints its reading and
 ## `docs/mobile_soak.md` is written by hand from it.
-var _sample := BalanceHarness.sample(2, 20, ["--seeds", "--days"])
+var _sample := BalanceHarness.sample(TOOL, 2, 20, ["--seeds", "--days"])
 var _fog := true
 var _append_count := 200
 

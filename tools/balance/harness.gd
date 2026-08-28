@@ -134,11 +134,14 @@ class SampleFlags:
 
 
 ## A sample with this driver's own defaults and this driver's own grammar.
-## Refuses a flag name nothing reads rather than quietly never taking it.
-static func sample(seeds: int, days_cap: int, offers: Array[String]) -> SampleFlags:
+## Refuses a flag name nothing reads rather than quietly never taking it, naming
+## the driver whose list it is.
+static func sample(
+	tool_name: String, seeds: int, days_cap: int, offers: Array[String]
+) -> SampleFlags:
 	for flag in offers:
 		if not flag in SAMPLE_FLAGS:
-			push_error("balance: '%s' is not a sample flag" % flag)
+			push_error("%s: '%s' is not a sample flag" % [tool_name, flag])
 	var flags := SampleFlags.new()
 	flags.seeds = seeds
 	flags.days_cap = days_cap

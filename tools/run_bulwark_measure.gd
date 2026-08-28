@@ -86,7 +86,7 @@ var _profile: AIProfile
 var _map_name := DEFAULT_MAP
 var _tier_id := DEFAULT_TIER
 var _grouping := "both"
-var _sample := BalanceHarness.sample(30, 100, ["--seeds", "--seed-offset", "--days", "--out"])
+var _sample := BalanceHarness.sample(TOOL, 30, 100, ["--seeds", "--seed-offset", "--days", "--out"])
 
 
 func _init() -> void:

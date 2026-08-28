@@ -135,7 +135,7 @@ var _scenario_names: Array[String] = []
 ## No `--seed-offset=`: this matrix has never sharded, and one committed report
 ## stands behind the seeds it plays.
 var _sample := BalanceHarness.sample(
-	BalanceHarness.DEFAULT_SEEDS, DEFAULT_DAYS, ["--seeds", "--days", "--out"]
+	"balance", BalanceHarness.DEFAULT_SEEDS, DEFAULT_DAYS, ["--seeds", "--days", "--out"]
 )
 var _include_neutral := false
 var _difficulty_check := false
