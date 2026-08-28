@@ -50,6 +50,21 @@ func test_her_power_removes_the_roll() -> void:
 		assert_eq(result.attack_damage, 74 + 9, "seed %d" % seed_value)
 
 
+## The ceiling she fires at is `data/rules.tres`'s, not a constant: on a config
+## whose luck_max is 5, Perfect Solution rolls a flat 5 rather than the shipped
+## 9 that `CombatResolver._luck_bounds` would otherwise clamp back down to.
+func test_her_power_rolls_the_configured_ceiling() -> void:
+	var rules: RulesConfig = RulesConfig.load_default().duplicate()
+	rules.luck_max = 5
+	for seed_value in 10:
+		var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0", &"lyra_quill")
+		state.rules_config = rules
+		state.rng.seed = seed_value
+		assert_eq(Fixture.fire_power(state, 1), "")
+		var result := CombatResolver.resolve(state, state.units[0], state.units[1])
+		assert_eq(result.attack_damage, 74 + 5, "seed %d" % seed_value)
+
+
 ## Determinism still holds: a narrowed range must draw exactly one number from
 ## the seeded RNG, or a replay recorded on that seed falls out of step.
 func test_a_narrowed_luck_range_stays_replayable() -> void:
