@@ -419,7 +419,7 @@ make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seed
 | `--out=` | Run directory, **relative to `reports/`**, default `reports/balance_pool/<spec>` |
 | `--timeout=` | Seconds per shard, default 3600 |
 | `--dry-run` | Resolve the spec, print the shard plan, and stop |
-| `--self-check` | Run the `--out` and resume-key rules over their cases and stop |
+| `--self-check` | Run the `--out`, resume-key and merge rules over their cases and stop |
 
 **Everything a run writes lands under `reports/`, and a path that would leave it
 is refused before a match is played.** That rule is every instrument's, not just

@@ -53,8 +53,8 @@ Flags:
                         leading `reports/` is accepted, so both spellings work)
   --timeout=SEC         per shard, default 3600
   --dry-run             resolve the spec, print the shard plan, and stop
-  --self-check          run the out-directory and resume-key rules over their
-                        cases and stop (gated by `make check`)
+  --self-check          run the out-directory, resume-key and merge rules over
+                        their cases and stop (gated by `make check`)
 
 Poll a live run with `cat <out>/status.txt`; `<out>/progress.log` is the record
 and `<out>/pool.json` the throughput reading. Exit status is 1 if any shard
@@ -71,11 +71,13 @@ while calling each one failed.
 Nice the whole pool if you want the machine back: `nice -n 10 tools/balance_pool.py …`
 """
 import argparse
+import csv
 import hashlib
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -136,9 +138,31 @@ def _profile_slug(path):
     return os.path.splitext(os.path.basename(path))[0] or "profile"
 
 
+def header_mismatch(sources):
+    """The one thing a concatenation cannot survive: shards that disagree about
+    their columns. Shard 0's header becomes the merged table's, so a shard played
+    under different flags would have its values read back under the wrong names,
+    and every row count downstream would call the result healthy. Returns the
+    refusal text, or "" when they all agree."""
+    first = ""
+    for index, source in enumerate(sources):
+        with open(source, newline="") as f:
+            header = f.readline().rstrip("\r\n")
+        if index == 0:
+            first = header
+        elif header != first:
+            return "shard %s disagrees about the columns:\n  %s\n  %s" % (
+                os.path.basename(os.path.dirname(source)), first, header
+            )
+    return ""
+
+
 def merge_csv(dest, sources):
-    """Concatenates the shards' rows in plan order, one header."""
-    rows = 0
+    """Concatenates the shards' rows in plan order, one header. Returns
+    (rows, error) — nothing is written unless every shard agrees."""
+    error = header_mismatch(sources)
+    if error:
+        return 0, error
     with open(dest, "w") as merged:
         for index, source in enumerate(sources):
             with open(source) as f:
@@ -147,8 +171,7 @@ def merge_csv(dest, sources):
                     merged.write(header)
                 for line in f:
                     merged.write(line)
-                    rows += 1
-    return rows
+    return count_csv_rows(dest), ""
 
 
 def merge_json(dest, sources):
@@ -160,12 +183,14 @@ def merge_json(dest, sources):
             records.extend(json.load(f))
     with open(dest, "w") as merged:
         json.dump(records, merged, indent="\t", sort_keys=True)
-    return len(records)
+    return len(records), ""
 
 
 def count_csv_rows(path):
-    with open(path) as f:
-        return max(0, sum(1 for _ in f) - 1)
+    """Records, not lines: `BalanceReportWriter._cell` quotes a cell holding a
+    separator, a quote or a newline (RFC 4180), so a row is not always a line."""
+    with open(path, newline="") as f:
+        return max(0, sum(1 for _ in csv.reader(f)) - 1)
 
 
 def count_json_records(path):
@@ -428,8 +453,9 @@ def run_shard(shard, args):
 
 
 def merge(out, shards, name, merger):
-    """Concatenates the shards' records in plan order. A shard that is missing
-    means the run is incomplete and the caller does not get here."""
+    """Concatenates the shards' records in plan order, and returns (rows, error).
+    A shard that is missing means the run is incomplete and the caller does not
+    get here."""
     sources = [os.path.join(ROOT, shard_dir(out, shard), name) for shard in shards]
     return merger(os.path.join(ROOT, out, name), sources)
 
@@ -454,8 +480,29 @@ OUT_CASES = [
 ]
 
 
+## Two headers that disagree and the merge that must refuse them. The columns are
+## the Lab's own, shortened: what makes a pair legal is that the text matches, so
+## the names only have to be recognisable.
+LAB_HEADER = "seed,map,red,blue,winner,day\n"
+MERGE_CASES = [
+    ("shards agreeing merge", [LAB_HEADER + "1,a,x,y,1,7\n", LAB_HEADER + "2,a,x,y,2,9\n"], True),
+    ("a shard with a column more", [LAB_HEADER, "seed,map,red,blue,winner,day,turns\n"], False),
+    ("a shard with the columns reordered", [LAB_HEADER, "map,seed,red,blue,winner,day\n"], False),
+]
+
+## What a row is when a cell is quoted the way `BalanceReportWriter._cell` quotes
+## it (RFC 4180) — the embedded newline is the case a line count reads as two.
+ROW_CASES = [
+    ("plain rows", LAB_HEADER + "1,a,x,y,1,7\n2,a,x,y,2,9\n", 2),
+    ("header only", LAB_HEADER, 0),
+    ("a quoted separator", LAB_HEADER + '1,a,"x,y",y,1,7\n', 1),
+    ("a quoted newline", LAB_HEADER + '1,a,"x\ny",y,1,7\n2,a,x,y,2,9\n', 2),
+]
+
+
 def self_check():
-    """The out-directory and resume-key rules, over the cases that made them.
+    """The out-directory, resume-key and merge rules, over the cases that made
+    them.
     Run by `tools/check_scripts.sh`, and so by `make check` and `make verify`,
     which otherwise reach GDScript only — these are the two decisions in here
     that are pure and worth pinning, and an ungated check is one that rots."""
@@ -490,6 +537,27 @@ def self_check():
     ):
         failures += 0 if ok else 1
         print("%-4s resume key: %s" % ("ok" if ok else "FAIL", label))
+
+    with tempfile.TemporaryDirectory() as scratch:
+        for index, (label, shards, agree) in enumerate(MERGE_CASES):
+            sources = []
+            for number, text in enumerate(shards):
+                path = os.path.join(scratch, "m%d_%d.csv" % (index, number))
+                with open(path, "w") as f:
+                    f.write(text)
+                sources.append(path)
+            ok = bool(header_mismatch(sources)) != agree
+            failures += 0 if ok else 1
+            print("%-4s merge: %s" % ("ok" if ok else "FAIL", label))
+
+        for index, (label, text, expected) in enumerate(ROW_CASES):
+            path = os.path.join(scratch, "r%d.csv" % index)
+            with open(path, "w", newline="") as f:
+                f.write(text)
+            counted = count_csv_rows(path)
+            ok = counted == expected
+            failures += 0 if ok else 1
+            print("%-4s rows: %s -> %d" % ("ok" if ok else "FAIL", label, counted))
 
     print("self-check: %d case(s) failed" % failures if failures else "self-check: all cases pass")
     return 1 if failures else 0
@@ -564,7 +632,11 @@ def main(argv):
     preset = PRESETS[args.preset]
     matches = 0
     for index, (name, merger) in enumerate(preset["artifacts"]):
-        rows = merge(args.out, shards, name, merger)
+        rows, error = merge(args.out, shards, name, merger)
+        if error:
+            log.write("=== pool end: %s not merged ===\n" % name)
+            print("balance-pool: %s: %s" % (name, error), file=sys.stderr)
+            return 1
         if index == 0:
             matches = rows
     separator = preset["pair_sep"]
