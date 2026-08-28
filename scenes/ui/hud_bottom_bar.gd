@@ -91,18 +91,7 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	custom_minimum_size = Vector2(0, UiTheme.HUD_BOTTOM_H)
-	add_theme_stylebox_override("panel", UiTheme.hud_bar_box(true))
-	# Chrome swallows the pointer, stated rather than inherited from Control's
-	# default: the board renders behind the bars, so an event that fell through to
-	# Battle._unhandled_input would move the game cursor onto a covered cell. The
-	# Fire button is a child and keeps its own hit-testing.
-	mouse_filter = Control.MOUSE_FILTER_STOP
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", UiTheme.HUD_GAP)
-	add_child(row)
-	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
+	var row := UiTheme.hud_bar_row(self, UiTheme.HUD_BOTTOM_H, true)
 	_build_commander(row)
 	row.add_child(UiTheme.hud_divider(UiTheme.HUD_BOTTOM_RULE_H))
 	# The unit block is the row's one expanding child, so the free width of the bar
@@ -115,7 +104,7 @@ func _build() -> void:
 	_build_terrain(row)
 	row.add_child(UiTheme.hud_divider(UiTheme.HUD_BOTTOM_RULE_H))
 	_build_end_turn(row)
-	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
+	row.add_child(UiTheme.hud_bar_pad())
 
 	_built = true
 

@@ -23,10 +23,6 @@ extends PanelContainer
 ## the way both bars above it do — so a finger that lands here during a banner or
 ## a cut-in neither acts nor skips the beat, rather than doing both at once.
 
-## The gap between a chip's ink and the bar's edge, and between the two thumbs'
-## groups. The dock is one row of short labels, so it uses the bars' own pad.
-const _PAD := UiTheme.HUD_PAD
-
 var _back: Button
 var _resume: Button
 var _step: Button
@@ -92,18 +88,7 @@ static func board_lift_px() -> int:
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(0, UiTheme.HUD_DOCK_H)
-	add_theme_stylebox_override("panel", UiTheme.hud_bar_box(true))
-	# The same reason the two bars above swallow the pointer: the board renders
-	# behind the chrome, so an event falling through would walk the game cursor
-	# onto a cell hidden under opaque paint.
-	mouse_filter = Control.MOUSE_FILTER_STOP
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", UiTheme.HUD_GAP)
-	add_child(row)
-
-	row.add_child(UiTheme.hud_spacer(_PAD - UiTheme.HUD_GAP))
+	var row := UiTheme.hud_bar_row(self, UiTheme.HUD_DOCK_H, true)
 	_back = _chip(ControlHints.DOCK_BACK, &"cancel")
 	row.add_child(_back)
 	_resume = _chip(ControlHints.DOCK_RESUME, &"confirm")
@@ -119,7 +104,7 @@ func _ready() -> void:
 	row.add_child(_chip(ControlHints.DOCK_ZOOM_OUT, &"zoom_out"))
 	row.add_child(_chip(ControlHints.DOCK_ZOOM_IN, &"zoom_in"))
 	row.add_child(_chip(ControlHints.DOCK_NEXT, &"next_unit"))
-	row.add_child(UiTheme.hud_spacer(_PAD - UiTheme.HUD_GAP))
+	row.add_child(UiTheme.hud_bar_pad())
 	refresh(ControlHints.IDLE)
 
 

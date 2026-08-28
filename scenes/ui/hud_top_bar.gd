@@ -35,21 +35,7 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	custom_minimum_size = Vector2(0, UiTheme.HUD_TOP_H)
-	add_theme_stylebox_override("panel", UiTheme.hud_bar_box(false))
-	# Chrome swallows the pointer. The board is deliberately allowed to render
-	# *behind* the bars (BoardCamera._apply_camera_limits), so a bar that let mouse
-	# events fall through to Battle._unhandled_input would walk the game cursor
-	# onto a cell hidden under opaque paint — and a click there would select it.
-	# The bottom bar states the same thing for the same reason.
-	mouse_filter = Control.MOUSE_FILTER_STOP
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", UiTheme.HUD_GAP)
-	row.alignment = BoxContainer.ALIGNMENT_BEGIN
-	add_child(row)
-
-	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
+	var row := UiTheme.hud_bar_row(self, UiTheme.HUD_TOP_H, false)
 	row.add_child(UiTheme.hud_label("DAY", UiTheme.SIZE_STAT, UiTheme.INK_3))
 	_day_label = UiTheme.hud_label("1", UiTheme.SIZE_BUTTON, UiTheme.WHITE, true)
 	row.add_child(_day_label)
@@ -122,7 +108,7 @@ func _build() -> void:
 		ControlHints.legend_for(ControlHints.IDLE), UiTheme.SIZE_STAT, UiTheme.INK_3
 	)
 	row.add_child(_keys_label)
-	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
+	row.add_child(UiTheme.hud_bar_pad())
 
 
 ## One update per turn change. `side_theme` and `faction` come from the side's

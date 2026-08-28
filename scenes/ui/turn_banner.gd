@@ -30,9 +30,7 @@ func _build() -> void:
 	margin.add_theme_constant_override("margin_bottom", _PAD_Y)
 	add_child(margin)
 
-	_label = UiTheme.hud_label("", UiTheme.SIZE_BANNER, UiTheme.INK)
-	_label.add_theme_font_override("font", UiTheme.display(true))
-	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label = UiTheme.banner_label("", UiTheme.INK)
 	margin.add_child(_label)
 
 

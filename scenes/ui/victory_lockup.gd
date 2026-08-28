@@ -73,9 +73,7 @@ func _build() -> void:
 	_portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	rows.add_child(_portrait)
 
-	_title = UiTheme.hud_label("", UiTheme.SIZE_BANNER, UiTheme.INK)
-	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title = UiTheme.banner_label("", UiTheme.INK)
 	rows.add_child(_title)
 	_sub = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK)
 	_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
