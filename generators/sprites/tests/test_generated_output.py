@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import cmath
 import colorsys
+import contextlib
 import math
 import statistics
 import unittest
@@ -1865,7 +1866,7 @@ class CanopyLight(unittest.TestCase):
         plane = {terrain.CANOPY_TOP, terrain.CANOPY_MID, terrain.CANOPY_LT}
         for r in sorted({r for _, _, r in terrain._CROWNS}):
             with self.subTest(radius=r):
-                with mock.patch.object(terrain, "_CROWNS", ((32, 32, r),)):
+                with mock.patch("spritegen.terrain.woods._CROWNS", ((32, 32, r),)):
                     px = terrain.woods().convert("RGB").load()
                 pts = [
                     (x, y)
@@ -2302,6 +2303,17 @@ class OneSun(unittest.TestCase):
                     self.assertGreater(sx - bx, 0.0)
                     self.assertGreater(sy - by, 0.0)
 
+    @contextlib.contextmanager
+    def _sun(self, offset):
+        """Both tile drawers under one sun. The offset is `voxel.SHADOW_OFFSET`,
+        which each drawer's module binds for itself, so it is patched where each
+        reads it rather than once on the package."""
+        with (
+            mock.patch("spritegen.terrain.mountain.SHADOW_OFFSET", offset),
+            mock.patch("spritegen.terrain.woods.SHADOW_OFFSET", offset),
+        ):
+            yield
+
     def _stamped(self, draw, offset):
         """The shadow a tile drawer stamps, read by DIFFERENCE against the
         same tile drawn with no offset at all — which is the only way to tell
@@ -2312,9 +2324,9 @@ class OneSun(unittest.TestCase):
         plate every scenery tile stands on: read against the plain `_ground`
         the clumps count as casters, and a clump four pixels up-left of a
         shadow pixel vouches for it, which makes both readings vacuous."""
-        with mock.patch.object(terrain, "SHADOW_OFFSET", offset):
+        with self._sun(offset):
             lit = draw().convert("RGB")
-        with mock.patch.object(terrain, "SHADOW_OFFSET", (0, 0)):
+        with self._sun((0, 0)):
             bare = draw().convert("RGB")
         a, b = lit.load(), bare.load()
         shade, caster = set(), set()

@@ -301,7 +301,7 @@ class PlainsPhases(unittest.TestCase):
                     e[:3] + ((),) if i == phase else e
                     for i, e in enumerate(terrain.PLAINS_PHASES)
                 )
-                with mock.patch.object(terrain, "PLAINS_PHASES", bare_table):
+                with mock.patch("spritegen.terrain.plains.PLAINS_PHASES", bare_table):
                     bare = terrain.plains(phase).convert("RGB")
                 tile = terrain.plains(phase).convert("RGB")
                 boxes = [(x, y, x + DECAL_SPAN, y + DECAL_SPAN) for _, x, y in decals]
