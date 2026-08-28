@@ -36,9 +36,4 @@ func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	var bounds_error := MissionBoardCheck.off_board(map, cell, "hold objective names")
 	if bounds_error != "":
 		return bounds_error
-	if not map.terrain_at(cell).is_property:
-		return (
-			"hold objective names %s, which is %s and not a property"
-			% [cell, map.terrain_at(cell).id]
-		)
-	return ""
+	return MissionBoardCheck.property_cell(map, cell, "hold objective names")

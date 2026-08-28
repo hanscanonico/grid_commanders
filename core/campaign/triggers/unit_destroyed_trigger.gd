@@ -18,8 +18,4 @@ func is_met(
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
-	if tag == &"":
-		return "unit-destroyed trigger names no unit"
-	if not MissionObjective.board_names(map, tag):
-		return "unit-destroyed trigger names '%s', which no unit on this board carries" % tag
-	return ""
+	return MissionBoardCheck.named_unit(map, tag, "unit-destroyed trigger names")

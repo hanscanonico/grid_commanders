@@ -1,11 +1,11 @@
 class_name MissionBoardCheck
 extends RefCounted
-## The three refusals every authored objective, trigger and effect shares, stated
-## once.
+## The refusals every authored objective, trigger and effect shares, stated once.
 ##
-## A cell off the board and an army the board never dealt are facts about the
-## board rather than about the condition asking, so sixteen call sites were
-## assembling the same two sentences by hand — and its fire-time sibling, an army
+## A cell off the board, ground that carries no property, an army the board never
+## dealt and a name no unit on it answers to are facts about the board rather than
+## about the condition asking, so dozens of call sites were assembling the same
+## few sentences by hand — and the fire-time sibling of the seat check, an army
 ## that is not at this table, six more. CD8 puts the check in `core/` for the
 ## tool and the suite to share; this is that rule read one step further, so the
 ## sentence cannot drift either.
@@ -19,6 +19,24 @@ static func off_board(map: MapData, cell: Vector2i, prefix: String) -> String:
 	if map.in_bounds(cell):
 		return ""
 	return "%s %s, off a %dx%d board" % [prefix, cell, map.width, map.height]
+
+
+## "" when `cell` carries a property, else why it does not. Bounds are the
+## caller's to check first: ground that is not there is a different refusal.
+static func property_cell(map: MapData, cell: Vector2i, prefix: String) -> String:
+	if map.terrain_at(cell).is_property:
+		return ""
+	return "%s %s, which is %s and not a property" % [prefix, cell, map.terrain_at(cell).id]
+
+
+## "" when `tag` names a unit this board deals, else why it does not — an unnamed
+## unit and a name nothing carries being the same refusal from two directions.
+static func named_unit(map: MapData, tag: StringName, prefix: String) -> String:
+	if tag == &"":
+		return "%s no unit" % prefix
+	if not MissionObjective.board_names(map, tag):
+		return "%s '%s', which no unit on this board carries" % [prefix, tag]
+	return ""
 
 
 ## "" when `map` deals `team` a seat, else why it does not.
