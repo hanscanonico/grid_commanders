@@ -43,10 +43,10 @@ make audio           # reinstall the sound effects + music from generators/audio
 make audio-test      # that generator's own gate: rosters, mix, loop seams, determinism
 make sprites-test    # the sprite generator's own gate: geometry, ramps, palette mirror
 make generators-venv # one-off: the Python interpreters the three generators need
-make portraits       # regenerate the faction emblems from generators/portraits + import
-make portraits-test  # that generator's own gate: the palette mirror and determinism
+make portraits       # rebake the busts and emblems from generators/portraits + import
+make portraits-test  # that generator's own gate: the palette mirror, the metrics, determinism
 make portraits-snapshot   # a fresh generation against the art installed under assets/
-make portraits-check # bake the busts in memory and byte-diff against the committed PNGs
+make portraits-lint  # ruff over generators/portraits
 make import          # (re)import assets headless
 make export-android  # package a debug APK -> build/android/ (setup below)
 make export-ios      # package an Xcode project -> build/ios/ (setup below)
@@ -1254,9 +1254,9 @@ already failing would muddy both readings.
   boards it has been played on — days a square has been held, units lost, the facts its beats have
   written and the war has not taken yet — carried across the
   scene change; navigation intent only, it decides no rule and holds no board).
-- `tools/` — the art and sound build scripts: the headless UI-chrome (overlay, cursor, icon),
-  sound, music, and portrait generators (the board atlases come from
-  `generators/sprites` — see Assets below); and the offline balance
+- `tools/` — the art build scripts: the headless UI-chrome generator (overlay, cursor, icon);
+  the board atlases, the sound and music, and the commander portraits all come from
+  `generators/` — see Assets below; and the offline balance
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`), the
   Balance Lab (`docs/balance_sim.md`) and the AI Arena under `tools/arena/`
@@ -1297,8 +1297,9 @@ atlases are its exact output; the per-cell PNGs under `assets/sprites/units` and
 `assets/sprites/iso_buildings` are the same art exported cell by cell as reviewable reference
 copies. The UI chrome that has no home there — the range overlay, the cursor, the icon — is drawn
 by `tools/generate_tiles.gd`. The commander portraits and faction emblems are
-generated too (`make portraits`) — project-original vector art drawn to the "Heroic Commander
-Portraits" design handoff's spec, no third-party pixels. All sound — the nine effects and two
+generated too, by `generators/portraits` (`make portraits`) — a second Python pipeline in this
+repository, painting project-original art to the "Heroic Commander Portraits" design handoff's
+spec with no third-party pixels, gated by `make portraits-test` and `make portraits-snapshot`. All sound — the nine effects and two
 project-original looping marches, `parade` for the menu and `advance` for the battle — is composed
 and rendered deterministically by `generators/audio`, a Python pipeline living in this
 repository and gated by `make audio-test` (determinism, loop-seam, loudness and distinctness

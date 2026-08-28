@@ -31,7 +31,18 @@ from .palette import INK, RGB
 # dispatch table, so nothing falls through to a default.
 JAWS = frozenset({"round", "square", "tapered"})
 
-# tools/commander_faces.gd's HEAD_DEFAULT, column for column.
+# The five skins the roster picks from, as the handoff wrote them. They live
+# beside the head because the head is what paints skin; `light.build_ramp`
+# turns one into the four tones a face is painted in.
+SKIN_BASES: dict[str, RGB] = {
+    "dark": (138, 90, 60),
+    "light": (242, 201, 160),
+    "medium": (217, 160, 102),
+    "pale": (246, 220, 194),
+    "tan": (198, 134, 66),
+}
+
+# The face table's own HEAD_DEFAULT, column for column.
 HEAD_DEFAULT: tuple[float, str, float, float] = (1.0, "round", 0.0, 1.0)
 
 # The centre of the skull: every head, ear and eye is placed against it, and a
@@ -176,7 +187,12 @@ def _flat(canvas: Canvas, tone: RGB) -> Image.Image:
     return Image.new("RGBA", canvas.image.size, (*tone, 255))
 
 
-def draw(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
+def ramp_for(skin: str) -> Ramp:
+    """The four tones a skin tone is painted in."""
+    return light.build_ramp(SKIN_BASES[skin])
+
+
+def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) -> None:
     """Paint the head, the neck and the ear in the skin ramp's four bands.
 
     Order is the light's: the parts behind the face first, each inked as it is
@@ -185,6 +201,11 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
     occlusion are painted through the face's own mask, so a shade can never
     run off the cheek onto the field. Nothing here is a wash over a fill —
     every mark is one of the ramp's named tones.
+
+    `mirrored` pre-flips the light for a layer the pose is about to turn over:
+    the two bands are placed on the other side of the face and the occlusion
+    and the rim step the other way in x, so that once the group is flipped they
+    land on the screen's shadow side like every unmirrored bust's.
     """
     skin = Canvas(canvas.size, canvas.scale)
     skin.polygon(neck(skull), ramp.shade)
@@ -197,7 +218,12 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
     skin.polygon(face, ramp.base)
     face_mask = _mask_of(skin, face)
     centre, half, top, height = _skull_box(skull)
-    placement = {"centre": centre, "half": half, "top": top, "height": height}
+    placement = {
+        "centre": centre,
+        "half": -half if mirrored else half,
+        "top": top,
+        "height": height,
+    }
     kind = light.shade_kind(skull.crown, skull.width)
     bands = (
         (light.face_light(**placement), ramp.lit),
@@ -208,7 +234,11 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
         skin.image.paste(_flat(skin, tone), (0, 0), band)
 
     under_jaw = light.occlusion(
-        face_mask, skin.silhouette(), depth=JAW_DEPTH, scale=canvas.scale
+        face_mask,
+        skin.silhouette(),
+        depth=JAW_DEPTH,
+        scale=canvas.scale,
+        mirrored=mirrored,
     )
     skin.image.paste(_flat(skin, ramp.deep), (0, 0), under_jaw)
 
@@ -220,6 +250,7 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
             weight=RIM_WEIGHT,
             inset=RIM_INSET,
             scale=canvas.scale,
+            mirrored=mirrored,
         )
     )
     canvas.compose(skin)

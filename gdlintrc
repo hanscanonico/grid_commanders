@@ -389,4 +389,10 @@ max-public-methods: 22
 # FACES table came out of it, is the longest file in the tree again. battle.gd is
 # pinned at its own length in tools/check_scripts.sh and takes none of this slack.
 # Adding to the face drawer still means moving something out first.
-max-file-lines: 1272
+#
+# 1272 -> 1196, and the ceiling is scenes/battle/battle.gd's again: the SVG face
+# drawer and its table are gone. generators/portraits bakes the busts now, in
+# Python, where this ratchet does not reach — so the four entries above are
+# history rather than a budget, and battle.gd, pinned at its own length in
+# tools/check_scripts.sh, is the longest script in the tree.
+max-file-lines: 1196

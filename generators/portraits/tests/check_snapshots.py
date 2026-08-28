@@ -31,13 +31,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 # Where each generated relpath directory is installed in the game. Restated
 # rather than imported: this script is run as a file, not as part of the
 # package, so it stands on Pillow alone.
-INSTALL_MAP = {"factions": "assets/portraits/factions"}
-# TODO(slice E): the busts are still baked by tools/generate_portraits.gd, so
-# the 23 committed PNGs under assets/portraits/commanders have no generated
-# twin yet and would fail the "baseline the generator no longer emits"
-# direction. Wiring the busts into OUTPUTS deletes this line, and the moment it
-# goes both directions cover the whole of assets/portraits.
-NOT_GENERATED_YET = {"commanders"}
+INSTALL_MAP = {
+    "commanders": "assets/portraits/commanders",
+    "factions": "assets/portraits/factions",
+}
 
 
 def _installed() -> dict[Path, Path]:
@@ -50,11 +47,7 @@ def _installed() -> dict[Path, Path]:
 
 
 def _generated(gen: Path) -> set[Path]:
-    return {
-        p.relative_to(gen)
-        for p in gen.rglob("*.png")
-        if p.is_file() and p.parent.name not in NOT_GENERATED_YET
-    }
+    return {p.relative_to(gen) for p in gen.rglob("*.png") if p.is_file()}
 
 
 def _differs(generated: Path, installed: Path) -> str | None:

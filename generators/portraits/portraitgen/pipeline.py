@@ -1,9 +1,8 @@
 """Deterministic portrait pipeline for grid_commanders.
 
-Bakes the art `CommanderVisuals` loads: the four 64x64 faction emblems today,
-and the 220x268 commander busts once the painter modules under `portraitgen/`
-are built. There are no seeds and no randomness — every mark is authored, so
-every run reproduces the same bytes.
+Bakes the art `CommanderVisuals` loads: the four 64x64 faction emblems and the
+twenty-three 220x268 commander busts. There are no seeds and no randomness —
+every mark is authored, so every run reproduces the same bytes.
 
 `OUTPUTS` is the one statement of what a run produces. Each `Output` carries
 the directory of a game checkout it installs into, so `install` derives its copy
@@ -12,6 +11,7 @@ that has to be kept in step.
 
 Outputs (under --out, default ./out):
   factions/<key>.png     64x64 RGBA emblem — drop-in for assets/portraits/factions
+  commanders/<id>.png    220x268 RGBA bust — drop-in for assets/portraits/commanders
 """
 
 from __future__ import annotations
@@ -26,11 +26,13 @@ from pathlib import Path
 
 from PIL import Image
 
+from .bust import busts as painted_busts
 from .emblem import draw as draw_emblem
 from .palette import EMBLEM_KEYS
 
 # Where each kind of output lands in a grid_commanders checkout.
 EMBLEMS, EMBLEMS_DIR = "factions", "assets/portraits/factions"
+BUSTS, BUSTS_DIR = "commanders", "assets/portraits/commanders"
 
 
 @dataclass(frozen=True)
@@ -50,10 +52,19 @@ def emblems() -> Iterator[Output]:
         yield Output(f"{EMBLEMS}/{key}.png", partial(draw_emblem, key), EMBLEMS_DIR)
 
 
-# Every file a full run writes, in the order it writes them. The busts join it
-# once the painter has one to draw; until then this pipeline owns the emblems
-# alone and `tools/generate_portraits.gd` still bakes the busts.
-OUTPUTS: tuple[Output, ...] = tuple(emblems())
+def busts() -> Iterator[Output]:
+    """One bust per general, and the empty seat.
+
+    The whole sheet is painted once here rather than per output: a bust is
+    twenty-odd milliseconds, and building them together is what lets `Output`
+    stay a plain "one file, one image" record.
+    """
+    for painted in painted_busts():
+        yield Output(f"{BUSTS}/{painted.id}.png", lambda p=painted: p.image, BUSTS_DIR)
+
+
+# Every file a full run writes, in the order it writes them.
+OUTPUTS: tuple[Output, ...] = (*emblems(), *busts())
 
 
 def generate(out: Path, *, log: Callable[[str], None] = print) -> None:

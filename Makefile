@@ -478,29 +478,15 @@ campaign-difficulty:
 	$(GODOT) --headless --path . -s res://tools/run_campaign_difficulty.gd -- $(CAMPAIGN)
 
 # Regenerates the art under assets/portraits with generators/portraits and
-# re-imports so the new PNGs register. Committed art, so this only needs
-# rerunning when the generator changes or a commander is added. The four faction
-# emblems are the whole of it today, and they are already pixel for pixel what
-# the generator draws: the 220x268 busts are still baked by
-# `godot --headless -s res://tools/generate_portraits.gd`, which portraits-check
-# gates, until the painter can draw one. Running this before then re-encodes the
-# emblems with Pillow — no pixel moves, but portraits-check byte-diffs against
-# the engine's own encode and goes red, so leave it alone until the busts land.
+# re-imports so the new PNGs register: the four faction emblems and the
+# twenty-three commander busts, which is the whole of it — nothing else bakes
+# this art. Committed art, so this only needs rerunning when the generator
+# changes or a commander is added. `make portraits-snapshot` is its gate.
 portraits:
 	$(call require-portraitgen)
 	"$(PORTRAITGEN_PY)" "$(PORTRAITGEN)/portrait_generator.py" \
 		-o "$(PORTRAITGEN)/out" --install "$(CURDIR)"
 	$(MAKE) import
-
-# Bakes the same art in memory and byte-diffs it against the committed PNGs,
-# writing nothing: the answer to "does regenerating reproduce it?", and the
-# merge bar for a change to either generator. Deliberately out of `make verify`
-# — the rasteriser is thorvg's, so the bytes are engine-version-stable but not
-# machine-independent, and this repo does not commit renderer-dependent goldens
-# (SMOKE_HASHES is recorded, never committed).
-portraits-check:
-	$(call require-godot)
-	$(GODOT) --headless --path . -s res://tools/generate_portraits.gd -- --check
 
 import:
 	$(call require-godot)
@@ -561,7 +547,7 @@ mobile-soak:
 	atlases ui-art \
 	audio audio-test sprites-test sprites-snapshot generators-lint generators-test \
 	portraits-test portraits-lint portraits-snapshot \
-	generators-venv portraits portraits-check import campaign-difficulty export-android export-ios \
+	generators-venv portraits import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns legibility-check mobile-soak

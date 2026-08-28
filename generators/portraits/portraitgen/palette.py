@@ -20,7 +20,7 @@ RGBA = tuple[int, int, int, int]
 Float3 = tuple[float, float, float]
 
 # Every border and body glyph in the design system, and the outline weight the
-# emblems are drawn with: tools/generate_portraits.gd's OUTLINE, as bytes.
+# emblems are drawn with: the retired GDScript bake's OUTLINE, as bytes.
 INK: RGB = (19, 23, 27)
 
 

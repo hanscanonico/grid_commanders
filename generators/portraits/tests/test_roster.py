@@ -19,13 +19,17 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from portraitgen import backdrop, features, hair, head, props, roster, uniform
+from portraitgen import backdrop, bust, features, hair, head, props, roster, uniform
 
 GAME = Path(__file__).resolve().parents[3]
 COMMANDERS = GAME / "data/commanders"
+VISUALS = GAME / "scenes/common/commander_visuals.gd"
 
 _ID = re.compile(r'^id = &"(\w+)"', re.M)
 _POWER_COST = re.compile(r"^power_cost = (\d+)", re.M)
+_FACTION = re.compile(r'^faction = "([^"]*)"', re.M)
+_FACTION_KEYS = re.compile(r"const _FACTION_KEYS := \{(.*?)\}", re.S)
+_FACTION_ENTRY = re.compile(r'"([^"]+)"\s*:\s*&"(\w+)"')
 
 # The four costliest Command Powers are the four busts that wear the rank stud.
 PIPPED = 4
@@ -33,6 +37,23 @@ PIPPED = 4
 
 def _commander_ids() -> list[str]:
     return sorted(_ID.search(p.read_text()).group(1) for p in COMMANDERS.glob("*.tres"))
+
+
+def _army_of_each_general() -> dict[str, str]:
+    """Which theme key the game seats each general under.
+
+    The faction string lives on the `.tres` and the string-to-key adapter in
+    `CommanderVisuals`, so both are read rather than restated — the same mirror
+    idiom `test_palette_mirror.py` uses on the colours themselves.
+    """
+    body = _FACTION_KEYS.search(VISUALS.read_text())
+    assert body, f"no _FACTION_KEYS dictionary in {VISUALS}"
+    keys = dict(_FACTION_ENTRY.findall(body.group(1)))
+    armies = {}
+    for path in COMMANDERS.glob("*.tres"):
+        src = path.read_text()
+        armies[_ID.search(src).group(1)] = keys[_FACTION.search(src).group(1)]
+    return armies
 
 
 def _power_costs() -> dict[str, int]:
@@ -167,6 +188,21 @@ class EveryGeneralCarriesTheirOwnProp(unittest.TestCase):
         worn = [face.prop for face in roster.FACES.values()]
         self.assertEqual(sorted(worn), sorted(props.PROPS))
         self.assertEqual(len(set(worn)), len(roster.FACES))
+
+
+class EveryGeneralWearsTheirOwnArmy(unittest.TestCase):
+    """`bust.FACTION_OF` decides which cloth a general is painted in, and the
+    game decides which army they command. Nothing else compares the two, so a
+    general reseated in their `.tres` would keep the old army's colour and only
+    a human looking at the sheet would catch it."""
+
+    def test_the_adapter_is_where_the_regex_looks(self):
+        armies = _army_of_each_general()
+        self.assertEqual(sorted(armies), _commander_ids())
+        self.assertEqual(len(set(armies.values())), 4)
+
+    def test_the_painter_dresses_every_general_in_the_army_they_command(self):
+        self.assertEqual(bust.FACTION_OF, _army_of_each_general())
 
 
 class TheRareMarksAreRare(unittest.TestCase):
