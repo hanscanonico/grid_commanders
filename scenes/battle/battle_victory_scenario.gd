@@ -1,17 +1,11 @@
 class_name BattleVictoryScenario
-extends RefCounted
+extends BattleScenario
 ## The victory poses: a duel's lockup, the same fronted by the winner's face, and
 ## a 2v2 won together (COM-47, four-players plan FP4).
 ##
 ## Their own class rather than three more methods on BattleScenarioDriver, the way
 ## BattleFeedbackScenario and BattleTransitionScenario are: the poses are
 ## self-contained, they belong together, and that file is at its length ratchet.
-
-var _battle: Battle
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
 
 
 ## Empty when the pose came out right, like every other scenario class: the driver

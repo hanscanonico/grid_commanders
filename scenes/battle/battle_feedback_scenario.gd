@@ -1,5 +1,5 @@
 class_name BattleFeedbackScenario
-extends RefCounted
+extends BattleScenario
 ## Driven feedback acceptance flows, split out so BattleScenarioDriver stays
 ## under its linted size cap. Every flow — `run` included — returns an error
 ## string rather than reporting one: the driver's `_fail` owns the push_error
@@ -14,12 +14,6 @@ const MODES: Array[String] = [
 	"power_range_readout",
 	"mapmenu",
 ]
-
-var _battle: Battle
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
 
 
 func run(mode: String) -> String:
@@ -105,7 +99,7 @@ func _run_rejected_confirms() -> String:
 	error = _expect_reason(feedback, "Out of reach.")
 	if error != "":
 		return error
-	await _press(&"fire_power")  # the Fire key with a unit in hand
+	await _press_action(&"fire_power")  # the Fire key with a unit in hand
 	error = _expect_reason(feedback, BattlePower.MID_ACTION)
 	if error != "":
 		return error
@@ -113,7 +107,7 @@ func _run_rejected_confirms() -> String:
 	# Back out the selection the way a player would before handing the turn over:
 	# a human selection left live under the CPU-turn chip is a board the game
 	# cannot reach, and this mode's frame is photographed exactly there.
-	await _press(&"cancel")
+	await _press_action(&"cancel")
 	if _battle.state != Battle.State.IDLE:
 		return "cancel did not clear the selection before the CPU turn"
 
@@ -144,10 +138,10 @@ func _run_no_target_confirm() -> String:
 	var error := _expect_reason(_battle.action_feedback, "No target there.")
 	if error != "":
 		return error
-	await _press(&"cancel")  # back to the orders
+	await _press_action(&"cancel")  # back to the orders
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"cancel")
-	await _press(&"cancel")
+	await _press_action(&"cancel")
 	return await _expect_rest("aiming")
 
 
@@ -169,24 +163,24 @@ func _run_bad_unload_confirm() -> String:
 	var error := _expect_reason(_battle.action_feedback, "Cannot unload there.")
 	if error != "":
 		return error
-	await _press(&"cancel")  # back to the orders
+	await _press_action(&"cancel")  # back to the orders
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"cancel")
-	await _press(&"cancel")
+	await _press_action(&"cancel")
 	return await _expect_rest("unloading")
 
 
 ## The Fire key on a meter that cannot fire. The bar hides its Fire button until
 ## the meter fills, so this key is the only route to either refusal.
 func _run_power_key_refusals() -> String:
-	await _press(&"fire_power")
+	await _press_action(&"fire_power")
 	var error := _expect_reason(_battle.action_feedback, BattlePower.NO_POWER)
 	if error != "":
 		return error
 
 	var sol := _battle.commander_db.by_id(&"rhea_sol")
 	_battle.game.set_commander(1, sol)
-	await _press(&"fire_power")
+	await _press_action(&"fire_power")
 	error = _expect_reason(_battle.action_feedback, BattlePower.CHARGING % [0, sol.power_cost])
 	# The board this mode photographs seats no commander; put it back.
 	_battle.game.set_commander(1, null)
@@ -207,7 +201,7 @@ func _run_enemy_range_preview() -> String:
 		return "enemy confirm did not enter PREVIEW"
 	if _battle.overlays.move_layer.get_used_cells().is_empty():
 		return "enemy preview painted no movement reach"
-	await _press(&"show_range")
+	await _press_action(&"show_range")
 	if _battle.overlays.attack_layer.get_used_cells().is_empty():
 		return "R painted no enemy fire ring"
 	return await _run_range_from_rest()
@@ -220,7 +214,7 @@ func _run_enemy_range_preview() -> String:
 ## rather than put the infantry's down. The last ring is left standing: this mode's
 ## frame is the feature, and a board cleared back to rest photographs nothing.
 func _run_range_from_rest() -> String:
-	await _press(&"cancel")
+	await _press_action(&"cancel")
 	if _battle.state != Battle.State.IDLE:
 		return "cancel did not dismiss the enemy preview"
 	if not _battle.overlays.attack_layer.get_used_cells().is_empty():
@@ -229,7 +223,7 @@ func _run_range_from_rest() -> String:
 	if error != "":
 		return error
 	var enemy_ring := _battle.overlays.attack_layer.get_used_cells()
-	await _press(&"cancel")
+	await _press_action(&"cancel")
 
 	var infantry := _battle.game.unit_at(Vector2i(4, 3))
 	infantry.acted = true
@@ -242,7 +236,7 @@ func _run_range_from_rest() -> String:
 
 func _expect_ring_from_rest(cell: Vector2i, whose: String) -> String:
 	_battle.set_cursor_cell(cell)
-	await _press(&"show_range")
+	await _press_action(&"show_range")
 	if _battle.overlays.attack_layer.get_used_cells().is_empty():
 		return "R from rest painted no fire ring for %s" % whose
 	return ""
@@ -250,7 +244,7 @@ func _expect_ring_from_rest(cell: Vector2i, whose: String) -> String:
 
 func _expect_ring_follows_cursor(cell: Vector2i, expected: Array[Vector2i]) -> String:
 	_battle.set_cursor_cell(cell)
-	await _press(&"show_range")
+	await _press_action(&"show_range")
 	var painted := _battle.overlays.attack_layer.get_used_cells()
 	if painted.is_empty():
 		return "R put the last unit's ring down instead of re-aiming at the cursor's"
@@ -538,19 +532,6 @@ func _focused_text(guard: Control) -> String:
 	return focused.text
 
 
-## A real key event rather than a synthetic action: focus navigation and a
-## focused Button's own Enter belong to Godot, and the guard has to live with
-## both. Released as well as pressed, or the board's held-direction repeat would
-## keep walking the cursor after the guard closes.
-func _press_key(keycode: Key) -> void:
-	for pressed in [true, false]:
-		var event := InputEventKey.new()
-		event.keycode = keycode
-		event.pressed = pressed
-		Input.parse_input_event(event)
-		await _battle.get_tree().process_frame
-
-
 func _open_end_turn() -> void:
 	_battle.confirm_at(Vector2i(10, 5))
 	await _until_state(Battle.State.MENU)
@@ -633,22 +614,7 @@ func _click(button: Button) -> void:
 		await _battle.get_tree().process_frame
 
 
-## Sends a key the player's own input path, so the flow under test is the one a
-## keyboard reaches — not a handler called directly.
-func _press(action: StringName) -> void:
-	var event := InputEventAction.new()
-	event.action = action
-	event.pressed = true
-	Input.parse_input_event(event)
-	await _battle.get_tree().process_frame
-
-
 func _expect_reason(feedback: ActionFeedback, expected: String) -> String:
 	if feedback.reason == expected:
 		return ""
 	return "rejected confirm showed '%s', expected '%s'" % [feedback.reason, expected]
-
-
-func _until_state(wanted: Battle.State) -> void:
-	while _battle.state != wanted:
-		await _battle.get_tree().process_frame

@@ -1,5 +1,5 @@
 class_name BattleScenarioDriver
-extends RefCounted
+extends BattleScenario
 ## Dev-only: parses the capture command line and drives Battle through scripted
 ## flows for automated screenshots (`make screenshot`, `make smoke`).
 ##
@@ -50,7 +50,6 @@ const FOUR_ARMY_PROBE_COMMANDERS: Array[StringName] = [
 	&"rhea_sol", &"viktor_draeg", &"mara_voss", &"cass_orlov"
 ]
 
-var _battle: Battle
 var _shot_path := ""
 var _select_cell := NO_CELL
 var _demo := ""
@@ -62,7 +61,7 @@ var _failed := false
 
 
 func _init(battle: Battle) -> void:
-	_battle = battle
+	super._init(battle)
 	_shot_path = ScreenshotUtil.requested()
 	var args := CmdArgs.user()
 	_select_cell = _selected_cell(args)
@@ -524,14 +523,6 @@ func _stage_menu_after_build_menu() -> void:
 		_fail("the two-row unit menu measures %s, no smaller than the build menu's %s" % sizes)
 
 
-## A control built in code measures and places itself a frame after its children
-## were added: the seat strip centres itself, the info sheet's grid sizes its
-## columns. The action menu is not one of them — ActionMenu.open sizes and clamps
-## the panel before it returns.
-func _settle_layout() -> void:
-	await _battle.get_tree().process_frame
-
-
 ## Every id in `wanted` is on the menu, read off the rows the menu was built from.
 ## A row that quietly stopped being offered fails the run rather than leaving a
 ## player with nowhere to go.
@@ -671,18 +662,6 @@ func _check_sheet_scrolls(sheet: CommanderInfoSheet) -> void:
 		_fail("the commander sheet did not scroll on DOWN (offset stayed %d)" % before)
 
 
-## One press and its release, resolved to an action by the InputMap rather than
-## named as one — so what a check proves is the whole chain from the keycode down.
-## Released as well as pressed, or a held-direction repeat would keep stepping.
-func _press_key(keycode: Key) -> void:
-	for pressed in [true, false]:
-		var event := InputEventKey.new()
-		event.keycode = keycode
-		event.pressed = pressed
-		Input.parse_input_event(event)
-		await _battle.get_tree().process_frame
-
-
 ## Culls Blue to one nearly-dead unit and kills it through the ordinary
 ## select -> Fire flow, so every flow that needs a win reaches VICTORY the way a
 ## player does. Shared rather than copied: both call sites are pinned to where
@@ -724,14 +703,3 @@ func _demo_select(cell: Vector2i) -> void:
 			best_cost = move_range.costs[candidate]
 			farthest = candidate
 	_battle.set_cursor_cell(farthest)
-
-
-## Scenarios advance by waiting on the scene's own state machine rather than a
-## fixed frame count, so they stay correct when animation timings change.
-func _until_state(wanted: Battle.State) -> void:
-	await until_state_of(_battle, wanted)
-
-
-static func until_state_of(battle: Battle, wanted: Battle.State) -> void:
-	while battle.state != wanted:
-		await battle.get_tree().process_frame

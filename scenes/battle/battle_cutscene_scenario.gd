@@ -1,5 +1,5 @@
 class_name BattleCutsceneScenario
-extends RefCounted
+extends BattleScenario
 ## The battle and capture cut-in staging family, split out so
 ## BattleScenarioDriver stays under its linted size cap — COM-94, the split its
 ## own gdlintrc history had named as due since COM-13's raise.
@@ -104,15 +104,10 @@ const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
 	PARTIAL_SUFFIX + FACTION_SUFFIX,
 ]
 
-var _battle: Battle
 ## Raised by any mid-scenario check that fails. `run` hands it back rather than
 ## writing straight to the driver's own flag, the same separation of concerns
 ## `stage_rout` and `until_state_of` already keep at the class boundary.
 var _failed := false
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
 
 
 ## Dispatches on the mode's prefix — the cut-in families carry a matchup in the

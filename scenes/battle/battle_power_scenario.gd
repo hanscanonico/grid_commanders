@@ -1,5 +1,5 @@
 class_name BattlePowerScenario
-extends RefCounted
+extends BattleScenario
 ## The Command Power capture flows, split out so BattleScenarioDriver stays under
 ## its linted size cap. Every flow — `run` included — returns an error string
 ## rather than reporting one: the driver's `_fail` owns the push_error and the
@@ -55,12 +55,6 @@ const MODES: Array[String] = [
 	"power_banner",
 	"power_targeting",
 ]
-
-var _battle: Battle
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
 
 
 func run(mode: String) -> String:
@@ -313,7 +307,3 @@ func _check_map_menu_readable() -> String:
 	if rows.is_empty() or rows[0].id != &"power":
 		return "map menu opened without the Command Power as its first row"
 	return BattleScenarioDriver.band_error(_battle, "map menu", _battle.action_menu)
-
-
-func _until_state(wanted: Battle.State) -> void:
-	await BattleScenarioDriver.until_state_of(_battle, wanted)

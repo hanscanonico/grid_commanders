@@ -1,5 +1,5 @@
 class_name BattleTransitionScenario
-extends RefCounted
+extends BattleScenario
 ## Driven acceptance flows for the state boundaries a turn crosses: the input
 ## convention (COM-15), the mixed-seat viewer and handoff (COM-47), and the pause
 ## a player may take while the computer plays. They use the same public Battle
@@ -22,12 +22,6 @@ const TURN_WAIT_FRAMES := 1800
 ## The computer's seat on the default board `ai_pause` runs on — the one side
 ## Battle plays itself unless `--hotseat` clears it.
 const AI_SEAT := 2
-
-var _battle: Battle
-
-
-func _init(battle: Battle) -> void:
-	_battle = battle
 
 
 func run(mode: String) -> String:
@@ -323,23 +317,9 @@ func _wait_for_handoff(team: int) -> String:
 	return "team %d never came up for its handoff" % team
 
 
-func _press_key(keycode: Key) -> void:
-	for pressed in [true, false]:
-		var event := InputEventKey.new()
-		event.keycode = keycode
-		event.pressed = pressed
-		Input.parse_input_event(event)
-		await _battle.get_tree().process_frame
-
-
 func _wait_for_banner(visible: bool) -> bool:
 	for frame in 120:
 		if _battle.animator.turn_banner.visible == visible:
 			return true
 		await _battle.get_tree().process_frame
 	return false
-
-
-func _until_state(wanted: Battle.State) -> void:
-	while _battle.state != wanted:
-		await _battle.get_tree().process_frame
