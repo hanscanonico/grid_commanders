@@ -21,10 +21,11 @@ across three movement domains (land, air, sea), property capture and income, and
 The plans under `.lavish/` are the designs of record — **read the owning plan before an
 architectural decision in its area.** The index below names each plan's scope and the locked
 decisions that must survive any change; milestones and the original argument live in the plans
-themselves. Six entries carry more than an index can hold, so **their long form — the rationale,
+themselves. Nine entries carry more than an index can hold, so **their long form — the rationale,
 the measurements, the superseded clauses and the risk registers — is `docs/design_record.md`**:
-AI Judgement, AI Economy, the AI Arena, four players, the asymmetric board and campaign depth.
-**Read that file's entry before an architectural decision in one of those six areas.** Every other
+AI Judgement, AI Economy, the AI Arena, four players, the asymmetric board, campaign depth, the
+battle animations, the zoom ladder and the animation milestone, and the mobile builds.
+**Read that file's entry before an architectural decision in one of those nine areas.** Every other
 plan is stated in full below and has no copy there.
 
 - `grid-commanders-plan.html` — the base game: milestones M0–M7 (all done), mechanics reference,
@@ -189,107 +190,30 @@ plan is stated in full below and has no copy there.
   of `camera.offset` (the combat shake composes through `BoardCamera.shake_offset`), and both bars
   swallow the pointer (`MOUSE_FILTER_STOP`) so events can't fall through to cells rendered behind
   them.
-- `battle-animations-plan.html` — the combat cut-in BA1–BA4, all shipped. D1: **the cut-in replays
-  a snapshot, it computes nothing** — `core/` gained only snapshot fields on `CombatResult`,
-  and the whole list is: `attacker_hp_before` / `defender_hp_before`, their
-  `_after` siblings, the two weapon slots the rules selected (`attacker_weapon_slot` /
-  `counter_weapon_slot`, with secondary weapons), which the cut-in maps to a style through
-  `BattleStyleDB.for_weapon` and never re-decides, and `attacker_indirect`. The last three
-  arrived by COM-83, which is the rule read the other way: the cut-in was reading "HP after"
-  off the *live* unit and asking `AttackRange.is_indirect` at replay time, so it was
-  recomputing two things the exchange already knew. `AttackRange` is still the one authority
-  on who is indirect — `attacker_indirect` is its answer, taken when the shot resolved. The
-  counter needs no such flag, because `_counter_shot` refuses any `max_range != 1` and a
-  returning volley therefore can never be a lob. D5: how a weapon looks is a `BattleStyle`
-  under `data/battle_anim/`, `UnitType.battle_style` / `secondary_battle_style` are presentation keys
-  like `atlas_col`, and no gameplay number may ever appear in a style.
-  D2 ("board art, blown up; nothing redrawn") holds for the ground plane and the figures, and has
-  **one recorded departure, the cut-in's scenery**: in the cut-in a terrain either *paves* the ground
-  or *stands* on it, said by two presentation keys on `TerrainType` beside `atlas_col` —
-  `cutin_ground` (the surface a standing terrain is paved with) and `cutin_scenery` (the shape it
-  stands), asked through `stands_in_cutin()` and never by terrain id. Paving with an object's own
-  art carpets the frame in tiny repeated towers, and standing the atlas cell as-is brings its
-  opaque ground plate with it and reads as a framed picture — so the shape is **drawn**, with its
-  colour still sampled off that same cell (over `OBJECT_WINDOW`, the middle, because a peak is grey
-  on a green square and the whole-cell average returns grass). The two keys are one decision in two
-  fields and nothing at draw time can see them disagree, so `tests/unit/test_terrain_db.gd` lints
-  them together: set together or not at all, a known shape, and a pavement that exists and does not
-  itself stand. `cutin_scenery:mech:mech` in the smoke sweep is the frame trees and peaks are drawn
-  in; `cutin_iron_commander` is the buildings'.
-  **A figure is that art minus the shadow the tile needed** (no plan artifact; this clause is its
-  record, and it holds for the capture cut-in's squad too): the generated cells carry an opaque
-  contact shadow, and both cut-ins were drawing it **twice**, since each also stamps the whole
-  cell as an offset silhouette. Both cut-ins already draw their own ground plane and their own
-  contact ellipse, so the baked one carried nothing there. (It was first cut for a sharper reason:
-  the shadow was a 1px checkerboard then, and at 1:1 the cut-in resolved its dots one by one — a
-  player reported them as "weird black points at the bottom of the tank". **That half of the
-  argument has retired and the doubling has not**, because the shadow is now *solid* — see the
-  shadow clause below. Do not read this sheet as a workaround for a dither.)
-  `UnitSprite.figure_texture_for` is the one
-  way to ask for it and `assets/tiles/units_atlas_figures.png` the sheet it cuts from — the board's
-  own sheet with those pixels **subtracted by the generator** (`compose_cell`'s `shadow`), never a
-  redraw and never a colour-keyed shader here, because which pixels are shadow is the generator's
-  answer and a second opinion on it in `scenes/` is exactly the drift D2 forbids. Subtracted rather
-  than composed-without, because the waterline foam is placed against the composed cell's own spans.
-  So D2 still holds of the figures: they *are* the board art, blown up. `tests/unit/test_figure_sheet.gd`
-  is the pin — the figure sheet may only ever remove a pixel, and every unit must lose one. When it
-  shipped, the legibility ruler was deliberately not re-run, no board pixel having moved; all
-  seventeen combat cut-in frames and all four capture ones re-baselined and every board and menu
-  frame was untouched.
-  **Where that shadow was centred is the cell's ground line, and it is not the cell's bottom edge**
-  — `UnitSprite.CELL_GROUND_PX`, **7** px up (9 until the animation install; the generator's one sun
-  drops the shadow its 2 px `SHADOW_OFFSET` below the feet row rather than centring it on them), the
-  same on every land and sea column, with air's cast displaced lower by height. The figure sheet is
-  a **pair** now, frame B beside frame A, and both are read — the cut-ins beat between them (the
-  ninth slice below). The
-  rows below it are the shadow's own spread, so a cut-in drawing the
-  shadowless sheet over a contact ellipse of *its* own has to centre that ellipse on the ground line;
-  both did it on the box's bottom edge, which put the ellipse below the tracks it was under and left
-  armour — whose shadow is the widest, so whose gap is the largest — reading as a separate blob on
-  the grass. One constant, both cut-ins' `_draw_shadow`, and `test_figure_sheet.gd` measures it off
-  the shipped sheets rather than asserting it, the subtraction between them being the shadow itself.
-  Not a 64x96 regression: the pre-#336 64 cell carries the same 9 px margin (measured on that
-  atlas) and the `-2.0` offset is BA3's, so the gap is as old as the cut-in and #336 only made it
-  easier to see. All seventeen combat cut-in frames and all four capture ones moved; every board and
-  menu frame is byte-identical.
-  **The board's cast shadow is SOLID, and it is solid because the board was measured through it**
-  (generator `55d2b65`, adopted 2026-08-19; this clause is its record). The board draws the 64px
-  cell onto a 16px grid with nearest filtering at whole rungs 1–5, so it keeps one source pixel in
-  4/z — 4:1 at rung 1, 2:1 at rung 2, **1:1 at rung 4**. A shadow with 1px structure therefore had a
-  different read at every rung, and the checkerboard's was: a sampling phase drew between 0% and
-  285% of the shadow's own density at rung 1 and 0%–268% at rung 2, so on the board it was a solid
-  smear zoomed out, land units all but floating at the default rung, and loose black dots at 1:1 —
-  which is the "ugly black dots" a player reported twice. Solid is the one shape with no sub-pixel
-  structure to lose (0.92–1.07, 0.99–1.01, exactly 1.0 at those rungs), and the two alternatives
-  were **rendered** against it at rungs 1, 2 and 4 rather than argued — a logical-pixel checker in
-  4px blocks reads as a chequered flag under an aircraft at 1:1, a dithered fringe reads as debris.
-  The sub's wake followed, being drawn on the shadow's own parity; it is solid and drawn *over* the
-  shadow now. The generator owns all of it (`_shadow_ellipse`, `tests/…::CastShadow`) — there is no
-  shadow tone and no parity anywhere in `scenes/`, which is what keeps the figure sheet's
-  subtraction exact. 54 of the 85 smoke frames moved and the set is exactly the
-  predicted one: every board frame, plus the three cut-ins that stage the sub against the cruiser —
-  a hull places its waterline foam against the composed cell's own spans, so a solid displacement
-  shadow moved a few flecks of it, and those flecks are the only pixels the figure sheet carries
-  over from this change. Every menu frame, every capture cut-in and every combat cut-in of a land
-  or air unit is byte-identical, which is the figure sheet's subtraction proving itself.
-  The legibility ruler was re-run this time and `docs/sprite_legibility.md` carries the re-read.
-  **The buildings' drop shadow is solid on the same reading** (generator `88245bb`, adopted
-  2026-08-19; this clause retires the one that recorded it as the remaining checkerboard) —
-  `terrain._drop_shadow` is a different drawer and that pass left it behind, which is why a city
-  wore a stippled fringe at 1:1. Over the five property cells the dither drew 0%–276% of its own
-  density at rung 1 and 0%–200% at rung 2, a whole sampling phase drawing none of it, against
-  solid's 0.97–1.06 at rung 2 and exactly 1.0 at rung 4; solid still spreads 0.69–1.38 at rung 1,
-  and that residual is the band's own **shape** — a ~130px silhouette two pixels wide — rather than
-  structure. **The tone is deliberately still the units'**, one shade on one board: the doubled
-  coverage was rendered on plains, road and shoal at all three rungs against the dither and three
-  lighter tones, and every lighter tone loses the shadow entirely on road and shoal zoomed out.
-  57 smoke frames moved — every board frame but `commander_info`, whose sheet covers the board,
-  plus the six menu frames that show a map thumbnail, a thumbnail baking the property art. **Both cut-ins are byte-identical, and that is structural**:
-  neither blits a property cell — a standing terrain is *drawn* with its colour sampled from a
-  window — and the only changed pixels inside `CutsceneScenery.OBJECT_WINDOW` or
-  `CaptureStage.ROOF_WINDOW` are the airport's and the port's, which no shipped scenario stages.
-  The legibility ruler was re-run and reads the board unchanged cell for cell, so
-  `docs/sprite_legibility.md` is untouched.
+- `battle-animations-plan.html` — the combat cut-in BA1–BA4, all shipped. **Long form:
+  `docs/design_record.md` § `battle-animations-plan.html`** — the snapshot-field list and how COM-83
+  arrived at it, the scenery departure's argument, the figure sheet's history, the ground-line
+  measurement and the three solid-shadow readings with their moved-frame counts. D1: **the cut-in
+  replays a snapshot, it computes nothing** — `core/` gained only snapshot fields on `CombatResult`
+  (`attacker_hp_before` / `defender_hp_before` and their `_after` siblings, the two weapon slots the
+  rules selected, `attacker_indirect`); `AttackRange` stays the one authority on who is indirect and
+  `BattleStyleDB.for_weapon` the one map from a weapon to a style, neither ever re-decided at replay
+  time. D2: board art, blown up; nothing redrawn — with **one recorded departure, the cut-in's
+  scenery**, where a terrain either *paves* the ground or *stands* on it, said by two presentation
+  keys on `TerrainType` beside `atlas_col` (`cutin_ground` / `cutin_scenery`) and asked through
+  `stands_in_cutin()`, never by terrain id; `tests/unit/test_terrain_db.gd` lints the pair together.
+  D5: how a weapon looks is a `BattleStyle` under `data/battle_anim/`, `UnitType.battle_style` /
+  `secondary_battle_style` are presentation keys like `atlas_col`, and no gameplay number may ever
+  appear in a style. **A figure is that art minus the shadow the tile needed** —
+  `UnitSprite.figure_texture_for` is the one way to ask for it,
+  `assets/tiles/units_atlas_figures.png` and its frame-B sibling the sheets it cuts from, the pixels
+  **subtracted by the generator** and never by a redraw or a colour-keyed shader in `scenes/`;
+  `tests/unit/test_figure_sheet.gd` is the pin. **`UnitSprite.CELL_GROUND_PX` (7) is the cell's
+  ground line, and it is not the cell's bottom edge** — it is where a cut-in centres its own contact
+  ellipse. **The board's cast shadow and the buildings' drop shadow are both SOLID**, measured
+  through the board's own sampling rather than argued, and the tone and the parity are the
+  generator's alone: there is no shadow tone and no parity anywhere in `scenes/`, which is what
+  keeps the figure sheet's subtraction exact.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
@@ -375,237 +299,87 @@ plan is stated in full below and has no copy there.
   chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
   on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
   a pip.
-- **The zoom ladder is integers above its floor** (no plan artifact; this entry is its record, and it is the
-  animation milestone's first slice) — the board is sampled with nearest filtering, so a rung that
-  is not a whole number of screen pixels per world pixel drops and doubles rows, and *which* rows it
-  drops moves as the camera pans: crawling edges, which animation makes impossible to ignore. The
-  ladder used to be anchored on the per-map fit ratio ceil'd to two decimals, so **every** board's
-  floor was fractional (0.57 on Bulwark up to 3.64 on the smallest fixture) and so was every rung
-  above it. **`BattleZoom` is the one statement of what rungs exist**: `rungs_for` is the ladder a
-  board offers and `floor_for` its furthest-out rung, so `BoardCamera.min_zoom` hands the ladder a
-  board and asks rather than deriving a second answer. `set_zoom` settles on the nearest rung and a
-  press steps one place, so nothing anywhere else can invent a level.
-  **A PLAYTEST HAS SINCE OVERRULED HALF OF THIS SLICE, and the half it kept is the half a match is
-  played at.** The player's verdict on the shipped build was that it "looks more pixelized than
-  before"; the captures agreed, and named two costs neither of them worth what they bought.
-  **`window/stretch/scale_mode` is back off** (its `integer` was one line and is gone): on a
-  maximized 1512x945 Mac window it rendered the picture at 1280x720 inside 116px side bars and
-  ~112px top and bottom, showing the *same board* 15% smaller, and it made every texel a perfectly
-  square, perfectly aligned block — which is exactly the lattice a player reads as "pixelized",
-  where the 2.36x fractional lattice's mixed 4/5px steps dither the grid and read as finer. **And
-  the floor rung is the fit-whole one again, fractional, with every rung above it still whole**:
-  floored at 1 it left Bulwark's 49x32 showing half of itself at maximum zoom-out, and a crawling
-  edge on a survey view nobody fights from is the cheaper defect. So what survives is that a board
-  the default rung fits inside is *fought* on whole rungs. **The exception is a board small enough
-  that its fit rung sits above the default** — `boot_camp` at 2.03 and `quartet` — where the floor
-  *is* the rung the match opens on, so those two play on a fractional rung again exactly as they
-  did before #322, and their four smoke frames (`mission_strip`, `mission_strip_retired`,
-  `side_victory`, `mixed_seat_handoff+fog`) moved back with them: the board fills the band edge to
-  edge instead of leaving a sliver of backdrop. The other 81 are byte-identical.
-  `tests/unit/test_texel_stability.gd` is the gate and states the formula it simulates; the 4x
-  terrain oversample is deliberately outside it, `TILE / TERRAIN_PX` being an exact decimation whose
-  phase never moves. It **states both weakenings in its own header and pins `scale_mode` to its
-  absence**, so re-forcing either is a decision rather than a drift.
-  **The milestone's second slice takes the rung's own promise the rest of the way**, because a
-  whole rung is only half of a still frame — the board also has to be *parked* on whole screen
-  pixels and never scaled off them. Four decisions, all presentation, nothing under `core/` or
-  `ai/`. **A1: a continuous zoom is played on a rendered still, never on the camera** —
-  `scenes/battle/board_punch.gd` (`BoardPunch`) grabs the frame and scales *that*, so the cut-in's
-  entry flinch spreads one uniform filtering artefact over the whole image instead of dropping a
-  different set of rows out of every sprite on every frame. It is exact rather than an
-  approximation: a camera zoom scales what is drawn about the camera's screen anchor, and that
-  anchor is the middle of the board band by construction, so the still is scaled about the same
-  point — pinned by a driven capture that came back **byte-identical to the live board at rest
-  scale**. Clipped to the band, which is what keeps the still's own chrome out (at any scale of 1.0
-  or more the snapshot's bars fall outside the clip and the live ones are what is on screen), and
-  the grab is **best-effort**: an occluded window hands back an empty image, and a cut-in that
-  failed to open because the board could not be photographed would be a nicety taking the scene
-  down with it. `camera.zoom` is now a rung and nothing else. The rejected mechanism is a
-  `SubViewport` around the cut-in *layer*: the thing being scaled is the board, not the band, and
-  wrapping the world in a viewport buys a second coordinate space for every input and overlay
-  answer to be wrong in. **A2: the board docks on a whole screen pixel** — the lift is 12, not the
-  bars' exact half-difference of 11.5 (`MobileDock.board_lift_px()`, which retired
-  `BattleView.BOARD_LIFT_PX` once the touch dock gave the chrome a second height), and **the odd pixel goes to the bottom** so a
-  unit on the last row ends up further from the chrome rather than nearer it. **A3: the camera
-  lands on the cell rather than gliding to it** — `position_smoothing` spent a third of a second
-  after every cursor step between two cells, which is that same fractional rest by another name;
-  a capture run already switched it off for the same reason, so no captured frame depended on it.
-  **A4: an atlas cell is drawn on whole texels** — the capture cut-in's squad is board art at 1:1
-  (`CaptureStage.FIGURE_PX` is `UnitSprite.SPRITE_W`) and the march, bob and stagger walked it
-  through fractional offsets, so its draw origin is rounded; the paved-property fallback's rect is
-  snapped with it. The mash **squash** is deliberately untouched — it is `draw_set_transform` over
-  *drawn shapes*, so it never sampled a texel and the beats' feel is unmoved. The band's own
-  `PUSH_SCALE` is a known remaining continuous scale over the cut-in's textures, left alone
-  because moving it moves seventeen shipped cut-in frames. `tests/unit/test_texel_stability.gd`
-  grew the rest half — the dock is stated in world units as `lift / zoom`, so the rung cancels and
-  what has to be whole is the lift itself, which is checked as an integer and as the nearest one to
-  the band's middle; the punch's pivot is the camera's own anchor. Fifty-six smoke frames
-  moved and the set is exactly the predicted one: every board frame by the dock's half pixel, and
-  the four `capture_cutin*` frames by the squad's snap — all seventeen combat cut-ins and all
-  twelve menus are byte-identical.
-  **The milestone's third slice is the board's ambient beat**, and it is a two-frame flip and
-  nothing more: `assets/tiles/units_atlas_b.png` is the same army a beat later, so `UnitSprite`
-  alternates the atlas its `AtlasTexture` cuts from every `AMBIENT_MS` and the region, the scrim,
-  the tint, the carrier hiding and the fog answer are untouched — every one of them is the sprite's
-  or the node's, so frame B inherits them by construction rather than by a second code path.
-  Three decisions. **The beat is a wall clock, not an accumulator** —
-  `Time.get_ticks_msec()`, so every sprite agrees on the frame with no conductor — and one cadence
-  serves both motions because the sheets encode one. **Instant is a still board and a capture is
-  pinned**: the clock answers frame A under the Instant tier, the same explicit branch the
-  tier is everywhere else, and `Battle` also freezes it for a capture,
-  because an explicit `--speed=` outranks the pinned tier and a capture of a tier must not become
-  a capture of a beat. **`UnitSprite.animates` is deleted and every sprite processes** (the
-  animation install, below): only the air and sea columns used to differ between the sheets, so
-  `domain != LAND` was the gate; every column now carries an idle key pose, and a predicate with
-  one answer is a dead branch. `tests/unit/test_ambient_frames.gd` pins *that* against the shipped
-  art cell by cell, comparing *drawn* pixels rather than bytes, because the atlases import with
-  `fix_alpha_border` and a copter that moved leaves its neighbour's transparent margin holding
-  different and equally invisible RGB. This slice's own "all 85 smoke frames byte-identical" and
-  its frame-B legibility reading (16.5% / 7.5%) are both superseded by the install below.
-  **The milestone's fourth slice is the on-map muzzle flash** (PR #325): the cut-in had drawn one
-  since BA1 (`CutsceneFx._draw_muzzle`), but the board's own attack path gave the shooter nothing —
-  a shot sound, then the defender's flash. `scenes/battle/muzzle_flash.gd` (`MuzzleFlash`) is a
-  dumb drawer in the `CapturePips` idiom; `BattleAnimator._flash_muzzle` poses it for the shot and
-  the counter, sized and tinted from the `BattleStyle` the result's own weapon slot names, through
-  `BattleStyleDB.shared()` so the cut-in and the board read one registry — no new sheet, no fresh
-  hex, opaque pixels only. **It obeys the cut-in's own fog rule, both combatants visible**, because
-  the star is aimed and a visible shooter pointed at hidden ground would leak the direction COM-57
-  exists to protect; Instant draws nothing (`flash_in_seconds()` is 0 there), which is also why
-  every smoke frame is byte-identical across the slice.
-  **The milestone's fifth slice is the 64x96 unit cell, and the armour family is its first user**
-  (generator `f818157`, adopted 2026-08-20; this clause is its record). A tank has to read as
-  heavier than the grass tile it is parked on, and the tile is 64px, so the generator's unit cell is
-  one tile wide and half a tile taller — `UnitSprite.SPRITE_H` is 96 — with every vertical landmark
-  in `compose_cell` measured up from the cell's **bottom** edge. The extra rows are therefore sky:
-  the fourteen unraised units are byte-identical in all three sheets, which is the bottom anchor
-  proving itself, and the board needed nothing new because `SPRITE_OVERFLOW` / `ART_OFFSET` and the
-  y-sort had already landed. **What the headroom is spent on is MASS, and that is the 128px lesson
-  read at a different scale** (`docs/density_128.md`): a voxel of height is 2px here, so a turret
-  tall enough to clear a whole tile is a silo rather than a tank — it was *rendered* on the md tank
-  and rejected — and a mast thin enough to look right is one source pixel, which the board's 4:1
-  rung draws or drops on the sampling phase. So tank and md tank grew deeper running gear, a deeper
-  hull and a turret on a full armour ring and stay inside their tile, while artillery's howitzer and
-  the rocket rack, the two weapons that legitimately elevate, are what break the tile's line.
-  **A square icon slot shows the tile, not the cell** — `UnitSprite.tile_texture_for` is the cell's
-  footprint square and the HUD's unit icon and the illustrated menu rows ask for it, because fitting
-  a 2:3 cell into a 20px square shrinks every unit to two thirds to make room for sky;
-  `ActionMenu.icon_cap`'s taller-than-wide branch stays as the bound for art that does reach a row
-  whole. Both cut-ins blow the cell up at 1:1, so each carries a `FIGURE_H` beside its `FIGURE_PX`
-  (pinned to `SPRITE_H` / `SPRITE_W` by `tests/unit/test_texel_stability.gd`) and draws it above the
-  feet. **72 of the 85 smoke frames moved, and the thirteen that did not are the twelve menu frames
-  and `side_victory`** — re-measured at review, the slice's own prediction of 64 having been short.
-  Two causes, and neither is a redraw: the raised columns and the square icon slot move every board
-  frame that shows a unit, and **a box 32 rows taller resamples the art inside it** wherever
-  something scales — both cut-ins push their band by up to 1.03, and `boot_camp` and `quartet` are
-  fought on a fractional floor rung — so all four capture cut-ins and the combat cut-ins of unraised
-  units moved by a pixel of phase with not one atlas pixel behind them changed. What did not move is
-  the art itself, which the three sheets prove cell by cell. The legibility ruler
-  was re-run for both ambient frames against a same-day control and `docs/sprite_legibility.md`
-  carries the re-read: nine cells, all hue-carried, and the tank came out *better*. The ruler reads
-  the cell's bottom square for the same reason the icons do.
-  **The milestone's sixth slice is the animation install, the board's new ambient baseline**
-  (generator `e16d261`, adopted 2026-08-25; this clause is its record). Every sheet on the board was
-  regenerated and four new ones arrived: `units_atlas_figures_b.png`, `units_atlas_move.png`,
-  `units_atlas_move_b.png` and `autotiles/sea_b.png` shipped installed and read by nothing, each
-  its own slice — **all four are drawn now** (the seventh, eighth and ninth slices below). Three
-  decisions. **`scenes/battle/board_beat.gd` (`BoardBeat`) is the one clock every looping sheet
-  reads** — the cadences (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples
-  of one another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable
-  without a scene; the sea has no business asking a unit sprite what time it is. **`animates` is
-  gone** (above). **The constants stay hardcoded and `assets/tiles/anim.json` is *pinned*, never
-  read at runtime**: the generator's manifest states the cell, the clips, the columns, the rows and
-  the phase counts, and `tests/unit/test_anim_manifest.gd` is the one place it is consumed, so the
-  contract and the game's constants cannot drift without putting a JSON parse in the draw path.
-  `PLAINS_PHASES` is 8 with it. **80 of the 85 smoke frames moved** and the five that did not are
-  exactly the menu screens that draw neither board art nor a thumbnail (`menu_campaign_hub`,
-  `..._debrief`, `..._interlude`, `menu_commander_select`, `menu_replays`).
-  **The legibility ruler was re-run and it reads a REGRESSION**: 86.7% of clear cells failing
-  against a same-day control of 16.0% on the previous art, the failure entirely at board resolution
-  (94.8% board against 21.6% cut-in) and 71.1% of it hue-carried. `docs/sprite_legibility.md`
-  carries the re-read; nothing was tuned in response, and answering it is the generator's.
-  **The milestone's seventh slice is the sea's swell**, `autotiles/sea_b.png` on `BoardBeat`'s
-  `SEA_MS`, and it costs one pointer: frame B is **the same three phases in the same order** with
-  only the glints moved, so the source id, the cut, `sheet_cells`, `atlas_coords`, `variant` and
-  `PHASE_COUNTS` are all untouched and the beat re-points the SEA `TileSetAtlasSource`'s texture
-  and nothing else. Three decisions. **`TerrainAutotiles.sheet_path(family, frame)` is the
-  filename authority, as it is for every other sheet** — frame 0 is what every surface has always
-  read, so the miniature and the legibility ruler keep reading the frame-A sheet `sheet_path`'s
-  default is pinned equal to, and are **deliberately** unedited: a time frame is another axis, and a thumbnail or a report taken on a
-  different one answers a different question, which is the reason `legibility_art.gd` already
-  states about the units' frame B. **`scenes/battle/sea_beat.gd` (`SeaBeat`) is where the tick
-  lands** — a `Node` in the `CapturePips` idiom owning nothing but the source it was handed,
-  because `BattleView` is `RefCounted` and has no frame to be told about; `BattleView`, the one
-  owner of the `TileSet` and its sources, is what hands the source over, so nothing here looks one
-  up, and it opens on whatever frame the rest of the board is on rather than snapping a tick later.
-  **The backdrop and the property ground swell by construction**, sharing `terrain_layer.tile_set`,
-  so the out-of-bounds ring beats with the water it continues with no second code path. Instant and
-  a pinned capture are already frame A through `BoardBeat.frame`, so **all 85 smoke frames are
-  byte-identical** — measured in one tree against the same sweep with the slice reverted in place.
-  **The milestone's eighth slice is the move clip** (this clause is its record, and it supersedes
-  the sixth's "read by nothing" for `units_atlas_move.png` / `_move_b.png` only). A unit walking a
-  path used to be a parked unit sliding; now it plays the generator's gait pair on
-  `BoardBeat.MOVE_MS` for exactly the length of `BattleAnimator.animate_path`'s tween. Four
-  decisions, all presentation, nothing under `core/` or `ai/`. **It is a clip, not a second beat** —
-  `UnitSprite._sheet_path(frame)` is the one answer to which sheet this sprite draws from, and every
-  site that builds or re-points the texture (the `atlas_row` setter, `_process`, the `moving`
-  setter) goes through it, because a repaint mid-walk — a defection's row, a fog flip — would
-  otherwise snap a striding unit back to parked. **The clip's lifetime is the tween's**: the
-  animator sets `moving` on both sides of it and nothing else does, Instant returns before any of
-  it so a still board plays no clip at all, and the flag is cleared even if the tween died with the
-  scene, a sprite left moving striding on the spot forever. **The sheets face screen-left and a
-  rightward step mirrors them** — `UnitSprite.facing_for(delta, was)` is that policy, static and
-  pure the way `PathArrow.segments` is, and **a purely vertical leg holds the previous facing**;
-  facing is set in `setup()` and by `face_step` at each corner and **never in `refresh()`**, so no
-  repaint mid-walk turns a striding unit around. **The mirror is the CLIP'S and ends with it** —
-  the `moving` setter faces a parked sprite forward again, one place owning both ends of it, and
-  the reason is the art: the generator draws the *move* pair's land and air cells over a
-  **cell-centred** cast shadow, so mirroring leaves that shadow where it was, while the **ambient**
-  pair's is not centred on any column (34 px of 64 on land and sea, 36 on air). A unit left
-  mirrored at rest therefore dropped its shadow 5–9 art px to the *other side* of itself from an
-  unmirrored neighbour of the same type, which reads as two suns on one board rather than as a
-  nudge — this supersedes the slice's own "about a board pixel, the accepted price of a facing
-  that survives a repaint", which under-measured it against the cell centre instead of against a
-  parked neighbour.
-  `test_move_frames.gd` carries that measurement, so if the generator ever centres the ambient
-  shadow the rule can be revisited out loud.
-  **An unauthored unit needs no fallback code**: the generator bakes each unauthored
-  column's ambient cell into both move sheets, so the clip is valid for the whole roster and nothing
-  here asks which families are authored — `tests/unit/test_move_frames.gd` pins that pairing (both
-  move frames equal to their ambient counterparts, or both different), the shared grid, the cadence,
-  the two stills and the flip policy against the shipped art. **All 85 smoke frames are
-  byte-identical**, and structurally so: a capture pins Instant, so it never runs a tween.
-  **The milestone's ninth slice is the cut-ins' idle beat**, `units_atlas_figures_b.png` — the last
-  of the install's four unread sheets, so nothing the generator ships is now drawn by nothing.
-  `UnitSprite.figure_texture_for` grew a **defaulted** `frame`, staying the one way to ask for a
-  figure, and both cut-ins cut the pair once at bind and pick between them while they play. The
-  decision is which clock they pick on: **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the
-  arithmetic, and a cut-in reads it off its own director's `t` rather than `BoardBeat.frame`'s wall
-  clock** — inside `scenes/battle/cutscene/` everything is a pure function of one clock, so a
-  posed `pose_at(t)` still and a skip (`t = total`) both land on a fixed pose, which a shutter-timed
-  beat could not promise. The board's two stills stay `frame`'s and do not reach in: Instant never
-  opens a cut-in at all, and a capture pins the *clock*, not the sheet. **14 of the 21 cut-in frames
-  moved** — all four capture ones and ten of the seventeen combat ones — and the seven that did not
-  (`cutin_ko` and the six `cutin_volley*`) are posed at a `t` inside a frame-A half beat, which is
-  the derivation proving itself; every board and menu frame is byte-identical, `commander_info`
-  included — re-measured at review over three sweeps of the unchanged tree and two of this one.
-  (no plan artifact; this entry is its record) — `N` walks the cursor
-  to the next unit on the side in hand that has not acted, so the last one is never hunted across
-  a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
-  still act and for the order they are walked in** — `of()` is the list the End Turn guard prints
-  and `after()` is the step through it, one reading order (`precedes`) stated once, because a walk
-  ordered differently from the list would skip a unit the guard just named and nothing on screen
-  would say so. Node-free statics, so the walk is checked without a scene
-  (`tests/unit/test_ready_units.gd`), which is also what let `Battle._ready_units` move out and pay
-  for the key inside that file's line budget. **It moves the cursor and nothing else**: selecting
-  stays the player's confirm press, so no command is issued and nothing under `core/` learns it
-  happened, and a board with nothing ready gets the ordinary `ActionFeedback` refusal rather than a
-  dead key. Live in `IDLE` and `PREVIEW` only — never with a unit in hand, where the cursor is
-  planning a move, and never over a computer turn, a replay or the guard. The guard's Review button
-  is the same call, so pressing it repeatedly walks the list instead of pinning its first entry.
-  Stated as a chip beside `T`, `R` and `O` (`ControlHints.NEXT_CHIP`) for the reason `R`'s is — the
-  same thing in every board context, and `IDLE`'s legend is already at `MAX_CHARS` — but with **no
-  lit state**, a jump not being a way of looking at the board. Every captured battle frame shifts:
-  the chip is permanent top-bar chrome.
+- **The zoom ladder is integers above its floor**, and the animation milestone's nine slices (no
+  plan artifact; this entry is its record). **Long form: `docs/design_record.md` § The zoom ladder
+  and the animation milestone** — the crawling-edge diagnosis, the playtest that overruled half of
+  the first slice, every slice's measurements and moved-frame counts, and the rejected mechanisms.
+  The board is sampled with nearest filtering, so a rung that is not a whole number of screen pixels
+  per world pixel drops and doubles rows, and which rows it drops moves as the camera pans.
+  **`BattleZoom` is the one statement of what rungs exist** — `rungs_for` is the ladder a board
+  offers and `floor_for` its furthest-out rung, so `BoardCamera.min_zoom` asks rather than deriving
+  a second answer; `set_zoom` settles on the nearest rung and a press steps one place, so nothing
+  else can invent a level. **A playtest has since overruled half of that slice**:
+  `window/stretch/scale_mode` is back off and the floor rung is the fit-whole one again, fractional,
+  with every rung above it still whole — so a board the default rung fits inside is *fought* on
+  whole rungs, and `boot_camp` and `quartet`, whose fit rung sits above the default, play on a
+  fractional one. `tests/unit/test_texel_stability.gd` is the gate and states both weakenings and
+  `scale_mode`'s absence in its own header, so re-forcing either is a decision rather than a drift.
+  The remaining slices are all presentation and none touches `core/` or `ai/`.
+  **The second slice parks the board on whole screen pixels**, four decisions: **A1** a continuous
+  zoom is played on a rendered still, never on the camera (`scenes/battle/board_punch.gd`,
+  `BoardPunch`, clipped to the band and best-effort; `camera.zoom` is now a rung and nothing else,
+  and a `SubViewport` around the cut-in layer is the rejected mechanism); **A2** the board docks on
+  a whole screen pixel (`MobileDock.board_lift_px()`, a lift of 12, the odd pixel to the bottom);
+  **A3** the camera lands on the cell rather than gliding to it (no `position_smoothing`); **A4** an
+  atlas cell is drawn on whole texels (`CaptureStage.FIGURE_PX` is `UnitSprite.SPRITE_W` and the
+  draw origin is rounded — the mash squash is deliberately untouched, being drawn shapes rather than
+  sampled texels).
+  **The third slice is the board's ambient beat**, a two-frame flip over
+  `assets/tiles/units_atlas_b.png` and nothing more: the beat is a **wall clock, not an
+  accumulator**, **Instant is a still board and a capture is pinned**, and `UnitSprite.animates` is
+  deleted so every sprite processes. `tests/unit/test_ambient_frames.gd` pins the sheets cell by
+  cell on *drawn* pixels rather than bytes.
+  **The fourth slice is the on-map muzzle flash** — `scenes/battle/muzzle_flash.gd` (`MuzzleFlash`),
+  a dumb drawer in the `CapturePips` idiom posed by `BattleAnimator._flash_muzzle`, sized and tinted
+  from the `BattleStyle` the result's own weapon slot names through `BattleStyleDB.shared()` so the
+  cut-in and the board read one registry. **It obeys the cut-in's fog rule, both combatants
+  visible**, and Instant draws nothing.
+  **The fifth slice is the 64x96 unit cell** — `UnitSprite.SPRITE_H` is 96 with every vertical
+  landmark measured up from the cell's **bottom** edge, so the extra rows are sky and an unraised
+  unit is byte-identical. **The headroom is spent on MASS, not height** (`docs/density_128.md`), and
+  **a square icon slot shows the tile, not the cell** (`UnitSprite.tile_texture_for`); each cut-in
+  carries a `FIGURE_H` beside its `FIGURE_PX`, pinned by `tests/unit/test_texel_stability.gd`.
+  **The sixth slice is the animation install, the board's new ambient baseline**:
+  **`scenes/battle/board_beat.gd` (`BoardBeat`) is the one clock every looping sheet reads** — the
+  cadences (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples of one
+  another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable without a
+  scene. **The constants stay hardcoded and `assets/tiles/anim.json` is *pinned*, never read at
+  runtime**, `tests/unit/test_anim_manifest.gd` the one place it is consumed. **The legibility ruler
+  reads a REGRESSION** against the previous art; nothing was tuned in response and answering it is
+  the generator's, with `docs/sprite_legibility.md` carrying the re-read.
+  **The seventh slice is the sea's swell**, and it costs one pointer:
+  **`TerrainAutotiles.sheet_path(family, frame)` is the filename authority**, as it is for every
+  other sheet, and frame 0 is what every surface has always read — the miniature and the legibility
+  ruler are deliberately unedited, a time frame being another axis. **`scenes/battle/sea_beat.gd`
+  (`SeaBeat`) is where the tick lands**, handed its source by `BattleView`, and the backdrop and the
+  property ground swell by construction.
+  **The eighth slice is the move clip**, played for exactly the length of
+  `BattleAnimator.animate_path`'s tween. **It is a clip, not a second beat** —
+  `UnitSprite._sheet_path(frame)` is the one answer to which sheet a sprite draws from, so no repaint
+  mid-walk snaps a striding unit back to parked. **The clip's lifetime is the tween's.** **The
+  sheets face screen-left and a rightward step mirrors them** — `UnitSprite.facing_for(delta, was)`
+  is that policy, a purely vertical leg holds the previous facing, and facing is never set in
+  `refresh()`. **The mirror is the CLIP'S and ends with it**, because the ambient pair's cast shadow
+  is not cell-centred and a unit left mirrored at rest drops its shadow to the other side of itself.
+  An unauthored unit needs no fallback code; `tests/unit/test_move_frames.gd` pins all of it.
+  **The ninth slice is the cut-ins' idle beat** — `UnitSprite.figure_texture_for` grew a
+  **defaulted** `frame` and stays the one way to ask for a figure, and
+  **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the arithmetic, read off the director's own `t`
+  rather than the wall clock**, so a posed still and a skip both land on a fixed pose. The board's
+  two stills stay `frame`'s and do not reach in.
+- **The next-ready-unit key** (no plan artifact; the long form is `docs/design_record.md` § The zoom
+  ladder and the animation milestone, where the index carried it) — `N` walks the cursor to the next
+  unit on the side in hand that has not acted, so the last one is never hunted across a 49×32 board.
+  **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can still act and for
+  the order they are walked in** — `of()` is the list the End Turn guard prints and `after()` is the
+  step through it, one reading order (`precedes`) stated once; Node-free statics, so the walk is
+  checked without a scene (`tests/unit/test_ready_units.gd`). **It moves the cursor and nothing
+  else**: selecting stays the player's confirm press, no command is issued, nothing under `core/`
+  learns it happened, and a board with nothing ready gets the ordinary `ActionFeedback` refusal
+  rather than a dead key. Live in `IDLE` and `PREVIEW` only — never with a unit in hand, never over
+  a computer turn, a replay or the guard. The guard's Review button is the same call, so pressing it
+  repeatedly walks the list. Stated as a chip beside `T`, `R` and `O` (`ControlHints.NEXT_CHIP`)
+  with **no lit state**, a jump not being a way of looking at the board.
 - `commander-doctrine-ai-plan.html` — each general's army, played by the computer, plays like
   that general: milestones CA1–CA4, all shipped. Half of it was already true and the plan's first
   job is saying so: the planners score through the same resolvers the rules run, so every combat
@@ -1407,153 +1181,37 @@ plan is stated in full below and has no copy there.
   plane the way `TerrainAutotiles.variant`/`stands_in_cutin()` already draw it. The moment a
   decorative tree "stands" the height a property does, a player will try to capture it.
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
-  no-op, below). The engine profile was already right, so all of it is presentation and packaging.
-  D1: **nothing under `core/` or `ai/` learns a phone exists** — no `OS`, no `DisplayServer`, no
-  feature tag, no touch class, and a mobile build and a desktop build trade save files. D5: **the
-  gate is `MobileProfile` and the bar is `make smoke` byte-stable** — mobile chrome is never
-  *constructed* on desktop, and every slice that touches a file the game loads re-cleared 85/85
-  measured in one tree against itself reverted in place (MB8 and MB9 touch none, so no frame of
-  theirs can move). D8: touch targets grow their **hit** rectangles, never their drawn
-  heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor rung.
-  D9: the planner is not a mobile task. **Landscape only** (user decision) and **`aspect="keep"`**.
-  The five new authorities the plan left behind are `MobileProfile`, `TouchTarget` /
-  `UiKit.touchable`, `MobileDock`, `TouchGestures` / `BoardPointer` and
-  `TransitionInput.is_touch_press`.
-  **MB1 (#381), the package.** `export_presets.cfg` and `make export-android`; `project.godot` gains the
-  landscape line and `import_etc2_astc`, which the Android exporter refuses to run without and which
-  moves no imported byte, every texture in the tree being `compress/mode=0`. **`OS.has_feature("mobile")` answers `true`** (with `android` true and
-  `editor` false), so D5's gate stands as written. `window/stretch/scale_mode` stays **absent** — the
-  Android window scale is a whole 3.000 or 2.000, so integer mode buys nothing there (README carries
-  the arithmetic). **D7's mechanism is REFUTED and D7's goal is therefore outstanding**: a
-  feature-tagged autoload override — `autoload/_mcp_game_helper.mobile=""` — does not clear an
-  autoload on 4.7.1, the engine reading each `autoload/*` property **raw**, so the base entry loads
-  anyway and the dotted key is picked up as an autoload of its own with an empty path, logging one
-  "Failed to instantiate an autoload" per boot **on every platform, desktop included**. Excluding the
-  directory while a live `[autoload]` entry still names it is the same boot error, so the preset
-  ships **without** `addons/godot_ai/` excluded (≈740 KB packed) and unregistering the helper belongs
-  to the addon that registers it. Three packaging facts no reader should re-derive: **`bin/*` must be
-  excluded** (an export walks the project directory rather than the index, so the gitignored vendored
-  engine rides along otherwise), **`maps/*.txt` must be *included*** (a board is a plain text file
-  that `export_filter="all_resources"` does not collect), and **`tools/` cannot be excluded** —
-  `battle_setup.gd`, `battle_ai_runner.gd` and `battle_outcome.gd` name `BalanceSideSpec` and
-  `BalanceMatchEngine`, so a package without `tools/balance/` fails to compile the whole scene tree,
-  a layering smell recorded rather than fixed.
-  **MB2 (#383), the touch classes — one finger is one press.** `TransitionInput.is_touch_press` is
-  the single answer to what a finger press is, and `CutscenePlayback.consume_skip` asks it rather
-  than testing `InputEventScreenTouch` itself. **A finger has two doors and exactly one is ever
-  open**: `emulate_mouse_from_touch` is the engine default this game keeps, and on 4.7.1 a tap is
-  delivered as *both* a screen touch and a synthesised click, both reaching `_unhandled_input`, with
-  handling one not suppressing the other — so **MOB-09's wording is superseded by measurement**,
-  since taken literally ("a pressed touch is a press and a confirm") it is the plan's own R1
-  double-fire: one tap would skip two banners, advance two interlude lines and refuse a computer turn
-  twice. The touch branch is therefore live only while emulation is off, insurance rather than a
-  second receipt; no `[input_devices]` section is added. **`DirectionalInput` is deliberately silent
-  on touch** and that silence is recorded in its header rather than coded around — a screen has no
-  d-pad and a touch control dispatches the direction *action*, which is already one press per
-  gesture.
-  **MB4 (#384), the hit areas.** `scenes/common/mobile_profile.gd` (`MobileProfile`) **is the one
-  answer to whether this build is played with a finger** — the engine's `mobile` feature tag or the
-  presentation-only `--mobile`, resolved once; it sits beside `GameSpeed` rather than on `UiTheme`
-  because a platform is not a metric, and nothing under `core/` or `ai/` may ask it at all.
-  **`TouchTarget.inflation` is the single statement of how far a hit rectangle grows** —
-  `UiTheme.TOUCH_MIN` (44) is the metric, `UiKit.touchable` the one caller, and the rule is that a
-  control claims the free space around it, half of each gap to a neighbour and never past the canvas,
-  with what one side cannot take spilling to the other and `_retreat` handing an axis back to the
-  neighbour lying *diagonally*, which neither gap measures (found by fuzz, pinned by it). **A touch
-  control is delivered the tap the engine would have delivered** — on release, `toggled` *and*
-  `pressed` on a toggle — because a flip alone is silent to `UiKit.segment`, which reads `pressed`,
-  and that shipped as a dead seat strip. Known limits, the rule working rather than failing: a row
-  between two rows reaches 21 px of 44, a gapless list gains nothing, **a chip on the 23 px top bar
-  hangs 21 px of its area over the board's first row** (that strip's taps are the chip's), and a tap
-  in END TURN's **bottom 2 canvas px** is eaten by the dock's area — measured on device by MB8,
-  reported and not fixed. Buying any of it back means drawn height, which D8 forbids. The greyed-out
-  Continue button is copy rather than interaction (`UiKit.caption_with_reason`), a disabled control
-  taking no focus and a finger not hovering. **The `FocusSource`/`Tooltip` half of MB4 is neither
-  built nor deleted**, still gated on the device reading MOB-08 asks for.
-  **MB3 (#385), the dock.** `scenes/ui/mobile_dock.gd` (`MobileDock`) is a third docked bar built
-  only behind `MobileProfile` — Back / Resume / Step and `−` `+` `NEXT` — and its headline is the
-  abort: in `POWER_TARGETING` any tap on the board fires the aimed power, so without Back a touch
-  player must spend Hammerfall on a square they did not choose. **Every chip dispatches the action
-  the keyboard dispatches, through `UiKit.action_chip`**, so which states honour a press is the
-  key path's. **This supersedes D2's pause/resume exception**: `_request_pause()` / `resume_turn()`
-  are not called from the dock, because `cancel` in `AI_TURN` and `confirm` in `PAUSED` already reach
-  them and a second door to one transition is what a single authority exists to prevent — Resume and
-  Step are live only where `BattleLegend.paused_in` / `steppable` say so, `confirm` at rest meaning
-  "select". **`BattleLegend` answers what a context permits** (`dock_live` beside `commands_board`),
-  reached through the one `BattleView.refresh_keys` call `Battle.state`'s setter already makes, so
-  the bar and the key legend cannot fall out of step. **Disabled, never hidden** — the height is
-  chrome the board's viewport is framed against, and a disabled chip is also what makes one tap one
-  receipt under a banner. **`MobileDock` owns the docked chrome's geometry**, `chrome_h()` and
-  `board_lift_px()`, the latter **retiring `BattleView.BOARD_LIFT_PX`**, because the dock is the only
-  reason either is not a constant. `mobile_back` is the driven gate and runs **alone**, `--mobile`
-  being a process fact `MobileProfile` resolves once, so it can never share the one-boot sweep.
-  **MB6 (#387), the two hands.** `scenes/battle/touch_gestures.gd` (`TouchGestures`) is the
-  recogniser and is deliberately pure: fingers in, **whole cells and whole rungs** out, no board
-  under it — a gesture reporting a float would bring back the fractional rest the integer ladder
-  exists to forbid. **`BattleZoom.settle_at` is the one way onto a rung**, so a key, a dock chip and
-  a pinch all arrive there and a pinch can no more rest between rungs than a key can; the pinch is
-  measured from the rung it *opened* on, so a spread and its exact undo land where the hand started.
-  **Sensitivity is per ladder** (`gain_for`, the ladder's own geometric step): one gain would make
-  Bulwark's 8.8x a hair trigger and a small board's 2.5x unreachable. **A pan walks the cursor, never
-  the camera** — `move_cursor_to` already parks the camera, so whole cells rest on whole world pixels
-  for free. **On a touch build the mouse door is shut and the finger's is open** —
-  `scenes/battle/board_pointer.gd` (`BoardPointer`) owns both, and the emulated click is refused
-  because it acts at finger-down, before anyone knows whether the finger will travel; the *release*
-  confirms, and only inside `TAP_SLOP_PX`, which makes "a drag beginning on a unit never issues a
-  move" structural rather than a threshold race. `BoardPointer` is also what paid for the slice —
-  `battle.gd` sat at its budget, so the mouse branch and `_mouse_cell` moved out with the touch half.
-  **MB9 (#386), iOS.** `export_presets.cfg` carries an iOS preset beside the Android one and it
-  exports **an Xcode project, not an `.ipa`** (`application/export_project_only`), so `make
-  export-ios` needs no signing identity and the archive is Xcode's. **No identity is committed**: the
-  engine refuses an iOS export with no team id even project-only, so the preset carries a placeholder
-  and `IOS_TEAM_ID` writes the real one into the **generated** project, build output — a signing id
-  in a tracked file being D7's rewritten-`project.godot` objection read for signing. Two toolchain
-  facts live in the README rather than being rediscovered: the 4.7.1 template's **simulator slice is
-  x86_64 only**, so an Apple Silicon simulator build needs `-arch x86_64`, and Xcode without its iOS
-  platform support installed refuses the asset catalog and the launch storyboard, which is where a
-  simulator build blocks. **D4's deferred fractional-scale measurement is taken and `scale_mode`
-  stays absent on iOS too**: at 3.275 the type carries no blended pixel at all — a pixel face is
-  rasterised at the final resolution under `canvas_items` stretch, so R6's softening is unobserved —
-  integer mode leaves the stems *less* even, fixes only the 1px slivers in texture art, and costs
-  8.4% of the short edge and 16% of the picture. Simulator, not a device.
-  **MB5 (#382), the payload — and the plan's own figure refuted.** MOB-10 read 11.6 MB of PCM in the
-  tree as 11.6 MB in the package and in RAM; Godot's WAV importer was already on `compress/mode=2`
-  (QOA), so the real package cost was 2.36 MB. What the re-encode buys is **−29% of on-device audio
-  storage and resident RAM** (2,357,070 → 1,680,280 B) and −86% of the committed bytes, against
-  −45 KB of APK — Ogg does not deflate, QOA did; **not the tenfold cut the plan estimated**. **The
-  format is the audio generator's to emit, never the game's to convert** — `make audio`
-  installs it and `generators/audio/audiogen/ogg.py` owns the compression level, and that module
-  pins the Ogg serial
-  number and recomputes the page CRCs, libsndfile stamping a random one against a pipeline whose
-  promise is byte-stability. **The autoload owns looping** — `Music` sets `stream.loop` the way it
-  used to set `loop_mode`, so the `.import` files stay at their defaults. **The effects stay PCM**:
-  nine files, 264 KB, already mono, where the codec's overhead would be most of the file.
-  **MB8 (#388), the soak.** `tools/run_mobile_soak.gd` (`make mobile-soak`) **is an instrument and
-  `docs/mobile_soak.md` its dated record**, superseded wholesale by a later soak in the
-  `bulwark_balance.md` convention; it is out of `make verify` and it tunes nothing. Its planner loop
-  is `run_bulwark_measure.gd`'s with a clock around it rather than a second match engine — since
-  #401 literally so: `tools/balance/four_army_loop.gd` (`FourArmyLoop`) is the one loop both read,
-  the soak's clock an `on_command` callback, and a rejected command is loud in both. The
-  measurement retires R5's *estimate*: a four-army Bulwark turn costs 249 ms (Normal) to 924 ms
-  (Brutal) of mean planning on a quiet desktop, worst turns 1.1–3.5 s, with fog worth 2.9x of it (the
-  AR1 cache being inert with fog on), so the phone answer — if one is wanted — belongs to the AI
-  plans, exactly as D9 says. Two facts a later slice should not re-derive: **a device build takes no
-  launch flags** (4.7.1 ignores `command_line_params` and `command_line` intent extras), so a device
-  scenario is reached through the menus; and **`BoardBeat` and `UnitSprite` cannot be compiled by a
-  `-s` script**, because they read the `Settings` autoload, which is why the beat is timed from the
-  running scene.
-  **MB7 is a no-op under `keep`.** D4 binds `expand` and the safe area together or not at all, the
-  letterbox being what makes the notch harmless, and the user's answer was `keep` — so no `SafeArea`
-  authority exists and shipping one without `expand` would be dead code. The residual is measured
-  rather than assumed (`docs/mobile_soak.md`): the window is 2220x1080 against an `mAppBounds` of
-  2220x1014, so the whole dock row lies inside the 66 px system gesture strip — taps still reach the
-  game under immersive mode, swipes there will not, and `keep` pads the sides only.
-  **Owed device proofs, named once and not faked in any slice**: a pinch on Bulwark reaching every
-  one of that board's six rungs; MOB-08's hover reading, which gates the `FocusSource`/`Tooltip` half
-  of MB4, with its scroll-drag and ten-of-ten tap checks; and the real-phone sitting
-  `docs/mobile_soak.md` §6 lists — a campaign mission, a four-army Bulwark round timed against §2's
-  desktop figures, a replay watched to its end on Pause/Step/Resume alone (which is where the Step
-  chip is proven), a save resumed after eviction, and audio interruption over all of it.
+  no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
+  slice's measurements, the packaging facts, the refutations, the known hit-area limits and the
+  device proofs still owed. The engine profile was already right, so all of it is presentation and
+  packaging. D1: **nothing under `core/` or `ai/` learns a phone exists** — no `OS`, no
+  `DisplayServer`, no feature tag, no touch class, and a mobile build and a desktop build trade save
+  files. D5: **the gate is `MobileProfile` and the bar is `make smoke` byte-stable** — mobile chrome
+  is never *constructed* on desktop. D8: touch targets grow their **hit** rectangles, never their
+  drawn heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor
+  rung. D9: the planner is not a mobile task. **Landscape only** (user decision) and
+  **`aspect="keep"`**; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
+  by measurement rather than by assumption. D7's mechanism is **refuted** — a feature-tagged autoload
+  override does not clear an autoload on 4.7.1, the engine reading each `autoload/*` property raw, so
+  unregistering the editor addon's runtime belongs to the addon that registers it. D4's safe-area
+  half is a no-op under `keep`, which is why no `SafeArea` authority exists.
+  The five authorities the plan left behind, to ask rather than re-derive: **`MobileProfile`** is the
+  one answer to whether this build is played with a finger (the engine's `mobile` tag or the
+  presentation-only `--mobile`, resolved once, and nothing under `core/` or `ai/` may ask it at
+  all); **`TouchTarget.inflation` / `UiKit.touchable`** are the single statement of how far a hit
+  rectangle grows, on the `UiTheme.TOUCH_MIN` (44) metric, claiming half of each gap to a neighbour
+  and never past the canvas; **`MobileDock`** is the third docked bar, disabled rather than hidden,
+  dispatching through `UiKit.action_chip` the same actions the keyboard dispatches and asking
+  `BattleLegend` what a context permits — it also owns the docked chrome's geometry (`chrome_h()`,
+  `board_lift_px()`, which retired `BattleView.BOARD_LIFT_PX`); **`TouchGestures` / `BoardPointer`**
+  are the pure recogniser (fingers in, **whole cells and whole rungs** out, sensitivity per ladder
+  via `gain_for`, `BattleZoom.settle_at` the one way onto a rung, a pan walking the cursor rather
+  than the camera) and the one owner of both pointer doors, where the release confirms inside
+  `TAP_SLOP_PX`; and **`TransitionInput.is_touch_press`** is the single answer to what a finger
+  press is, with the touch branch live only while mouse emulation is off, since a tap arrives
+  through both doors otherwise. `tools/run_mobile_soak.gd` (`make mobile-soak`) is an instrument out
+  of `make verify` and `docs/mobile_soak.md` is its dated record, superseded wholesale by a later
+  soak rather than edited.
 
 ## Architecture — the rules that matter most
 
