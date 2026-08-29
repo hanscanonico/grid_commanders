@@ -1,6 +1,6 @@
 """Deterministic portrait pipeline for grid_commanders.
 
-Bakes the art `CommanderVisuals` loads: the four 64x64 faction emblems and the
+Bakes the art `CommanderVisuals` loads: the five 64x64 faction emblems and the
 twenty-three 220x268 commander busts. There are no seeds and no randomness —
 every mark is authored, so every run reproduces the same bytes.
 

@@ -206,7 +206,7 @@ class EveryGeneralWearsTheirOwnArmy(unittest.TestCase):
     def test_the_adapter_is_where_the_regex_looks(self):
         armies = _army_of_each_general()
         self.assertEqual(sorted(armies), _commander_ids())
-        self.assertEqual(len(set(armies.values())), 4)
+        self.assertEqual(len(set(armies.values())), 5)
 
     def test_the_painter_dresses_every_general_in_the_army_they_command(self):
         self.assertEqual(bust.FACTION_OF, _army_of_each_general())

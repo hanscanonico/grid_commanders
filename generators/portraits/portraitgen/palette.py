@@ -4,7 +4,7 @@ The faction themes mirror grid_commanders' `CommanderVisuals.FactionTheme` so th
 portraits this tool bakes and the UI chrome that frames them can never disagree
 about which colour a faction is; `tests/test_palette_mirror.py` reads the values
 back out of the game's own code. Row order mirrors `SideIdentity._ROW_FOR_KEY`:
-0 neutral, 1 meridian, 2 aurora, 3 iron, 4 verdant.
+0 neutral, 1 meridian, 2 aurora, 3 iron, 4 verdant, 5 gold.
 
 Colours are kept as the authored 0-1 floats and converted to bytes in one place
 (`rgb8`), which **truncates** — that is what Godot's `Color` to `FORMAT_RGBA8`
@@ -88,11 +88,18 @@ FACTIONS: tuple[Faction, ...] = (
         (0.114, 0.380, 0.153),
         (0.310, 0.659, 0.353),
     ),
+    Faction(
+        "gold",
+        "Gilded Concord",
+        (0.914, 0.788, 0.157),
+        (0.694, 0.600, 0.118),
+        (0.953, 0.863, 0.400),
+    ),
 )
 
-# The seat nobody holds wears no emblem: assets/portraits/factions holds four
+# The seat nobody holds wears no emblem: assets/portraits/factions holds five
 # files, one per army.
-EMBLEM_KEYS: tuple[str, ...] = ("aurora", "iron", "meridian", "verdant")
+EMBLEM_KEYS: tuple[str, ...] = ("aurora", "gold", "iron", "meridian", "verdant")
 
 
 def faction_by_key(key: str) -> Faction:
