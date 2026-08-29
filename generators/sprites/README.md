@@ -779,6 +779,13 @@ game does not load, so they stay compared against the review gallery's own
 copies under `.lavish/assets`. Run it against your own output with
 `~/.cache/grid_commanders/venv-sprites/bin/python tests/check_snapshots.py out`.
 
+A pixel mismatch also writes a contact sheet per differing sheet —
+installed art, fresh output and a map of what moved, cropped to the changed
+cells and scaled up — into `reports/sprite_snapshot_diffs/`, and names the
+file in the failure message beside the count of pixels and cells that moved.
+Most failures here are an art change somebody meant, so the reviewer gets a
+picture rather than a path.
+
 ## Cell density
 
 The sheet is emitted at a **64px cell**, and that is the shipped default.
