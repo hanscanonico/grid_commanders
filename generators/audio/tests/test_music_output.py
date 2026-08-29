@@ -21,7 +21,7 @@ import numpy as np
 import soundfile as sf
 
 from audiogen import measure, music, sequencer, sfx
-from audiogen.dsp import RATE, seconds
+from audiogen.dsp import RATE, seconds, sine
 from audiogen.ogg import ogg_bytes, vendor_string
 
 # The checkout this generator sits in, for the audio the game actually ships.
@@ -357,6 +357,14 @@ class Timbre(unittest.TestCase):
                     if top is None or midi > top[0]:
                         top = (midi, beats * 60.0 / song.bpm, vel)
         return top
+
+    def test_the_measure_scores_a_harmonic_tone_at_zero(self):
+        harmonics = sine(440.0, 1.0) + 0.5 * sine(880.0, 1.0)
+        self.assertLess(measure.inharmonic_fraction(harmonics, 440.0), 0.01)
+
+    def test_the_measure_scores_a_tone_off_the_comb_at_one(self):
+        off_comb = sine(1100.0, 1.0)
+        self.assertGreater(measure.inharmonic_fraction(off_comb, 440.0), 0.99)
 
     def test_every_melodic_voice_is_authored_somewhere(self):
         self.assertEqual(
