@@ -113,11 +113,6 @@ def kit(bars: int, pattern, start_bar: int = 0) -> tuple:
     return tuple(notes)
 
 
-def roll(bar: int, hits) -> tuple:
-    """A snare roll at the end of a bar: (beat_in_bar, velocity) sixteenths."""
-    return tuple((bar * 4.0 + off, 0, 0.25, vel) for off, vel in hits)
-
-
 # -- parade ------------------------------------------------------------------
 # C major, 104 BPM, AABA. The A strain shares bars 1-7; bar 8 differs per
 # pass — settling the first time, turning minor into the bridge, and lifting
@@ -193,10 +188,11 @@ def parade() -> sequencer.Song:
                 "snare",
                 0.34,
                 kit(BARS, _MARCH_SNARE)
-                + roll(7, _STRAIN_ROLL)
-                + roll(15, _STRAIN_ROLL)
-                + roll(23, _STRAIN_ROLL)
-                + roll(31, _STRAIN_ROLL),  # the last one rolls into the loop
+                + kit(1, _STRAIN_ROLL, start_bar=7)
+                + kit(1, _STRAIN_ROLL, start_bar=15)
+                + kit(1, _STRAIN_ROLL, start_bar=23)
+                # The last one rolls into the loop.
+                + kit(1, _STRAIN_ROLL, start_bar=31),
             ),
             sequencer.Track("hat", 0.32, kit(BARS, _MARCH_HAT)),
         ),
@@ -284,10 +280,11 @@ def advance() -> sequencer.Song:
                 "snare",
                 0.34,
                 kit(BARS, _DRIVE_SNARE)
-                + roll(7, _PUSH_ROLL)
-                + roll(15, _PUSH_ROLL)
-                + roll(23, _PUSH_ROLL)
-                + roll(31, _STRAIN_ROLL),  # the full roll launches the loop
+                + kit(1, _PUSH_ROLL, start_bar=7)
+                + kit(1, _PUSH_ROLL, start_bar=15)
+                + kit(1, _PUSH_ROLL, start_bar=23)
+                # The full roll launches the loop.
+                + kit(1, _STRAIN_ROLL, start_bar=31),
             ),
             # The hats double to sixteenths under the final strain.
             sequencer.Track(
