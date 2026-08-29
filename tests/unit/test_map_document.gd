@@ -46,6 +46,7 @@ func test_a_written_document_parses_back_as_the_board_it_drew() -> void:
 	assert_eq(map.terrain_at(Vector2i(0, 0)).id, &"hq", "the HQ came back")
 	assert_eq(map.owner_at(Vector2i(2, 1)), 3, "and so did who holds the base")
 	assert_eq(map.teams(), [1, 2, 3], "the roster is read off the seats the draft named")
+	assert_eq(doc.teams(), map.teams(), "and the draft said the same before it was saved")
 	assert_eq(map.starting_units.size(), 1, "one unit was placed")
 	assert_eq(map.starting_units[0].symbol, "i", "and it is the rifleman")
 
@@ -56,15 +57,15 @@ func test_every_shipped_board_survives_a_round_trip() -> void:
 		assert_not_null(original, "%s parses" % path)
 		if original == null:
 			continue
-		var reparsed := MapData.parse(
-			MapDocument.from_map(original, terrain_db).to_text(), terrain_db
-		)
+		var draft := MapDocument.from_map(original, terrain_db)
+		var reparsed := MapData.parse(draft.to_text(), terrain_db)
 		assert_not_null(reparsed, "%s survives a draft and a save" % path)
 		if reparsed == null:
 			continue
 		assert_eq(
 			_board_digest(reparsed), _board_digest(original), "%s comes back unchanged" % path
 		)
+		assert_eq(draft.teams(), original.teams(), "%s seats the same armies as a draft" % path)
 
 
 func test_ownership_clears_when_a_cell_stops_being_a_property() -> void:
@@ -115,6 +116,27 @@ func test_a_cell_holds_one_unit() -> void:
 		0,
 		"a draft with no army writes no [units] section"
 	)
+
+
+func test_the_same_board_writes_the_same_bytes_whatever_order_it_was_painted() -> void:
+	var cells := [Vector2i(0, 0), Vector2i(2, 0), Vector2i(1, 1)]
+	var forwards := _board_with_bases(cells)
+	cells.reverse()
+	var backwards := _board_with_bases(cells)
+	assert_eq(
+		forwards.to_text(), backwards.to_text(), "a saved draft is its board, not its edit history"
+	)
+
+
+## A 3x2 board with a base on each of `cells`, owned by seat 1, laid down in the
+## order given.
+func _board_with_bases(cells: Array) -> MapDocument:
+	var doc := MapDocument.blank(3, 2, terrain_db)
+	for cell: Vector2i in cells:
+		doc.paint(cell, &"base")
+		doc.set_owner(cell, 1)
+		doc.place_unit(cell, unit_db.by_id(&"infantry"), 1)
+	return doc
 
 
 ## Every board on disk: the shipped roster, the fixtures, and the campaign

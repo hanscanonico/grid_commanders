@@ -159,17 +159,17 @@ func remove_unit(cell: Vector2i) -> void:
 	_units.erase(cell)
 
 
-## The armies this draft seats, read off its owners and units exactly as
-## `MapData._build_roster` reads them off a parsed board — the board is the
-## roster authority (four-players plan D1), and a draft has to say the same
-## thing about itself that it will say once it is saved and read back.
+## The armies this draft seats, answered by `MapData.roster_for` off the seats
+## the draft names — the board is the roster authority (four-players plan D1),
+## and a draft has to say the same thing about itself that it will say once it
+## is saved and read back.
 func teams() -> Array[int]:
-	var seats := MapData.DEFAULT_TEAMS.size()
+	var named: Array[int] = []
 	for cell: Vector2i in _owners:
-		seats = maxi(seats, _owners[cell])
+		named.append(_owners[cell])
 	for cell: Vector2i in _units:
-		seats = maxi(seats, _units[cell].team)
-	return MapData.PLAYER_TEAMS.slice(0, seats)
+		named.append(_units[cell].team)
+	return MapData.roster_for(named)
 
 
 func player_count() -> int:
