@@ -28,9 +28,12 @@ columns: 101 pictures.
 
 Phase 0 of each phase-keyed sheet is that terrain's atlas column byte for byte, and the woods
 sheet's mask 15 is the woods column byte for byte; the census checks all four rather than assuming
-them, and they hold. The atlas columns for `road`, `river`, `bridge`, `shoal` and `sea` **are never
-drawn on a board** — a sheet answers for every one of those cells — and the property columns are
-transparent overlays with no ground of their own.
+them, and they hold. Two of the 101 are read without a board ever indexing them: `coast/0` is plain
+open sea, which a sea cell with no land on an edge draws from the sea sheet instead, and `woods/15`
+is the interior wood's atlas column, read here as well as in that column. The atlas columns for
+`road`, `river`, `bridge`, `shoal` and `sea` **are never drawn on a board** — a sheet answers for
+every one of those cells — and the property columns are transparent overlays with no ground of
+their own.
 
 The board draws the 64px cell onto a 16px grid with nearest filtering, so it keeps one source pixel
 in 4/z: **4:1 at rung 1, 2:1 at rung 2, 1:1 at rung 4**. Which pixel of each block survives depends

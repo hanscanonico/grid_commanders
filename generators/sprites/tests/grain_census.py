@@ -158,6 +158,7 @@ class Reading:
 
         self.name = name
         self.sheet = sheet
+        self.pixels = img.tobytes()
         self.colours = len(counts)
         self.lone = lone_pixels(img)
         self.density = sum(1 for _, _, c in pixels if c != base) / len(pixels)
@@ -276,9 +277,7 @@ def _fallback_checks(source: str, assets: Path) -> None:
     for name, index in (("woods", 15), ("plains", 0), ("mountain", 0), ("sea", 0)):
         spec = next(s for s in SHEETS if s.name == name)
         cell = sheet_tiles(spec, source, assets)[index]
-        same = list(cell.getdata()) == list(
-            atlas_column(name, source, assets).getdata()
-        )
+        same = cell.tobytes() == atlas_column(name, source, assets).tobytes()
         print(f"{name}/{index} == atlas {name}: {'yes' if same else 'NO'}")
 
 
@@ -304,16 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         print()
         _fallback_checks("installed", args.assets)
     if args.source == "both":
-        agree = all(
-            (a.colours, a.lone, round(a.density, 9), [round(s, 9) for s in a.shares[1]])
-            == (
-                b.colours,
-                b.lone,
-                round(b.density, 9),
-                [round(s, 9) for s in b.shares[1]],
-            )
-            for a, b in zip(fresh, shipped)
-        )
+        agree = all(a.pixels == b.pixels for a, b in zip(fresh, shipped))
         print()
         print(f"installed matches fresh: {'yes' if agree else 'NO'}")
     return 0
