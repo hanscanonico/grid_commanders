@@ -15,6 +15,10 @@ Outputs (under --out, default ./out):
   musicboard.html    the same for the two marches; both players loop, so
                      the seam is auditioned by just letting them play
 
+--only NAME [NAME ...] narrows a run to the named effects and tracks (and
+refuses --install, which would leave the rest of assets/ from an older
+render); --no-boards skips the two HTML pages.
+
 --install requires an explicit game checkout path on purpose: a defaulted
 destination once overwrote uncommitted work in the game repo (the
 sprite_generator lesson, 2026-08-14).
@@ -29,6 +33,8 @@ import sys
 import wave
 from pathlib import Path
 
+import numpy as np
+
 from audiogen import measure, music, sfx
 from audiogen.dsp import RATE, seconds, to_int16
 from audiogen.ogg import ogg_bytes
@@ -39,7 +45,7 @@ from audiogen.ogg import ogg_bytes
 GAME_ROOT = Path(__file__).resolve().parents[2]
 
 
-def wav_bytes(x) -> bytes:
+def wav_bytes(x: np.ndarray) -> bytes:
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
         w.setnchannels(1)
@@ -49,24 +55,25 @@ def wav_bytes(x) -> bytes:
     return buf.getvalue()
 
 
-def write_all(out: Path) -> dict[str, bytes]:
-    rendered: dict[str, bytes] = {}
+def write_all(out: Path, names: list[str]) -> dict[str, np.ndarray]:
+    rendered = {name: sfx.render(name) for name in names}
     (out / "sfx").mkdir(parents=True, exist_ok=True)
-    for name in sfx.SFX:
-        data = wav_bytes(sfx.render(name))
-        (out / "sfx" / f"{name}.wav").write_bytes(data)
-        rendered[name] = data
+    for name, x in rendered.items():
+        (out / "sfx" / f"{name}.wav").write_bytes(wav_bytes(x))
         print(f"  wrote {out / 'sfx' / (name + '.wav')}")
     return rendered
 
 
-def write_music(out: Path) -> dict:
-    arrays = {name: music.render(name) for name in music.MUSIC}
+def write_music(
+    out: Path, names: list[str]
+) -> tuple[dict[str, np.ndarray], dict[str, bytes]]:
+    arrays = {name: music.render(name) for name in names}
+    encoded = {name: ogg_bytes(x) for name, x in arrays.items()}
     (out / "music").mkdir(parents=True, exist_ok=True)
-    for name, x in arrays.items():
-        (out / "music" / f"{name}.ogg").write_bytes(ogg_bytes(x))
+    for name, data in encoded.items():
+        (out / "music" / f"{name}.ogg").write_bytes(data)
         print(f"  wrote {out / 'music' / (name + '.ogg')}")
-    return arrays
+    return arrays, encoded
 
 
 _PAGE_STYLE = (
@@ -89,10 +96,9 @@ def _audio_tag(data: bytes, loop: bool = False, mime: str = "audio/wav") -> str:
     )
 
 
-def soundboard(out: Path, rendered: dict[str, bytes], game: Path) -> None:
+def soundboard(out: Path, rendered: dict[str, np.ndarray], game: Path) -> None:
     rows = []
-    for name in sfx.SFX:
-        x = sfx.render(name)
+    for name, x in rendered.items():
         _b, category, _p = sfx.SFX[name]
         old_path = game / "assets/sfx" / f"{name}.wav"
         old_tag = "<em>missing</em>"
@@ -101,7 +107,7 @@ def soundboard(out: Path, rendered: dict[str, bytes], game: Path) -> None:
         rows.append(
             f"<tr><td><b>{name}</b><br><small>{category}</small></td>"
             f"<td>{old_tag}</td>"
-            f"<td>{_audio_tag(rendered[name])}</td>"
+            f"<td>{_audio_tag(wav_bytes(x))}</td>"
             f'<td class="num">{seconds(len(x)):.2f}s<br>peak {measure.peak_db(x):.1f} dB'
             f"<br>rms {measure.rms_db(x):.1f} dB<br>centroid {measure.centroid_hz(x):.0f} Hz</td></tr>"
         )
@@ -115,7 +121,9 @@ def soundboard(out: Path, rendered: dict[str, bytes], game: Path) -> None:
     print(f"  wrote {out / 'soundboard.html'}")
 
 
-def musicboard(out: Path, arrays: dict, game: Path) -> None:
+def musicboard(
+    out: Path, arrays: dict[str, np.ndarray], encoded: dict[str, bytes], game: Path
+) -> None:
     rows = []
     for name, x in arrays.items():
         builder, _peak = music.MUSIC[name]
@@ -129,24 +137,50 @@ def musicboard(out: Path, arrays: dict, game: Path) -> None:
         rows.append(
             f"<tr><td><b>{name}</b><br><small>{song.bpm:.0f} BPM</small></td>"
             f"<td>{old_tag}</td>"
-            f"<td>{_audio_tag(ogg_bytes(x), loop=True, mime='audio/ogg')}</td>"
+            f"<td>{_audio_tag(encoded[name], loop=True, mime='audio/ogg')}</td>"
             f'<td class="num">{seconds(len(x)):.1f}s'
             f"<br>peak {measure.peak_db(x):.1f} dB<br>rms {measure.rms_db(x):.1f} dB"
             f"<br>tempo {measure.tempo_bpm(x):.1f} BPM"
             f"<br>seam Δ {measure.loop_rms_delta_db(x):.1f} dB</td></tr>"
         )
-    distance = measure.spectral_distance(arrays["parade"], arrays["advance"])
+    intro = (
+        "<p>Both players loop, so let a track run past its end: the seam is "
+        "the audition."
+    )
+    if len(arrays) == len(music.MUSIC):
+        distance = measure.spectral_distance(arrays["parade"], arrays["advance"])
+        intro += f" Spectral distance between the two marches: {distance:.3f}."
     html = (
         f"<title>Musicboard</title><style>{_PAGE_STYLE}</style>"
         "<h1>Grid Commanders musicboard — current vs composed</h1>"
-        "<p>Both players loop, so let a track run past its end: the seam is "
-        "the audition. Spectral distance between the two marches: "
-        f"{distance:.3f}.</p>"
+        f"{intro}</p>"
         "<table><tr><th>Track</th><th>Current (in game)</th><th>Composed</th>"
         "<th>Measured</th></tr>" + "".join(rows) + "</table>"
     )
     (out / "musicboard.html").write_text(html)
     print(f"  wrote {out / 'musicboard.html'}")
+
+
+def plan(only: list[str] | None, install: Path | None) -> tuple[list[str], list[str]]:
+    """Which effects and tracks a run covers. Raises ValueError on a bad request."""
+    if not only:
+        return list(sfx.SFX), list(music.MUSIC)
+    known = list(sfx.SFX) + list(music.MUSIC)
+    unknown = [name for name in only if name not in known]
+    if unknown:
+        raise ValueError(
+            f"no such sound/track: {', '.join(unknown)}; "
+            f"known names are {', '.join(known)}"
+        )
+    if install is not None:
+        raise ValueError(
+            "--only cannot be installed: a partial run leaves the rest of "
+            "assets/ from an older render — drop --only to install"
+        )
+    return (
+        [name for name in sfx.SFX if name in only],
+        [name for name in music.MUSIC if name in only],
+    )
 
 
 def install(out: Path, dest: Path) -> None:
@@ -193,14 +227,32 @@ def main() -> None:
         help="copy the rendered sounds into a grid_commanders checkout "
         "(explicit path required — no default destination, deliberately)",
     )
+    ap.add_argument(
+        "--only",
+        nargs="+",
+        metavar="NAME",
+        help="render just these sounds or tracks (cannot be installed)",
+    )
+    ap.add_argument(
+        "--no-boards", action="store_true", help="skip the HTML audition boards"
+    )
     args = ap.parse_args()
 
-    print(f"rendering {len(sfx.SFX)} sound effects")
-    rendered = write_all(args.out)
-    soundboard(args.out, rendered, args.game)
-    print(f"rendering {len(music.MUSIC)} music loops")
-    arrays = write_music(args.out)
-    musicboard(args.out, arrays, args.game)
+    try:
+        sfx_names, music_names = plan(args.only, args.install)
+    except ValueError as error:
+        sys.exit(str(error))
+
+    if sfx_names:
+        print(f"rendering {len(sfx_names)} sound effects")
+        rendered = write_all(args.out, sfx_names)
+        if not args.no_boards:
+            soundboard(args.out, rendered, args.game)
+    if music_names:
+        print(f"rendering {len(music_names)} music loops")
+        arrays, encoded = write_music(args.out, music_names)
+        if not args.no_boards:
+            musicboard(args.out, arrays, encoded, args.game)
     if args.install is not None:
         install(args.out, args.install)
 

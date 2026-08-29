@@ -4,7 +4,8 @@ Everything here renders sounds and asserts properties of the resulting
 samples — the sprite_generator discipline applied to audio: determinism,
 the game's Sfx.NAMES contract, loudness bands, click-free edges, and
 pairwise spectral distinctness (the silhouette-IoU gate with a Fourier
-transform: no two effects may share a tonal fingerprint).
+transform: no two effects may share a tonal fingerprint) — plus the one
+CLI rule that is decided before anything renders, which names a run covers.
 
 Run with `make audio-test` from the repository root.
 """
@@ -12,8 +13,10 @@ Run with `make audio-test` from the repository root.
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
-from audiogen import measure, sfx
+import audio_generator
+from audiogen import measure, music, sfx
 from audiogen.dsp import seconds
 
 # The game's autoload/sfx.gd Sfx.NAMES, verbatim.
@@ -110,6 +113,31 @@ class Distinctness(unittest.TestCase):
                         measure.spectral_distance(rendered[a], rendered[b]),
                         self.THRESHOLD,
                     )
+
+
+class Selection(unittest.TestCase):
+    """What a `--only` run covers, decided before anything is rendered."""
+
+    def test_no_only_covers_both_rosters(self):
+        self.assertEqual(
+            audio_generator.plan(None, None),
+            (list(sfx.SFX), list(music.MUSIC)),
+        )
+
+    def test_only_narrows_to_the_named_sounds_and_tracks(self):
+        self.assertEqual(
+            audio_generator.plan(["parade", "shot"], None), (["shot"], ["parade"])
+        )
+
+    def test_an_unknown_name_is_refused_with_the_known_ones(self):
+        with self.assertRaises(ValueError) as caught:
+            audio_generator.plan(["parade", "trumpet"], None)
+        self.assertIn("trumpet", str(caught.exception))
+        self.assertIn("parade", str(caught.exception))
+
+    def test_a_narrowed_run_refuses_to_install(self):
+        with self.assertRaises(ValueError):
+            audio_generator.plan(["shot"], Path("/tmp/some-checkout"))
 
 
 if __name__ == "__main__":
