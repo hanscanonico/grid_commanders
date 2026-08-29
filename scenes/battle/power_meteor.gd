@@ -109,19 +109,19 @@ func pose_at(centre: Vector2i, at: float) -> void:
 
 
 func _place(centre: Vector2i) -> void:
-	position = Vector2(centre * TILE) + Vector2(TILE, TILE) * 0.5
+	position = BattleView.cell_center(centre)
 
 
 func _process(delta: float) -> void:
 	_advance(t + delta * FastForward.rate() / _seconds)
 
 
-## The skip door the cut-ins use, asked of the one authority that owns it, plus
-## cancel — so whatever retires a cut-in retires this too.
+## The skip door the cut-ins use, asked of the one authority that owns it, so
+## whatever retires a cut-in retires this too.
 func _unhandled_input(event: InputEvent) -> void:
 	if not _playing:
 		return
-	if not (TransitionInput.is_confirm(event) or event.is_action_pressed(&"cancel")):
+	if not CutscenePlayback.is_skip_press(event):
 		return
 	get_viewport().set_input_as_handled()
 	_skipped = true
