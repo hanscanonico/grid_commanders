@@ -203,15 +203,15 @@ def parade() -> sequencer.Song:
             sequencer.Track(
                 "brass_lead", 0.34, rings_over(seq(PARADE_MELODY), _SEAM_RING)
             ),
-            sequencer.Track("stab", 0.12, afterbeats(PARADE_CHART)),
+            sequencer.Track("stab", 0.28, afterbeats(PARADE_CHART)),
             sequencer.Track(
-                "tuba_bass", 0.30, rings_over(oompah(PARADE_CHART), _SEAM_RING)
+                "tuba_bass", 0.52, rings_over(oompah(PARADE_CHART), _SEAM_RING)
             ),
-            sequencer.Track("pad", 0.15, _PARADE_COUNTER),
-            sequencer.Track("kick", 0.50, kit(BARS, _MARCH_KICK)),
+            sequencer.Track("pad", 0.41, _PARADE_COUNTER),
+            sequencer.Track("kick", 0.62, kit(BARS, _MARCH_KICK)),
             sequencer.Track(
                 "snare",
-                0.34,
+                0.27,
                 kit(BARS, _MARCH_SNARE)
                 + kit(1, _STRAIN_ROLL, start_bar=7)
                 + kit(1, _STRAIN_ROLL, start_bar=15)
@@ -220,7 +220,7 @@ def parade() -> sequencer.Song:
                 + kit(1, _STRAIN_ROLL, start_bar=31),
             ),
             sequencer.Track("hat", 0.32, kit(BARS, _MARCH_HAT)),
-            sequencer.Track("roll", 0.60, _SEAM_ROLL),
+            sequencer.Track("roll", 0.48, _SEAM_ROLL),
         ),
     )
 
@@ -301,14 +301,14 @@ def advance() -> sequencer.Song:
             sequencer.Track(
                 "edge_lead", 0.32, rings_over(seq(ADVANCE_MELODY), _SEAM_RING)
             ),
-            sequencer.Track("stab", 0.11, stabs(ADVANCE_CHART)),
+            sequencer.Track("stab", 0.22, stabs(ADVANCE_CHART)),
             sequencer.Track(
-                "drive_bass", 0.26, rings_over(drive(ADVANCE_CHART), _SEAM_RING)
+                "drive_bass", 0.45, rings_over(drive(ADVANCE_CHART), _SEAM_RING)
             ),
-            sequencer.Track("kick", 0.50, kit(BARS, _DRIVE_KICK)),
+            sequencer.Track("kick", 0.36, kit(BARS, _DRIVE_KICK)),
             sequencer.Track(
                 "snare",
-                0.34,
+                0.28,
                 kit(BARS, _DRIVE_SNARE)
                 + kit(1, _PUSH_ROLL, start_bar=7)
                 + kit(1, _PUSH_ROLL, start_bar=15)
@@ -319,10 +319,10 @@ def advance() -> sequencer.Song:
             # The hats double to sixteenths under the final strain.
             sequencer.Track(
                 "hat",
-                0.30,
+                0.20,
                 kit(24, _DRIVE_HAT8) + kit(8, _DRIVE_HAT16, start_bar=24),
             ),
-            sequencer.Track("roll", 1.30, _SEAM_ROLL),
+            sequencer.Track("roll", 1.40, _SEAM_ROLL),
         ),
     )
 

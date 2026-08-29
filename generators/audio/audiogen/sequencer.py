@@ -43,20 +43,32 @@ class Song:
 # -- melodic instruments -----------------------------------------------------
 # Signature (midi, t, vel) -> samples. Each shortens its slot a little — the
 # articulation gap is what keeps a march stepping instead of smearing.
+#
+# The pulse voices are all lowpassed before their envelope. A naive square
+# is a wall of harmonics and aliases — the leads were carrying a third of
+# their spectral weight above 10 kHz, which is the buzz of a cheap plugin
+# rather than the chirp of a chip. The cutoffs leave the first handful of
+# harmonics of every note in range, so the pulse still reads as a pulse.
+
+_LEAD_CUTOFF = 3000.0
+_STAB_CUTOFF = 2600.0
+_BASS_CUTOFF = 2000.0
 
 
 def brass_lead(midi: float, t: float, vel: float) -> np.ndarray:
     """The parade's singable front: wide pulse, slow vibrato, round release."""
     t = max(0.05, t * 0.95)
     freq = midi_hz(midi) * (1.0 + 0.004 * dsp.sine(5.5, t))
-    return dsp.square(freq, t, duty=0.35) * dsp.adsr(t, 0.012, 0.06, 0.78, 0.05) * vel
+    tone = dsp.lowpass_poles(dsp.square(freq, t, duty=0.35), _LEAD_CUTOFF)
+    return tone * dsp.adsr(t, 0.012, 0.06, 0.78, 0.05) * vel
 
 
 def edge_lead(midi: float, t: float, vel: float) -> np.ndarray:
     """The advance's tenser voice: thin pulse, quick vibrato, hard attack."""
     t = max(0.04, t * 0.92)
     freq = midi_hz(midi) * (1.0 + 0.003 * dsp.sine(6.5, t))
-    return dsp.square(freq, t, duty=0.25) * dsp.adsr(t, 0.005, 0.04, 0.7, 0.035) * vel
+    tone = dsp.lowpass_poles(dsp.square(freq, t, duty=0.25), _LEAD_CUTOFF)
+    return tone * dsp.adsr(t, 0.005, 0.04, 0.7, 0.035) * vel
 
 
 def tuba_bass(midi: float, t: float, vel: float) -> np.ndarray:
@@ -69,14 +81,16 @@ def drive_bass(midi: float, t: float, vel: float) -> np.ndarray:
     """The advance's engine: a narrow pulse that punches every eighth."""
     t = max(0.04, t * 0.85)
     env = dsp.adsr(t, 0.004, 0.05, 0.55, 0.03)
-    return dsp.square(midi_hz(midi), t, duty=0.3) * env * vel
+    tone = dsp.lowpass_poles(dsp.square(midi_hz(midi), t, duty=0.3), _BASS_CUTOFF)
+    return tone * env * vel
 
 
 def stab(midi: float, t: float, vel: float) -> np.ndarray:
     """Afterbeat chord voice: short, bright, gone."""
     t = max(0.04, t * 0.8)
     env = dsp.adsr(t, 0.004, 0.05, 0.45, 0.03)
-    return dsp.square(midi_hz(midi), t, duty=0.25) * env * vel
+    tone = dsp.lowpass_poles(dsp.square(midi_hz(midi), t, duty=0.25), _STAB_CUTOFF)
+    return tone * env * vel
 
 
 def pad(midi: float, t: float, vel: float) -> np.ndarray:
@@ -186,11 +200,12 @@ def add_wrapped(out: np.ndarray, x: np.ndarray, at: int) -> None:
         out[: len(x) - head] += x[head:]
 
 
-def render(song: Song, peak_db: float) -> np.ndarray:
-    """The finished loop: every track placed, tails wrapped, levelled.
+def mixdown(song: Song) -> np.ndarray:
+    """Every track placed at its authored gain, tails wrapped, unlevelled.
 
-    No edge fade — a fade would dent the loop seam. Click-freedom comes from
-    every instrument's own attack and release ramps.
+    Levelling is peak normalisation, so it is the whole mix's answer and
+    nothing a single voice can be read against — this is the seam a gate
+    weighing one voice against the band renders through.
     """
     spb = 60.0 / song.bpm
     n = int(round(song.beats * spb * dsp.RATE))
@@ -202,4 +217,13 @@ def render(song: Song, peak_db: float) -> np.ndarray:
                 raise ValueError(f"note at beat {start} outside the song")
             x = instrument(midi, beats * spb, vel) * track.gain
             add_wrapped(out, x, int(round(start * spb * dsp.RATE)))
-    return dsp.normalize(out, peak_db)
+    return out
+
+
+def render(song: Song, peak_db: float) -> np.ndarray:
+    """The finished loop: mixed down and levelled to its authored peak.
+
+    No edge fade — a fade would dent the loop seam. Click-freedom comes from
+    every instrument's own attack and release ramps.
+    """
+    return dsp.normalize(mixdown(song), peak_db)
