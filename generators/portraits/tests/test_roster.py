@@ -261,6 +261,11 @@ class TheIdentitiesTheReviewPinned(unittest.TestCase):
         face = roster.FACES["dane_ferrow"]
         self.assertIn("scar", (face.acc, face.acc2))
 
+    def test_calder_wears_the_shade_that_parted_her_from_voss(self):
+        calder, voss = roster.FACES["ines_calder"], roster.FACES["mara_voss"]
+        self.assertIn("visor", (calder.acc, calder.acc2))
+        self.assertNotIn("visor", (voss.acc, voss.acc2))
+
     def test_rowan_and_reed_carry_different_things_on_the_chest(self):
         self.assertNotEqual(
             roster.FACES["nia_rowan"].chest, roster.FACES["tomas_reed"].chest
