@@ -13,8 +13,9 @@ terrain_atlas.png — 14 columns x 5 rows of terrain.CELL square RGBA cells,
                     columns repeat one opaque tile down all rows, property
                     columns are faction-tinted per row and transparent
                     around the building, for the board to paint under.
-unit cells        — <unit id>_<team>.png, one units-atlas cell each, the
-                    inputs tools/paste_unit_sprites.gd consumes.
+unit cells        — <unit id>_<team>.png, one units-atlas cell each, exported
+                    for assets/sprites/units as a reviewable copy of art the
+                    atlas already carries; the game loads the atlas, not these.
 building cells    — <building>_<team>.png, one terrain cell each, RGBA
                     transparent-backed sprites for assets/sprites/iso_buildings.
 """
