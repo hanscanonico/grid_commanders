@@ -276,6 +276,35 @@ class TheIdentitiesTheReviewPinned(unittest.TestCase):
         self.assertEqual(["konrad_vale"], wearing)
 
 
+class TheGreyArmyWearsTheVillainsFace(unittest.TestCase):
+    """The Iron Dominion is the antagonist the sheet has to sell, and the only
+    place that is said is its six grey rows. A soft mouth or a wide, bright eye
+    on one of them puts the face back where it started, and nothing else here
+    reads the expression against the army wearing it.
+    """
+
+    SOFT_MOUTHS = ("grin", "laugh", "neutral", "open", "smile", "wry")
+    HARD_EYES = ("lidded", "narrow")
+    WIDEST_EYE = 0.94
+
+    def iron_faces(self) -> list[roster.Face]:
+        return [f for k, f in roster.FACES.items() if bust.FACTION_OF[k] == "iron"]
+
+    def test_the_grey_army_is_six_generals(self):
+        self.assertEqual(6, len(self.iron_faces()))
+
+    def test_no_iron_general_wears_a_soft_mouth(self):
+        for face in self.iron_faces():
+            with self.subTest(commander=face.id):
+                self.assertNotIn(face.mouth, self.SOFT_MOUTHS)
+
+    def test_every_iron_eye_is_narrowed_or_lidded(self):
+        for face in self.iron_faces():
+            with self.subTest(commander=face.id):
+                self.assertIn(face.eyes, self.HARD_EYES)
+                self.assertLessEqual(face.eye, self.WIDEST_EYE)
+
+
 class ThePosesAreTiltedAndFiveAreMirrored(unittest.TestCase):
     """The mirror is a pose, never a light: the cast shadow keeps its one offset
     sheet-wide, so the mirrored rows are counted here rather than assumed.
