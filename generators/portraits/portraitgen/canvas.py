@@ -11,8 +11,12 @@ cannot change the art.
 
 Determinism is the reason geometry is rounded in exactly one place (`_at`):
 float control points coerced to ints implicitly could move an edge by a pixel
-between two libms. Nothing here reads a clock, an environment variable or a
-random number.
+between two libms. It is the reason a stroke builds its own rectangles
+(`segment_quad`) instead of handing Pillow a width — that path decides the same
+corners in C off libm, and a diagonal landed a pixel apart on x86-64 and arm.
+Every number this module gives a rasteriser is an integer at the working
+resolution. Nothing here reads a clock, an environment variable or a random
+number.
 
 Ink is a hierarchy of three weights and nothing else, so a scar can never come
 out as heavy as a jaw; `stroke` refuses any other width rather than drawing it.
@@ -20,10 +24,12 @@ out as heavy as a jaw; `stroke` refuses any other width rather than drawing it.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable
 
 from PIL import Image, ImageDraw
 
+from . import raster
 from .palette import RGB, RGBA
 
 # The pinned raster (CommanderVisuals.PORTRAIT_SIZE) and the factor everything
@@ -49,6 +55,41 @@ Point = tuple[float, float]
 Box = tuple[float, float, float, float]
 
 
+# The rasteriser's own type: one place decides what a whole-pixel corner is.
+Corner = raster.Corner
+
+
+def segment_quad(start: Corner, end: Corner, radius: int) -> list[Corner] | None:
+    """One segment of a stroke as a rectangle on the working grid.
+
+    Its corners are decided here rather than by passing `width` to Pillow's
+    line: that path builds the same rectangle in C off a libm `hypot`, whose
+    last bit is not the same on x86-64 and arm, so a diagonal came out a pixel
+    apart on Linux and macOS. `math.sqrt` of an exact integer is correctly
+    rounded on every platform, and the offset lands on an integer before it
+    reaches a rasteriser.
+
+    `None` for a segment of no length — the disc drawn at the vertex is the
+    whole mark there.
+    """
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    span = math.sqrt(dx * dx + dy * dy)
+    if span == 0.0:
+        return None
+    offset_x, offset_y = _grid(-dy * radius / span), _grid(dx * radius / span)
+    return [
+        (start[0] + offset_x, start[1] + offset_y),
+        (end[0] + offset_x, end[1] + offset_y),
+        (end[0] - offset_x, end[1] - offset_y),
+        (start[0] - offset_x, start[1] - offset_y),
+    ]
+
+
+def _grid(value: float) -> int:
+    """Half away from zero, so the two sides of a stroke stay symmetric."""
+    return math.floor(value + 0.5) if value >= 0.0 else math.ceil(value - 0.5)
+
+
 class Canvas:
     """An RGBA layer at `scale` times the portrait raster.
 
@@ -67,7 +108,7 @@ class Canvas:
     def _at(self, value: float) -> int:
         return round(value * self.scale)
 
-    def _points(self, points: Iterable[Point]) -> list[tuple[int, int]]:
+    def _points(self, points: Iterable[Point]) -> list[Corner]:
         return [(self._at(x), self._at(y)) for x, y in points]
 
     def _box(self, box: Box) -> tuple[int, int, int, int]:
@@ -81,7 +122,25 @@ class Canvas:
         self._draw.rectangle(self._box(box), fill=colour)
 
     def polygon(self, points: Iterable[Point], colour: RGB | RGBA) -> None:
-        self._draw.polygon(self._points(points), fill=colour)
+        self._fill(self._points(points), colour)
+
+    def _fill(self, corners: list[Corner], colour: RGB | RGBA) -> None:
+        """A polygon already at the working resolution, painted as the rows
+        `raster` says it covers."""
+        rows = list(raster.spans(corners, self.image.size))
+        if not rows:
+            return
+        left = min(first for _, first, _ in rows)
+        top = min(row for row, _, _ in rows)
+        width = max(last for _, _, last in rows) - left + 1
+        height = max(row for row, _, _ in rows) - top + 1
+        mask = bytearray(width * height)
+        for row, first, last in rows:
+            at = (row - top) * width + first - left
+            mask[at : at + last - first + 1] = b"\xff" * (last - first + 1)
+        self.image.paste(
+            colour, (left, top), Image.frombytes("L", (width, height), bytes(mask))
+        )
 
     def ellipse(self, box: Box, colour: RGB | RGBA) -> None:
         self._draw.ellipse(self._box(box), fill=colour)
@@ -94,7 +153,7 @@ class Canvas:
         *,
         closed: bool = False,
     ) -> None:
-        """A path in one of the three ink weights, mitred at its joints."""
+        """A path in one of the three ink weights, rounded at its joints."""
         if weight not in INK_WEIGHTS:
             raise ValueError(
                 f"ink weight {weight} is none of {INK_WEIGHTS} — "
@@ -103,12 +162,14 @@ class Canvas:
         path = self._points(points)
         if closed:
             path = [*path, path[0]]
-        width = self._at(weight)
-        self._draw.line(path, fill=colour, width=width, joint="curve")
-        # `joint="curve"` rounds the corners between segments; the ends of a
-        # thick open path stay square without this.
-        radius = width // 2
-        for x, y in (path[0], path[-1]):
+        radius = self._at(weight) // 2
+        for start, end in zip(path, path[1:]):
+            quad = segment_quad(start, end, radius)
+            if quad is not None:
+                self._fill(quad, colour)
+        # One disc per vertex: it rounds every joint between segments and caps
+        # the two ends, which would otherwise be square.
+        for x, y in path:
             self._draw.ellipse(
                 (x - radius, y - radius, x + radius, y + radius), fill=colour
             )

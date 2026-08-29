@@ -68,8 +68,18 @@ downsampling once to 220x268 with a box filter. `ImageDraw` has no
 antialiasing of its own; the downsample is where the smooth edge comes from, and
 a plain box average at an exact integer ratio is reproducible on any machine
 Pillow runs on and does not ring on hard ink edges. `portraitgen/canvas.py` is
-the only place a float coordinate becomes an integer, so no edge can move by a
-pixel between two machines' libm.
+the only place a float coordinate becomes an integer.
+
+Integer coordinates were not enough on their own. Pillow's polygon fill and its
+wide line work their own geometry out in C — a float32 slope and a
+multiply-and-add per scan line, a libm `hypot` for a line's corners — and arm
+compilers fold a multiply and an add into one instruction where x86-64 ones do
+not. A crossing that lands exactly on a pixel boundary then falls either side of
+it, which is how two busts came out a pixel apart on CI while every local
+regeneration was clean. So neither is used: `portraitgen/raster.py` says which
+whole pixels a polygon covers, in whole numbers, and `canvas.segment_quad`
+builds a stroke's rectangles itself. The art is identical on macOS/arm64,
+Linux/arm64 and Linux/x86-64.
 
 The emblems are the deliberate exception: they are axis-aligned and 45-degree
 shapes, so `portraitgen/emblem.py` draws them at 1x with integer geometry, which
