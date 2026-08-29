@@ -28,7 +28,9 @@ SCALE = 8
 # Tried in order against a sheet's dimensions: the tall unit cell, then the
 # square terrain and autotile cell.
 CELL_GUESSES = ((64, 96), (64, 64))
-MAX_SHEET_W = 2048
+# Scale up until the sheet is about this wide; a crop already wider than it
+# is shown at 1:1 rather than shrunk.
+SCALE_TO_WIDTH = 2048
 
 
 @dataclass(frozen=True)
@@ -136,7 +138,7 @@ def build_sheet(
         _diff_panel(after.crop(box), mask.crop(box)),
     ]
     w, h = panels[0].size
-    scale = max(1, min(SCALE, (MAX_SHEET_W - 2 * GUTTER_PX) // (3 * w)))
+    scale = max(1, min(SCALE, (SCALE_TO_WIDTH - 2 * GUTTER_PX) // (3 * w)))
     w, h = w * scale, h * scale
     sheet = Image.new("RGBA", (3 * w + 2 * GUTTER_PX, h), GUTTER)
     for i, panel in enumerate(panels):
@@ -151,6 +153,7 @@ def write_diff_sheet(
     after = Image.open(generated)
     sheet, pixels, cells = build_sheet(before, after, cell_grid(before.size))
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"{str(relpath).replace('/', '_')[:-4]}_diff.png"
+    stem = relpath.with_suffix("").as_posix().replace("/", "_")
+    path = out_dir / f"{stem}_diff.png"
     sheet.save(path)
     return DiffReport(path, pixels, cells)
