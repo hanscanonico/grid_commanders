@@ -105,6 +105,25 @@ def loop_rms_delta_db(x: np.ndarray, window: float = 0.25) -> float:
     return abs(rms_db(x[:n]) - rms_db(x[-n:]))
 
 
+def quietest_window_db(
+    x: np.ndarray, window: float = 0.008, region: float = 0.1
+) -> float:
+    """The quietest `window` of the last `region`, dB below the track's peak.
+
+    The two RMS readings either side of the seam both pass over a hole
+    between them, and a hole is what a loop gasps on — so this reads the
+    worst short window on the way out rather than the average.
+    """
+    n = int(window * RATE)
+    tail = x[-int(region * RATE) :]
+    energy = np.concatenate(([0.0], np.cumsum(tail**2)))
+    quietest = float(np.min(energy[n:] - energy[:-n])) / n
+    peak = float(np.max(np.abs(x)))
+    if quietest <= 0.0 or peak == 0.0:
+        return -120.0
+    return 10.0 * np.log10(quietest) - 20.0 * np.log10(peak)
+
+
 def tempo_bpm(x: np.ndarray, lo: float = 95.0, hi: float = 170.0) -> float:
     """Tempo read off the rendered audio: onset-strength autocorrelation.
 

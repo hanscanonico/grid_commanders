@@ -134,6 +134,27 @@ def hat(_midi: float, _t: float, vel: float) -> np.ndarray:
     return _hat_hit() * vel
 
 
+# The one drum voice that is not a fixed hit: it takes its length from the
+# note, because its whole job is to be still sounding at the song's last
+# sample. A roll authored to end a little past the last beat crescendos into
+# the loop point and add_wrapped lays its release over the downbeat.
+
+_ROLL_RELEASE = 0.03  # of the note, so a roll authored 3% long peaks at the bar line
+
+
+@lru_cache(maxsize=None)
+def _roll_buzz(t: float) -> np.ndarray:
+    """A swelling band of snare noise, loudest just before it releases."""
+    buzz = dsp.bandpass(dsp.noise(t, seed=205), 350.0, 2500.0)
+    buzz /= np.max(np.abs(buzz))
+    release = _ROLL_RELEASE * t
+    return _frozen(buzz * dsp.adsr(t, t - release, 0.0, 1.0, release))
+
+
+def roll(_midi: float, t: float, vel: float) -> np.ndarray:
+    return _roll_buzz(t) * vel
+
+
 INSTRUMENTS = {
     "brass_lead": brass_lead,
     "edge_lead": edge_lead,
@@ -144,6 +165,7 @@ INSTRUMENTS = {
     "kick": kick,
     "snare": snare,
     "hat": hat,
+    "roll": roll,
 }
 
 

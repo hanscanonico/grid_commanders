@@ -10,12 +10,13 @@ parade  — the menu's face: a proud C-major march at 104 BPM, AABA over 32
           bars. Oom-pah tuba, afterbeat horns, parade snare with rolls into
           every strain, and a singable square lead; the bridge turns to the
           relative minor under a held counter-voice, and the last bar's
-          G-B-D pickup lifts the loop back to its downbeat.
+          G-B-D pickup lifts the loop back to its downbeat over a buzz roll
+          that swells across the bar line.
 advance — the battle's pulse: an A-minor quickstep at 132 BPM, ABAC over 32
           bars. Driving eighth-note bass with octave pops, syncopated stabs,
           a thin urgent lead; the final strain crests at C6, the hats double
           to sixteenths, and a descending E7 run resolves across the seam
-          onto the loop's opening A.
+          onto the loop's opening A under the same swelling buzz roll.
 """
 
 from __future__ import annotations
@@ -104,6 +105,20 @@ def stabs(chart, offsets=(1.5, 3.0), vel: float = 0.85) -> tuple:
     return tuple(notes)
 
 
+def rings_over(notes: tuple, beats: float) -> tuple:
+    """Sound the voice's last note `beats` longer than its slot.
+
+    Nothing is authored past bar 32, so without this every instrument has
+    stopped before the file's last sample and the loop gasps at the wrap.
+    What rings past the end is what `add_wrapped` lands on the downbeat.
+    """
+    last = max(note[0] for note in notes)
+    return tuple(
+        (start, midi, length + (beats if start == last else 0.0), vel)
+        for start, midi, length, vel in notes
+    )
+
+
 def kit(bars: int, pattern, start_bar: int = 0) -> tuple:
     """One drum voice's bar pattern repeated: (beat_in_bar, velocity) hits."""
     notes = []
@@ -168,6 +183,12 @@ _PARADE_COUNTER = tuple(
     for bar, midi in enumerate((64, 60, 57, 59, 60, 57, 59, 62))
 )
 
+# The roll over the bar line: two beats of swell whose last sixteenth — its
+# release — sounds past the score, so the file ends as loud as it starts and
+# add_wrapped lays the release over the loop's downbeat.
+_SEAM_ROLL = ((BEATS - 2.0, 0, 2.0625, 1.0),)
+_SEAM_RING = 1.5  # beats the last melody note and bass note hold past the end
+
 _MARCH_KICK = ((0.0, 1.0), (2.0, 0.85))
 _MARCH_SNARE = ((1.0, 0.85), (3.0, 0.92))
 _MARCH_HAT = tuple((k * 0.5, 0.62 if k % 2 == 0 else 0.45) for k in range(8))
@@ -179,9 +200,13 @@ def parade() -> sequencer.Song:
         bpm=104.0,
         beats=BEATS,
         tracks=(
-            sequencer.Track("brass_lead", 0.34, seq(PARADE_MELODY)),
+            sequencer.Track(
+                "brass_lead", 0.34, rings_over(seq(PARADE_MELODY), _SEAM_RING)
+            ),
             sequencer.Track("stab", 0.12, afterbeats(PARADE_CHART)),
-            sequencer.Track("tuba_bass", 0.30, oompah(PARADE_CHART)),
+            sequencer.Track(
+                "tuba_bass", 0.30, rings_over(oompah(PARADE_CHART), _SEAM_RING)
+            ),
             sequencer.Track("pad", 0.15, _PARADE_COUNTER),
             sequencer.Track("kick", 0.50, kit(BARS, _MARCH_KICK)),
             sequencer.Track(
@@ -195,6 +220,7 @@ def parade() -> sequencer.Song:
                 + kit(1, _STRAIN_ROLL, start_bar=31),
             ),
             sequencer.Track("hat", 0.32, kit(BARS, _MARCH_HAT)),
+            sequencer.Track("roll", 0.60, _SEAM_ROLL),
         ),
     )
 
@@ -272,9 +298,13 @@ def advance() -> sequencer.Song:
         bpm=132.0,
         beats=BEATS,
         tracks=(
-            sequencer.Track("edge_lead", 0.32, seq(ADVANCE_MELODY)),
+            sequencer.Track(
+                "edge_lead", 0.32, rings_over(seq(ADVANCE_MELODY), _SEAM_RING)
+            ),
             sequencer.Track("stab", 0.11, stabs(ADVANCE_CHART)),
-            sequencer.Track("drive_bass", 0.26, drive(ADVANCE_CHART)),
+            sequencer.Track(
+                "drive_bass", 0.26, rings_over(drive(ADVANCE_CHART), _SEAM_RING)
+            ),
             sequencer.Track("kick", 0.50, kit(BARS, _DRIVE_KICK)),
             sequencer.Track(
                 "snare",
@@ -292,6 +322,7 @@ def advance() -> sequencer.Song:
                 0.30,
                 kit(24, _DRIVE_HAT8) + kit(8, _DRIVE_HAT16, start_bar=24),
             ),
+            sequencer.Track("roll", 1.30, _SEAM_ROLL),
         ),
     )
 
