@@ -153,6 +153,38 @@ class EveryKindDraws(unittest.TestCase):
         self.assertGreater(len(features.accessory(cell, SKULL, "bandana")), 2)
 
 
+class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
+    """P13/P16: three hats over one skull, and each is the shape the two others
+    are not — a peak, a bare brow, a bare crown."""
+
+    def _box(self, kind: str) -> tuple[float, float, float, float]:
+        cell = _cell()
+        features.accessory(cell, SKULL, kind)
+        box = cell.image.getbbox()
+        assert box, f"{kind} drew nothing"
+        return tuple(value / cell.scale for value in box)
+
+    def test_the_service_cap_hangs_a_peak_the_field_cap_has_not_got(self):
+        self.assertGreater(self._box("cap")[3] - self._box("fieldcap")[3], 8.0)
+
+    def test_the_service_cap_is_the_wider_hat(self):
+        cap, field = self._box("cap"), self._box("fieldcap")
+        self.assertLess(cap[0], field[0])
+        self.assertGreater(cap[2], field[2])
+
+    def test_the_field_cap_sits_lower_on_the_skull(self):
+        self.assertGreater(self._box("fieldcap")[1], self._box("cap")[1])
+
+    def test_the_visor_carries_no_crown(self):
+        self.assertGreater(self._box("visor")[1], self._box("cap")[1] + 20.0)
+
+    def test_no_hat_comes_down_over_the_eyes(self):
+        line = FRAME.at(0.0, features.EYE_LINE)[1]
+        for kind in ("cap", "fieldcap", "visor"):
+            with self.subTest(accessory=kind):
+                self.assertLess(self._box(kind)[3], line)
+
+
 class AnUnknownNameRaises(unittest.TestCase):
     """The vocabulary is the dispatch table; nothing falls through to a default."""
 
