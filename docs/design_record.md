@@ -1367,8 +1367,14 @@ and which is given one back here. Reproduced otherwise verbatim.
   otherwise snap a striding unit back to parked. **The clip's lifetime is the tween's**: the
   animator sets `moving` on both sides of it and nothing else does, Instant returns before any of
   it so a still board plays no clip at all, and the flag is cleared even if the tween died with the
-  scene, a sprite left moving striding on the spot forever. **The sheets face screen-left and a
-  rightward step mirrors them** — `UnitSprite.facing_for(delta, was)` is that policy, static and
+  scene, a sprite left moving striding on the spot forever. **Its cadence is the tween's tier
+  too** (2026-08-29): `BoardBeat.move_ms()`, over `GameSpeed.clip_period_ms`, restates `MOVE_MS` at
+  the tier being played — 160 ms at Normal, 107 at Quick — because legs beating on the authored
+  rate under a tier-scaled body was the gait striding out of step with itself. `MOVE_MS` stays the
+  authored constant `test_anim_manifest.gd` holds against the generator's manifest, and the ambient
+  beat and the sea's swell are scenery on a wall clock and stay authored.
+  **The sheets face screen-left and a rightward step mirrors them** —
+  `UnitSprite.facing_for(delta, was)` is that policy, static and
   pure the way `PathArrow.segments` is, and **a purely vertical leg holds the previous facing**;
   facing is set in `setup()` and by `face_step` at each corner and **never in `refresh()`**, so no
   repaint mid-walk turns a striding unit around. **The mirror is the CLIP'S and ends with it** —

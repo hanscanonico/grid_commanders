@@ -239,8 +239,12 @@ forms named in the root index are in `docs/design_record.md`.
   **The eighth slice is the move clip**, played for exactly the length of
   `BattleAnimator.animate_path`'s tween. **It is a clip, not a second beat** —
   `UnitSprite._sheet_path(frame)` is the one answer to which sheet a sprite draws from, so no repaint
-  mid-walk snaps a striding unit back to parked. **The clip's lifetime is the tween's.** **The
-  sheets face screen-left and a rightward step mirrors them** — `UnitSprite.facing_for(delta, was)`
+  mid-walk snaps a striding unit back to parked. **The clip's lifetime is the tween's, and since
+  2026-08-29 its cadence is the tween's tier** — `BoardBeat.move_ms()` over
+  `GameSpeed.clip_period_ms` restates `MOVE_MS` at the tier being played (160 ms at Normal, 107 at
+  Quick); `MOVE_MS` itself stays the authored constant the manifest is held against, and the
+  ambient beat and the sea's swell stay authored. **The sheets face screen-left and a rightward
+  step mirrors them** — `UnitSprite.facing_for(delta, was)`
   is that policy, a purely vertical leg holds the previous facing, and facing is never set in
   `refresh()`. **The mirror is the CLIP'S and ends with it**, because the ambient pair's cast shadow
   is not cell-centred and a unit left mirrored at rest drops its shadow to the other side of itself.
