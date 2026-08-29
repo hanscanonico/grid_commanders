@@ -73,6 +73,11 @@ func test_the_battle_theme_crossfades_over_the_menu_theme() -> void:
 		Music.SILENT_DB,
 		"the outgoing theme should still be audible at the seam"
 	)
+	assert_lt(
+		_voice(&"advance").volume_db,
+		Music.LEVEL_DB,
+		"the incoming theme should still be climbing at the seam"
+	)
 	await wait_seconds(Music.CROSSFADE_SEC + 0.1)
 	assert_null(_voice(&"parade"), "the menu theme should have faded out")
 	assert_almost_eq(_voice(&"advance").volume_db, Music.LEVEL_DB, 0.01)

@@ -28,7 +28,7 @@ const SILENT_DB := -60.0
 
 var _streams: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
-var _fades: Array[Tween] = [null, null]
+var _fades: Array[Tween] = []
 var _active: int = 0
 var _current: StringName = &""
 
@@ -40,6 +40,7 @@ func _ready() -> void:
 			var stream: AudioStreamOggVorbis = load(path)
 			stream.loop = true
 			_streams[track] = stream
+	_fades.resize(PLAYERS)
 	for i in PLAYERS:
 		var player := AudioStreamPlayer.new()
 		player.volume_db = SILENT_DB
