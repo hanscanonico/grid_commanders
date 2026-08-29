@@ -207,7 +207,7 @@ class TheCloudSitsLowAndBroad(Combed):
     the ear, and its top edge shows the curls the dial names and no more.
     """
 
-    def cloud(self) -> list[tuple[int, int]]:
+    def cloud(self) -> list[tuple[float, float]]:
         return _silhouette(self.drawn("curly"))
 
     def test_the_cloud_covers_the_crown(self):
