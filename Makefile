@@ -437,8 +437,11 @@ audio-test:
 # animation manifest, the palette mirrored off the game's own code, and two
 # full runs of the pipeline in two processes byte for byte. Out of
 # `make verify` because it needs a Python venv a clone of this repo does not
-# have, and because it costs ~300 s — mostly the terrain and paint contract
-# suites, which render sheets to read them back. CI runs it as its own job.
+# have, and because it costs a few minutes: the suites read composed art back,
+# and composing it is the whole bill. Every gate that reads a cell or a sheet
+# asks `tests/pixel_helpers.py` for it, so the run renders each one once —
+# 8317 cell renders in 300 s before that, 3660 in 176 s after (2026-08-29,
+# back to back on one box). CI runs it as its own job.
 sprites-test:
 	$(call require-spritegen)
 	cd "$(SPRITEGEN)" && "$(abspath $(SPRITEGEN_PY))" -m unittest discover tests

@@ -12,12 +12,14 @@ from spritegen import atlas, autotile, terrain
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, Pose
 
+from pixel_helpers import terrain_sheet, units_sheet
+
 
 class AtlasContract(unittest.TestCase):
     """The two sheets the game drops in unchanged."""
 
     def test_units_atlas_is_18_by_6_rgba_cells(self):
-        img = atlas.build_units_atlas()
+        img = units_sheet()
         self.assertEqual(
             img.size, (len(ATLAS_ORDER) * atlas.CELL_W, len(FACTIONS) * atlas.CELL_H)
         )
@@ -25,7 +27,7 @@ class AtlasContract(unittest.TestCase):
         self.assertEqual(img.mode, "RGBA")
 
     def test_terrain_atlas_is_14_by_6_rgba_cells(self):
-        img = atlas.build_terrain_atlas()
+        img = terrain_sheet()
         self.assertEqual(
             img.size, (len(terrain.TERRAIN_ORDER) * 64, len(FACTIONS) * 64)
         )
@@ -34,7 +36,7 @@ class AtlasContract(unittest.TestCase):
         self.assertEqual(img.mode, "RGBA")
 
     def test_every_atlas_row_renders_its_own_faction(self):
-        img = atlas.build_units_atlas()
+        img = units_sheet()
         rows = [
             img.crop((0, r * atlas.CELL_H, img.width, (r + 1) * atlas.CELL_H)).tobytes()
             for r in range(len(FACTIONS))
@@ -87,8 +89,8 @@ class FigureSheet(unittest.TestCase):
     def test_it_removes_shadow_pixels_and_changes_nothing_else(self):
         for pose in (Pose.A, Pose.B):
             with self.subTest(pose=pose):
-                board = atlas.build_units_atlas(pose).load()
-                figures = atlas.build_units_atlas(pose, shadow=False).load()
+                board = units_sheet(pose).load()
+                figures = units_sheet(pose, shadow=False).load()
                 removed = 0
                 for y in range(len(FACTIONS) * atlas.CELL_H):
                     for x in range(len(ATLAS_ORDER) * atlas.CELL_W):
@@ -106,8 +108,8 @@ class FigureSheet(unittest.TestCase):
     def test_every_unit_of_every_faction_loses_its_shadow(self):
         for pose in (Pose.A, Pose.B):
             with self.subTest(pose=pose):
-                board = atlas.build_units_atlas(pose)
-                figures = atlas.build_units_atlas(pose, shadow=False)
+                board = units_sheet(pose)
+                figures = units_sheet(pose, shadow=False)
                 for row, fac in enumerate(FACTIONS):
                     for col, uid in enumerate(ATLAS_ORDER):
                         box = (
@@ -133,8 +135,8 @@ class FigureSheet(unittest.TestCase):
         """A clip needs two frames: the shadow erase must not flatten the
         pose difference the ambient pair carries."""
         self.assertNotEqual(
-            atlas.build_units_atlas(Pose.A, shadow=False).tobytes(),
-            atlas.build_units_atlas(Pose.B, shadow=False).tobytes(),
+            units_sheet(Pose.A, shadow=False).tobytes(),
+            units_sheet(Pose.B, shadow=False).tobytes(),
         )
 
 

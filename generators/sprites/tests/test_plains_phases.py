@@ -21,7 +21,7 @@ from unittest import mock
 
 from PIL import Image
 
-from spritegen import atlas, autotile, palette, terrain
+from spritegen import autotile, palette, terrain
 from spritegen.terrain import (
     CELL,
     GRASS,
@@ -30,7 +30,7 @@ from spritegen.terrain import (
     TERRAIN_VALUE_CEILING,
 )
 
-from pixel_helpers import opaque_pixels, share_above
+from pixel_helpers import opaque_pixels, share_above, terrain_sheet
 from test_terrain_paint import TerrainPalette
 from test_value_bands import ValueCeiling
 
@@ -110,9 +110,7 @@ class PlainsPhases(unittest.TestCase):
 
     def test_phase_zero_is_the_atlas_plains_column(self):
         col = terrain.TERRAIN_ORDER.index("plains")
-        column = atlas.build_terrain_atlas().crop(
-            (col * CELL, 0, col * CELL + CELL, CELL)
-        )
+        column = terrain_sheet().crop((col * CELL, 0, col * CELL + CELL, CELL))
         self.assertEqual(
             column.convert("RGB").tobytes(), terrain.plains(0).convert("RGB").tobytes()
         )

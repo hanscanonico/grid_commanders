@@ -360,7 +360,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
 | `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
 | `terrain_atlas.png` | 896x384 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
-| `units/<id>_<team>.png` | 108 cells, installed to `assets/sprites/units` as the atlas's own art exported cell by cell |
+| `units/<id>_<team>.png` | 108 cells, installed to `assets/sprites/units` as the atlas's own art exported cell by cell — **cut out of the units sheet the run already built** (`atlas.cell_box`), so a cell is the atlas's cell by construction rather than by a second render agreeing with it |
 | `iso_buildings/<id>_<team>.png` | 30 property-building cells for `assets/sprites/iso_buildings` |
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
 | `preview_map.png` | an authored little battle map proving the sheet in context: the shipped maps' terrain mix, autotiled, phased by the game's own coordinate hash |
@@ -791,7 +791,8 @@ the same relative path, and fails in both directions, so a new output landing
 with no home is a failure rather than a silence. The single exception is
 `units/<id>_<team>.png` — instead of installing 108 duplicates of art the
 atlas already carries, each exported cell must be pixel for pixel one of the
-cells of the installed `units_atlas.png`. The previews are the one thing the
+cells of the installed `units_atlas.png` — which the exporter cropping the
+built sheet makes true by construction. The previews are the one thing the
 game does not load, so they stay compared against the review gallery's own
 copies under `.lavish/assets`. Run it against your own output with
 `~/.cache/grid_commanders/venv-sprites/bin/python tests/check_snapshots.py out`.
@@ -802,6 +803,14 @@ cells and scaled up — into `reports/sprite_snapshot_diffs/`, and names the
 file in the failure message beside the count of pixels and cells that moved.
 Most failures here are an art change somebody meant, so the reviewer gets a
 picture rather than a path.
+
+The suites read composed art back, and composing it is what the run costs, so
+`tests/pixel_helpers.py` is where a gate asks for a cell or a sheet
+(`pose_cell`, `units_sheet`, `terrain_sheet`) and each is rendered once for the
+whole run. The images it hands back are shared: read them, never paint on them.
+A gate that needs a *fresh* render — the determinism ones, which compare two
+builds, and the two that render under a patched module — calls `atlas` itself
+and says why.
 
 ## Cell density
 

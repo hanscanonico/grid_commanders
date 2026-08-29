@@ -35,7 +35,7 @@ from spritegen.terrain import (
 from spritegen.units import ATLAS_ORDER, Pose, build_model
 from spritegen.voxel import render_indexed
 
-from pixel_helpers import RUNG_1_CELL
+from pixel_helpers import RUNG_1_CELL, pose_cell
 
 
 class GroundContrast(unittest.TestCase):
@@ -101,7 +101,7 @@ class GroundContrast(unittest.TestCase):
     def _boundary(self, uid, fac, pose, ground, n):
         """(value ties, colour-and-value ties, boundary pixels) of one sprite
         standing on `ground`, the tile repeating under the cell as on a map."""
-        cell = atlas.unit_cell(uid, fac, pose, False).convert("RGBA")
+        cell = pose_cell(uid, fac, pose, False).convert("RGBA")
         px = cell.load()
         w, h = cell.size
         weak = both = total = 0
@@ -332,7 +332,7 @@ class BoardScaleEdge(unittest.TestCase):
             for fac in FACTIONS:
                 for pose in Pose:
                     px = (
-                        atlas.unit_cell(uid, fac, pose, shadow=False)
+                        pose_cell(uid, fac, pose, shadow=False)
                         .resize(RUNG_1_CELL, Image.NEAREST)
                         .load()
                     )
@@ -396,7 +396,7 @@ class Silhouette(unittest.TestCase):
     RUNG_1, RUNG_1_BAR = 4, 0.78
 
     def _silhouette(self, uid: str, ratio: int = 2) -> set[tuple[int, int]]:
-        cell = atlas.unit_cell(uid, faction_by_key("neutral")).convert("RGBA")
+        cell = pose_cell(uid, faction_by_key("neutral")).convert("RGBA")
         w, h = atlas.CELL_W // ratio, atlas.CELL_H // ratio
         small = cell.resize((w, h), Image.NEAREST)
         px = small.load()

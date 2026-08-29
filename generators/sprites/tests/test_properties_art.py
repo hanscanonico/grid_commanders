@@ -24,7 +24,7 @@ from spritegen.terrain import CELL
 from spritegen import voxel
 from spritegen.voxel import _broad_flat_tops, _prop_contour, render, render_indexed
 
-from pixel_helpers import opaque_pixels
+from pixel_helpers import opaque_pixels, terrain_sheet
 
 
 class PropOutline(unittest.TestCase):
@@ -349,7 +349,7 @@ class PropertyOverlays(unittest.TestCase):
         return terrain.tile(tid, fac).convert("RGBA")
 
     def test_only_the_property_columns_carry_transparency(self):
-        img = atlas.build_terrain_atlas()
+        img = terrain_sheet()
         px = img.load()
         for col, tid in enumerate(terrain.TERRAIN_ORDER):
             clear = sum(

@@ -14,7 +14,7 @@ from collections import Counter
 
 from PIL import Image
 
-from spritegen import atlas, autotile, palette, terrain
+from spritegen import autotile, palette, terrain
 from spritegen.autotile import E, N, S, W
 from spritegen.palette import FACTIONS, RAMPS, S_BODY
 from spritegen.terrain import (
@@ -34,11 +34,12 @@ from spritegen.terrain import (
 import test_value_bands
 
 from pixel_helpers import (
-    opaque_pixels,
-    share_above,
+    EDGE_PROBES,
     ROAD_TONES,
     WATER_TONES,
-    EDGE_PROBES,
+    opaque_pixels,
+    share_above,
+    terrain_sheet,
 )
 
 
@@ -521,9 +522,7 @@ class SeaPhases(unittest.TestCase):
 
     def test_phase_zero_is_the_atlas_sea_column(self):
         col = terrain.TERRAIN_ORDER.index("sea")
-        column = atlas.build_terrain_atlas().crop(
-            (col * CELL, 0, col * CELL + CELL, CELL)
-        )
+        column = terrain_sheet().crop((col * CELL, 0, col * CELL + CELL, CELL))
         self.assertEqual(
             column.convert("RGB").tobytes(), terrain.sea(0).convert("RGB").tobytes()
         )

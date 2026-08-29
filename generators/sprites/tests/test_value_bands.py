@@ -24,7 +24,7 @@ from spritegen.terrain import (
 )
 from spritegen.units import ATLAS_ORDER, UNITS, Pose
 
-from pixel_helpers import opaque_pixels, share_above, dominant
+from pixel_helpers import dominant, opaque_pixels, pose_cell, share_above, units_sheet
 
 
 class ValueCeiling(unittest.TestCase):
@@ -124,9 +124,7 @@ class ValueCeiling(unittest.TestCase):
                     self.assertLessEqual(share, self.BUILDING_GLINT_SHARE)
 
     def test_the_unit_sheet_still_out_keys_every_tile(self):
-        units = sorted(
-            terrain.luminance(c) for c in opaque_pixels(atlas.build_units_atlas())
-        )
+        units = sorted(terrain.luminance(c) for c in opaque_pixels(units_sheet()))
         top_of_ramp = units[int(len(units) * 0.99)]
         for tid, fac, px in self._tiles():
             with self.subTest(tile=tid, faction=fac.key):
@@ -179,7 +177,7 @@ class UnitBandCoverage(unittest.TestCase):
             px = [
                 c
                 for uid in ATLAS_ORDER
-                for _, _, c in self._unit_pixels(atlas.unit_cell(uid, fac))
+                for _, _, c in self._unit_pixels(pose_cell(uid, fac))
             ]
             shares[fac.key] = share_above(px, self.ROW_BAND)
         return shares
@@ -187,7 +185,7 @@ class UnitBandCoverage(unittest.TestCase):
     def test_every_unit_stands_in_the_band_reserved_for_it(self):
         for fac in FACTIONS:
             for uid in ATLAS_ORDER:
-                px = self._unit_pixels(atlas.unit_cell(uid, fac))
+                px = self._unit_pixels(pose_cell(uid, fac))
                 lit = sum(
                     1 for _, _, c in px if terrain.luminance(c) > self.BRIGHT_BAND
                 )
@@ -197,10 +195,8 @@ class UnitBandCoverage(unittest.TestCase):
     def test_every_unit_wears_its_team_on_most_of_itself(self):
         for uid in ATLAS_ORDER:
             for pose in Pose:
-                red = atlas.unit_cell(uid, faction_by_key("red"), pose)
-                blue = atlas.unit_cell(uid, faction_by_key("blue"), pose).convert(
-                    "RGBA"
-                )
+                red = pose_cell(uid, faction_by_key("red"), pose)
+                blue = pose_cell(uid, faction_by_key("blue"), pose).convert("RGBA")
                 other = blue.load()
                 px = self._unit_pixels(red)
                 worn = sum(1 for x, y, c in px if other[x, y][:3] != c)
@@ -369,7 +365,7 @@ class HullValues(unittest.TestCase):
     COMPOSED = UnitBandCoverage.COMPOSED
 
     def _hull_median(self, uid: str, fac) -> float:
-        cell = atlas.unit_cell(uid, fac).convert("RGBA")
+        cell = pose_cell(uid, fac).convert("RGBA")
         px = cell.load()
         pixels = [
             (y, px[x, y][:3])

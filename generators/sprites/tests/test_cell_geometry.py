@@ -20,6 +20,8 @@ from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from spritegen.voxel import compose_cell, place_in_cell, render_indexed
 
+from pixel_helpers import pose_cell, units_sheet
+
 TALLER = atlas.CELL_H + 32
 
 
@@ -58,12 +60,12 @@ class CellSize(unittest.TestCase):
     """The sheet is laid out from CELL_W / CELL_H, never from a literal."""
 
     def test_a_unit_cell_is_the_atlas_cell(self):
-        cell = atlas.unit_cell("infantry", FACTIONS[0])
+        cell = pose_cell("infantry", FACTIONS[0])
         self.assertEqual(cell.size, (atlas.CELL_W, atlas.CELL_H))
 
     def test_the_units_atlas_is_the_cell_grid(self):
         for pose, shadow in ((Pose.A, True), (Pose.B, True), (Pose.A, False)):
-            img = atlas.build_units_atlas(pose=pose, shadow=shadow)
+            img = units_sheet(pose=pose, shadow=shadow)
             self.assertEqual(
                 img.size,
                 (len(ATLAS_ORDER) * atlas.CELL_W, len(FACTIONS) * atlas.CELL_H),

@@ -15,7 +15,7 @@ from functools import lru_cache
 from PIL import Image
 
 from spritegen import atlas, terrain
-from spritegen.palette import Faction, faction_by_key
+from spritegen.palette import Faction
 from spritegen.terrain import CELL, ROAD, ROAD_DARK, WATER, WATER_DARK
 from spritegen.units import AMBIENT_POSES, Pose
 
@@ -89,6 +89,35 @@ def faction_pixels(sprite_a, sprite_b) -> list[tuple[int, int, int]]:
     return out
 
 
+# The renders the suites share. Every gate that reads composed art asks for it
+# here, so one cell or one sheet is built once for the whole run instead of
+# once per question — the suites between them ask the same handful of cells a
+# few hundred times, and a cell costs ~35 ms. The images handed back are
+# SHARED: read them, crop them, convert them, never paint on them. A gate that
+# wants a fresh render — the determinism ones, which compare two builds — calls
+# `atlas` directly and says so.
+
+
+@lru_cache(maxsize=None)
+def pose_cell(
+    uid: str, fac: Faction, pose: Pose = Pose.A, shadow: bool = True
+) -> Image.Image:
+    """One composed unit cell."""
+    return atlas.unit_cell(uid, fac, pose, shadow)
+
+
+@lru_cache(maxsize=None)
+def units_sheet(pose: Pose = Pose.A, shadow: bool = True) -> Image.Image:
+    """One built units atlas — 18 units x 6 factions of `pose_cell`."""
+    return atlas.build_units_atlas(pose, shadow)
+
+
+@lru_cache(maxsize=None)
+def terrain_sheet() -> Image.Image:
+    """The built terrain atlas."""
+    return atlas.build_terrain_atlas()
+
+
 # Rung 1 of the board's zoom: BattleView scales the 64x96 cell by 0.25 per
 # rung with nearest filtering, so the furthest the board zooms out samples the
 # cell down to 16x24 texels, and a pose delta under 4 atlas px moves nothing a
@@ -103,7 +132,7 @@ def rung1_texels(
     disagreements are the silhouette rather than the tone."""
     w, h = RUNG_1_CELL
     pa, pb = (
-        atlas.unit_cell(uid, fac, pose).resize(RUNG_1_CELL, Image.NEAREST).load()
+        pose_cell(uid, fac, pose).resize(RUNG_1_CELL, Image.NEAREST).load()
         for pose in poses
     )
     changed = silhouette = 0
@@ -115,10 +144,3 @@ def rung1_texels(
                 if (ca[3] > 128) != (cb[3] > 128):
                     silhouette += 1
     return changed, silhouette
-
-
-@lru_cache(maxsize=None)
-def pose_cell(uid: str, fac_key: str, pose: Pose) -> Image.Image:
-    """One composed cell, kept across tests — a move gate compares the same
-    handful of cells several ways and each render costs ~35 ms."""
-    return atlas.unit_cell(uid, faction_by_key(fac_key), pose)

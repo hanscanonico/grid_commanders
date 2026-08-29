@@ -21,6 +21,7 @@ from spritegen.palette import FACTIONS, SLOTS
 from spritegen.units import ATLAS_ORDER, Pose, build_model
 from spritegen.voxel import render_indexed
 
+
 # A stand-in six-step ramp: evenly spaced greys, so a slot is readable off the
 # pixel and a mid slot is unambiguous.
 RAMP = tuple((v, v, v) for v in range(0, 251, 50))
@@ -275,6 +276,9 @@ class Wiring(unittest.TestCase):
     CELLS = ("infantry", "mech", "recon", "bomber", "cruiser")
 
     def _cells(self):
+        # Rendered rather than asked of `pose_cell`: these tests render the
+        # same cells twice with `aa.ENABLED` flipped between, and a shared
+        # cell would hand the second call the first one's answer.
         return [atlas.unit_cell(uid, FACTIONS[0]) for uid in self.CELLS]
 
     def test_the_composed_cell_carries_the_softening(self):
