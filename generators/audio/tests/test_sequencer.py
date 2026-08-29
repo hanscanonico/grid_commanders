@@ -33,7 +33,7 @@ class ColdCache(unittest.TestCase):
         _clear_hit_cache()
         for name in TRACKS:
             with self.subTest(track=name):
-                self.assertTrue((music.render(name) == warm[name]).all())
+                self.assertTrue(np.array_equal(music.render(name), warm[name]))
 
     def test_a_cached_hit_refuses_an_in_place_edit(self):
         for builder in HIT_BUILDERS:
