@@ -21,7 +21,7 @@ import numpy as np
 import soundfile as sf
 
 from audiogen import measure, music, sequencer, sfx
-from audiogen.dsp import RATE, seconds
+from audiogen.dsp import RATE, seconds, sine
 from audiogen.ogg import ogg_bytes, vendor_string
 
 # The checkout this generator sits in, for the audio the game actually ships.
@@ -318,6 +318,67 @@ class OggEncoding(unittest.TestCase):
             "music: regenerate with `make audio`, or install the soundfile "
             "requirements.txt pins",
         )
+
+
+class Timbre(unittest.TestCase):
+    """What the oscillators cost at the top of their range.
+
+    dsp.square/saw/triangle are point-sampled, so every partial above
+    Nyquist folds back onto a frequency that is no multiple of the note —
+    audible as a shimmer on the high leads, and invisible to Distinctness,
+    which reads band energy and cannot tell foldover from music. These
+    ceilings pin today's oscillators at each melodic voice's highest
+    authored note: they document the status quo rather than bless it, and
+    a band-limited oscillator would move every one of them down.
+    """
+
+    MELODIC = ("brass_lead", "edge_lead", "tuba_bass", "drive_bass", "stab", "pad")
+
+    # Measured today, at the note each voice tops out on.
+    INHARMONIC = {
+        "brass_lead": 0.150,
+        "edge_lead": 0.154,
+        "tuba_bass": 0.017,
+        "drive_bass": 0.091,
+        "stab": 0.184,
+        "pad": 0.001,
+    }
+    SLACK = 0.02
+
+    def highest_note(self, instrument: str) -> tuple:
+        """(midi, seconds, velocity) of the instrument's top authored note."""
+        top = None
+        for builder, _peak in music.MUSIC.values():
+            song = builder()
+            for track in song.tracks:
+                if track.instrument != instrument:
+                    continue
+                for _start, midi, beats, vel in track.notes:
+                    if top is None or midi > top[0]:
+                        top = (midi, beats * 60.0 / song.bpm, vel)
+        return top
+
+    def test_the_measure_scores_a_harmonic_tone_at_zero(self):
+        harmonics = sine(440.0, 1.0) + 0.5 * sine(880.0, 1.0)
+        self.assertLess(measure.inharmonic_fraction(harmonics, 440.0), 0.01)
+
+    def test_the_measure_scores_a_tone_off_the_comb_at_one(self):
+        off_comb = sine(1100.0, 1.0)
+        self.assertGreater(measure.inharmonic_fraction(off_comb, 440.0), 0.99)
+
+    def test_every_melodic_voice_is_authored_somewhere(self):
+        self.assertEqual(
+            tuple(i for i in self.MELODIC if self.highest_note(i)), self.MELODIC
+        )
+
+    def test_foldover_stays_at_todays_level_on_the_top_note(self):
+        for instrument in self.MELODIC:
+            midi, t, vel = self.highest_note(instrument)
+            note = sequencer.INSTRUMENTS[instrument](midi, t, vel)
+            fraction = measure.inharmonic_fraction(note, sequencer.midi_hz(midi))
+            ceiling = self.INHARMONIC[instrument] + self.SLACK
+            with self.subTest(instrument=instrument, midi=midi):
+                self.assertLess(fraction, ceiling)
 
 
 if __name__ == "__main__":

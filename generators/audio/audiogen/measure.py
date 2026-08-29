@@ -142,3 +142,23 @@ def tempo_bpm(x: np.ndarray, lo: float = 95.0, hi: float = 170.0) -> float:
         for lag in range(lag_lo, lag_hi + 1)
     ]
     return 60.0 / ((lag_lo + int(np.argmax(strength))) * 0.005)
+
+
+def inharmonic_fraction(x: np.ndarray, f0_hz: float, tol_hz: float = 8.0) -> float:
+    """Share of a note's spectral energy that is not on a harmonic of f0.
+
+    A point-sampled oscillator folds every partial above Nyquist back down
+    to a frequency that is no multiple of the fundamental, so the energy
+    sitting off the harmonic comb is the aliasing — the one thing the band
+    fingerprints cannot see, because foldover lands in the same bands the
+    music does.
+    """
+    spec = np.abs(np.fft.rfft(x)) ** 2
+    freqs = np.fft.rfftfreq(len(x), 1.0 / RATE)
+    total = spec.sum()
+    if total <= 0.0:
+        return 0.0
+    harmonic = np.zeros(len(spec), dtype=bool)
+    for k in range(1, int(RATE / 2.0 / f0_hz) + 1):
+        harmonic |= np.abs(freqs - k * f0_hz) <= tol_hz
+    return 1.0 - float(spec[harmonic].sum()) / float(total)

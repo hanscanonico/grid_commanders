@@ -128,6 +128,10 @@ leftover would ship beside its replacement.
   no two effects may sound like the same event (the silhouette-IoU gate
   with a Fourier transform). The two marches must also separate — spectrally
   and in measured tempo, each of which must land on its authored BPM.
+- **Timbre** — inharmonic (aliased) energy at each melodic voice's highest
+  authored note, pinned under today's level: the point-sampled oscillators
+  fold 15–18 % of a high lead's spectrum off the harmonic comb, which is
+  real and which no band fingerprint can see.
 
 The measurements live in `audiogen/measure.py`; the tests only assert over
 them, so the tool and the suite cannot disagree about what "loud" means.
