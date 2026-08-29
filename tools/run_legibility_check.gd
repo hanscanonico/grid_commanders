@@ -34,6 +34,14 @@ extends Node
 ##                                score that units sheet instead of the shipped
 ##                                one, on today's grounds — how a past
 ##                                generation reads through today's ruler
+##     --against=tests/fixtures/legibility_baseline.csv
+##                                diff this run against a committed verdict
+##                                digest and exit non-zero when a cell that
+##                                passed there fails here (`make
+##                                legibility-ratchet`)
+##     --rewrite-baseline=tests/fixtures/legibility_baseline.csv
+##                                write that digest from this run instead of
+##                                reading it (`make legibility-baseline`)
 ##
 ## Writes cells.csv and summary.md under --out (gitignored), plus the gallery,
 ## which is the one thing a run publishes: it is committed review evidence that
@@ -65,13 +73,43 @@ func _ready() -> void:
 		return
 	var summary := _summary(sweep, rows, elapsed)
 	BalanceReportWriter.write_csv(out.path_join("cells.csv"), rows, LegibilitySweep.COLUMNS)
-	_write(out.path_join("summary.md"), summary)
+	_write(out.path_join("summary.md"), summary + "\n")
 	print(summary)
 	print(_worst(rows, int(args.get("worst", DEFAULT_WORST))))
 	_gallery(sweep, rows, str(args.get("gallery", DEFAULT_GALLERY)))
 	if args.has("dump"):
 		_dump(sweep, str(args["dump"]), int(args.get("dump-scale", DEFAULT_DUMP_SCALE)), out)
-	get_tree().quit(0)
+	get_tree().quit(_baseline(rows, args))
+
+
+## The ratchet, and the one thing this instrument can exit non-zero for: a cell
+## the committed baseline says passed and this run says fails. LegibilityBaseline
+## owns the digest and the diff; here is only which file, and the exit status.
+func _baseline(rows: Array[Dictionary], args: Dictionary) -> int:
+	if args.has("rewrite-baseline"):
+		var path := str(args["rewrite-baseline"])
+		if not _write(_absolute(path), LegibilityBaseline.to_csv(rows)):
+			return 1
+		print("\nWrote %s (%d cells)" % [path, rows.size()])
+		return 0
+	if not args.has("against"):
+		return 0
+	var text := _read(_absolute(str(args["against"])))
+	if text == "":
+		push_error("legibility: cannot read the baseline %s" % args["against"])
+		return 1
+	var verdicts := LegibilityBaseline.parse(text)
+	if verdicts.is_empty():
+		return 1
+	var diff := LegibilityBaseline.compare(verdicts, rows)
+	print(LegibilityBaseline.report(diff))
+	return 1 if LegibilityBaseline.regressed(diff) else 0
+
+
+static func _absolute(path: String) -> String:
+	if path.is_absolute_path():
+		return path
+	return ProjectSettings.globalize_path("res://").path_join(path)
 
 
 func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> String:
@@ -259,12 +297,18 @@ func _percent(failed: int, rows: Array[Dictionary]) -> float:
 	return 100.0 * float(failed) / float(rows.size()) if not rows.is_empty() else 0.0
 
 
-func _write(path: String, text: String) -> void:
+func _write(path: String, text: String) -> bool:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("legibility: cannot write %s" % path)
-		return
-	file.store_string(text + "\n")
+		return false
+	file.store_string(text)
+	return true
+
+
+func _read(path: String) -> String:
+	var file := FileAccess.open(path, FileAccess.READ)
+	return "" if file == null else file.get_as_text()
 
 
 func _args() -> Dictionary:

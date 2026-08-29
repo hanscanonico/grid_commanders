@@ -28,6 +28,26 @@ Re-run with `make legibility-check`. It reads the shipped atlases and the shippe
 no match, takes about a minute, writes `cells.csv` and `summary.md` under `reports/` (gitignored) —
 and redraws the one artifact it publishes, the worst-twenty gallery below.
 
+## The ratchet
+
+`make legibility-ratchet` runs the same sweep and diffs its verdicts against
+`tests/fixtures/legibility_baseline.csv`, the committed PASS/FAIL per cell. **It fails only where a
+cell that passed in the baseline fails now.** A cell that newly passes is printed and nothing more:
+the rule this page is written under is unchanged — a failing cell is a finding for the art to
+answer, never a colour to move — so the ratchet holds the line rather than demanding it improve. A
+cell the baseline does not know about, or one it knows and this run no longer measures, is listed
+too; both mean the matrix itself moved, which is a re-baseline and not a regression.
+
+Only the verdicts are committed, never the readings, so a re-render that moves a ramp step without
+crossing the bar leaves the file alone. A cell is named by view, frame, unit, faction, state,
+terrain and overlay — not by the terrain variant, which is the worst-scoring tile of that family
+and may change hands without the verdict moving.
+
+Re-baseline with `make legibility-baseline` after an **intended** art change, alongside `make
+tiles`: read the new sweep first, then commit the digest with the art it describes. It is out of
+`make verify` for the sweep's own reason — it renders the whole matrix and takes about 24 minutes on
+a loaded machine — so it is a step before an art merge, not a per-commit gate.
+
 ## Re-read 2026-08-19, over the terrain variants
 
 The ruler now reads a ground on every tile its family can draw and reports the worst (see *What is

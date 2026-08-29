@@ -280,6 +280,29 @@ legibility-check:
 	$(call require-godot)
 	$(GODOT) --headless --path . res://tools/run_legibility_check.tscn -- $(LEGIBILITY)
 
+# The same sweep, diffed against the committed verdict digest in
+# tests/fixtures/legibility_baseline.csv: it exits non-zero only where a cell
+# that PASSED in the baseline FAILS now. A newly passing cell is printed, never
+# demanded — the rule that a failing cell is a finding for the art to answer
+# rather than a colour to move is unchanged; this only holds the line between two
+# manual re-reads.
+# Out of `make verify` like the sweep it runs (~24 minutes, and it renders the
+# whole matrix). It skips the gallery, because a check run has no business
+# redrawing a committed artifact.
+LEGIBILITY_BASELINE := tests/fixtures/legibility_baseline.csv
+legibility-ratchet:
+	$(call require-godot)
+	$(GODOT) --headless --path . res://tools/run_legibility_check.tscn -- \
+		--gallery= --against=$(LEGIBILITY_BASELINE) $(LEGIBILITY)
+
+# Rewrite that digest from a fresh run — after an intended art change, alongside
+# `make tiles`, and only once the new reading has been looked at. Redraws the
+# gallery too, so the committed sheet and the committed digest are of one run.
+legibility-baseline:
+	$(call require-godot)
+	$(GODOT) --headless --path . res://tools/run_legibility_check.tscn -- \
+		--rewrite-baseline=$(LEGIBILITY_BASELINE) $(LEGIBILITY)
+
 # Every .gd file that is actually ours: skips the engine cache, vendored addons,
 # the engine binary, and .claude/worktrees, which holds whole nested checkouts of
 # this same repo and would otherwise be linted as if it were project source.
@@ -577,4 +600,4 @@ mobile-soak:
 	generators-venv portraits import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
-	balance-watch replay replay-report campaigns legibility-check mobile-soak
+	balance-watch replay replay-report campaigns legibility-check legibility-ratchet legibility-baseline mobile-soak

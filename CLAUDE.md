@@ -162,7 +162,9 @@ Follow the official Godot GDScript style guide. Key points:
   `tools/balance/`, the arena's grammar, scorer and pools in `tools/arena/`, the replay
   analyser in `tools/replay/`, and the composite legibility metric in `tools/legibility/`
   (`LegibilityMetric` — the arithmetic only; the render sweep it reports in is an offline
-  instrument like the Balance Lab and stays out of `make verify`), all of which are Node-free for
+  instrument like the Balance Lab and stays out of `make verify`, and `LegibilityBaseline`, the
+  committed verdict digest that sweep is diffed against and the rule that only a PASS turning FAIL
+  is a failure), all of which are Node-free for
   exactly this reason. That's where the rules
   live and where bugs hurt. Presentation is verified by playing the scene, not by unit tests.
   The narrow exception is the launch layer that was deliberately made Node-free and
