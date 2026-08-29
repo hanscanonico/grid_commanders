@@ -1,10 +1,10 @@
-"""The four 64x64 faction emblems: hollow diamond, diamond, star, pennant.
+"""The five 64x64 faction emblems: hollow diamond, diamond, star, pennant, sun.
 
 Board marks are outlined, not blurred, and these are board marks: each emblem is
-a couple of Manhattan diamonds and bands, drawn **at 1x with integer geometry**
-rather than through the supersampled canvas the busts use. That is a decision,
-not an oversight — the shapes are axis-aligned and 45-degree, so a supersample
-buys nothing but a soft edge, and drawing them the way
+a couple of Manhattan diamonds, discs and bands, drawn **at 1x with integer
+geometry** rather than through the supersampled canvas the busts use. That is a
+decision, not an oversight — every shape here is decided by an integer distance
+test, so a supersample buys nothing but a soft edge, and drawing them the way
 the retired GDScript bake's `_draw_emblem` did keeps the committed PNGs pixel
 for pixel what they already are.
 """
@@ -45,6 +45,12 @@ def _four_point_star(img: Image.Image, colour: RGB) -> None:
     _band(img, 6, _CENTRE - 3, 52, 6, colour)
 
 
+def _pierced_disc(img: Image.Image, colour: RGB) -> None:
+    _disc(img, _CENTRE, _CENTRE, 25, INK)
+    _disc(img, _CENTRE, _CENTRE, 20, colour)
+    _disc(img, _CENTRE, _CENTRE, 9, INK)
+
+
 def _pennant(img: Image.Image, colour: RGB) -> None:
     _band(img, 18, 8, 6, 48, INK)
     for y in range(10, 40):
@@ -60,6 +66,7 @@ _SHAPES = {
     "iron": _solid_diamond,
     "aurora": _four_point_star,
     "verdant": _pennant,
+    "gold": _pierced_disc,
 }
 
 
@@ -67,6 +74,13 @@ def _band(img: Image.Image, x: int, y: int, w: int, h: int, colour: RGB) -> None
     for py in range(max(0, y), min(SIZE, y + h)):
         for px in range(max(0, x), min(SIZE, x + w)):
             img.putpixel((px, py), (*colour, 255))
+
+
+def _disc(img: Image.Image, cx: int, cy: int, r: int, colour: RGB) -> None:
+    for y in range(max(0, cy - r), min(SIZE, cy + r + 1)):
+        for x in range(max(0, cx - r), min(SIZE, cx + r + 1)):
+            if (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r:
+                img.putpixel((x, y), (*colour, 255))
 
 
 def _diamond(img: Image.Image, cx: int, cy: int, r: int, colour: RGB) -> None:

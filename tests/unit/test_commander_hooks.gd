@@ -242,16 +242,20 @@ static func _stored_fields(resource: Resource) -> Array[String]:
 	return fields
 
 
-## The reviewed 6 / 6 / 5 / 5 roster. Pinned so a half-added general — a script
-## with no .tres, or a .tres with the wrong faction string — fails visibly.
+## The reviewed 6 / 5 / 4 / 4 / 3 roster. Pinned so a half-added general — a
+## script with no .tres, or a .tres with the wrong faction string — fails
+## visibly. Iron keeps all six on purpose: it is The Collection's named
+## antagonist, and the three the Gilded Concord took came one from each of the
+## other three.
 func test_the_roster_has_the_reviewed_faction_counts() -> void:
 	var counts: Dictionary = {}
 	for co in Fixture.commander_db().all():
 		if co.id == CommanderType.NEUTRAL_ID:
 			continue
 		counts[co.faction] = int(counts.get(co.faction, 0)) + 1
-	assert_eq(counts.size(), 4, "four factions, got %s" % [counts.keys()])
-	assert_eq(counts["Meridian Coalition"], 6)
+	assert_eq(counts.size(), 5, "five factions, got %s" % [counts.keys()])
 	assert_eq(counts["Iron Dominion"], 6)
-	assert_eq(counts["Aurora Compact"], 5)
-	assert_eq(counts["Verdant League"], 5)
+	assert_eq(counts["Meridian Coalition"], 5)
+	assert_eq(counts["Aurora Compact"], 4)
+	assert_eq(counts["Verdant League"], 4)
+	assert_eq(counts["Gilded Concord"], 3)

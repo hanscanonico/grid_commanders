@@ -12,44 +12,46 @@ extends RefCounted
 ## never hears the question.
 ##
 ## No Node, no scene path: this sits in scenes/common/ beside CommanderVisuals,
-## whose four faction themes it reads and never re-derives.
+## whose five faction themes it reads and never re-derives.
 
 ## Theme key -> the row the art pipeline draws that faction's units and property
 ## buildings at. MUST match sprite_generator's FACTIONS row order:
-## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant.
+## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant, 5 gold.
 const _ROW_FOR_KEY := {
 	&"neutral": 0,
 	&"meridian": 1,
 	&"aurora": 2,
 	&"iron": 3,
 	&"verdant": 4,
+	&"gold": 5,
 }
 ## Team 0 (a neutral property owner) and any side that never resolved.
 const NEUTRAL_ROW := 0
 ## The team-tinted rows, 1..FACTION_ROWS — one per faction, above the neutral
 ## row 0. The runtime property TileSet registers exactly these (BattleView).
-const FACTION_ROWS := 4
+const FACTION_ROWS := 5
 
 ## Every theme a side may fall back to, in the order it is offered. Both lists
-## hold all four keys and both start with the two original classics — Meridian
+## hold all five keys and both start with the two original classics — Meridian
 ## red and Aurora blue — so every resolution a two-army board ever produced is
-## unchanged, and iron and verdant only ever come up on a board that seats a
-## third or fourth army (four-players plan D5).
+## unchanged, and iron, verdant and gold only ever come up on a board that seats
+## a third or fourth army (four-players plan D5).
 ##
-## Four keys against at most four armies is what makes "no two sides share a
+## Five keys against at most four armies is what makes "no two sides share a
 ## colour" **provable** rather than merely true so far: each fallback takes the
 ## first key nobody has, and there can never be fewer free keys than sides left
-## to place. `_fallback`'s neutral escape hatch became unreachable with this.
+## to place. `_fallback`'s neutral escape hatch became unreachable with this, and
+## the fifth key only widens the margin.
 ##
 ## Generic (commander-less) sides claim classics in this order, meridian then
 ## aurora, so a match with no commanders at all renders exactly as it did before
 ## factions: side 1 red, side 2 blue (plan D4).
-const _GENERIC_ORDER: Array[StringName] = [&"meridian", &"aurora", &"iron", &"verdant"]
+const _GENERIC_ORDER: Array[StringName] = [&"meridian", &"aurora", &"iron", &"verdant", &"gold"]
 ## A mirror side — one whose faction an earlier slot already wears — borrows in
 ## this order instead, aurora then meridian, taking the first that is hue-distinct
 ## from what is already on the board (plan D3). Iron v Iron -> slate + blue;
 ## Aurora v Aurora -> blue + red.
-const _MIRROR_ORDER: Array[StringName] = [&"aurora", &"meridian", &"iron", &"verdant"]
+const _MIRROR_ORDER: Array[StringName] = [&"aurora", &"meridian", &"iron", &"verdant", &"gold"]
 
 var _theme_by_team: Dictionary[int, CommanderVisuals.FactionTheme] = {}
 var _name_by_team: Dictionary[int, String] = {}
@@ -154,17 +156,17 @@ func _seat_order(commanders: Dictionary) -> Array[int]:
 
 
 ## The first theme in `order` whose key is not already on the board.
-## Distinctness is by theme key, which for the four faction themes is
+## Distinctness is by theme key, which for the five faction themes is
 ## distinctness by hue — each theme is its own hue — so this is the "fall back by
 ## hue, never by shade" of plan D3, and the "first classic not in use" of D4,
-## the two differing only in which order they try the four keys.
+## the two differing only in which order they try the five keys.
 func _fallback(
 	order: Array[StringName], used: Dictionary[StringName, bool]
 ) -> CommanderVisuals.FactionTheme:
 	for key in order:
 		if not used.has(key):
 			return CommanderVisuals.theme_for_key(key)
-	# Unreachable: both orders hold all four keys and a board seats at most four
+	# Unreachable: both orders hold all five keys and a board seats at most four
 	# armies, so a side reaching a fallback always finds one nobody has taken.
 	# Answering neutral rather than crashing keeps the resolver total, but a
 	# neutral side would be indistinguishable from unowned ground — and

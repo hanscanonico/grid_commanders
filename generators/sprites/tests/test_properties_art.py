@@ -273,6 +273,21 @@ class PropertyPalette(unittest.TestCase):
     # hue alone, so it is held to a floor of its own rather than to the bar
     # every coloured pair clears.
     NEUTRAL_IRON_APART = 20.0
+    # Gold against the two rows it sits BETWEEN. The bar above was set by four
+    # hues spread around the wheel; a fifth one lands between red and green by
+    # construction, and there is nowhere on a property for it to buy the
+    # distance back — a property shows an owner in ~27 of the 109 pixels the
+    # board samples, so the pair distance is the roof rungs' own and no
+    # ladder can move it far. Measured over the whole hue and ladder space
+    # the row's other gates leave open, gold's worst pair peaks at 23.2; the
+    # shipped hue reads 23.8 / 20.5 (hq, against meridian and verdant),
+    # 31.6 / 20.8 (city), 32.9 / 24.7 (base), and clears the full bar on the
+    # airport and the port. Against the three rows it is NOT between —
+    # aurora, iron, neutral — it clears by 27.1 to 63.1 and is held to the
+    # bar. So this is the same shape as the neutral/Iron floor: a pair whose
+    # margin cannot be bought where the others buy theirs.
+    GOLD_NEIGHBOURS_APART = 20.0
+    GOLD_NEIGHBOURS = ({"gold", "meridian"}, {"gold", "verdant"})
 
     def _board_cell(self, tid: str, fac):
         """One property tile as the board samples it: 4:1, nearest."""
@@ -298,11 +313,11 @@ class PropertyPalette(unittest.TestCase):
                         for c, d in drawn
                     ) / len(drawn)
                     pair = {a.key, b.key}
-                    bar = (
-                        self.NEUTRAL_IRON_APART
-                        if pair == {"neutral", "iron"}
-                        else self.OWNERS_APART
-                    )
+                    bar = self.OWNERS_APART
+                    if pair == {"neutral", "iron"}:
+                        bar = self.NEUTRAL_IRON_APART
+                    elif pair in self.GOLD_NEIGHBOURS:
+                        bar = self.GOLD_NEIGHBOURS_APART
                     with self.subTest(property=tid, pair=(a.key, b.key)):
                         self.assertGreater(apart, bar)
 

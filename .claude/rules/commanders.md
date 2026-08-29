@@ -36,7 +36,9 @@ themselves are under `.lavish/`, and the long forms named in the root index are 
   Iona Vance with the Meridian Coalition (MC2), Ivar Thorne with the Verdant League (MC3) and
   Radek Morn with the Iron Dominion (MC4), so they now read 6 / 6 / 5 / 5 over 22 × 22. Iona
   Vance and Mara Voss have since swapped factions — Vance is Iron Dominion, Voss is Meridian
-  Coalition; faction is presentation-only, so the counts and every doctrine number are unmoved.
+  Coalition — and a fifth faction, the Gilded Concord, has since taken Rhea Sol, Lyra Quill and
+  Sable Wren, one from each of the other three, for 6 / 5 / 4 / 4 / 3. Faction is
+  presentation-only, so no count of matchups and no doctrine number is moved by either.
 - `more-commanders-plan.html` — four more generals, MC1–MC5. Three of them (Lark, Vance, Thorne)
   touch no shared file at all, which is the commanders plan's D1 holding; the fourth is the whole
   cost of the plan and the one entry worth reading before touching a power. D2: **a power may name

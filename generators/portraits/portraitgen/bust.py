@@ -46,7 +46,6 @@ from .roster import EmptySeat, Face
 FACTION_OF: dict[str, str] = {
     "alina_ward": "meridian",
     "gideon_holt": "meridian",
-    "rhea_sol": "meridian",
     "mara_voss": "meridian",
     "halden_marr": "meridian",
     "iris_colt": "meridian",
@@ -57,15 +56,16 @@ FACTION_OF: dict[str, str] = {
     "iona_vance": "iron",
     "radek_morn": "iron",
     "cassian_rook": "aurora",
-    "lyra_quill": "aurora",
     "orin_flux": "aurora",
     "perrin_ash": "aurora",
     "sera_lark": "aurora",
     "nia_rowan": "verdant",
-    "sable_wren": "verdant",
     "tomas_reed": "verdant",
     "ines_calder": "verdant",
     "ivar_thorne": "verdant",
+    "rhea_sol": "gold",
+    "lyra_quill": "gold",
+    "sable_wren": "gold",
 }
 
 # The pose's two anchors, in portrait pixels: the zoom is taken about the

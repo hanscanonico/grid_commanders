@@ -247,16 +247,23 @@ Three details make it hold:
 
 The bill, re-recorded over both poses of all 18 units:
 
-| reading | light (meridian) | rim (aurora / verdant) | heavy (neutral / iron) |
-| --- | --- | --- | --- |
-| S0 share of a unit's own pixels | 14.22% | 14.28% | 17.35% |
-| S0 share on the worst sprite (b_copter, pose B) | 24.22% | 24.67% | 30.76% |
-| sunward silhouette drawn dark | 7.19% | 6.72% | 63.23% |
-| boundary within 25L of shoal | 15.27% | 2.97 / 2.83% | 0.44 / 0.55% |
-| boundary within 25L of plains | 14.66% | 3.69 / 3.38% | 0.75 / 0.75% |
-| boundary tying in value AND colour, shoal | 0.29% | **0.55 / 0.29%** | 0.15 / 0.07% |
-| boundary tying in value AND colour, plains | 0.00% | **0.00 / 0.39%** | 0.00 / 0.00% |
-| share above L160 (chromatic max 21.43%) | 19.00% | 20.67 / 21.43% | 18.61 / 18.58% |
+| reading | light (meridian) | light (gold) | rim (aurora / verdant) | heavy (neutral / iron) |
+| --- | --- | --- | --- | --- |
+| S0 share of a unit's own pixels | 14.22% | 14.19% | 14.28% | 17.35% |
+| S0 share on the worst sprite (b_copter, pose B) | 24.22% | 23.65% | 24.67% | 30.76% |
+| sunward silhouette drawn dark | 7.19% | 6.63% | 6.72% | 63.23% |
+| boundary within 25L of shoal | 15.27% | 13.01% | 2.97 / 2.83% | 0.44 / 0.55% |
+| boundary within 25L of plains | 14.66% | 14.32% | 3.69 / 3.38% | 0.75 / 0.75% |
+| boundary tying in value AND colour, shoal | 0.29% | 0.23% | **0.55 / 0.29%** | 0.15 / 0.07% |
+| boundary tying in value AND colour, plains | 0.00% | 0.00% | **0.00 / 0.39%** | 0.00 / 0.00% |
+| share above L160 (chromatic max 21.43%) | 19.00% | 18.66% | 20.67 / 21.43% | 18.61 / 18.58% |
+
+Gold is the fifth row, added 2026-08-28, and its column is measured on the
+same readings: it is a light row for the same reason meridian is — a token
+hue no ground shares — and it lands inside meridian's bill on every line.
+The other columns are round 11's record and were not re-run for it, so the
+comparison holds to a few tenths of a point rather than exactly: re-measured
+today, meridian's L160 share reads 18.46% against gold's 18.45%.
 
 Nothing else moved: the light and heavy rows are byte-identical, the terrain
 and every property are byte-identical, and the two open pairs are now inside

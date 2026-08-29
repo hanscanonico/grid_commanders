@@ -3,7 +3,7 @@
 Faction colors mirror grid_commanders' CommanderVisuals.FactionTheme so the
 sprites this tool bakes and the UI chrome the game draws can never disagree
 about which color a faction is. Row order mirrors SideIdentity._ROW_FOR_KEY:
-0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant.
+0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant, 5 gold.
 """
 
 from __future__ import annotations
@@ -56,6 +56,13 @@ class Faction:
 # verdant are the two rows whose own hue is a ground's: blue over the water a
 # shoal is half made of, green over the grass, measured at 6.5% and 10.3% of
 # their boundary tying in value AND colour. They take the rim grade.
+#
+# Gold is the fifth row and the third to wear the light grade: its body sits
+# at hue 50 degrees, chromatic and outside GROUND_HUES, so it has colour to
+# break with the grass and the sand alike. That hue is measured rather than
+# chosen: neutral's khaki is hue 39 and the sun the rim turns toward is 45, so
+# a warmer gold either collapses into the row nobody owns (`RowSeparation`) or
+# leaves its rim nothing to turn to.
 FACTIONS: tuple[Faction, ...] = (
     Faction(
         "neutral",
@@ -73,6 +80,7 @@ FACTIONS: tuple[Faction, ...] = (
     Faction(
         "verdant", "verdant", (44, 134, 54), (29, 97, 39), (79, 168, 90), OUTLINE_RIM
     ),
+    Faction("gold", "gold", (233, 201, 40), (177, 153, 30), (243, 220, 102)),
 )
 
 # The value band the ground a unit stands on occupies, on THIS module's
@@ -339,8 +347,8 @@ def _hex(h: str) -> RGB:
 #    take a fraction of it. Big rotations turn a red faction's shadow purple
 #    and stop reading as the same army.
 
-# The sky every shadow on the sheet is lit by. One constant, so the five
-# armies and the props share a light rather than each carrying their own.
+# The sky every shadow on the sheet is lit by. One constant, so the six
+# rows and the props share a light rather than each carrying their own.
 AMBIENT: RGB = (86, 112, 190)
 # Hue of that sky, and of the sun the lit steps drift toward.
 _SKY_HUE = 225.0
@@ -421,6 +429,13 @@ def build_ramp(base: RGB, ladder: tuple[float, ...]) -> Ramp:
 _MERIDIAN_L = (23.0, 56.0, 86.0, 114.9, 148.0, 208.0)
 _AURORA_L = (21.0, 50.0, 74.0, 101.3, 136.0, 205.0)
 _VERDANT_L = (25.0, 56.0, 76.0, 98.0, 140.0, 214.0)
+# Gold is the third row authored off-token, and for Iron's reason rather than
+# neutral's: its token is a LIT plane. At L190 it keys 75L over the other
+# three chromatic bodies, and a row anchored there puts its own S4 over the
+# terrain ceiling on every roof it owns. So the ramp carries the token's hue
+# on a ladder of the row's own, one step under the other three: the board
+# reads gold off the hue and the rim, and the chrome wears the token whole.
+_GOLD_L = (20.0, 46.0, 70.0, 104.0, 136.0, 200.0)
 # Iron keeps its inverted identity — near-black panels jumping to light
 # steel, a value structure no chromatic faction has — but its ceiling is
 # pulled in (see IRON_SLOT_CEILING) so it sits with them instead of above.
@@ -445,6 +460,7 @@ RAMPS: dict[str, Ramp] = {
     "meridian": build_ramp(_hex("db4a3b"), _MERIDIAN_L),
     "aurora": build_ramp(_hex("3c64d8"), _AURORA_L),
     "verdant": build_ramp(_hex("2c8636"), _VERDANT_L),
+    "gold": build_ramp(_hex("e9c928"), _GOLD_L),
     "iron": build_ramp(_hex("79838d"), _IRON_L),
     "neutral": build_ramp(_hex("a4874f"), _NEUTRAL_L),
 }

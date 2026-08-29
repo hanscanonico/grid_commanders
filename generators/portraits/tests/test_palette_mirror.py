@@ -111,7 +111,7 @@ class RowOrderMirrorsSideIdentity(unittest.TestCase):
 
 
 class EveryArmyWearsAnEmblem(unittest.TestCase):
-    """Four emblems, one per army — the seat nobody holds has none."""
+    """Five emblems, one per army — the seat nobody holds has none."""
 
     def test_emblem_keys_are_the_factions_less_the_neutral_one(self):
         neutral = _NEUTRAL_KEY.search(VISUALS.read_text())

@@ -36,9 +36,9 @@ forms named in the root index are in `docs/design_record.md`.
   commander picks and is the single authority every surface reads — ask it, never re-derive a
   side's colour or name. Its fallbacks are load-bearing and total: a no-CO match is
   board-identical to before factions. The atlas-row order (`0 neutral, 1 meridian, 2 aurora,
-  3 iron, 4 verdant`) is a contract between `SideIdentity._ROW_FOR_KEY` and the art pipeline —
-  since 2026-08-14 `generators/sprites`, whose `palette.FACTIONS` tuple mirrors it row for
-  row and reads this game's own `CommanderVisuals` themes; the original "rows 0–2 stay
+  3 iron, 4 verdant, 5 gold`) is a contract between `SideIdentity._ROW_FOR_KEY` and the art
+  pipeline — since 2026-08-14 `generators/sprites`, whose `palette.FACTIONS` tuple mirrors it
+  row for row and reads this game's own `CommanderVisuals` themes; the original "rows 0–2 stay
   byte-for-byte" clause retired with the PixVoxel art it froze. **That mirror is a test rather
   than a comment** — `generators/sprites/tests/test_palette_mirror.py`, run by `make sprites-test`,
   parses `commander_visuals.gd` and `side_identity.gd` and fails on the drifted key by name.

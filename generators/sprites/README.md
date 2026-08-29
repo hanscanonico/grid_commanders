@@ -3,8 +3,8 @@
 Deterministic sprite pipeline for this game, living in the repository it feeds
 (`generators/sprites`, an offline instrument the engine never sees — the
 sibling `generators/.gdignore` keeps Godot out of it). It generates the game's
-complete **units atlas** (18 units x 5 faction rows) and **terrain atlas**
-(14 terrains x 5 rows) as curated isometric-voxel pixel
+complete **units atlas** (18 units x 6 faction rows) and **terrain atlas**
+(14 terrains x 6 rows) as curated isometric-voxel pixel
 art, in the same dimetric style as the PixVoxel pack the game shipped with —
 but with more detail: finer voxels, baked ambient occlusion, front-edge rim
 light, per-part outlines, and consistent scale, light and palette across the
@@ -30,7 +30,7 @@ The rest of this document is why the art looks the way it does.
 | Terrain | road, plains, woods, mountain, river, city, base, hq, sea, airport, port, shoal, bridge, reef (0-13) |
 
 Rows follow `SideIdentity._ROW_FOR_KEY`: 0 neutral, 1 meridian (red),
-2 aurora (blue), 3 iron, 4 verdant — every row's ramp is the exact
+2 aurora (blue), 3 iron, 4 verdant, 5 gold — every row's ramp is the exact
 `CommanderVisuals.FactionTheme` (color / dark / light) from the game's code,
 neutral's slate theme included. Weapon silhouettes follow each unit's
 `battle_style` (small arms, rocket, cannon, autocannon, bomb, torpedo,
@@ -332,23 +332,23 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | --- | --- |
 | `-o / --out` | output directory (default `out/`) |
 | `--only` | comma list of unit/terrain ids — renders just `preview_only.png` |
-| `--team` | faction row for `--only` (neutral/red/blue/iron/verdant) |
+| `--team` | faction row for `--only` (neutral/red/blue/iron/verdant/gold) |
 | `--zoom` | zoom factor for `--only` previews (default 6) |
-| `--no-cells` | skip the 115 per-cell PNGs, write only atlases + previews |
+| `--no-cells` | skip the 138 per-cell PNGs, write only atlases + previews |
 | `--install` | copy outputs into a grid_commanders checkout (explicit path; no default) |
 
 ## Outputs
 
 | File | Contract |
 | --- | --- |
-| `units_atlas.png` | 1152x480 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
+| `units_atlas.png` | 1152x576 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
 | `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
 | `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the tile's cast shadow subtracted, for the cut-ins (see below) |
-| `units_atlas_move.png` | 1152x480 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 5 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
+| `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
 | `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
-| `terrain_atlas.png` | 896x320 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
-| `units/<id>_<team>.png` | 90 cells, installed to `assets/sprites/units` as the atlas's own art exported cell by cell |
-| `iso_buildings/<id>_<team>.png` | 25 property-building cells for `assets/sprites/iso_buildings` |
+| `terrain_atlas.png` | 896x384 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
+| `units/<id>_<team>.png` | 108 cells, installed to `assets/sprites/units` as the atlas's own art exported cell by cell |
+| `iso_buildings/<id>_<team>.png` | 30 property-building cells for `assets/sprites/iso_buildings` |
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
 | `preview_map.png` | an authored little battle map proving the sheet in context: the shipped maps' terrain mix, autotiled, phased by the game's own coordinate hash |
 | `autotiles/{roads,rivers,coast,shoals,woods}.png` | 16-variant connection sheets (see below) |
@@ -776,7 +776,7 @@ That comparison is `tests/check_snapshots.py`, and it enumerates nothing by
 hand: it pairs off every PNG the generator emitted with the installed file of
 the same relative path, and fails in both directions, so a new output landing
 with no home is a failure rather than a silence. The single exception is
-`units/<id>_<team>.png` — instead of installing 90 duplicates of art the
+`units/<id>_<team>.png` — instead of installing 108 duplicates of art the
 atlas already carries, each exported cell must be pixel for pixel one of the
 cells of the installed `units_atlas.png`. The previews are the one thing the
 game does not load, so they stay compared against the review gallery's own

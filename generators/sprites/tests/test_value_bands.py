@@ -149,9 +149,9 @@ class UnitBandCoverage(unittest.TestCase):
 
     BRIGHT_BAND = 200.0
     MIN_RIM_SHARE = 0.03
-    # The band the rows are ordered on, and the three rows that own it.
+    # The band the rows are ordered on, and the four rows that own it.
     ROW_BAND = 160.0
-    CHROMATIC = ("meridian", "aurora", "verdant")
+    CHROMATIC = ("meridian", "aurora", "verdant", "gold")
     # How far over the widest chromatic row a row may sit. A percentage point
     # is a row a reader cannot pick out of a contact sheet; the two defects
     # this bound was written against were 12 pp (neutral, round 5) and 2.4 pp
@@ -257,11 +257,13 @@ class UnitBandCoverage(unittest.TestCase):
         did not — 17.3% of iron's pixels above L160 against 14.0-14.9% for
         every other row, and the frozen number caught none of it.
 
-        The chromatic three are the band's owners because their bodies are
+        The chromatic rows are the band's owners because their bodies are
         the design-system tokens themselves; neutral and iron are authored
         around them (khaki for hue separation, inverted for its near-black
         panels), so what they may never do is out-light the armies whose
-        colour the band is for.
+        colour the band is for. Gold joined them with the fifth row: its body
+        is a fifth such token, and its ramp is authored a step under it
+        (`palette._GOLD_L`) rather than around another row's.
         """
         shares = self._row_bright_shares()
         ceiling = max(shares[k] for k in self.CHROMATIC) + self.ROW_BAND_TOLERANCE

@@ -3,7 +3,7 @@
 Deterministic portrait pipeline for this game, living in the repository it feeds
 (`generators/portraits`, an offline instrument the engine never sees — the
 sibling `generators/.gdignore` keeps Godot out of it). It bakes the art
-`scenes/common/commander_visuals.gd` loads: the **four 64x64 faction emblems**
+`scenes/common/commander_visuals.gd` loads: the **five 64x64 faction emblems**
 and the **twenty-three 220x268 commander busts** — twenty-two generals and the
 empty seat.
 
@@ -81,9 +81,10 @@ whole pixels a polygon covers, in whole numbers, and `canvas.segment_quad`
 builds a stroke's rectangles itself. The art is identical on macOS/arm64,
 Linux/arm64 and Linux/x86-64.
 
-The emblems are the deliberate exception: they are axis-aligned and 45-degree
-shapes, so `portraitgen/emblem.py` draws them at 1x with integer geometry, which
-is what keeps the committed PNGs pixel for pixel what they already were.
+The emblems are the deliberate exception: every shape there is decided by an
+integer distance test, so `portraitgen/emblem.py` draws them at 1x with integer
+geometry, which is what keeps the committed PNGs pixel for pixel what they
+already were.
 
 ## Palette discipline
 

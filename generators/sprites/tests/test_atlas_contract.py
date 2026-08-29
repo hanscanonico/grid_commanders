@@ -16,20 +16,20 @@ from spritegen.units import ATLAS_ORDER, Pose
 class AtlasContract(unittest.TestCase):
     """The two sheets the game drops in unchanged."""
 
-    def test_units_atlas_is_18_by_5_rgba_cells(self):
+    def test_units_atlas_is_18_by_6_rgba_cells(self):
         img = atlas.build_units_atlas()
         self.assertEqual(
             img.size, (len(ATLAS_ORDER) * atlas.CELL_W, len(FACTIONS) * atlas.CELL_H)
         )
-        self.assertEqual(img.size, (1152, 480))
+        self.assertEqual(img.size, (1152, 576))
         self.assertEqual(img.mode, "RGBA")
 
-    def test_terrain_atlas_is_14_by_5_rgba_cells(self):
+    def test_terrain_atlas_is_14_by_6_rgba_cells(self):
         img = atlas.build_terrain_atlas()
         self.assertEqual(
             img.size, (len(terrain.TERRAIN_ORDER) * 64, len(FACTIONS) * 64)
         )
-        self.assertEqual(img.size, (896, 320))
+        self.assertEqual(img.size, (896, 384))
         # RGBA, not RGB: the property columns carry alpha — see PropertyOverlays.
         self.assertEqual(img.mode, "RGBA")
 
