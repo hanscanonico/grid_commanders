@@ -20,7 +20,7 @@ from functools import lru_cache
 
 from PIL import Image, ImageChops
 
-from portraitgen import bust, features, head, roster, uniform
+from portraitgen import bust, features, head, light, roster, uniform
 from portraitgen.canvas import PORTRAIT_SIZE, Canvas
 
 # M2/C5: a value band is a luminance covering this much of the figure, and a
@@ -234,6 +234,118 @@ class OneLightOnEveryFace(unittest.TestCase):
                 self.assertGreater(
                     mean(min(xs), min(xs) + third), mean(max(xs) - third, max(xs))
                 )
+
+
+class NoFaceWearsAHalfMask(unittest.TestCase):
+    """C7/C8: the face shade is a shape on a cheek, not one step down the
+    nose-mouth axis.
+
+    Read off the pixels rather than off `_SHADE_SHAPES`, because the shade a
+    face ends up wearing is the polygon clipped by its own skull and then drawn
+    over by hair, a brow and a nose. A column of the skull box counts as shaded
+    when `SHADED_COLUMN` of its skin is shade or deep; the mask is a half mask
+    when those columns are all on one side of the centre line, the side's inner
+    column sits within `MIDLINE_CLEARANCE` of it, and it owns more than
+    `SHADE_SHARE_CAP` of the band. The eye band is left out for the reason
+    `OneLightOnEveryFace` leaves it out.
+    """
+
+    SHADED_COLUMN = 0.30
+    SHADE_SHARE_CAP = 0.32
+    MIDLINE_CLEARANCE = 0.35
+    ONE_SIDED = 0.9
+    EYE_BAND = (0.35, 0.62)
+    COLUMN_FLOOR = 4
+
+    def _shaded_columns(self, key: str, face) -> tuple[dict[int, float], float, float]:
+        ramp = head.ramp_for(face.skin)
+        dark = (ramp.deep, ramp.shade)
+        tones = (*dark, ramp.base, ramp.lit)
+        pixels = _painted(key).load()
+        centre, half, top, height = head.skull_box(face.head)
+        low = top + self.EYE_BAND[0] * height
+        high = top + self.EYE_BAND[1] * height
+        shares: dict[int, float] = {}
+        for x in range(round(centre - half), round(centre + half) + 1):
+            skin = [
+                next(
+                    (
+                        tone
+                        for tone in tones
+                        if max(abs(pixels[x, y][i] - tone[i]) for i in range(3)) <= 14
+                    ),
+                    None,
+                )
+                for y in range(round(top), round(top + height) + 1)
+                if not low <= y <= high and pixels[x, y][3] >= 204
+            ]
+            band = [tone for tone in skin if tone is not None]
+            if len(band) >= self.COLUMN_FLOOR:
+                shares[x] = sum(tone in dark for tone in band) / len(band)
+        return shares, centre, half
+
+    def test_no_shade_is_one_sided_against_the_centre_line(self):
+        for key, face in sorted(roster.FACES.items()):
+            with self.subTest(commander=key):
+                shares, centre, half = self._shaded_columns(key, face)
+                shaded = [x for x, s in shares.items() if s >= self.SHADED_COLUMN]
+                if not shaded:
+                    continue
+                side = max(
+                    (
+                        [x for x in shaded if x < centre],
+                        [x for x in shaded if x >= centre],
+                    ),
+                    key=len,
+                )
+                one_sided = len(side) / len(shaded)
+                inner = min(abs(x - centre) for x in side) / half
+                share = sum(shares.values()) / len(shares)
+                self.assertFalse(
+                    share > self.SHADE_SHARE_CAP
+                    and one_sided > self.ONE_SIDED
+                    and inner < self.MIDLINE_CLEARANCE,
+                    f"half mask: share {share:.2f}, one-sided {one_sided:.2f}, "
+                    f"inner edge {inner:.2f} of a half-width off centre",
+                )
+
+
+class TheThreeShadesKeepOffTheNose(unittest.TestCase):
+    """C7: each geometry ends on a horizontal run, out past the nose.
+
+    The numbers are spelled here rather than read off `light`, so the bar the
+    review set is stated in the suite and a shape moved back onto the axis
+    fails rather than moving the bar with it."""
+
+    PLACEMENT = {"centre": 110.0, "half": 46.0, "top": 82.0, "height": 124.0}
+    # The terminator is a run, not a corner: this much of a half-width of it.
+    MIN_RUN = 0.4
+    # How far out from the centre line the nearest vertex of a shade may sit.
+    INNER_CLEARANCE = 0.58
+
+    def test_every_shape_terminates_horizontally_at_its_own_height(self):
+        for kind, v in light.TERMINATORS.items():
+            with self.subTest(shade=kind):
+                y = self.PLACEMENT["top"] + v * self.PLACEMENT["height"]
+                run = [
+                    x for x, py in light.face_shade(kind, **self.PLACEMENT) if py == y
+                ]
+                self.assertEqual(len(run), 2)
+                self.assertGreater(
+                    max(run) - min(run), self.MIN_RUN * self.PLACEMENT["half"]
+                )
+
+    def test_no_shade_reaches_the_nose_mouth_axis(self):
+        clearance = (
+            self.PLACEMENT["centre"] + self.INNER_CLEARANCE * self.PLACEMENT["half"]
+        )
+        for kind in light.SHADE_KINDS:
+            with self.subTest(shade=kind):
+                shape = light.face_shade(kind, **self.PLACEMENT)
+                self.assertGreaterEqual(min(x for x, _ in shape), clearance)
+
+    def test_every_shape_names_a_terminator(self):
+        self.assertEqual(sorted(light.TERMINATORS), sorted(light.SHADE_KINDS))
 
 
 class TheSilhouettesAreDistinct(unittest.TestCase):

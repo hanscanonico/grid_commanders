@@ -63,8 +63,9 @@ _AMBIENT_MIX = (0.26, 0.13, 0.0, 0.0, 0.0)
 
 # How far off the face's own centre line the shade may come. C8: a boundary
 # down the nose-mouth axis reads as a two-tone mask rather than as a lit head,
-# so every shade shape starts this fraction of a half-width out from centre.
-NOSE_AXIS_CLEARANCE = 0.30
+# so every shade shape starts this fraction of a half-width out from centre —
+# outside the nose and the mouth, which is what the clearance buys.
+NOSE_AXIS_CLEARANCE = 0.58
 
 # The three face-shade geometries (C7). Which one a skull takes is its crown and
 # its width, so the sheet does not wear one shade shape 22 times.
@@ -75,32 +76,41 @@ SHADE_KINDS = (CHEEK_WEDGE, BROW_SOCKET, JAW_UNDER)
 CROWN_BROW = 1.0
 WIDTH_JAW = 1.06
 
+# Where each shape ends on the nose side: a horizontal run at one v, so the
+# shade reads as a plane turning away from the light rather than as a line
+# drawn down the face. Keyed by shape, in skull heights from the crown.
+TERMINATORS: dict[str, float] = {
+    CHEEK_WEDGE: 0.62,
+    BROW_SOCKET: 0.46,
+    JAW_UNDER: 0.74,
+}
+
 # Each shape as (u, v): u out from the face's centre in half-widths, v down
-# from the crown in skull heights. Every u clears NOSE_AXIS_CLEARANCE.
+# from the crown in skull heights. Every u clears NOSE_AXIS_CLEARANCE and every
+# shape opens on its terminator's two vertices. The outer u run past 1.0 on
+# purpose: the caller clips them to the face's own mask, so a wedge meets the
+# cheek's edge instead of stopping short of it.
 _SHADE_SHAPES: dict[str, tuple[Point, ...]] = {
     CHEEK_WEDGE: (
-        (1.00, 0.28),
-        (0.98, 0.62),
-        (0.60, 0.86),
-        (0.34, 0.70),
-        (0.52, 0.44),
-        (0.74, 0.30),
+        (0.58, 0.62),
+        (1.08, 0.62),
+        (1.08, 0.86),
+        (0.86, 0.94),
+        (0.62, 0.80),
     ),
     BROW_SOCKET: (
-        (1.00, 0.14),
-        (1.00, 0.46),
-        (0.44, 0.54),
-        (0.30, 0.40),
-        (0.52, 0.30),
-        (0.80, 0.16),
+        (0.58, 0.46),
+        (1.08, 0.46),
+        (1.08, 0.16),
+        (0.84, 0.12),
+        (0.60, 0.28),
     ),
     JAW_UNDER: (
-        (0.96, 0.50),
-        (0.86, 0.80),
-        (0.46, 0.94),
-        (0.32, 0.74),
-        (0.62, 0.62),
-        (0.84, 0.52),
+        (0.58, 0.74),
+        (1.06, 0.74),
+        (1.00, 0.92),
+        (0.78, 1.00),
+        (0.60, 0.86),
     ),
 }
 # The one shape on the key side: the forehead and cheekbone the light catches.

@@ -100,8 +100,8 @@ default.
 | Module | Owns | Entry points |
 | --- | --- | --- |
 | `portraitgen/canvas.py` | the 3x surface, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/rect`, `compose`, `silhouette`, `cast_shadow`, `resolve` |
-| `portraitgen/light.py` | the key direction, the ramps, the rim, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `shade_kind`, `face_shade`, `face_light`, `rim_light(silhouette, ramp, weight=, inset=, scale=, mirrored=)`, `occlusion(occluder, target, depth=, scale=, mirrored=)` |
-| `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
+| `portraitgen/light.py` | the key direction, the ramps, the rim, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `rim_light(silhouette, ramp, weight=, inset=, scale=, mirrored=)`, `occlusion(occluder, target, depth=, scale=, mirrored=)` |
+| `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
 | `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `accessory(…, tint=)`, `earring`, `freckles` |
 | `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |
 | `portraitgen/uniform.py` | shoulders, collar cut, chest treatment, rank pip | `COLLAR_CUTS`, `CHEST_TREATMENTS`, `draw(canvas, faction, collar, ramp)`, `chest(canvas, treatment, faction, ramp)`, `pip(canvas, ramp)` |
