@@ -1,0 +1,13 @@
+{
+	"matches": 3,
+	"boards": 1,
+	"commands": 120,
+	"days": 42,
+	"findings": 7,
+	"stopped": 0,
+	"unreadable": 0,
+	"kinds": [
+		{"kind": "idle_unit", "count": 4, "share": 0.57, "per_100_commands": 3.33, "per_match": 1.3, "subjects": []},
+		{"kind": "banked_power", "count": 3, "share": 0.43, "per_100_commands": 2.5, "per_match": 1.0, "subjects": []}
+	]
+}

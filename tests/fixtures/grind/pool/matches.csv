@@ -1,0 +1,5 @@
+match_id,map,seed,red_commander,red_tier,blue_commander,blue_tier,winner,termination
+1,ironworks,1000,none,normal,none,hard,1,rout
+2,ironworks,1000,none,normal,none,hard,1,rout
+3,ironworks,1001,none,normal,none,hard,2,rout
+4,ironworks,1001,none,normal,none,hard,0,day_cap

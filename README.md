@@ -90,6 +90,9 @@ make sheet-census         # what the shipped atlases cost: PNG, decoded RGBA, ce
                           # cells that repeat (docs/sheet_census.md)
 make mobile-soak          # what a computer turn costs to plan and what the replay recorder's
                           # per-command flush costs (docs/mobile_soak.md)
+make grind                # the grind box: every instrument above, rotated on a spare machine
+                          # around the clock -> reports/grind/DIGEST.md (docs/grind_box.md);
+                          # `make grind-status` says which job it is on right now
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,

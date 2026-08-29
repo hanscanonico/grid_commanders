@@ -1,0 +1,13 @@
+{
+	"anchors": {},
+	"base": {"retreat_bias": 0.2, "focus_fire": 1.0},
+	"block": "combat",
+	"champion": {"retreat_bias": 0.4, "focus_fire": 1.0},
+	"couples": {},
+	"dials": ["retreat_bias", "focus_fire"],
+	"note": "A fixture block, not a measurement.",
+	"rows": [
+		{"path": "reports/ai_arena/search/default/combat/c1.tres", "training": 0.12, "validation": 0.08, "gap": 0.04}
+	],
+	"waves": 2
+}
