@@ -5,9 +5,11 @@
 	"champion": {"retreat_bias": 0.4, "focus_fire": 1.0},
 	"couples": {},
 	"dials": ["retreat_bias", "focus_fire"],
-	"note": "A fixture block, not a measurement.",
+	"note": "A fixture block, not a measurement. The best row is neither the first nor the last, so a reader that takes either is caught.",
 	"rows": [
-		{"path": "reports/ai_arena/search/default/combat/c1.tres", "training": 0.12, "validation": 0.08, "gap": 0.04}
+		{"path": "reports/ai_arena/search/default/combat/c0.tres", "training": 0.03, "validation": 0.09, "gap": -0.06},
+		{"path": "reports/ai_arena/search/default/combat/c1.tres", "training": 0.12, "validation": 0.08, "gap": 0.04},
+		{"path": "reports/ai_arena/search/default/combat/c2.tres", "training": 0.07, "validation": 0.02, "gap": 0.05}
 	],
 	"waves": 2
 }

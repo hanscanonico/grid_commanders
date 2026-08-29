@@ -329,6 +329,9 @@ run_job() {
 	for accepted in $ok_codes; do
 		[ "$code" = "$accepted" ] && status=done
 	done
+	# A job we signalled did not fail, and a digest that says it did sends the
+	# reader after a phantom every time the box is restarted.
+	[ -n "$STOPPING" ] && [ "$status" = failed ] && status=stopped
 	finished=$(date +%s)
 	say "job $name ends: exit $code ($status) after $((finished - started))s"
 	if [ "$status" = done ] && [ "$kind" != arena ]; then
@@ -345,17 +348,33 @@ run_job() {
 # durable copy — and it is why nothing here ever commits to the checkout's own
 # branch.
 publish() {
-	local worktree="$GRIND_DIR/publish-worktree" board base run champion
+	local worktree="$GRIND_DIR/publish-worktree" board base run champion survey
 	if [ ! -d "$worktree/.git" ] && [ ! -f "$worktree/.git" ]; then
-		git -C "$ROOT" worktree add --detach "$worktree" >/dev/null 2>&1 || return 1
+		# `reports/` is gitignored, so the directory can be cleared out from under
+		# a registration that git still holds; without the prune the add then
+		# fails on every pass for the rest of the box's life.
+		git -C "$ROOT" worktree prune
+		git -C "$ROOT" worktree add --detach "$worktree" >/dev/null 2>&1 || {
+			say "publish: could not add the worktree at $GRIND_REL/publish-worktree"
+			return 1
+		}
+	fi
+	# The results branch is the only thing this worktree may ever be on. A
+	# detached HEAD here commits the whole source tree, and `push origin
+	# grind-results` then pushes the stale local branch and reports success.
+	if [ "$(git -C "$worktree" rev-parse --abbrev-ref HEAD 2>/dev/null)" != grind-results ]; then
 		if git -C "$ROOT" ls-remote --exit-code --heads origin grind-results >/dev/null 2>&1; then
-			git -C "$worktree" fetch origin grind-results >/dev/null 2>&1
-			git -C "$worktree" checkout -B grind-results origin/grind-results >/dev/null 2>&1
+			git -C "$worktree" fetch -q origin \
+				grind-results:refs/remotes/origin/grind-results &&
+				git -C "$worktree" checkout -q -B grind-results origin/grind-results
 		else
-			git -C "$worktree" checkout --orphan grind-results >/dev/null 2>&1
-			git -C "$worktree" rm -rq --cached . >/dev/null 2>&1
-			find "$worktree" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-		fi
+			git -C "$worktree" checkout -q --orphan grind-results &&
+				git -C "$worktree" rm -rq --cached . &&
+				find "$worktree" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+		fi || {
+			say "publish: could not put $GRIND_REL/publish-worktree on grind-results"
+			return 1
+		}
 	fi
 	mkdir -p "$worktree/arena" "$worktree/replay"
 	cp "$GRIND_DIR/DIGEST.md" "$GRIND_DIR/status.json" "$worktree/" 2>/dev/null
@@ -379,7 +398,12 @@ publish() {
 		return 0
 	}
 	git -C "$worktree" commit -q -m "Grind results from $HOST at $SHA" || return 1
-	git -C "$worktree" push -q -u origin grind-results && say "publish: pushed grind-results"
+	if git -C "$worktree" push -q origin HEAD:grind-results; then
+		say "publish: pushed grind-results"
+	else
+		say "publish: the push to grind-results was refused"
+		return 1
+	fi
 }
 
 # --------------------------------------------------------------------- loop

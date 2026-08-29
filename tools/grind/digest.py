@@ -400,6 +400,8 @@ def self_check():
     case("section keeps the verdict", "PASS: every higher tier clears the gate." in section)
     case("section drops the noise", "playing 12 matches" not in "\n".join(section))
     case("engine exit chatter is not a verdict", not any("godot_ai" in l for l in section))
+    case("a section longer than the cap is capped", len(section) == MAX_RESULT_LINES)
+    case("a capped section is elided in the middle", section[-2] == "…")
     case("a job with no reading says so", reading({"kind": "log", "log": ""}) == ["(no output)"])
     case("a missing artifact is not a crash", reading({"kind": "pool", "artifact": "nope"}))
 
@@ -410,11 +412,12 @@ def self_check():
         {"kind": "section", "log": "tests/fixtures/grind/difficulty.log", "marker": "difficulty:"}
     )
     case("a long reading keeps its verdict", long_section[-1].startswith("PASS"))
+    case("a long reading drops its middle, not its end", "…" in long_section)
     case("the page has one section per job", "## difficulty-check — done (—, 0s)" in page)
 
     case("fixtures are where they are said to be", os.path.isdir(fixtures))
     case(
-        "the champion of a block is its top row",
+        "the champion of a block is its best-training row, whatever its position",
         champions(os.path.join(fixtures, "search"))
         == ["reports/ai_arena/search/default/combat/c1.tres"],
     )

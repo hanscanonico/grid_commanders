@@ -77,7 +77,8 @@ sudo systemctl stop grid-commanders-grind     # or ctrl-c a foreground run
 
 The supervisor traps the signal, stops the running job's whole process group and
 exits at that job's boundary. Nothing is left half-written: every instrument
-here writes its artifacts in one go at the end.
+here writes its artifacts in one go at the end, and the job it interrupted is
+`stopped` in the digest rather than `failed` — a restart is not a finding.
 
 ## Adopting an arena champion
 
