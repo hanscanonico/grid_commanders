@@ -4,10 +4,11 @@ The vocabulary *is* the dispatch table now, so these suites replace the three
 GUT lints that existed only to catch a silent fallback — a name outside the
 table cannot reach a default any more, it raises.
 
-Two facts are measured rather than eyeballed: C13, the mouth's dark area staying
-under one eye's, which the shipped `open` mouth broke by reading as a second eye
-socket; and the palette, which is checked as "only tones this module was handed"
-on the working canvas, where a flat tone is still exactly itself.
+Three facts are measured rather than eyeballed: C13, the mouth's dark area
+staying under the pair of eyes'; P3, an open mouth spanning 2.2 of one eye's
+width, which the shipped glyph had collapsed under; and the palette, which is
+checked as "only tones this module was handed" on the working canvas, where a
+flat tone is still exactly itself.
 """
 
 from __future__ import annotations
@@ -222,6 +223,17 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
 
     def test_the_patch_and_its_strap_are_one_tone(self):
         self.assertEqual(_colours(self._patch()), {INK})
+
+    def test_the_strap_lands_on_the_ear(self):
+        """P4a: a plate with no strap is a sticker. It is anchored where it
+        would be worn, so the ear is where the stroke has to end."""
+        ear_x, ear_y, radius = features.EAR
+        x, y = (
+            round(value * SUPERSAMPLE)
+            for value in FRAME.at(ear_x + radius, ear_y - radius)
+        )
+        anchor = self._patch().image.crop((x - 1, y - 1, x + 2, y + 2))
+        self.assertEqual(anchor.getcolors(), [(9, (*INK, 255))])
 
     def test_the_eyepatch_is_the_one_accessory_that_covers_a_socket(self):
         covering = {
