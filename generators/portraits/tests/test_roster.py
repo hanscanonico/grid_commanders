@@ -159,6 +159,12 @@ class EveryColumnNamesSomethingDrawable(unittest.TestCase):
             with self.subTest(commander=key):
                 self.assertIn(face.facial, features.FACIAL_KINDS)
                 self.assertIn(face.acc, features.ACCESSORY_KINDS)
+                self.assertIn(face.acc2, features.ACCESSORY_KINDS)
+
+    def test_only_the_first_slot_may_cover_a_socket(self):
+        for key, face in roster.FACES.items():
+            with self.subTest(commander=key):
+                self.assertIsNone(features.covered_eye(face.acc2))
 
     def test_every_collar_is_one_the_uniform_can_cut(self):
         for key, face in roster.FACES.items():
@@ -246,6 +252,28 @@ class TheIdentitiesTheReviewPinned(unittest.TestCase):
                 face = roster.FACES[key]
                 worn = features.accessory(Canvas(), face.head, face.acc)
                 self.assertGreater(len(worn), 2, "an accessory that is not headwear")
+
+    def test_the_two_bare_heads_do_not_wear_the_same_hat(self):
+        first, second = (roster.FACES[key].acc for key in self.EMPTY_ABOVE_THE_COLLAR)
+        self.assertNotEqual(first, second)
+
+    def test_ferrow_kept_his_scar_when_he_took_the_cap(self):
+        face = roster.FACES["dane_ferrow"]
+        self.assertIn("scar", (face.acc, face.acc2))
+
+    def test_calder_wears_the_shade_that_parted_her_from_voss(self):
+        calder, voss = roster.FACES["ines_calder"], roster.FACES["mara_voss"]
+        self.assertIn("visor", (calder.acc, calder.acc2))
+        self.assertNotIn("visor", (voss.acc, voss.acc2))
+
+    def test_rowan_and_reed_carry_different_things_on_the_chest(self):
+        self.assertNotEqual(
+            roster.FACES["nia_rowan"].chest, roster.FACES["tomas_reed"].chest
+        )
+
+    def test_the_steel_ramp_is_worn_by_the_one_general_it_was_cut_for(self):
+        wearing = [f.id for f in roster.FACES.values() if f.hair == "steel"]
+        self.assertEqual(["konrad_vale"], wearing)
 
 
 class ThePosesAreTiltedAndFiveAreMirrored(unittest.TestCase):

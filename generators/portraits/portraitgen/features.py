@@ -512,24 +512,60 @@ _HOOD_LINING: tuple[Point, ...] = (
     (110.0, 110.0),
     (60.0, 116.0),
 )
+# The service cap: a saucer crown that overhangs its band on both sides, and a
+# peak wider than either. Both are the silhouette — this is the dress cap, and
+# the field cap below it is the same head with all of that taken off.
 _CAP_CROWN: tuple[Point, ...] = (
-    (58.0, 88.0),
-    (66.0, 58.0),
-    (110.0, 50.0),
-    (154.0, 58.0),
-    (162.0, 88.0),
+    (50.0, 88.0),
+    (54.0, 56.0),
+    (98.0, 44.0),
+    (124.0, 44.0),
+    (166.0, 56.0),
+    (170.0, 88.0),
 )
 _CAP_BAND: tuple[Point, ...] = (
-    (56.0, 86.0),
-    (164.0, 86.0),
-    (164.0, 100.0),
-    (56.0, 100.0),
+    (54.0, 86.0),
+    (166.0, 86.0),
+    (166.0, 100.0),
+    (54.0, 100.0),
 )
 _CAP_PEAK: tuple[Point, ...] = (
-    (50.0, 98.0),
-    (170.0, 98.0),
-    (160.0, 112.0),
-    (60.0, 112.0),
+    (44.0, 98.0),
+    (176.0, 98.0),
+    (162.0, 114.0),
+    (58.0, 114.0),
+)
+# The soft field cap: the same band, a lower crown that slouches away from the
+# key, and no peak at all. The peak is the service cap's whole silhouette, so
+# leaving it off is what tells the two caps apart at chip size.
+_FIELD_CROWN: tuple[Point, ...] = (
+    (56.0, 92.0),
+    (60.0, 76.0),
+    (92.0, 66.0),
+    (140.0, 68.0),
+    (168.0, 78.0),
+    (170.0, 92.0),
+)
+_FIELD_BAND: tuple[Point, ...] = (
+    (56.0, 88.0),
+    (168.0, 88.0),
+    (168.0, 102.0),
+    (56.0, 102.0),
+)
+# The eyeshade: a strap and a wide brim over the brow, and no crown — so the
+# hair above it stays part of the outline, which is what separates it from a
+# cap. The brim stops above the brow line the eyes are read against.
+_VISOR_STRAP: tuple[Point, ...] = (
+    (60.0, 90.0),
+    (160.0, 90.0),
+    (160.0, 104.0),
+    (60.0, 104.0),
+)
+_VISOR_BRIM: tuple[Point, ...] = (
+    (42.0, 102.0),
+    (178.0, 102.0),
+    (158.0, 118.0),
+    (62.0, 118.0),
 )
 _GOGGLE_STRAP: tuple[Point, ...] = (
     (60.0, 100.0),
@@ -604,6 +640,28 @@ def _cap(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
     return crown
 
 
+def _fieldcap(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
+    """A soft field cap: a slouched crown over a kit band, and nothing else."""
+    crown = frame.path(_FIELD_CROWN)
+    canvas.polygon(crown, tint)
+    canvas.stroke(crown, INK_FEATURE, INK, closed=True)
+    band = frame.path(_FIELD_BAND)
+    canvas.polygon(band, KIT)
+    canvas.stroke(band, INK_FEATURE, INK, closed=True)
+    return crown
+
+
+def _visor(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
+    """An eyeshade: a kit strap carrying a brim in the general's own cloth."""
+    strap = frame.path(_VISOR_STRAP)
+    canvas.polygon(strap, KIT)
+    canvas.stroke(strap, INK_FEATURE, INK, closed=True)
+    brim = frame.path(_VISOR_BRIM)
+    canvas.polygon(brim, tint)
+    canvas.stroke(brim, INK_FEATURE, INK, closed=True)
+    return brim
+
+
 def _goggles(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
     path = frame.path(_GOGGLE_STRAP)
     canvas.polygon(path, KIT)
@@ -672,6 +730,7 @@ _ACCESSORIES: dict[str, Callable[[Canvas, Frame, Skull, RGB], list[Point]]] = {
     "bandana": _worn(_BANDANA),
     "cap": _cap,
     "eyepatch": _eyepatch,
+    "fieldcap": _fieldcap,
     "glasses": _glasses,
     "goggles": _goggles,
     "headband": _worn(_HEADBAND),
@@ -679,6 +738,7 @@ _ACCESSORIES: dict[str, Callable[[Canvas, Frame, Skull, RGB], list[Point]]] = {
     "hood": _hood,
     "none": _unworn,
     "scar": _scar,
+    "visor": _visor,
 }
 ACCESSORY_KINDS = frozenset(_ACCESSORIES)
 # Which of the two sockets a worn accessory hides. An eyepatch is the only one

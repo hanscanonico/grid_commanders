@@ -10,7 +10,7 @@ Two vocabularies live here. The three collar cuts are silhouettes rather than
 decorations — the V notches the mass, the mandarin stands a band above the
 shoulder line, the double-breasted facing crosses the chest — so a bust is still
 told apart at 31px, where nothing inside the outline survives. The chest
-treatments are the second: twelve of them, so the sheet's twenty-two generals
+treatments are the second: thirteen of them, so the sheet's twenty-two generals
 can wear one each without any being shared by more than two.
 
 The gold is `UiTheme.AMMO`, and the rank pip is the only place a general who has
@@ -28,14 +28,16 @@ from .palette import INK, RGB, Faction
 COLLAR_CUTS = frozenset({"double", "mandarin", "v"})
 COLLAR_DEFAULT = "v"
 
-# What a general carries on the chest under the collar. Twelve, because the
-# sheet is twenty-two generals and no treatment may be worn by more than two.
+# What a general carries on the chest under the collar. Thirteen over the
+# sheet's twenty-two — nine worn by a pair, four by one — and no treatment may
+# be worn by more than two.
 CHEST_TREATMENTS = frozenset(
     {
         "bandolier",
         "boards",
         "crossbelt",
         "epaulette",
+        "harness",
         "lanyard",
         "loops",
         "mapcase",
@@ -244,6 +246,34 @@ def _pouch(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     _stud(canvas, (left + 21.0, 248.0), 4.0, GOLD)
 
 
+def _harness(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
+    """Webbing: two vertical straps off the shoulder line, carrying nothing.
+
+    The empty chest is the point — it is the one treatment told apart by what
+    is missing from it, which is what breaks it from the pouch it replaced.
+    """
+    for left in (PAYLOAD_INBOARD + 14.0, PAYLOAD_INBOARD + 88.0):
+        right = left + 18.0
+        canvas.rect((left, 206.0, right, 268.0), (*ramp.deep, 255))
+        _ink(
+            canvas,
+            [(left, 206.0), (left, 268.0)],
+            INK_DETAIL,
+            closed=False,
+        )
+        _ink(
+            canvas,
+            [(right, 206.0), (right, 268.0)],
+            INK_DETAIL,
+            closed=False,
+        )
+        canvas.stroke(
+            [(left + 4.0, 214.0), (left + 4.0, 268.0)],
+            INK_DETAIL,
+            (*ramp.shade, 255),
+        )
+
+
 def _mapcase(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     canvas.rect((150.0, 226.0, 186.0, 268.0), (*ramp.deep, 255))
     _ink(
@@ -341,6 +371,7 @@ _CHESTS: dict[str, Callable[[Canvas, Faction, Ramp], None]] = {
     "boards": _boards,
     "crossbelt": _crossbelt,
     "epaulette": _epaulette,
+    "harness": _harness,
     "lanyard": _lanyard,
     "loops": _loops,
     "mapcase": _mapcase,

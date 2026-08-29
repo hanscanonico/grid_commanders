@@ -28,7 +28,10 @@ from .head import Skull
 from .light import Ramp
 from .palette import INK, RGB
 
-# The seven hair colours the roster picks from, as the handoff wrote them.
+# The hair colours the roster picks from: the handoff's seven, plus `steel`.
+# Steel is grey a rung darker, and it exists because grey over a pale face is
+# the sheet's contrast floor — the one general who wears both needs a ramp of
+# his own rather than everyone else's grey moved down to meet him.
 HAIR_BASES: dict[str, RGB] = {
     "auburn": (140, 74, 47),
     "black": (38, 38, 38),
@@ -37,6 +40,7 @@ HAIR_BASES: dict[str, RGB] = {
     "darkbrown": (51, 37, 26),
     "grey": (189, 189, 189),
     "platinum": (231, 224, 204),
+    "steel": (165, 165, 165),
 }
 HAIR_COLOURS = frozenset(HAIR_BASES)
 

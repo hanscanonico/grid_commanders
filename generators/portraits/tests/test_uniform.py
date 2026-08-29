@@ -106,6 +106,33 @@ class TheChestCarriesSomething(unittest.TestCase):
             uniform.chest(Canvas(), "cape", FACTION, RAMP)
 
 
+class TheHarnessIsTheOneTreatmentWithNoPayload(unittest.TestCase):
+    """P18: the pair the review named shared a pouch, and webbing is the chest
+    idea told apart by carrying nothing — so it is measured that way."""
+
+    def _webbing(self) -> Canvas:
+        canvas = Canvas()
+        uniform.chest(canvas, "harness", FACTION, RAMP)
+        return canvas
+
+    def test_the_harness_carries_nothing(self):
+        painted = {
+            colour[:3]
+            for _, colour in self._webbing().image.getcolors(maxcolors=1 << 16)
+            if colour[3] > 0
+        }
+        self.assertNotIn(uniform.GOLD, painted)
+
+    def test_the_harness_is_two_straps(self):
+        canvas = self._webbing()
+        row = canvas.scale * 240
+        opaque = [
+            canvas.image.getpixel((x, row))[3] > 0 for x in range(canvas.image.width)
+        ]
+        runs = sum(1 for i, on in enumerate(opaque) if on and not opaque[i - 1])
+        self.assertEqual(2, runs)
+
+
 class TheGoldIsTheGame(unittest.TestCase):
     """`GOLD` is `UiTheme.AMMO` restated, so it is read back out of the game.
 

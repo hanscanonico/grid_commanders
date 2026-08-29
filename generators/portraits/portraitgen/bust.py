@@ -211,7 +211,9 @@ def _face_group(face: Face, skin: light.Ramp, mane: light.Ramp) -> Canvas:
     head.draw(group, face.head, skin, mirrored=face.pose[2])
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
-    features.accessory(group, face.head, face.acc, tint=_faction(face).body)
+    tint = _faction(face).body
+    for worn in (face.acc, face.acc2):
+        features.accessory(group, face.head, worn, tint=tint)
     covered = features.covered_eye(face.acc)
     features.brow(group, face.head, face.brow, mane, covered=covered)
     features.eyes(group, face.head, face.eyes, scale=face.eye, covered=covered)

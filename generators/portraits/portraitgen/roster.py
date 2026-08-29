@@ -26,6 +26,11 @@ class Face:
     (0.82-1.06), `head` is the skull's four dials and `pose` is
     [tilt degrees, zoom, mirrored].
 
+    `acc2` is a second worn glyph, drawn over the first. It exists because a
+    general who takes headwear was paying for it with a face mark: the review's
+    §3 lists Ferrow's scar *and* something above his collar, and one slot could
+    only carry one of them. Only the first slot may cover an eye socket.
+
     `chest` is the one column the GDScript table had no field for: it wore one
     diagonal sash five times over, and the review's own bar is that no chest
     treatment is shared by more than two. It is named per row here for the
@@ -49,6 +54,7 @@ class Face:
     bg: str
     prop: str
     chest: str = CHEST_DEFAULT
+    acc2: str = "none"
     pip: bool = False
     earring: bool = False
     freckles: bool = False
@@ -291,7 +297,7 @@ FACES: dict[str, Face] = {
         ),
         Face(
             id="tomas_reed",
-            chest="pouch",
+            chest="harness",
             skin="dark",
             hair="black",
             style="curly",
@@ -320,6 +326,7 @@ FACES: dict[str, Face] = {
             eye=0.93,
             facial="none",
             acc="glasses",
+            acc2="visor",
             collar="mandarin",
             head=Skull(0.94, "round", 0.5, 1.02),
             nose="tick",
@@ -331,7 +338,7 @@ FACES: dict[str, Face] = {
             id="konrad_vale",
             chest="boards",
             skin="pale",
-            hair="grey",
+            hair="steel",
             style="sidepart",
             brow="angled",
             eyes="narrow",
@@ -395,7 +402,8 @@ FACES: dict[str, Face] = {
             mouth="clench",
             eye=0.94,
             facial="stubble",
-            acc="cap",
+            acc="fieldcap",
+            acc2="scar",
             collar="mandarin",
             head=Skull(1.08, "square", 0.0, 0.96),
             nose="broad",

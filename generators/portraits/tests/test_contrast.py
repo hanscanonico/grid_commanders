@@ -16,7 +16,7 @@ import statistics
 import unittest
 from functools import lru_cache
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 from portraitgen import bust, hair, head, roster
 
@@ -43,18 +43,31 @@ def _painted(key: str) -> Image.Image:
     return bust.paint(roster.FACES[key])
 
 
+@lru_cache(maxsize=None)
+def _figure(key: str) -> Image.Image:
+    """Where the bust differs from its own window: the general, without the
+    backdrop behind them. The backdrops are flat grey fields over slate, so a
+    dark enough hair ramp reads its own shadow band in the wall otherwise."""
+    face = roster.FACES[key]
+    difference = ImageChops.difference(bust.paint(face, cast=False), bust.window(face))
+    return difference.convert("L").point(lambda level: 255 if level else 0)
+
+
 def _hair_luminance(key: str) -> float:
     """The median luminance of everything painted in the general's hair ramp."""
     ramp = hair.ramp_for(roster.FACES[key].hair)
     tones = (ramp.deep, ramp.shade, ramp.base, ramp.lit)
     image = _painted(key)
     pixels = image.load()
+    figure = _figure(key).load()
     width, height = image.size
     mass = [
         _luminance(pixels[x, y])
         for y in range(height)
         for x in range(width)
-        if pixels[x, y][3] >= OPAQUE and any(_is(pixels[x, y], tone) for tone in tones)
+        if figure[x, y]
+        and pixels[x, y][3] >= OPAQUE
+        and any(_is(pixels[x, y], tone) for tone in tones)
     ]
     assert mass, f"{key} has no hair mass to measure"
     return statistics.median(mass)

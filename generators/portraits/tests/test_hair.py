@@ -205,6 +205,13 @@ class EveryColourHasItsFourTones(Combed):
                     self.assertAlmostEqual(tone, want, delta=1)
                 self.assertNotEqual(ramp.deep, ramp.lit)
 
+    def test_steel_stays_the_rung_of_grey_it_was_forked_to_be(self):
+        # `steel` exists only because grey over a pale face sat on the contrast
+        # floor, so it is worth nothing unless it stays a band below grey.
+        self.assertLessEqual(
+            hair.HAIR_BASES["steel"][0], hair.HAIR_BASES["grey"][0] - 20
+        )
+
     def test_a_colour_the_table_does_not_hold_raises(self):
         with self.assertRaises(KeyError):
             hair.ramp_for("chartreuse")
