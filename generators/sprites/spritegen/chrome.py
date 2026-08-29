@@ -5,9 +5,9 @@ but they are art the game ships, and until this module they were the one art
 the engine drew for itself, out of a second palette nothing compared against
 the first. They are flat rectangles, so they are stated as rectangles.
 
-The two team squares on the icon and the two grounds under them keep the hues
-the engine script drew them with, which are a step off `palette.FACTIONS` and
-`terrain.tones` — a recolour is an art change and this module is not one. The
+The icon's two team tokens keep the hues the engine script drew them with,
+which are a step off `palette.FACTIONS` — a recolour is an art change and this
+module is not one. The
 distance is measured rather than described: `ChromeDrift` in `test_chrome.py`
 holds each legacy hue within a stated tolerance of the row it stands for, so
 the two palettes can drift no further without a test saying so.
@@ -35,14 +35,21 @@ CURSOR_SHADOW: RGBA = (12, 12, 12, 229)
 BRACKET_LONG, BRACKET_SHORT = 6, 2
 SHADOW_OFFSET = (1, 1)
 
-# The icon is the board in miniature: a crossroads on grass with one army in
-# each far corner. See the module header on these four hues.
-ICON_GRASS: RGBA = (120, 200, 80, 255)
-ICON_ROAD: RGBA = (201, 184, 132, 255)
+# The icon is the command table: a dark plate ruled into a 3x3 board, one army
+# in each far corner and the gold mark on the cell between them. See the module
+# header on the two team hues.
+ICON_PLATE: RGBA = (26, 30, 36, 255)
+ICON_GRID: RGBA = (72, 84, 96, 255)
 ICON_MERIDIAN: RGBA = (216, 74, 60, 255)
 ICON_AURORA: RGBA = (60, 100, 216, 255)
-ICON_ROAD_WIDTH = 16
-ICON_MARGIN, ICON_SQUARE = 14, 28
+ICON_MARK: RGBA = (224, 169, 46, 255)
+# Everything is a multiple of eight so the 128 survives the platforms' halvings:
+# a 4px rule is a pixel at 32, a 24px token is three.
+ICON_CORNER = 8
+ICON_LINE, ICON_CELL = 4, 32
+ICON_INSET = (ICON - (4 * ICON_LINE + 3 * ICON_CELL)) // 2
+ICON_TOKEN = 24
+ICON_MARK_ARM, ICON_MARK_THICK = 28, 8
 
 
 def _fill(img: Image.Image, box: tuple[int, int, int, int], color: RGBA) -> None:
@@ -93,14 +100,49 @@ def cursor() -> Image.Image:
     return img
 
 
+def _cell_origin(col: int, row: int) -> tuple[int, int]:
+    """The top-left of a board cell: the inset, then a rule and a cell per step."""
+    step = ICON_LINE + ICON_CELL
+    return (ICON_INSET + ICON_LINE + col * step, ICON_INSET + ICON_LINE + row * step)
+
+
+def _plate(img: Image.Image) -> None:
+    """The dark table, its four corners cut away so it reads as rounded."""
+    _fill(img, (0, 0, ICON, ICON), ICON_PLATE)
+    for x in (0, ICON - ICON_CORNER):
+        for y in (0, ICON - ICON_CORNER):
+            _fill(img, (x, y, ICON_CORNER, ICON_CORNER), (0, 0, 0, 0))
+
+
+def _rules(img: Image.Image) -> None:
+    """Four rules each way: the board's frame and the two lines inside it."""
+    span = 4 * ICON_LINE + 3 * ICON_CELL
+    for step in range(4):
+        offset = ICON_INSET + step * (ICON_LINE + ICON_CELL)
+        _fill(img, (ICON_INSET, offset, span, ICON_LINE), ICON_GRID)
+        _fill(img, (offset, ICON_INSET, ICON_LINE, span), ICON_GRID)
+
+
+def _token(img: Image.Image, col: int, row: int, color: RGBA) -> None:
+    x, y = _cell_origin(col, row)
+    pad = (ICON_CELL - ICON_TOKEN) // 2
+    _fill(img, (x + pad, y + pad, ICON_TOKEN, ICON_TOKEN), color)
+
+
+def _mark(img: Image.Image) -> None:
+    """The gold crosshair on the centre cell — the objective both armies want."""
+    mid = ICON // 2
+    long, short = ICON_MARK_ARM // 2, ICON_MARK_THICK // 2
+    _fill(img, (mid - long, mid - short, ICON_MARK_ARM, ICON_MARK_THICK), ICON_MARK)
+    _fill(img, (mid - short, mid - long, ICON_MARK_THICK, ICON_MARK_ARM), ICON_MARK)
+
+
 def icon() -> Image.Image:
-    """The project icon: a crossroads with two armies facing across it."""
+    """The project icon: two armies across a ruled table, the mark between them."""
     img = _blank(ICON)
-    _fill(img, (0, 0, ICON, ICON), ICON_GRASS)
-    mid = (ICON - ICON_ROAD_WIDTH) // 2
-    _fill(img, (mid, 0, ICON_ROAD_WIDTH, ICON), ICON_ROAD)
-    _fill(img, (0, mid, ICON, ICON_ROAD_WIDTH), ICON_ROAD)
-    far = ICON - ICON_MARGIN - ICON_SQUARE
-    _fill(img, (ICON_MARGIN, ICON_MARGIN, ICON_SQUARE, ICON_SQUARE), ICON_MERIDIAN)
-    _fill(img, (far, far, ICON_SQUARE, ICON_SQUARE), ICON_AURORA)
+    _plate(img)
+    _rules(img)
+    _token(img, 0, 2, ICON_MERIDIAN)
+    _token(img, 2, 0, ICON_AURORA)
+    _mark(img)
     return img
