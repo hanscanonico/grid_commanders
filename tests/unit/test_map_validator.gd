@@ -63,12 +63,12 @@ func test_a_good_board_draws_no_complaint() -> void:
 
 func test_a_board_under_the_floor_is_refused() -> void:
 	var text := "[terrain]\n" + ".....\n".repeat(4) + "[owners]\n"
-	assert_has_error(_errors(text), "at least")
+	assert_has_error(_errors(text), "5x4; a map must be at least")
 
 
 func test_a_board_over_the_ceiling_is_refused() -> void:
 	var wide := ".".repeat(MapValidator.MAX_SIZE.x + 1) + "\n"
-	assert_has_error(_errors("[terrain]\n" + wide.repeat(5)), "at most")
+	assert_has_error(_errors("[terrain]\n" + wide.repeat(5)), "a map may be at most")
 
 
 func test_a_seat_with_nothing_on_the_board_is_refused() -> void:
