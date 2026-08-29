@@ -82,6 +82,9 @@ make replay-report REPLAY=<dir>   # survey a directory of them -> rates (docs/re
 make legibility-check     # every unit, tint, ground, overlay and animation frame composited,
                           # and how many ramp steps its contour keeps from the ground beside it
                           # -> reports/ (docs/sprite_legibility.md)
+make legibility-ratchet   # the same sweep, diffed against tests/fixtures/legibility_baseline.csv:
+                          # fails only where a cell that passed there fails now
+make legibility-baseline  # rewrite that baseline from a fresh run, after an intended art change
 make grain-census         # how much of each drawn terrain cell's grain every zoom rung draws
                           # (docs/terrain_grain.md)
 make sheet-census         # what the shipped atlases cost: PNG, decoded RGBA, cells and the
@@ -1279,12 +1282,14 @@ already failing would muddy both readings.
   verdict and reads how hard it was (`docs/campaign_difficulty.md`); the composite legibility sweep
   under `tools/legibility/`, which stacks every unit, tint, ground, board overlay and animation
   frame out of the six shipped unit sheets and measures how far each figure's contour separates
-  from the ground just outside it (`docs/sprite_legibility.md`); plus `tools/focus_timeline.sh`,
+  from the ground just outside it (`docs/sprite_legibility.md`), and diffs those verdicts against
+  the committed digest in `tests/fixtures/legibility_baseline.csv` when asked
+  (`make legibility-ratchet`); plus `tools/focus_timeline.sh`,
   the focus-theft instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
   offline balance harness under `tools/balance/`, the arena's scorer and pools under
-  `tools/arena/`, the recording reader under `tools/replay/`, the legibility metric under
-  `tools/legibility/`, and
+  `tools/arena/`, the recording reader under `tools/replay/`, the legibility metric and its
+  baseline diff under `tools/legibility/`, and
   the launch layer that states which match to play (`MatchRequest`, `CmdArgs`) — each written that
   way for exactly this reason.
 - `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT), with one local
