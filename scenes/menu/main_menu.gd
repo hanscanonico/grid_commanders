@@ -350,12 +350,13 @@ func _build_setup_panel() -> Control:
 	body.add_theme_constant_override("separation", PANEL_ROW_GAP)
 	col.add_child(UiKit.pad(body, 8, 7))
 
+	# The picker takes the panel's slack: choosing a board is what this page is
+	# for, and every other row here says its piece in a fixed number of lines.
+	_map_picker.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(_map_picker)
 	body.add_child(UiKit.rule())
 	body.add_child(_build_seats_row())
-	body.add_child(_build_choices_row())
-	body.add_child(UiKit.rule())
-	body.add_child(_build_toggles_row())
+	body.add_child(_build_options_row())
 	return panel
 
 
@@ -379,43 +380,14 @@ func _build_seats_row() -> Control:
 	return col
 
 
-func _build_choices_row() -> Control:
+## Speed and the three checkboxes, one row: pacing on the left, then fog — this
+## match's — and the two animation settings, which are the device's (game-speed
+## D1). One row rather than two, and no rule between them, because the height they
+## gave back is the map picker's second shelf of boards (COM-258).
+func _build_options_row() -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-
-	# No Difficulty segment: how well the computer plays is per seat now (COM-225)
-	# and the seat strip is the one control that says it. Two controls writing one
-	# fact is the drift a single authority exists to prevent.
-	var meridian := UiTheme.menu_identity().theme(1)
-	var speed_labels := PackedStringArray()
-	var speed_selected := 0
-	for i in _speed_tiers.size():
-		speed_labels.append(_speed_tiers[i].display_name)
-		if _speed_tiers[i].id == Settings.speed.id:
-			speed_selected = i
-	var speed_detail := "Pacing only · outcomes never change"
-	var speed := UiKit.segment(
-		"Speed",
-		speed_labels,
-		speed_selected,
-		meridian.color,
-		"How fast moves and battles play out",
-		speed_detail,
-		_on_speed_selected
-	)
-	speed.add_child(_option_help(speed_detail))
-	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(speed)
-	return row
-
-
-## The three checkboxes, one row of the panel's fixed height: fog is this match's,
-## the two animation settings are the device's (game-speed D1). Three across
-## rather than a second row because the panel's height is spent (`_chrome`), which
-## is why each explanation is a short one.
-func _build_toggles_row() -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 6)
+	row.add_child(_build_speed_col())
 	row.add_child(
 		_toggle_col(
 			"Fog of war",
@@ -442,11 +414,38 @@ func _build_toggles_row() -> Control:
 			Settings.menu_animations,
 			"Drift the board behind the menus and reveal pages a line at a time",
 			"Off holds every menu still",
-			"Backdrop drift and blink",
+			"Drift and blink",
 			_on_menu_animations_toggled
 		)
 	)
 	return row
+
+
+func _build_speed_col() -> Control:
+	# No Difficulty segment: how well the computer plays is per seat now (COM-225)
+	# and the seat strip is the one control that says it. Two controls writing one
+	# fact is the drift a single authority exists to prevent.
+	var meridian := UiTheme.menu_identity().theme(1)
+	var speed_labels := PackedStringArray()
+	var speed_selected := 0
+	for i in _speed_tiers.size():
+		speed_labels.append(_speed_tiers[i].display_name)
+		if _speed_tiers[i].id == Settings.speed.id:
+			speed_selected = i
+	var speed_detail := "Pacing only · outcomes never change"
+	var speed := UiKit.segment(
+		"Speed",
+		speed_labels,
+		speed_selected,
+		meridian.color,
+		"How fast moves and battles play out",
+		speed_detail,
+		_on_speed_selected
+	)
+	# Shorter than the tip: the four options share a row and the help lines set it.
+	speed.add_child(_option_help("Pacing, not outcomes"))
+	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return speed
 
 
 ## One checkbox with the help line under it that explains it — the pair every
