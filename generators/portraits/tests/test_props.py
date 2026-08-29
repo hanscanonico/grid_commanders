@@ -153,6 +153,20 @@ class TheScalesHangPlumb(unittest.TestCase):
         self.assertLessEqual(abs(centre - midline), self.OFF_MIDLINE_PX)
 
 
+class TheCigarClearsTheMouth(unittest.TestCase):
+    """Cass Orlov's cigar crossed the mouth line, and a dark bar laid over a
+    lip is a moustache. Every row it paints has to sit under that line, and the
+    lit tip has to be the sheet's one gold."""
+
+    def test_the_stem_starts_below_the_mouth_line(self):
+        top = _prop("cigar").image.getbbox()[1] / Canvas().scale
+        self.assertGreater(top, props.MOUTH_LINE)
+
+    def test_the_tip_carries_an_ember(self):
+        colours = {colour for _, colour in _prop("cigar").image.getcolors(1 << 16)}
+        self.assertIn((*props.GOLD, 255), colours)
+
+
 class EveryPropCasts(unittest.TestCase):
     def test_the_shadow_lands_outside_the_prop(self):
         for key in sorted(props.PROPS):

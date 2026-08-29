@@ -73,6 +73,20 @@ PROP_CAST_TONE = (0, 0, 0, 64)
 RIGHT_BLEED = 4.0
 RIGHT_LIMIT = 220.0 - RIGHT_BLEED
 
+# The row a mouth is drawn on and the lip corner a smoked prop leaves from, in
+# portrait pixels: the reference mouth of `features.py` fitted to a skull lands
+# here, and a prop is drawn in raster space rather than in that skull's frame,
+# so the one row the two layers share is stated once.
+MOUTH_LINE = 170.0
+LIP_CORNER = (126.0, MOUTH_LINE)
+# How far under the corner the stem starts, how steeply it falls away from the
+# face, how long and how thick it runs, and the lit tip's radius.
+CIGAR_DROP = 4.0
+CIGAR_PITCH = 12.0
+CIGAR_LENGTH = 32.0
+CIGAR_GIRTH = 9.0
+CIGAR_EMBER = 2.0
+
 STEEL: RGB = (170, 179, 187)
 STEEL_LIT: RGB = (207, 214, 221)
 SLATE: RGB = (43, 47, 52)
@@ -300,12 +314,34 @@ def _pipe(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _cigar(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
+    """Clenched in the lip corner, angled clear of the mouth, lit at the tip.
+
+    It sat across the mouth line for four reviews, where a dark bar over a lip
+    reads as a moustache and not as a cigar. It leaves from below the corner
+    instead, so the mouth stays the mouth and the stem is the only thing on
+    that row.
+    """
+    along = (math.cos(math.radians(CIGAR_PITCH)), math.sin(math.radians(CIGAR_PITCH)))
+    across = (-along[1], along[0])
+    x, y = LIP_CORNER[0], LIP_CORNER[1] + CIGAR_DROP
+
+    def at(run: float, side: float) -> Point:
+        return (
+            x + along[0] * run + across[0] * side,
+            y + along[1] * run + across[1] * side,
+        )
+
     _shape(
         canvas,
-        [(116.0, 164.0), (148.0, 154.0), (152.0, 166.0), (120.0, 176.0)],
+        [
+            at(0.0, 0.0),
+            at(CIGAR_LENGTH, 0.0),
+            at(CIGAR_LENGTH, CIGAR_GIRTH),
+            at(0.0, CIGAR_GIRTH),
+        ],
         TOBACCO,
     )
-    _disc(canvas, (152.0, 160.0), 4.0, faction.body_lt)
+    _disc(canvas, at(CIGAR_LENGTH, CIGAR_GIRTH / 2.0), CIGAR_EMBER, GOLD)
 
 
 def _medal(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
