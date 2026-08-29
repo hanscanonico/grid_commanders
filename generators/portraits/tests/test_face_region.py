@@ -46,7 +46,7 @@ def face_region() -> tuple[int, int, int, int]:
     return tuple(int(group) for group in found.groups())
 
 
-def _is_skin(pixel: tuple[int, ...], tones: list[tuple[int, int, int]]) -> bool:
+def is_skin(pixel: tuple[int, ...], tones: list[tuple[int, int, int]]) -> bool:
     if pixel[3] < 204:
         return False
     return any(
@@ -55,8 +55,12 @@ def _is_skin(pixel: tuple[int, ...], tones: list[tuple[int, int, int]]) -> bool:
     )
 
 
-def _chin(image: Image.Image, tones: list[tuple[int, int, int]]) -> int:
+def chin_row(image: Image.Image, tones: list[tuple[int, int, int]]) -> int:
     """The lowest row of the crop's middle column that is still this face.
+
+    Public because it is the sheet's one reading of where a jaw ends, and
+    `test_props` holds a prop clear of that row rather than taking a second
+    opinion on it.
 
     A column rather than the whole bottom row, for the GUT suite's own reason: a
     signature prop is drawn in its owner's skin, so a row-wide scan measures the
@@ -67,17 +71,17 @@ def _chin(image: Image.Image, tones: list[tuple[int, int, int]]) -> int:
     rows = [
         row
         for row in range(y, y + height)
-        if _is_skin(image.getpixel((column, row)), tones)
+        if is_skin(image.getpixel((column, row)), tones)
     ]
     return rows[-1] if rows else -1
 
 
 def _clearance(image: Image.Image, tones: list[tuple[int, int, int]]) -> int:
     _, y, _, height = face_region()
-    return y + height - 1 - _chin(image, tones)
+    return y + height - 1 - chin_row(image, tones)
 
 
-def _tones(skin: str) -> list[tuple[int, int, int]]:
+def skin_tones(skin: str) -> list[tuple[int, int, int]]:
     ramp = head.ramp_for(skin)
     return [ramp.deep, ramp.shade, ramp.base, ramp.lit]
 
@@ -98,13 +102,13 @@ class TheCropClearsEveryJaw(unittest.TestCase):
         for key, face in sorted(roster.FACES.items()):
             with self.subTest(commander=key):
                 image = bust.paint(face)
-                tones = _tones(face.skin)
-                self.assertGreater(_chin(image, tones), 0, "no face on the column")
+                tones = skin_tones(face.skin)
+                self.assertGreater(chin_row(image, tones), 0, "no face on the column")
                 self.assertGreaterEqual(_clearance(image, tones), CHIN_CLEARANCE_PX)
 
     def test_the_sheet_holds_the_band_the_shipped_busts_held(self):
         thin = {
-            key: _clearance(bust.paint(face), _tones(face.skin))
+            key: _clearance(bust.paint(face), skin_tones(face.skin))
             for key, face in sorted(roster.FACES.items())
         }
         self.assertEqual(
