@@ -248,6 +248,10 @@ class NoFaceWearsAHalfMask(unittest.TestCase):
     column sits within `MIDLINE_CLEARANCE` of it, and it owns more than
     `SHADE_SHARE_CAP` of the band. The eye band is left out for the reason
     `OneLightOnEveryFace` leaves it out.
+
+    It is a ceiling, not the fix's own proof: the geometry this replaced also
+    cleared it, by 0.01 on its worst face. `TheThreeShadesKeepOffTheNose` is
+    what fails when a shape moves back onto the axis.
     """
 
     SHADED_COLUMN = 0.30
