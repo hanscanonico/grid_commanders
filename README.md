@@ -84,6 +84,8 @@ make legibility-check     # every unit, tint, ground, overlay and animation fram
                           # -> reports/ (docs/sprite_legibility.md)
 make grain-census         # how much of each drawn terrain cell's grain every zoom rung draws
                           # (docs/terrain_grain.md)
+make sheet-census         # what the shipped atlases cost: PNG, decoded RGBA, cells and the
+                          # cells that repeat (docs/sheet_census.md)
 make mobile-soak          # what a computer turn costs to plan and what the replay recorder's
                           # per-command flush costs (docs/mobile_soak.md)
 ```

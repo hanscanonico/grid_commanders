@@ -466,6 +466,15 @@ sprites-snapshot:
 		"$(SPRITEGEN_PY)" "$(SPRITEGEN)/tests/check_snapshots.py" "$$out"; \
 		status=$$?; rm -rf "$$out"; exit $$status
 
+# What the shipped atlases cost: PNG bytes, decoded RGBA, cells, and the cells
+# that are byte-for-byte copies of another cell in the same sheet. A readout of
+# the installed art, not a gate, so it is out of `make verify` — the case for
+# or against relaying out a sheet is made here and decided in a plan.
+# docs/sheet_census.md is the committed reading.
+sheet-census:
+	$(call require-spritegen)
+	"$(SPRITEGEN_PY)" "$(SPRITEGEN)/tests/sheet_census.py"
+
 # The same gate for the sounds: the effects byte for byte, the marches by their
 # decoded samples — an Ogg's bytes belong to the libVorbis that encoded them.
 audio-snapshot:
@@ -572,7 +581,7 @@ mobile-soak:
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
 	audio audio-test audio-lint audio-snapshot sprites-test sprites-lint \
-	sprites-snapshot grain-census generators-lint generators-test \
+	sprites-snapshot grain-census sheet-census generators-lint generators-test \
 	portraits-test portraits-lint portraits-snapshot \
 	generators-venv portraits import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
