@@ -433,6 +433,25 @@ _HOOD_LINING: tuple[Point, ...] = (
     (110.0, 110.0),
     (60.0, 116.0),
 )
+_CAP_CROWN: tuple[Point, ...] = (
+    (58.0, 88.0),
+    (66.0, 58.0),
+    (110.0, 50.0),
+    (154.0, 58.0),
+    (162.0, 88.0),
+)
+_CAP_BAND: tuple[Point, ...] = (
+    (56.0, 86.0),
+    (164.0, 86.0),
+    (164.0, 100.0),
+    (56.0, 100.0),
+)
+_CAP_PEAK: tuple[Point, ...] = (
+    (50.0, 98.0),
+    (170.0, 98.0),
+    (160.0, 112.0),
+    (60.0, 112.0),
+)
 _GOGGLE_STRAP: tuple[Point, ...] = (
     (60.0, 100.0),
     (160.0, 100.0),
@@ -477,6 +496,22 @@ def _hood(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
     canvas.polygon(frame.path(_HOOD_LINING), KIT)
     canvas.stroke(path, INK_FEATURE, INK, closed=True)
     return path
+
+
+def _cap(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
+    """A service cap: a crown in faction cloth over a kit band and a peak.
+
+    The peak is what makes it a cap rather than a hat at chip size — a straight
+    dark bar over the brow, wider than the band it hangs off.
+    """
+    crown = frame.path(_CAP_CROWN)
+    canvas.polygon(crown, tint)
+    canvas.stroke(crown, INK_FEATURE, INK, closed=True)
+    for piece in (_CAP_BAND, _CAP_PEAK):
+        path = frame.path(piece)
+        canvas.polygon(path, KIT)
+        canvas.stroke(path, INK_FEATURE, INK, closed=True)
+    return crown
 
 
 def _goggles(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
@@ -542,6 +577,7 @@ def _unworn(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point
 
 _ACCESSORIES: dict[str, Callable[[Canvas, Frame, Skull, RGB], list[Point]]] = {
     "bandana": _worn(_BANDANA),
+    "cap": _cap,
     "eyepatch": _eyepatch,
     "glasses": _glasses,
     "goggles": _goggles,

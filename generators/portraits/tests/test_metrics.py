@@ -36,15 +36,13 @@ BAND_COVERAGE = 0.02
 MAX_TONES = 48
 TONE_COVERAGE = 0.001
 
-# M1/C9: silhouettes of the face crop at chip size, over all 253 pairs. One
-# pair is over the ceiling and it is named rather than rounded away: Orlov and
-# Ferrow are two buzz-cut square jaws with no headwear between them, which is a
-# roster retune (a `head`, `style` or `acc` column) and not this slice's — the
-# table is a transcription here. The gate is that no *other* pair joins them.
+# M1/C9: silhouettes of the face crop at chip size, over all 253 pairs. The
+# ceiling is a plain one — a measured failure is a roster retune, not a named
+# exception — and the pair that used to carry one, Orlov and Ferrow, was two
+# buzz-cut square jaws with no headwear between them until Ferrow took a cap.
 CHIP = 28
 MAX_IOU = 0.90
 MEAN_IOU = 0.78
-OVER_THE_CEILING = (("cass_orlov", "dane_ferrow"),)
 
 # C10: the sheet's collar budget — line officers V, staff mandarin, veterans
 # double — and the four costliest powers wear the stud.
@@ -367,9 +365,11 @@ class TheSilhouettesAreDistinct(unittest.TestCase):
         pairs = self._pairs()
         self.assertLessEqual(sum(p[0] for p in pairs) / len(pairs), MEAN_IOU)
 
-    def test_no_new_pair_crosses_the_ceiling(self):
-        over = tuple(sorted((a, b) for score, a, b in self._pairs() if score > MAX_IOU))
-        self.assertEqual(over, OVER_THE_CEILING)
+    def test_no_pair_crosses_the_ceiling(self):
+        over = sorted(
+            (round(score, 3), a, b) for score, a, b in self._pairs() if score > MAX_IOU
+        )
+        self.assertEqual([], over)
 
 
 class ThePropsStayInTheFrame(unittest.TestCase):
