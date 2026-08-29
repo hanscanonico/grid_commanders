@@ -72,19 +72,23 @@ def decay(t: float, half_life: float) -> np.ndarray:
 
 
 def adsr(t: float, a: float, d: float, s: float, r: float) -> np.ndarray:
-    """Linear ADSR fitted into t seconds; sustain level s, release r seconds."""
+    """Linear ADSR fitted into t seconds; sustain level s, release r seconds.
+
+    The stages must fit: a note too short for its own envelope would be cut
+    mid-release, which is the click the ramps exist to avoid.
+    """
     n = samples(t)
     na, nd, nr = samples(a), samples(d), samples(r)
-    ns = max(0, n - na - nd - nr)
-    env = np.concatenate(
+    if na + nd + nr > n:
+        raise ValueError(f"ADSR {a}+{d}+{r}s does not fit in {t}s")
+    return np.concatenate(
         [
             np.linspace(0.0, 1.0, na, endpoint=False),
             np.linspace(1.0, s, nd, endpoint=False),
-            np.full(ns, s),
+            np.full(n - na - nd - nr, s),
             np.linspace(s, 0.0, nr),
         ]
     )
-    return env[:n] if len(env) >= n else np.pad(env, (0, n - len(env)))
 
 
 def edge_fade(x: np.ndarray, t: float = 0.004) -> np.ndarray:

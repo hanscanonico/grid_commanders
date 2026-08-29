@@ -15,6 +15,7 @@ construction. The loop gates in tests/ hold that promise.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 import numpy as np
 
@@ -89,47 +90,48 @@ def pad(midi: float, t: float, vel: float) -> np.ndarray:
 # only Python-loop filters out of the render path.
 
 
+def _frozen(arr: np.ndarray) -> np.ndarray:
+    """A cached hit is shared by every beat that plays it — make it read-only
+    so an in-place edit raises instead of retuning the rest of the song."""
+    arr.flags.writeable = False
+    return arr
+
+
+@lru_cache(maxsize=None)
 def _kick_hit() -> np.ndarray:
     """A pitch-dropping thump with a soft beater tick on top."""
     body = dsp.sine(dsp.sweep(120.0, 44.0, 0.14, curve=1.5), 0.14)
     body *= dsp.decay(0.14, 0.05)
     tick = dsp.noise(0.02, seed=201) * dsp.decay(0.02, 0.004)
-    return dsp.mix(body, dsp.highpass(tick, 2000.0) * 0.25)
+    return _frozen(dsp.mix(body, dsp.highpass(tick, 2000.0) * 0.25))
 
 
+@lru_cache(maxsize=None)
 def _snare_hit() -> np.ndarray:
     """Parade snare: a bright crack over a short drum body."""
     crack = dsp.noise(0.16, seed=202) * dsp.decay(0.16, 0.03)
     crack = dsp.bandpass(crack, 700.0, 7500.0)
     body = dsp.sine(dsp.sweep(220.0, 170.0, 0.08), 0.08) * dsp.decay(0.08, 0.02)
-    return dsp.mix(crack, body * 0.5)
+    return _frozen(dsp.mix(crack, body * 0.5))
 
 
+@lru_cache(maxsize=None)
 def _hat_hit() -> np.ndarray:
     """Closed hat: a tick of high metal."""
-    return dsp.highpass(dsp.noise(0.05, seed=203) * dsp.decay(0.05, 0.012), 6500.0)
-
-
-_HIT_BUILDERS = {"kick": _kick_hit, "snare": _snare_hit, "hat": _hat_hit}
-_hits: dict[str, np.ndarray] = {}
-
-
-def _hit(name: str) -> np.ndarray:
-    if name not in _hits:
-        _hits[name] = _HIT_BUILDERS[name]()
-    return _hits[name]
+    tick = dsp.noise(0.05, seed=203) * dsp.decay(0.05, 0.012)
+    return _frozen(dsp.highpass(tick, 6500.0))
 
 
 def kick(_midi: float, _t: float, vel: float) -> np.ndarray:
-    return _hit("kick") * vel
+    return _kick_hit() * vel
 
 
 def snare(_midi: float, _t: float, vel: float) -> np.ndarray:
-    return _hit("snare") * vel
+    return _snare_hit() * vel
 
 
 def hat(_midi: float, _t: float, vel: float) -> np.ndarray:
-    return _hit("hat") * vel
+    return _hat_hit() * vel
 
 
 INSTRUMENTS = {
