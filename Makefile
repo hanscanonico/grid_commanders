@@ -342,9 +342,10 @@ format-check:
 	$(call require-gdtoolkit,gdformat)
 	gdformat --check $(SOURCES)
 
-# `atlases` regenerates both sheets with generators/sprites and installs them
-# (plus the per-cell reference sprites) here; `ui-art` draws the overlay, cursor
-# and icon, the art that pipeline has no home for.
+# `atlases` regenerates every sprite the game ships with generators/sprites and
+# installs it here: both sheets, the per-cell reference sprites, and the UI
+# chrome (the overlay, the cursor, the icon), which the engine used to draw for
+# itself out of a second palette nothing compared against the first.
 # `import` runs last because Godot caches image imports by size: without it a
 # rebuild that changes the atlas dimensions renders a blank map.
 # .NOTPARALLEL keeps that order under `make -j`, and it is file-scope on
@@ -356,16 +357,12 @@ format-check:
 # the whole file regardless.
 .NOTPARALLEL:
 
-tiles: atlases ui-art import
+tiles: atlases import
 
 atlases:
 	$(call require-spritegen)
 	"$(SPRITEGEN_PY)" "$(SPRITEGEN)/sprite_generator.py" \
 		-o "$(SPRITEGEN)/out" --install "$(CURDIR)"
-
-ui-art:
-	$(call require-godot)
-	$(GODOT) --headless --path . -s res://tools/generate_tiles.gd
 
 # The sound effects and the two music loops are composed and gated in
 # generators/audio (see assets/LICENSES.md) and installed here as committed
@@ -605,7 +602,7 @@ mobile-soak:
 	$(GODOT) --headless --path . -s res://tools/run_mobile_soak.gd -- $(SOAK)
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
-	atlases ui-art \
+	atlases \
 	audio audio-test audio-lint audio-snapshot sprites-test sprites-lint \
 	sprites-snapshot grain-census sheet-census generators-lint generators-test \
 	portraits-test portraits-lint portraits-snapshot \

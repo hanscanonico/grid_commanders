@@ -24,6 +24,9 @@ Outputs (under --out, default ./out):
                           art's own, screen-left); the consumer mirrors it
   terrain_atlas.png       896x320 RGBA — drop-in for assets/tiles/terrain_atlas.png
                           (the five property columns are transparent overlays)
+  overlay.png / ui/cursor.png / icon/icon.png
+                          the UI chrome — the range tile the scene modulates,
+                          the board cursor, and the project icon
   units/<id>_<team>.png   one units-atlas cell each — the atlas's own art
                           exported cell by cell, installed to
                           assets/sprites/units as a reviewable reference the
@@ -44,7 +47,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from . import anim, atlas, autotile, terrain
+from . import anim, atlas, autotile, chrome, terrain
 from .palette import FACTIONS, Faction, faction_by_key
 from .units import ATLAS_ORDER, Pose
 
@@ -53,6 +56,11 @@ TILES_DIR = "assets/tiles"
 AUTOTILES, AUTOTILES_DIR = "autotiles", "assets/tiles/autotiles"
 UNIT_CELLS, UNIT_CELLS_DIR = "units", "assets/sprites/units"
 BUILDING_CELLS, BUILDING_CELLS_DIR = "iso_buildings", "assets/sprites/iso_buildings"
+# The two chrome files that do not land beside the board sprites. Each output
+# directory installs into exactly one place, so the icon — alone at the assets
+# root in the game — gets a directory of its own here.
+CURSOR_DIR, CURSOR_INSTALL_DIR = "ui", "assets/ui"
+ICON_DIR, ICON_INSTALL_DIR = "icon", "assets"
 
 
 @dataclass(frozen=True)
@@ -115,6 +123,9 @@ SHEETS: tuple[Output, ...] = (
     ),
     _autotiles("plains", autotile.plains_sheet),
     _autotiles("mountain", autotile.mountain_sheet),
+    Output("overlay.png", chrome.overlay, TILES_DIR),
+    Output(f"{CURSOR_DIR}/cursor.png", chrome.cursor, CURSOR_INSTALL_DIR),
+    Output(f"{ICON_DIR}/icon.png", chrome.icon, ICON_INSTALL_DIR),
     Output("preview_units.png", lambda: atlas.preview(_units_sheet(Pose.A, True), 2)),
     Output(
         "preview_terrain.png",

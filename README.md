@@ -36,9 +36,8 @@ make determinism     # replay one pinned balance match; byte-diff it against the
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
 make format-check    # gdformat --check — report what it would rewrite, change nothing
-make tiles           # rebuild the art: generators/sprites atlases, UI chrome, import
-make atlases         # the first half alone: the generator's sheets
-make ui-art          # the second alone: the overlay, cursor and icon this repo draws itself
+make tiles           # rebuild the art: generators/sprites sheets and UI chrome, then import
+make atlases         # the generation alone: the sheets, the cells and the chrome
 make generators-venv # one-off: the Python interpreters the three generators need
 make audio           # reinstall the sound effects + music from generators/audio + import
 make audio-test      # that generator's own gate: rosters, mix, loop seams, determinism
@@ -1310,8 +1309,8 @@ themes so the sprites and the UI chrome can never disagree about a faction's col
 `make sprites-test` pins rather than a comment. The committed
 atlases are its exact output; the per-cell PNGs under `assets/sprites/units` and
 `assets/sprites/iso_buildings` are the same art exported cell by cell as reviewable reference
-copies. The UI chrome that has no home there — the range overlay, the cursor, the icon — is drawn
-by `tools/generate_tiles.gd`. The commander portraits and faction emblems are
+copies. The UI chrome — the range overlay, the cursor, the icon — is drawn by the same pipeline
+(`spritegen/chrome.py`) and gated the same way. The commander portraits and faction emblems are
 generated too, by `generators/portraits` (`make portraits`) — a second Python pipeline in this
 repository, painting project-original art to the "Heroic Commander Portraits" design handoff's
 spec with no third-party pixels, gated by `make portraits-test` and `make portraits-snapshot`. All sound — the nine effects and two
@@ -1323,9 +1322,8 @@ by `make audio` — the effects as committed WAVs, the two marches as Ogg Vorbis
 imported or exported. Third-party asset licenses must be
 tracked in `assets/LICENSES.md`. No Nintendo assets or names may ever be used.
 
-`make tiles` rebuilds the art in three ordered steps: `atlases` regenerates both sheets with
-`generators/sprites` and installs them here, `ui-art` draws the overlay, cursor and icon headless,
-and `import` reimports the result — Godot caches image imports by size, so skipping the last step
+`make tiles` rebuilds the art in two ordered steps: `atlases` regenerates the sheets, the cells and
+the UI chrome with `generators/sprites` and installs them here, and `import` reimports the result — Godot caches image imports by size, so skipping the last step
 after a rebuild that changes atlas dimensions renders a blank map. `make sprites-test` is that
 pipeline's own gate (cell geometry, ramps, phase sheets, the animation manifest, the palette
 mirror), and like `make audio-test` it stays out of `make verify` and runs as its own CI job.

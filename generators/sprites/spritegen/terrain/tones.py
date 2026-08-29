@@ -116,7 +116,7 @@ TERRAIN_MEDIAN_CEILING = 165.0  # and no tile's median may reach it
 # share there stays a third of the share the unit sheet is held to.
 BUILDING_KEY_CEILING = 200.0
 
-# generate_tiles.gd's hues, revalued under the ceiling above. The hues are the
+# The engine script's original hues, revalued under the ceiling above. The hues are the
 # map's own; what moved is their value, plus the three tans that had collapsed
 # into one: road, bridge deck and shoal sand now sit ~18L apart with a hue
 # split — gravel grey, timber brown, beach sand — so movement cost reads from

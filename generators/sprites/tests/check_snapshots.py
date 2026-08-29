@@ -40,23 +40,33 @@ from pathlib import Path
 from diff_sheet import write_diff_sheet
 from PIL import Image, ImageChops
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-GALLERY_ASSETS = Path(__file__).resolve().parents[1] / ".lavish" / "assets"
+GENERATOR_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(GENERATOR_ROOT))
 
-# Where each generated relpath is installed in the game, by its directory.
-INSTALL_MAP = {
-    ".": "assets/tiles",
-    "autotiles": "assets/tiles/autotiles",
-    "iso_buildings": "assets/sprites/iso_buildings",
-}
+from spritegen.pipeline import SHEETS, building_cells  # noqa: E402
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+GALLERY_ASSETS = GENERATOR_ROOT / ".lavish" / "assets"
+
+
+def _install_map() -> dict[str, str]:
+    """Where each generated relpath is installed in the game, by its directory
+    — read off the outputs themselves, so a new destination (the icon's, the
+    cursor's) needs no second list here to be compared."""
+    return {
+        Path(o.rel).parent.as_posix(): o.install_to
+        for o in (*SHEETS, *building_cells())
+        if o.install_to is not None
+    }
+
+
+INSTALL_MAP = _install_map()
 # Emitted for the review gallery and installed nowhere: the previews are
 # composed scenes rather than art the game loads, so they stay compared
 # against the gallery's own copies.
 NOT_INSTALLED = frozenset(
     {"preview_map.png", "preview_terrain.png", "preview_units.png"}
 )
-# Installed beside the generated art but drawn by `make ui-art`, not here.
-NOT_GENERATED = frozenset({"overlay.png"})
 # The non-image output, compared byte for byte.
 BYTE_COMPARED = frozenset({"anim.json"})
 
@@ -82,8 +92,7 @@ def _installed() -> dict[Path, Path]:
     pairs: dict[Path, Path] = {}
     for rel_dir, install_dir in INSTALL_MAP.items():
         for p in (REPO_ROOT / install_dir).glob("*.png"):
-            if p.name not in NOT_GENERATED:
-                pairs[Path(rel_dir) / p.name] = p
+            pairs[Path(rel_dir) / p.name] = p
     # A named baseline that is not on disk is left out of the pairs, so its
     # generated twin fails the "no baseline" direction rather than crashing.
     for name in BYTE_COMPARED:

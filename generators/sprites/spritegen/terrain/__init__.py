@@ -1,6 +1,6 @@
 """The 14 terrain tiles, drawn native at the 64px atlas cell.
 
-Ground hues are the game's tools/generate_tiles.gd palette, revalued under
+Ground hues are the game's original chrome palette, revalued under
 the ceiling below so scenery never out-keys an army; the detail on top
 (painted canopies, terraced mountains, foam, wear) is what this generator
 adds. Ground fills are seamless — no tile is darkened at its edge
