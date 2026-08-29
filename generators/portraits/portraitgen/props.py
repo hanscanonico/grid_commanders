@@ -9,6 +9,10 @@ to the collar, or a **sleeve** rising out of the hem to a cuff. The sleeve is
 why there is no hand here: a bare flesh disc under an object is the one contact
 the reviews rejected outright.
 
+The connector is the whole of it, and it is measured rather than trusted: a
+prop's own drawing has to run unbroken from the object to the figure, because
+an object hanging clear of its own sleeve reads exactly as one that floats.
+
 Every prop casts the same hard shadow — one flat tone, no blur, down and to the
 right — so it stands off what is behind it under the sheet's one light. Nothing
 breaks the frame closer than four pixels to the raster's right edge.
@@ -135,11 +139,12 @@ def _sleeve(canvas: Canvas, cuff: Point, faction: Faction, ramp: Ramp) -> None:
     _shape(canvas, _box(x - 19.0, y - 2.0, x + 19.0, y + 10.0), ramp.deep, INK_DETAIL)
 
 
-def _cord(canvas: Canvas, first: Point, second: Point, colour: RGB) -> None:
-    """One rope of a lanyard: ink under a lighter core, so a cord thin enough to
-    read as rope still carries the sheet's outline."""
-    canvas.stroke([first, second], INK_FEATURE, (*INK, 255))
-    canvas.stroke([first, second], INK_DETAIL, (*colour, 255))
+def _cord(canvas: Canvas, path: Iterable[Point], colour: RGB) -> None:
+    """One rope of a lanyard, a cable or a sling: ink under a lighter core, so a
+    cord thin enough to read as rope still carries the sheet's outline."""
+    run = list(path)
+    canvas.stroke(run, INK_FEATURE, (*INK, 255))
+    canvas.stroke(run, INK_DETAIL, (*colour, 255))
 
 
 # --- the five shouldered objects, drawn behind the figure ---------------------
@@ -174,26 +179,29 @@ def _wrench_back(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _anchor_back(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _shape(canvas, _box(166.0, 96.0, 182.0, 222.0), STEEL)
-    _shape(canvas, _box(150.0, 114.0, 198.0, 128.0), STEEL)
+    """Slung over the shoulder: the shank runs down behind it, the crown tucks
+    under the shoulder line, and only the ring, the stock and the arms clear
+    it. The occlusion is the depth — flat on the chest the anchor read as a bib."""
+    _shape(canvas, _box(168.0, 106.0, 184.0, 240.0), STEEL)
+    _shape(canvas, _box(152.0, 124.0, 192.0, 138.0), STEEL)
     _ink(
         canvas,
-        [(174.0, 68.0), (190.0, 84.0), (174.0, 100.0), (158.0, 84.0)],
+        [(176.0, 78.0), (190.0, 92.0), (176.0, 106.0), (162.0, 92.0)],
         INK_SILHOUETTE,
     )
     _shape(
         canvas,
         [
-            (152.0, 152.0),
-            (158.0, 198.0),
-            (174.0, 208.0),
-            (192.0, 198.0),
-            (198.0, 152.0),
-            (186.0, 158.0),
-            (182.0, 188.0),
-            (174.0, 194.0),
-            (166.0, 188.0),
-            (164.0, 158.0),
+            (154.0, 162.0),
+            (160.0, 208.0),
+            (176.0, 218.0),
+            (194.0, 208.0),
+            (200.0, 162.0),
+            (188.0, 168.0),
+            (184.0, 198.0),
+            (176.0, 204.0),
+            (168.0, 198.0),
+            (166.0, 168.0),
         ],
         STEEL,
     )
@@ -217,7 +225,7 @@ def _axe_back(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _hammer_back(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _shape(canvas, [(162.0, 68.0), (180.0, 68.0), (176.0, 208.0), (158.0, 208.0)], WOOD)
+    _shape(canvas, [(162.0, 68.0), (180.0, 68.0), (176.0, 216.0), (158.0, 216.0)], WOOD)
     _shape(canvas, _box(146.0, 42.0, 194.0, 76.0), STEEL)
     canvas.rect((180.0, 44.0, 192.0, 74.0), (*SLATE, 255))
 
@@ -246,8 +254,9 @@ def _wrench_front(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _anchor_front(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _cord(canvas, (164.0, 208.0), (126.0, 268.0), faction.body_dk)
-    _cord(canvas, (178.0, 216.0), (140.0, 268.0), faction.body_dk)
+    """The sling: two ropes off the shank, over the shoulder and down the chest."""
+    _cord(canvas, [(178.0, 214.0), (152.0, 212.0), (134.0, 224.0)], faction.body_dk)
+    _cord(canvas, [(180.0, 226.0), (154.0, 226.0), (136.0, 238.0)], faction.body_dk)
 
 
 def _axe_front(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
@@ -329,8 +338,7 @@ def _monocle(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     """
     canvas.stroke(_ring((130.0, 141.0), 16.0), INK_FEATURE, (*INK, 255), closed=True)
     canvas.stroke([(118.0, 133.0), (124.0, 128.0)], INK_DETAIL, (*STEEL_LIT, 255))
-    _cord(canvas, (143.0, 150.0), (159.0, 196.0), GOLD)
-    _cord(canvas, (159.0, 196.0), (166.0, 224.0), GOLD)
+    _cord(canvas, [(143.0, 150.0), (159.0, 196.0), (166.0, 224.0)], GOLD)
     _disc(canvas, (166.0, 228.0), 5.0, GOLD)
 
 
@@ -356,18 +364,19 @@ def _helm(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _scales(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _shape(canvas, _box(52.0, 196.0, 62.0, 268.0), STEEL)
-    _shape(canvas, _box(28.0, 188.0, 96.0, 198.0), STEEL)
-    for x in (36.0, 88.0):
-        canvas.stroke([(x, 196.0), (x, 214.0)], INK_DETAIL, (*INK, 255))
-    _shape(canvas, [(22.0, 214.0), (50.0, 214.0), (36.0, 230.0)], GOLD, INK_DETAIL)
-    _shape(canvas, [(74.0, 214.0), (102.0, 214.0), (88.0, 230.0)], GOLD, INK_DETAIL)
-    _disc(canvas, (57.0, 186.0), 5.0, GOLD)
+    """Hung under the collar, not laid beside it: the post rises into the collar
+    band and the beam carries the pans down the chest."""
+    _shape(canvas, _box(104.0, 212.0, 116.0, 242.0), STEEL)
+    _shape(canvas, _box(74.0, 238.0, 146.0, 248.0), STEEL)
+    for x in (80.0, 140.0):
+        canvas.stroke([(x, 246.0), (x, 256.0)], INK_DETAIL, (*INK, 255))
+    _shape(canvas, [(66.0, 256.0), (94.0, 256.0), (80.0, 268.0)], GOLD, INK_DETAIL)
+    _shape(canvas, [(126.0, 256.0), (154.0, 256.0), (140.0, 268.0)], GOLD, INK_DETAIL)
 
 
 def _whistle(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _cord(canvas, (94.0, 208.0), (104.0, 242.0), GOLD)
-    _cord(canvas, (126.0, 208.0), (118.0, 242.0), GOLD)
+    _cord(canvas, [(94.0, 208.0), (104.0, 242.0)], GOLD)
+    _cord(canvas, [(126.0, 208.0), (118.0, 242.0)], GOLD)
     _shape(canvas, [(78.0, 244.0), (96.0, 240.0), (96.0, 256.0), (78.0, 252.0)], GOLD)
     _shape(canvas, _box(96.0, 238.0, 128.0, 258.0), GOLD)
     _disc(canvas, (114.0, 248.0), 3.0, INK)
@@ -390,7 +399,7 @@ def _baton(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 def _card(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     _sleeve(canvas, (158.0, 232.0), faction, ramp)
-    _shape(canvas, _box(140.0, 178.0, 176.0, 226.0), PAPER)
+    _shape(canvas, _box(140.0, 178.0, 176.0, 234.0), PAPER)
     _shape(
         canvas,
         [(158.0, 190.0), (168.0, 202.0), (158.0, 214.0), (148.0, 202.0)],
@@ -419,29 +428,40 @@ def _book(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 def _dagger(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     _sleeve(canvas, (168.0, 226.0), faction, ramp)
     _shape(canvas, [(174.0, 138.0), (184.0, 196.0), (158.0, 196.0)], STEEL_LIT)
-    _shape(canvas, _box(160.0, 196.0, 180.0, 214.0), WOOD, INK_DETAIL)
+    _shape(canvas, _box(160.0, 196.0, 180.0, 226.0), WOOD, INK_DETAIL)
 
 
 def _plane(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _sleeve(canvas, (150.0, 234.0), faction, ramp)
+    """Landed on the shoulder, under a mounting strap, and clear of the jaw:
+    held up at the chin it cut the crop the HUD chip is taken from."""
     _shape(
-        canvas, [(118.0, 198.0), (146.0, 186.0), (178.0, 200.0), (146.0, 210.0)], PAPER
+        canvas,
+        [(150.0, 219.0), (172.0, 253.0), (164.0, 259.0), (142.0, 225.0)],
+        ramp.deep,
+        INK_DETAIL,
+    )
+    _shape(
+        canvas, [(124.0, 248.0), (152.0, 236.0), (188.0, 248.0), (152.0, 258.0)], PAPER
     )
     _shape(
         canvas,
-        [(138.0, 188.0), (152.0, 168.0), (160.0, 172.0), (152.0, 194.0)],
+        [(146.0, 244.0), (164.0, 226.0), (174.0, 232.0), (156.0, 250.0)],
         faction.body,
         INK_DETAIL,
     )
     _shape(
         canvas,
-        [(120.0, 196.0), (110.0, 184.0), (116.0, 202.0)],
+        [(130.0, 246.0), (122.0, 236.0), (128.0, 250.0)],
         faction.body,
         INK_DETAIL,
     )
 
 
 def _radio(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
+    """The handset and the cable the sheet's prop contact is measured against:
+    the cord leaves the set, coils down across the shoulder and ends at the
+    collar, so the object is tied to the figure by a drawn run rather than by
+    standing next to it."""
     _sleeve(canvas, (150.0, 232.0), faction, ramp)
     canvas.stroke(
         [(146.0, 168.0), (132.0, 132.0), (142.0, 110.0)], INK_DETAIL, (*INK, 255)
@@ -449,25 +469,47 @@ def _radio(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     _shape(canvas, _box(134.0, 166.0, 168.0, 214.0), SLATE)
     for y in (176.0, 184.0):
         canvas.stroke([(140.0, y), (162.0, y)], INK_DETAIL, (*PAPER, 255))
+    _cord(
+        canvas,
+        [
+            (144.0, 212.0),
+            (124.0, 220.0),
+            (134.0, 230.0),
+            (114.0, 238.0),
+            (124.0, 248.0),
+            (102.0, 256.0),
+        ],
+        SLATE,
+    )
 
 
 def _coins(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _sleeve(canvas, (158.0, 238.0), faction, ramp)
-    _disc(canvas, (166.0, 204.0), 10.0, GOLD)
-    _disc(canvas, (188.0, 186.0), 10.0, GOLD)
-    _disc(canvas, (150.0, 178.0), 10.0, GOLD)
+    """Three coins strung on a strap off the collar, each sitting on the band —
+    beside the head they were three discs in open air."""
+    _shape(
+        canvas,
+        [(132.0, 197.0), (180.0, 255.0), (172.0, 261.0), (124.0, 203.0)],
+        ramp.deep,
+        INK_DETAIL,
+    )
+    _disc(canvas, (140.0, 214.0), 10.0, GOLD)
+    _disc(canvas, (154.0, 232.0), 10.0, GOLD)
+    _disc(canvas, (168.0, 250.0), 10.0, GOLD)
 
 
 def _compass(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _sleeve(canvas, (72.0, 242.0), faction, ramp)
-    _disc(canvas, (56.0, 208.0), 24.0, PAPER)
+    """Hung off the collar on a two-rope lanyard through its own ring."""
+    _cord(canvas, [(58.0, 190.0), (96.0, 210.0)], GOLD)
+    _cord(canvas, [(58.0, 190.0), (86.0, 218.0)], GOLD)
+    _disc(canvas, (58.0, 190.0), 5.0, GOLD)
+    _disc(canvas, (56.0, 216.0), 22.0, PAPER)
     _ink(
-        canvas, [(56.0, 190.0), (74.0, 208.0), (56.0, 226.0), (38.0, 208.0)], INK_DETAIL
+        canvas, [(56.0, 198.0), (74.0, 216.0), (56.0, 234.0), (38.0, 216.0)], INK_DETAIL
     )
     _shape(
-        canvas, [(56.0, 190.0), (63.0, 208.0), (56.0, 214.0)], faction.body, INK_DETAIL
+        canvas, [(56.0, 198.0), (63.0, 216.0), (56.0, 222.0)], faction.body, INK_DETAIL
     )
-    _shape(canvas, [(56.0, 226.0), (49.0, 208.0), (56.0, 214.0)], STEEL, INK_DETAIL)
+    _shape(canvas, [(56.0, 234.0), (49.0, 216.0), (56.0, 222.0)], STEEL, INK_DETAIL)
 
 
 def _ledger(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:

@@ -6,6 +6,12 @@ per-drawing: every prop reaches the figure through a strap, a lanyard, a cable,
 a perch or a sleeve, and this measures that its alpha really does meet the
 figure's. The stand-in figure is the uniform mass, which is the layer a prop is
 composed against.
+
+Meeting it is the floor, not the bar. A prop that reaches the bust through a
+shape detached from the object it carries still reads as a float, so the
+connector is measured too: unbroken drawing from the object down to the
+contact, a plane held clear of the crop the HUD chip is cut from, and an anchor
+the shoulder really passes in front of.
 """
 
 from __future__ import annotations
@@ -13,8 +19,10 @@ from __future__ import annotations
 import unittest
 
 from PIL import Image, ImageChops
+from test_face_region import chin_row, skin_tones
 
-from portraitgen import props, uniform
+from portraitgen import bust, props, roster, uniform
+from portraitgen import canvas as canvas_module
 from portraitgen.canvas import Canvas
 from portraitgen.light import Ramp
 from portraitgen.palette import faction_by_key
@@ -33,6 +41,12 @@ RAMP = Ramp(
 HEAD = (54.0, 84.0, 166.0, 196.0)
 
 
+def _shoulders() -> Image.Image:
+    canvas = Canvas()
+    uniform.draw(canvas, FACTION, uniform.COLLAR_DEFAULT, RAMP)
+    return canvas.silhouette()
+
+
 def _figure() -> Image.Image:
     canvas = Canvas()
     uniform.draw(canvas, FACTION, uniform.COLLAR_DEFAULT, RAMP)
@@ -44,6 +58,19 @@ def _prop(key: str, *, layer: str = "all") -> Canvas:
     canvas = Canvas()
     props.draw(canvas, key, FACTION, RAMP, layer=layer)
     return canvas
+
+
+def _painted_rows(canvas: Canvas) -> set[int]:
+    """Which portrait rows a layer puts ink on."""
+    mask = canvas.silhouette()
+    width = mask.width
+    lit = mask.get_flattened_data()
+    return {index // width // canvas.scale for index, value in enumerate(lit) if value}
+
+
+def _area(mask: Image.Image) -> int:
+    """A one-bit mask's painted area, in portrait pixels."""
+    return sum(1 for value in mask.get_flattened_data() if value) // Canvas().scale ** 2
 
 
 class EveryPropDraws(unittest.TestCase):
@@ -70,6 +97,60 @@ class EveryPropTouchesTheBust(unittest.TestCase):
             with self.subTest(prop=key):
                 overlap = ImageChops.multiply(_prop(key).silhouette(), figure)
                 self.assertIsNotNone(overlap.getbbox(), "the prop meets nothing")
+
+
+class TheConnectorIsDrawn(unittest.TestCase):
+    """Touching is not enough: the run from the object to the figure has to be
+    drawn. An object hanging clear of its own strap reaches the bust through a
+    detached second shape, which is the float the reviews kept naming — so the
+    measure is that a prop crosses every row of its own span."""
+
+    def test_no_prop_skips_a_row_of_its_own_span(self):
+        for key in sorted(props.PROPS):
+            with self.subTest(prop=key):
+                painted = _painted_rows(_prop(key))
+                span = range(min(painted), max(painted) + 1)
+                self.assertEqual([], [row for row in span if row not in painted])
+
+
+class ThePlaneRidesTheShoulder(unittest.TestCase):
+    """Perrin Ash's model plane, held up beside the jaw, crossed the crop the
+    HUD chip and the speech bust are cut from."""
+
+    def test_the_prop_clears_the_face_crop_s_chin_row(self):
+        face = roster.FACES["perrin_ash"]
+        chin = chin_row(bust.paint(face), skin_tones(face.skin))
+        top = bust.prop_art(face).getbbox()[1]
+        self.assertGreater(top, chin)
+
+
+class TheAnchorHangsBehindTheShoulder(unittest.TestCase):
+    """Halden Marr's anchor read as a bib because none of it was occluded: an
+    object the figure passes in front of has depth, one laid on the chest is a
+    decal."""
+
+    HIDDEN_PX = 500
+
+    def test_the_shank_runs_behind_the_shoulder(self):
+        behind = _prop("anchor", layer="back").silhouette()
+        self.assertGreaterEqual(
+            _area(ImageChops.multiply(behind, _shoulders())), self.HIDDEN_PX
+        )
+
+
+class TheScalesHangPlumb(unittest.TestCase):
+    """Iona Vance's scales sat off to one side of the chest, which reads as an
+    object laid on her rather than hung from her collar. A balance hangs plumb:
+    its beam straddles the midline the collar closes on."""
+
+    OFF_MIDLINE_PX = 6
+
+    def test_the_beam_is_centred_on_the_bust_midline(self):
+        left, _, right, _ = _prop("scales").silhouette().getbbox()
+        scale = Canvas().scale
+        centre = (left + right) / 2 / scale
+        midline = canvas_module.PORTRAIT_SIZE[0] / 2
+        self.assertLessEqual(abs(centre - midline), self.OFF_MIDLINE_PX)
 
 
 class EveryPropCasts(unittest.TestCase):
