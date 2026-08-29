@@ -43,6 +43,10 @@ const SKY_HORIZON := Color(0.749, 0.902, 0.949)
 const BAR := Color(0.055, 0.063, 0.078)
 const DIM := Color(0.078, 0.086, 0.118)
 
+## The pale of a landing's kicked-up specks, and of the haze hanging over a
+## skyline: the same off-white, drawn at each site's own alpha.
+const DUST := Color(0.941, 0.925, 0.886)
+
 ## The flattened contact shadow a figure, a building or a piece of scenery casts
 ## on the diorama's ground. Each site sets its own alpha.
 const GROUND_SHADOW := Color(0.078, 0.102, 0.133)

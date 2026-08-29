@@ -20,8 +20,10 @@ extends Control
 
 ## Share of the arena the grass plane fills, up from the bottom.
 const GROUND_RATIO := 0.42
-## How many steps the sky is graded in over what is left above it.
-const SKY_BANDS := 28
+## How many steps the sky is graded in over what is left above it. The capture sky
+## grades a long way — slate to a warm horizon — so it wants more steps than the
+## combat cut-in's does before the bands themselves start reading.
+const SKY_BANDS := 40
 ## How tall the property's tallest shape stands. The board cell is 64 px; here it
 ## fills a good third of the frame so the flip is the thing the eye lands on.
 const PROP_PX := 132.0
@@ -43,6 +45,10 @@ const PROP_DEPTH_PX := 0.14
 ## frame is *for*, and the object average carries enough grey wall and grass either
 ## side of the roof to leave two factions the same olive.
 const ROOF_WINDOW := Rect2i(16, 24, 34, 16)
+## And the part of it that is the ground the property stands on — the bottom band,
+## below every roof — which is what the backdrop's own field is tinted toward, so
+## a desert or a city capture does not happen on a lawn.
+const GROUND_WINDOW := Rect2i(4, 44, 56, 16)
 ## Where the property's base sits, as a share of the arena, and how high off the
 ## bottom its feet rest.
 const PROP_CENTER := 0.66
@@ -61,10 +67,6 @@ const SQUAD_SLOTS: Array[Vector2] = [
 ## a share of the width left of the property.
 const MARCH_FROM := -280.0
 const MARCH_TO := 0.24
-
-const GRASS := Color(0.471, 0.784, 0.314)
-const GRASS_DARK := Color(0.353, 0.651, 0.235)
-const DUST := Color(0.941, 0.925, 0.886)
 
 ## Where the lower plate's defence row starts, and the space it leaves between the
 ## terrain's name and its first star.
@@ -148,8 +150,7 @@ func _draw() -> void:
 	if unit == null or terrain == null:
 		return
 	var arena := _arena()
-	_draw_sky(arena)
-	_draw_ground(arena)
+	_draw_backdrop(arena)
 	_draw_property(arena)
 	_draw_squad(arena)
 	_draw_dust(arena)
@@ -163,38 +164,24 @@ func _arena() -> Rect2:
 # --- backdrop ----------------------------------------------------------------
 
 
-func _draw_sky(arena: Rect2) -> void:
+## Sky, town and ground, in that order. Every layer is CaptureBackdrop's; what is
+## the stage's is the two colours it hands over, both sampled off the very cell
+## being taken and both in the row the property is currently drawn in — so the
+## town flips faction with the building and the field is the ground the capture
+## really stands on.
+func _draw_backdrop(arena: Rect2) -> void:
 	var horizon := _horizon(arena)
-	CutsceneScenery.draw_sky_gradient(self, arena, size.x, horizon, SKY_BANDS)
-	CutsceneScenery.draw_cloud(
-		self, Vector2(size.x * 0.22, arena.position.y + arena.size.y * 0.16), 1.0
+	var row := _atlas_row()
+	CaptureBackdrop.draw_sky(self, arena, size.x, horizon, SKY_BANDS)
+	CaptureBackdrop.draw_skyline(
+		self, size.x, horizon, PROP_PX, CutsceneScenery.cell_tint(prop_col, row, ROOF_WINDOW), clock
 	)
-	CutsceneScenery.draw_cloud(
-		self, Vector2(size.x * 0.72, arena.position.y + arena.size.y * 0.08), 0.66
+	CaptureBackdrop.draw_ground(
+		self, arena, size.x, horizon, CutsceneScenery.cell_tint(prop_col, row, GROUND_WINDOW)
 	)
-
-
-## A grass plane receding to the horizon: rows that lighten and thin toward the
-## back, so the field reads as ground rather than a wall.
-func _draw_ground(arena: Rect2) -> void:
-	var horizon := _horizon(arena)
-	var floor_y := arena.position.y + arena.size.y
-	var depth := floor_y - horizon
-	var y := horizon
-	var row_h := depth * 0.06
-	var toggle := 0
-	while y < floor_y:
-		var lit := lerpf(0.82, 1.0, clampf((y - horizon) / depth, 0.0, 1.0))
-		var base := GRASS if toggle % 2 == 0 else GRASS_DARK
-		draw_rect(
-			Rect2(0.0, y, size.x, row_h + 1.0), Color(base.r * lit, base.g * lit, base.b * lit)
-		)
-		y += row_h
-		row_h *= 1.5
-		toggle += 1
-	draw_rect(Rect2(0.0, horizon, size.x, 2.0), Color(GRASS_DARK.darkened(0.35), 0.9))
-	draw_rect(Rect2(0.0, horizon - 1.0, size.x, 1.0), Color(1.0, 1.0, 1.0, 0.3))
-	draw_rect(Rect2(0.0, floor_y - 16.0, size.x, 16.0), Color(0.0, 0.0, 0.0, 0.14))
+	CaptureBackdrop.draw_light_shaft(
+		self, CaptureBackdrop.sun_at(size.x, horizon), horizon, _prop_base(arena), accent
+	)
 
 
 func _horizon(arena: Rect2) -> float:
@@ -343,7 +330,7 @@ func _draw_dust(arena: Rect2) -> void:
 			var reach := lerpf(4.0, 44.0 + (i % 3) * 12.0, p)
 			var s := CutsceneFx.ramp(p, [0.0, 0.4, 1.0], [6.0, 11.0, 3.0])
 			var pos := at + Vector2(cos(ang) * reach, sin(ang) * reach * 0.5)
-			draw_circle(pos, s * 0.5, Color(DUST, 1.0 - p))
+			draw_circle(pos, s * 0.5, Color(CutscenePalette.DUST, 1.0 - p))
 
 
 # --- plates ------------------------------------------------------------------
