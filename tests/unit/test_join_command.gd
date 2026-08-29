@@ -2,9 +2,9 @@ extends GutTest
 ## JoinCommand on its own: what it refuses, and what a merge actually does to
 ## the twin that stays.
 ##
-## Every rejection asserts the exact reason string. A join has six of them and
+## Every rejection asserts the exact reason string. A join has five of them and
 ## four had never been reached — a bare `assert_ne(validate(), "")` passes on any
-## of the six, so a branch that started answering with its neighbour's message
+## of the five, so a branch that started answering with its neighbour's message
 ## would have kept the suite green.
 ##
 ## The one reason not staged here is the team half of "can only join an identical
@@ -87,7 +87,24 @@ func test_the_twin_is_exhausted_and_cannot_be_refreshed() -> void:
 	assert_false(target.refreshable)
 
 
-# --- the six refusals ---------------------------------------------------------
+## Only the mover has to be unspent: a twin that already took its turn is still
+## a place to put a wounded unit, and it stays spent afterwards.
+func test_a_spent_twin_can_still_be_merged_into() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n1 t 1 0")
+	var mover := state.units[0]
+	var target := state.units[1]
+	mover.hp = 40
+	target.hp = 50
+	target.acted = true
+	var command := JoinCommand.new(mover, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]))
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_eq(target.hp, 90, "the mover's points land on the twin")
+	assert_true(target.acted, "which is still done for the turn")
+	assert_false(state.units.has(mover), "and the mover is gone")
+
+
+# --- the five refusals ---------------------------------------------------------
 
 
 func test_join_answers_the_move_rules_first() -> void:
@@ -128,18 +145,6 @@ func test_join_rejects_a_different_unit_type() -> void:
 			state
 		),
 		"can only join an identical friendly unit"
-	)
-
-
-func test_join_rejects_a_target_that_has_already_acted() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n1 t 1 0")
-	state.units[1].hp = 50
-	state.units[1].acted = true
-	assert_eq(
-		JoinCommand.new(state.units[0], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).validate(
-			state
-		),
-		"target has already acted"
 	)
 
 

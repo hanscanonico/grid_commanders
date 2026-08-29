@@ -348,8 +348,8 @@ func _consider_captures(
 ## withdrawal is last: it must be strictly better than running away, not equal.
 ##
 ## What a join is legal at all is JoinCommand's to say, and it is asked rather
-## than re-listed here: same type, same team, a target that is damaged, unspent
-## and carrying nothing. What this weighs is only which of the legal ones is
+## than re-listed here: same type, same team, a target that is damaged and
+## carrying nothing. What this weighs is only which of the legal ones is
 ## worth doing.
 func _consider_join(
 	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
