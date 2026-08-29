@@ -63,6 +63,16 @@ def centroid_hz(x: np.ndarray) -> float:
     return float((freqs * spec).sum() / total) if total > 0 else 0.0
 
 
+def voice_contribution_db(mix: np.ndarray, without: np.ndarray) -> float:
+    """How much one voice carries, in dB relative to the mix it plays in.
+
+    The voice is what the two mixes differ by, so its own RMS against the
+    full mix's is the level it is heard at — a voice muted, emptied or
+    turned down reads straight off this number.
+    """
+    return rms_db(mix - without) - rms_db(mix)
+
+
 # -- loop measurements -------------------------------------------------------
 # A music track loops the whole file (the game's LOOP_FORWARD contract), so
 # its one seam is last-sample -> first-sample. These read that seam the same
