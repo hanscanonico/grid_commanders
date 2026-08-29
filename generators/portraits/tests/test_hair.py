@@ -15,10 +15,20 @@ import unittest
 import preview_sheet
 from portraitgen import hair, light
 from portraitgen.canvas import PORTRAIT_SIZE, Canvas
+from portraitgen.features import REFERENCE_BOX
 from portraitgen.head import Skull
 from portraitgen.palette import INK
 
 SKULL = Skull(1.0, "round", 0.0, 1.0)
+# That skull is the one the styles were authored on, so it lands on the
+# reference box one for one and a share of the skull is a share of this box.
+LEFT, TOP, RIGHT, BOTTOM = REFERENCE_BOX
+# How far a bound read off the raster may sit from the dial that drew it: a mass
+# carries half the silhouette's ink outside its own path on each side, plus the
+# supersampled canvas' own rounding step.
+INK_SLACK = 5
+# How near the highest row a column has to reach to count as one of the curls.
+CREST_BAND = 2
 MANE = light.build_ramp((90, 60, 40))
 SKIN = light.build_ramp(preview_sheet.SKIN)
 NAMED = {INK, MANE.deep, MANE.shade, MANE.base, MANE.lit, MANE.rim}
@@ -73,6 +83,28 @@ def _regions(pixels: list[tuple[int, int]]) -> int:
                     left.discard(near)
                     edge.append(near)
     return islands
+
+
+def _silhouette(cell: Canvas) -> list[tuple[float, float]]:
+    """Every painted pixel, in the portrait pixels the styles are authored in."""
+    pixels = cell.image.load()
+    width, height = cell.image.size
+    return [
+        (x / cell.scale, y / cell.scale)
+        for y in range(height)
+        for x in range(width)
+        if pixels[x, y][3] > 0
+    ]
+
+
+def _crests(pixels: list[tuple[float, float]]) -> int:
+    """How many curls a top edge shows: the runs that reach its highest row."""
+    profile: dict[float, float] = {}
+    for x, y in pixels:
+        profile[x] = min(y, profile.get(x, y))
+    peak = min(profile.values())
+    columns = sorted(x for x, y in profile.items() if y <= peak + CREST_BAND)
+    return 1 + sum(1 for near, far in zip(columns, columns[1:]) if far - near > 1.0)
 
 
 def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
@@ -137,14 +169,15 @@ class TheMassTakesOneLitLobe(Combed):
             with self.subTest(style=style):
                 self.assertEqual(_regions(_pixels_of(self.drawn(style), MANE.lit)), 1)
 
-    def test_the_crown_is_the_base_tone_under_the_one_lit_shape(self):
+    def test_the_crown_is_one_tone_under_the_one_lit_shape(self):
         # Two tones over the head and no more: a mass and the key on it. The
         # clusters took a band each, which is what striped every crown.
         for style in COMBED:
             with self.subTest(style=style):
                 cell = _cell()
                 hair.front(cell, SKULL, style, MANE)
-                self.assertEqual(_colours(cell) - {INK}, {MANE.base, MANE.lit})
+                mass = MANE.band(hair.mass_band(style))
+                self.assertEqual(_colours(cell) - {INK}, {mass, MANE.lit})
 
     def test_the_lobe_sits_on_the_side_the_key_is_fixed_to(self):
         # The light never moves, so the lobe belongs to the left of the mass on
@@ -163,6 +196,70 @@ class TheMassTakesOneLitLobe(Combed):
                 hair.draw(cell, SKULL, style, PLATINUM)
                 self.assertGreater(_painted(cell), 0)
                 self.assertEqual(_area_of(cell, PLATINUM.lit), 0)
+
+
+class TheCloudSitsLowAndBroad(Combed):
+    """`curly` is one broad cloud of curls rather than a stack of them.
+
+    Three reviews read the four ink-ringed blobs it used to carry as a
+    barrister's wig, so what is measured here is the silhouette they were
+    replaced by: it covers the crown, it spreads past the skull, it stops at
+    the ear, and its top edge shows the curls the dial names and no more.
+    """
+
+    def cloud(self) -> list[tuple[float, float]]:
+        return _silhouette(self.drawn("curly"))
+
+    def test_the_cloud_covers_the_crown(self):
+        # A crest under the crown line bares the top of the head, which reads
+        # as bald rather than as low.
+        self.assertLessEqual(min(y for _, y in self.cloud()), TOP)
+
+    def test_the_cloud_spreads_wider_than_the_skull_it_sits_on(self):
+        xs = [x for x, _ in self.cloud()]
+        self.assertAlmostEqual(
+            max(xs) - min(xs), (RIGHT - LEFT) * hair.CLOUD_WIDTH, delta=INK_SLACK
+        )
+
+    def test_the_cloud_falls_no_further_than_the_ear(self):
+        self.assertAlmostEqual(
+            max(y for _, y in self.cloud()),
+            TOP + (BOTTOM - TOP) * hair.CLOUD_FOOT,
+            delta=INK_SLACK,
+        )
+
+    def test_the_top_edge_shows_the_curls_the_dial_names(self):
+        self.assertEqual(_crests(self.cloud()), hair.CLOUD_LOBES)
+
+
+class TheBobHemsInAnArc(Combed):
+    """`bob` is painted a band down its ramp and ends at the chin.
+
+    Platinum's base and a pale face are one value, so the mass takes the shade
+    band — the contrast floor is met without renaming the colour. The hem is
+    an arc for the other half of the same reading: two square corners at the
+    jaw are a curtain, not a bob.
+    """
+
+    def test_the_mass_takes_the_band_under_its_own_base(self):
+        cell = self.drawn("bob")
+        self.assertEqual(hair.mass_band("bob"), "shade")
+        self.assertGreater(_area_of(cell, MANE.shade), 0)
+        self.assertEqual(_area_of(cell, MANE.base), 0)
+
+    def test_the_hem_falls_to_the_chin(self):
+        self.assertAlmostEqual(
+            max(y for _, y in _silhouette(self.drawn("bob"))),
+            TOP + (BOTTOM - TOP) * hair.BOB_HEM,
+            delta=INK_SLACK,
+        )
+
+    def test_the_hems_own_corners_are_rounded_off(self):
+        fall = [(x, y) for x, y in _silhouette(self.drawn("bob")) if y > BOTTOM - 60]
+        bottom = max(y for _, y in fall)
+        hem = [x for x, y in fall if y >= bottom - CREST_BAND]
+        self.assertGreater(min(hem), min(x for x, _ in fall) + INK_SLACK)
+        self.assertLess(max(hem), max(x for x, _ in fall) - INK_SLACK)
 
 
 class TheFringeShadesTheForehead(Combed):
