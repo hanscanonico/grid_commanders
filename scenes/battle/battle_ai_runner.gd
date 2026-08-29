@@ -41,7 +41,7 @@ func run() -> void:
 		return
 	await TurnBeat.opening(_battle.get_tree())
 	for i in MAX_COMMANDS_PER_TURN:
-		if game.winner != 0:
+		if _battle.match_over():
 			_leave()
 			return
 		if _left_auto(game):
@@ -53,7 +53,7 @@ func run() -> void:
 		var receipt := await _execute(command)
 		if receipt == null:
 			return
-		if receipt.winner != 0 or receipt.turn_changed:
+		if _battle.match_over() or receipt.turn_changed:
 			return
 		await TurnBeat.between_commands(_battle.get_tree())
 		# The one place a computer turn can be held: between two commands, with the
@@ -79,9 +79,11 @@ func _left_auto(game: GameState) -> bool:
 
 
 ## Every bail-out from the loop lands here, so a planner bug can never leave the
-## scene stuck in AI_TURN with all input blocked and no banner.
+## scene stuck in AI_TURN with all input blocked and no banner. The match is over
+## on Battle's answer, not the board's: a campaign mission decided on its
+## objectives has no sim winner to read.
 func _leave() -> void:
-	if _battle.game.winner != 0:
+	if _battle.match_over():
 		_battle.enter_victory()
 	else:
 		_battle.state = _battle.rest_state()

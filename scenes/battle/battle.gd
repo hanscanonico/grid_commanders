@@ -307,8 +307,6 @@ func _ready() -> void:
 	end_turn_guard.end_requested.connect(_end_turn_anyway)
 	view.fire_pressed.connect(power.fire)
 	view.end_turn_pressed.connect(_request_end_turn)
-	victory_screen.rematch_button.pressed.connect(_request_rematch)
-	victory_screen.menu_button.pressed.connect(_request_main_menu)
 	handoff.setup(%HandoffScreen, %HandoffBackdrop, %HandoffLabel, %HandoffHint, %HandoffButton)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view.board_camera)
@@ -447,7 +445,18 @@ func start_ai_turn() -> void:
 ## hands the player a board they may not play. Public because the abandon
 ## confirmation BattleExit owns ends the same way.
 func rest_state() -> State:
+	if state == State.VICTORY:
+		return State.VICTORY
 	return State.PAUSED if _paused else State.IDLE
+
+
+## Is this match finished? Two authorities answer it and either is enough: the
+## board's own winner, and the campaign session's verdict — a mission won or lost
+## on its objectives never touches `game.winner`. Ask this rather than the sim
+## wherever the answer decides whether play goes on, or a mission decided in the
+## middle of a computer turn leaves the runner planning under the end card.
+func match_over() -> bool:
+	return game.winner != 0 or CampaignSession.outcome != null
 
 
 ## Status banners use the same blocking/skip convention as the day and ambush
@@ -990,16 +999,6 @@ func enter_victory() -> void:
 	_outcome.enter_victory()
 
 
-func _request_rematch() -> void:
-	if _outcome.accepts_action(victory_screen.rematch_button):
-		exit.rematch()
-
-
-func _request_main_menu() -> void:
-	if _outcome.accepts_action(victory_screen.menu_button):
-		exit.to_main_menu()
-
-
 ## A production property of ours standing empty. Which terrains those are is the
 ## terrain's own data, so a port and an airport open the build menu through this
 ## same check — and offer only what they build, see _open_build_menu.
@@ -1078,8 +1077,8 @@ func _begin_turn() -> void:
 	refresh_hud()
 	refresh_panel()
 	# A side wiped out by its own fuel gauge ends the match here, exactly as one
-	# shot to pieces does.
-	if game.winner != 0:
+	# shot to pieces does, and so does a mission the last turn decided.
+	if match_over():
 		enter_victory()
 		return
 	if _outcome.end_watch_on_day_cap():
