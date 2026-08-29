@@ -20,7 +20,7 @@ from functools import lru_cache
 
 from PIL import Image, ImageChops
 
-from portraitgen import bust, features, head, light, roster, uniform
+from portraitgen import bust, features, hair, head, light, roster, uniform
 from portraitgen.canvas import PORTRAIT_SIZE, Canvas
 
 # M2/C5: a value band is a luminance covering this much of the figure, and a
@@ -193,10 +193,11 @@ class OneLightOnEveryFace(unittest.TestCase):
     black rectangle over one third and it broke this gate before."""
 
     EYE_BAND = (0.35, 0.62)
+    TOLERANCE = 14
 
     def _skin(self, key: str, face) -> list[tuple[int, int, tuple[int, ...]]]:
-        ramp = head.ramp_for(face.skin)
-        tones = (ramp.deep, ramp.shade, ramp.base, ramp.lit)
+        skin = head.ramp_for(face.skin)
+        mane = hair.ramp_for(face.hair)
         crop = _painted(key).crop(FACE_CROP)
         pixels = crop.load()
         width, height = crop.size
@@ -204,12 +205,22 @@ class OneLightOnEveryFace(unittest.TestCase):
             (x, y, pixels[x, y])
             for y in range(height)
             for x in range(width)
-            if pixels[x, y][3] >= 204
-            and any(
-                max(abs(pixels[x, y][i] - tone[i]) for i in range(3)) <= 14
-                for tone in tones
-            )
+            if pixels[x, y][3] >= 204 and self._is_skin(pixels[x, y], skin, mane)
         ]
+
+    def _is_skin(self, pixel, skin, mane) -> bool:
+        """Skin only, as the metric's name says: a tone a hair ramp owns more
+        closely than the skin ramp does is hair, however near the tolerance it
+        lands. Platinum on pale skin sits inside it, and reading a crown as a
+        cheek is how a flat mass fails a light gate it never lit."""
+        near = self._nearest(pixel, (skin.deep, skin.shade, skin.base, skin.lit))
+        if near > self.TOLERANCE:
+            return False
+        return near < self._nearest(pixel, (mane.deep, mane.shade, mane.base, mane.lit))
+
+    @staticmethod
+    def _nearest(pixel, tones) -> int:
+        return min(max(abs(pixel[i] - tone[i]) for i in range(3)) for tone in tones)
 
     def test_the_key_side_of_every_face_is_the_lighter_one(self):
         for key, face in sorted(roster.FACES.items()):
@@ -229,9 +240,9 @@ class OneLightOnEveryFace(unittest.TestCase):
                     ]
                     return sum(band) / len(band)
 
-                self.assertGreater(
-                    mean(min(xs), min(xs) + third), mean(max(xs) - third, max(xs))
-                )
+                key_side = mean(min(xs), min(xs) + third)
+                away = mean(max(xs) - third, max(xs))
+                self.assertGreater(key_side, away)
 
 
 class NoFaceWearsAHalfMask(unittest.TestCase):

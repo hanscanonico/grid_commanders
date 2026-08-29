@@ -1,10 +1,11 @@
-"""Hair: every style is a mass with strands in it, and no style is a name only.
+"""Hair: every style is a mass with one lit lobe on it, and `bald` has neither.
 
-The claim the module exists to make is that a hairstyle is not one flat hex: it
-is a mass plus clusters, each taking its own band. That is measured here as
-"more than one tone of the ramp reaches the canvas", which is the thing a single
-fill cannot fake — plus the vocabulary sweep and the raise on an unknown name
-the roster is linted by.
+The claim the module exists to make is that a hairstyle is a mass the key
+catches once — not one flat hex, and not the row of alternating strand clusters
+it used to be, which read as a striped awning at chip size. That is measured
+here as the lobe's share of the mass, the pale ramps that refuse a lobe at all,
+and the scalp that draws no fringe — plus the vocabulary sweep and the raise on
+an unknown name the roster is linted by.
 """
 
 from __future__ import annotations
@@ -21,9 +22,13 @@ SKULL = Skull(1.0, "round", 0.0, 1.0)
 MANE = light.build_ramp((90, 60, 40))
 SKIN = light.build_ramp(preview_sheet.SKIN)
 NAMED = {INK, MANE.deep, MANE.shade, MANE.base, MANE.lit, MANE.rim}
-# The styles that are a cap of hair rather than a scalp: `bald` is two wisps at
-# the temples and has no mass for a cluster to lie on.
+# The styles that are a cap of hair rather than a scalp: `bald` has no mass for
+# a lobe to lie on, and nothing over the crown to cast a fringe.
 COMBED = sorted(hair.STYLES - {"bald"})
+# A ramp over the pale line, and one under it, to ask the same style twice.
+PLATINUM = hair.ramp_for("platinum")
+# The lobe is a highlight on the mass, not a second mass beside it.
+LOBE_SHARE = 0.25
 
 
 def _cell() -> Canvas:
@@ -42,6 +47,17 @@ def _area_of(cell: Canvas, tone: tuple[int, int, int]) -> int:
     return sum(count for count, pixel in _tally(cell) if pixel[:3] == tone)
 
 
+def _pixels_of(cell: Canvas, tone: tuple[int, int, int]) -> list[tuple[int, int]]:
+    pixels = cell.image.load()
+    width, height = cell.image.size
+    return [
+        (x, y)
+        for y in range(height)
+        for x in range(width)
+        if pixels[x, y][3] > 0 and pixels[x, y][:3] == tone
+    ]
+
+
 def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
     return {pixel[:3] for _, pixel in _tally(cell) if pixel[3] > 0}
 
@@ -56,8 +72,8 @@ class Combed(unittest.TestCase):
 
 
 class EveryStyleDraws(Combed):
-    def test_every_style_puts_hair_on_the_head(self):
-        for style in sorted(hair.STYLES):
+    def test_every_combed_style_puts_hair_on_the_head(self):
+        for style in COMBED:
             with self.subTest(style=style):
                 self.assertGreater(_painted(self.drawn(style)), 0)
 
@@ -83,21 +99,38 @@ def _composed(behind: Canvas, over: Canvas) -> Canvas:
     return behind
 
 
-class AMassIsNotOneFlatHex(Combed):
-    """The strand clusters are the whole point: they put bands in the mass."""
+class TheMassTakesOneLitLobe(Combed):
+    """One flat shape where the key lands, and it stays a highlight."""
 
-    def test_every_combed_style_carries_more_than_one_band(self):
+    def test_every_combed_style_carries_a_lit_lobe(self):
         for style in COMBED:
             with self.subTest(style=style):
-                bands = _colours(self.drawn(style)) - {INK}
-                self.assertGreaterEqual(len(bands), 3)
+                self.assertGreater(_area_of(self.drawn(style), MANE.lit), 0)
 
-    def test_the_clusters_are_lit_from_the_one_fixed_side(self):
-        # The light never moves, so the lit band belongs to the left of the mass
-        # and the deep band to its right — on every style, mirrored or not.
+    def test_the_lobe_is_a_quarter_of_the_mass_at_most(self):
+        for style in COMBED:
+            with self.subTest(style=style):
+                cell = self.drawn(style)
+                share = _area_of(cell, MANE.lit) / _painted(cell)
+                self.assertLessEqual(share, LOBE_SHARE)
+
+    def test_the_lobe_sits_on_the_side_the_key_is_fixed_to(self):
+        # The light never moves, so the lobe belongs to the left of the mass on
+        # every style, mirrored or not.
         cell = self.drawn("long")
-        self.assertGreater(_area_of(cell, MANE.lit), 0)
-        self.assertGreater(_area_of(cell, MANE.shade), 0)
+        columns = [x for x, _ in _pixels_of(cell, MANE.lit)]
+        self.assertLess(max(columns), cell.image.width / 2)
+
+    def test_a_pale_mass_takes_no_lobe_at_all(self):
+        # Over the pale line the lit band is a step off the base, so the lobe
+        # stops separating the mass and starts cutting a seam through it.
+        self.assertGreater(light.luminance(PLATINUM.base), hair.PALE_HAIR)
+        for style in COMBED:
+            with self.subTest(style=style):
+                cell = _cell()
+                hair.draw(cell, SKULL, style, PLATINUM)
+                self.assertGreater(_painted(cell), 0)
+                self.assertEqual(_area_of(cell, PLATINUM.lit), 0)
 
 
 class TheFringeShadesTheForehead(Combed):
@@ -109,6 +142,11 @@ class TheFringeShadesTheForehead(Combed):
 
     def test_a_scalp_has_no_fringe_to_cast_one(self):
         self.assertEqual(_area_of(self.drawn("bald", skin=SKIN), SKIN.shade), 0)
+
+    def test_a_scalp_draws_no_fringe_pixels_of_its_own(self):
+        # The two temple wisps this style used to carry read as horns on the
+        # crown, so a bald head is a bald head.
+        self.assertEqual(_painted(self.drawn("bald", skin=SKIN)), 0)
 
 
 class HairIsPaintedInNamedTones(Combed):
