@@ -202,6 +202,15 @@ func cutscene_rate() -> float:
 	return default_speed().anim_scale / anim_scale
 
 
+## One frame of a looping clip, in milliseconds — the same rate applied to a
+## cadence rather than to a beat sheet, so a clip whose motion is tween-scaled
+## keeps step with the body it belongs to. Authored at the default tier, played
+## at this one. Instant never plays a clip at all (BoardBeat answers frame A),
+## so it falls through at the authored value.
+func clip_period_ms(authored_ms: int) -> int:
+	return maxi(1, int(roundf(authored_ms / cutscene_rate())))
+
+
 ## Zero under Instant, where BattleAiRunner awaits a single frame instead so the
 ## board still repaints once per command.
 func command_delay_seconds() -> float:
@@ -234,5 +243,7 @@ func power_mark_seconds() -> float:
 
 
 ## How long the AI waits after the day banner clears before its first command.
+## Instant drops it outright, the tier being an explicit branch: a turn it shows
+## rather than plays out may not open on a tenth of a second of nothing.
 func start_delay_seconds() -> float:
-	return START_DELAY_PADDING
+	return 0.0 if instant else START_DELAY_PADDING
