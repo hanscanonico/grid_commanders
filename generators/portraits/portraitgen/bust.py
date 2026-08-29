@@ -212,10 +212,11 @@ def _face_group(face: Face, skin: light.Ramp, mane: light.Ramp) -> Canvas:
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
     features.accessory(group, face.head, face.acc, tint=_faction(face).body)
-    features.brow(group, face.head, face.brow, mane)
-    features.eyes(group, face.head, face.eyes, scale=face.eye)
+    covered = features.covered_eye(face.acc)
+    features.brow(group, face.head, face.brow, mane, covered=covered)
+    features.eyes(group, face.head, face.eyes, scale=face.eye, covered=covered)
     features.nose(group, face.head, face.nose, skin)
-    features.mouth(group, face.head, face.mouth)
+    features.mouth(group, face.head, face.mouth, eye=face.eye)
     if face.earring:
         features.earring(group, face.head)
     if face.freckles:

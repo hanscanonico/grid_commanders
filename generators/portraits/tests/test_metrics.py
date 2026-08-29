@@ -433,7 +433,9 @@ class TheMouthCannotOutrankTheEyes(unittest.TestCase):
         for key, face in sorted(open_eyed.items()):
             with self.subTest(commander=key):
                 mouth = _dark_area(
-                    lambda layer, f=face: features.mouth(layer, f.head, f.mouth)
+                    lambda layer, f=face: features.mouth(
+                        layer, f.head, f.mouth, eye=f.eye
+                    )
                 )
                 eyes = _dark_area(
                     lambda layer, f=face: features.eyes(

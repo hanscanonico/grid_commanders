@@ -131,11 +131,18 @@ EYE_KINDS = frozenset(_EYES)
 EYE_RX = 8.2
 
 
-def eyes(canvas: Canvas, skull: Skull, kind: str, *, scale: float) -> None:
-    """Sclera, iris ring, pupil and the catchlights, at the roster's eye dial."""
+def eyes(
+    canvas: Canvas, skull: Skull, kind: str, *, scale: float, covered: int | None = None
+) -> None:
+    """Sclera, iris ring, pupil and the catchlights, at the roster's eye dial.
+
+    `covered` is the socket a worn accessory hides, from `covered_eye`.
+    """
     shape = _EYES[kind]
     frame = Frame.of(skull)
-    for x in _eye_xs(skull):
+    for side, x in enumerate(_eye_xs(skull)):
+        if side == covered:
+            continue
         if shape.closed:
             shut = [
                 (x - 4.5 * scale, EYE_LINE),
@@ -197,11 +204,15 @@ _BROWS: dict[str, BrowShape] = {
 BROW_KINDS = frozenset(_BROWS)
 
 
-def brow(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
+def brow(
+    canvas: Canvas, skull: Skull, kind: str, ramp: Ramp, *, covered: int | None = None
+) -> None:
     """A tapered mass per eye, in the hair ramp, under a deep-tone edge."""
     shape = _BROWS[kind]
     frame = Frame.of(skull)
     for side, x in enumerate(_eye_xs(skull)):
+        if side == covered:
+            continue
         # `cocked` is the one brow whose halves differ: one raised, one level.
         worn = _BROWS["soft"] if kind == "cocked" and side == 1 else shape
         outward = -1.0 if side == 0 else 1.0
@@ -256,65 +267,93 @@ def _clench(canvas: Canvas, frame: Frame) -> None:
         canvas.stroke(frame.path(corner), INK_DETAIL, INK)
 
 
-def _toothed(
-    dark: tuple[Point, ...], teeth: tuple[Point, ...], weight: float
-) -> Callable[[Canvas, Frame], None]:
-    """An open mouth: a small dark area under a white band across its top.
-
-    The band is what keeps the mouth from reading as a second eye socket — the
-    dark shape stays smaller than one eye either way, which is the rule the
-    whole family is cut to.
-    """
-
-    def draw(canvas: Canvas, frame: Frame) -> None:
-        canvas.polygon(frame.path(dark), INK)
-        canvas.stroke(frame.path(teeth), weight, SCLERA)
-
-    return draw
-
-
-def _open(canvas: Canvas, frame: Frame) -> None:
-    canvas.ellipse(frame.ellipse(110.0, 170.5, 6.0, 6.5), INK)
-    canvas.stroke(frame.path([(105.0, 167.0), (115.0, 167.0)]), INK_FEATURE, SCLERA)
-
-
 _MOUTHS: dict[str, Callable[[Canvas, Frame], None]] = {
     "clench": _clench,
-    "grin": _toothed(
-        ((97.0, 167.0), (123.0, 167.0), (110.0, 178.0)),
-        ((100.0, 169.0), (120.0, 169.0)),
-        INK_DETAIL,
-    ),
-    "laugh": _toothed(
-        ((96.0, 166.0), (124.0, 166.0), (110.0, 179.0)),
-        ((99.0, 168.5), (121.0, 168.5)),
-        INK_DETAIL,
-    ),
     "neutral": _stroked(((98.0, 171.0), (122.0, 171.0)), INK_FEATURE),
-    "open": _open,
     "smile": _stroked(((95.0, 166.0), (110.0, 176.0), (125.0, 166.0)), INK_FEATURE),
     "smirk": _stroked(((97.0, 172.0), (112.0, 175.0), (125.0, 166.0)), INK_FEATURE),
-    "snarl": _toothed(
-        (
-            (99.0, 167.0),
-            (110.0, 164.5),
-            (121.0, 167.0),
-            (118.0, 174.0),
-            (110.0, 175.5),
-            (102.0, 174.0),
-        ),
-        ((101.0, 168.5), (119.0, 168.5)),
-        INK_DETAIL,
-    ),
     "stern": _stroked(((98.0, 172.0), (110.0, 169.0), (122.0, 173.0)), INK_FEATURE),
     "wry": _stroked(((94.0, 170.0), (110.0, 172.0), (126.0, 164.0)), INK_FEATURE),
 }
-MOUTH_KINDS = frozenset(_MOUTHS)
+
+# The face's midline, and what an open mouth is wide in: the review reads a
+# mouth in eye widths, so it is drawn in them — a general whose eyes are
+# dialled up gets the wider mouth that holds the ratio.
+MOUTH_X = 110.0
+MOUTH_EYE_SPAN = 2.5
 
 
-def mouth(canvas: Canvas, skull: Skull, kind: str) -> None:
+@dataclass(frozen=True)
+class OpenMouth:
+    """An open mouth as three heights — the lip line, the corners, the lower
+    lip — how far down the band of teeth runs before the mouth goes dark, and
+    how far one side of the lip curls, which is the whole of a snarl."""
+
+    top: float
+    corner: float
+    bottom: float
+    teeth: float
+    curl: float = 0.0
+
+
+_OPEN: dict[str, OpenMouth] = {
+    "grin": OpenMouth(163.5, 166.5, 175.5, 1.0),
+    "laugh": OpenMouth(162.5, 165.5, 178.5, 0.56),
+    "open": OpenMouth(163.0, 166.5, 178.0, 0.5),
+    "snarl": OpenMouth(163.5, 166.5, 175.0, 1.0, curl=4.5),
+}
+OPEN_MOUTH_KINDS = frozenset(_OPEN)
+MOUTH_KINDS = frozenset(_MOUTHS) | OPEN_MOUTH_KINDS
+
+
+def _mouth_half(eye: float) -> float:
+    """Half an open mouth's width, in reference pixels, at one eye dial."""
+    return MOUTH_EYE_SPAN * (EYE_RX * eye + INK_FEATURE / 2.0) - INK_FEATURE / 2.0
+
+
+def _lips(shape: OpenMouth, half: float) -> tuple[Point, ...]:
+    return (
+        (MOUTH_X - half, shape.corner - shape.curl * 0.7),
+        (MOUTH_X - half * 0.6, shape.top - shape.curl),
+        (MOUTH_X + half * 0.6, shape.top),
+        (MOUTH_X + half, shape.corner),
+        (MOUTH_X + half * 0.55, shape.bottom),
+        (MOUTH_X - half * 0.55, shape.bottom),
+    )
+
+
+def _opened(canvas: Canvas, frame: Frame, shape: OpenMouth, half: float) -> None:
+    """A wide mouth: a white band across the top, the dark under it, one lip.
+
+    C13 caps the dark area rather than the size, so the mouth is an outline
+    around that band rather than a filled hole — a grin bares the whole band,
+    a laugh keeps a cavity below it.
+    """
+    lips = _lips(shape, half)
+    canvas.polygon(frame.path(lips), SCLERA)
+    if shape.teeth < 1.0:
+        gum = shape.top + (shape.bottom - shape.top) * shape.teeth
+        canvas.polygon(
+            frame.path(
+                (
+                    (MOUTH_X - half * 0.88, gum),
+                    (MOUTH_X + half * 0.88, gum),
+                    (MOUTH_X + half * 0.55, shape.bottom),
+                    (MOUTH_X - half * 0.55, shape.bottom),
+                )
+            ),
+            INK,
+        )
+    canvas.stroke(frame.path(lips), INK_FEATURE, INK, closed=True)
+
+
+def mouth(canvas: Canvas, skull: Skull, kind: str, *, eye: float = EYE_DEFAULT) -> None:
     """The mouth can never outrank the eyes: its dark area stays the smaller."""
-    _MOUTHS[kind](canvas, Frame.of(skull))
+    frame = Frame.of(skull)
+    if kind in _OPEN:
+        _opened(canvas, frame, _OPEN[kind], _mouth_half(eye))
+        return
+    _MOUTHS[kind](canvas, frame)
 
 
 # --- facial hair -------------------------------------------------------------
@@ -471,6 +510,17 @@ _HEADSET_CUP: tuple[Point, ...] = (
     (68.0, 152.0),
     (52.0, 152.0),
 )
+# The eyepatch: a plate over the eye it covers, in reference pixels off that
+# eye's centre, and the strap that lands on the ear. The plate is one flat tone
+# all through: what the review read as a domino mask was the lit eye and the
+# brow showing inside it, and `covered_eye` is what keeps them off it.
+_PATCH_PLATE: tuple[Point, ...] = (
+    (-15.0, 130.0),
+    (13.0, 127.0),
+    (14.0, 148.0),
+    (0.0, 158.0),
+    (-14.0, 151.0),
+)
 _SCAR_CUTS: tuple[tuple[Point, ...], ...] = (
     ((134.0, 126.0), (142.0, 148.0)),
     ((130.0, 132.0), (136.0, 134.0)),
@@ -540,14 +590,17 @@ def _glasses(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Poin
 
 
 def _eyepatch(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    canvas.stroke(frame.path([(56.0, 122.0), (164.0, 112.0)]), INK_FEATURE, INK)
     x = _eye_xs(skull)[0]
-    canvas.polygon(
+    ear_x, ear_y, radius = EAR
+    outer_x, outer_y = _PATCH_PLATE[0]
+    canvas.stroke(
         frame.path(
-            ((x - 15.0, 130.0), (x + 15.0, 128.0), (x + 15.0, 154.0), (x - 15.0, 156.0))
+            [(x + outer_x + 2.0, outer_y + 3.0), (ear_x + radius, ear_y - radius)]
         ),
+        INK_FEATURE,
         INK,
     )
+    canvas.polygon(frame.path([(x + dx, y) for dx, y in _PATCH_PLATE]), INK)
     return []
 
 
@@ -588,6 +641,15 @@ _ACCESSORIES: dict[str, Callable[[Canvas, Frame, Skull, RGB], list[Point]]] = {
     "scar": _scar,
 }
 ACCESSORY_KINDS = frozenset(_ACCESSORIES)
+# Which of the two sockets a worn accessory hides. An eyepatch is the only one
+# that hides anything, and it covers the eye and the brow over it: a patch with
+# either drawn on top of it is the mask the review named, not a patch.
+_COVERS_EYE: dict[str, int] = {"eyepatch": 0}
+
+
+def covered_eye(kind: str) -> int | None:
+    """The socket the worn accessory hides — `eyes` and `brow` skip it."""
+    return _COVERS_EYE.get(kind)
 
 
 def accessory(
