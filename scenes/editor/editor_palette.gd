@@ -76,8 +76,8 @@ func selected() -> TerrainType:
 	return _terrains[_selected] if _selected < _terrains.size() else null
 
 
-## Puts a brush in hand from outside a press — the keyboard's route through the
-## palette, and how the page opens on a brush at all.
+## Puts a brush in hand: what a row's press runs, and the seam a later route to
+## the palette (a hotkey, a touch dock) picks a brush through.
 func select(index: int) -> void:
 	if index < 0 or index >= _terrains.size():
 		return

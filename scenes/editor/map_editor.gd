@@ -108,6 +108,15 @@ func _paint_at(cell: Vector2i) -> void:
 	_say_cursor()
 
 
+## The brush is chosen and the board is what the next press is meant for, so the
+## palette lets the arrows go rather than keeping them — and the status line says
+## the new brush at once rather than at the next thing the cursor does.
+func _on_brush_picked(_terrain: TerrainType) -> void:
+	_hand_the_board_back()
+	if _doc != null:
+		_say_cursor()
+
+
 ## Takes the focus off whatever menu control holds it. **The board is not a
 ## focusable control**, and cannot be: a focused Control makes the viewport read
 ## the arrow keys as focus navigation, which walked the cursor out of the board
@@ -165,9 +174,7 @@ func _build() -> void:
 	_palette.custom_minimum_size = Vector2(_PALETTE_W, 0)
 	body.add_child(_palette)
 	_palette.configure(_db)
-	# The brush is chosen and the board is what the next press is meant for, so
-	# the palette lets the arrows go rather than keeping them.
-	_palette.picked.connect(func(_terrain: TerrainType) -> void: _hand_the_board_back())
+	_palette.picked.connect(_on_brush_picked)
 
 	var frame := PanelContainer.new()
 	frame.add_theme_stylebox_override("panel", UiTheme.dark_panel_box(UiTheme.SLATE_900))
