@@ -38,10 +38,12 @@ voxel-model analogue for composition:
 
 - **parade** (main menu): a proud C-major march at 104 BPM, AABA over 32
   bars (74 s). Oom-pah tuba, afterbeat horns, parade snare, singable lead;
-  the last bar's pickup lifts the loop back to its downbeat.
+  the last bar's pickup lifts the loop back to its downbeat over a buzz
+  roll that swells across the bar line.
 - **advance** (battle): an A-minor quickstep at 132 BPM, ABAC over 32 bars
   (58 s). Driving eighth-note bass, syncopated stabs, a thin urgent lead;
-  a descending E7 run resolves across the seam onto the loop's opening note.
+  a descending E7 run resolves across the seam onto the loop's opening
+  note, under the same swelling buzz roll.
 
 The game loops the whole file (`LOOP_FORWARD`), so each track is rendered as
 one seamless loop: every tail that rings past the end wraps back to beat
