@@ -1,15 +1,16 @@
-"""Hair: a mass silhouette plus tapered strand clusters off the hair ramp.
+"""Hair: a mass silhouette with one flat lit lobe off the hair ramp.
 
-A style is not a flat shape — it is the mass, then N clusters placed on a fixed
-sequence over it, each taking its own band from the ramp. That is what turns a
-single dark hex into hair.
+A style is the mass plus the single shape the key catches on it. It used to be
+N alternating strand clusters, and at chip size a row of them read as a striped
+awning rather than as hair — so the mass now takes one lobe, on the lit side,
+and nothing else.
 
 The masses are the handoff's own, transcribed in portrait pixels (its units,
 doubled, over `features.REFERENCE_BOX` like every other feature) and fitted to
 the general's skull by `features.Frame`, so hair and the face it sits on can
-never be cut to two different heads. Which band a cluster takes is decided by
-where it lies, not by a roll: the light is fixed upper left, so the clusters on
-that side are the lit ones on every bust.
+never be cut to two different heads. Where the lobe lies is decided by the
+light, not by a roll: the key is fixed upper left, so it sits on that side of
+the mass on every bust.
 
 The mass is drawn in two halves because the head is painted between them: `back`
 is the fall behind the skull, `front` the fringe and the crown over it. `draw`
@@ -44,25 +45,24 @@ Blob = tuple[float, float, float]
 
 
 @dataclass(frozen=True)
-class Comb:
-    """Where a style's strand clusters fall: a span, a drop and a count."""
+class Lobe:
+    """The one shape the key catches on a mass: a span at a top, and its drop."""
 
     x0: float
     x1: float
     top: float
     fall: float
-    count: int
     lean: float = 0.0
 
 
 @dataclass(frozen=True)
 class Style:
-    """One hairstyle: what falls behind the head, what covers it, and the comb."""
+    """One hairstyle: what falls behind the head, what covers it, and the lobe."""
 
     front: tuple[Mass, ...] = ()
     back: tuple[Mass, ...] = ()
     blobs: tuple[Blob, ...] = ()
-    comb: Comb | None = None
+    lobe: Lobe | None = None
     fringe: Mass = ()
 
 
@@ -79,12 +79,9 @@ _CAP: Mass = (
 _FRINGE_BAND: Mass = ((66.0, 116.0), (110.0, 110.0), (154.0, 116.0), (110.0, 126.0))
 
 _STYLES: dict[str, Style] = {
-    "bald": Style(
-        front=(
-            ((68.0, 88.0), (88.0, 70.0), (80.0, 80.0), (80.0, 92.0)),
-            ((152.0, 88.0), (132.0, 70.0), (140.0, 80.0), (140.0, 92.0)),
-        )
-    ),
+    # A scalp, and nothing else: the two temple wisps this style used to carry
+    # broke the crown's silhouette and read as horns at chip size.
+    "bald": Style(),
     "bob": Style(
         front=(
             (
@@ -114,7 +111,7 @@ _STYLES: dict[str, Style] = {
                 (56.0, 188.0),
             ),
         ),
-        comb=Comb(64.0, 156.0, 84.0, 22.0, 7),
+        lobe=Lobe(66.0, 104.0, 84.0, 24.0),
         fringe=_FRINGE_BAND,
     ),
     "braid": Style(
@@ -143,7 +140,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         blobs=((56.0, 170.0, 9.0), (60.0, 194.0, 9.0)),
-        comb=Comb(66.0, 154.0, 86.0, 18.0, 6),
+        lobe=Lobe(68.0, 104.0, 86.0, 20.0),
         fringe=_FRINGE_BAND,
     ),
     "bun": Style(
@@ -160,7 +157,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         blobs=((110.0, 74.0, 18.0),),
-        comb=Comb(68.0, 152.0, 90.0, 16.0, 6),
+        lobe=Lobe(70.0, 106.0, 90.0, 18.0),
         fringe=_FRINGE_BAND,
     ),
     "buzz": Style(
@@ -176,7 +173,7 @@ _STYLES: dict[str, Style] = {
                 (80.0, 102.0),
             ),
         ),
-        comb=Comb(74.0, 146.0, 92.0, 10.0, 8),
+        lobe=Lobe(76.0, 110.0, 92.0, 12.0),
     ),
     "curly": Style(
         front=(
@@ -196,7 +193,7 @@ _STYLES: dict[str, Style] = {
             (124.0, 90.0, 17.0),
             (146.0, 102.0, 16.0),
         ),
-        comb=Comb(72.0, 148.0, 96.0, 14.0, 5),
+        lobe=Lobe(74.0, 108.0, 88.0, 18.0),
         fringe=_FRINGE_BAND,
     ),
     "hood": Style(
@@ -212,7 +209,7 @@ _STYLES: dict[str, Style] = {
                 (64.0, 114.0),
             ),
         ),
-        comb=Comb(70.0, 150.0, 92.0, 18.0, 5),
+        lobe=Lobe(68.0, 106.0, 90.0, 22.0),
         fringe=_FRINGE_BAND,
     ),
     "long": Style(
@@ -247,7 +244,7 @@ _STYLES: dict[str, Style] = {
                 (48.0, 236.0),
             ),
         ),
-        comb=Comb(62.0, 158.0, 80.0, 30.0, 8, lean=4.0),
+        lobe=Lobe(64.0, 106.0, 80.0, 32.0, lean=3.0),
         fringe=_FRINGE_BAND,
     ),
     "ponytail": Style(
@@ -276,7 +273,7 @@ _STYLES: dict[str, Style] = {
                 (164.0, 128.0),
             ),
         ),
-        comb=Comb(66.0, 154.0, 84.0, 20.0, 7),
+        lobe=Lobe(68.0, 106.0, 84.0, 22.0),
         fringe=_FRINGE_BAND,
     ),
     "short": Style(
@@ -292,7 +289,7 @@ _STYLES: dict[str, Style] = {
                 (72.0, 96.0),
             ),
         ),
-        comb=Comb(70.0, 150.0, 86.0, 16.0, 7),
+        lobe=Lobe(70.0, 108.0, 86.0, 18.0),
         fringe=_FRINGE_BAND,
     ),
     "sidepart": Style(
@@ -309,7 +306,7 @@ _STYLES: dict[str, Style] = {
                 (88.0, 104.0),
             ),
         ),
-        comb=Comb(90.0, 154.0, 86.0, 14.0, 6, lean=6.0),
+        lobe=Lobe(64.0, 100.0, 86.0, 18.0, lean=4.0),
         fringe=_FRINGE_BAND,
     ),
     "spiky": Style(
@@ -330,7 +327,7 @@ _STYLES: dict[str, Style] = {
                 (80.0, 104.0),
             ),
         ),
-        comb=Comb(76.0, 144.0, 94.0, 12.0, 6),
+        lobe=Lobe(74.0, 108.0, 92.0, 14.0),
     ),
 }
 STYLES = frozenset(_STYLES)
@@ -339,6 +336,15 @@ STYLES = frozenset(_STYLES)
 # skin's shade tone, hard-edged like every other band on the sheet. The design
 # system takes no blur, so this is a painted band rather than a softened alpha.
 FRINGE_BAND = "shade"
+
+# Above this luma a hair ramp's lit band is already within a step of the base,
+# so the lobe stops reading as a highlight and starts cutting a seam through the
+# mass — grey, platinum and blonde crowns all lost their edge to it. Those
+# masses take the base tone whole.
+PALE_HAIR = 150.0
+# How far the lobe draws in at its foot, as a share of its own span: the shape
+# is a crown highlight tapering down the mass, not a rectangle on it.
+_LOBE_TAPER = 0.22
 
 
 def ramp_for(colour: str) -> Ramp:
@@ -349,7 +355,7 @@ def ramp_for(colour: str) -> Ramp:
 def draw(
     canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
 ) -> None:
-    """The mass and its clusters. An unknown style raises."""
+    """The mass and the shape the key catches on it. An unknown style raises."""
     back(canvas, skull, style, ramp)
     front(canvas, skull, style, ramp, skin=skin)
 
@@ -364,7 +370,7 @@ def back(canvas: Canvas, skull: Skull, style: str, ramp: Ramp) -> None:
 def front(
     canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
 ) -> None:
-    """The fringe, the crown and the strand clusters — painted over the head.
+    """The fringe, the crown and the lit lobe — painted over the head.
 
     `skin` is the wearer's own ramp: the fringe casts a flat band of its shade
     tone on the forehead, and a shadow on skin has to be a skin tone.
@@ -378,8 +384,8 @@ def front(
         canvas.stroke(_ring(frame, x, y, radius), INK_SILHOUETTE, INK, closed=True)
     for mass in spec.front:
         _mass(canvas, frame, mass, ramp.base)
-    if spec.comb is not None:
-        _clusters(canvas, frame, spec.comb, ramp)
+    if spec.lobe is not None and light.luminance(ramp.base) <= PALE_HAIR:
+        canvas.polygon(frame.path(_lobe(spec.lobe)), ramp.lit)
 
 
 def _mass(canvas: Canvas, frame: Frame, mass: Mass, tone: RGB) -> None:
@@ -404,28 +410,13 @@ def _ring(frame: Frame, cx: float, cy: float, radius: float) -> list[Point]:
     return frame.path(corners)
 
 
-def _clusters(canvas: Canvas, frame: Frame, comb: Comb, ramp: Ramp) -> None:
-    """Tapered quads across the mass, each taking the band its place is lit in."""
-    span = comb.x1 - comb.x0
-    half = span / (comb.count * 1.15)
-    for index in range(comb.count):
-        share = index / (comb.count - 1) if comb.count > 1 else 0.0
-        x = comb.x0 + span * share
-        tip = x + comb.lean
-        quad = (
-            (x - half, comb.top),
-            (x + half, comb.top),
-            (tip + half * 0.3, comb.top + comb.fall),
-            (tip - half * 0.3, comb.top + comb.fall),
-        )
-        canvas.polygon(frame.path(quad), _band(ramp, share, index))
-
-
-def _band(ramp: Ramp, share: float, index: int) -> RGB:
-    """Which tone a cluster takes: where it lies, one step darker on the odds.
-
-    The light never moves, so the left of the mass is always the lit side.
-    """
-    order = (ramp.lit, ramp.base, ramp.shade, ramp.deep)
-    step = 0 if share < 0.3 else 1 if share < 0.6 else 2
-    return order[step + index % 2]
+def _lobe(lobe: Lobe) -> Mass:
+    """The lit shape as one tapered quad, in the reference box's own units."""
+    draw_in = (lobe.x1 - lobe.x0) * _LOBE_TAPER
+    foot = lobe.top + lobe.fall
+    return (
+        (lobe.x0, lobe.top),
+        (lobe.x1, lobe.top),
+        (lobe.x1 + lobe.lean - draw_in, foot),
+        (lobe.x0 + lobe.lean + draw_in, foot),
+    )
