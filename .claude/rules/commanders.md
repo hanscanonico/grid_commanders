@@ -15,7 +15,10 @@ themselves are under `.lavish/`, and the long forms named in the root index are 
 
 - `commanders-plan.html` — Commanders and Command Powers: milestones C1–C4, locked decisions D1–D4
   (subclassed `CommanderType`, asymmetric charge accrual, C1 scope, Sable Wren's reworked Vanish),
-  risk register R1–R6.
+  risk register R1–R6. **Sable Wren's doctrine is superseded by a user-directed retune
+  (2026-08-29, COM-260): cover gives +1 defence star *and* +20 % attack, and the road penalty is
+  gone** — her doctrine is a reward with no matching punishment, and Vanish's ambush stacks
+  additively on it for +60 % while it runs.
 - `new-commanders-plan.html` — six more generals, milestones NC1–NC7, **all shipped**: Ines Calder
   and Konrad Vale share the one `UnitPricing.cost_for` purchase authority while base cost remains
   charge/target/value currency; Perrin Ash and Halden Marr are domain-only and exactly neutral on

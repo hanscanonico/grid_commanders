@@ -709,6 +709,14 @@ this change.
 
 ### Balance changelog
 
+- **2026-08-29 — Sable Wren drops the road penalty and gains +20 % attack from
+  cover (COM-260).** A user-ordered design change, not a measured retune: her
+  doctrine is now reward-only — `defense_bonus` is gone, and shooting out of
+  Woods or a Reef is worth +20 %, which Vanish stacks additively on for +60 %
+  while it runs. It is a straight buff on a commander last measured at 52–60 %,
+  and nothing was tuned to compensate. **Her rows in the tables above are
+  therefore stale**; regenerating the matrix is a review trigger and is
+  deliberately not done in this PR.
 - **2026-08-15 — the matrix is regenerated after the power-gate pass; no number
   moved.** 9,680 matches at `225fe71`, 33 minutes, hard invariants clean (0
   rejected, 0 cap stalls, 1 draw), first-seat bias +32.6 pp. It closes

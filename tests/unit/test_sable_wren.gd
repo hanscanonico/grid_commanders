@@ -30,17 +30,42 @@ func test_her_units_get_an_extra_star_in_woods() -> void:
 	)
 
 
-## Roads have no cover to begin with, so the penalty is pure downside:
-## 75 * (200 - 90)/100 = 82.5 -> 83, against 75 flat.
-func test_her_units_are_softer_on_roads() -> void:
-	var state := _state("[terrain]\n==\n[units]\n2 t 0 0\n1 i 1 0")
+## The road penalty is gone (COM-260): her ground is ordinary ground, and a
+## road resolves exactly as it does with no commander at all.
+func test_a_road_is_ordinary_ground_now() -> void:
+	var map_text := "[terrain]\n==\n[units]\n2 t 0 0\n1 i 1 0"
+	var sable := _state(map_text)
+	var neutral := _state(map_text, false)
+	assert_eq(
+		(
+			CombatResolver
+			. forecast(sable, sable.units[0], Vector2i(0, 0), sable.units[1])
+			. attack_damage
+		),
+		(
+			CombatResolver
+			. forecast(neutral, neutral.units[0], Vector2i(0, 0), neutral.units[1])
+			. attack_damage
+		)
+	)
+
+
+## The everyday half of the cover bonus, with the meter empty. Tank vs Infantry
+## out of woods onto plains (1 star): 75 * 1.2 * 0.9 = 81, against
+## 75 * 0.9 = 67.5 -> 68.
+func test_her_units_hit_harder_from_cover_without_the_power() -> void:
+	var state := _state("[terrain]\nF.\n[units]\n1 t 0 0\n2 i 1 0")
+	var fight := Engagement.create(
+		state.units[0], Vector2i(0, 0), 10, state.units[1], Vector2i(1, 0), 10
+	)
+	assert_eq(state.commander_of(1).attack_bonus(state, fight), 20)
 	assert_eq(
 		(
 			CombatResolver
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		83
+		81
 	)
 
 
@@ -145,8 +170,10 @@ func test_vanish_does_nothing_without_fog() -> void:
 	assert_true(Vision.can_see_unit(state, 2, state.units[0], visible))
 
 
-## The ambush half: attacking out of cover while the power runs.
-## Infantry vs Tank from woods, base 5: 5 * 1.4 * 0.9 = 6.3 -> 6, against 5.
+## The ambush half: attacking out of cover while the power runs. It stacks on
+## the doctrine's own +20%, additively, for +60% in all.
+## Infantry vs Tank from woods, base 5: 5 * 1.6 * 0.9 = 7.2 -> 7, against
+## 5 * 1.2 * 0.9 = 5.4 -> 5.
 func test_the_ambush_bonus_applies_from_woods() -> void:
 	var state := _state("[terrain]\nF.\n[units]\n1 i 0 0\n2 t 1 0")
 	assert_eq(
@@ -164,12 +191,12 @@ func test_the_ambush_bonus_applies_from_woods() -> void:
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		6
+		7
 	)
 
 
 ## Cruiser vs Sub from a reef, base 90 against open water (no cover on the
-## defender's side): 90 * 1.4 = 126, against 90 flat.
+## defender's side): 90 * 1.6 = 144, against the doctrine's own 90 * 1.2 = 108.
 func test_the_ambush_bonus_applies_from_a_reef() -> void:
 	var state := _state("[terrain]\n*S\n[units]\n1 c 0 0\n2 s 1 0")
 	assert_eq(
@@ -178,7 +205,7 @@ func test_the_ambush_bonus_applies_from_a_reef() -> void:
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		90
+		108
 	)
 	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(
@@ -187,7 +214,7 @@ func test_the_ambush_bonus_applies_from_a_reef() -> void:
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		126
+		144
 	)
 
 
