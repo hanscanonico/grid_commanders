@@ -43,8 +43,9 @@ ICON_GRID: RGBA = (72, 84, 96, 255)
 ICON_MERIDIAN: RGBA = (216, 74, 60, 255)
 ICON_AURORA: RGBA = (60, 100, 216, 255)
 ICON_MARK: RGBA = (224, 169, 46, 255)
-# Everything is a multiple of eight so the 128 survives the platforms' halvings:
-# a 4px rule is a pixel at 32, a 24px token is three.
+# Every measure is a multiple of the 4px rule, so the platforms' 64 and 32 land
+# on whole pixels: a rule is one pixel at 32, a token is six. The 16 halves the
+# rule, and is the one size the gridlines soften at.
 ICON_CORNER = 8
 ICON_LINE, ICON_CELL = 4, 32
 ICON_INSET = (ICON - (4 * ICON_LINE + 3 * ICON_CELL)) // 2

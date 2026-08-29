@@ -779,7 +779,7 @@ that pipeline's paste step can be pointed at this art instead.
    icon was redrawn here on 2026-08-30 as the command table — a dark plate
    ruled into a 3x3 board, an army in two opposite cells and the gold mark
    on the one between them, every measure a multiple of the 4px rule so the
-   platforms' 64, 32 and 16 all land on whole pixels — but it keeps the two
+   platforms' 64 and 32 land on whole pixels — but it keeps the two
    team hues the retired script typed, `d84a3c` / `3c64d8` against
    `CommanderVisuals` meridian `db4a3b` and aurora `3865d8`.
    `ChromeDrift` in `tests/test_chrome.py` holds the

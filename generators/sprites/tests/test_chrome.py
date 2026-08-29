@@ -122,8 +122,8 @@ class Icon(unittest.TestCase):
         self.assertEqual(counts[chrome.ICON_MARK], arms - chrome.ICON_MARK_THICK**2)
 
     def test_nothing_is_thinner_than_a_rule(self):
-        """Every feature is a multiple of the 4px rule, so the platforms' 64,
-        32 and 16 all land on whole pixels."""
+        """Every feature is a multiple of the 4px rule, so the platforms' 64
+        and 32 land on whole pixels; the 16 halves the rule."""
         for size in (
             chrome.ICON_CORNER,
             chrome.ICON_LINE,
