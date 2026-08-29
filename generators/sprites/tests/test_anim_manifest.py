@@ -21,7 +21,7 @@ import unittest
 from pathlib import Path
 
 import sprite_generator
-from spritegen import anim, atlas, terrain, units, voxel
+from spritegen import anim, atlas, pipeline, terrain, units, voxel
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, MOVES, UNITS, Pose
 
@@ -328,9 +328,13 @@ class Install(unittest.TestCase):
             src, dest = Path(tmp) / "out", Path(tmp) / "game"
             for sub in ("units", "iso_buildings", "autotiles"):
                 (src / sub).mkdir(parents=True)
-            for name in _SHEETS:
-                (src / name).write_bytes(b"")
-            (src / "terrain_atlas.png").write_bytes(b"")
+            # Every named output the install demands, read off the table it
+            # reads, so a new sheet needs no second list seeded here.
+            for output in pipeline.SHEETS:
+                if output.install_to is not None:
+                    seeded = src / output.rel
+                    seeded.parent.mkdir(parents=True, exist_ok=True)
+                    seeded.write_bytes(b"")
             anim.dump(src / anim.MANIFEST_NAME)
             with contextlib.redirect_stdout(io.StringIO()):
                 sprite_generator._install(src, dest)

@@ -123,8 +123,7 @@ res://
 ├─ maps/        # map scenes / map resources (campaign boards under maps/campaign/)
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
-│              # (tools/arena/), replay analyser (tools/replay/), the UI-chrome
-│              # art pipeline
+│              # (tools/arena/), replay analyser (tools/replay/)
 ├─ generators/ # the asset pipelines that live in this repo rather than beside it —
 │              # audio/, sprites/ and portraits/ are Python (make audio / make tiles /
 │              # make portraits install their output; make audio-test /

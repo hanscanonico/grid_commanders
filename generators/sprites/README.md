@@ -318,8 +318,7 @@ flip policy, when the clip starts and stops, and the game-side task.
 ## Usage
 
 `make tiles` from the repository root is the whole of it: it regenerates the
-sheets, installs them, draws the UI chrome this pipeline has no home for and
-reimports, and `make generators-venv` is the one-off interpreter setup it
+sheets and the UI chrome, installs them and reimports, and `make generators-venv` is the one-off interpreter setup it
 needs. The venv is deliberately kept **outside** the checkout
 (`~/.cache/grid_commanders/venv-sprites` by default, overridable as
 `SPRITEGEN_PY=<python>`), because a git worktree shares no ignored files with
@@ -668,7 +667,7 @@ that pipeline's paste step can be pointed at this art instead.
    move — so every importer still reads `spritegen.units`.
 4. **`spritegen/buildings.py` / `spritegen/terrain/`** — voxel property
    buildings and nature props composed onto 64px tile grounds. The grounds
-   keep `tools/generate_tiles.gd`'s hues but not its values: every tone is
+   keep the engine script's original hues but not its values: every tone is
    authored under `terrain.TERRAIN_VALUE_CEILING` so the top of the ramp
    stays the units'. **A ground's shadow tone is not typed, it is built**:
    `terrain._shade` puts a lit tone through the same three steps
@@ -769,6 +768,18 @@ that pipeline's paste step can be pointed at this art instead.
    roads, the river, the bridge, every coastline and every wood's tree line
    through the autotile variants, so it shows the CELLS the board would
    paint rather than the tiles the atlas holds.
+10. **`spritegen/chrome.py`** — the UI chrome: the range overlay the scene
+   modulates, the board cursor and the project icon. Flat rectangles, no
+   model and no ramp, folded in on 2026-08-29 from the engine script that
+   drew them (`make ui-art`, retired) so the one art the game shipped from a
+   second palette is now generated and snapshot-gated with the rest. **The
+   fold changed no pixel**, and the icon therefore still carries the hues
+   that script typed — `d84a3c` / `3c64d8` against `CommanderVisuals`
+   meridian `db4a3b` and aurora `3865d8`, and a grass and a road from before
+   the terrain revaluation. `ChromeDrift` in `tests/test_chrome.py` holds the
+   two team squares within 4/255 and 2 degrees of the rows they stand for, so
+   the gap can widen no further unquietly; closing it is a recolour, and a
+   recolour is an art change of its own.
 
 Python 3.10+, no dependencies beyond Pillow. The old seed-driven generator
 (creatures/ships/items/robots/tanks) lives in git history before this

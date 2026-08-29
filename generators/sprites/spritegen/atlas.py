@@ -9,7 +9,7 @@ units_atlas_figures.png
                     for the cut-ins, which draw the art at 1:1 over a ground
                     plane of their own (see compose_cell's `shadow`).
 terrain_atlas.png — 14 columns x 5 rows of terrain.CELL square RGBA cells,
-                    columns in tools/generate_tiles.gd order; non-property
+                    columns in the original engine script's order; non-property
                     columns repeat one opaque tile down all rows, property
                     columns are faction-tinted per row and transparent
                     around the building, for the board to paint under.
