@@ -93,7 +93,15 @@ static func _caption(row: Dictionary, rank: int) -> Array[String]:
 				str(row["state"]).to_upper()
 			]
 		),
-		"%s EDGE %.2f HUE %.1f" % [str(row["view"]).to_upper(), row["edge_steps"], row["edge_hue"]],
+		(
+			"%s %s EDGE %.2f HUE %.1f"
+			% [
+				str(row["view"]).to_upper(),
+				str(row["frame"]).to_upper(),
+				row["edge_steps"],
+				row["edge_hue"]
+			]
+		),
 		"MEDIAN %.2f HUE %.1f" % [row["steps"], row["hue"]],
 	]
 

@@ -2,7 +2,9 @@ class_name LegibilitySweep
 extends RefCounted
 ## The matrix: every unit kind, in every faction's colours, ready and acted,
 ## on every ground the board can put it on, under every wash the board can lay
-## over it — plus the same figures at the cut-in's own resolution.
+## over it, in every pose the board beats it through — the idle clip's two
+## frames and the gait clip's two — plus the same figures at the cut-in's own
+## resolution, on the idle clip it poses them in.
 ##
 ## An offline instrument, in the Balance Lab's sense: it observes shipped art
 ## and shipped constants, plays no match, and is not part of `make verify`.
@@ -85,14 +87,18 @@ const CUTIN_VIEW := "cutin"
 ## SideIdentity's contract with the art pipeline; this is only how the report
 ## spells them.
 const ROW_NAMES: Array[String] = ["neutral", "meridian", "aurora", "iron", "verdant"]
-## The seven fields that name one composite, in the order `--dump` spells them.
+## The eight fields that name one composite, in the order `--dump` spells them.
 ## `variant` is which tile of its family the terrain drew — a phase of the sea
 ## sheet, a connection mask, or LegibilityArt.ATLAS_VARIANT for a base-atlas
 ## cell — so a row names a tile rather than a terrain and a regression points at
-## the one that moved.
-const KEYS: Array[String] = ["view", "unit", "faction", "state", "terrain", "variant", "overlay"]
+## the one that moved. `frame` is which pose of which clip the figure was in,
+## the board's four and the cut-in's two, so a row names a sheet the same way.
+const KEYS: Array[String] = [
+	"view", "frame", "unit", "faction", "state", "terrain", "variant", "overlay"
+]
 const COLUMNS: Array[String] = [
 	"view",
+	"frame",
 	"unit",
 	"faction",
 	"state",
@@ -148,7 +154,8 @@ func composite(
 	terrain_id: StringName,
 	variant: String,
 	overlay: int,
-	view: String
+	view: String,
+	frame: String
 ) -> LegibilityComposite:
 	var terrain_type := terrain_db.by_id(terrain_id)
 	var ground := (
@@ -156,11 +163,11 @@ func composite(
 		if view == CUTIN_VIEW
 		else art.board_cell(terrain_type, terrain_db, variant)
 	)
-	if ground.is_empty():
+	if ground.is_empty() or not _sheets_of(view).has(frame):
 		return null
 	var cell := LegibilityComposite.new()
 	cell.art = art
-	cell.figure_cell = art.unit_cell(unit_type, row)
+	cell.figure_cell = art.unit_cell(unit_type, row, _sheets_of(view)[frame])
 	cell.size = LegibilityComposite.CUTIN_PX if view == CUTIN_VIEW else LegibilityComposite.BOARD_PX
 	cell.ground_cell = ground
 	cell.overlay = overlay as LegibilityComposite.Overlay
@@ -179,7 +186,27 @@ func _variants_of(terrain_id: StringName, view: String) -> Array[String]:
 	return names
 
 
-## The composite one report row names, rebuilt from the row's own six keys. The
+## Which sheets a view draws from, frame by frame: the board's four poses, the
+## cut-in's two. LegibilityArt owns the mapping; a view only says which of its
+## two tables it reads.
+static func _sheets_of(view: String) -> Dictionary[String, String]:
+	return LegibilityArt.CUTIN_SHEETS if view == CUTIN_VIEW else LegibilityArt.BOARD_SHEETS
+
+
+## The frames one view is measured in, in the order the beat plays them.
+static func frames_of(view: String) -> Array[String]:
+	var names: Array[String] = []
+	for frame: String in _sheets_of(view):
+		names.append(frame)
+	return names
+
+
+## The shipped sheet one frame of one view is read off.
+static func sheet_of(view: String, frame: String) -> String:
+	return _sheets_of(view).get(frame, "")
+
+
+## The composite one report row names, rebuilt from the row's own eight keys. The
 ## gallery and `--dump` both come through here, so a picture is always of the
 ## cell whose numbers are printed beside it.
 func composite_for(row: Dictionary) -> LegibilityComposite:
@@ -194,7 +221,8 @@ func composite_for(row: Dictionary) -> LegibilityComposite:
 		StringName(row["terrain"]),
 		str(row["variant"]),
 		overlay,
-		str(row["view"])
+		str(row["view"]),
+		str(row["frame"])
 	)
 	if cell == null:
 		return null
@@ -319,14 +347,26 @@ static func _with_fog(rows: Array[Dictionary], keep: bool) -> Array[Dictionary]:
 
 func _unit_rows(unit_type: UnitType, row: int, terrain_id: StringName) -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
-	for overlay in LegibilityComposite.Overlay.values():
-		for exhausted in [false, true]:
-			rows.append(_worst_row(unit_type, row, terrain_id, overlay, exhausted, BOARD_VIEW))
+	for frame in frames_of(BOARD_VIEW):
+		for overlay in LegibilityComposite.Overlay.values():
+			for exhausted in [false, true]:
+				rows.append(
+					_worst_row(unit_type, row, terrain_id, overlay, exhausted, BOARD_VIEW, frame)
+				)
 	# The cut-in draws neither the board's washes nor the acted scrim: it is the
 	# figure against the surface its terrain paves with, and nothing else.
-	rows.append(
-		_worst_row(unit_type, row, terrain_id, LegibilityComposite.Overlay.NONE, false, CUTIN_VIEW)
-	)
+	for frame in frames_of(CUTIN_VIEW):
+		rows.append(
+			_worst_row(
+				unit_type,
+				row,
+				terrain_id,
+				LegibilityComposite.Overlay.NONE,
+				false,
+				CUTIN_VIEW,
+				frame
+			)
+		)
 	return rows
 
 
@@ -342,11 +382,12 @@ func _worst_row(
 	terrain_id: StringName,
 	overlay: int,
 	exhausted: bool,
-	view: String
+	view: String,
+	frame: String
 ) -> Dictionary:
 	var worst := {}
 	for variant in _variants_of(terrain_id, view):
-		var candidate := _row(unit_type, row, terrain_id, variant, overlay, exhausted, view)
+		var candidate := _row(unit_type, row, terrain_id, variant, overlay, exhausted, view, frame)
 		if worst.is_empty() or _worse(candidate, worst):
 			worst = candidate
 	return worst
@@ -367,9 +408,10 @@ func _row(
 	variant: String,
 	overlay: int,
 	exhausted: bool,
-	view: String
+	view: String,
+	frame: String
 ) -> Dictionary:
-	var cell := composite(unit_type, row, terrain_id, variant, overlay, view)
+	var cell := composite(unit_type, row, terrain_id, variant, overlay, view, frame)
 	cell.exhausted = exhausted
 	var figure := cell.figure_colours()
 	var ground := cell.ground_colours()
@@ -384,6 +426,7 @@ func _row(
 	var edge_steps := snappedf(LegibilityMetric.in_steps(edge.x, ramp_step), 0.01)
 	var row_out := {
 		"view": view,
+		"frame": frame,
 		"unit": String(unit_type.id),
 		"faction": ROW_NAMES[row],
 		"state": "acted" if exhausted else "ready",

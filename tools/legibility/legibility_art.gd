@@ -4,7 +4,7 @@ extends RefCounted
 ## from. Nothing here is a second opinion: every image is the one the battle
 ## scene loads, and every number is read out of the file that owns it —
 ##
-##   units / terrain atlas  UnitSprite.UNITS_ATLAS_PATH, BattleView.ATLAS_PATH
+##   units / terrain atlas  UnitSprite's six unit sheets, BattleView.ATLAS_PATH
 ##   the reach / fire / threat washes  OverlayPalette.MOVE / ATTACK / THREAT
 ##   the threat stripe period           BattleOverlays.THREAT_STRIPE
 ##   the fog shroud                     FogLayer's modulate in battle.tscn
@@ -43,10 +43,35 @@ const ATLAS_VARIANT := "atlas"
 ## is a hole in the measurement.
 const VARIANT_PROBE_SPAN := 24
 
-## The units atlas at ambient frame A. The board also beats to frame B
-## (UnitSprite.UNITS_ATLAS_B_PATH), which this sweep does not measure: a frame is
-## a sixth axis, and adding it is a widening that supersedes a whole report
-## rather than an option on one.
+## A frame names a clip and a beat, never a file: the board beats an idle clip
+## and, while a unit walks its path, a gait clip, and each is two poses
+## (UnitSprite._sheet_path). Which file a frame is drawn from is the view's —
+## the board draws its own cells, shadow and all, and the cut-in draws the pair
+## with that shadow subtracted, which is a surface rather than a third clip
+## (UnitSprite.figure_texture_for).
+const FRAME_IDLE_A := "idle_a"
+const FRAME_IDLE_B := "idle_b"
+const FRAME_WALK_A := "walk_a"
+const FRAME_WALK_B := "walk_b"
+## Frame -> the sheet the board draws it from. All four, in the order the beat
+## plays them.
+const BOARD_SHEETS: Dictionary[String, String] = {
+	FRAME_IDLE_A: UnitSprite.UNITS_ATLAS_PATH,
+	FRAME_IDLE_B: UnitSprite.UNITS_ATLAS_B_PATH,
+	FRAME_WALK_A: UnitSprite.UNITS_ATLAS_MOVE_PATH,
+	FRAME_WALK_B: UnitSprite.UNITS_ATLAS_MOVE_B_PATH,
+}
+## Frame -> the sheet the cut-in draws it from. The idle clip only: a cut-in
+## poses a unit rather than walking it, so there is no gait sheet without the
+## tile's cast shadow to read.
+const CUTIN_SHEETS: Dictionary[String, String] = {
+	FRAME_IDLE_A: UnitSprite.UNITS_ATLAS_FIGURES_PATH,
+	FRAME_IDLE_B: UnitSprite.UNITS_ATLAS_FIGURES_B_PATH,
+}
+
+## The units atlas at the board's idle frame A — the sheet the ramp step is
+## measured off and the one a `--units=` run replaces. The other five reach the
+## harness through `frame_sheet`.
 var units: Image
 ## Where `units` was read from — the shipped path, or the file a `--units=` run
 ## put in its place. The ramp step is measured off that sheet, so a report has
@@ -131,7 +156,16 @@ func cutin_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 	return {"image": terrain, "origin": Vector2i(paving.atlas_col * CELL_PX, 0), "px": CELL_PX}
 
 
-## The region one unit kind occupies in one faction row of the units atlas. Its
+## One of the six shipped unit sheets, read once. The board's idle frame A comes
+## back as `units` rather than off disk, so a `--units=` run scores the sheet it
+## named there and the shipped art everywhere else.
+func frame_sheet(sheet_path: String) -> Image:
+	if sheet_path == UnitSprite.UNITS_ATLAS_PATH:
+		return units
+	return _sheet(sheet_path)
+
+
+## The region one unit kind occupies in one faction row of a unit sheet. Its
 ## cell is UnitSprite's own size rather than the terrain's: the two happen to
 ## match in width today, and nothing here may depend on their staying equal.
 ##
@@ -140,10 +174,10 @@ func cutin_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 ## that square is what a unit shows against the ground it stands on. What a
 ## raised silhouette overflows upward reads against the row behind it, which is
 ## a different tile and outside this measurement.
-func unit_cell(unit_type: UnitType, atlas_row: int) -> Dictionary:
+func unit_cell(unit_type: UnitType, atlas_row: int, sheet_path: String) -> Dictionary:
 	var footprint := Vector2i(0, UnitSprite.SPRITE_H - UnitSprite.SPRITE_W)
 	return {
-		"image": units,
+		"image": frame_sheet(sheet_path),
 		"origin":
 		(
 			Vector2i(unit_type.atlas_col * UnitSprite.SPRITE_W, atlas_row * UnitSprite.SPRITE_H)

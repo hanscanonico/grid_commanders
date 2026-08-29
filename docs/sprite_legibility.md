@@ -86,6 +86,69 @@ Everything below this line still describes the `0d87068` art. The next generator
 this page wholesale; until one does, **read the headline as the previous art's and this section as
 what shipped over it**.
 
+## Re-read 2026-08-29, over the frame axis — all six unit sheets
+
+The ruler had read one sheet of the six the game ships. It now reads a **frame** — a clip and a
+beat — on every row: the board's `idle_a` / `idle_b` (the ambient pair) and `walk_a` / `walk_b`
+(the gait pair a unit wears while `BattleAnimator` tweens it along a path), and the cut-in's
+`idle_a` / `idle_b`, which are the *figure* sheets, the same poses with the tile's cast shadow
+subtracted. Which file a frame is drawn from is the view's, exactly as `UnitSprite._sheet_path`
+and `UnitSprite.figure_texture_for` decide it in the scene. The matrix is **37,800 composites**
+where it was 9,900, `frame` is a column in `cells.csv`, a table in `summary.md`, a caption line in
+the gallery and the second field of `--dump`, and the ramp step is unmoved at **0.1549**.
+
+Nothing was tuned in response and the ruler is unchanged: same edge reading, same bars, same hue
+bound, same gallery sort.
+
+| view / frame | sheet | clear cells | failing | median edge | fogged failing |
+| --- | --- | --- | --- | --- | --- |
+| board `idle_a` | `units_atlas.png` | 7,200 | 6,829 (94.8%) | 1.15 | 1,439 (79.9%) |
+| board `idle_b` | `units_atlas_b.png` | 7,200 | 6,928 (96.2%) | 1.17 | 1,459 (81.1%) |
+| board `walk_a` | `units_atlas_move.png` | 7,200 | 6,951 (**96.5%**) | 1.11 | 1,491 (82.8%) |
+| board `walk_b` | `units_atlas_move_b.png` | 7,200 | 6,862 (95.3%) | 1.15 | 1,456 (80.9%) |
+| cut-in `idle_a` | `units_atlas_figures.png` | 900 | 422 (46.9%) | 2.00 | — |
+| cut-in `idle_b` | `units_atlas_figures_b.png` | 900 | 399 (44.3%) | 2.01 | — |
+
+Whole run: **clear 30,600 cells, 28,391 failing (92.8%)**, 19,869 of them hue-carried; **fog 7,200
+cells, 5,845 failing (81.2%)** at the one-step bar.
+
+**The two frames this page had already read reproduce it to the cell.** Board `idle_a` is
+94.8% clear / 79.9% fogged, which is the 2026-08-25 section's headline exactly, and board `idle_b`
+is 96.2% / 81.1%, which is that section's `--units=units_atlas_b.png` probe exactly. The axis
+therefore adds readings without moving one.
+
+### The four findings
+
+1. **The gait sheets are the install's art, and no better.** `walk_a` is the worst frame on the
+   board (96.5% clear, 82.8% fogged) and `walk_b` the middle of the pack; both sit inside the
+   spread the ambient pair already had. The move clip did not introduce a legibility problem of its
+   own and it did not answer the install's — the whole board still fails at ~95% for the reason the
+   2026-08-25 section gives, one source pixel in four surviving the board's decimation.
+2. **A frame is a real axis, not a rounding difference.** Between `idle_a` and `walk_a`, 6,720 of
+   the 9,000 board cells (both classes) move their edge reading and **267 cross to failing against
+   93 the other way**; `idle_a`→`idle_b` is 6,836 moved, 268 / 149. Per unit the spread is widest
+   on the **sub (73.8% idling, 90.8% walking, clear class)**, the tank (85.5% `idle_a` to 97.2%
+   `walk_a`) and the APC.
+   Reading one frame was reading one of four boards.
+3. **The cut-in row changed subject, and it was wrong before.** It used to be measured off the
+   board's own cell — cast shadow included — which is art the cut-in never draws. Off the sheets it
+   actually draws it reads **46.9% / 44.3%** where the old composite read 21.6% / 16.1%. That is
+   the harness correcting itself, not the figures moving: the dark shadow band was contour the
+   reading was scoring and the screen never shows. It is still the optimistic direction on one
+   count — the director paints its own contact shadow under the figure and this composite does not
+   — so treat the cut-in numbers as the figure against bare ground.
+4. **The worst-twenty gallery is now all four frames.** Ten of the twenty are gait cells and the
+   `lander` fogged on a mountain in `walk_b` is the worst cell in the whole sweep at 0.20 edge steps
+   / 3.9 hue. The pairing behind them is the previous rounds' unchanged: pale or grey airframes and
+   hulls on masonry, shoal and mountain.
+
+![the twenty worst-scoring composites](images/legibility_worst20.png)
+
+The run takes **24 minutes** on a loaded machine (four times the matrix it was), still writes
+`cells.csv` and `summary.md` under `reports/`, and still redraws only the gallery above. A cell is
+named `view:frame:unit:faction:state:terrain:variant:overlay` now — for example
+`make legibility-check LEGIBILITY="--dump=board:walk_b:lander:iron:ready:mountain:0:fog"`.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in

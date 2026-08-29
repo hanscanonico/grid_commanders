@@ -268,7 +268,8 @@ replay-report:
 # It boots a bare scene rather than running with -s, because the board constants
 # it reads sit on scripts that name autoloads.
 #   make legibility-check
-#   make legibility-check LEGIBILITY="--worst=40 --dump=board:tank:verdant:ready:woods:atlas:none"
+#   make legibility-check LEGIBILITY="--worst=40 \
+#     --dump=board:idle_a:tank:verdant:ready:woods:atlas:none"
 # An instrument rather than a gate — a failing cell is a finding for the art to
 # answer, never a colour to move — so it stays out of `make verify`, like the
 # Balance Lab. docs/sprite_legibility.md is the committed reading; the run
