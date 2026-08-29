@@ -46,6 +46,15 @@ this pass leaves it alone by design (a clean 2:1 diagonal is already the
 smoothest line a grid can draw; softening every step of one would only grey
 the outline down). What it catches is the shallower stretches — a wing root,
 a hull front, the shoulders of a foot unit.
+
+The property buildings come through the same seam (`terrain.property_sprite`)
+and today it moves no pixel of any of them, on any faction row: a building is
+its base-plate diamond and axis-aligned walls, which is runs of two end to
+end, so `MIN_RUN` excludes every corner they have (measured 2026-08-29 — 0
+corners found, against 17-34 pixels each at `min_run=2`; `test_aa.Buildings`
+keeps both halves honest). That is the rule answering, not a gap: the day a
+building is drawn with a shallower roof line, it is softened like a wing root
+without anyone wiring it up again.
 """
 
 from __future__ import annotations
@@ -109,8 +118,14 @@ def ramps_for_model(model: Model, faction: Faction) -> tuple[Ramp, ...]:
     return tuple(out)
 
 
-def soften_unit(sprite: Image.Image, model: Model, faction: Faction) -> Image.Image:
-    """`soften_staircase` for a rendered unit: the gate plus the ramp lookup."""
+def soften_sprite(sprite: Image.Image, model: Model, faction: Faction) -> Image.Image:
+    """`soften_staircase` for a rendered model: the gate plus the ramp lookup.
+
+    Units and property buildings both come through here. They are drawn out of
+    the same indexed ramps one band apart (`voxel.BUILDING_TOP_SLOT`), so the
+    lookup that lands a corner between its line and its body costs a building
+    nothing extra.
+    """
     if not ENABLED or sprite.height < MIN_SPRITE_HEIGHT:
         return sprite
     return soften_staircase(sprite, ramps_for_model(model, faction))

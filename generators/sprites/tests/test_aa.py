@@ -13,13 +13,14 @@ Run with `.venv/bin/python -m unittest discover tests`.
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 from PIL import Image
 
-from spritegen import aa, atlas
+from spritegen import aa, atlas, buildings, terrain
 from spritegen.palette import FACTIONS, SLOTS
 from spritegen.units import ATLAS_ORDER, Pose, build_model
-from spritegen.voxel import render_indexed
+from spritegen.voxel import render, render_indexed
 
 
 # A stand-in six-step ramp: evenly spaced greys, so a slot is readable off the
@@ -156,7 +157,7 @@ class ReachesOnlyThroughTheLine(unittest.TestCase):
             model = build_model(uid, Pose.A)
             for fac in (FACTIONS[0], FACTIONS[1]):
                 sprite = render_indexed(model, fac).image
-                out = aa.soften_unit(sprite, model, fac)
+                out = aa.soften_sprite(sprite, model, fac)
                 for x, y in changed(sprite, out):
                     edge = sprite.getpixel((x, y))[:3]
                     # Every colour within the pass's own reach, in each of the
@@ -196,7 +197,7 @@ class NeverOutside(unittest.TestCase):
                 model = build_model(uid, pose)
                 for fac in (FACTIONS[0], FACTIONS[3]):
                     sprite = render_indexed(model, fac).image
-                    out = aa.soften_unit(sprite, model, fac)
+                    out = aa.soften_sprite(sprite, model, fac)
                     self.assertEqual(
                         sprite.getchannel("A").tobytes(),
                         out.getchannel("A").tobytes(),
@@ -221,7 +222,7 @@ class Palette(unittest.TestCase):
             model = build_model(uid, Pose.A)
             for fac in FACTIONS:
                 sprite = render_indexed(model, fac).image
-                out = aa.soften_unit(sprite, model, fac)
+                out = aa.soften_sprite(sprite, model, fac)
                 allowed = {c for ramp in aa.ramps_for_model(model, fac) for c in ramp}
                 allowed |= {p[:3] for p in sprite.getdata() if p[3]}
                 stray = {p[:3] for p in out.getdata() if p[3]} - allowed
@@ -259,7 +260,7 @@ class Determinism(unittest.TestCase):
         sprite = render_indexed(model, FACTIONS[1]).image
         aa.ENABLED = False
         try:
-            self.assertIs(aa.soften_unit(sprite, model, FACTIONS[1]), sprite)
+            self.assertIs(aa.soften_sprite(sprite, model, FACTIONS[1]), sprite)
         finally:
             aa.ENABLED = True
 
@@ -267,7 +268,7 @@ class Determinism(unittest.TestCase):
         model = build_model("mech", Pose.A)
         sprite = render_indexed(model, FACTIONS[1]).image
         short = sprite.crop((0, 0, sprite.width, aa.MIN_SPRITE_HEIGHT - 1))
-        self.assertIs(aa.soften_unit(short, model, FACTIONS[1]), short)
+        self.assertIs(aa.soften_sprite(short, model, FACTIONS[1]), short)
 
 
 class Wiring(unittest.TestCase):
@@ -310,6 +311,68 @@ class Wiring(unittest.TestCase):
                 b.getchannel("A").tobytes(),
                 f"{uid} changed its cell silhouette",
             )
+
+
+class Buildings(unittest.TestCase):
+    """The property buildings run through the pass, and it finds nothing.
+
+    Both halves are the claim `aa`'s docstring records: the seam is wired, and
+    at the shipped `MIN_RUN` a building — a base-plate diamond and axis-aligned
+    walls, runs of two end to end — has no corner that qualifies. If a model is
+    redrawn with a shallower line, the first test here is what says so.
+    """
+
+    BUILDINGS = ("city", "base", "hq", "airport", "port")
+
+    def test_no_building_has_a_qualifying_corner(self):
+        for bid in self.BUILDINGS:
+            for fac in FACTIONS:
+                model = buildings.model_for(bid, fac)
+                sprite = render(model, fac)
+                # Not the height gate answering for the run rule.
+                self.assertGreaterEqual(sprite.height, aa.MIN_SPRITE_HEIGHT)
+                out = aa.soften_sprite(sprite, model, fac)
+                self.assertEqual(changed(sprite, out), [], f"{bid} {fac.key}")
+
+    def _softened_at_two(self, bid: str, fac) -> Image.Image:
+        """`property_sprite` with the run bar lowered to the runs of two a
+        building is actually drawn out of — the only way to see the seam
+        carry anything at all."""
+        real = aa.soften_staircase
+
+        def softer(sprite, model, faction):
+            return real(sprite, aa.ramps_for_model(model, faction), 2)
+
+        with mock.patch.object(aa, "soften_sprite", softer):
+            return terrain.property_sprite(bid, fac)
+
+    def test_the_property_sprite_is_the_softened_one(self):
+        for bid in self.BUILDINGS:
+            fac = FACTIONS[0]
+            plain = render(buildings.model_for(bid, fac), fac)
+            self.assertNotEqual(
+                plain.tobytes(),
+                self._softened_at_two(bid, fac).tobytes(),
+                f"{bid} is drawn unsoftened",
+            )
+
+    def test_a_softened_building_keeps_its_silhouette_and_its_palette(self):
+        for bid in self.BUILDINGS:
+            for fac in FACTIONS:
+                model = buildings.model_for(bid, fac)
+                plain = render(model, fac)
+                soft = self._softened_at_two(bid, fac)
+                self.assertEqual(
+                    plain.getchannel("A").tobytes(),
+                    soft.getchannel("A").tobytes(),
+                    f"{bid} {fac.key} changed its silhouette",
+                )
+                allowed = {c for ramp in aa.ramps_for_model(model, fac) for c in ramp}
+                allowed |= {p[:3] for p in plain.getdata() if p[3]}
+                stray = {p[:3] for p in soft.getdata() if p[3]} - allowed
+                self.assertFalse(
+                    stray, f"{bid} {fac.key} landed off its ramps: {stray}"
+                )
 
 
 class RampShape(unittest.TestCase):

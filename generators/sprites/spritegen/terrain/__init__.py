@@ -33,7 +33,7 @@ from .plains import (
     plains,
     road,
 )
-from .properties import PROPERTY_ANCHOR, SHADOW, property_overlay
+from .properties import PROPERTY_ANCHOR, SHADOW, property_overlay, property_sprite
 from .tones import (
     BUILDING_KEY_CEILING,
     CANOPY,
@@ -160,6 +160,7 @@ __all__ = [
     "mountain",
     "plains",
     "property_overlay",
+    "property_sprite",
     "reef",
     "river",
     "road",
