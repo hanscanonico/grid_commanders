@@ -24,7 +24,7 @@ from spritegen.units import (
 from spritegen import voxel
 from spritegen.voxel import CAST, FOAM
 
-from pixel_helpers import pose_cell, rung1_texels, RUNG_1_CELL
+from pixel_helpers import RUNG_1_CELL, pose_cell, rung1_texels, units_sheet
 
 
 class AmbientFrames(unittest.TestCase):
@@ -38,7 +38,7 @@ class AmbientFrames(unittest.TestCase):
     def test_frame_b_is_reproducible_and_distinct(self):
         b1 = atlas.build_units_atlas(Pose.B)
         self.assertEqual(b1.tobytes(), atlas.build_units_atlas(Pose.B).tobytes())
-        self.assertNotEqual(b1.tobytes(), atlas.build_units_atlas().tobytes())
+        self.assertNotEqual(b1.tobytes(), units_sheet().tobytes())
 
     # What the board draws is `RUNG_1_CELL` — the furthest the board zooms
     # out, and the hardest sample an idle has to survive.
@@ -113,8 +113,8 @@ class AmbientFrames(unittest.TestCase):
     def test_the_key_pose_keeps_the_units_mass(self):
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
-                a = self._mass(atlas.unit_cell(uid, fac))
-                b = self._mass(atlas.unit_cell(uid, fac, Pose.B))
+                a = self._mass(pose_cell(uid, fac))
+                b = self._mass(pose_cell(uid, fac, Pose.B))
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertLess(abs(b - a) / a, self.MAX_MASS_DRIFT)
 
@@ -134,8 +134,8 @@ class AmbientFrames(unittest.TestCase):
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertEqual(
-                        self._shadow(atlas.unit_cell(uid, fac)),
-                        self._shadow(atlas.unit_cell(uid, fac, Pose.B)),
+                        self._shadow(pose_cell(uid, fac)),
+                        self._shadow(pose_cell(uid, fac, Pose.B)),
                     )
 
     def test_both_poses_stand_on_the_same_cell_coordinate(self):
@@ -171,8 +171,8 @@ class AmbientFrames(unittest.TestCase):
             self.assertEqual(build_model(uid, Pose.A).vox, build_model(uid, Pose.B).vox)
             ground = atlas.cell_placement(uid, Pose.A).ground
             for fac in FACTIONS:
-                a = atlas.unit_cell(uid, fac)
-                b = atlas.unit_cell(uid, fac, Pose.B)
+                a = pose_cell(uid, fac)
+                b = pose_cell(uid, fac, Pose.B)
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertEqual(
                         b.crop((0, 0, atlas.CELL_W, ground - atlas.BOB_PX)).tobytes(),
@@ -244,7 +244,7 @@ class AmbientFrames(unittest.TestCase):
                 self.assertLessEqual(abs(box[Pose.A][2] - box[Pose.B][2]), 1)
             cells = {}
             for pose in AMBIENT_POSES:
-                cell = atlas.unit_cell(uid, neutral, pose, shadow=False)
+                cell = pose_cell(uid, neutral, pose, shadow=False)
                 px = cell.load()
                 w, h = cell.size
                 dy = atlas.BOB_PX if pose is Pose.B else 0
@@ -255,7 +255,7 @@ class AmbientFrames(unittest.TestCase):
             with self.subTest(unit=uid, reading="iou"):
                 self.assertGreaterEqual(len(a & b) / len(a | b), self.MIN_ROTOR_IOU)
             small = [
-                atlas.unit_cell(uid, neutral, pose).resize((16, 24), Image.NEAREST)
+                pose_cell(uid, neutral, pose).resize((16, 24), Image.NEAREST)
                 for pose in AMBIENT_POSES
             ]
             pa, pb = (cell.load() for cell in small)
@@ -280,9 +280,9 @@ class AmbientFrames(unittest.TestCase):
                 continue
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
-                    a = self._foam(atlas.unit_cell(uid, fac))
+                    a = self._foam(pose_cell(uid, fac))
                     self.assertTrue(a)
-                    self.assertEqual(a, self._foam(atlas.unit_cell(uid, fac, Pose.B)))
+                    self.assertEqual(a, self._foam(pose_cell(uid, fac, Pose.B)))
 
     def test_frame_b_still_reads_as_its_own_unit(self):
         # A rotor sweep on a small aircraft legitimately moves a quarter of
@@ -301,7 +301,7 @@ class AmbientFrames(unittest.TestCase):
                 self.assertEqual(best, uid)
 
     def _sil(self, uid: str, pose: Pose) -> set:
-        cell = atlas.unit_cell(uid, faction_by_key("neutral"), pose)
+        cell = pose_cell(uid, faction_by_key("neutral"), pose)
         small = cell.convert("RGBA").resize((32, 32), Image.NEAREST)
         px = small.load()
         return {(x, y) for y in range(32) for x in range(32) if px[x, y][3] > 200}
@@ -381,7 +381,7 @@ class MoveFrames(unittest.TestCase):
         that passes through the rest pose — but not both)."""
         for uid in self._movers():
             for fac in FACTIONS:
-                cells = {pose: pose_cell(uid, fac.key, pose).tobytes() for pose in Pose}
+                cells = {pose: pose_cell(uid, fac, pose).tobytes() for pose in Pose}
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertNotEqual(cells[Pose.MOVE_A], cells[Pose.MOVE_B])
                     self.assertNotEqual(
@@ -482,10 +482,10 @@ class MoveFrames(unittest.TestCase):
     def test_the_gait_keeps_the_units_mass(self):
         for uid in self._movers():
             for fac in FACTIONS:
-                a = self._mass(pose_cell(uid, fac.key, Pose.A))
+                a = self._mass(pose_cell(uid, fac, Pose.A))
                 for pose in MOVE_POSES:
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
-                        m = self._mass(pose_cell(uid, fac.key, pose))
+                        m = self._mass(pose_cell(uid, fac, pose))
                         self.assertLessEqual(abs(m - a) / a, self.MAX_MASS_DRIFT)
 
     def test_the_move_clip_moves_no_cell(self):
@@ -559,10 +559,10 @@ class MoveFrames(unittest.TestCase):
         for uid in self._movers():
             dx = self._shadow_dx(uid)
             for fac in FACTIONS:
-                a = pose_cell(uid, fac.key, Pose.A)
+                a = pose_cell(uid, fac, Pose.A)
                 shadow, body = self._shadow(a), self._body(a)
                 for pose in (Pose.B, *MOVE_POSES):
-                    cell = pose_cell(uid, fac.key, pose)
+                    cell = pose_cell(uid, fac, pose)
                     other, other_body = self._shadow(cell), self._body(cell)
                     ref, ref_body = shadow, body
                     if units.moving(pose) and dx:
@@ -608,7 +608,7 @@ class MoveFrames(unittest.TestCase):
                 continue
             for fac in FACTIONS:
                 for pose in MOVE_POSES:
-                    cell = pose_cell(uid, fac.key, pose)
+                    cell = pose_cell(uid, fac, pose)
                     shadow, body = self._shadow(cell), self._body(cell)
                     flipped = self._flip(shadow)
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
@@ -644,7 +644,7 @@ class MoveFrames(unittest.TestCase):
         """The bottom rung-1 row the unit's own body paints, shadow off."""
         w, h = RUNG_1_CELL
         px = (
-            atlas.unit_cell(uid, fac, pose, shadow=False)
+            pose_cell(uid, fac, pose, shadow=False)
             .resize(RUNG_1_CELL, Image.NEAREST)
             .load()
         )
@@ -689,14 +689,14 @@ class MoveFrames(unittest.TestCase):
             if UNITS[uid][1] != "sea":
                 continue
             for fac in FACTIONS:
-                parked = atlas.unit_cell(uid, fac, Pose.A)
+                parked = pose_cell(uid, fac, Pose.A)
                 foam, shade = self._foam(parked), self._shadow(parked)
                 water = shade | self._transparent(parked)
                 self.assertTrue(foam)
                 midline = (min(x for x, _ in shade) + max(x for x, _ in shade) + 1) // 2
                 rows = {}
                 for pose in MOVE_POSES:
-                    running = self._foam(atlas.unit_cell(uid, fac, pose))
+                    running = self._foam(pose_cell(uid, fac, pose))
                     wave = running - foam
                     rows[pose] = {y for _, y in wave}
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
@@ -726,12 +726,12 @@ class MoveFrames(unittest.TestCase):
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertEqual(
-                        pose_cell(uid, fac.key, Pose.MOVE_A).tobytes(),
-                        pose_cell(uid, fac.key, Pose.A).tobytes(),
+                        pose_cell(uid, fac, Pose.MOVE_A).tobytes(),
+                        pose_cell(uid, fac, Pose.A).tobytes(),
                     )
                     self.assertEqual(
-                        pose_cell(uid, fac.key, Pose.MOVE_B).tobytes(),
-                        pose_cell(uid, fac.key, Pose.B).tobytes(),
+                        pose_cell(uid, fac, Pose.MOVE_B).tobytes(),
+                        pose_cell(uid, fac, Pose.B).tobytes(),
                     )
 
     def test_a_moving_unit_still_reads_as_its_own_unit(self):
@@ -759,7 +759,7 @@ class MoveFrames(unittest.TestCase):
         mirroring is asymmetric in the sheet."""
         for uid in self._movers():
             for fac in FACTIONS:
-                cell = pose_cell(uid, fac.key, Pose.MOVE_A)
+                cell = pose_cell(uid, fac, Pose.MOVE_A)
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertNotEqual(
                         cell.tobytes(),
@@ -794,7 +794,7 @@ class MoveFrames(unittest.TestCase):
             {v: m for v, m in b.vox.items() if v[2] >= 3},
         )
         for fac in FACTIONS:
-            cells = [pose_cell("mech", fac.key, pose) for pose in MOVE_POSES]
+            cells = [pose_cell("mech", fac, pose) for pose in MOVE_POSES]
             rows = [y for _, y in self._body(cells[0])]
             waist = (min(rows) + max(rows) + 1) // 2
             upper = [c.crop((0, 0, c.width, waist)).tobytes() for c in cells]
@@ -840,7 +840,7 @@ class MoveFrames(unittest.TestCase):
         }
 
     def _sil(self, uid: str, pose: Pose) -> set:
-        cell = pose_cell(uid, "neutral", pose).convert("RGBA")
+        cell = pose_cell(uid, faction_by_key("neutral"), pose).convert("RGBA")
         px = cell.resize((32, 32), Image.NEAREST).load()
         return {(x, y) for y in range(32) for x in range(32) if px[x, y][3] > 200}
 

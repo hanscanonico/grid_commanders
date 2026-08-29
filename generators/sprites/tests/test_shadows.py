@@ -25,7 +25,7 @@ from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, MOVE_POSES, UNITS, Pose
 from spritegen import cell as cell_mod
 from spritegen import voxel
 
-from pixel_helpers import opaque_pixels
+from pixel_helpers import opaque_pixels, pose_cell
 
 
 class OneSun(unittest.TestCase):
@@ -102,7 +102,7 @@ class OneSun(unittest.TestCase):
         fac = FACTIONS[1]
         for uid in ATLAS_ORDER:
             for pose in self._sheet_poses(uid):
-                cast, hull = self._split(atlas.unit_cell(uid, fac, pose), voxel.SHADOW)
+                cast, hull = self._split(pose_cell(uid, fac, pose), voxel.SHADOW)
                 with self.subTest(unit=uid, pose=pose.name):
                     self.assertTrue(cast)
                     (sx, sy), (hx, hy) = self._centroid(cast), self._centroid(hull)
@@ -117,10 +117,12 @@ class OneSun(unittest.TestCase):
         2px only where the cell edge or the wake clips it), and an airborne
         one keeps its own larger lateral drop."""
         fac = FACTIONS[1]
+        # Every render under a patched offset is `atlas`'s own: a shared cell
+        # would answer the patched question with the unpatched cell.
         for uid in ATLAS_ORDER:
             for pose in self._sheet_poses(uid):
                 with self.subTest(unit=uid, pose=pose.name):
-                    lit, _ = self._split(atlas.unit_cell(uid, fac, pose), voxel.SHADOW)
+                    lit, _ = self._split(pose_cell(uid, fac, pose), voxel.SHADOW)
                     with mock.patch.object(cell_mod, "SHADOW_OFFSET", (0, 0)):
                         bare, _ = self._split(
                             atlas.unit_cell(uid, fac, pose), voxel.SHADOW
@@ -158,7 +160,7 @@ class OneSun(unittest.TestCase):
                 continue
             for pose in MOVE_POSES:
                 with self.subTest(unit=uid, pose=pose.name):
-                    cell = atlas.unit_cell(uid, fac, pose)
+                    cell = pose_cell(uid, fac, pose)
                     lit, hull = self._split(cell, voxel.SHADOW)
                     self.assertTrue(lit)
                     with mock.patch.object(
@@ -297,7 +299,7 @@ class CastShadow(unittest.TestCase):
         fac = FACTIONS[1]
         found = []
         for uid in ATLAS_ORDER:
-            px = atlas.unit_cell(uid, fac).convert("RGBA").load()
+            px = pose_cell(uid, fac).convert("RGBA").load()
             found.append(
                 [
                     (x, y)

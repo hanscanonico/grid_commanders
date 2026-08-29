@@ -175,15 +175,22 @@ def unit_cell(
     )
 
 
+def cell_box(uid: str, fac: Faction) -> tuple[int, int, int, int]:
+    """Where one unit's faction row sits in the units atlas, as a crop box —
+    the one statement of the grid `build_units_atlas` lays cells out on, so a
+    cell cut back out of a sheet lands on the cell that was composed into it."""
+    x, y = ATLAS_ORDER.index(uid) * CELL_W, FACTIONS.index(fac) * CELL_H
+    return x, y, x + CELL_W, y + CELL_H
+
+
 def build_units_atlas(pose: Pose = Pose.A, shadow: bool = True) -> Image.Image:
     atlas = Image.new(
         "RGBA", (len(ATLAS_ORDER) * CELL_W, len(FACTIONS) * CELL_H), (0, 0, 0, 0)
     )
-    for row, fac in enumerate(FACTIONS):
-        for col, uid in enumerate(ATLAS_ORDER):
-            atlas.alpha_composite(
-                unit_cell(uid, fac, pose, shadow), (col * CELL_W, row * CELL_H)
-            )
+    for fac in FACTIONS:
+        for uid in ATLAS_ORDER:
+            x, y, _, _ = cell_box(uid, fac)
+            atlas.alpha_composite(unit_cell(uid, fac, pose, shadow), (x, y))
     return atlas
 
 

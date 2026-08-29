@@ -25,6 +25,8 @@ from spritegen import anim, atlas, terrain, units, voxel
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, MOVES, UNITS, Pose
 
+from pixel_helpers import pose_cell, units_sheet
+
 
 class Columns(unittest.TestCase):
     def test_the_columns_are_the_atlas_order(self):
@@ -66,9 +68,9 @@ class Cell(unittest.TestCase):
         for uid in ATLAS_ORDER:
             if UNITS[uid][1] != "land":
                 continue
-            cell = atlas.unit_cell(uid, fac)
+            cell = pose_cell(uid, fac)
             lit = cell.load()
-            bare = atlas.unit_cell(uid, fac, shadow=False).load()
+            bare = pose_cell(uid, fac, shadow=False).load()
             spans = [
                 sum(
                     1
@@ -168,8 +170,8 @@ class MoveFallback(unittest.TestCase):
         the assembled sheets — placement included — rather than trusted from
         `build_model`."""
         for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
-            moved = atlas.build_units_atlas(move)
-            idle = atlas.build_units_atlas(ambient)
+            moved = units_sheet(move)
+            idle = units_sheet(ambient)
             for col, uid in enumerate(ATLAS_ORDER):
                 if uid in MOVES:
                     continue

@@ -45,7 +45,7 @@ from pathlib import Path
 from PIL import Image
 
 from . import anim, atlas, autotile, terrain
-from .palette import FACTIONS, faction_by_key
+from .palette import FACTIONS, Faction, faction_by_key
 from .units import ATLAS_ORDER, Pose
 
 # Where each kind of output lands in a grid_commanders checkout.
@@ -124,18 +124,24 @@ SHEETS: tuple[Output, ...] = (
 )
 
 
+def _sheet_cell(uid: str, fac: Faction) -> Image.Image:
+    """One cell cut back out of the sheet the run already built."""
+    return _units_sheet(Pose.A, True).crop(atlas.cell_box(uid, fac))
+
+
 def unit_cells() -> Iterator[Output]:
     """One units-atlas cell per unit and faction.
 
     Reference exports of art the atlas already carries: nothing in the game
     loads them, and `tests/check_snapshots.py` holds each to the cell of the
-    installed `units_atlas.png` it was cut from.
+    installed `units_atlas.png` it was cut from — which cropping rather than
+    re-rendering makes true by construction, and saves 90 renders a run.
     """
     for uid in ATLAS_ORDER:
         for fac in FACTIONS:
             yield Output(
                 f"{UNIT_CELLS}/{uid}_{fac.team}.png",
-                partial(atlas.unit_cell, uid, fac),
+                partial(_sheet_cell, uid, fac),
                 UNIT_CELLS_DIR,
             )
 

@@ -23,6 +23,8 @@ from spritegen import atlas
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER
 
+from pixel_helpers import pose_cell
+
 # The risers: tracked armour and the two guns that elevate.
 RAISED = ("tank", "md_tank", "artillery", "rockets")
 # What armour has to out-mass: the light vehicles on the same tile.
@@ -34,7 +36,7 @@ RUNG_1 = 4
 def _silhouette(uid: str) -> list[tuple[int, int]]:
     """Every drawn pixel of a cell, shadow left off: the shadow is the tile's
     and would report the ground line as art."""
-    cell = atlas.unit_cell(uid, FACTIONS[1], shadow=False).convert("RGBA")
+    cell = pose_cell(uid, FACTIONS[1], shadow=False).convert("RGBA")
     px = cell.load()
     return [
         (x, y)

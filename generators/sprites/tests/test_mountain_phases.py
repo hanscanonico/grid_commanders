@@ -16,13 +16,13 @@ from __future__ import annotations
 import statistics
 import unittest
 
-from spritegen import atlas, autotile, buildings, terrain
+from spritegen import autotile, buildings, terrain
 from spritegen.gbuffer import N_LEFT, N_RIGHT, N_TOP
 from spritegen.palette import FACTIONS, ROCK_RAMP, SNOW_RAMP
 from spritegen.terrain import CELL, TERRAIN_MEDIAN_CEILING, TERRAIN_VALUE_CEILING
 from spritegen.voxel import SHADOW_OFFSET, render_indexed_gbuffer
 
-from pixel_helpers import opaque_pixels, share_above
+from pixel_helpers import opaque_pixels, share_above, terrain_sheet
 from test_terrain_paint import TerrainPalette
 from test_value_bands import ValueCeiling
 
@@ -44,9 +44,7 @@ class MountainPhases(unittest.TestCase):
 
     def test_phase_zero_is_the_atlas_mountain_column(self):
         col = terrain.TERRAIN_ORDER.index("mountain")
-        column = atlas.build_terrain_atlas().crop(
-            (col * CELL, 0, col * CELL + CELL, CELL)
-        )
+        column = terrain_sheet().crop((col * CELL, 0, col * CELL + CELL, CELL))
         self.assertEqual(
             column.convert("RGB").tobytes(),
             terrain.mountain(0).convert("RGB").tobytes(),

@@ -30,9 +30,11 @@ from __future__ import annotations
 import unittest
 from functools import cache
 
-from spritegen import atlas, autotile, pipeline, terrain
+from spritegen import autotile, pipeline, terrain
 from spritegen.palette import FACTIONS
 from spritegen.terrain import CELL
+
+from pixel_helpers import terrain_sheet
 
 MAX_COLOURS = 24
 GUTTER = 2
@@ -120,11 +122,6 @@ def isolated(cell) -> list[tuple[int, int]]:
 
 
 @cache
-def terrain_atlas():
-    return atlas.build_terrain_atlas()
-
-
-@cache
 def autotile_sheet(rel: str):
     return next(o for o in pipeline.SHEETS if o.rel == rel).build()
 
@@ -143,7 +140,7 @@ def sheet_cells(sheet):
 def atlas_cells():
     """Every cell of the terrain atlas, which is a bare grid of terrain
     columns by faction rows."""
-    sheet = terrain_atlas()
+    sheet = terrain_sheet()
     for row, fac in enumerate(FACTIONS):
         for col, tid in enumerate(terrain.TERRAIN_ORDER):
             box = (col * CELL, row * CELL, (col + 1) * CELL, (row + 1) * CELL)
@@ -162,7 +159,7 @@ class TerrainAtlasInvariants(unittest.TestCase):
                 self.assertLessEqual(len(colours(cell)), MAX_COLOURS)
 
     def test_the_terrain_atlas_carries_no_semi_transparent_pixel(self):
-        self.assertEqual(alphas(terrain_atlas()) - {0, 255}, set())
+        self.assertEqual(alphas(terrain_sheet()) - {0, 255}, set())
 
     def test_only_the_property_columns_are_cut_out_of_the_ground(self):
         """The five property columns are overlays the board composites over a

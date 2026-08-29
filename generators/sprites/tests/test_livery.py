@@ -24,7 +24,14 @@ from spritegen.palette import (
 from spritegen.units import ATLAS_ORDER, Pose, build_model
 from spritegen.voxel import render_indexed
 
-from pixel_helpers import saturation, hue, hue_gap, faction_pixels
+from pixel_helpers import (
+    faction_pixels,
+    hue,
+    hue_gap,
+    pose_cell,
+    saturation,
+    units_sheet,
+)
 
 
 class Livery(unittest.TestCase):
@@ -224,7 +231,7 @@ class RowSeparation(unittest.TestCase):
         tot = [0, 0, 0]
         n = 0
         for uid in ATLAS_ORDER:
-            cell = atlas.unit_cell(uid, fac).convert("RGBA")
+            cell = pose_cell(uid, fac).convert("RGBA")
             px = cell.load()
             for y in range(cell.height):
                 for x in range(cell.width):
@@ -273,9 +280,7 @@ class RowSeparation(unittest.TestCase):
         red, blue = faction_by_key("red"), faction_by_key("blue")
         for uid in ("tank", "md_tank", "apc", "battleship"):
             with self.subTest(unit=uid):
-                px = faction_pixels(
-                    atlas.unit_cell(uid, red), atlas.unit_cell(uid, blue)
-                )
+                px = faction_pixels(pose_cell(uid, red), pose_cell(uid, blue))
                 sats = sorted(saturation(c) for c in px)
                 self.assertGreater(statistics.median(sats), 0.45)
 
@@ -304,14 +309,14 @@ class IndexedPalette(unittest.TestCase):
             for uid in ATLAS_ORDER:
                 with self.subTest(faction=fac.key, unit=uid):
                     self.assertLessEqual(
-                        len(set(self._opaque(atlas.unit_cell(uid, fac)))), 24
+                        len(set(self._opaque(pose_cell(uid, fac)))), 24
                     )
 
     def test_the_atlas_carries_no_semi_transparent_pixel(self):
         # 9.8% of the shipped atlas was partial alpha — halos at cut-in.
         for pose in Pose:
             with self.subTest(pose=pose.name):
-                alpha = {p[3] for p in self._pixels(atlas.build_units_atlas(pose))}
+                alpha = {p[3] for p in self._pixels(units_sheet(pose))}
                 self.assertEqual(alpha - {0, 255}, set())
 
     def test_no_plane_touches_the_ground_on_the_shaded_side(self):
@@ -486,7 +491,7 @@ class IndexedPalette(unittest.TestCase):
         intentional = {self.SHADOW, self.FOAM}
         for fac in FACTIONS:
             for uid in ATLAS_ORDER:
-                cell = atlas.unit_cell(uid, fac).convert("RGBA")
+                cell = pose_cell(uid, fac).convert("RGBA")
                 px = cell.load()
                 w, h = cell.size
                 stray = []
