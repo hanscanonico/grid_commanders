@@ -20,6 +20,7 @@ from collections import Counter
 from pathlib import Path
 
 from portraitgen import backdrop, bust, features, hair, head, props, roster, uniform
+from portraitgen.canvas import Canvas
 
 GAME = Path(__file__).resolve().parents[3]
 COMMANDERS = GAME / "data/commanders"
@@ -223,6 +224,28 @@ class TheRareMarksAreRare(unittest.TestCase):
         self.assertEqual(
             ["nia_rowan"], [f.id for f in roster.FACES.values() if f.freckles]
         )
+
+
+class TheIdentitiesTheReviewPinned(unittest.TestCase):
+    """Three rows the design review named, held by the columns that carry them.
+
+    Rowan's prop drifted to an unsanctioned one once already, and the two busts
+    the review read as empty above the collar were empty because their `acc`
+    column said `none` — both are one word in this table and neither shows up
+    in any other lint here.
+    """
+
+    EMPTY_ABOVE_THE_COLLAR = ("dane_ferrow", "iona_vance")
+
+    def test_rowan_carries_the_monocle(self):
+        self.assertEqual(roster.FACES["nia_rowan"].prop, "monocle")
+
+    def test_the_two_bare_heads_wear_headwear(self):
+        for key in self.EMPTY_ABOVE_THE_COLLAR:
+            with self.subTest(commander=key):
+                face = roster.FACES[key]
+                worn = features.accessory(Canvas(), face.head, face.acc)
+                self.assertGreater(len(worn), 2, "an accessory that is not headwear")
 
 
 class ThePosesAreTiltedAndFiveAreMirrored(unittest.TestCase):

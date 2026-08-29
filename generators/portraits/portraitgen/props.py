@@ -4,8 +4,8 @@ A prop never floats. The five shouldered ones are drawn behind the figure and
 carried by a rig drawn in front of it — five props, five different rigs, because
 one repeated diagonal band was the loudest shared mark on the contact sheet. The
 rest reach the bust themselves: a bowl resting on the collar, a cable running
-down to the shoulder, a lanyard hung off the neckline, a bird's feet on the
-shoulder board, or a **sleeve** rising out of the hem to a cuff. The sleeve is
+down to the shoulder, a lanyard hung off the neckline, a chain run from a lens
+to the collar, or a **sleeve** rising out of the hem to a cuff. The sleeve is
 why there is no hand here: a bare flesh disc under an object is the one contact
 the reviews rejected outright.
 
@@ -20,6 +20,7 @@ general's faction rather than declaring a hue of its own.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Iterable
 
 from .canvas import INK_DETAIL, INK_FEATURE, INK_SILHOUETTE, Canvas, Point
@@ -38,11 +39,11 @@ PROPS = frozenset(
         "compass",
         "dagger",
         "drone",
-        "falcon",
         "hammer",
         "helm",
         "ledger",
         "medal",
+        "monocle",
         "pipe",
         "plane",
         "radio",
@@ -95,6 +96,18 @@ def _shape(
 
 def _box(x0: float, y0: float, x1: float, y1: float) -> list[Point]:
     return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+
+def _ring(at: Point, radius: float, steps: int = 24) -> list[Point]:
+    """A circle as a path, for the one prop that is an outline and not a fill."""
+    x, y = at
+    return [
+        (
+            x + radius * math.cos(math.tau * step / steps),
+            y + radius * math.sin(math.tau * step / steps),
+        )
+        for step in range(steps)
+    ]
 
 
 def _disc(canvas: Canvas, at: Point, radius: float, colour: RGB) -> None:
@@ -307,23 +320,18 @@ def _drone(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     _disc(canvas, (172.0, 105.0), 3.0, faction.body_lt)
 
 
-def _falcon(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    _shape(
-        canvas,
-        [
-            (152.0, 158.0),
-            (140.0, 178.0),
-            (144.0, 204.0),
-            (164.0, 212.0),
-            (176.0, 192.0),
-            (172.0, 166.0),
-        ],
-        WOOD,
-    )
-    canvas.stroke([(148.0, 178.0), (154.0, 198.0)], INK_DETAIL, (*INK, 255))
-    _disc(canvas, (166.0, 150.0), 11.0, PAPER)
-    _shape(canvas, [(176.0, 146.0), (190.0, 152.0), (176.0, 158.0)], GOLD, INK_DETAIL)
-    _disc(canvas, (168.0, 147.0), 2.0, INK)
+def _monocle(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
+    """A lens worn on the eye, chained to a stud on the collar.
+
+    The lens is a ring rather than a disc: the eye under it has to stay the
+    eye. The chain is the contact — it runs off the rim to the collar, which is
+    what keeps the prop off the list of objects that float.
+    """
+    canvas.stroke(_ring((130.0, 141.0), 16.0), INK_FEATURE, (*INK, 255), closed=True)
+    canvas.stroke([(118.0, 133.0), (124.0, 128.0)], INK_DETAIL, (*STEEL_LIT, 255))
+    _cord(canvas, (143.0, 150.0), (159.0, 196.0), GOLD)
+    _cord(canvas, (159.0, 196.0), (166.0, 224.0), GOLD)
+    _disc(canvas, (166.0, 228.0), 5.0, GOLD)
 
 
 def _helm(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
@@ -489,11 +497,11 @@ _FRONT: dict[str, Callable[[Canvas, Faction, Ramp], None]] = {
     "compass": _compass,
     "dagger": _dagger,
     "drone": _drone,
-    "falcon": _falcon,
     "hammer": _hammer_front,
     "helm": _helm,
     "ledger": _ledger,
     "medal": _medal,
+    "monocle": _monocle,
     "pipe": _pipe,
     "plane": _plane,
     "radio": _radio,
