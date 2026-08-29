@@ -144,6 +144,17 @@ three lighter tones: solid is indistinguishable from the dither at rungs 1 and
 2, reads as shade rather than dots at rung 4, and every lighter tone loses the
 shadow entirely on road and shoal when zoomed out.
 
+The **ground the shadow falls on** was read the same way in 2026-08-29, and
+`../../docs/terrain_grain.md` is that record. The subject is what the board
+paints — `TerrainAutotiles` sends almost every ground terrain to an autotile
+sheet, so the census reads all 101 cells of the ten sheets plus the two
+`terrain_atlas.png` columns (reef, and the interior wood) a board still shows,
+and none of the columns a sheet answers for. Every one of the 101 is stable: the
+terrains' grain is picked per 4px block, which is the block the furthest rung
+samples at, so each draws the same share of its texture at every phase of every
+rung, worst swing 0.12 against a 0.15 bar. Nothing was tuned in response.
+`make grain-census` re-runs it, `GRAIN=--detail` cell by cell.
+
 ### The unit cell is 64x96, and armour spends the headroom
 
 A tank has to read as heavier than the grass tile it is parked on, and the
@@ -227,9 +238,10 @@ frames beside their mirror, because that mirror is the only place a
 screen-handed silhouette would show; `--no-flip` turns it off and `--flip`
 forces it on for any clip.
 
-The generator's four dev instruments — `tests/measure_motion.py`,
-`tests/preview_motion.py`, `tests/measure_livery.py` (`docs/ramps.md`) and
-`tests/measure_128.py` (`../../docs/density_128.md`) — all run under the one
+The generator's five dev instruments — `tests/measure_motion.py`,
+`tests/preview_motion.py`, `tests/measure_livery.py` (`docs/ramps.md`),
+`tests/measure_128.py` (`../../docs/density_128.md`) and
+`tests/grain_census.py` (`../../docs/terrain_grain.md`) — all run under the one
 interpreter `make generators-venv` builds, from this directory, with nothing on
 `PYTHONPATH`:
 
@@ -237,10 +249,11 @@ interpreter `make generators-venv` builds, from this directory, with nothing on
 py=~/.cache/grid_commanders/venv-sprites/bin/python
 "$py" tests/measure_motion.py --clip move
 "$py" tests/preview_motion.py OUTDIR
+"$py" tests/grain_census.py
 ```
 
-None of them is a test — `unittest discover`'s `test*.py` pattern does not
-match a `measure_` or `preview_` name — and none writes into `out/`, so
+None of them is a test — `unittest discover`'s `test*.py` pattern matches no
+`measure_`, `preview_` or `grain_` name — and none writes into `out/`, so
 `make sprites-test` and the snapshot gate never see one.
 
 ### A move clip is a gait, not a translation

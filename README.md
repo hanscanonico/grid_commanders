@@ -82,6 +82,8 @@ make replay-report REPLAY=<dir>   # survey a directory of them -> rates (docs/re
 make legibility-check     # every unit, tint, ground, overlay and animation frame composited,
                           # and how many ramp steps its contour keeps from the ground beside it
                           # -> reports/ (docs/sprite_legibility.md)
+make grain-census         # how much of each drawn terrain cell's grain every zoom rung draws
+                          # (docs/terrain_grain.md)
 make mobile-soak          # what a computer turn costs to plan and what the replay recorder's
                           # per-command flush costs (docs/mobile_soak.md)
 ```
