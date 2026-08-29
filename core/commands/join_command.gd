@@ -2,7 +2,8 @@ class_name JoinCommand
 extends Command
 ## Merges a unit into a damaged same-type friendly on the destination cell.
 ## HP, fuel, and ammo add up (capped at the type maximums); the moving unit
-## disappears and the merged unit is exhausted.
+## disappears and the merged unit is exhausted — the twin may already have acted,
+## only the mover has to be unspent.
 
 var unit: Unit
 var path: Array[Vector2i]
@@ -25,8 +26,6 @@ func validate(state: GameState) -> String:
 	# armies' units would move one side's spent funds onto the other's board.
 	if target.team != unit.team or target.type != unit.type:
 		return "can only join an identical friendly unit"
-	if target.acted:
-		return "target has already acted"
 	if target.displayed_hp() >= 10:
 		return "target is at full strength"
 	if not state.cargo_of(unit).is_empty() or not state.cargo_of(target).is_empty():

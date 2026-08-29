@@ -134,14 +134,16 @@ func test_a_healthy_unit_is_never_poured_into_a_wounded_one() -> void:
 
 
 ## Whether a merge is legal at all is JoinCommand's answer and this asks for it
-## rather than keeping a copy: a target that has already acted is refused there,
-## and a planner that decided for itself would hand the pipeline a command it
-## rejects — which costs the army the whole turn, not just the merge.
-func test_a_twin_that_has_already_acted_is_not_a_join_at_all() -> void:
+## rather than keeping a copy: a twin that has already acted is still a legal
+## destination there, so the planner offers the merge — and a planner that
+## decided for itself would leave those funds split all match.
+func test_a_spent_twin_is_still_worth_merging_into() -> void:
 	var state := _state(TWO_WOUNDED_TWINS, {Vector2i(0, 0): 40, Vector2i(1, 0): 40})
 	for unit in state.units:
 		if unit.cell == Vector2i(1, 0):
 			unit.acted = true
 	var command := _plan_on(state, _profile(0.5))
-	assert_false(command is JoinCommand, "a spent twin cannot be merged into, at any weight")
-	assert_eq(command.validate(state), "", "and whatever is planned instead has to be playable")
+	assert_true(
+		command is JoinCommand, "expected a merge, got %s" % command.get_script().get_global_name()
+	)
+	assert_eq(command.validate(state), "", "and whatever is planned has to be playable")
