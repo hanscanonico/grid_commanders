@@ -310,15 +310,6 @@ class MoveFallback(unittest.TestCase):
             self.assertEqual(len(poses), len(clip["sheets"]))
 
 
-# Every units sheet the install has to carry, in one place, so seeding the
-# fake output directory and asserting what landed cannot drift apart.
-_SHEETS: tuple[str, ...] = (
-    *anim.AMBIENT_SHEETS,
-    *anim.FIGURE_SHEETS,
-    *anim.MOVE_SHEETS,
-)
-
-
 class Install(unittest.TestCase):
     def test_the_install_step_ships_the_manifest_with_the_sheets(self):
         """The manifest is only a contract where the game can read it: a
@@ -343,9 +334,14 @@ class Install(unittest.TestCase):
             self.assertTrue(shipped.exists(), "the install left the manifest behind")
             self.assertEqual(shipped.read_text(encoding="utf-8"), anim.dumps())
             # A clip the manifest names but the install does not ship is the
-            # same drift one step later, so every sheet has to land too.
-            for name in _SHEETS:
-                self.assertTrue((tiles / name).exists(), f"the install left {name}")
+            # same drift one step later, so every output has to land too —
+            # read off the same table it was seeded from, so a new sheet or a
+            # new chrome destination is asserted without a second list here.
+            for output in pipeline.SHEETS:
+                if output.install_to is None:
+                    continue
+                landed = dest / output.install_to / Path(output.rel).name
+                self.assertTrue(landed.exists(), f"the install left {output.rel}")
 
 
 class Determinism(unittest.TestCase):
