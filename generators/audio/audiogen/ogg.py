@@ -57,6 +57,23 @@ def _pin_serials(stream: bytes) -> bytes:
     return bytes(out)
 
 
+def vendor_string(stream: bytes) -> str:
+    """The encoder libVorbis stamped into the stream's comment header.
+
+    Two Oggs of the same samples only agree byte for byte when the same
+    encoder made them, so this is what tells a stale file from a differently
+    encoded one.
+    """
+    at = stream.find(b"\x03vorbis")
+    if at < 0:
+        raise ValueError("no Vorbis comment header in stream")
+    start = at + 11
+    length = int.from_bytes(stream[at + 7 : start], "little")
+    if len(stream) < start + length:
+        raise ValueError("Vorbis comment header is truncated")
+    return stream[start : start + length].decode("utf-8")
+
+
 def ogg_bytes(x: np.ndarray) -> bytes:
     buf = io.BytesIO()
     sf.write(

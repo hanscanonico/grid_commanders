@@ -127,6 +127,14 @@ jobs:
           diff -r /tmp/gen_a/sfx /tmp/gen_b/sfx
           diff -r /tmp/gen_a/music /tmp/gen_b/music
 
+      # The audio the game loads, in both directions, so a composition edit
+      # that forgot `make audio` cannot stay green and a new sound cannot land
+      # compared against nothing. The effects byte for byte; the marches by
+      # their decoded samples to a measured tolerance, an Ogg's bytes and even
+      # its samples being the platform's libVorbis as much as the composition.
+      - name: Installed audio matches a fresh render
+        run: python tests/check_snapshots.py /tmp/gen_a
+
   # The sprite generator's own gate, on the same terms as the audio one: a
   # Python venv instead of the engine, so it runs beside `verify` rather than
   # inside it (`make sprites-test` runs the unittest half by hand).

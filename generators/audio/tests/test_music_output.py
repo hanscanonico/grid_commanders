@@ -15,13 +15,17 @@ from __future__ import annotations
 import dataclasses
 import io
 import unittest
+from pathlib import Path
 
 import numpy as np
 import soundfile as sf
 
 from audiogen import measure, music, sequencer, sfx
 from audiogen.dsp import RATE, seconds
-from audiogen.ogg import ogg_bytes
+from audiogen.ogg import ogg_bytes, vendor_string
+
+# The checkout this generator sits in, for the audio the game actually ships.
+GAME_ROOT = Path(__file__).resolve().parents[3]
 
 # The game's autoload/music.gd Music.NAMES, verbatim.
 CONTRACT = ("parade", "advance")
@@ -284,6 +288,19 @@ class OggEncoding(unittest.TestCase):
                 delta=0.5,
                 msg=name,
             )
+
+    def test_the_encoder_matches_the_one_that_made_the_committed_ogg(self):
+        # Every gate above holds over samples; the repository ships bytes. A
+        # different libVorbis encodes the same march into different bytes, so
+        # the snapshot gate can only byte-compare while the encoders agree.
+        installed = GAME_ROOT / "assets/music/parade.ogg"
+        self.assertEqual(
+            vendor_string(ogg_bytes(RENDERED["parade"])),
+            vendor_string(installed.read_bytes()),
+            "this soundfile encodes a different Vorbis than the committed "
+            "music: regenerate with `make audio`, or install the soundfile "
+            "requirements.txt pins",
+        )
 
 
 if __name__ == "__main__":

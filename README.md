@@ -39,20 +39,26 @@ make format-check    # gdformat --check — report what it would rewrite, change
 make tiles           # rebuild the art: generators/sprites atlases, UI chrome, import
 make atlases         # the first half alone: the generator's sheets
 make ui-art          # the second alone: the overlay, cursor and icon this repo draws itself
-make audio           # reinstall the sound effects + music from generators/audio
+make generators-venv # one-off: the Python interpreters the three generators need
+make audio           # reinstall the sound effects + music from generators/audio + import
 make audio-test      # that generator's own gate: rosters, mix, loop seams, determinism
 make sprites-test    # the sprite generator's own gate: geometry, ramps, palette mirror
-make generators-venv # one-off: the Python interpreters the three generators need
-make portraits       # rebake the busts and emblems from generators/portraits + import
-make portraits-test  # that generator's own gate: the palette mirror, the metrics, determinism
-make portraits-snapshot   # a fresh generation against the art installed under assets/
+make portraits-test  # the portrait generator's own gate: palette mirror, metrics, determinism
+make audio-lint      # ruff over generators/audio
+make sprites-lint    # ruff over generators/sprites
 make portraits-lint  # ruff over generators/portraits
+make generators-lint # all three lint gates
+make generators-test # all three generator suites
+make sprites-snapshot     # a fresh generation against the board art installed under assets/
+make audio-snapshot       # a fresh render against the sound installed under assets/
+make portraits-snapshot   # a fresh generation against the commander art installed under assets/
+make portraits       # rebake the busts and emblems from generators/portraits + import
 make import          # (re)import assets headless
 make export-android  # package a debug APK -> build/android/ (setup below)
 make export-ios      # package an Xcode project -> build/ios/ (setup below)
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
-make gallery-screenshot   # render all twenty-two commander cards (the G1 gate)
+make gallery-screenshot   # render all twenty-three commander cards (the G1 gate)
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make bulwark-measure      # Bulwark's win spread over N seeds -> reports/ (docs/bulwark_balance.md)
@@ -1303,8 +1309,8 @@ spec with no third-party pixels, gated by `make portraits-test` and `make portra
 project-original looping marches, `parade` for the menu and `advance` for the battle — is composed
 and rendered deterministically by `generators/audio`, a Python pipeline living in this
 repository and gated by `make audio-test` (determinism, loop-seam, loudness and distinctness
-measurements), and installed by `make audio` — the effects as committed WAVs, the two marches as
-Ogg Vorbis. `generators/.gdignore` keeps the engine out of the directory, so nothing there is
+measurements) and `make audio-snapshot` (the installed sound against a fresh render), and installed
+by `make audio` — the effects as committed WAVs, the two marches as Ogg Vorbis. `generators/.gdignore` keeps the engine out of the directory, so nothing there is
 imported or exported. Third-party asset licenses must be
 tracked in `assets/LICENSES.md`. No Nintendo assets or names may ever be used.
 
@@ -1315,12 +1321,14 @@ after a rebuild that changes atlas dimensions renders a blank map. `make sprites
 pipeline's own gate (cell geometry, ramps, phase sheets, the animation manifest, the palette
 mirror), and like `make audio-test` it stays out of `make verify` and runs as its own CI job.
 
-The two pipelines need a Python interpreter the engine does not — Pillow for the sprites, numpy
-and soundfile for the audio — and `make generators-venv` builds both, at
-`~/.cache/grid_commanders/venv-sprites` and `~/.cache/grid_commanders/venv-audio`. They sit
+The three pipelines need a Python interpreter the engine does not — Pillow for the sprites and the
+portraits, numpy and soundfile for the audio — and `make generators-venv` builds all three, at
+`~/.cache/grid_commanders/venv-sprites`, `~/.cache/grid_commanders/venv-portraits` and
+`~/.cache/grid_commanders/venv-audio`. They sit
 **outside** the checkout on purpose: a git worktree shares no ignored files with the main checkout,
 so a venv under the tree would be one install per worktree. Point `SPRITEGEN_PY=<python>` /
-`AUDIOGEN_PY=<python>` at another interpreter, or `SPRITEGEN_VENV=<dir>` / `AUDIOGEN_VENV=<dir>` at
+`PORTRAITGEN_PY=<python>` / `AUDIOGEN_PY=<python>` at another interpreter, or
+`SPRITEGEN_VENV=<dir>` / `PORTRAITGEN_VENV=<dir>` / `AUDIOGEN_VENV=<dir>` at
 another place to build it. The committed art and audio are the pipelines' exact output, so a clone
 that never builds a venv still plays and still passes `make verify`.
 
