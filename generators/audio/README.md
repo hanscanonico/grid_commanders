@@ -87,8 +87,8 @@ py=~/.cache/grid_commanders/venv-audio/bin/python
 `--only` takes any of the nine effect names and the two track names; an
 unknown name lists the known ones and exits non-zero. It refuses `--install`,
 because installing a narrowed run would leave the rest of `assets/` from an
-older render. `--no-boards` skips the two HTML pages, which are most of the
-run once only one sound is being rendered — each inlines its audio as base64.
+older render. `--no-boards` skips the two HTML pages, each of which inlines
+its audio as base64 — worth dropping when you only want the files on disk.
 
 `--game`, which the boards read the current sounds from, defaults to the
 repository this generator sits in.
