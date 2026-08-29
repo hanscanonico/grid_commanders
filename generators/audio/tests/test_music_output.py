@@ -3,14 +3,16 @@
 The SFX discipline applied to composition: determinism, the game's
 Music.NAMES contract, a seamless loop (the file's end must lead into its
 start — the game plays LOOP_FORWARD over the whole file), music sitting
-clearly under the combat SFX peaks, and the two marches staying distinct
-in both spectrum and tempo.
+clearly under the combat SFX peaks, every authored voice being heard in
+the mix it plays in, and the two marches staying distinct in both spectrum
+and tempo.
 
-Run with `.venv/bin/python -m unittest discover tests`.
+Run with `make audio-test` from the repository root.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import io
 import unittest
 
@@ -28,6 +30,14 @@ CONTRACT = ("parade", "advance")
 # compares against these, which is the render-twice check itself.
 RENDERED = {name: music.render(name) for name in CONTRACT}
 
+# One encode and one decode per track: the shipped bytes, and the samples the
+# game actually loops. Encoding is the suite's most expensive step, so the
+# gates below read these rather than re-encoding per assertion.
+ENCODED = {name: ogg_bytes(RENDERED[name]) for name in CONTRACT}
+DECODED = {
+    name: sf.read(io.BytesIO(ENCODED[name]), dtype="float64")[0] for name in CONTRACT
+}
+
 
 class Contract(unittest.TestCase):
     def test_roster_is_the_games_music_names(self):
@@ -39,6 +49,18 @@ class Contract(unittest.TestCase):
             t = seconds(len(RENDERED[name]))
             with self.subTest(track=name):
                 self.assertTrue(30.0 <= t <= 90.0, f"{t:.2f}s outside [30, 90]")
+
+    def test_each_loop_runs_exactly_the_score(self):
+        # The file is the loop, so its length is the score's: a bar dropped
+        # from a strain or a tempo edited past its melody lands here.
+        for name in CONTRACT:
+            builder, _peak = music.MUSIC[name]
+            song = builder()
+            authored = song.beats * 60.0 / song.bpm
+            with self.subTest(track=name):
+                self.assertAlmostEqual(
+                    seconds(len(RENDERED[name])), authored, delta=seconds(1)
+                )
 
 
 class Determinism(unittest.TestCase):
@@ -66,6 +88,16 @@ class Loop(unittest.TestCase):
         # sample-to-sample motion — a seam louder than the music clicks.
         for name in CONTRACT:
             x = RENDERED[name]
+            typical = measure.typical_step(x)
+            with self.subTest(track=name):
+                self.assertLess(measure.loop_step(x), typical)
+                self.assertLess(measure.loop_slope(x), 2.0 * typical)
+
+    def test_the_decoded_seam_stays_inside_the_texture(self):
+        # The same seam on the samples the game loops: the encoder rounds
+        # the last and first samples, and the seam must survive that too.
+        for name in CONTRACT:
+            x = DECODED[name]
             typical = measure.typical_step(x)
             with self.subTest(track=name):
                 self.assertLess(measure.loop_step(x), typical)
@@ -137,8 +169,79 @@ class Distinctness(unittest.TestCase):
         self.assertGreater(abs(a - b) / min(a, b), 0.15)
 
 
-if __name__ == "__main__":
-    unittest.main()
+class Arrangement(unittest.TestCase):
+    """Every authored voice is in the band, and heard once it is there."""
+
+    # The band each march plays with: (instrument, gain), in score order.
+    ROSTER = {
+        "parade": (
+            ("brass_lead", 0.34),
+            ("stab", 0.12),
+            ("tuba_bass", 0.30),
+            ("pad", 0.15),
+            ("kick", 0.50),
+            ("snare", 0.34),
+            ("hat", 0.32),
+        ),
+        "advance": (
+            ("edge_lead", 0.32),
+            ("stab", 0.11),
+            ("drive_bass", 0.26),
+            ("kick", 0.50),
+            ("snare", 0.34),
+            ("hat", 0.30),
+        ),
+    }
+
+    # Measured level each voice carries in its mix, dB relative to the whole.
+    # A pad at gain 0.15 can never read like a kick at 0.50, so the bar is
+    # per voice; the slack is uniform because it is the same claim each time.
+    CONTRIBUTION_DB = {
+        "parade": {
+            "brass_lead": -1.0,
+            "stab": -17.7,
+            "tuba_bass": -8.8,
+            "pad": -19.0,
+            "kick": -12.5,
+            "snare": -21.4,
+            "hat": -28.2,
+        },
+        "advance": {
+            "edge_lead": -1.9,
+            "stab": -14.7,
+            "drive_bass": -6.3,
+            "kick": -9.2,
+            "snare": -18.9,
+            "hat": -25.9,
+        },
+    }
+
+    # 6 dB is half the amplitude: a voice turned down to half its authored
+    # weight sits exactly on the bar, and anything quieter is a mix bug.
+    SLACK_DB = 6.0
+
+    def test_the_roster_of_voices_is_the_authored_one(self):
+        for name in CONTRACT:
+            builder, _peak = music.MUSIC[name]
+            with self.subTest(track=name):
+                self.assertEqual(
+                    tuple((t.instrument, t.gain) for t in builder().tracks),
+                    self.ROSTER[name],
+                )
+
+    def test_every_voice_is_audible_in_the_mix(self):
+        for name in CONTRACT:
+            builder, peak_db = music.MUSIC[name]
+            song = builder()
+            for voice in song.tracks:
+                rest = tuple(t for t in song.tracks if t is not voice)
+                without = sequencer.render(
+                    dataclasses.replace(song, tracks=rest), peak_db
+                )
+                carried = measure.voice_contribution_db(RENDERED[name], without)
+                floor = self.CONTRIBUTION_DB[name][voice.instrument] - self.SLACK_DB
+                with self.subTest(track=name, voice=voice.instrument):
+                    self.assertGreater(carried, floor)
 
 
 class OggEncoding(unittest.TestCase):
@@ -156,21 +259,18 @@ class OggEncoding(unittest.TestCase):
         # The loop is the whole file, so a codec that padded or trimmed the
         # stream would move the seam the gates above measure.
         for name in CONTRACT:
-            decoded, rate = sf.read(
-                io.BytesIO(ogg_bytes(RENDERED[name])), dtype="float64"
-            )
+            decoded, rate = sf.read(io.BytesIO(ENCODED[name]), dtype="float64")
             self.assertEqual(rate, RATE)
             self.assertEqual(len(decoded), len(RENDERED[name]), name)
 
     def test_the_encode_is_far_smaller_than_the_pcm_it_replaces(self):
         for name in CONTRACT:
             pcm = 2 * len(RENDERED[name])
-            self.assertLess(len(ogg_bytes(RENDERED[name])), pcm / 5, name)
+            self.assertLess(len(ENCODED[name]), pcm / 5, name)
 
     def test_the_decoded_track_measures_like_the_source(self):
         for name in CONTRACT:
-            decoded, _ = sf.read(io.BytesIO(ogg_bytes(RENDERED[name])), dtype="float64")
-            source = RENDERED[name]
+            decoded, source = DECODED[name], RENDERED[name]
             self.assertAlmostEqual(
                 measure.peak_db(decoded), measure.peak_db(source), delta=0.5, msg=name
             )
@@ -183,3 +283,7 @@ class OggEncoding(unittest.TestCase):
                 delta=0.5,
                 msg=name,
             )
+
+
+if __name__ == "__main__":
+    unittest.main()

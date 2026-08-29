@@ -95,16 +95,23 @@ leftover would ship beside its replacement.
 
 - **Contract** — the rosters are `Sfx.NAMES` and `Music.NAMES` verbatim;
   every duration fits its authored budget (a UI blip stays a blip, a music
-  loop is 30–90 s).
+  loop is 30–90 s), and each march runs exactly the score it is written as
+  (its beats at its tempo, to the sample).
 - **Determinism** — every render is byte-stable.
 - **Mix** — peaks sit at their authored per-sound level; UI under combat;
   music RMS clearly under every combat peak (a battle track never buries
   the shot it underscores); no clicks at the edges (first/last ~0.4 ms
   near-silent); no DC offset.
-- **Loop** — the music seam is measured: end-to-start amplitude and slope
-  stay inside the track's own motion, the texture holds across the seam,
-  and the sequencer's tail-wrap invariant is pinned on a fixture. A click
-  at the loop point is a build failure.
+- **Loop** — the music seam is measured on the render *and* on the decoded
+  Ogg the game actually loops: end-to-start amplitude and slope stay inside
+  the track's own motion, the texture holds across the seam, and the
+  sequencer's tail-wrap invariant is pinned on a fixture. A click at the
+  loop point is a build failure.
+- **Arrangement** — the composition itself: each march's voices are the
+  authored (instrument, gain) roster in score order, and every one of them
+  is heard — re-rendering the mix without a voice must lose the level that
+  voice measures at, so a voice muted, emptied or turned past half weight
+  fails by name.
 - **Distinctness** — pairwise spectral distance over log-band fingerprints:
   no two effects may sound like the same event (the silhouette-IoU gate
   with a Fourier transform). The two marches must also separate — spectrally

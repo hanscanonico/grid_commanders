@@ -6,7 +6,7 @@ the game's Sfx.NAMES contract, loudness bands, click-free edges, and
 pairwise spectral distinctness (the silhouette-IoU gate with a Fourier
 transform: no two effects may share a tonal fingerprint).
 
-Run with `.venv/bin/python -m unittest discover tests`.
+Run with `make audio-test` from the repository root.
 """
 
 from __future__ import annotations
