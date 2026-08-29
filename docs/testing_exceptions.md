@@ -1,0 +1,55 @@
+# Testing exceptions — what may be unit-tested outside `core/` and `ai/`
+
+`CLAUDE.md`'s **Testing** section states the rule: GUT tests target the Node-free layers, and
+presentation is verified by playing the scene. This file is the full list of what else the suite
+is allowed to test and why each one earns it. **Add to this list only when the subject is genuinely
+Node-free (or a static, pure function on a Node type) — never to make a scene testable.**
+
+## The Node-free layers themselves
+
+`core/`, `ai/`, the offline balance harness in `tools/balance/`, the arena's grammar, scorer and
+pools in `tools/arena/`, the replay analyser in `tools/replay/`, and the composite legibility
+metric in `tools/legibility/` — all Node-free for exactly this reason. That's where the rules live
+and where bugs hurt.
+
+`LegibilityMetric` is the arithmetic only. The render sweep it reports in is an offline instrument
+like the Balance Lab and stays out of `make verify`; `LegibilityBaseline` is the committed verdict
+digest that sweep is diffed against, and only a PASS turning FAIL is a failure.
+
+## The launch layer
+
+Deliberately made Node-free and argument-taking so it could be tested at all.
+
+| subject | suite | why it earns the exception |
+|---|---|---|
+| `MatchRequest`, `CmdArgs` (`scenes/common/`) | `test_match_request.gd` and the flag-grammar suites | the flag grammar every `make smoke` scenario and Balance Lab row is launched with |
+| `MatchConfig`'s staging | `test_match_config.gd` | reachable without a scene, and where `take()` clearing is held |
+| `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
+| `CampaignSession` | `tests/unit/test_campaign_session.gd` | the autoload is up for the whole headless run and reachable without a scene; its lifecycle — armed by `begin`, silent for every skirmish, emptied whole by `clear` — is what the suite pins |
+
+## Pure answers over an input or a state
+
+| subject | suite | why it earns the exception |
+|---|---|---|
+| `TransitionInput` | `test_transition_input.gd` | a pure static answer over an `InputEvent`, so the boundary convention every banner and the victory lockup obey is checked without a scene |
+| `TransitionInput`'s two `dismissed_by_*` readings | `test_page_dismissal.gd` | they also stamp the receipt on the page's viewport, so each case runs under a `SubViewport` rather than by booting a scene |
+| `DirectionalInput` | `test_directional_input.gd` | a pure answer over an `InputEvent` and the `InputMap`, so the one-step-per-gesture convention the board cursor and every menu obey is checked without a pad |
+| `SeatStrip.normalised_sides`, `SeatStrip.reopened_seats` | `test_seat_strip.gd` | the grouping and seating arithmetic a shrinking roster runs through is static and pure, so it is checked without building the strip |
+| `BattleZoom.floor_for` | `test_texel_stability.gd` | which rungs the zoom ladder offers is arithmetic over a viewport and a board, checked without a camera |
+
+## Content registries and resolved identity
+
+| subject | suite | why it earns the exception |
+|---|---|---|
+| `BattleMenus` | `test_unit_pricing.gd` | which rows a menu offers is content, gated by the same command authorities the rows would run, not scene plumbing — so the suite reads a build row's price and disabled state straight off it |
+| `BattleCampaign.objective_cells` | `test_objective_marks.gd` | a static, pure read over `CampaignSession` and a `GameState` with no `Node` in it, so which objectives put a mark on the board is pinned without staging a battle |
+| `TutorialHints`, `ControlHints` | `test_tutorial_copy.gd`, `test_control_hints.gd` | Node-free copy registries for the same reason `GameSpeed` is: which mission step is next and which key legend a context prints are pure functions of state the suite can hand them. One suite each — the two are two subjects — and each holds its subject to its character caps |
+| `CommanderVisuals`, `SideIdentity` | `test_side_identity.gd`, `test_side_identity_roster.gd` | the single authority for a side's presentation — a portrait, a faction theme, an atlas row, resolved once from the match's commander picks with no `Node` and no scene path |
+| `BattleStyle` (a `Resource`) and `BattleStyleDB` (`RefCounted`) | `test_battle_styles.gd` | weapon-signature data rather than drawing, so every unit naming a style that exists is checked without staging a cut-in |
+
+## The two that are not Node-free — but whose suites never build one
+
+`PathArrow` extends `Node2D` and `MapThumbnail` extends `Control`. Neither suite builds one:
+`PathArrow.segments()` and `MapThumbnail.sheet_path()` / `sheet_region()` — the pure functions the
+`_draw` of each only paints — are static, and are all `test_path_arrow.gd` and
+`test_map_thumbnail.gd` call. Same shape as `SeatStrip.normalised_sides` and `TransitionInput`.
