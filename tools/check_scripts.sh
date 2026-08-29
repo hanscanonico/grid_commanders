@@ -485,6 +485,15 @@ if (($# == 0)); then
 		failed=$((failed + 1))
 	fi
 
+	# And for the grind box's digest, whose pure half is the reading it takes off
+	# each instrument's artifact. The box itself plays matches for days; this is
+	# the part a gate can hold, over the fixtures in tests/fixtures/grind/.
+	if ! digest_check="$(tools/grind/digest.py --self-check 2>&1)"; then
+		echo "check: tools/grind/digest.py --self-check failed" >&2
+		printf '%s\n' "$digest_check" >&2
+		failed=$((failed + 1))
+	fi
+
 	# A detector with no fixture is a detector nobody can trust: a false positive
 	# sends the reader looking at a doctrine that was playing correctly. Every
 	# finding kind the analyser can report is a key of ReplayAnalysis.SEVERITY, so

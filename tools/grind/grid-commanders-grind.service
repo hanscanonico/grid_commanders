@@ -1,0 +1,29 @@
+# The grind box, as a service. Template unit: copy it to
+# /etc/systemd/system/, set User and WorkingDirectory to the checkout, then
+#   sudo systemctl daemon-reload && sudo systemctl enable --now grid-commanders-grind
+# docs/grind_box.md is the whole install.
+[Unit]
+Description=Grid Commanders grind box — the offline instruments, around the clock
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=grind
+WorkingDirectory=/home/grind/grid_commanders
+Environment=GODOT=bin/godot
+ExecStart=/usr/bin/make grind GRIND="--publish"
+# The box is meant to be usable while it grinds, and every job nices itself
+# again on top of this.
+Nice=10
+# A crash is a finding, not the end of the run: the supervisor keeps its own
+# markers, so a restart resumes rather than replays.
+Restart=always
+RestartSec=30
+KillMode=mixed
+TimeoutStopSec=120
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

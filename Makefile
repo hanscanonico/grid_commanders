@@ -537,6 +537,24 @@ campaign-difficulty:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_campaign_difficulty.gd -- $(CAMPAIGN)
 
+# The grind box: every instrument above, rotated on a machine nobody is sitting
+# at, and a digest a person can read in the morning. Nothing new is measured —
+# the jobs are these same targets, run under `nice`, logged, resumed where the
+# tool resumes itself and marked done where it does not. It bootstraps its own
+# engine on Linux (the version .github/workflows/verify.yml pins) and imports
+# once per checkout, so a fresh box needs `git clone` and this.
+#   make grind GRIND="--once --dry-run"    # the plan, playing nothing
+#   make grind GRIND="--publish"           # the systemd unit's own line
+# `make grind-status` says where it is right now; docs/grind_box.md is the
+# install, the reading and how a champion is adopted by hand.
+GRIND ?=
+STATUS ?=
+grind:
+	tools/grind/grind.sh $(GRIND)
+
+grind-status:
+	tools/grind/status.sh $(STATUS)
+
 # Regenerates the art under assets/portraits with generators/portraits and
 # re-imports so the new PNGs register: the five faction emblems and the
 # twenty-three commander busts, which is the whole of it — nothing else bakes
@@ -611,4 +629,5 @@ mobile-soak:
 	generators-venv portraits import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
-	balance-watch replay replay-report campaigns legibility-check legibility-ratchet legibility-baseline mobile-soak
+	balance-watch replay replay-report campaigns legibility-check legibility-ratchet legibility-baseline mobile-soak \
+	grind grind-status
