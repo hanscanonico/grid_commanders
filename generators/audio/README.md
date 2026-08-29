@@ -76,9 +76,19 @@ py=~/.cache/grid_commanders/venv-audio/bin/python
 # (music, both players loop) — the game's current take beside this run's,
 # with the measurements
 
+# iterate on one sound or one march: renders and boards just those
+"$py" audio_generator.py --only parade
+"$py" audio_generator.py --only shot rocket --no-boards
+
 # install into a game checkout — the path is REQUIRED, never defaulted
 "$py" audio_generator.py --install /path/to/grid_commanders
 ```
+
+`--only` takes any of the nine effect names and the two track names; an
+unknown name lists the known ones and exits non-zero. It refuses `--install`,
+because installing a narrowed run would leave the rest of `assets/` from an
+older render. `--no-boards` skips the two HTML pages, which are most of the
+run once only one sound is being rendered — each inlines its audio as base64.
 
 `--game`, which the boards read the current sounds from, defaults to the
 repository this generator sits in.
