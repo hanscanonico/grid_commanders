@@ -62,8 +62,11 @@ the ear; the hair fringe and the collar are the same pass at their own layers.
 | `cheek_wedge` | otherwise | the cheekbone-to-jaw wedge |
 
 Every shape starts at least `NOSE_AXIS_CLEARANCE` of a half-width out from the
-face's centre line, because a boundary running down the nose-mouth axis reads
-as a two-tone mask rather than as a lit head. `face_light` is the one shape on
+face's centre line — outside the nose and the mouth — because a boundary
+running down the nose-mouth axis reads as a two-tone mask rather than as a lit
+head, and each one closes on its own horizontal run (`TERMINATORS`, in skull
+heights from the crown) so the shade ends as a plane turning away from the
+light rather than as a line drawn down the face. `face_light` is the one shape on
 the key side — a single band across the forehead and cheekbone, not a mirror of
 the shade, so the two sides of a face are never the same drawing.
 

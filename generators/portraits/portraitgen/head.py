@@ -170,7 +170,7 @@ def ears(skull: Skull) -> tuple[tuple[float, float, float, float], ...]:
     )
 
 
-def _skull_box(skull: Skull) -> tuple[float, float, float, float]:
+def skull_box(skull: Skull) -> tuple[float, float, float, float]:
     """Centre, half-width, crown and height — what a shade shape is placed on."""
     half = (_hx(SKULL_RIGHT, skull.width) - _hx(SKULL_LEFT, skull.width)) / 2.0
     top = CROWN_Y - skull.crown * CROWN_PX
@@ -217,7 +217,7 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
     face = outline(skull)
     skin.polygon(face, ramp.base)
     face_mask = _mask_of(skin, face)
-    centre, half, top, height = _skull_box(skull)
+    centre, half, top, height = skull_box(skull)
     placement = {
         "centre": centre,
         "half": -half if mirrored else half,
