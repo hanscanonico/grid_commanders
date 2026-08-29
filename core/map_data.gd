@@ -296,8 +296,9 @@ func _tag_error(tag: StringName, line: String) -> String:
 	return "MapData: %s in '%s'" % [error, line]
 
 
-## Reads the roster off the board, once, at the end of `parse` — the last line may
-## be the one that seats the last army.
+## The roster a board naming `named_teams` seats — the one statement of the rule,
+## asked by `_build_roster` here and by `MapDocument.teams()` for a draft that is
+## not saved yet, so a board says the same thing about itself both times.
 ##
 ## Seats run from 1 up to the highest one the board names, never fewer than the
 ## two a match needs. Two things make it a range rather than the exact set of
@@ -306,13 +307,22 @@ func _tag_error(tag: StringName, line: String) -> String:
 ## indexes past; and a board that only ever mentions one army (which most test
 ## fixtures are, and which no match is) has always been played as a duel with an
 ## empty seat opposite.
-func _build_roster() -> void:
+static func roster_for(named_teams: Array[int]) -> Array[int]:
 	var seats := DEFAULT_TEAMS.size()
+	for team in named_teams:
+		seats = maxi(seats, team)
+	return PLAYER_TEAMS.slice(0, seats)
+
+
+## Reads the roster off the board, once, at the end of `parse` — the last line may
+## be the one that seats the last army.
+func _build_roster() -> void:
+	var named: Array[int] = []
 	for cell: Vector2i in _owners:
-		seats = maxi(seats, _owners[cell])
+		named.append(_owners[cell])
 	for entry: Dictionary in starting_units:
-		seats = maxi(seats, entry.team)
-	_teams = PLAYER_TEAMS.slice(0, seats)
+		named.append(entry.team)
+	_teams = roster_for(named)
 
 
 func _team_bound_message(what: String, line: String) -> String:
