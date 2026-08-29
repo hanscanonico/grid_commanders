@@ -410,7 +410,8 @@ audio-test:
 	cd "$(AUDIOGEN)" && "$(abspath $(AUDIOGEN_PY))" -m unittest discover tests
 
 # The sprite generator's own merge bar: cell geometry, ramps, phase sheets, the
-# animation manifest and the palette mirrored off the game's own code. Out of
+# animation manifest, the palette mirrored off the game's own code, and two
+# full runs of the pipeline in two processes byte for byte. Out of
 # `make verify` because it needs a Python venv a clone of this repo does not
 # have, and because it costs ~240 s — mostly the terrain and paint contract
 # suites, which render sheets to read them back. CI runs it as its own job.
