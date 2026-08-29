@@ -221,7 +221,7 @@ FACES: dict[str, Face] = {
         Face(
             id="lyra_quill",
             chest="placket",
-            skin="medium",
+            skin="pale",
             hair="platinum",
             style="bob",
             brow="soft",

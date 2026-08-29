@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 from . import light
 from .canvas import INK_SILHOUETTE, Canvas, Point
-from .features import Frame
+from .features import REFERENCE_BOX, Frame
 from .head import Skull
 from .light import Ramp
 from .palette import INK, RGB
@@ -61,13 +61,103 @@ class Lobe:
 
 @dataclass(frozen=True)
 class Style:
-    """One hairstyle: what falls behind the head, what covers it, and the lobe."""
+    """One hairstyle: what falls behind the head, what covers it, and the lobe.
+
+    `band` is the rung of the hair ramp the mass is painted in. It is `base`
+    everywhere but on a style whose own colour sits so near the skin under it
+    that the two read as one shape once the ink between them mips away — there
+    the mass drops a rung rather than the colour being renamed.
+    """
 
     front: tuple[Mass, ...] = ()
     back: tuple[Mass, ...] = ()
     blobs: tuple[Blob, ...] = ()
     lobe: Lobe | None = None
     fringe: Mass = ()
+    band: str = "base"
+
+
+# `curly` is a cloud of curls, not a wig: the mass spreads this share of the
+# skull's width and falls this share of its height below the crown, so it reads
+# low and broad rather than stacked. Its crest still breaks the crown line the
+# way every other style's does — a crest under that line bares the top of the
+# head, which reads as bald and not as low.
+CLOUD_WIDTH = 1.06
+CLOUD_FOOT = 0.46
+CLOUD_RISE = 8.0
+# How many curls the top edge shows. Four ink-ringed blobs in a row read as a
+# barrister's wig through three reviews; three arcs on one silhouette read as
+# hair. The steps are how finely each arc is walked out.
+CLOUD_LOBES = 3
+CLOUD_STEPS = 11
+
+
+def _curls(centre: float, half: float, crest: float) -> list[Point]:
+    """The upper envelope of the lobes: one scalloped edge, not N outlines."""
+    radius = half / (CLOUD_LOBES - 0.5)
+    reach = half - radius
+    middles = [
+        centre + (lobe - (CLOUD_LOBES - 1) / 2.0) * reach * 2.0 / (CLOUD_LOBES - 1)
+        for lobe in range(CLOUD_LOBES)
+    ]
+    edge: list[Point] = []
+    for step in range(CLOUD_LOBES * CLOUD_STEPS + 1):
+        x = centre - half + 2.0 * half * step / (CLOUD_LOBES * CLOUD_STEPS)
+        rises = [radius**2 - (x - middle) ** 2 for middle in middles]
+        edge.append((x, crest + radius - max(0.0, max(rises)) ** 0.5))
+    return edge
+
+
+def _cloud() -> Mass:
+    """`curly`'s mass: the curls over the crown, and the fall past the ear."""
+    left, top, right, bottom = REFERENCE_BOX
+    centre = (left + right) / 2.0
+    half = (right - left) / 2.0 * CLOUD_WIDTH
+    crest = top - CLOUD_RISE
+    foot = top + (bottom - top) * CLOUD_FOOT
+    return (
+        (centre - half + 7.0, foot),
+        (centre - half, foot - 18.0),
+        *_curls(centre, half, crest),
+        (centre + half, foot - 18.0),
+        (centre + half - 7.0, foot),
+        (centre + half - 19.0, foot - 6.0),
+        (centre + half - 20.0, 120.0),
+        (centre, 112.0),
+        (centre - half + 20.0, 120.0),
+        (centre - half + 19.0, foot - 6.0),
+    )
+
+
+# Where `bob` ends: an arc this far down the skull, a hem at the chin rather
+# than the two square corners that made it a curtain.
+BOB_HEM = 0.92
+
+
+def _bob_fall() -> Mass:
+    """`bob`'s mass: the cap, and the two falls hemmed in a chin-length arc."""
+    top, bottom = REFERENCE_BOX[1], REFERENCE_BOX[3]
+    hem = top + (bottom - top) * BOB_HEM
+    return (
+        (56.0, 140.0),
+        (48.0, 76.0),
+        (110.0, 72.0),
+        (172.0, 76.0),
+        (164.0, 140.0),
+        (164.0, hem - 16.0),
+        (160.0, hem - 4.0),
+        (152.0, hem),
+        (146.0, hem - 6.0),
+        (148.0, 176.0),
+        (160.0, 132.0),
+        (110.0, 124.0),
+        (60.0, 132.0),
+        (72.0, 176.0),
+        (74.0, hem - 6.0),
+        (68.0, hem),
+        (60.0, hem - 4.0),
+        (56.0, hem - 16.0),
+    )
 
 
 _CAP: Mass = (
@@ -99,24 +189,10 @@ _STYLES: dict[str, Style] = {
                 (74.0, 98.0),
             ),
         ),
-        back=(
-            (
-                (56.0, 140.0),
-                (48.0, 76.0),
-                (110.0, 72.0),
-                (172.0, 76.0),
-                (164.0, 140.0),
-                (164.0, 188.0),
-                (148.0, 180.0),
-                (160.0, 132.0),
-                (110.0, 124.0),
-                (60.0, 132.0),
-                (72.0, 180.0),
-                (56.0, 188.0),
-            ),
-        ),
+        back=(_bob_fall(),),
         lobe=Lobe(66.0, 104.0, 84.0, 24.0),
         fringe=_FRINGE_BAND,
+        band="shade",
     ),
     "braid": Style(
         front=(
@@ -180,24 +256,8 @@ _STYLES: dict[str, Style] = {
         lobe=Lobe(76.0, 110.0, 92.0, 12.0),
     ),
     "curly": Style(
-        front=(
-            (
-                (64.0, 124.0),
-                (68.0, 108.0),
-                (152.0, 108.0),
-                (156.0, 124.0),
-                (140.0, 112.0),
-                (110.0, 112.0),
-                (80.0, 112.0),
-            ),
-        ),
-        blobs=(
-            (76.0, 100.0, 16.0),
-            (100.0, 90.0, 17.0),
-            (124.0, 90.0, 17.0),
-            (146.0, 102.0, 16.0),
-        ),
-        lobe=Lobe(74.0, 108.0, 88.0, 18.0),
+        front=(_cloud(),),
+        lobe=Lobe(74.0, 100.0, 96.0, 14.0),
         fringe=_FRINGE_BAND,
     ),
     "hood": Style(
@@ -356,6 +416,11 @@ def ramp_for(colour: str) -> Ramp:
     return light.build_ramp(HAIR_BASES[colour])
 
 
+def mass_band(style: str) -> str:
+    """Which band of the ramp a style's mass takes. An unknown style raises."""
+    return _STYLES[style].band
+
+
 def draw(
     canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
 ) -> None:
@@ -381,13 +446,14 @@ def front(
     """
     spec = _STYLES[style]
     frame = Frame.of(skull)
+    tone = ramp.band(spec.band)
     if skin is not None and spec.fringe:
         canvas.polygon(frame.path(spec.fringe), skin.shade)
     for x, y, radius in spec.blobs:
-        canvas.ellipse(frame.ellipse(x, y, radius, radius), ramp.base)
+        canvas.ellipse(frame.ellipse(x, y, radius, radius), tone)
         canvas.stroke(_ring(frame, x, y, radius), INK_SILHOUETTE, INK, closed=True)
     for mass in spec.front:
-        _mass(canvas, frame, mass, ramp.base)
+        _mass(canvas, frame, mass, tone)
     if spec.lobe is not None and light.luminance(ramp.base) <= PALE_HAIR:
         canvas.polygon(frame.path(_lobe(spec.lobe)), ramp.lit)
 
