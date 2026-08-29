@@ -17,17 +17,13 @@ const TILE := BattleView.TILE
 const ORIGIN := Vector2(TILE * 0.5, -6.0)
 ## How far a mark travels while it fades, in world pixels.
 const LIFT := 7.0
-## The arrow: half its width, and its height. Two pixels of dark outline are
-## grown off these, so the shape reads on any terrain.
-const ARROW_HALF := 4.0
-const ARROW_H := 7.0
+## The destroyed cross: half its width, and its height. Two pixels of dark
+## outline are grown off these, so the shape reads on any terrain.
+const CROSS_HALF := 4.0
+const CROSS_H := 7.0
 const OUTLINE := 2.0
-## Where the digits sit beside the arrow, and the baseline they sit on.
-const TEXT_X := 5.0
+## The baseline the digits sit on.
 const BASELINE := 5.0
-## The arrow steps left by this much when a number is drawn beside it, so the
-## pair reads as centred on the tile rather than the arrow alone.
-const NUMBER_SHIFT := 4.0
 
 ## 0 at rest, 1 when the mark has finished travelling. Tweened by BattleAnimator.
 var rise: float = 0.0:
@@ -64,24 +60,21 @@ func _draw() -> void:
 
 
 func _draw_mark(font: Font, origin: Vector2, mark: PowerEffects.Mark) -> void:
-	var colour := _colour_for(mark.kind)
-	var pen := origin - Vector2(NUMBER_SHIFT if mark.pips > 0 else 0.0, 0.0)
 	if mark.kind == PowerEffects.Kind.DESTROYED:
-		_draw_cross(pen, colour)
-	else:
-		_draw_arrow(pen, colour, falls(mark.kind))
+		_draw_cross(origin, colour_for(mark.kind))
 	if mark.pips <= 0:
 		return
 	var sign := "-" if falls(mark.kind) else "+"
-	_draw_number(font, pen + Vector2(TEXT_X, BASELINE), "%s%d" % [sign, mark.pips])
+	_draw_number(font, origin, "%s%d" % [sign, mark.pips])
 
 
-## What each kind is painted in. Health speaks the board's own two colours —
+## What each kind is painted in — the cross on the board, and the flash the
+## animator puts on the units the mark names. Health speaks the board's own two colours —
 ## capture green for a pip back, critical red for one lost — while stores take the
 ## amber every ammo bar and charge meter is already drawn with, a refreshed unit
 ## takes the reach overlay's blue because that is what it just got back, and a
 ## doctrine mark takes the gold that means "chosen" everywhere else in the shell.
-static func _colour_for(kind: PowerEffects.Kind) -> Color:
+static func colour_for(kind: PowerEffects.Kind) -> Color:
 	match kind:
 		PowerEffects.Kind.HEALED:
 			return UiTheme.CAPTURE
@@ -95,32 +88,25 @@ static func _colour_for(kind: PowerEffects.Kind) -> Color:
 			return UiTheme.DANGER
 
 
-## True for the marks that are bad news for whoever is standing there: the arrow
-## points down and a number is signed negative.
+## True for the marks that are bad news for whoever is standing there: their
+## number is signed negative.
 static func falls(kind: PowerEffects.Kind) -> bool:
 	return kind in [PowerEffects.Kind.HARMED, PowerEffects.Kind.HINDERED]
 
 
-func _draw_arrow(origin: Vector2, colour: Color, down: bool) -> void:
-	var tip := origin + Vector2(0.0, ARROW_H if down else 0.0)
-	var base_y := origin.y + (0.0 if down else ARROW_H)
-	var shape := PackedVector2Array(
-		[tip, Vector2(origin.x - ARROW_HALF, base_y), Vector2(origin.x + ARROW_HALF, base_y)]
-	)
-	draw_polyline(shape + PackedVector2Array([tip]), UiTheme.HARD_BORDER, OUTLINE)
-	draw_colored_polygon(shape, colour)
-
-
 func _draw_cross(origin: Vector2, colour: Color) -> void:
-	var top_left := origin + Vector2(-ARROW_HALF, 0.0)
-	var top_right := origin + Vector2(ARROW_HALF, 0.0)
-	var bottom_left := origin + Vector2(-ARROW_HALF, ARROW_H)
-	var bottom_right := origin + Vector2(ARROW_HALF, ARROW_H)
+	var top_left := origin + Vector2(-CROSS_HALF, 0.0)
+	var top_right := origin + Vector2(CROSS_HALF, 0.0)
+	var bottom_left := origin + Vector2(-CROSS_HALF, CROSS_H)
+	var bottom_right := origin + Vector2(CROSS_HALF, CROSS_H)
 	draw_line(top_left, bottom_right, UiTheme.HARD_BORDER, OUTLINE + 1.0)
 	draw_line(top_right, bottom_left, UiTheme.HARD_BORDER, OUTLINE + 1.0)
 	draw_line(top_left, bottom_right, colour, OUTLINE)
 	draw_line(top_right, bottom_left, colour, OUTLINE)
 
 
-func _draw_number(font: Font, pen: Vector2, text: String) -> void:
-	BoardMark.count(self, font, pen, text, int(OUTLINE))
+## Centred on the tile, the number being the whole mark now that no glyph stands
+## beside it.
+func _draw_number(font: Font, origin: Vector2, text: String) -> void:
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MARK).x
+	BoardMark.count(self, font, origin + Vector2(-width * 0.5, BASELINE), text, int(OUTLINE))

@@ -12,7 +12,8 @@ extends BattleScenario
 ## commander block takes, power_ready_contrast is the named legibility gate,
 ## power_mapmenu opens the keyboard route the ready meter advertises and checks
 ## the menu stays inside the board band, power_banner fires a power so its
-## activation card holds, and power_targeting stops the aimed power mid-aim.
+## activation card holds, power_targeting stops the aimed power mid-aim, and
+## power_meteor freezes the strike that square gets at its impact flash.
 
 ## Where `power_targeting` aims Hammerfall: the middle of Red's own opening
 ## corner, so the square holds his HQ, his base, a neutral city and four of his
@@ -20,6 +21,11 @@ extends BattleScenario
 ## standing in it, and a frame full of the *player's* pieces says that where one
 ## full of the opponent's would only look like an attack.
 const HAMMERFALL_AIM := Vector2i(3, 3)
+## Where `power_meteor` freezes the strike's clock: a beat past the landing rather
+## than on it, because the flash is at full white on impact and photographs as a
+## disc with nothing behind it — one beat later the crater, the shock ring and the
+## dust are all in the frame together.
+const METEOR_POSE := 0.7
 
 ## `capture_power` walks COM-50's race — a Command Power fired from the HUD while
 ## the capture cut-in is playing. The city the default board's `capture` demo takes
@@ -54,6 +60,7 @@ const MODES: Array[String] = [
 	"power_mapmenu",
 	"power_banner",
 	"power_targeting",
+	"power_meteor",
 ]
 
 
@@ -63,6 +70,21 @@ func run(mode: String) -> String:
 			return await _run_power_menu_demo()
 		CAPTURE_POWER_MODE:
 			return await _stage_capture_power_race()
+		"power_mapmenu":
+			return await _stage_power_map_menu()  # the keyboard route, unobscured
+		"power_banner":
+			return await _stage_power_banner()  # fire it -> the activation card holds
+		"power_targeting":
+			return await _stage_power_targeting()  # the aimed power, mid-aim
+		"power_meteor":
+			return await _stage_power_meteor()  # the strike that square gets, at impact
+	return await _stage_meter(mode)
+
+
+## The five modes that only dress the bottom bar's commander block and photograph
+## it: none of them drives the board, which is what makes them one family.
+func _stage_meter(mode: String) -> String:
+	match mode:
 		"power_charging":
 			return await _stage_charging_power()
 		"power_ready", "power_ready_contrast":
@@ -73,12 +95,6 @@ func run(mode: String) -> String:
 			return await _stage_ai_power()
 		"power_mirror":
 			return await _stage_mirror_power()
-		"power_mapmenu":
-			return await _stage_power_map_menu()  # the keyboard route, unobscured
-		"power_banner":
-			return await _stage_power_banner()  # fire it -> the activation card holds
-		"power_targeting":
-			return await _stage_power_targeting()  # the aimed power, mid-aim
 	return "unknown power scenario: %s" % mode
 
 
@@ -287,6 +303,18 @@ func _check_blast_preview() -> String:
 	if painted == doomed:
 		return ""
 	return "the blast preview paints %s, the strike takes %s" % [painted, doomed]
+
+
+## Hammerfall's strike at the moment it lands, over the same square
+## `power_targeting` aims at. Posed rather than played: the meteor is a pure
+## function of its clock, so freezing it at the impact beat is the frame every
+## sweep gets back.
+func _stage_power_meteor() -> String:
+	_set_red_commander(&"radek_morn", true)
+	_battle.set_cursor_cell(HAMMERFALL_AIM)
+	_battle.animator.meteor().pose_at(HAMMERFALL_AIM, METEOR_POSE)
+	await _battle.get_tree().process_frame
+	return ""
 
 
 ## The keyboard route the ready meter advertises alongside F: Enter on empty

@@ -201,7 +201,7 @@ func _present_power(
 ) -> void:
 	Sfx.play(&"fanfare")
 	await _battle.animator.show_power_banner(command.commander, command.team)
-	await _battle.animator.show_power_effects(_visible_marks(before, blast))
+	await _battle.animator.show_power_effects(_visible_marks(before, blast), blast)
 
 
 ## The square an aimed power names, asked of the doctrine that owns the footprint

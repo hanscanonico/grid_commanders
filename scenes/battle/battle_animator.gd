@@ -44,6 +44,14 @@ const CUT_IN_STREAK_TAIL := 0.22
 ## clock rate — the seconds below are the default tier's, like the beat sheets'.
 const PUNCH_ZOOM := 1.14
 const PUNCH_SECONDS := 0.11
+## The strike runs longer than the marks that follow it, being the power itself
+## rather than a caption on one, and it flinches the board harder than a shot.
+const METEOR_SCALE := 2.5
+const METEOR_SHAKE := 5.0
+## How many times a touched unit blinks over its mark's lift, and how far past
+## full brightness the flash goes.
+const BLINK_PULSES := 3
+const BLINK_GAIN := 2.5
 ## Where each blocking card sits in `_cards`.
 const _TURN_CARD := 0
 const _POWER_CARD := 1
@@ -58,6 +66,8 @@ var turn_banner: TurnBanner
 var power_banner: CommanderPowerBanner
 ## The board marks a fired power leaves behind, played once the card clears.
 var power_marks: PowerMarks
+## Hammerfall's strike. Built on first use by `meteor()`, and down otherwise.
+var power_meteor: PowerMeteor
 ## The star at a firing unit's muzzle on the map path — see `_flash_muzzle`.
 var muzzle_flash: MuzzleFlash
 ## What a scripted mission beat says, held like the power card and retired by the
@@ -456,20 +466,30 @@ func show_power_banner(commander: CommanderType, team: int) -> void:
 ## decides nothing about who was affected. An empty list is the ordinary quiet
 ## case: a power fired where the viewer can see none of it.
 ##
+## Every unit a mark names blinks in that mark's own colour while its mark lifts,
+## so the power is read off the pieces it touched rather than off the tiles they
+## happen to stand on. An aimed square that took what was standing in it gets the
+## meteor first — the strike itself, before the receipt.
+##
 ## While capturing the marks pose at rest, exactly as the card holds, because
-## there they are the frame's subject. Instant skips them outright — that tier
-## shows results rather than playing them out.
-func show_power_effects(marks: Array[PowerEffects.Mark]) -> void:
+## there they are the frame's subject, and the blink poses at its brightest for
+## the same reason. Instant skips them outright — that tier shows results rather
+## than playing them out.
+func show_power_effects(marks: Array[PowerEffects.Mark], blast: Array[Vector2i] = []) -> void:
 	if marks.is_empty():
 		return
 	if capturing:
 		power_marks.set_marks(marks)
+		_pose_blink(marks)
 		return
 	var tier := Settings.speed
 	if tier.instant:
 		return
-	power_marks.set_marks(marks)
 	var seconds := tier.power_mark_seconds()
+	if _strikes(marks, blast):
+		await meteor().strike(_blast_centre(blast), seconds * METEOR_SCALE)
+	power_marks.set_marks(marks)
+	_blink_marked(marks, seconds / BLINK_PULSES)
 	var tween := node.create_tween().set_parallel()
 	tween.tween_property(power_marks, "rise", 1.0, seconds).set_trans(Tween.TRANS_CUBIC).set_ease(
 		Tween.EASE_OUT
@@ -477,6 +497,68 @@ func show_power_effects(marks: Array[PowerEffects.Mark]) -> void:
 	tween.tween_property(power_marks, "modulate:a", 0.0, seconds).set_delay(seconds)
 	await tween.finished
 	power_marks.clear_marks()
+
+
+## The meteor, built here rather than in `battle.tscn` because the scene root is
+## already at its line budget and this is the collaborator that owns the strike.
+## Its bang and its flinch are the animator's own, hung off `struck`, so the
+## meteor keeps drawing and deciding nothing.
+func meteor() -> PowerMeteor:
+	if power_meteor == null:
+		power_meteor = PowerMeteor.new()
+		power_meteor.name = "PowerMeteor"
+		power_meteor.struck.connect(_on_meteor_struck)
+		node.add_child(power_meteor)
+	return power_meteor
+
+
+func _on_meteor_struck() -> void:
+	Sfx.play(&"explosion")
+	shake_camera(METEOR_SHAKE)
+
+
+## True for the one power the meteor belongs to: an aimed footprint that took
+## what was standing in it. Every other power — aimed or not — blinks and no more.
+static func _strikes(marks: Array[PowerEffects.Mark], blast: Array[Vector2i]) -> bool:
+	if blast.is_empty():
+		return false
+	for mark in marks:
+		if mark.kind == PowerEffects.Kind.DESTROYED:
+			return true
+	return false
+
+
+static func _blast_centre(blast: Array[Vector2i]) -> Vector2i:
+	var sum := Vector2i.ZERO
+	for cell in blast:
+		sum += cell
+	return sum / blast.size()
+
+
+func _blink_marked(marks: Array[PowerEffects.Mark], step: float) -> void:
+	for mark in marks:
+		var sprite := view.sprite_for(mark.unit) if mark.unit != null else null
+		if sprite == null:
+			continue
+		var tween := node.create_tween()
+		for _pulse in BLINK_PULSES:
+			tween.tween_property(sprite, "self_modulate", _blink_tint(mark.kind), step)
+			tween.tween_property(sprite, "self_modulate", Color.WHITE, step)
+
+
+func _pose_blink(marks: Array[PowerEffects.Mark]) -> void:
+	for mark in marks:
+		var sprite := view.sprite_for(mark.unit) if mark.unit != null else null
+		if sprite != null:
+			sprite.self_modulate = _blink_tint(mark.kind)
+
+
+## The mark's own colour, overdriven so it reads as a flash on a sprite rather
+## than as a tint. `self_modulate` and never `modulate`, which carries the team
+## colours `BattleView.refresh_sprite` writes.
+static func _blink_tint(kind: PowerEffects.Kind) -> Color:
+	var colour := PowerMarks.colour_for(kind)
+	return Color(colour.r * BLINK_GAIN, colour.g * BLINK_GAIN, colour.b * BLINK_GAIN)
 
 
 ## One beat of scripted mission dialogue, on the board the beat landed on. The

@@ -95,7 +95,10 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # power_targeting is the first aimed power (MC4), stopped mid-aim over Red's own
 # corner, and it measures too: the painted square is read back off the overlay and
 # compared with what the strike would actually clear, since a preview showing nine
-# tiles over a power that clears sixteen photographs just as well. The
+# tiles over a power that clears sixteen photographs just as well.
+# power_meteor is that same square one beat later: the strike it gets, frozen at
+# the impact flash. Posed rather than played, the meteor being a pure function of
+# its own clock. The
 # activation card, both-sides info sheet, and victory lockup are each still proved
 # to render at native 640x360.
 #
@@ -340,7 +343,8 @@ DEFAULT_MODES=(
 	campaign_mapmenu campaign_win_stops_ai
 	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
-	power_mapmenu power_banner power_targeting commander_info commander_victory side_victory
+	power_mapmenu power_banner power_targeting power_meteor
+	commander_info commander_victory side_victory
 	mixed_seat_handoff+fog
 	cutin cutin_ko cutin_skip cutin_iron_commander cutin_scenery:mech:mech
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
