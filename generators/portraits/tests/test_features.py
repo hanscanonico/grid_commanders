@@ -227,7 +227,9 @@ class AnOpenMouthOutspansTheEyes(unittest.TestCase):
                         MOUTH_SPAN * self._eye_width(dial),
                     )
 
-    def test_every_open_mouth_bares_a_band_of_teeth(self):
+    def test_every_open_mouth_carries_one_light_mark(self):
+        """Teeth on three of them, the lit lower lip on the fourth: what an
+        open mouth may not be is a dark hole with nothing bright in it."""
         for kind in sorted(features.OPEN_MOUTH_KINDS):
             with self.subTest(mouth=kind):
                 cell = _cell()
@@ -258,6 +260,7 @@ class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
 
     def test_no_open_mouth_bares_more_than_three_fifths_of_its_width(self):
         """The cap, to the raster pixel the band's own edge rounds to."""
+        self.assertLessEqual(features.TEETH_WIDTH, 0.6)
         for kind in sorted(features.OPEN_MOUTH_KINDS):
             with self.subTest(mouth=kind):
                 self.assertLessEqual(
