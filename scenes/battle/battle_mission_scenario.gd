@@ -25,9 +25,17 @@ const MODE := "objective_panel"
 const EVENT_MODE := "mission_event"
 const DEFECT_MODE := "mission_defection"
 const MAP_MENU_MODE := "campaign_mapmenu"
+const WIN_MODE := "campaign_win_stops_ai"
 ## What this class owns, read by `stage` and by the driver's dispatch, so neither
 ## can learn of a mission scenario the other has not.
-const MODES: Array[String] = [MODE, EVENT_MODE, DEFECT_MODE, MAP_MENU_MODE]
+const MODES: Array[String] = [MODE, EVENT_MODE, DEFECT_MODE, MAP_MENU_MODE, WIN_MODE]
+## The ceiling on a wait for a turn or a state to arrive, so a flow that never
+## gets there is named by the check rather than left to the sweep's own deadline.
+const TURN_WAIT_FRAMES := 1800
+## How long the finished board is then watched to see whether anything moves on
+## it. Wall clock rather than frames: what is being watched for is a runner that
+## keeps planning, and the lockup arms its own buttons on a real half-second timer.
+const SETTLE_MS := 1500
 ## The Collection's opening mission, because CD2 re-authored it onto `HoldCell`:
 ## the card then carries a new verb, its running readout, and the deadline that
 ## ends it, rather than a lone "take the depot". CD3 hung its exemplar beat on
@@ -77,6 +85,12 @@ static func stage() -> void:
 	if defecting:
 		mission = _posed_defection(mission)
 		progress.flags[GARRISON_FLAG] = 1
+	elif demo == WIN_MODE:
+		# That scenario swaps this mission's objectives mid-turn, and the loader
+		# caches the shipped resource for the whole process — the other campaign
+		# scenarios in the same sweep stage the very same mission. A copy is what
+		# keeps the swap inside this frame.
+		mission = mission.duplicate() as MissionDefinition
 	MatchConfig.stage(CampaignSession.begin(campaign, mission, progress))
 
 
@@ -116,6 +130,8 @@ func run(mode: String) -> String:
 		return _run_defection()
 	if mode == MAP_MENU_MODE:
 		return await _run_map_menu()
+	if mode == WIN_MODE:
+		return await _run_win_stops_ai()
 	return await _run_panel()
 
 
@@ -239,3 +255,75 @@ func _board_error() -> String:
 				% [unit.type.id, unit.cell, sprite.atlas_row, unit.team]
 			)
 	return ""
+
+
+## A mission decided in the middle of the computer's turn stops the match.
+##
+## The verdict never touches `game.winner` — a campaign is won on its objectives —
+## so every "is this over?" that asked the board alone said no, the runner planned
+## the next command under the raised end card, and the state it overwrote left the
+## card's own buttons guarded shut. The match played on with a dead screen over it,
+## which photographs perfectly well: this is a check first and a picture second.
+##
+## The mission is won mid-turn by giving it an objective the board already meets,
+## swapped in once the computer is on turn — before that, the player's own end-turn
+## would be the boundary that decided it and the runner would never start.
+func _run_win_stops_ai() -> String:
+	var mission := CampaignSession.mission
+	var seat: int = mission.ai_teams[0]
+	await BattleFeedbackScenario.new(_battle).end_turn_anyway()
+	var error := await _wait_for_team(seat)
+	if error != "":
+		return error
+	_win_on_the_board_as_it_stands(mission)
+	error = await _wait_for_state(
+		Battle.State.VICTORY, "the mission being won on the computer's turn"
+	)
+	if error != "":
+		return error
+
+	var day := _battle.game.day
+	var until := Time.get_ticks_msec() + SETTLE_MS
+	while Time.get_ticks_msec() < until:
+		await _battle.get_tree().process_frame
+	if _battle.state != Battle.State.VICTORY:
+		return "the finished mission left state %s; the match is still being played" % _battle.state
+	if _battle.game.day != day:
+		return "the finished mission ran on to day %d from day %d" % [_battle.game.day, day]
+	# The lockup arms its buttons half a second after it opens, and only while the
+	# scene is still on it. A match that played on underneath leaves them shut for
+	# good, which is the dead card the player met.
+	if _battle.victory_screen.rematch_button.mouse_filter != Control.MOUSE_FILTER_STOP:
+		return "the end card's action button never took the mouse back"
+	return ""
+
+
+## Replaces the mission's win condition with one this board already satisfies, so
+## the computer's next command is the boundary the verdict is taken at. The
+## session's runtime reads the same definition object — the copy `stage` made —
+## so the swap is seen there and nowhere else.
+func _win_on_the_board_as_it_stands(mission: MissionDefinition) -> void:
+	var now := SurviveUntilDayObjective.new()
+	now.text = "Hold the line"
+	now.day = _battle.game.day
+	var met: Array[MissionObjective] = [now]
+	mission.objectives = met
+	mission.bonus_objectives = []
+
+
+## Bounded waits, so a flow that never arrives is named rather than left to the
+## sweep's own deadline, which only knows the scenario.
+func _wait_for_team(team: int) -> String:
+	for frame in TURN_WAIT_FRAMES:
+		if _battle.game.current_team == team:
+			return ""
+		await _battle.get_tree().process_frame
+	return "team %d never came up to play" % team
+
+
+func _wait_for_state(wanted: Battle.State, what: String) -> String:
+	for frame in TURN_WAIT_FRAMES:
+		if _battle.state == wanted:
+			return ""
+		await _battle.get_tree().process_frame
+	return "%s left the scene in state %s, not %s" % [what, _battle.state, wanted]

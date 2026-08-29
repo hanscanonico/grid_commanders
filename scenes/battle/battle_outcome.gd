@@ -56,18 +56,29 @@ func _init(battle: Battle) -> void:
 	_battle = battle
 
 
-## Takes the lockup and wires the one action that is wholly this class's and
-## BattleExit's: Watch Replay is offered off the recorder, guarded by the same
-## `accepts_action` window as the other two, and leaves through BattleExit — so
-## Battle holds no half of it, and its two buttons stay wired where they were.
+## Takes the lockup and wires its three actions. All of them are this class's and
+## BattleExit's between them — each is guarded by the same `accepts_action`
+## window and leaves through BattleExit — so Battle holds no half of any of them.
 func bind_screen(screen: VictoryLockup) -> void:
 	victory_screen = screen
+	screen.rematch_button.pressed.connect(_request_rematch)
 	screen.watch_button.pressed.connect(_request_watch_replay)
+	screen.menu_button.pressed.connect(_request_main_menu)
 
 
 func _request_watch_replay() -> void:
 	if accepts_action(victory_screen.watch_button):
 		_battle.exit.watch_replay()
+
+
+func _request_rematch() -> void:
+	if accepts_action(victory_screen.rematch_button):
+		_battle.exit.rematch()
+
+
+func _request_main_menu() -> void:
+	if accepts_action(victory_screen.menu_button):
+		_battle.exit.to_main_menu()
 
 
 ## Watch mode's flags and the staged seating, from the setup. Set once at build;

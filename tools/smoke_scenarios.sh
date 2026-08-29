@@ -270,10 +270,10 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # when the player performs it, and a strip stuck on SELECT photographs just as
 # well as one that advanced.
 #
-# objective_panel, mission_event, mission_defection and campaign_mapmenu are the
-# four scenarios that play a campaign mission, and the only way the in-battle
-# objective card, a scripted beat and the pause menu's Briefing row are reachable
-# at all: all four are down for every skirmish,
+# objective_panel, mission_event, mission_defection, campaign_mapmenu and
+# campaign_win_stops_ai are the five scenarios that play a campaign mission, and the
+# only way the in-battle objective card, a scripted beat and the pause menu's
+# Briefing row are reachable at all: all of them are down for every skirmish,
 # which is what keeps every other frame in this sweep byte-stable. None names a
 # board — the mission's own is not in the map catalogue, so they are launched the
 # way the campaign hub launches one, through MatchConfig — and the first two read
@@ -288,6 +288,14 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # and ai_pause all photograph the menu without them, and it reads the rows back
 # like power_mapmenu does — a menu that dropped either, or carried it somewhere
 # other than after Commanders, writes a perfectly healthy PNG.
+#
+# campaign_win_stops_ai is a check the picture cannot make at all. A mission is won
+# on its objectives, never on `game.winner`, so a verdict reached in the middle of
+# the computer's turn used to leave the runner planning the next command under the
+# raised end card — the match ran on, and the card's own buttons stayed guarded shut
+# because the runner had overwritten the state that releases them. It wins the
+# mission mid-turn, then watches the finished board for a second and a half and
+# fails if anything on it moved.
 #
 # mission_defection is the other half of what a beat can do to the board, and it
 # is a check before it is a picture: a unit that changed army has to be redrawn in
@@ -329,7 +337,7 @@ DEFAULT_MODES=(
 	turn_banner_build_attempt outcome_mash_guard
 	powermenu capture_power victory aiturn ai_pause
 	mission_strip mission_strip_retired objective_panel mission_event mission_defection
-	campaign_mapmenu
+	campaign_mapmenu campaign_win_stops_ai
 	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
 	power_mapmenu power_banner power_targeting commander_info commander_victory side_victory

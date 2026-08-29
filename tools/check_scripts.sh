@@ -241,8 +241,14 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # band_error, all of which the driver and its own scenario classes were each
 # declaring. They are BattleScenario's now; the driver keeps _check_in_band, the
 # reporting wrapper.
+# battle.gd 1196 -> 1195: `match_over()`, the one answer to whether the match is
+# finished — the board's winner or the campaign's verdict — and the extraction
+# paid for it. The victory lockup's Rematch and Main Menu buttons were wired in
+# Battle and guarded through BattleOutcome, so half of each action lived on
+# either side; BattleOutcome.bind_screen owns all three of its buttons now, the
+# way it already owned Watch Replay.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1196
+scenes/battle/battle.gd 1195
 scenes/menu/main_menu.gd 778
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
