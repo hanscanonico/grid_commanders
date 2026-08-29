@@ -254,6 +254,11 @@ forms named in the root index are in `docs/design_record.md`.
   **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the arithmetic, read off the director's own `t`
   rather than the wall clock**, so a posed still and a skip both land on a fixed pose. The board's
   two stills stay `frame`'s and do not reach in.
+  **Since 2026-08-29 the legibility ruler reads all six unit sheets**: a `frame` axis names a clip
+  and a beat (`idle_a`/`idle_b`/`walk_a`/`walk_b`), the view says which file draws it — the board's
+  own cells, the cut-in's shadow-subtracted pair — and every report row and `--dump` key carries it
+  (`LegibilityArt.BOARD_SHEETS` / `CUTIN_SHEETS`, `docs/sprite_legibility.md`'s 2026-08-29
+  re-read). The sea's swell frames stay out, a *time* frame still being another axis.
 - **The next-ready-unit key** (no plan artifact; the long form is `docs/design_record.md` § The zoom
   ladder and the animation milestone, where the index carried it) — `N` walks the cursor to the next
   unit on the side in hand that has not acted, so the last one is never hunted across a 49×32 board.

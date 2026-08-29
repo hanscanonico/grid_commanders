@@ -79,8 +79,8 @@ make balance-watch        # watch a Balance Lab match play out live, both sides 
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
 make replay-report REPLAY=<dir>   # survey a directory of them -> rates (docs/replay_survey.md)
-make legibility-check     # every unit, tint, ground and overlay composited, and how many ramp
-                          # steps its contour keeps from the ground beside it
+make legibility-check     # every unit, tint, ground, overlay and animation frame composited,
+                          # and how many ramp steps its contour keeps from the ground beside it
                           # -> reports/ (docs/sprite_legibility.md)
 make mobile-soak          # what a computer turn costs to plan and what the replay recorder's
                           # per-command flush costs (docs/mobile_soak.md)
@@ -1273,10 +1273,10 @@ already failing would muddy both readings.
   (`docs/bulwark_balance.md`) — a four-army board `BalanceMatchEngine` cannot play, so it runs the
   match loop itself; `tools/run_campaign_difficulty.gd`, which plays every shipped mission to a
   verdict and reads how hard it was (`docs/campaign_difficulty.md`); the composite legibility sweep
-  under `tools/legibility/`, which stacks every unit, tint, ground and board overlay out of the
-  shipped atlases and measures how far each figure's contour separates from the ground just outside
-  it (`docs/sprite_legibility.md`); plus `tools/focus_timeline.sh`, the focus-theft
-  instrument the smoke sweep above is measured with.
+  under `tools/legibility/`, which stacks every unit, tint, ground, board overlay and animation
+  frame out of the six shipped unit sheets and measures how far each figure's contour separates
+  from the ground just outside it (`docs/sprite_legibility.md`); plus `tools/focus_timeline.sh`,
+  the focus-theft instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
   offline balance harness under `tools/balance/`, the arena's scorer and pools under
   `tools/arena/`, the recording reader under `tools/replay/`, the legibility metric under

@@ -1,7 +1,9 @@
 extends Node
 ## The composite legibility sweep (sprite design spec item 15): every unit kind,
 ## in every faction's colours, ready and acted, over every ground, under every
-## wash the board lays on it — and the same figures at the cut-in's resolution.
+## wash the board lays on it, in every frame of the two clips it beats them
+## through — and the same figures at the cut-in's resolution, in the two frames
+## it poses them in.
 ## Each cell is measured for unit-vs-ground separation in ramp steps — along the
 ## figure's own contour, which is the headline, and over the whole figure, which
 ## is the secondary — and judged against LegibilitySweep.PASS_STEPS.
@@ -24,7 +26,7 @@ extends Node
 ##     --gallery=docs/images/legibility_worst20.png
 ##                                where the worst-cell sheet is written; empty
 ##                                skips it
-##     --dump=board:tank:verdant:ready:woods:atlas:none
+##     --dump=board:idle_a:tank:verdant:ready:woods:atlas:none
 ##                                writes that one composite as a PNG beside the
 ##                                report, magnified by --dump-scale
 ##     --dump-scale=8             nearest magnification of a dumped crop
@@ -103,6 +105,7 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 		)
 	)
 	lines.append("Secondary: the whole-figure medians, `steps` and `hue`, which decide nothing.")
+	lines.append_array(_frame_lines())
 	lines.append("")
 	var clear := LegibilitySweep.unfogged(rows)
 	lines.append_array(_class_lines("Clear", clear))
@@ -110,7 +113,7 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 	lines.append_array(_class_lines("Fogged", LegibilitySweep.fogged(rows)))
 	lines.append("")
 	lines.append("Every table below is the clear class; the fog class is the line above it.")
-	for column in ["view", "overlay", "terrain", "faction", "state"]:
+	for column in ["view", "frame", "overlay", "terrain", "faction", "state"]:
 		lines.append("")
 		lines.append_array(_table(column, LegibilitySweep.tally(clear, column)))
 	lines.append("")
@@ -118,6 +121,16 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 	lines.append("")
 	lines.append_array(_table("unit", LegibilitySweep.tally(clear, "unit")))
 	return "\n".join(lines)
+
+
+## Which shipped sheet each frame of each view was read off, so a per-frame
+## table in the report names a file.
+func _frame_lines() -> Array[String]:
+	var lines: Array[String] = ["", "| view | frame | sheet |", "| --- | --- | --- |"]
+	for view in [LegibilitySweep.BOARD_VIEW, LegibilitySweep.CUTIN_VIEW]:
+		for frame in LegibilitySweep.frames_of(view):
+			lines.append("| %s | %s | %s |" % [view, frame, LegibilitySweep.sheet_of(view, frame)])
+	return lines
 
 
 ## The headline for one class of cells. Two of them, because the fog shroud is
@@ -163,13 +176,14 @@ func _worst(rows: Array[Dictionary], count: int) -> String:
 			row["edge_steps"],
 			row["edge_hue"],
 			row["view"],
+			row["frame"],
 			row["unit"],
 			row["faction"],
 			row["state"],
 			"%s/%s" % [row["terrain"], row["variant"]],
 			row["overlay"],
 		]
-		lines.append("  edge %5.2f  hue %5.1f  %-6s %-11s %-8s %-6s %-14s %s" % fields)
+		lines.append("  edge %5.2f  hue %5.1f  %-6s %-6s %-11s %-8s %-6s %-14s %s" % fields)
 	return "\n".join(lines)
 
 
@@ -191,7 +205,7 @@ func _gallery(sweep: LegibilitySweep, rows: Array[Dictionary], path: String) -> 
 	print("\nWrote %s (%d x %d)" % [path, image.get_width(), image.get_height()])
 
 
-## `view:unit:faction:state:terrain:variant:overlay` — the same seven fields a
+## `view:frame:unit:faction:state:terrain:variant:overlay` — the same eight fields a
 ## report row is keyed by, so a cell in the table is copied straight onto the
 ## command line.
 func _dump(sweep: LegibilitySweep, spec: String, scale: int, out: String) -> void:
