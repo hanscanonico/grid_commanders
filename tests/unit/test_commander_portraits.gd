@@ -99,13 +99,18 @@ func test_every_bust_is_lit_from_the_same_side() -> void:
 		if texture == null:
 			continue
 		var image := texture.get_image()
-		var delta := _mean_luminance(image, LIT_PATCH) - _mean_luminance(image, SHADED_PATCH)
+		var delta := _patch_luminance(image, LIT_PATCH) - _patch_luminance(image, SHADED_PATCH)
 		assert_gt(delta, SHADE_FLOOR, "%s is not lit from the sheet's side" % commander.id)
 
 
-func _mean_luminance(image: Image, patch: Rect2i) -> float:
-	var total := 0.0
+## The median rather than the mean, because a prop reaches into a corner of the
+## lit patch on some busts — Lyra Quill's open book — and a mean lets that ink
+## outvote the cloth the patch is there to read.
+func _patch_luminance(image: Image, patch: Rect2i) -> float:
+	var values: Array[float] = []
 	for y: int in range(patch.position.y, patch.end.y):
 		for x: int in range(patch.position.x, patch.end.x):
-			total += image.get_pixel(x, y).get_luminance()
-	return total / float(patch.size.x * patch.size.y)
+			values.append(image.get_pixel(x, y).get_luminance())
+	values.sort()
+	var half := values.size() / 2
+	return 0.5 * (values[half - 1] + values[half])
