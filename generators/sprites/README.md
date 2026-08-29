@@ -775,12 +775,15 @@ that pipeline's paste step can be pointed at this art instead.
    modulates, the board cursor and the project icon. Flat rectangles, no
    model and no ramp, folded in on 2026-08-29 from the engine script that
    drew them (`make ui-art`, retired) so the one art the game shipped from a
-   second palette is now generated and snapshot-gated with the rest. **The
-   fold changed no pixel**, and the icon therefore still carries the hues
-   that script typed — `d84a3c` / `3c64d8` against `CommanderVisuals`
-   meridian `db4a3b` and aurora `3865d8`, and a grass and a road from before
-   the terrain revaluation. `ChromeDrift` in `tests/test_chrome.py` holds the
-   two team squares within 4/255 and 2 degrees of the rows they stand for, so
+   second palette is now generated and snapshot-gated with the rest. The
+   icon was redrawn here on 2026-08-30 as the command table — a dark plate
+   ruled into a 3x3 board, an army in two opposite cells and the gold mark
+   on the one between them, every measure a multiple of the 4px rule so the
+   platforms' 64 and 32 land on whole pixels — but it keeps the two
+   team hues the retired script typed, `d84a3c` / `3c64d8` against
+   `CommanderVisuals` meridian `db4a3b` and aurora `3865d8`.
+   `ChromeDrift` in `tests/test_chrome.py` holds the
+   two team tokens within 4/255 and 2 degrees of the rows they stand for, so
    the gap can widen no further unquietly; closing it is a recolour, and a
    recolour is an art change of its own.
 

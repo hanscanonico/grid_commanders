@@ -2,7 +2,7 @@
 
 The three are flat rectangles, so what is checked is what a rectangle can get
 wrong — size, coverage, which colours are in the image — plus the one thing
-that has no other keeper: how far the icon's two team squares have drifted
+that has no other keeper: how far the icon's two team tokens have drifted
 from the faction rows they stand for.
 """
 
@@ -65,24 +65,79 @@ class Cursor(unittest.TestCase):
 
 
 class Icon(unittest.TestCase):
-    def test_two_armies_face_across_a_crossroads(self):
+    def test_it_is_five_flat_colours_on_a_transparent_ground(self):
         counts = _counts(chrome.icon())
-        square = chrome.ICON_SQUARE**2
-        self.assertEqual(counts[chrome.ICON_MERIDIAN], square)
-        self.assertEqual(counts[chrome.ICON_AURORA], square)
+        self.assertEqual(
+            set(counts),
+            {
+                (0, 0, 0, 0),
+                chrome.ICON_PLATE,
+                chrome.ICON_GRID,
+                chrome.ICON_MERIDIAN,
+                chrome.ICON_AURORA,
+                chrome.ICON_MARK,
+            },
+        )
         self.assertEqual(sum(counts.values()), chrome.ICON**2)
 
-    def test_the_roads_cross_at_the_centre(self):
+    def test_the_board_fits_the_plate_exactly(self):
+        span = 4 * chrome.ICON_LINE + 3 * chrome.ICON_CELL
+        self.assertEqual(span + 2 * chrome.ICON_INSET, chrome.ICON)
+
+    def test_the_corners_are_cut_away(self):
+        px = chrome.icon().load()
+        far = chrome.ICON - 1
+        for x, y in ((0, 0), (far, 0), (0, far), (far, far)):
+            self.assertEqual(px[x, y][3], 0, (x, y))
+        self.assertEqual(px[chrome.ICON_CORNER, 0], chrome.ICON_PLATE)
+
+    def test_the_rules_frame_nine_cells(self):
         px = chrome.icon().load()
         mid = chrome.ICON // 2
-        self.assertEqual(px[mid, mid], chrome.ICON_ROAD)
-        self.assertEqual(px[mid, 2], chrome.ICON_ROAD)
-        self.assertEqual(px[2, mid], chrome.ICON_ROAD)
-        self.assertEqual(px[2, 2], chrome.ICON_GRASS)
+        self.assertEqual(px[chrome.ICON_INSET, mid], chrome.ICON_GRID)
+        self.assertEqual(px[mid, chrome.ICON_INSET], chrome.ICON_GRID)
+        empty = chrome._cell_origin(1, 0)
+        self.assertEqual(px[empty[0] + 2, empty[1] + 2], chrome.ICON_PLATE)
+
+    def test_two_armies_sit_in_opposite_corner_cells(self):
+        px = chrome.icon().load()
+        counts = _counts(chrome.icon())
+        token = chrome.ICON_TOKEN**2
+        for (col, row), color in (
+            ((0, 2), chrome.ICON_MERIDIAN),
+            ((2, 0), chrome.ICON_AURORA),
+        ):
+            x, y = chrome._cell_origin(col, row)
+            half = chrome.ICON_CELL // 2
+            self.assertEqual(px[x + half, y + half], color)
+            self.assertEqual(counts[color], token)
+
+    def test_the_mark_holds_the_centre_cell(self):
+        px = chrome.icon().load()
+        counts = _counts(chrome.icon())
+        mid = chrome.ICON // 2
+        self.assertEqual(px[mid, mid], chrome.ICON_MARK)
+        self.assertLessEqual(chrome.ICON_MARK_ARM, chrome.ICON_CELL)
+        arms = 2 * chrome.ICON_MARK_ARM * chrome.ICON_MARK_THICK
+        self.assertEqual(counts[chrome.ICON_MARK], arms - chrome.ICON_MARK_THICK**2)
+
+    def test_nothing_is_thinner_than_a_rule(self):
+        """Every feature is a multiple of the 4px rule, so the platforms' 64
+        and 32 land on whole pixels; the 16 halves the rule."""
+        for size in (
+            chrome.ICON_CORNER,
+            chrome.ICON_LINE,
+            chrome.ICON_CELL,
+            chrome.ICON_INSET,
+            chrome.ICON_TOKEN,
+            chrome.ICON_MARK_ARM,
+            chrome.ICON_MARK_THICK,
+        ):
+            self.assertEqual(size % chrome.ICON_LINE, 0, size)
 
 
 class ChromeDrift(unittest.TestCase):
-    """The icon's team squares against the faction rows they stand for.
+    """The icon's team tokens against the faction rows they stand for.
 
     They are not the same colour: the icon keeps the hues the engine script
     drew it with, one step off `CommanderVisuals` (meridian db4a3b, aurora
@@ -100,7 +155,7 @@ class ChromeDrift(unittest.TestCase):
             (chrome.ICON_AURORA, faction_by_key("aurora")),
         )
 
-    def test_each_square_is_its_row_to_the_eye(self):
+    def test_each_token_is_its_row_to_the_eye(self):
         for legacy, fac in self._pairs():
             for channel, (a, b) in enumerate(zip(legacy[:3], fac.body)):
                 self.assertLessEqual(abs(a - b), self.DRIFT, f"{fac.key} ch{channel}")
@@ -113,7 +168,7 @@ class ChromeDrift(unittest.TestCase):
             ]
             self.assertLessEqual(abs(hues[0] - hues[1]), self.HUE_DRIFT, fac.key)
 
-    def test_the_squares_are_opaque(self):
+    def test_the_tokens_are_opaque(self):
         for legacy, _ in self._pairs():
             self.assertEqual(legacy[3], 255)
 
