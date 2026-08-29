@@ -522,8 +522,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   two-army resolution is byte-identical to before and iron, verdant and gold only ever come up on a
   board seating a third or fourth army — which is what makes "no two sides share a colour"
   *provable* (four keys against at most four armies; five since the Gilded Concord took row 5)
-  rather than true so far, and `_fallback`'s neutral escape unreachable. Unreachable matters: `BattleView._last_seen_owner` maps an atlas row back to a team,
-  so two sides sharing row 0 would name the wrong owner. An army falling is announced through the
+  rather than true so far, and `_fallback`'s neutral escape unreachable. Unreachable matters:
+  `BattleView._last_seen_owner` maps an atlas row back to a team, so two sides sharing row 0
+  would name the wrong owner. An army falling is announced through the
   ordinary turn banner — the pipeline reports it on `BattleCommandReceipt.fallen`, the flow layer
   says it: `Battle.conclude_command` awaits the banner **before** the turn hands over, so it lands
   on the board that produced it, and suppresses it while `animator.capturing` like the cut-ins.

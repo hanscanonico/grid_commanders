@@ -4,8 +4,7 @@ extends GutTest
 ##
 ## Rows are the atlas order the art pipeline writes and SideIdentity maps to:
 ## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant, 5 gold. Names
-## are the
-## faction display strings CommanderVisuals maps.
+## are the faction display strings CommanderVisuals maps.
 
 const MERIDIAN := "Meridian Coalition"
 const IRON := "Iron Dominion"

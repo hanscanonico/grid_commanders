@@ -814,10 +814,9 @@ funds — and who charges toward one **Command Power** that bends them further f
 
 Twenty-two ship, spread across five factions (six to the Iron Dominion, five to the Meridian
 Coalition, four each to the Aurora Compact and the Verdant League, three to the Gilded Concord).
-`data/commanders/` is the
-roster: one `.tres` per general, carrying their doctrine line, power name and description, and
-every balance number. Read it — or the selection page's card, which binds the same fields —
-rather than a list here, so the numbers have one home.
+`data/commanders/` is the roster: one `.tres` per general, carrying their doctrine line, power
+name and description, and every balance number. Read it — or the selection page's card, which
+binds the same fields — rather than a list here, so the numbers have one home.
 
 **Colours and names.** A side wears its commander's faction: pick Verdant League and your army is
 green and called *Verdant League* everywhere — the board, the day banner, the HUD bars, the
