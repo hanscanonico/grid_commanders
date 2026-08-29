@@ -202,7 +202,7 @@
       <tr><td class="mono">out/units_atlas.png</td><td>1152x320 RGBA — 18 unit columns in <code>atlas_col</code> order x 5 faction rows</td><td class="mono">assets/tiles/units_atlas.png</td></tr>
       <tr><td class="mono">out/terrain_atlas.png</td><td>896x320 RGB — 14 terrain columns x 5 rows; properties tinted per row</td><td class="mono">assets/tiles/terrain_atlas.png</td></tr>
       <tr><td class="mono">out/units/&lt;id&gt;_&lt;team&gt;.png</td><td>90 cells, 64x64 RGBA</td><td class="mono">tools/paste_unit_sprites.gd</td></tr>
-      <tr><td class="mono">out/iso_buildings/&lt;id&gt;_&lt;team&gt;.png</td><td>25 property-building cells, 64x64 RGBA</td><td class="mono">assets/sprites/iso_buildings</td></tr>
+      <tr><td class="mono">out/iso_buildings/&lt;id&gt;_&lt;team&gt;.png</td><td>25 property-building cells, 64x64 RGBA</td><td class="mono">review only</td></tr>
       <tr><td class="mono">out/preview_*.png</td><td>review sheets + authored demo map</td><td>humans</td></tr>
     </table>
     <div class="fac-legend">
@@ -244,9 +244,9 @@
 
 <section>
   <div class="sec-head"><span class="n">4</span><h2>Property-building cells</h2></div>
-  <div class="sub" style="margin-bottom:12px">The transparent 64px building sprites exported for
-  <code>assets/sprites/iso_buildings</code> — the same models the terrain tiles compose, shown here
-  on their own so the silhouettes are inspectable.</div>
+  <div class="sub" style="margin-bottom:12px">The transparent 64px building sprites exported into
+  the generator's <code>out/iso_buildings</code> — the same models the terrain tiles compose, shown
+  here on their own so the silhouettes are inspectable.</div>
   <div class="bgrid" id="bgrid"></div>
 </section>
 
@@ -477,7 +477,7 @@ for (const b of ["city", "base", "hq", "airport", "port"]) {
   for (const t of TEAMS) {
     const f = document.createElement("div");
     f.className = "checker cf";
-    f.innerHTML = `<img src="../../../assets/sprites/iso_buildings/${b}_${t}.png" alt="${b} ${t}" title="${t}">`;
+    f.innerHTML = `<img src="../out/iso_buildings/${b}_${t}.png" alt="${b} ${t}" title="${t}">`;
     row.appendChild(f);
   }
   bgrid.appendChild(col);

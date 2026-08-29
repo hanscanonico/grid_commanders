@@ -317,8 +317,7 @@ class Install(unittest.TestCase):
         behind is the drift this file exists to end."""
         with tempfile.TemporaryDirectory() as tmp:
             src, dest = Path(tmp) / "out", Path(tmp) / "game"
-            for sub in ("units", "iso_buildings", "autotiles"):
-                (src / sub).mkdir(parents=True)
+            (src / "autotiles").mkdir(parents=True)
             # Every named output the install demands, read off the table it
             # reads, so a new sheet needs no second list seeded here.
             for output in pipeline.SHEETS:

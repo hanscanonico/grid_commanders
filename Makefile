@@ -343,9 +343,11 @@ format-check:
 	gdformat --check $(SOURCES)
 
 # `atlases` regenerates every sprite the game ships with generators/sprites and
-# installs it here: both sheets, the per-cell reference sprites, and the UI
-# chrome (the overlay, the cursor, the icon), which the engine used to draw for
-# itself out of a second palette nothing compared against the first.
+# installs it here: the sheets and the UI chrome (the overlay, the cursor, the
+# icon), which the engine used to draw for itself out of a second palette
+# nothing compared against the first. The per-cell reference sprites stay in
+# the generator's out/ — the game loads the sheets, so shipping the cells would
+# ship the same pixels twice.
 # `import` runs last because Godot caches image imports by size: without it a
 # rebuild that changes the atlas dimensions renders a blank map.
 # .NOTPARALLEL keeps that order under `make -j`, and it is file-scope on

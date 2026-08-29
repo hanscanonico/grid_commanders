@@ -1307,9 +1307,8 @@ deterministic Python voxel pipeline living in this repository, where each sprite
 hand-authored model rendered with one projection, light, palette and outline rule, and the faction ramps are read from this game's own `CommanderVisuals`
 themes so the sprites and the UI chrome can never disagree about a faction's colour — a mirror
 `make sprites-test` pins rather than a comment. The committed
-atlases are its exact output; the per-cell PNGs under `assets/sprites/units` and
-`assets/sprites/iso_buildings` are the same art exported cell by cell as reviewable reference
-copies. The UI chrome — the range overlay, the cursor, the icon — is drawn by the same pipeline
+atlases are its exact output; the generator also exports the same art cell by cell into its own
+`out/`, as review copies the game never loads and the repository never ships. The UI chrome — the range overlay, the cursor, the icon — is drawn by the same pipeline
 (`spritegen/chrome.py`) and gated the same way. The commander portraits and faction emblems are
 generated too, by `generators/portraits` (`make portraits`) — a second Python pipeline in this
 repository, painting project-original art to the "Heroic Commander Portraits" design handoff's
