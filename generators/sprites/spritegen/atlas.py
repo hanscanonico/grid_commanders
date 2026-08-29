@@ -14,10 +14,10 @@ terrain_atlas.png — 14 columns x 5 rows of terrain.CELL square RGBA cells,
                     columns are faction-tinted per row and transparent
                     around the building, for the board to paint under.
 unit cells        — <unit id>_<team>.png, one units-atlas cell each, exported
-                    for assets/sprites/units as a reviewable copy of art the
+                    under the generator's out/ as a reviewable copy of art the
                     atlas already carries; the game loads the atlas, not these.
 building cells    — <building>_<team>.png, one terrain cell each, RGBA
-                    transparent-backed sprites for assets/sprites/iso_buildings.
+                    transparent-backed sprites, review exports the same way.
 """
 
 from __future__ import annotations
@@ -211,7 +211,7 @@ def build_terrain_atlas() -> Image.Image:
 
 def building_cell(bid: str, fac: Faction) -> Image.Image:
     """A property building alone on a transparent cell, placed exactly as the
-    terrain tiles place it, for the game's iso_buildings compositor."""
+    terrain tiles place it, for review beside the tile it composes."""
     sprite = terrain.property_sprite(bid, fac)
     out = Image.new("RGBA", (terrain.CELL, terrain.CELL), (0, 0, 0, 0))
     cx, bottom = terrain.PROPERTY_ANCHOR[bid]

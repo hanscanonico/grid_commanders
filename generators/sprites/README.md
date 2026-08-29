@@ -336,7 +336,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 # iterate on specific sprites at high zoom while editing models
 "$py" sprite_generator.py --only tank,city --team verdant --zoom 8
 
-# copy atlases and cells into a game checkout — the path is required
+# copy the atlases and the UI chrome into a game checkout — path required
 "$py" sprite_generator.py --install ../..
 ```
 
@@ -347,7 +347,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `--team` | faction row for `--only` (neutral/red/blue/iron/verdant/gold) |
 | `--zoom` | zoom factor for `--only` previews (default 6) |
 | `--no-cells` | skip the 138 per-cell PNGs, write only atlases + previews |
-| `--install` | copy outputs into a grid_commanders checkout (explicit path; no default) |
+| `--install` | copy the installed outputs into a grid_commanders checkout (explicit path; no default) — the per-cell PNGs are review output and stay here |
 
 ## Outputs
 
@@ -359,8 +359,8 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
 | `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
 | `terrain_atlas.png` | 896x384 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
-| `units/<id>_<team>.png` | 108 cells, installed to `assets/sprites/units` as the atlas's own art exported cell by cell — **cut out of the units sheet the run already built** (`atlas.cell_box`), so a cell is the atlas's cell by construction rather than by a second render agreeing with it |
-| `iso_buildings/<id>_<team>.png` | 30 property-building cells for `assets/sprites/iso_buildings` |
+| `units/<id>_<team>.png` | 108 cells, the atlas's own art exported cell by cell for review — **cut out of the units sheet the run already built** (`atlas.cell_box`), so a cell is the atlas's cell by construction rather than by a second render agreeing with it. Installed nowhere: the game loads the sheet |
+| `iso_buildings/<id>_<team>.png` | 30 property-building cells, review output the same way |
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
 | `preview_map.png` | an authored little battle map proving the sheet in context: the shipped maps' terrain mix, autotiled, phased by the game's own coordinate hash |
 | `autotiles/{roads,rivers,coast,shoals,woods}.png` | 16-variant connection sheets (see below) |
@@ -796,17 +796,18 @@ style settings in `ruff.toml`), the contract tests
 (`python -m unittest discover tests`, which is what `make sprites-test` runs
 locally), two generator runs diffed against each other for byte determinism,
 and a pixel comparison of the art the game has installed — `assets/tiles/**`
-and `assets/sprites/**` — against fresh generator output. Change what the
+and `assets/ui/**` — against fresh generator output. Change what the
 generator draws without running `make tiles` in the same commit and CI fails.
 
 That comparison is `tests/check_snapshots.py`, and it enumerates nothing by
 hand: it pairs off every PNG the generator emitted with the installed file of
 the same relative path, and fails in both directions, so a new output landing
-with no home is a failure rather than a silence. The single exception is
-`units/<id>_<team>.png` — instead of installing 108 duplicates of art the
-atlas already carries, each exported cell must be pixel for pixel one of the
-cells of the installed `units_atlas.png` — which the exporter cropping the
-built sheet makes true by construction. The previews are the one thing the
+with no home is a failure rather than a silence. The exceptions are the two
+cell directories, which install nowhere: rather than ship 138 duplicates of art
+the sheets already carry, each exported unit cell must be pixel for pixel one of
+the cells of the run's own `units_atlas.png` — which the exporter cropping the
+built sheet makes true by construction — and the building cells are pinned to
+the terrain tiles by `tests/test_properties_art.py`. The previews are the one thing the
 game does not load, so they stay compared against the review gallery's own
 copies under `.lavish/assets`. Run it against your own output with
 `~/.cache/grid_commanders/venv-sprites/bin/python tests/check_snapshots.py out`.

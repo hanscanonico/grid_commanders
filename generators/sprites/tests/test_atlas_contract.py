@@ -141,7 +141,7 @@ class FigureSheet(unittest.TestCase):
 
 
 class ExportedCells(unittest.TestCase):
-    """The reference cells under `assets/sprites/units`, cut out of the sheet
+    """The review cells under the generator's `out/units`, cut out of the sheet
     rather than rendered again — so the name on the file and the crop it comes
     from are the only thing left to get wrong."""
 

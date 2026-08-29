@@ -1,9 +1,9 @@
 """The snapshot gate CI runs: the game's installed art vs a fresh generation.
 
-The baseline is what the game loads — `assets/tiles/**` and
-`assets/sprites/**` — so a regeneration that forgets `make tiles` fails here
-rather than shipping. A second copy of those sheets beside the generator would
-only be a thing to keep in step with the first.
+The baseline is what the game loads — `assets/tiles/**` and `assets/ui/**` —
+so a regeneration that forgets `make tiles` fails here rather than shipping. A
+second copy of those sheets beside the generator would only be a thing to keep
+in step with the first.
 
 Pixel comparison, not byte comparison: the installed PNGs may have been
 encoded by a different Pillow/zlib than CI's, so identical art can still
@@ -15,12 +15,12 @@ generated file with no installed home fails, and an installed file the
 generator no longer emits fails too. That is what keeps a new output (a new
 autotile sheet, a new atlas) from landing compared against nothing.
 
-The one output not compared file-for-file is `units/<id>_<team>.png`: those
-cells are the units atlas's own cells, exported under `assets/sprites/` as
-reviewable reference copies the game itself never loads. Each cell is required
-to be, pixel for pixel, one of the cells of the installed `units_atlas.png` —
-which pins the exporter to the atlas. That binds the art but not the cell's
-address in the atlas, which nothing here can know.
+The per-cell exports are the outputs with no baseline to pair off: they are
+review copies of art the sheets carry and the game never loads, so nothing
+installs them. The unit cells are still held to the atlas — each must be,
+pixel for pixel, one of the cells of the run's own `units_atlas.png`, which
+pins the exporter to the sheet. That binds the art but not the cell's address
+in the atlas, which nothing here can know.
 
 A pixel mismatch also writes a before/after/diff contact sheet, because most
 failures here are an art change somebody meant and the message alone gives a
@@ -43,7 +43,7 @@ from PIL import Image, ImageChops
 GENERATOR_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(GENERATOR_ROOT))
 
-from spritegen.pipeline import SHEETS, building_cells  # noqa: E402
+from spritegen.pipeline import BUILDING_CELLS, SHEETS, UNIT_CELLS  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GALLERY_ASSETS = GENERATOR_ROOT / ".lavish" / "assets"
@@ -55,7 +55,7 @@ def _install_map() -> dict[str, str]:
     cursor's) needs no second list here to be compared."""
     return {
         Path(o.rel).parent.as_posix(): o.install_to
-        for o in (*SHEETS, *building_cells())
+        for o in SHEETS
         if o.install_to is not None
     }
 
@@ -73,8 +73,10 @@ BYTE_COMPARED = frozenset({"anim.json"})
 # Committed art that is not generator output and so is not a snapshot: the
 # before/after/old reference shots kept for the write-ups, and the fonts.
 REFERENCE_PREFIXES = ("before_", "after_", "old_")
-# The cell directory covered through the atlas rather than file for file.
-CELL_DIR = "units"
+# The two directories that install nowhere. The unit cells are covered through
+# the atlas instead of file for file; the building cells are pinned to the
+# terrain tiles by `tests/test_properties_art.py`.
+CELL_DIRS = frozenset({UNIT_CELLS, BUILDING_CELLS})
 CELL_ATLAS = "units_atlas.png"
 
 
@@ -130,16 +132,17 @@ def _differs(a_path: Path, b_path: Path, rel: Path) -> str | None:
     return None
 
 
-def _check_cells(gen: Path, atlas_path: Path | None, cells: set[Path]) -> list[str]:
-    """Every exported unit cell must be a cell of the installed atlas."""
+def _check_cells(gen: Path, cells: set[Path]) -> list[str]:
+    """Every exported unit cell must be a cell of the run's own atlas."""
     if not cells:
-        return [f"generator emitted no {CELL_DIR}/ cells"]
-    if atlas_path is None or not atlas_path.exists():
-        return [f"missing baseline: {atlas_path or CELL_ATLAS}"]
+        return [f"generator emitted no {UNIT_CELLS}/ cells"]
+    atlas_path = gen / CELL_ATLAS
+    if not atlas_path.exists():
+        return [f"missing {atlas_path}"]
     atlas = Image.open(atlas_path).convert("RGBA")
     sizes = {Image.open(gen / c).size for c in cells}
     if len(sizes) != 1:
-        return [f"{CELL_DIR}/ cells are not one size: {sorted(sizes)}"]
+        return [f"{UNIT_CELLS}/ cells are not one size: {sorted(sizes)}"]
     cw, ch = sizes.pop()
     if atlas.width % cw or atlas.height % ch:
         return [f"{CELL_ATLAS} {atlas.size} is not a grid of {cw}x{ch} cells"]
@@ -160,7 +163,7 @@ def main(argv: list[str]) -> int:
     mirror = Path(argv[2]) if len(argv) > 2 else None
     suffixes = frozenset({".png"} if mirror else {".png", ".json"})
     generated = _generated(gen, suffixes)
-    cells = {p for p in generated if p.parent.name == CELL_DIR}
+    cells = {p for p in generated if p.parent.name in CELL_DIRS}
     pairs = sorted(generated - cells)
     baseline = _mirror(mirror) if mirror else _installed()
 
@@ -169,7 +172,8 @@ def main(argv: list[str]) -> int:
         f"baseline file the generator no longer emits: {baseline[p]}"
         for p in sorted(set(baseline) - set(pairs))
     ]
-    bad += _check_cells(gen, baseline.get(Path(CELL_ATLAS)), cells)
+    unit_cells = {p for p in cells if p.parent.name == UNIT_CELLS}
+    bad += _check_cells(gen, unit_cells)
     for p in pairs:
         if p in baseline:
             note = _differs(gen / p, baseline[p], p)
@@ -178,7 +182,9 @@ def main(argv: list[str]) -> int:
     if bad:
         print("\n".join(bad))
         return 1
-    print(f"{len(pairs)} outputs match their baseline, {len(cells)} cells in-atlas")
+    print(
+        f"{len(pairs)} outputs match their baseline, {len(unit_cells)} cells in-atlas"
+    )
     return 0
 
 

@@ -13,7 +13,7 @@ from rather than from a second list that has to be kept in step.
 Outputs (under --out, default ./out):
   anim.json              the sheet contract — cell geometry, ambient clip,
                          column/row order, terrain phase counts
-  units_atlas.png        1152x480 RGBA — drop-in for assets/tiles/units_atlas.png
+  units_atlas.png        1152x576 RGBA — drop-in for assets/tiles/units_atlas.png
   units_atlas_b.png      ambient animation frame B (every unit's second key pose)
   units_atlas_figures.png / units_atlas_figures_b.png
                           the same two frames with the tile's cast shadow left
@@ -22,16 +22,15 @@ Outputs (under --out, default ./out):
   units_atlas_move.png / units_atlas_move_b.png
                           the same grid again, under way — one facing (the
                           art's own, screen-left); the consumer mirrors it
-  terrain_atlas.png       896x320 RGBA — drop-in for assets/tiles/terrain_atlas.png
+  terrain_atlas.png       896x384 RGBA — drop-in for assets/tiles/terrain_atlas.png
                           (the five property columns are transparent overlays)
   overlay.png / ui/cursor.png / icon/icon.png
                           the UI chrome — the range tile the scene modulates,
                           the board cursor, and the project icon
   units/<id>_<team>.png   one units-atlas cell each — the atlas's own art
-                          exported cell by cell, installed to
-                          assets/sprites/units as a reviewable reference the
-                          game never loads
-  iso_buildings/<id>_<team>.png  64x64 RGBA property buildings
+                          exported cell by cell, for review; the game loads the
+                          sheets, so these stay here and are installed nowhere
+  iso_buildings/<id>_<team>.png  64x64 RGBA property buildings, for review too
   preview_units.png / preview_terrain.png / preview_map.png  review sheets
 """
 
@@ -54,8 +53,10 @@ from .units import ATLAS_ORDER, Pose
 # Where each kind of output lands in a grid_commanders checkout.
 TILES_DIR = "assets/tiles"
 AUTOTILES, AUTOTILES_DIR = "autotiles", "assets/tiles/autotiles"
-UNIT_CELLS, UNIT_CELLS_DIR = "units", "assets/sprites/units"
-BUILDING_CELLS, BUILDING_CELLS_DIR = "iso_buildings", "assets/sprites/iso_buildings"
+# The two cell directories install nowhere: they are review exports of art the
+# sheets already carry, so shipping them would ship the same pixels twice.
+UNIT_CELLS = "units"
+BUILDING_CELLS = "iso_buildings"
 # The two chrome files that do not land beside the board sprites. Each output
 # directory installs into exactly one place, so the icon — alone at the assets
 # root in the game — gets a directory of its own here.
@@ -143,17 +144,15 @@ def _sheet_cell(uid: str, fac: Faction) -> Image.Image:
 def unit_cells() -> Iterator[Output]:
     """One units-atlas cell per unit and faction.
 
-    Reference exports of art the atlas already carries: nothing in the game
-    loads them, and `tests/check_snapshots.py` holds each to the cell of the
-    installed `units_atlas.png` it was cut from — which cropping rather than
-    re-rendering makes true by construction, and saves 90 renders a run.
+    Review exports of art the atlas already carries, so they are written here
+    and installed nowhere. `tests/check_snapshots.py` holds each to a cell of
+    the run's own `units_atlas.png` — which cropping rather than re-rendering
+    makes true by construction, and saves 90 renders a run.
     """
     for uid in ATLAS_ORDER:
         for fac in FACTIONS:
             yield Output(
-                f"{UNIT_CELLS}/{uid}_{fac.team}.png",
-                partial(_sheet_cell, uid, fac),
-                UNIT_CELLS_DIR,
+                f"{UNIT_CELLS}/{uid}_{fac.team}.png", partial(_sheet_cell, uid, fac)
             )
 
 
@@ -164,7 +163,6 @@ def building_cells() -> Iterator[Output]:
             yield Output(
                 f"{BUILDING_CELLS}/{bid}_{fac.team}.png",
                 partial(atlas.building_cell, bid, fac),
-                BUILDING_CELLS_DIR,
             )
 
 
@@ -187,9 +185,9 @@ def generate(
 
 def _install_directories() -> dict[str, str]:
     """Which generated subdirectory installs where, read off the outputs that
-    live in one — the autotile sheets and the two kinds of cell."""
+    live in one — the autotile sheets, today."""
     dirs: dict[str, str] = {}
-    for output in (*SHEETS, *unit_cells(), *building_cells()):
+    for output in SHEETS:
         parent = Path(output.rel).parent
         if output.install_to is not None and parent != Path("."):
             dirs[parent.as_posix()] = output.install_to
@@ -203,8 +201,8 @@ def install(src: Path, dest: Path) -> int:
     The manifest travels with the sheets it describes: a checkout with new
     atlases and last run's anim.json would be the coupling `anim` exists to
     end. A sheet at the root is named and has to be there; a directory is
-    copied as it stands, so a `--no-cells` run installs its atlases without
-    demanding cells it never wrote.
+    copied as it stands. The per-cell exports are not copied at all — the game
+    loads the sheets, and the cells are the same pixels a second time.
     """
     pairs = [
         (src / o.rel, dest / o.install_to / o.rel)
@@ -212,7 +210,6 @@ def install(src: Path, dest: Path) -> int:
         if o.install_to is not None and Path(o.rel).parent == Path(".")
     ]
     pairs.append((src / anim.MANIFEST_NAME, dest / TILES_DIR / anim.MANIFEST_NAME))
-    sheet_count = len(pairs)
     for sub, into in _install_directories().items():
         for f in sorted((src / sub).glob("*.png")):
             pairs.append((f, dest / into / f.name))
@@ -221,7 +218,7 @@ def install(src: Path, dest: Path) -> int:
             sys.exit(f"missing {s} — run a full generation first")
         d.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(s, d)
-    print(f"installed atlases + {len(pairs) - sheet_count} cells into {dest}")
+    print(f"installed {len(pairs)} files into {dest}")
     return len(pairs)
 
 
@@ -288,7 +285,7 @@ def _parser() -> argparse.ArgumentParser:
         "--install",
         type=Path,
         metavar="GAME_DIR",
-        help="copy the atlases and cells into a grid_commanders checkout "
+        help="copy the atlases and the UI chrome into a grid_commanders checkout "
         "(explicit path required — no default destination, deliberately)",
     )
     return ap

@@ -317,8 +317,7 @@ class Install(unittest.TestCase):
         behind is the drift this file exists to end."""
         with tempfile.TemporaryDirectory() as tmp:
             src, dest = Path(tmp) / "out", Path(tmp) / "game"
-            for sub in ("units", "iso_buildings", "autotiles"):
-                (src / sub).mkdir(parents=True)
+            (src / "autotiles").mkdir(parents=True)
             # Every named output the install demands, read off the table it
             # reads, so a new sheet needs no second list seeded here.
             for output in pipeline.SHEETS:
@@ -342,6 +341,33 @@ class Install(unittest.TestCase):
                     continue
                 landed = dest / output.install_to / Path(output.rel).name
                 self.assertTrue(landed.exists(), f"the install left {output.rel}")
+
+    def test_the_install_step_ships_no_per_cell_export(self):
+        """The cells are the sheets' own pixels a second time, so they are
+        review output and land nowhere in the game."""
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dest = Path(tmp) / "out", Path(tmp) / "game"
+            for output in pipeline.SHEETS:
+                if output.install_to is not None:
+                    seeded = src / output.rel
+                    seeded.parent.mkdir(parents=True, exist_ok=True)
+                    seeded.write_bytes(b"")
+            for output in (*pipeline.unit_cells(), *pipeline.building_cells()):
+                self.assertIsNone(output.install_to, output.rel)
+                seeded = src / output.rel
+                seeded.parent.mkdir(parents=True, exist_ok=True)
+                seeded.write_bytes(b"")
+            anim.dump(src / anim.MANIFEST_NAME)
+            with contextlib.redirect_stdout(io.StringIO()):
+                sprite_generator._install(src, dest)
+            self.assertEqual(
+                sorted(p.name for p in dest.rglob("*.png")),
+                sorted(
+                    Path(o.rel).name
+                    for o in pipeline.SHEETS
+                    if o.install_to is not None
+                ),
+            )
 
 
 class Determinism(unittest.TestCase):
