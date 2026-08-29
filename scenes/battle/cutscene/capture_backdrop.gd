@@ -142,21 +142,21 @@ static func draw_ground(
 ) -> void:
 	var floor_y := arena.position.y + arena.size.y
 	var depth := floor_y - horizon
-	var near := GRASS.lerp(tint, GROUND_BLEND)
-	var far := GRASS_DARK.lerp(tint, GROUND_BLEND)
+	var light := GRASS.lerp(tint, GROUND_BLEND)
+	var dark := GRASS_DARK.lerp(tint, GROUND_BLEND)
 	var y := horizon
 	var row_h := depth * 0.06
 	var toggle := 0
 	while y < floor_y:
 		var lit := lerpf(0.82, 1.0, clampf((y - horizon) / depth, 0.0, 1.0))
-		var base := near if toggle % 2 == 0 else far
+		var base := light if toggle % 2 == 0 else dark
 		canvas.draw_rect(
 			Rect2(0.0, y, width, row_h + 1.0), Color(base.r * lit, base.g * lit, base.b * lit)
 		)
 		y += row_h
 		row_h *= 1.5
 		toggle += 1
-	canvas.draw_rect(Rect2(0.0, horizon, width, 2.0), Color(far.darkened(0.35), 0.9))
+	canvas.draw_rect(Rect2(0.0, horizon, width, 2.0), Color(dark.darkened(0.35), 0.9))
 	canvas.draw_rect(Rect2(0.0, horizon - 1.0, width, 1.0), Color(1.0, 1.0, 1.0, 0.3))
 	canvas.draw_rect(Rect2(0.0, floor_y - 16.0, width, 16.0), Color(0.0, 0.0, 0.0, 0.14))
 
