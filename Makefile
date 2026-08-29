@@ -393,10 +393,13 @@ generators-venv:
 	python3 -m venv "$(PORTRAITGEN_VENV)"
 	"$(PORTRAITGEN_PY)" -m pip install --quiet --requirement "$(PORTRAITGEN)/requirements.txt"
 
+# `import` runs last for the reason `tiles` does: Godot caches by size, so a
+# stale import plays the old sound — or silence.
 audio:
 	$(call require-audiogen)
 	"$(AUDIOGEN_PY)" "$(AUDIOGEN)/audio_generator.py" \
 		-o "$(AUDIOGEN)/out" --install "$(CURDIR)"
+	$(MAKE) import
 
 # The generator's own merge bar: rosters, determinism, mix levels, loop seams
 # and pairwise distinctness. Out of `make verify` because it costs ~20 s and
@@ -422,6 +425,16 @@ portraits-test:
 	$(call require-portraitgen)
 	cd "$(PORTRAITGEN)" && "$(abspath $(PORTRAITGEN_PY))" -m unittest discover tests
 
+audio-lint:
+	$(call require-audiogen)
+	cd "$(AUDIOGEN)" && "$(abspath $(AUDIOGEN_PY))" -m ruff check . \
+		&& "$(abspath $(AUDIOGEN_PY))" -m ruff format --check .
+
+sprites-lint:
+	$(call require-spritegen)
+	cd "$(SPRITEGEN)" && "$(abspath $(SPRITEGEN_PY))" -m ruff check . \
+		&& "$(abspath $(SPRITEGEN_PY))" -m ruff format --check .
+
 portraits-lint:
 	$(call require-portraitgen)
 	cd "$(PORTRAITGEN)" && "$(abspath $(PORTRAITGEN_PY))" -m ruff check . \
@@ -429,13 +442,7 @@ portraits-lint:
 
 # Every generator's Python lint gate, each under its own ruff.toml, and the same
 # two commands CI runs. Out of `make verify` with the suites, for the venv.
-generators-lint: portraits-lint
-	$(call require-audiogen)
-	$(call require-spritegen)
-	cd "$(AUDIOGEN)" && "$(abspath $(AUDIOGEN_PY))" -m ruff check . \
-		&& "$(abspath $(AUDIOGEN_PY))" -m ruff format --check .
-	cd "$(SPRITEGEN)" && "$(abspath $(SPRITEGEN_PY))" -m ruff check . \
-		&& "$(abspath $(SPRITEGEN_PY))" -m ruff format --check .
+generators-lint: audio-lint sprites-lint portraits-lint
 
 generators-test: audio-test sprites-test portraits-test
 
@@ -447,6 +454,15 @@ sprites-snapshot:
 	@out=$$(mktemp -d) && \
 		"$(SPRITEGEN_PY)" "$(SPRITEGEN)/sprite_generator.py" -o "$$out" && \
 		"$(SPRITEGEN_PY)" "$(SPRITEGEN)/tests/check_snapshots.py" "$$out"; \
+		status=$$?; rm -rf "$$out"; exit $$status
+
+# The same gate for the sounds: the effects byte for byte, the marches by their
+# decoded samples — an Ogg's bytes belong to the libVorbis that encoded them.
+audio-snapshot:
+	$(call require-audiogen)
+	@out=$$(mktemp -d) && \
+		"$(AUDIOGEN_PY)" "$(AUDIOGEN)/audio_generator.py" -o "$$out" && \
+		"$(AUDIOGEN_PY)" "$(AUDIOGEN)/tests/check_snapshots.py" "$$out"; \
 		status=$$?; rm -rf "$$out"; exit $$status
 
 # The same gate for the commander art, in both directions: a generated file with
@@ -545,7 +561,8 @@ mobile-soak:
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	audio audio-test sprites-test sprites-snapshot generators-lint generators-test \
+	audio audio-test audio-lint audio-snapshot sprites-test sprites-lint \
+	sprites-snapshot generators-lint generators-test \
 	portraits-test portraits-lint portraits-snapshot \
 	generators-venv portraits import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \

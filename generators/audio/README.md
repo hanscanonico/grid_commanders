@@ -130,6 +130,14 @@ leftover would ship beside its replacement.
 The measurements live in `audiogen/measure.py`; the tests only assert over
 them, so the tool and the suite cannot disagree about what "loud" means.
 
+`make audio-snapshot` is the other half: the sound installed under `assets/`
+against a fresh render, in both directions, so an edit merged without
+`make audio` fails here instead of shipping silently. The effects are compared
+byte for byte; the marches by their decoded length exactly and their decoded
+samples to a measured tolerance, because a different platform's libVorbis
+decodes the same stream a little differently. Differing bytes are printed as a
+note, never a failure.
+
 ## Adoption
 
 The game ships this pipeline's exact output: `make audio` installs the nine
