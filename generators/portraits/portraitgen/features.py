@@ -51,6 +51,10 @@ GLASS: RGB = (188, 214, 224)
 GOLD: RGB = (224, 169, 46)
 SCAR: RGB = (181, 107, 90)
 
+# Half a lens, squared on the eye line: what survives the mip is the square,
+# not the frame drawn around it.
+LENS_HALF = 14.0
+
 
 @dataclass(frozen=True)
 class Frame:
@@ -283,24 +287,36 @@ MOUTH_X = 110.0
 MOUTH_EYE_SPAN = 2.5
 
 
+# P10: the bared band of teeth spans this share of the mouth's inner width at
+# most, and each open mouth bares it its own way — one white block worn by
+# seven busts is what the band had become.
+TEETH_WIDTH = 0.6
+# A snarl bares its upper row alone, and an open mouth bares no teeth at all:
+# it is a dark cavity read by the lit lip along the bottom of it.
+UPPER_ROW = 0.34
+NOTHING_BARED = 0.0
+LIT_LIP = 2.0
+
+
 @dataclass(frozen=True)
 class OpenMouth:
     """An open mouth as three heights — the lip line, the corners, the lower
-    lip — how far down the band of teeth runs before the mouth goes dark, and
-    how far one side of the lip curls, which is the whole of a snarl."""
+    lip — how wide and how deep into the opening the bared band of teeth runs,
+    and how far one side of the lip curls, which is the whole of a snarl."""
 
     top: float
     corner: float
     bottom: float
-    teeth: float
+    bared: float
+    teeth: float = 1.0
     curl: float = 0.0
 
 
 _OPEN: dict[str, OpenMouth] = {
-    "grin": OpenMouth(163.5, 166.5, 175.5, 1.0),
-    "laugh": OpenMouth(162.5, 165.5, 178.5, 0.56),
-    "open": OpenMouth(163.0, 166.5, 178.0, 0.5),
-    "snarl": OpenMouth(163.5, 166.5, 175.0, 1.0, curl=4.5),
+    "grin": OpenMouth(163.5, 166.5, 175.5, TEETH_WIDTH * 0.6),
+    "laugh": OpenMouth(162.5, 165.5, 178.5, TEETH_WIDTH),
+    "open": OpenMouth(163.0, 166.5, 173.0, NOTHING_BARED),
+    "snarl": OpenMouth(163.5, 166.5, 175.0, TEETH_WIDTH, UPPER_ROW, curl=4.5),
 }
 OPEN_MOUTH_KINDS = frozenset(_OPEN)
 MOUTH_KINDS = frozenset(_MOUTHS) | OPEN_MOUTH_KINDS
@@ -322,28 +338,52 @@ def _lips(shape: OpenMouth, half: float) -> tuple[Point, ...]:
     )
 
 
-def _opened(canvas: Canvas, frame: Frame, shape: OpenMouth, half: float) -> None:
-    """A wide mouth: a white band across the top, the dark under it, one lip.
+def _inside(shape: OpenMouth, half: float, y: float) -> float:
+    """How wide the opening still is at one height, inside its own lip."""
+    closing = max((y - shape.corner) / (shape.bottom - shape.corner), 0.0)
+    return half * (1.0 - 0.45 * closing) - INK_FEATURE / 2.0
 
-    C13 caps the dark area rather than the size, so the mouth is an outline
-    around that band rather than a filled hole — a grin bares the whole band,
-    a laugh keeps a cavity below it.
+
+def _teeth(shape: OpenMouth, half: float) -> tuple[Point, ...]:
+    """The bared band, hung off the upper lip and inset from both corners."""
+    top = shape.top + INK_FEATURE / 2.0
+    bottom = top + shape.teeth * (shape.bottom - shape.top - INK_FEATURE)
+    band = shape.bared * (half - INK_FEATURE / 2.0)
+    close = min(band, _inside(shape, half, bottom))
+    return (
+        (MOUTH_X - band, top),
+        (MOUTH_X + band, top),
+        (MOUTH_X + close, bottom),
+        (MOUTH_X - close, bottom),
+    )
+
+
+def _lower_lip(shape: OpenMouth, half: float) -> tuple[Point, ...]:
+    """The lit lip a mouth that bares no teeth is read by instead."""
+    edge = _inside(shape, half, shape.bottom)
+    bottom = shape.bottom - INK_FEATURE / 2.0
+    return (
+        (MOUTH_X - edge, bottom - LIT_LIP),
+        (MOUTH_X + edge, bottom - LIT_LIP),
+        (MOUTH_X + edge, bottom),
+        (MOUTH_X - edge, bottom),
+    )
+
+
+def _opened(canvas: Canvas, frame: Frame, shape: OpenMouth, half: float) -> None:
+    """A wide mouth: the lip, and the one light thing inside it.
+
+    C13 caps the dark area rather than the size, so a mouth that bares teeth is
+    an outline around them rather than a filled hole — and what it bares is what
+    tells the four apart: a laugh the whole band, a grin under two thirds of its
+    width, a snarl the upper row, an open mouth a dark cavity and a lit lip.
     """
     lips = _lips(shape, half)
-    canvas.polygon(frame.path(lips), SCLERA)
-    if shape.teeth < 1.0:
-        gum = shape.top + (shape.bottom - shape.top) * shape.teeth
-        canvas.polygon(
-            frame.path(
-                (
-                    (MOUTH_X - half * 0.88, gum),
-                    (MOUTH_X + half * 0.88, gum),
-                    (MOUTH_X + half * 0.55, shape.bottom),
-                    (MOUTH_X - half * 0.55, shape.bottom),
-                )
-            ),
-            INK,
-        )
+    if shape.bared > NOTHING_BARED:
+        canvas.polygon(frame.path(_teeth(shape, half)), SCLERA)
+    else:
+        canvas.polygon(frame.path(lips), INK)
+        canvas.polygon(frame.path(_lower_lip(shape, half)), SCLERA)
     canvas.stroke(frame.path(lips), INK_FEATURE, INK, closed=True)
 
 
@@ -574,18 +614,18 @@ def _goggles(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Poin
 
 
 def _glasses(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    left, right = _eye_xs(skull)
-    for x in (left, right):
+    """P17: two squares at the feature weight, and no bridge between them.
+
+    A bridge is the one part of a pair of glasses the mip cannot hold, and it
+    was what joined the two lenses into a single grey smear at chip size."""
+    for x in _eye_xs(skull):
         lens = (
-            (x - 15.0, 132.0),
-            (x + 15.0, 132.0),
-            (x + 15.0, 154.0),
-            (x - 15.0, 154.0),
+            (x - LENS_HALF, EYE_LINE - LENS_HALF),
+            (x + LENS_HALF, EYE_LINE - LENS_HALF),
+            (x + LENS_HALF, EYE_LINE + LENS_HALF),
+            (x - LENS_HALF, EYE_LINE + LENS_HALF),
         )
         canvas.stroke(frame.path(lens), INK_FEATURE, INK, closed=True)
-    canvas.stroke(
-        frame.path([(left + 15.0, 138.0), (right - 15.0, 138.0)]), INK_FEATURE, INK
-    )
     return []
 
 
