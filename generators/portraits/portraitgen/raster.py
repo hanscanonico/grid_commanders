@@ -8,11 +8,14 @@ two of the twenty-three busts came out a pixel apart on Linux while every local
 regeneration was clean. A crossing is a ratio of small whole numbers, so it is
 kept as one here and never becomes a float at all.
 
-The pixel model is Pillow's, so the art already drawn does not move: a pixel is
-the unit square centred on its integer coordinate, a scan line is a row of those
-centres, and a run covers the centres between two crossings rounded inward. A
-crossing outside the raster is clipped, which is also why the rounding needs no
-rule for a negative one.
+The pixel model follows Pillow's, so a shape keeps its place: a pixel is the
+unit square centred on its integer coordinate, a scan line is a row of those
+centres, and a run covers the pixels its two crossings land in, one exactly on a
+boundary counting inward. It is not Pillow's fill to the last pixel — Pillow
+also paints a shallow edge's own row whole — so the re-bake moved a few percent
+of every bust: a stroke edge one working pixel over, a third of a portrait pixel
+after the downsample. A crossing outside the raster is clipped, which is also
+why the rounding needs no rule for a negative one.
 """
 
 from __future__ import annotations
@@ -84,13 +87,19 @@ def _value(crossing: Crossing) -> float:
 
 
 def _round_up(crossing: Crossing) -> int:
-    """The first pixel centre at or after a crossing."""
+    """The pixel a run's left crossing lands in; on a boundary, the right one.
+
+    Pillow's `ROUND_UP` macro, in whole numbers.
+    """
     numerator, denominator = crossing
     return (2 * numerator + denominator) // (2 * denominator)
 
 
 def _round_down(crossing: Crossing) -> int:
-    """The last pixel centre at or before a crossing."""
+    """The pixel a run's right crossing lands in; on a boundary, the left one.
+
+    Pillow's `ROUND_DOWN` macro, in whole numbers.
+    """
     numerator, denominator = crossing
     return -((denominator - 2 * numerator) // (2 * denominator))
 

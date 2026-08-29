@@ -55,7 +55,8 @@ Point = tuple[float, float]
 Box = tuple[float, float, float, float]
 
 
-Corner = tuple[int, int]
+# The rasteriser's own type: one place decides what a whole-pixel corner is.
+Corner = raster.Corner
 
 
 def segment_quad(start: Corner, end: Corner, radius: int) -> list[Corner] | None:
@@ -107,7 +108,7 @@ class Canvas:
     def _at(self, value: float) -> int:
         return round(value * self.scale)
 
-    def _points(self, points: Iterable[Point]) -> list[tuple[int, int]]:
+    def _points(self, points: Iterable[Point]) -> list[Corner]:
         return [(self._at(x), self._at(y)) for x, y in points]
 
     def _box(self, box: Box) -> tuple[int, int, int, int]:
@@ -123,7 +124,7 @@ class Canvas:
     def polygon(self, points: Iterable[Point], colour: RGB | RGBA) -> None:
         self._fill(self._points(points), colour)
 
-    def _fill(self, corners: list[raster.Corner], colour: RGB | RGBA) -> None:
+    def _fill(self, corners: list[Corner], colour: RGB | RGBA) -> None:
         """A polygon already at the working resolution, painted as the rows
         `raster` says it covers."""
         rows = list(raster.spans(corners, self.image.size))
