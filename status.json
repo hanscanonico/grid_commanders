@@ -1,0 +1,81 @@
+{
+	"jobs": [
+		{
+			"artifact": "",
+			"ended": 1788041851,
+			"exit": 0,
+			"job": "difficulty-check",
+			"kind": "section",
+			"log": "reports/grind/logs/difficulty-check-20260830-001726.log",
+			"marker": "=== difficulty ladder ===",
+			"reading": [
+				"=== difficulty ladder ===",
+				"matches 8   rejected 0   cap-stalls 0   gate >= 70%",
+				"  normal  over easy      75.0%  (3/4)  ok",
+				"      on scrimmage   100.0%  (2/2)",
+				"      on ironworks    50.0%  (1/2)",
+				"  hard    over normal    75.0%  (3/4)  ok",
+				"\u2026",
+				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
+			],
+			"started": 1788041846,
+			"status": "done"
+		}
+	],
+	"state": {
+		"boot": 1788042398,
+		"host": "mini-pc-Default-string",
+		"job": "",
+		"order": [
+			"arena-search-default",
+			"arena-search-easy",
+			"arena-search-hard",
+			"difficulty-check",
+			"commander-balance",
+			"campaign-difficulty",
+			"legibility-ratchet",
+			"balance-pool-arsenal",
+			"replay-survey-arsenal",
+			"balance-pool-crossfire",
+			"replay-survey-crossfire",
+			"balance-pool-first_steps",
+			"replay-survey-first_steps",
+			"balance-pool-jet_stream",
+			"replay-survey-jet_stream",
+			"balance-pool-riverline",
+			"replay-survey-riverline",
+			"balance-pool-scrimmage",
+			"replay-survey-scrimmage",
+			"balance-pool-timberline",
+			"replay-survey-timberline"
+		],
+		"pass": 1,
+		"phase": "idle",
+		"queue": [
+			"arena-search-default",
+			"arena-search-easy",
+			"arena-search-hard",
+			"difficulty-check",
+			"commander-balance",
+			"campaign-difficulty",
+			"legibility-ratchet",
+			"balance-pool-arsenal",
+			"replay-survey-arsenal",
+			"balance-pool-crossfire",
+			"replay-survey-crossfire",
+			"balance-pool-first_steps",
+			"replay-survey-first_steps",
+			"balance-pool-jet_stream",
+			"replay-survey-jet_stream",
+			"balance-pool-riverline",
+			"replay-survey-riverline",
+			"balance-pool-scrimmage",
+			"replay-survey-scrimmage",
+			"balance-pool-timberline",
+			"replay-survey-timberline"
+		],
+		"sha": "eb10c427",
+		"started": 0
+	},
+	"written": 1788042400
+}
