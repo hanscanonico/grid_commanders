@@ -96,11 +96,10 @@ def _byte_note(generated: Path, installed: Path) -> str | None:
     """Not a failure: which encoder wrote the bytes, when they are not equal."""
     if filecmp.cmp(generated, installed, shallow=False):
         return None
-    return (
-        f"note: {installed} decodes the same but its bytes differ — encoded by "
-        f"{vendor_string(installed.read_bytes())!r}, fresh render is "
-        f"{vendor_string(generated.read_bytes())!r}"
-    )
+    was = vendor_string(installed.read_bytes())
+    now = vendor_string(generated.read_bytes())
+    encoders = f"both {was!r}" if was == now else f"{was!r}, fresh render is {now!r}"
+    return f"note: {installed} decodes the same but its bytes differ — encoded by {encoders}"
 
 
 def _differs(generated: Path, installed: Path) -> str | None:
