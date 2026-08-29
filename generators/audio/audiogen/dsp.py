@@ -8,6 +8,8 @@ platform (the same rule sprite_generator holds for its hash noise).
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 import numpy as np
 
 RATE = 44100
@@ -116,6 +118,30 @@ def lowpass(x: np.ndarray, cutoff: float | np.ndarray) -> np.ndarray:
         y = (1.0 - a[i]) * x[i] + a[i] * y
         out[i] = y
     return out
+
+
+@lru_cache(maxsize=None)
+def _pole_kernel(cutoff: float, poles: int) -> np.ndarray:
+    """A one-pole lowpass's impulse response, cascaded `poles` times."""
+    a = np.exp(-2.0 * np.pi * cutoff / RATE)
+    one = (1.0 - a) * a ** np.arange(int(np.ceil(np.log(1e-4) / np.log(a))))
+    h = one
+    for _ in range(poles - 1):
+        h = np.convolve(h, one)
+    h /= h.sum()
+    h.flags.writeable = False
+    return h
+
+
+def lowpass_poles(x: np.ndarray, cutoff: float, poles: int = 2) -> np.ndarray:
+    """Cascaded one-pole lowpass, run as a convolution with its own
+    impulse response — same answer as `lowpass` applied `poles` times, but
+    vectorised, and the melodic voices sound hundreds of notes a song.
+
+    Unity at DC, so a zero-mean oscillator stays zero-mean, and the step
+    response never overshoots, so a filtered pulse keeps its peak.
+    """
+    return np.convolve(x, _pole_kernel(cutoff, poles))[: len(x)]
 
 
 def highpass(x: np.ndarray, cutoff: float | np.ndarray) -> np.ndarray:

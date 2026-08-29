@@ -153,16 +153,102 @@ class Mix(unittest.TestCase):
                     measure.rms_db(RENDERED[name]), quietest_combat - self.MARGIN_DB
                 )
 
+    # Program loudness the rebalance may not give back: peak normalisation
+    # sets the ceiling, so these are what the band actually fills under it.
+    PROGRAM_RMS_DB = {"parade": -21.9, "advance": -23.7}
+
+    # A chordal voice this far under the lead is a harmony nobody hears; the
+    # leads used to sit 16-18 dB over their own chords.
+    CHORDAL_SPREAD_DB = 10.0
+    CHORDAL = ("stab", "pad")
+
     def test_no_dc(self):
         for name in CONTRACT:
             with self.subTest(track=name):
                 self.assertLess(measure.dc_offset(RENDERED[name]), 0.005)
 
+    def test_the_program_stays_as_loud_as_it_was_authored(self):
+        for name in CONTRACT:
+            with self.subTest(track=name):
+                self.assertGreaterEqual(
+                    measure.rms_db(RENDERED[name]), self.PROGRAM_RMS_DB[name]
+                )
+
+    def test_the_harmony_stays_within_reach_of_the_lead(self):
+        # Solo levels read off the unlevelled mixdown: peak normalisation is
+        # the whole mix's answer, so a track rendered alone is levelled
+        # against its own peak and says nothing about the band.
+        for name in CONTRACT:
+            song = music.MUSIC[name][0]()
+            solo = {
+                t.instrument: measure.rms_db(
+                    sequencer.mixdown(dataclasses.replace(song, tracks=(t,)))
+                )
+                for t in song.tracks
+            }
+            lead = solo[song.tracks[0].instrument]
+            for voice in self.CHORDAL:
+                if voice not in solo:
+                    continue
+                with self.subTest(track=name, voice=voice):
+                    self.assertLessEqual(lead - solo[voice], self.CHORDAL_SPREAD_DB)
+
+
+class Brightness(unittest.TestCase):
+    """The pulse voices are filtered, not left buzzing at the top."""
+
+    # The four pulse recipes, which are lowpassed inside the instrument.
+    PULSE = ("brass_lead", "edge_lead", "stab", "drive_bass")
+
+    # Measured on the pulse voices alone: centroid 898-2414 Hz and 0.4-2.1 %
+    # above 15 kHz, against 4.7-7.3 kHz and 10.7-17.9 % as naked squares.
+    PULSE_CENTROID_HZ = 2600.0
+    PULSE_SHARE_15K = 0.03
+
+    # Measured whole-track: parade 13.1 / 7.3 %, advance 17.4 / 9.4 %, from
+    # 29.9 / 16.6 % and 27.4 / 15.0 %. What is left up there is percussion —
+    # the kick's beater tick, the snare crack, the hat and the seam roll.
+    SHARE_10K = 0.20
+    SHARE_15K = 0.11
+
+    # Measured 3555 Hz and 4486 Hz, from 6858 Hz and 6496 Hz.
+    CENTROID_HZ = (2500.0, 4500.0)
+
+    def test_each_pulse_voice_is_filtered(self):
+        for name in CONTRACT:
+            song = music.MUSIC[name][0]()
+            for voice in song.tracks:
+                if voice.instrument not in self.PULSE:
+                    continue
+                solo = sequencer.mixdown(dataclasses.replace(song, tracks=(voice,)))
+                with self.subTest(track=name, voice=voice.instrument):
+                    self.assertLess(measure.centroid_hz(solo), self.PULSE_CENTROID_HZ)
+                    self.assertLess(
+                        measure.hf_share(solo, 15000.0), self.PULSE_SHARE_15K
+                    )
+
+    def test_no_track_carries_its_weight_in_the_top_octave(self):
+        for name in CONTRACT:
+            x = RENDERED[name]
+            with self.subTest(track=name):
+                self.assertLess(measure.hf_share(x, 10000.0), self.SHARE_10K)
+                self.assertLess(measure.hf_share(x, 15000.0), self.SHARE_15K)
+
+    def test_each_track_centres_where_a_march_should(self):
+        lo, hi = self.CENTROID_HZ
+        for name in CONTRACT:
+            with self.subTest(track=name):
+                self.assertTrue(
+                    lo <= measure.centroid_hz(RENDERED[name]) <= hi,
+                    f"{measure.centroid_hz(RENDERED[name]):.0f} Hz outside "
+                    f"[{lo:.0f}, {hi:.0f}]",
+                )
+
 
 class Distinctness(unittest.TestCase):
     """The menu and the battle may not wear the same march."""
 
-    SPECTRAL_THRESHOLD = 0.05  # measured 0.099 between the two as authored
+    SPECTRAL_THRESHOLD = 0.05  # measured 0.121 between the two as authored
     TEMPO_TOLERANCE_BPM = 3.0
 
     def test_the_two_tracks_separate_spectrally(self):
@@ -194,22 +280,22 @@ class Arrangement(unittest.TestCase):
     ROSTER = {
         "parade": (
             ("brass_lead", 0.34),
-            ("stab", 0.12),
-            ("tuba_bass", 0.30),
-            ("pad", 0.15),
-            ("kick", 0.50),
-            ("snare", 0.34),
+            ("stab", 0.28),
+            ("tuba_bass", 0.52),
+            ("pad", 0.41),
+            ("kick", 0.62),
+            ("snare", 0.27),
             ("hat", 0.32),
-            ("roll", 0.60),
+            ("roll", 0.48),
         ),
         "advance": (
             ("edge_lead", 0.32),
-            ("stab", 0.11),
-            ("drive_bass", 0.26),
-            ("kick", 0.50),
-            ("snare", 0.34),
-            ("hat", 0.30),
-            ("roll", 1.30),
+            ("stab", 0.22),
+            ("drive_bass", 0.45),
+            ("kick", 0.36),
+            ("snare", 0.28),
+            ("hat", 0.20),
+            ("roll", 1.40),
         ),
     }
 
@@ -218,23 +304,23 @@ class Arrangement(unittest.TestCase):
     # per voice; the slack is uniform because it is the same claim each time.
     CONTRIBUTION_DB = {
         "parade": {
-            "brass_lead": -0.9,
-            "stab": -17.8,
-            "tuba_bass": -8.4,
-            "pad": -19.2,
-            "kick": -10.8,
-            "snare": -21.5,
-            "hat": -27.8,
-            "roll": -21.2,
+            "brass_lead": -3.1,
+            "stab": -12.1,
+            "tuba_bass": -5.1,
+            "pad": -11.5,
+            "kick": -11.9,
+            "snare": -21.9,
+            "hat": -30.5,
+            "roll": -28.0,
         },
         "advance": {
-            "edge_lead": -2.4,
-            "stab": -17.6,
-            "drive_bass": -6.4,
-            "kick": -9.0,
-            "snare": -19.0,
-            "hat": -28.6,
-            "roll": -12.2,
+            "edge_lead": -4.6,
+            "stab": -13.4,
+            "drive_bass": -3.2,
+            "kick": -13.1,
+            "snare": -19.8,
+            "hat": -33.0,
+            "roll": -17.5,
         },
     }
 

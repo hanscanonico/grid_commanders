@@ -63,6 +63,19 @@ def centroid_hz(x: np.ndarray) -> float:
     return float((freqs * spec).sum() / total) if total > 0 else 0.0
 
 
+def hf_share(x: np.ndarray, above_hz: float) -> float:
+    """Share of the magnitude spectrum sitting above `above_hz`, 0-1.
+
+    Magnitude-weighted like `centroid_hz` on purpose: the two then agree
+    about where a sound's weight is, so a track whose share climbs is the
+    same track whose centroid climbs.
+    """
+    spec = np.abs(np.fft.rfft(x))
+    freqs = np.fft.rfftfreq(len(x), 1.0 / RATE)
+    total = spec.sum()
+    return float(spec[freqs >= above_hz].sum() / total) if total > 0 else 0.0
+
+
 def voice_contribution_db(mix: np.ndarray, without: np.ndarray) -> float:
     """How much one voice carries, in dB relative to the mix it plays in.
 
@@ -89,9 +102,15 @@ def loop_slope(x: np.ndarray) -> float:
     return float(abs((x[1] - x[0]) - (x[-1] - x[-2])))
 
 
-def typical_step(x: np.ndarray, percentile: float = 99.5) -> float:
-    """The track's own sample-to-sample motion (a high percentile of |diff|):
-    the yardstick a seam step must not exceed to stay inaudible in texture."""
+def typical_step(x: np.ndarray, percentile: float = 99.99) -> float:
+    """The largest sample-to-sample motion the track already makes (a high
+    percentile of |diff|): the yardstick a seam step must not exceed to stay
+    inaudible in texture.
+
+    The percentile sits up among the sparse transients on purpose. The pulse
+    voices are lowpassed, so the music is smooth nearly everywhere and its
+    real steps are the drum onsets — and a loop seam is a drum onset.
+    """
     return float(np.percentile(np.abs(np.diff(x)), percentile))
 
 
