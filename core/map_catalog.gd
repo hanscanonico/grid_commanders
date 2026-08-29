@@ -26,6 +26,13 @@ const TUTORIAL_MAP_PATH := "res://maps/boot_camp.txt"
 ## unplayable one is worse here than on the shelf (COM-106). See
 ## `fixture_paths()`.
 const FIXTURES_DIR := "res://maps/fixtures"
+## Where a board the player drew themselves is kept. Outside `res://` because
+## nothing in an exported game may be written to, and deliberately outside
+## `paths()`: the shipped roster is a fixed list the README counts and the
+## per-map AI soak plays, and a board that arrived on this machine an hour ago
+## belongs to neither. `UserMaps` owns writing here; this class only finds and
+## names what is already there.
+const USER_DIR := "user://maps"
 
 
 ## Every shipped map, alphabetically by filename — a stable order that does not
@@ -40,6 +47,16 @@ static func paths() -> Array[String]:
 ## the same set of files.
 static func fixture_paths() -> Array[String]:
 	return _txt_paths(FIXTURES_DIR)
+
+
+## Every board the player has drawn, alphabetically — the same discovery
+## `paths()` does, in the writable directory. Empty, and silently so, when
+## nothing has ever been saved there: a fresh install has no such directory and
+## that is the ordinary case rather than a failure.
+static func user_paths() -> Array[String]:
+	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(USER_DIR)):
+		return []
+	return _txt_paths(USER_DIR)
 
 
 ## Every `.txt` board directly under `dir`, alphabetically by filename — a stable
@@ -80,9 +97,11 @@ static func display_name(path: String) -> String:
 
 
 ## A bare board name — what a `--map=` flag carries — to the file it names, or ""
-## when nothing answers to it. Shipped maps win over fixtures on a name clash,
-## which is the right way round: the roster is the game, the fixtures are
-## instruments.
+## when nothing answers to it. Shipped maps win over fixtures, and both win over
+## the player's own boards, which is the right way round: the roster is the game,
+## the fixtures are instruments, and a board saved on this machine may not quietly
+## stand in for either. `UserMaps` refuses a name already taken here, so the
+## precedence is a backstop rather than the rule.
 ##
 ## The single answer to "which board is `ironworks`?", so the offline balance
 ## tools and the battle scene resolve a spec identically — a watched match has to
@@ -96,15 +115,17 @@ static func resolve(name: String, fixtures_dir: String = FIXTURES_DIR) -> String
 	var bare := name.strip_edges().trim_suffix(".txt")
 	if bare == "":
 		return ""
-	for dir in [MAPS_DIR, fixtures_dir]:
+	for dir in [MAPS_DIR, fixtures_dir, USER_DIR]:
 		var path: String = dir.path_join("%s.txt" % bare)
 		if ResourceLoader.exists(path) or FileAccess.file_exists(path):
 			return path
 	return ""
 
 
-## Every name `resolve()` answers to, shipped roster first then fixtures — what a
-## tool prints when a `--map=` flag names something that does not exist.
+## Every name that ships, shipped roster first then fixtures — what a tool prints
+## when a `--map=` flag names something that does not exist. The player's own
+## boards resolve but are deliberately not listed: this is the list a bug report
+## quotes, and it has to read the same on every machine.
 static func resolvable_names() -> Array[String]:
 	var names: Array[String] = []
 	for path in paths() + fixture_paths():
