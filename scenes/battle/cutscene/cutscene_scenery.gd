@@ -175,18 +175,23 @@ static func horizon_of(arena: Rect2, ground_ratio: float) -> float:
 	return arena.position.y + arena.size.y * (1.0 - ground_ratio)
 
 
-## The graded sky above that horizon, in `bands` steps from SKY_TOP to
-## SKY_HORIZON. The band count is the caller's, being how coarse that stage wants
-## its gradient rather than what colour a sky is.
+## The graded sky above that horizon, in `bands` steps. The band count and both
+## ends are the caller's — how coarse a stage wants its gradient, and what hour it
+## is fought at, are that stage's, while grading one into the other is not. The
+## defaults are the band's daylight.
 static func draw_sky_gradient(
-	canvas: CanvasItem, arena: Rect2, width: float, horizon: float, bands: int
+	canvas: CanvasItem,
+	arena: Rect2,
+	width: float,
+	horizon: float,
+	bands: int,
+	top_shade: Color = CutscenePalette.SKY_TOP,
+	low_shade: Color = CutscenePalette.SKY_HORIZON
 ) -> void:
 	for i in bands:
 		var top := arena.position.y + (horizon - arena.position.y) * float(i) / bands
 		var bottom := arena.position.y + (horizon - arena.position.y) * float(i + 1) / bands
-		var shade := CutscenePalette.SKY_TOP.lerp(
-			CutscenePalette.SKY_HORIZON, float(i) / float(bands - 1)
-		)
+		var shade := top_shade.lerp(low_shade, float(i) / float(bands - 1))
 		canvas.draw_rect(Rect2(0.0, top, width, bottom - top + 1.0), shade)
 
 
