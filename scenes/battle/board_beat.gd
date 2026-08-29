@@ -17,7 +17,8 @@ extends RefCounted
 ## the slowest rate a swept rotor still reads as turning, which is the faster of
 ## the two motions and so the one that sets the beat.
 const AMBIENT_MS := 500
-## The walk cycle's own rate, faster than a unit's idle by design.
+## The walk cycle's own rate, faster than a unit's idle by design, and authored
+## at the default tier — `move_ms` is what a sprite plays it at.
 const MOVE_MS := 160
 ## The sea's swell, the slowest of the three.
 const SEA_MS := 900
@@ -28,6 +29,15 @@ const SEA_MS := 900
 ## frame A — because an explicit `--speed=` still wins over the pinned tier and a
 ## capture of a tier must not become a capture of a beat.
 static var frozen := false
+
+
+## The gait's cadence at the tier being played. Alone among the three, the walk
+## cycle belongs to a motion the tier already scales — `BattleAnimator` tweens
+## each leg for `move_step_seconds()` — so legs that beat on the authored rate
+## at every tier stride out of step with the body. The other two are scenery on
+## a wall clock and stay authored.
+static func move_ms() -> int:
+	return Settings.speed.clip_period_ms(MOVE_MS)
 
 
 ## Which frame of a two-frame clip is showing, at `period_ms` per frame.

@@ -16,8 +16,14 @@ extends RefCounted
 
 ## The rest after the day banner clears, before the turn's first command. Padding
 ## only — Battle awaits the banner itself before handing the turn over.
+## Instant asks for none, and waits a frame instead for `between_commands`'
+## reason: the board still repaints before the turn's first command.
 static func opening(tree: SceneTree) -> void:
-	await tree.create_timer(Settings.speed.start_delay_seconds()).timeout
+	var delay := Settings.speed.start_delay_seconds()
+	if delay <= 0.0:
+		await tree.process_frame
+		return
+	await tree.create_timer(delay).timeout
 
 
 ## The think-beat between two commands, so a turn reads as decisions rather than

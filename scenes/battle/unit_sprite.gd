@@ -258,7 +258,7 @@ func _sheet_path(frame: int) -> String:
 
 
 func _period_ms() -> int:
-	return BoardBeat.MOVE_MS if moving else BoardBeat.AMBIENT_MS
+	return BoardBeat.move_ms() if moving else BoardBeat.AMBIENT_MS
 
 
 func _repoint_sheet() -> void:

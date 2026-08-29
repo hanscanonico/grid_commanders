@@ -82,13 +82,55 @@ func test_the_move_beat_alternates_every_cadence() -> void:
 	)
 
 
+## The gait belongs to the move tween, which the tier scales, so its cadence has
+## to scale with it: `cutscene_rate` is 1.0 at the default tier and 1.5 at Quick.
+func test_the_gait_beats_on_the_tier_being_played() -> void:
+	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
+	assert_eq(BoardBeat.move_ms(), BoardBeat.MOVE_MS, "the default tier retimed the gait")
+	Settings.speed = GameSpeed.by_id(&"quick")
+	assert_eq(BoardBeat.move_ms(), 107, "Quick did not hurry the gait")
+	assert_eq(BoardBeat.frame(BoardBeat.move_ms(), 0), 0, "the gait did not open on frame A")
+	assert_eq(
+		BoardBeat.frame(BoardBeat.move_ms(), BoardBeat.move_ms()),
+		1,
+		"the gait did not turn over on Quick's period"
+	)
+	assert_eq(
+		BoardBeat.frame(BoardBeat.move_ms(), BoardBeat.MOVE_MS - 1),
+		1,
+		"Quick's gait was still walking the authored period"
+	)
+
+
+## A tier hurries the legs; it may not put them back on a cadence that shares a
+## tick with the scenery, which is the anti-stutter rule below at every tier.
+func test_every_tier_keeps_the_gait_off_the_other_cadences() -> void:
+	for id: StringName in [GameSpeed.DEFAULT_ID, &"quick", &"instant"]:
+		Settings.speed = GameSpeed.by_id(id)
+		var gait := BoardBeat.move_ms()
+		for other in [BoardBeat.AMBIENT_MS, BoardBeat.SEA_MS]:
+			assert_ne(other % gait, 0, "%s: the gait divides %d" % [id, other])
+			assert_ne(gait % other, 0, "%s: the gait is a multiple of %d" % [id, other])
+
+
 func test_a_frozen_clock_and_instant_hold_frame_a() -> void:
 	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
 	BoardBeat.frozen = true
 	assert_eq(BoardBeat.frame(BoardBeat.MOVE_MS, BoardBeat.MOVE_MS), 0, "a pinned capture strode")
 	BoardBeat.frozen = false
 	Settings.speed = GameSpeed.by_id(&"instant")
-	assert_eq(BoardBeat.frame(BoardBeat.MOVE_MS, BoardBeat.MOVE_MS), 0, "Instant played the gait")
+	assert_eq(BoardBeat.frame(BoardBeat.move_ms(), BoardBeat.MOVE_MS), 0, "Instant played the gait")
+
+
+## The tier shows a turn rather than playing it out, so the pad before the
+## computer's first command is the last thing that may hold the board still.
+func test_instant_opens_a_turn_with_no_delay() -> void:
+	assert_eq(GameSpeed.by_id(&"instant").start_delay_seconds(), 0.0, "Instant padded its opening")
+	assert_gt(
+		GameSpeed.by_id(GameSpeed.DEFAULT_ID).start_delay_seconds(),
+		0.0,
+		"the default tier lost its opening pad"
+	)
 
 
 ## A walking unit, a parked one and the water must never turn over on the same
