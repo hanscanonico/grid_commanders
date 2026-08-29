@@ -58,6 +58,23 @@ def _pixels_of(cell: Canvas, tone: tuple[int, int, int]) -> list[tuple[int, int]
     ]
 
 
+def _regions(pixels: list[tuple[int, int]]) -> int:
+    """How many four-connected islands a set of pixels falls into."""
+    left = set(pixels)
+    islands = 0
+    while left:
+        islands += 1
+        edge = [left.pop()]
+        while edge:
+            x, y = edge.pop()
+            for step in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                near = (x + step[0], y + step[1])
+                if near in left:
+                    left.discard(near)
+                    edge.append(near)
+    return islands
+
+
 def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
     return {pixel[:3] for _, pixel in _tally(cell) if pixel[3] > 0}
 
@@ -113,6 +130,21 @@ class TheMassTakesOneLitLobe(Combed):
                 cell = self.drawn(style)
                 share = _area_of(cell, MANE.lit) / _painted(cell)
                 self.assertLessEqual(share, LOBE_SHARE)
+
+    def test_the_lobe_is_one_shape_and_not_a_row_of_them(self):
+        # The awning this replaced was N clusters, so "one" is the claim.
+        for style in COMBED:
+            with self.subTest(style=style):
+                self.assertEqual(_regions(_pixels_of(self.drawn(style), MANE.lit)), 1)
+
+    def test_the_crown_is_the_base_tone_under_the_one_lit_shape(self):
+        # Two tones over the head and no more: a mass and the key on it. The
+        # clusters took a band each, which is what striped every crown.
+        for style in COMBED:
+            with self.subTest(style=style):
+                cell = _cell()
+                hair.front(cell, SKULL, style, MANE)
+                self.assertEqual(_colours(cell) - {INK}, {MANE.base, MANE.lit})
 
     def test_the_lobe_sits_on_the_side_the_key_is_fixed_to(self):
         # The light never moves, so the lobe belongs to the left of the mass on

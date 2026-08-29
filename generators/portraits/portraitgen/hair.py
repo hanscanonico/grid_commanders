@@ -355,7 +355,7 @@ def ramp_for(colour: str) -> Ramp:
 def draw(
     canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
 ) -> None:
-    """The mass and its clusters. An unknown style raises."""
+    """The mass and the shape the key catches on it. An unknown style raises."""
     back(canvas, skull, style, ramp)
     front(canvas, skull, style, ramp, skin=skin)
 
@@ -370,7 +370,7 @@ def back(canvas: Canvas, skull: Skull, style: str, ramp: Ramp) -> None:
 def front(
     canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
 ) -> None:
-    """The fringe, the crown and the strand clusters — painted over the head.
+    """The fringe, the crown and the lit lobe — painted over the head.
 
     `skin` is the wearer's own ramp: the fringe casts a flat band of its shade
     tone on the forehead, and a shadow on skin has to be a skin tone.
