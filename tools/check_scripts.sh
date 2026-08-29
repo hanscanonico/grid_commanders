@@ -247,9 +247,12 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # Battle and guarded through BattleOutcome, so half of each action lived on
 # either side; BattleOutcome.bind_screen owns all three of its buttons now, the
 # way it already owned Watch Replay.
+# main_menu.gd 778 -> 777: Speed and the three toggles are one row now (COM-258).
+# The height the second row and its rule were spending went to the map picker,
+# which is the control this page exists for.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1195
-scenes/menu/main_menu.gd 778
+scenes/menu/main_menu.gd 777
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
 scenes/battle/battle_scenario_driver.gd 668

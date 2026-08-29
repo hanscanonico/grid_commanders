@@ -1,6 +1,6 @@
 class_name MapPicker
 extends VBoxContainer
-## The map picker: a scrollable two-up grid of live board thumbnails, the whole
+## The map picker: a scrollable three-up grid of live board thumbnails, the whole
 ## roster with its teaching board first (MapCatalog.ordered) — the dropdown is
 ## gone (MN2). The selected cell gets the raised cream surface, the meridian
 ## border and a ✓; scroll follows keyboard focus so every board is reachable
@@ -23,11 +23,13 @@ signal map_selected(index: int)
 ## selection; the height may not (UX-recovery D2), so the panel is as tall on the
 ## longest description as on the shortest.
 const MAP_CAPTION_LINES := 2
+## The gap between cells, in both axes.
+const GRID_GAP := 8
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
 ## A cell's picture. The Random cell has none and is sized off it anyway, so the
-## grid's two columns are one height whichever cell is in them.
-const THUMB := Vector2(132.0 - 2 * CARD_PAD, 60)
+## grid's three columns are one height whichever cell is in them.
+const THUMB := Vector2(112.0 - 2 * CARD_PAD, 56)
 
 ## The panel's header-right "name · size". Built here and parented by the setup
 ## panel's title bar, so the words and the label that sets them stay together.
@@ -63,17 +65,21 @@ func configure(db: TerrainDB) -> void:
 
 	_map_scroll = ScrollContainer.new()
 	# 126 before the seat strip took its lines of the panel's fixed height, and 80
-	# before COM-254 measured it against what the picker shows: one whole cell and
-	# its name. It is the one control here that scrolls by design, so it is the one
-	# that gives ground — down to its own content, and no further.
-	_map_scroll.custom_minimum_size = Vector2(0, 76)
+	# before COM-254 measured it against what the picker shows. COM-258 gave the
+	# ground back the other way: choosing a board is what this page is for, so the
+	# viewport is a whole row of cells and half of the next, which is the shape
+	# that says out loud there is more roster below. It is still the one control
+	# here that scrolls by design, so it is still the one that gives ground when
+	# the panel runs out of height.
+	_map_scroll.custom_minimum_size = Vector2(0, 1.5 * _cell_height())
+	_map_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(_map_scroll)
 
 	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", GRID_GAP)
+	grid.add_theme_constant_override("v_separation", GRID_GAP)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_map_scroll.add_child(grid)
 
@@ -251,14 +257,20 @@ static func random_index(maps: Array[MapData], current: int, rng: RandomNumberGe
 # --- cells -------------------------------------------------------------------
 
 
+## A cell's height: its picture, the frame around it and the board's name beneath.
+## Asked of the font rather than typed in, so the viewport's row and a half stays
+## a row and a half if the face changes.
+func _cell_height() -> float:
+	return THUMB.y + 2 * CARD_PAD + UiTheme.display().get_height(UiTheme.SIZE_BODY) + 1
+
+
 ## One picker cell: a focusable button holding a live thumbnail and the board's
 ## name, and as tall as the two of them plus the frame, so a square board's
 ## picture no longer crosses it. The thumbnail is a truthful miniature — real
 ## terrain, real property colours — of the board this cell launches (plan D5).
 func _make_map_cell(index: int, map: MapData) -> Button:
 	var button := Button.new()
-	var name_height := UiTheme.display().get_height(UiTheme.SIZE_BODY)
-	button.custom_minimum_size = THUMB + Vector2(2 * CARD_PAD, 2 * CARD_PAD + name_height + 1)
+	button.custom_minimum_size = Vector2(THUMB.x + 2 * CARD_PAD, _cell_height())
 	# The cell is a single control describing itself, so it is its own trigger —
 	# the micro-label rule guards *group* controls, where hovering to reach a
 	# segment would fire an explanation of the group.
@@ -305,8 +317,7 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 ## because pressing it leaves a real board selected.
 func _make_random_cell() -> Button:
 	var button := Button.new()
-	var name_height := UiTheme.display().get_height(UiTheme.SIZE_BODY)
-	button.custom_minimum_size = THUMB + Vector2(2 * CARD_PAD, 2 * CARD_PAD + name_height + 1)
+	button.custom_minimum_size = Vector2(THUMB.x + 2 * CARD_PAD, _cell_height())
 	Tooltip.attach(
 		button,
 		"Picks a board for you.",

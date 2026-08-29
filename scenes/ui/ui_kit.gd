@@ -43,6 +43,10 @@ enum BustCrop { WHOLE_FITTED, WHOLE_COVERED, FACE }
 const _BUST_MIN_H := 64
 const _BUST_ART := &"Bust"
 
+## A toggle's ✓-box, and the gap between the three things on its row.
+const TOGGLE_CHECK := 12
+const TOGGLE_GAP := 5
+
 
 ## The veil a full-screen page is laid over, added to `page` as its first child.
 ##
@@ -377,6 +381,21 @@ static func style_segment(seg: Button, active: bool, divided: bool, accent: Colo
 	)
 
 
+## The width a toggle needs to say its whole piece: the box, the words and the
+## ON/OFF, with the row's two gaps and a third of trailing slack so the status
+## never sits against the column's edge. The row inside the button is anchored
+## rather than parented by a container, so the button has to state this itself —
+## without it a narrow column clips the words instead of the layout refusing.
+static func toggle_width(text: String) -> float:
+	var words := UiTheme.display().get_string_size(
+		text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_BODY
+	)
+	var status := UiTheme.stat().get_string_size(
+		"OFF", HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_STAT
+	)
+	return TOGGLE_CHECK + words.x + status.x + 3 * TOGGLE_GAP
+
+
 ## A toggle row: a ✓-box (capture green on, grey off), a label, and a Silkscreen
 ## ON/OFF status. The whole row is one focusable button (handoff Toggle), so mouse,
 ## keyboard and controller all flip it — and, like a segmented group, its
@@ -387,7 +406,7 @@ static func toggle(
 	var button := Button.new()
 	button.toggle_mode = true
 	button.button_pressed = is_on
-	button.custom_minimum_size = Vector2(0, 16)
+	button.custom_minimum_size = Vector2(toggle_width(text), 16)
 	var ghost := UiTheme.flat(Color(0, 0, 0, 0))
 	button.add_theme_stylebox_override("normal", ghost)
 	button.add_theme_stylebox_override("hover", ghost)
@@ -395,12 +414,12 @@ static func toggle(
 	button.add_theme_stylebox_override("focus", UiTheme.focus_box())
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 5)
+	row.add_theme_constant_override("separation", TOGGLE_GAP)
 	row.set_anchors_preset(Control.PRESET_FULL_RECT)
 	button.add_child(row)
 
 	var check := Panel.new()
-	check.custom_minimum_size = Vector2(12, 12)
+	check.custom_minimum_size = Vector2(TOGGLE_CHECK, TOGGLE_CHECK)
 	var mark := Label.new()
 	mark.text = "✓"
 	mark.add_theme_font_override("font", UiTheme.stat(true))
