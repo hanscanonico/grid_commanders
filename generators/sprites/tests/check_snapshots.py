@@ -16,10 +16,15 @@ generator no longer emits fails too. That is what keeps a new output (a new
 autotile sheet, a new atlas) from landing compared against nothing.
 
 The one output not compared file-for-file is `units/<id>_<team>.png`: those
-cells are the units atlas's own cells, exported for the game's paste script.
-Each cell is required to be, pixel for pixel, one of the cells of the
-installed `units_atlas.png` — which pins the exporter to the atlas. That binds
-the art but not the cell's address in the atlas, which nothing here can know.
+cells are the units atlas's own cells, exported under `assets/sprites/` as
+reviewable reference copies the game itself never loads. Each cell is required
+to be, pixel for pixel, one of the cells of the installed `units_atlas.png` —
+which pins the exporter to the atlas. That binds the art but not the cell's
+address in the atlas, which nothing here can know.
+
+A pixel mismatch also writes a before/after/diff contact sheet, because most
+failures here are an art change somebody meant and the message alone gives a
+reviewer nothing to look at.
 
 Run: .venv/bin/python tests/check_snapshots.py <generated-dir> [assets-dir]
 Naming an assets directory compares against that flat mirror instead, which is
@@ -32,6 +37,7 @@ import filecmp
 import sys
 from pathlib import Path
 
+from diff_sheet import write_diff_sheet
 from PIL import Image, ImageChops
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -99,7 +105,7 @@ def _generated(gen: Path, suffixes: frozenset[str]) -> set[Path]:
     }
 
 
-def _differs(a_path: Path, b_path: Path) -> str | None:
+def _differs(a_path: Path, b_path: Path, rel: Path) -> str | None:
     if b_path.name in BYTE_COMPARED:
         if not filecmp.cmp(a_path, b_path, shallow=False):
             return f"byte mismatch: {b_path}"
@@ -111,7 +117,7 @@ def _differs(a_path: Path, b_path: Path) -> str | None:
     # alpha_only=False is required: on RGBA images getbbox() otherwise
     # inspects only the alpha band, so color-only drift would pass.
     if ImageChops.difference(a, b).getbbox(alpha_only=False) is not None:
-        return f"pixel mismatch: {b_path}"
+        return write_diff_sheet(a_path, b_path, rel).note(b_path)
     return None
 
 
@@ -157,7 +163,7 @@ def main(argv: list[str]) -> int:
     bad += _check_cells(gen, baseline.get(Path(CELL_ATLAS)), cells)
     for p in pairs:
         if p in baseline:
-            note = _differs(gen / p, baseline[p])
+            note = _differs(gen / p, baseline[p], p)
             if note:
                 bad.append(note)
     if bad:
