@@ -86,6 +86,16 @@ def voice_contribution_db(mix: np.ndarray, without: np.ndarray) -> float:
     return rms_db(mix - without) - rms_db(mix)
 
 
+def bar_rms_db(x: np.ndarray, bars: int) -> np.ndarray:
+    """Per-bar RMS in dB — the track's contour, one reading a bar.
+
+    The file is exactly the score it was authored from (the Contract gate
+    holds that), so equal slices of it are its bars.
+    """
+    edges = np.linspace(0, len(x), bars + 1).round().astype(int)
+    return np.array([rms_db(x[lo:hi]) for lo, hi in zip(edges, edges[1:])])
+
+
 # -- loop measurements -------------------------------------------------------
 # A music track loops the whole file (the game's LOOP_FORWARD contract), so
 # its one seam is last-sample -> first-sample. These read that seam the same

@@ -155,7 +155,10 @@ class Mix(unittest.TestCase):
 
     # Program loudness the rebalance may not give back: peak normalisation
     # sets the ceiling, so these are what the band actually fills under it.
-    PROGRAM_RMS_DB = {"parade": -21.9, "advance": -23.7}
+    # The arrangement's quiet strains lower both means by design: the floors
+    # were -21.9 / -23.7 against -21.74 / -23.44 flat, and are re-stated here
+    # against -22.64 / -24.10 with the same slack.
+    PROGRAM_RMS_DB = {"parade": -22.8, "advance": -24.3}
 
     # A chordal voice this far under the lead is a harmony nobody hears; the
     # leads used to sit 16-18 dB over their own chords.
@@ -211,8 +214,14 @@ class Brightness(unittest.TestCase):
     SHARE_10K = 0.20
     SHARE_15K = 0.11
 
-    # Measured 3555 Hz and 4486 Hz, from 6858 Hz and 6496 Hz.
-    CENTROID_HZ = (2500.0, 4500.0)
+    # Measured 3810 Hz and 4614 Hz, from 6858 Hz and 6496 Hz as naked
+    # squares. The ceiling was 4500 with advance at 4486, 14 Hz of room: a
+    # strain that steps the melodic band back while the kit marks time is
+    # bound to move the whole file's centroid up, so the ceiling is re-stated
+    # at 4800. What it was guarding — weight in the top octave — is
+    # test_no_track_carries_its_weight_in_the_top_octave, whose shares are
+    # unchanged at 0.146 / 0.181 above 10 kHz.
+    CENTROID_HZ = (2500.0, 4800.0)
 
     def test_each_pulse_voice_is_filtered(self):
         for name in CONTRACT:
@@ -304,23 +313,23 @@ class Arrangement(unittest.TestCase):
     # per voice; the slack is uniform because it is the same claim each time.
     CONTRIBUTION_DB = {
         "parade": {
-            "brass_lead": -3.1,
-            "stab": -12.1,
-            "tuba_bass": -5.1,
-            "pad": -11.5,
-            "kick": -11.9,
-            "snare": -21.9,
+            "brass_lead": -3.2,
+            "stab": -12.2,
+            "tuba_bass": -5.2,
+            "pad": -10.6,
+            "kick": -11.6,
+            "snare": -21.7,
             "hat": -30.5,
-            "roll": -28.0,
+            "roll": -27.1,
         },
         "advance": {
-            "edge_lead": -4.6,
-            "stab": -13.4,
-            "drive_bass": -3.2,
-            "kick": -13.1,
-            "snare": -19.8,
-            "hat": -33.0,
-            "roll": -17.5,
+            "edge_lead": -4.8,
+            "stab": -13.7,
+            "drive_bass": -3.1,
+            "kick": -12.9,
+            "snare": -19.7,
+            "hat": -33.5,
+            "roll": -15.3,
         },
     }
 
@@ -350,6 +359,64 @@ class Arrangement(unittest.TestCase):
                 floor = self.CONTRIBUTION_DB[name][voice.instrument] - self.SLACK_DB
                 with self.subTest(track=name, voice=voice.instrument):
                     self.assertGreater(carried, floor)
+
+
+class Dynamics(unittest.TestCase):
+    """A 74-second loop needs a shape, not a level.
+
+    Both marches used to play every bar at the same weight — 2.1 dB and
+    2.7 dB of bar-to-bar spread, which is the melody moving, not the band —
+    and a loop with no contour wears out in the minutes the menu track gets
+    every session. The bars are read off the finished render, so what is
+    pinned is what the game plays.
+    """
+
+    # Measured 4.60 dB / 1.40 dB (parade) and 5.95 dB / 1.73 dB (advance).
+    SPREAD_DB = 4.0
+    SIGMA_DB = 1.0
+
+    # A dynamic is a strain stepping back, not a hole in the track: the
+    # quietest bar sits 3.0 dB under the mean on both marches today.
+    DIP_DB = 8.0
+
+    def contour(self, name: str) -> np.ndarray:
+        return measure.bar_rms_db(RENDERED[name], music.BARS)
+
+    def test_the_measure_reads_a_flat_tone_as_flat(self):
+        flat = measure.bar_rms_db(sine(440.0, 4.0), 32)
+        self.assertLess(float(flat.max() - flat.min()), 0.1)
+
+    def test_every_bar_is_read(self):
+        for name in CONTRACT:
+            with self.subTest(track=name):
+                self.assertEqual(len(self.contour(name)), music.BARS)
+
+    def test_each_march_has_a_contour(self):
+        for name in CONTRACT:
+            bars = self.contour(name)
+            with self.subTest(track=name):
+                self.assertGreaterEqual(float(bars.max() - bars.min()), self.SPREAD_DB)
+                self.assertGreaterEqual(float(bars.std()), self.SIGMA_DB)
+
+    def test_no_bar_drops_out_of_the_band(self):
+        for name in CONTRACT:
+            bars = self.contour(name)
+            with self.subTest(track=name):
+                self.assertLess(
+                    float(bars.mean() - bars.min()),
+                    self.DIP_DB,
+                    f"quietest bar {float(bars.min()):.1f} dB against a mean of "
+                    f"{float(bars.mean()):.1f} dB",
+                )
+
+    def test_the_loop_wraps_on_full_bars(self):
+        # The seam is the reprise leading back to the downbeat, never a
+        # thinned strain: bar 32 and bar 1 are the loudest bars of each march.
+        for name in CONTRACT:
+            bars = self.contour(name)
+            with self.subTest(track=name):
+                self.assertGreater(bars[0], bars.mean())
+                self.assertGreater(bars[-1], bars.mean())
 
 
 class OggEncoding(unittest.TestCase):

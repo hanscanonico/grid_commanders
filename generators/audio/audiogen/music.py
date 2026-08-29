@@ -9,14 +9,17 @@ existing tune is quoted or interpolated.
 parade  — the menu's face: a proud C-major march at 104 BPM, AABA over 32
           bars. Oom-pah tuba, afterbeat horns, parade snare with rolls into
           every strain, and a singable square lead; the bridge turns to the
-          relative minor under a held counter-voice, and the last bar's
-          G-B-D pickup lifts the loop back to its downbeat over a buzz roll
-          that swells across the bar line.
+          relative minor and the band drops away under a held counter-voice
+          before building back for the reprise, and the last bar's G-B-D
+          pickup lifts the loop back to its downbeat over a buzz roll that
+          swells across the bar line.
 advance — the battle's pulse: an A-minor quickstep at 132 BPM, ABAC over 32
           bars. Driving eighth-note bass with octave pops, syncopated stabs,
-          a thin urgent lead; the final strain crests at C6, the hats double
-          to sixteenths, and a descending E7 run resolves across the seam
-          onto the loop's opening A under the same swelling buzz roll.
+          a thin urgent lead; the counter-charge holds its breath on staccato
+          bass roots before the octave pops return, the final strain crests
+          at C6 as the hats double to sixteenths, and a descending E7 run
+          resolves across the seam onto the loop's opening A under the same
+          swelling buzz roll.
 """
 
 from __future__ import annotations
@@ -103,6 +106,31 @@ def stabs(chart, offsets=(1.5, 3.0), vel: float = 0.85) -> tuple:
             for midi in chords[int(beat)][1]:
                 notes.append((beat, midi, 0.35, vel))
     return tuple(notes)
+
+
+def roots(chart, vel: float = 0.95) -> tuple:
+    """The drive stripped back: one staccato root a beat, no octave pops."""
+    chords = _beat_chords(chart)
+    return tuple(
+        (float(beat), chords[beat][0], 0.5, vel * (1.0 if beat % 4 == 0 else 0.8))
+        for beat in range(len(chords))
+    )
+
+
+def shade(notes: tuple, first_bar: int, bars: int, scale: float) -> tuple:
+    """The dynamic marking on a strain: every note starting inside it plays
+    at `scale` of its authored velocity."""
+    lo, hi = first_bar * 4.0, (first_bar + bars) * 4.0
+    return tuple(
+        (start, midi, length, vel * scale if lo <= start < hi else vel)
+        for start, midi, length, vel in notes
+    )
+
+
+def strain(notes: tuple, first_bar: int, bars: int) -> tuple:
+    """The slice of a voice that plays inside a bar range."""
+    lo, hi = first_bar * 4.0, (first_bar + bars) * 4.0
+    return tuple(note for note in notes if lo <= note[0] < hi)
 
 
 def rings_over(notes: tuple, beats: float) -> tuple:
@@ -194,6 +222,21 @@ _MARCH_SNARE = ((1.0, 0.85), (3.0, 0.92))
 _MARCH_HAT = tuple((k * 0.5, 0.62 if k % 2 == 0 else 0.45) for k in range(8))
 _STRAIN_ROLL = ((3.0, 0.5), (3.25, 0.6), (3.5, 0.7), (3.75, 0.85))
 
+# Under the bridge the band steps back and the kit marks time: kick on the
+# one, a soft rim-tap backbeat, no hats. The held counter-voice carries the
+# strain, and the last two bars build the band back up for the reprise.
+_BRIDGE_KICK = ((0.0, 0.75),)
+_BRIDGE_SNARE = ((1.0, 0.45), (3.0, 0.5))
+_BRIDGE = 16, 6  # bars 17-22, the thinned stretch
+_REBUILD = 22, 2  # bars 23-24, walking back up into the reprise
+_BRIDGE_LEVEL = 0.34
+_REBUILD_LEVEL = 0.64
+
+
+def _parade_dynamics(notes: tuple) -> tuple:
+    """A voice played the parade's way: quiet bridge, swell into the reprise."""
+    return shade(shade(notes, *_BRIDGE, _BRIDGE_LEVEL), *_REBUILD, _REBUILD_LEVEL)
+
 
 def parade() -> sequencer.Song:
     return sequencer.Song(
@@ -201,25 +244,40 @@ def parade() -> sequencer.Song:
         beats=BEATS,
         tracks=(
             sequencer.Track(
-                "brass_lead", 0.34, rings_over(seq(PARADE_MELODY), _SEAM_RING)
+                "brass_lead",
+                0.34,
+                rings_over(_parade_dynamics(seq(PARADE_MELODY)), _SEAM_RING),
             ),
-            sequencer.Track("stab", 0.28, afterbeats(PARADE_CHART)),
+            sequencer.Track("stab", 0.28, _parade_dynamics(afterbeats(PARADE_CHART))),
             sequencer.Track(
-                "tuba_bass", 0.52, rings_over(oompah(PARADE_CHART), _SEAM_RING)
+                "tuba_bass",
+                0.52,
+                rings_over(_parade_dynamics(oompah(PARADE_CHART)), _SEAM_RING),
             ),
             sequencer.Track("pad", 0.41, _PARADE_COUNTER),
-            sequencer.Track("kick", 0.62, kit(BARS, _MARCH_KICK)),
+            sequencer.Track(
+                "kick",
+                0.62,
+                kit(16, _MARCH_KICK)
+                + kit(6, _BRIDGE_KICK, start_bar=16)
+                + kit(10, _MARCH_KICK, start_bar=22),
+            ),
             sequencer.Track(
                 "snare",
                 0.27,
-                kit(BARS, _MARCH_SNARE)
+                kit(16, _MARCH_SNARE)
+                + kit(6, _BRIDGE_SNARE, start_bar=16)
+                + kit(10, _MARCH_SNARE, start_bar=22)
                 + kit(1, _STRAIN_ROLL, start_bar=7)
                 + kit(1, _STRAIN_ROLL, start_bar=15)
                 + kit(1, _STRAIN_ROLL, start_bar=23)
                 # The last one rolls into the loop.
                 + kit(1, _STRAIN_ROLL, start_bar=31),
             ),
-            sequencer.Track("hat", 0.32, kit(BARS, _MARCH_HAT)),
+            # The hats sit out the bridge and step back in for the rebuild.
+            sequencer.Track(
+                "hat", 0.32, kit(16, _MARCH_HAT) + kit(10, _MARCH_HAT, start_bar=22)
+            ),
             sequencer.Track("roll", 0.48, _SEAM_ROLL),
         ),
     )
@@ -292,6 +350,14 @@ _DRIVE_HAT8 = tuple((k * 0.5, 0.42 if k % 2 == 0 else 0.55) for k in range(8))
 _DRIVE_HAT16 = tuple((k * 0.25, 0.5 if k % 4 == 0 else 0.35) for k in range(16))
 _PUSH_ROLL = ((3.5, 0.6), (3.75, 0.75))
 
+# The counter-charge holds its breath: the engine falls back to staccato
+# roots, the kick loses its push and the band plays under itself. The octave
+# pops and the full drive return for the second A and crest through C.
+_HELD_KICK = ((0.0, 0.9), (2.0, 0.8))
+_HELD_SNARE = ((1.0, 0.6), (3.0, 0.7))
+_HELD = 8, 8  # bars 9-16, the B strain
+_HELD_LEVEL = 0.5
+
 
 def advance() -> sequencer.Song:
     return sequencer.Song(
@@ -299,28 +365,50 @@ def advance() -> sequencer.Song:
         beats=BEATS,
         tracks=(
             sequencer.Track(
-                "edge_lead", 0.32, rings_over(seq(ADVANCE_MELODY), _SEAM_RING)
+                "edge_lead",
+                0.32,
+                rings_over(shade(seq(ADVANCE_MELODY), *_HELD, _HELD_LEVEL), _SEAM_RING),
             ),
-            sequencer.Track("stab", 0.22, stabs(ADVANCE_CHART)),
             sequencer.Track(
-                "drive_bass", 0.45, rings_over(drive(ADVANCE_CHART), _SEAM_RING)
+                "stab", 0.22, shade(stabs(ADVANCE_CHART), *_HELD, _HELD_LEVEL)
             ),
-            sequencer.Track("kick", 0.36, kit(BARS, _DRIVE_KICK)),
+            sequencer.Track(
+                "drive_bass",
+                0.45,
+                rings_over(
+                    strain(drive(ADVANCE_CHART), 0, 8)
+                    + strain(roots(ADVANCE_CHART), 8, 8)
+                    + strain(drive(ADVANCE_CHART), 16, 16),
+                    _SEAM_RING,
+                ),
+            ),
+            sequencer.Track(
+                "kick",
+                0.36,
+                kit(8, _DRIVE_KICK)
+                + kit(8, _HELD_KICK, start_bar=8)
+                + kit(16, _DRIVE_KICK, start_bar=16),
+            ),
             sequencer.Track(
                 "snare",
                 0.28,
-                kit(BARS, _DRIVE_SNARE)
+                kit(8, _DRIVE_SNARE)
+                + kit(8, _HELD_SNARE, start_bar=8)
+                + kit(16, _DRIVE_SNARE, start_bar=16)
                 + kit(1, _PUSH_ROLL, start_bar=7)
                 + kit(1, _PUSH_ROLL, start_bar=15)
                 + kit(1, _PUSH_ROLL, start_bar=23)
                 # The full roll launches the loop.
                 + kit(1, _STRAIN_ROLL, start_bar=31),
             ),
-            # The hats double to sixteenths under the final strain.
+            # The hats sit out the held B strain and double to sixteenths
+            # under the final one.
             sequencer.Track(
                 "hat",
                 0.20,
-                kit(24, _DRIVE_HAT8) + kit(8, _DRIVE_HAT16, start_bar=24),
+                kit(8, _DRIVE_HAT8)
+                + kit(8, _DRIVE_HAT8, start_bar=16)
+                + kit(8, _DRIVE_HAT16, start_bar=24),
             ),
             sequencer.Track("roll", 1.40, _SEAM_ROLL),
         ),
