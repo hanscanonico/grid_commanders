@@ -118,9 +118,96 @@ rather than texture: they change the tile's *look* between rungs (a 4:1 pass kee
 them) without changing how much of the tile is grain, which is what a shimmer is. Units get
 despeckle and staircase AA for that contour; terrain does not, and this page does not argue it
 should — it only records that the question of density is answered and the question of contour is
-still open.
+still open. **The section below answers it: no.**
+
+## The contour answer: the units' despeckle does not help the ground — 2026-08-29
+
+The question above was put to the ruler rather than to taste. The units' rule
+(`_despeckle` in `generators/sprites/spritegen/voxel.py`) was applied to a **fresh, uninstalled**
+render of the woods, mountain and river sheets and the two atlas columns beside them, and the
+treated cells were read twice: through this page's own census, and through the composite legibility
+ruler (`LegibilityMetric`'s edge reading over `LegibilityComposite`, the sweep's own two classes)
+with a unit standing on the tile. **Nothing shipped.** The art in the tree is untouched; only this
+section is the deliverable.
+
+### What the treatment does to the pixels
+
+The rule folds every lone pixel into the neighbour closest in value. On the ground it finds a lot to
+fold — 2841 pixels across the three sheets and the columns — and it takes the lone-pixel count to
+**zero** everywhere, which is the whole of what it changes:
+
+| cell | lone px | colours | grain | worst swing | verdict |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `woods/15` (= the atlas column) | 181 → 0 | 13 → 13 | 79.0% → 78.4% | 0.05 → 0.04 | stable → stable |
+| `woods/0`–`woods/14` | 130–177 → 0 | 13 → 13 | 79.0–84.4% → 78.3–83.6% | ≤0.07 → ≤0.05 | stable → stable |
+| `mountain/0`–`mountain/2` | 29–35 → 0 | 18 → 18 | 83.1–85.2% → 83.0–85.2% | 0.06 → 0.06 | stable → stable |
+| `rivers/0` | 99 → 0 | 16 → 15 | 82.6% → 82.6% | 0.02 → 0.02 | stable → stable |
+| `rivers/1`–`rivers/15` | 2–52 → 0 | 15 → 14 | 45.5–78.8% → 45.5–78.6% | ≤0.12 → ≤0.12 | stable → stable |
+
+Every cell was `stable` before and is `stable` after. The density the tile is authored at barely
+moves, because the lone pixels were never what carried it — which is what the section above
+predicted and is why the census could not settle this on its own.
+
+### What it does to the ruler
+
+The edge reading, unit against ground, over every unit kind × six faction rows × ready and acted ×
+all five washes, on the idle frame, at the three rungs the board plays at (a 16px composite is 4:1,
+32px is 2:1, 64px is 1:1). Woods is read on its **atlas column**, because a wood standing in wood is
+the one cell `TerrainAutotiles` leaves on that column; mountain on all three phases.
+
+| ground | rung | cells | mean steps, shipped | treated | delta | cells better | cells worse |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| woods | 1 (4:1) | 1080 | 1.038 | 1.031 | **−0.006** | 83 | 144 |
+| woods | 2 (2:1) | 1080 | 1.520 | 1.529 | +0.009 | 168 | 38 |
+| woods | 4 (1:1) | 1080 | 1.630 | 1.635 | +0.005 | 158 | 48 |
+| mountain | 1 (4:1) | 3240 | 1.105 | 1.105 | +0.000 | 5 | 0 |
+| mountain | 2 (2:1) | 3240 | 1.274 | 1.274 | +0.000 | 0 | 0 |
+| mountain | 4 (1:1) | 3240 | 1.505 | 1.506 | +0.000 | 30 | 7 |
+
+The worst cell of each set is unmoved to two decimals either way (woods 0.21 / 0.36 / 0.67, mountain
+0.24 / 0.23 / 0.23). Against a bar of two ramp steps, the largest move anywhere is **0.009 of a
+step**, and at the rung the board is most often played at — rung 1, the one
+`tests/fixtures/legibility_baseline.csv` is taken over — woods goes the **wrong** way: four cells
+that clear the bar there stop clearing it and one starts, a net three the ratchet would refuse.
+
+That reading is of the *plain* rule, with nothing exempt, which is the largest version of the change
+there is. A keep-mask over the canopy edge folds a subset of those same pixels, so it can only move
+the ruler less than a delta that is already two orders of magnitude inside the bar; it was not worth
+rendering separately.
+
+### What it does to the crops
+
+![Shipped and despeckled woods, mountain and river cells at 1:1 and at 4:1](images/terrain_despeckle_compare.png)
+
+Left pair 1:1, right pair 4:1 (rung 1); shipped then treated in each. At 4:1 the pairs are the same
+picture but for a handful of pixels on the river's bank. At 1:1 the treatment is visible and it is a
+loss: the canopy's leaf dapple and its hash-ragged crown edge go, so the crowns firm up into the
+smooth lobes the 2026-08-23 review called a tray of pills; the mountain sheds scree flecks off its
+lit faces; and the river's sandy bank stops ragging into the grass and closes into a drawn ring.
+Those pixels are the rag itself — the ground's drawers spend their hash on the *decision* at a
+boundary, at a 2px key, precisely so the edge is not a line — and the despeckle's whole job is to
+delete exactly that.
+
+**So: not shipped.** The units' despeckle answers a problem the ground does not have. A sprite's
+lone pixels are stair corners and outline diagonals left over from a voxel render; a tile's are
+authored, coarse enough to survive the downsample, and are the only thing keeping its boundaries
+from reading as drawn shapes. The ruler says the trade buys nothing, and the crops say it costs the
+tile's edge.
+
+Two limits of this reading, stated rather than left to be rediscovered. The legibility sweep has no
+**river** ground in `LegibilitySweep.TERRAIN_IDS`, though foot and boot units stand on one, so the
+river cells here are answered by the census and the crops only. And the sweep's woods cell is the
+atlas column, so the fifteen tree-line masks of `autotiles/woods.png` are censused but never carry a
+figure — the sheet cells and the column differ by which crowns are pulled inside the border, not by
+how they are drawn, which is why the column is taken as speaking for them.
 
 ## Method
+
+The contour section's two runs are scratch and were not kept: the treated sheets were written over
+this branch's `assets/tiles` from a backup, read, then restored, and the probe that walked
+`LegibilitySweep`'s composites at three sizes was deleted with them. Nothing shipped, so there is
+nothing for a committed instrument to hold in step — re-running it means writing it again, from the
+recipe in that section.
 
 `generators/sprites/tests/grain_census.py`, a readout in the idiom of
 `generators/sprites/tests/measure_livery.py`. Not a test: `unittest discover`'s `test*.py` pattern
