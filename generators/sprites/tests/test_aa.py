@@ -156,7 +156,7 @@ class ReachesOnlyThroughTheLine(unittest.TestCase):
             model = build_model(uid, Pose.A)
             for fac in (FACTIONS[0], FACTIONS[1]):
                 sprite = render_indexed(model, fac).image
-                out = aa.soften_unit(sprite, model, fac)
+                out = aa.soften_sprite(sprite, model, fac)
                 for x, y in changed(sprite, out):
                     edge = sprite.getpixel((x, y))[:3]
                     # Every colour within the pass's own reach, in each of the
@@ -196,7 +196,7 @@ class NeverOutside(unittest.TestCase):
                 model = build_model(uid, pose)
                 for fac in (FACTIONS[0], FACTIONS[3]):
                     sprite = render_indexed(model, fac).image
-                    out = aa.soften_unit(sprite, model, fac)
+                    out = aa.soften_sprite(sprite, model, fac)
                     self.assertEqual(
                         sprite.getchannel("A").tobytes(),
                         out.getchannel("A").tobytes(),
@@ -221,7 +221,7 @@ class Palette(unittest.TestCase):
             model = build_model(uid, Pose.A)
             for fac in FACTIONS:
                 sprite = render_indexed(model, fac).image
-                out = aa.soften_unit(sprite, model, fac)
+                out = aa.soften_sprite(sprite, model, fac)
                 allowed = {c for ramp in aa.ramps_for_model(model, fac) for c in ramp}
                 allowed |= {p[:3] for p in sprite.getdata() if p[3]}
                 stray = {p[:3] for p in out.getdata() if p[3]} - allowed
@@ -259,7 +259,7 @@ class Determinism(unittest.TestCase):
         sprite = render_indexed(model, FACTIONS[1]).image
         aa.ENABLED = False
         try:
-            self.assertIs(aa.soften_unit(sprite, model, FACTIONS[1]), sprite)
+            self.assertIs(aa.soften_sprite(sprite, model, FACTIONS[1]), sprite)
         finally:
             aa.ENABLED = True
 
@@ -267,7 +267,7 @@ class Determinism(unittest.TestCase):
         model = build_model("mech", Pose.A)
         sprite = render_indexed(model, FACTIONS[1]).image
         short = sprite.crop((0, 0, sprite.width, aa.MIN_SPRITE_HEIGHT - 1))
-        self.assertIs(aa.soften_unit(short, model, FACTIONS[1]), short)
+        self.assertIs(aa.soften_sprite(short, model, FACTIONS[1]), short)
 
 
 class Wiring(unittest.TestCase):

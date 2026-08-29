@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from PIL import Image
 
-from .. import buildings
+from .. import aa, buildings
 from ..palette import Faction
 from ..sun import SHADOW, SHADOW_OFFSET
 from ..voxel import place_in_cell, render
@@ -67,6 +67,23 @@ def _drop_shadow(cell: Image.Image, sprite: Image.Image, x0: int, y0: int) -> No
             px[tx, ty] = (*SHADOW, 255)
 
 
+def property_sprite(bid: str, fac: Faction) -> Image.Image:
+    """The building alone, rendered and softened: the one sprite the terrain
+    tile and the exported iso_buildings cell both draw.
+
+    Softening is the last word here as it is on a unit (`spritegen.aa`) — the
+    properties are the tallest silhouettes on the board, so the staircases
+    their long roof lines and plate edges leave are the ones a corner reads
+    heaviest on. It runs before the shadow is stamped only because it cannot
+    matter: the pass never touches alpha, so the silhouette the shadow is cut
+    from is the same either way.
+    """
+    # model_for, not BUILDINGS[bid]: the neutral row swaps hue-carrying
+    # materials for greys, and every drawer must match.
+    model = buildings.model_for(bid, fac)
+    return aa.soften_sprite(render(model, fac), model, fac)
+
+
 def property_overlay(bid: str, fac: Faction) -> Image.Image:
     """A property cell: the building and its shadow, on transparent ground.
 
@@ -78,7 +95,7 @@ def property_overlay(bid: str, fac: Faction) -> Image.Image:
     an object sitting on it rather than as a tile of its own.
     """
     t = Image.new("RGBA", (CELL, CELL), (0, 0, 0, 0))
-    prop = render(buildings.model_for(bid, fac), fac)
+    prop = property_sprite(bid, fac)
     cx, bottom = PROPERTY_ANCHOR[bid]
     x0, y0 = cx - prop.width // 2, bottom - prop.height
     _drop_shadow(t, prop, x0, y0)

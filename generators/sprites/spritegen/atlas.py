@@ -26,7 +26,7 @@ from typing import NamedTuple
 
 from PIL import Image
 
-from . import aa, buildings, terrain, units
+from . import aa, terrain, units
 from .palette import FACTIONS, Faction
 from .units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from .voxel import (
@@ -34,7 +34,6 @@ from .voxel import (
     GROUND_BOTTOM,
     compose_cell,
     place_in_cell,
-    render,
     render_indexed,
     sprite_origin,
     sprite_size,
@@ -137,8 +136,8 @@ def cell_placement(uid: str, pose: Pose) -> Placement:
 def unit_cell(
     uid: str, fac: Faction, pose: Pose = Pose.A, shadow: bool = True
 ) -> Image.Image:
-    """One atlas cell. Units render through the indexed ramps; terrain and
-    buildings keep the shading renderer until their own pass moves them."""
+    """One atlas cell. Units render through the indexed ramps; terrain keeps
+    the shading renderer until its own pass moves it."""
     kind = UNITS[uid][1]
     model = build_model(uid, pose)
     place = cell_placement(uid, pose)
@@ -147,7 +146,7 @@ def unit_cell(
     # contour and the despeckle, before the cell composes a shadow under it —
     # the shadow is not the unit's silhouette and has no staircase of its own
     # to answer for.
-    sprite = aa.soften_unit(render_indexed(model, fac).image, model, fac)
+    sprite = aa.soften_sprite(render_indexed(model, fac).image, model, fac)
     return compose_cell(
         sprite,
         kind,
@@ -213,9 +212,7 @@ def build_terrain_atlas() -> Image.Image:
 def building_cell(bid: str, fac: Faction) -> Image.Image:
     """A property building alone on a transparent cell, placed exactly as the
     terrain tiles place it, for the game's iso_buildings compositor."""
-    # model_for, not BUILDINGS[bid]: the neutral row swaps hue-carrying
-    # materials for greys, and the exported cells must match the tiles.
-    sprite = render(buildings.model_for(bid, fac), fac)
+    sprite = terrain.property_sprite(bid, fac)
     out = Image.new("RGBA", (terrain.CELL, terrain.CELL), (0, 0, 0, 0))
     cx, bottom = terrain.PROPERTY_ANCHOR[bid]
     place_in_cell(out, sprite, cx - sprite.width // 2, bottom - sprite.height)
