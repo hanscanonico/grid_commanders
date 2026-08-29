@@ -22,6 +22,7 @@ from PIL import Image, ImageChops
 from test_face_region import chin_row, skin_tones
 
 from portraitgen import bust, props, roster, uniform
+from portraitgen import canvas as canvas_module
 from portraitgen.canvas import Canvas
 from portraitgen.light import Ramp
 from portraitgen.palette import faction_by_key
@@ -135,6 +136,21 @@ class TheAnchorHangsBehindTheShoulder(unittest.TestCase):
         self.assertGreaterEqual(
             _area(ImageChops.multiply(behind, _shoulders())), self.HIDDEN_PX
         )
+
+
+class TheScalesHangPlumb(unittest.TestCase):
+    """Iona Vance's scales sat off to one side of the chest, which reads as an
+    object laid on her rather than hung from her collar. A balance hangs plumb:
+    its beam straddles the midline the collar closes on."""
+
+    OFF_MIDLINE_PX = 6
+
+    def test_the_beam_is_centred_on_the_bust_midline(self):
+        left, _, right, _ = _prop("scales").silhouette().getbbox()
+        scale = Canvas().scale
+        centre = (left + right) / 2 / scale
+        midline = canvas_module.PORTRAIT_SIZE[0] / 2
+        self.assertLessEqual(abs(centre - midline), self.OFF_MIDLINE_PX)
 
 
 class EveryPropCasts(unittest.TestCase):
