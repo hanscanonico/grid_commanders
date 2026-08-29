@@ -104,7 +104,7 @@ func test_a_spent_twin_can_still_be_merged_into() -> void:
 	assert_false(state.units.has(mover), "and the mover is gone")
 
 
-# --- the five refusals ---------------------------------------------------------
+# --- the five refusals --------------------------------------------------------
 
 
 func test_join_answers_the_move_rules_first() -> void:

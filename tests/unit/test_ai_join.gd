@@ -143,5 +143,7 @@ func test_a_spent_twin_is_still_worth_merging_into() -> void:
 		if unit.cell == Vector2i(1, 0):
 			unit.acted = true
 	var command := _plan_on(state, _profile(0.5))
-	assert_true(command is JoinCommand, "expected a merge, got %s" % command)
+	assert_true(
+		command is JoinCommand, "expected a merge, got %s" % command.get_script().get_global_name()
+	)
 	assert_eq(command.validate(state), "", "and whatever is planned has to be playable")
