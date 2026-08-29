@@ -16,9 +16,9 @@ from __future__ import annotations
 import unittest
 
 import preview_sheet
-from PIL import Image
+from PIL import Image, ImageChops
 from portraitgen import features, light
-from portraitgen.canvas import PORTRAIT_SIZE, SUPERSAMPLE, Canvas
+from portraitgen.canvas import INK_FEATURE, PORTRAIT_SIZE, SUPERSAMPLE, Canvas
 from portraitgen.head import Skull
 from portraitgen.palette import INK
 
@@ -58,6 +58,29 @@ def _painted(cell: Canvas) -> int:
 
 def _area_of(cell: Canvas, tone: tuple[int, int, int]) -> int:
     return sum(count for count, pixel in _tally(cell) if pixel[:3] == tone)
+
+
+def _box_of(cell: Canvas, tone: tuple[int, int, int]) -> tuple[int, int, int, int]:
+    """Where one flat tone sits on the working canvas, in supersampled pixels."""
+    bands = [
+        band.point(lambda level, want=want: 255 if level == want else 0)
+        for band, want in zip(cell.image.split(), tone, strict=False)
+    ]
+    mask = ImageChops.multiply(ImageChops.multiply(bands[0], bands[1]), bands[2])
+    box = mask.getbbox()
+    assert box is not None, f"no {tone} on the canvas"
+    return box
+
+
+def _ink_run(cell: Canvas, y: int) -> int:
+    """How thick the first stroke along one row of the working canvas is."""
+    band = cell.image.crop((0, y, cell.image.width, y + 1)).get_flattened_data()
+    row = [pixel[:3] for pixel in band]
+    start = row.index(INK)
+    run = 0
+    while start + run < len(row) and row[start + run] == INK:
+        run += 1
+    return run
 
 
 def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
@@ -210,6 +233,86 @@ class AnOpenMouthOutspansTheEyes(unittest.TestCase):
                 cell = _cell()
                 features.mouth(cell, SKULL, kind)
                 self.assertGreater(_area_of(cell, features.SCLERA), 0)
+
+
+class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
+    """P10: seven busts wore one wide white block, which is a sameness of its
+    own. The band is capped at `TEETH_WIDTH` of the mouth's inner width and
+    each open mouth bares it its own way, so a laugh, a grin, a snarl and an
+    open mouth are four marks at chip size rather than one."""
+
+    def _mouth(self, kind: str) -> Canvas:
+        cell = _cell()
+        features.mouth(cell, SKULL, kind)
+        return cell
+
+    def _opening(self, kind: str) -> tuple[int, int]:
+        """The width and height inside the lip, which is what the cap is of."""
+        left, top, right, bottom = self._mouth(kind).image.getbbox()
+        lip = round(2 * INK_FEATURE * SUPERSAMPLE)
+        return (right - left - lip, bottom - top - lip)
+
+    def _bared(self, kind: str) -> tuple[int, int]:
+        left, top, right, bottom = _box_of(self._mouth(kind), features.SCLERA)
+        return (right - left, bottom - top)
+
+    def test_no_open_mouth_bares_more_than_three_fifths_of_its_width(self):
+        """The cap, to the raster pixel the band's own edge rounds to."""
+        for kind in sorted(features.OPEN_MOUTH_KINDS):
+            with self.subTest(mouth=kind):
+                self.assertLessEqual(
+                    self._bared(kind)[0],
+                    features.TEETH_WIDTH * self._opening(kind)[0] + SUPERSAMPLE,
+                )
+
+    def test_a_grin_bares_a_narrower_band_than_a_laugh(self):
+        self.assertLess(self._bared("grin")[0], self._bared("laugh")[0])
+
+    def test_a_snarl_bares_its_upper_row_alone(self):
+        self.assertLess(self._bared("snarl")[1], self._opening("snarl")[1] / 2)
+
+    def test_an_open_mouth_is_a_dark_cavity_with_a_lit_lip(self):
+        cell = self._mouth("open")
+        left, top, right, _ = cell.image.getbbox()
+        under_the_lip = (
+            (left + right) // 2,
+            top + round(INK_FEATURE * SUPERSAMPLE) + 1,
+        )
+        self.assertEqual(cell.image.getpixel(under_the_lip)[:3], INK)
+        self.assertLessEqual(
+            self._bared("open")[1], round((features.LIT_LIP + 1) * SUPERSAMPLE)
+        )
+
+
+class TheGlassesAreTwoSquaresAndNoBridge(unittest.TestCase):
+    """P17: a bridge is the part of a pair of glasses the mip cannot hold — it
+    joined the two lenses into one grey smear at chip size. Two squares at the
+    feature weight survive it; the bridge is gone."""
+
+    def _worn(self) -> Canvas:
+        cell = _cell()
+        features.accessory(cell, SKULL, "glasses")
+        return cell
+
+    def test_nothing_is_drawn_between_the_two_lenses(self):
+        """Both rings are cropped off, so only a bridge can be left in it."""
+        worn = self._worn().image
+        left, top, right, bottom = worn.getbbox()
+        lens = round(self._lens_side() * SUPERSAMPLE)
+        self.assertIsNone(worn.crop((left + lens, top, right - lens, bottom)).getbbox())
+
+    def _lens_side(self) -> float:
+        return 2 * features.LENS_HALF + INK_FEATURE
+
+    def test_each_lens_is_a_square_ring_at_the_feature_weight(self):
+        _, top, _, bottom = self._worn().image.getbbox()
+        self.assertAlmostEqual(
+            bottom - top, round(self._lens_side() * SUPERSAMPLE), delta=SUPERSAMPLE
+        )
+        self.assertEqual(
+            _ink_run(self._worn(), (top + bottom) // 2),
+            round(INK_FEATURE * SUPERSAMPLE),
+        )
 
 
 class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
