@@ -16,6 +16,10 @@ voxel model (`spritegen/units/`, `spritegen/buildings.py`) or tile painter
 run reproduces the same bytes. Regenerating after an edit changes exactly the
 sprites you edited.
 
+**Adding a unit, a terrain tile or a faction: `docs/adding_art.md`** — the
+end-to-end recipe, the game-side files each owes, and which gate catches what.
+The rest of this document is why the art looks the way it does.
+
 ## The roster
 
 | Group | Columns (atlas order) |

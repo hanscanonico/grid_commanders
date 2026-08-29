@@ -36,7 +36,7 @@ OUTLINE_LIGHT, OUTLINE_HEAVY, OUTLINE_RIM = 0, 1, 2
 @dataclass(frozen=True)
 class Faction:
     key: str  # atlas row key (side_identity.gd)
-    team: str  # per-unit PNG suffix (paste_unit_sprites.gd TEAM_ROWS)
+    team: str  # per-unit PNG suffix (assets/sprites/units/<id>_<team>.png)
     body: RGB  # FactionTheme.color
     body_dk: RGB  # FactionTheme.color_dark
     body_lt: RGB  # FactionTheme.color_light

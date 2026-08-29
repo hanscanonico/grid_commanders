@@ -24,7 +24,10 @@ Outputs (under --out, default ./out):
                           art's own, screen-left); the consumer mirrors it
   terrain_atlas.png       896x320 RGBA — drop-in for assets/tiles/terrain_atlas.png
                           (the five property columns are transparent overlays)
-  units/<id>_<team>.png   one units-atlas cell each, for paste_unit_sprites.gd
+  units/<id>_<team>.png   one units-atlas cell each — the atlas's own art
+                          exported cell by cell, installed to
+                          assets/sprites/units as a reviewable reference the
+                          game never loads
   iso_buildings/<id>_<team>.png  64x64 RGBA property buildings
   preview_units.png / preview_terrain.png / preview_map.png  review sheets
 """
@@ -122,7 +125,12 @@ SHEETS: tuple[Output, ...] = (
 
 
 def unit_cells() -> Iterator[Output]:
-    """One units-atlas cell per unit and faction, for paste_unit_sprites.gd."""
+    """One units-atlas cell per unit and faction.
+
+    Reference exports of art the atlas already carries: nothing in the game
+    loads them, and `tests/check_snapshots.py` holds each to the cell of the
+    installed `units_atlas.png` it was cut from.
+    """
     for uid in ATLAS_ORDER:
         for fac in FACTIONS:
             yield Output(
