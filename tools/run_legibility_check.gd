@@ -105,7 +105,7 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 		)
 	)
 	lines.append("Secondary: the whole-figure medians, `steps` and `hue`, which decide nothing.")
-	lines.append_array(_frame_lines())
+	lines.append_array(_frame_lines(sweep))
 	lines.append("")
 	var clear := LegibilitySweep.unfogged(rows)
 	lines.append_array(_class_lines("Clear", clear))
@@ -123,13 +123,17 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 	return "\n".join(lines)
 
 
-## Which shipped sheet each frame of each view was read off, so a per-frame
-## table in the report names a file.
-func _frame_lines() -> Array[String]:
+## Which sheet each frame of each view was read off, so a per-frame table in the
+## report names a file. A `--units=` run says the file it was handed, which is
+## the one board idle_a was actually scored from.
+func _frame_lines(sweep: LegibilitySweep) -> Array[String]:
 	var lines: Array[String] = ["", "| view | frame | sheet |", "| --- | --- | --- |"]
 	for view in [LegibilitySweep.BOARD_VIEW, LegibilitySweep.CUTIN_VIEW]:
 		for frame in LegibilitySweep.frames_of(view):
-			lines.append("| %s | %s | %s |" % [view, frame, LegibilitySweep.sheet_of(view, frame)])
+			var sheet := LegibilitySweep.sheet_of(view, frame)
+			if sheet == UnitSprite.UNITS_ATLAS_PATH:
+				sheet = sweep.art.units_source
+			lines.append("| %s | %s | %s |" % [view, frame, sheet])
 	return lines
 
 

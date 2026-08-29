@@ -125,9 +125,10 @@ therefore adds readings without moving one.
    own and it did not answer the install's — the whole board still fails at ~95% for the reason the
    2026-08-25 section gives, one source pixel in four surviving the board's decimation.
 2. **A frame is a real axis, not a rounding difference.** Between `idle_a` and `walk_a`, 6,720 of
-   the 7,200 clear board cells move their edge reading and **267 cross to failing against 93 the
-   other way**; `idle_a`→`idle_b` is 6,836 moved, 268 / 149. Per unit the spread is widest on the
-   **sub (73.8% idling, 91.0% walking)**, the tank (85.5% `idle_a` to 97.2% `walk_a`) and the APC.
+   the 9,000 board cells (both classes) move their edge reading and **267 cross to failing against
+   93 the other way**; `idle_a`→`idle_b` is 6,836 moved, 268 / 149. Per unit the spread is widest
+   on the **sub (73.8% idling, 90.8% walking, clear class)**, the tank (85.5% `idle_a` to 97.2%
+   `walk_a`) and the APC.
    Reading one frame was reading one of four boards.
 3. **The cut-in row changed subject, and it was wrong before.** It used to be measured off the
    board's own cell — cast shadow included — which is art the cut-in never draws. Off the sheets it
@@ -136,7 +137,7 @@ therefore adds readings without moving one.
    reading was scoring and the screen never shows. It is still the optimistic direction on one
    count — the director paints its own contact shadow under the figure and this composite does not
    — so treat the cut-in numbers as the figure against bare ground.
-4. **The worst-twenty gallery is now all four frames.** Nine of the twenty are gait cells and the
+4. **The worst-twenty gallery is now all four frames.** Ten of the twenty are gait cells and the
    `lander` fogged on a mountain in `walk_b` is the worst cell in the whole sweep at 0.20 edge steps
    / 3.9 hue. The pairing behind them is the previous rounds' unchanged: pale or grey airframes and
    hulls on masonry, shoal and mountain.
