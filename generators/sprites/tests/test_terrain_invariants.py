@@ -11,9 +11,12 @@ The three readings, and where the numbers come from:
   it everywhere — the loudest cell measured is the hq at 23, the loudest
   autotile the bridge deck at 21, the loudest building the airport at 22.
 * **Alpha.** No cell carries a partial pixel anywhere, so the gate is exact:
-  the ground terrains and every autotile sheet are fully opaque, and the
+  the ground terrains and every autotile tile are fully opaque, and the
   five property columns and the building cells are 0 or 255 — those columns
-  are overlays the board composites, and cut nothing in between.
+  are overlays the board composites, and cut nothing in between. The
+  autotiles are read as tiles rather than off their contact sheet, which
+  `autotile.sheet` pastes into an RGB image: a sheet has no alpha left to
+  gate.
 * **Isolated pixels.** Grain is what most of this art is made of — the
   ground plane is where ambient variety lives — so a flat zero would fail
   the field, the wood and the sea's own texture. The budgets below are the
@@ -27,7 +30,7 @@ from __future__ import annotations
 import unittest
 from functools import cache
 
-from spritegen import atlas, pipeline, terrain
+from spritegen import atlas, autotile, pipeline, terrain
 from spritegen.palette import FACTIONS
 from spritegen.terrain import CELL
 
@@ -60,6 +63,32 @@ SHEET_GRAIN = {
     "autotiles/sea_b.png": 0,
     "autotiles/plains.png": 15,
     "autotiles/mountain.png": 35,
+}
+
+# The tiles each sheet is pasted from, in sheet order. Alpha is read here
+# because `autotile.sheet` pastes through `convert("RGB")`.
+TILE_SOURCES = {
+    "autotiles/roads.png": lambda: [autotile.road_tile(m) for m in range(16)],
+    "autotiles/rivers.png": lambda: [autotile.river_tile(m) for m in range(16)],
+    "autotiles/coast.png": lambda: [autotile.coast_tile(m) for m in range(16)],
+    "autotiles/shoals.png": lambda: [autotile.shoal_tile(m) for m in range(16)],
+    "autotiles/woods.png": lambda: [autotile.woods_tile(m) for m in range(16)],
+    "autotiles/bridges.png": lambda: [
+        autotile.bridge_tile(True),
+        autotile.bridge_tile(False),
+    ],
+    "autotiles/sea.png": lambda: [
+        terrain.sea(phase, 0) for phase in range(len(terrain.SEA_PHASES))
+    ],
+    "autotiles/sea_b.png": lambda: [
+        terrain.sea(phase, 1) for phase in range(len(terrain.SEA_PHASES))
+    ],
+    "autotiles/plains.png": lambda: [
+        terrain.plains(phase) for phase in range(len(terrain.PLAINS_PHASES))
+    ],
+    "autotiles/mountain.png": lambda: [
+        terrain.mountain(phase) for phase in range(len(terrain.MOUNTAIN_PHASES))
+    ],
 }
 
 
@@ -158,10 +187,18 @@ class AutotileInvariants(unittest.TestCase):
                 with self.subTest(sheet=rel, cell=index):
                     self.assertLessEqual(len(colours(cell)), MAX_COLOURS)
 
-    def test_every_autotile_sheet_is_opaque_throughout(self):
-        for rel in SHEET_GRAIN:
+    def test_every_sheet_states_the_tiles_it_is_pasted_from(self):
+        self.assertEqual(set(TILE_SOURCES), set(SHEET_GRAIN))
+        for rel, tiles in TILE_SOURCES.items():
             with self.subTest(sheet=rel):
-                self.assertEqual(alphas(autotile_sheet(rel)), {255})
+                cells = [index for index, _ in sheet_cells(autotile_sheet(rel))]
+                self.assertEqual(len(cells), len(tiles()))
+
+    def test_every_autotile_tile_is_opaque_throughout(self):
+        for rel, tiles in TILE_SOURCES.items():
+            for index, tile in enumerate(tiles()):
+                with self.subTest(sheet=rel, cell=index):
+                    self.assertEqual(alphas(tile), {255})
 
     def test_no_isolated_pixel_beyond_each_sheets_grain(self):
         for rel, budget in SHEET_GRAIN.items():
