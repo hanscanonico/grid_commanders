@@ -12,6 +12,8 @@ arch with a control tower, port a crane over a warehouse.
 
 from __future__ import annotations
 
+import math
+
 from .palette import Faction, h01
 from .voxel import Model
 
@@ -100,16 +102,29 @@ MASSIF_SPAN = 13  # voxels across the footprint, on both ground axes
 # ground plane, so a voxel step along it is sqrt(2) of ground for two pixels
 # of screen x), which is what `MountainProjection` measures. Anything under
 # ~1.2 leaves a wide low apron the renderer draws as one flat plinth — a
-# plateau, not a peak; 1.5 is where the flank stops showing terraces wider
-# than the crags on it.
-MASSIF_SLOPE = 1.5
+# plateau, not a peak. 1.5 still read as a squat quarry heap, because a cone
+# that shallow is wider than the tile: the bottom half of the silhouette was
+# the wall it got cut off at. 2.1 lands the whole cone inside the footprint,
+# so the mass narrows all the way down to the talus below.
+MASSIF_SLOPE = 2.1
 # Above this height a column is snow. A cap is the one thing that tells a
 # summit from a quarry at the board's 4:1 rung, and it is deliberately small:
 # the snow ramp is the brightest material on any tile.
-MASSIF_SNOW = 12
+MASSIF_SNOW = 13
 # Under this height a column is talus rather than scarp — one ramp band down,
-# so the foot the grass apron meets is in the mass's own shadow.
-MASSIF_TALUS = 3
+# so the foot the grass apron meets is in the mass's own shadow. Two rather
+# than three since the apron below: a fan that wide in the darker band puts
+# more of its own shadow under a unit's silhouette than the massif ever paid
+# for (`make legibility-ratchet`).
+MASSIF_TALUS = 2
+# The talus fan under the peaks: a second, far shallower cone off the same
+# summits. It is what carries the mass out to the footprint's edge now that
+# the flanks are too steep to reach it themselves — so the rock still meets
+# the grass along the cell's own dimetric edge, the one contour a projection
+# claim can be exact about, and it meets it as a spilled apron rather than as
+# a cut-off wall.
+MASSIF_APRON = 4.5
+MASSIF_APRON_SLOPE = 0.25
 
 
 def _relief(vx: int, vy: int, seed: int, lattice: int) -> float:
@@ -131,35 +146,79 @@ def _relief(vx: int, vy: int, seed: int, lattice: int) -> float:
 
 # How far the two relief fields move the surface: the coarse one stretches and
 # pinches the plan (a spur reaches out, a gully cuts in), the fine one roughens
-# the surface by under a voxel so the flanks break into crags.
-_PLAN_RELIEF = 0.55
-_CRAG_RELIEF = 2.0
+# the surface by under a voxel. It used to be 2.0, which scattered isolated
+# light voxels down the flanks as speckle; at 1.0 what is left reads as the
+# gullies between the ridges below.
+_PLAN_RELIEF = 0.35
+_CRAG_RELIEF = 1.0
+
+# The ridges. A mountain is read by continuous crest lines running summit to
+# foot, which an isotropic relief field cannot make: it has no direction, so it
+# can only roughen — which is what the old field did on its own, and it came
+# out as speckle. Each summit carries `RIDGE_ARMS` straight arms, evenly spaced
+# around it at an angle the seed picks, and a column on one stands up to
+# `RIDGE_GAIN` voxels proud of the cone. The lift is flat along an arm, so a
+# crest falls at the flank's own authored slope rather than bulging, and it
+# fades in over the summit's own `_RIDGE_CROWN` voxels, which is what keeps the
+# peak the highest point on the mass instead of a ring of fins around a saddle.
+RIDGE_ARMS = 3
+RIDGE_GAIN = 1.6
+_RIDGE_CROWN = 1.5
+_RIDGE_WIDTH = 1.3
+
+
+def _ridge_arms(px: int, py: int, seed: int) -> tuple[tuple[float, float], ...]:
+    """The ground directions the ridges leave a summit in — evenly spaced, so
+    no flank of the mass is left as a plain cone face, and turned by the seed,
+    so a phase is a differently ridged mountain."""
+    base = h01(px, py, seed + 3) * math.tau
+    step = math.tau / RIDGE_ARMS
+    return tuple(
+        (math.cos(base + k * step), math.sin(base + k * step))
+        for k in range(RIDGE_ARMS)
+    )
+
+
+def _ridge_lift(vx: int, vy: int, arms: tuple[tuple[float, float], ...]) -> float:
+    """How far a column stands proud of its summit's cone: the full
+    `RIDGE_GAIN` on a crest line, nothing `_RIDGE_WIDTH` off one, and nothing
+    at the summit itself."""
+    lift = 0.0
+    for ux, uy in arms:
+        along = vx * ux + vy * uy
+        across = abs(vx * uy - vy * ux)
+        if along <= 0.0 or across >= _RIDGE_WIDTH:
+            continue
+        crown = min(1.0, along / _RIDGE_CROWN)
+        lift = max(lift, RIDGE_GAIN * crown * (1.0 - across / _RIDGE_WIDTH))
+    return lift
 
 
 def massif(peaks: tuple[tuple[int, int, int], ...], seed: int) -> Model:
     """The mountain tile's mass: three summits over one height field.
 
     `peaks` is (voxel x, voxel y, height) per summit, tallest first; `seed`
-    keys the relief, so a phase is a different mountain rather than the same
-    one slid sideways.
+    keys the ridges and the relief, so a phase is a different mountain rather
+    than the same one slid sideways.
     """
     m = Model()
+    arms = [_ridge_arms(px, py, seed) for px, py, _ in peaks]
     for vx in range(MASSIF_SPAN + 1):
         for vy in range(MASSIF_SPAN + 1):
             plan = 1.0 + _PLAN_RELIEF * _relief(vx, vy, seed, 4)
             h, near = 0.0, MASSIF_SPAN * 1.0
-            for px, py, pz in peaks:
+            for (px, py, pz), ridges in zip(peaks, arms):
                 d = ((vx - px) ** 2 + (vy - py) ** 2) ** 0.5
                 near = min(near, d)
-                h = max(h, pz - MASSIF_SLOPE * d * plan)
+                cone = pz - MASSIF_SLOPE * d * plan
+                apron = MASSIF_APRON - MASSIF_APRON_SLOPE * d * plan
+                h = max(h, cone + _ridge_lift(vx - px, vy - py, ridges), apron)
             # The crags fade out at a summit: a peak roughened as hard as its
             # flanks is a rounded lump, and the summit is the one part of the
             # silhouette the tile is read by.
             h += _CRAG_RELIEF * min(1.0, near / 3.0) * _relief(vx, vy, seed + 31, 2)
-            top = int(h)
-            if top < 1:
-                continue
-            snow = MASSIF_SNOW + int(h01(vx, vy, seed + 7) * 3)
+            top = max(int(h), 1)
+            snow = MASSIF_SNOW + int(h01(vx, vy, seed + 7) * 4)
             for z in range(top + 1):
                 if z >= snow:
                     m.set(vx, vy, z, "snowcap")

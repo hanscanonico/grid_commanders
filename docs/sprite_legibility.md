@@ -169,6 +169,27 @@ The run takes **24 minutes** on a loaded machine (four times the matrix it was),
 named `view:frame:unit:faction:state:terrain:variant:overlay` now — for example
 `make legibility-check LEGIBILITY="--dump=board:walk_b:lander:iron:ready:mountain:0:fog"`.
 
+## Re-read 2026-08-30, after the mountain was redrawn as a peak (COM-264)
+
+The massif's height field was rebuilt — a steeper flank, ridge crests off each summit instead of
+isotropic crag speckle, a wider snowcap and a talus fan carrying the mass out to the footprint's
+edge — and the three phases were re-seeded with it. Only `mountain` moved: **34,212 failing (93.2%)
+clear and 7,037 (81.4%) fogged**, against the previous baseline's art on the same harness, and the
+`mountain` row is 94.4% of its 3,672 cells. **55 verdicts changed, all of them mountain's: 36
+crossed to failing and 19 the other way**, a net 17 cells of 45,360.
+
+The mechanism is the speckle. The old flank scattered lit top planes over its whole face, and a
+sprinkle of bright pixels behind a contour is worth p25 edge steps whatever it does to the read; the
+new flank spends its light on continuous crests, so a stretch of outline that used to fall on a
+stray light pixel now falls on one plane. No colour moved for a cell: the one thing this sweep did
+say out loud is that the new talus fan put a lot more of the rock's darker band under a silhouette,
+so `MASSIF_TALUS` went 3 to 2, and running it again after that turned a good share of the losses
+back. The board is at 93.2% for the reason the 2026-08-25 section gives, so 17 cells on one terrain
+is inside that regression, not a reading of this change.
+
+The baseline digest was rewritten for it (`make legibility-baseline`), which is what that target is
+for after an intended art change.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in
