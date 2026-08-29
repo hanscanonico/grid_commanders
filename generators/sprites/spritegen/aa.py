@@ -51,9 +51,10 @@ The property buildings come through the same seam (`terrain.property_sprite`)
 and today it moves no pixel of any of them, on any faction row: a building is
 its base-plate diamond and axis-aligned walls, which is runs of two end to
 end, so `MIN_RUN` excludes every corner they have (measured 2026-08-29 — 0
-corners found, against 17-31 pixels each at `min_run=2`). That is the rule
-answering, not a gap: the day a building is drawn with a shallower roof line,
-it is softened like a wing root without anyone wiring it up again.
+corners found, against 17-34 pixels each at `min_run=2`; `test_aa.Buildings`
+keeps both halves honest). That is the rule answering, not a gap: the day a
+building is drawn with a shallower roof line, it is softened like a wing root
+without anyone wiring it up again.
 """
 
 from __future__ import annotations

@@ -738,7 +738,7 @@ that pipeline's paste step can be pointed at this art instead.
 5. **`spritegen/autotile.py`** — the direction-aware road/river/bridge/
    coast/shoal/woods variants and the sea's phase variants, exported under
    `autotiles/`.
-6. **`spritegen/aa.py`** — the last word on a unit sprite, run between the
+6. **`spritegen/aa.py`** — the last word on a rendered sprite, run between the
    renderer and the cell: a **single mid-tone pixel in the inner corner of a
    staircase step**, and only where both runs meeting there are three pixels
    or longer and the riser between them is no taller than two. It writes an
@@ -756,7 +756,10 @@ that pipeline's paste step can be pointed at this art instead.
    which is already the smoothest line a grid can hold, and softening every
    step of one would only grey the outline down. What is left for it are the
    shallower stretches — a wing root, a hull front, the shoulders of a foot
-   unit — 146 pixels across the whole sheet. `ENABLED` turns the pass off;
+   unit — 146 pixels across the whole sheet. The property buildings come
+   through the same seam (`terrain.property_sprite`) and it moves no pixel of
+   any of them: walls and a base plate are runs of two end to end, so
+   `MIN_RUN` excludes every corner they have. `ENABLED` turns the pass off;
    `MIN_RUN` is the knob that decides what counts as a staircase.
 7. **`spritegen/cell.py`** — where a rendered sprite is placed in its 64x96
    atlas cell: the vertical landmarks measured up from the cell's bottom
