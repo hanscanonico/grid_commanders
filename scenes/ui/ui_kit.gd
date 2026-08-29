@@ -382,7 +382,8 @@ static func style_segment(seg: Button, active: bool, divided: bool, accent: Colo
 
 
 ## The width a toggle needs to say its whole piece: the box, the words and the
-## ON/OFF, with the row's gaps between them. The row inside the button is anchored
+## ON/OFF, with the row's two gaps and a third of trailing slack so the status
+## never sits against the column's edge. The row inside the button is anchored
 ## rather than parented by a container, so the button has to state this itself —
 ## without it a narrow column clips the words instead of the layout refusing.
 static func toggle_width(text: String) -> float:
