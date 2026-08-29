@@ -420,6 +420,14 @@ sprites-test:
 	$(call require-spritegen)
 	cd "$(SPRITEGEN)" && "$(abspath $(SPRITEGEN_PY))" -m unittest discover tests
 
+# How much of each terrain tile's grain every zoom rung draws — the cast
+# shadow's density study, asked of the ground it falls on. A readout, not a bar:
+# out of `make verify` and out of `make sprites-test`, and it fails nothing.
+# `docs/terrain_grain.md` is the committed reading.
+grain-census:
+	$(call require-spritegen)
+	cd "$(SPRITEGEN)" && "$(abspath $(SPRITEGEN_PY))" tests/grain_census.py $(GRAIN)
+
 # The portrait generator's own merge bar: the faction palette mirrored off the
 # game's own code, and two runs of the pipeline byte for byte. Out of
 # `make verify` with the other two, for the venv. CI runs it as its own job.
@@ -564,7 +572,7 @@ mobile-soak:
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
 	audio audio-test audio-lint audio-snapshot sprites-test sprites-lint \
-	sprites-snapshot generators-lint generators-test \
+	sprites-snapshot grain-census generators-lint generators-test \
 	portraits-test portraits-lint portraits-snapshot \
 	generators-venv portraits import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
