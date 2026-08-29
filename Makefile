@@ -609,6 +609,11 @@ menu-screenshot: import
 gallery-screenshot: import
 	$(GODOT_GUI) --path . scenes/menu/commander_gallery.tscn -- --screenshot=$(CURDIR)/screenshot.png
 
+# The map editor (COM-263), booted straight rather than through the menu: the
+# capture opens a default board so the frame is of the thing being built.
+editor-screenshot: import
+	$(GODOT_GUI) --path . scenes/editor/map_editor.tscn -- --screenshot=$(CURDIR)/screenshot.png
+
 # The mobile soak's desktop baseline (mobile plan MB8): how long a computer turn
 # takes to plan on the busiest board, and what the replay recorder's per-command
 # flush costs. A measurement, not a gate — out of `make verify` and `make test`,
@@ -627,7 +632,7 @@ mobile-soak:
 	sprites-snapshot grain-census sheet-census generators-lint generators-test \
 	portraits-test portraits-lint portraits-snapshot \
 	generators-venv portraits import campaign-difficulty export-android export-ios \
-	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
+	screenshot menu-screenshot gallery-screenshot editor-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns legibility-check legibility-ratchet legibility-baseline mobile-soak \
 	grind grind-status

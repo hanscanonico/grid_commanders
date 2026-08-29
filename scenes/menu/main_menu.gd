@@ -22,6 +22,7 @@ extends Control
 ## MenuCaptureDriver refuses to let regress.
 
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
+const EDITOR_SCENE := "res://scenes/editor/map_editor.tscn"
 const ICON_PATH := "res://assets/icon.png"
 ## Faction-silent by faction-identity D5: no "Red vs Blue" reaches a player screen.
 const TAGLINE := "TURN-BASED TACTICS · PICK YOUR GROUND"
@@ -62,6 +63,7 @@ var _setup_help_labels: Array[Label] = []
 var _continue: ContinueSlot
 var _campaign_button: Button
 var _replay_button: Button
+var _editor_button: Button
 var _quit_button: Button
 var _press_start: Label
 ## The page's scenery — the drifting board and the blinking PRESS START — and the
@@ -167,6 +169,7 @@ func _ready() -> void:
 	_deal_seats_for_map()
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
+	_editor_button.pressed.connect(func() -> void: get_tree().change_scene_to_file(EDITOR_SCENE))
 	_quit_button.pressed.connect(get_tree().quit)
 	if _capture_driver.poses(MenuCaptureDriver.DEMO_SETUP_CONTEXT):
 		# The frame that photographs the dimmed Difficulty: a table of nothing but
@@ -491,6 +494,11 @@ func _build_action_stack() -> Control:
 	# surface that tells a player their matches are being recorded at all.
 	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_replay_button)
+
+	# Last of the ghosts: authoring a board is the one thing on this page that is
+	# not playing the game (COM-263).
+	_editor_button = UiKit.action_button("Map Editor", "", UiTheme.ButtonVariant.GHOST, null)
+	col.add_child(_editor_button)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL

@@ -58,6 +58,7 @@ make export-ios      # package an Xcode project -> build/ios/ (setup below)
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
 make gallery-screenshot   # render all twenty-three commander cards (the G1 gate)
+make editor-screenshot    # boot the map editor on a default board, save screenshot.png
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make bulwark-measure      # Bulwark's win spread over N seeds -> reports/ (docs/bulwark_balance.md)
