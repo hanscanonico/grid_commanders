@@ -29,12 +29,12 @@ const WIN_MODE := "campaign_win_stops_ai"
 ## What this class owns, read by `stage` and by the driver's dispatch, so neither
 ## can learn of a mission scenario the other has not.
 const MODES: Array[String] = [MODE, EVENT_MODE, DEFECT_MODE, MAP_MENU_MODE, WIN_MODE]
-## How long a wait on a computer turn may take, and how long the finished board is
-## then watched to see whether anything moves on it. The watch is the whole check,
-## so it is a wall-clock second and a half rather than a couple of frames.
+## The ceiling on a wait for a turn or a state to arrive, so a flow that never
+## gets there is named by the check rather than left to the sweep's own deadline.
 const TURN_WAIT_FRAMES := 1800
-## Wall clock rather than frames: what is being watched for is a runner that keeps
-## planning, and the lockup arms its own buttons on a real half-second timer.
+## How long the finished board is then watched to see whether anything moves on
+## it. Wall clock rather than frames: what is being watched for is a runner that
+## keeps planning, and the lockup arms its own buttons on a real half-second timer.
 const SETTLE_MS := 1500
 ## The Collection's opening mission, because CD2 re-authored it onto `HoldCell`:
 ## the card then carries a new verb, its running readout, and the deadline that
@@ -85,6 +85,12 @@ static func stage() -> void:
 	if defecting:
 		mission = _posed_defection(mission)
 		progress.flags[GARRISON_FLAG] = 1
+	elif demo == WIN_MODE:
+		# That scenario swaps this mission's objectives mid-turn, and the loader
+		# caches the shipped resource for the whole process — the other campaign
+		# scenarios in the same sweep stage the very same mission. A copy is what
+		# keeps the swap inside this frame.
+		mission = mission.duplicate() as MissionDefinition
 	MatchConfig.stage(CampaignSession.begin(campaign, mission, progress))
 
 
@@ -294,7 +300,8 @@ func _run_win_stops_ai() -> String:
 
 ## Replaces the mission's win condition with one this board already satisfies, so
 ## the computer's next command is the boundary the verdict is taken at. The
-## session's runtime reads the same definition object, so the swap is seen there.
+## session's runtime reads the same definition object — the copy `stage` made —
+## so the swap is seen there and nowhere else.
 func _win_on_the_board_as_it_stands(mission: MissionDefinition) -> void:
 	var now := SurviveUntilDayObjective.new()
 	now.text = "Hold the line"
