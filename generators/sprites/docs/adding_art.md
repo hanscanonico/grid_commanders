@@ -27,7 +27,10 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    to the new column and `battle_style` (and `secondary_battle_style`) naming a
    `data/battle_anim/*.tres` weapon signature; `tests/unit/test_battle_styles.gd`
    fails on a style that does not exist. The generator draws the weapon
-   silhouette to match, so pick the style before authoring the gun.
+   silhouette to match, so pick the style before authoring the gun. An armed
+   unit also needs its row and its columns in `data/damage_chart.tres` —
+   `tests/unit/test_damage_chart.gd` fails a gun that can hit nothing and a
+   unit nothing can hit.
 5. **Install and gate.** `make tiles`, then `make sprites-test`,
    `make sprites-snapshot` and `make verify`.
 
@@ -47,11 +50,14 @@ Gates a new unit meets, and what each wants:
 ## Add a terrain tile
 
 1. **Paint it.** Write the painter in its family's module under
-   `spritegen/terrain/` (`plains.py`, `water.py`, `woods.py`, `mountain.py`,
-   or `properties.py` for a faction-tinted building), returning one
-   `terrain.CELL` square RGBA tile. Use the tones in `spritegen/terrain/tones.py`
-   and stay under `TERRAIN_VALUE_CEILING` — the band above it belongs to the
-   units.
+   `spritegen/terrain/` (`plains.py`, `water.py`, `woods.py`, `mountain.py`),
+   returning one `terrain.CELL` square RGBA tile. Use the tones in
+   `spritegen/terrain/tones.py` and stay under `TERRAIN_VALUE_CEILING` — the
+   band above it belongs to the units. A faction-tinted property is a voxel
+   model instead: build it in `spritegen/buildings.py`, register it in
+   `BUILDINGS`, and give it a `PROPERTY_ANCHOR` entry in
+   `spritegen/terrain/properties.py`, whose `property_overlay` composites the
+   model and its shadow onto empty ground.
 2. **Register it.** Export the name from `spritegen/terrain/__init__.py`'s
    `__all__`, add the id to `TERRAIN_ORDER` (the atlas column), and add it to
    either `_PLAIN_TILES` or `PROPERTY`. A property is a **transparent
@@ -61,8 +67,9 @@ Gates a new unit meets, and what each wants:
    phase table if it varies by cell (`PLAINS_PHASES`, `SEA_PHASES`,
    `MOUNTAIN_PHASES`).
 4. **Give the game the tile.** Add `data/terrain/<id>.tres` with `atlas_col`
-   set to the new column, `team_tinted` for a property, and the movement costs
-   every move class pays on it.
+   set to the new column, the movement costs every move class pays on it, and
+   — for a property — `team_tinted`, plus the `builds` and `services` move
+   classes it produces and refits.
 5. **Install and gate.** `make tiles`, `make sprites-test`,
    `make sprites-snapshot`, `make verify`.
 
@@ -93,7 +100,7 @@ touching a ramp.
 Then, from the repository root:
 
 - `make tiles` — regenerate, install into `assets/`, reimport.
-- `make sprites-test` — this pipeline's merge bar (~240 s).
+- `make sprites-test` — this pipeline's merge bar (several minutes).
 - `make sprites-snapshot` — the installed art against a fresh generation; this
   is what catches an edit that never ran `make tiles`.
 - `make legibility-check` — an instrument, not a gate: what a cell reads like
