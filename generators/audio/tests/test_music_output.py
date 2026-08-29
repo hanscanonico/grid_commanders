@@ -109,10 +109,23 @@ class Loop(unittest.TestCase):
                 self.assertLess(measure.loop_slope(x), 2.0 * typical)
 
     def test_the_texture_holds_across_the_seam(self):
-        # No dropout out of the end, no thump into the start.
+        # No dropout out of the end, no thump into the start — read over a
+        # beat, and again over the 20 ms a gasp used to hide in.
         for name in CONTRACT:
-            with self.subTest(track=name):
-                self.assertLess(measure.loop_rms_delta_db(RENDERED[name]), 6.0)
+            for source, x in (("render", RENDERED[name]), ("ogg", DECODED[name])):
+                with self.subTest(track=name, source=source):
+                    self.assertLess(measure.loop_rms_delta_db(x), 6.0)
+                    self.assertLess(measure.loop_rms_delta_db(x, 0.020), 4.0)
+
+    def test_the_band_is_still_playing_at_the_last_sample(self):
+        # Two windows either side of the seam both pass over a hole between
+        # them, and the hole is what the loop audibly gasped on: every
+        # instrument used to shorten its slot and nothing was authored past
+        # the last bar, so the file decayed out before its final sample.
+        for name in CONTRACT:
+            for source, x in (("render", RENDERED[name]), ("ogg", DECODED[name])):
+                with self.subTest(track=name, source=source):
+                    self.assertGreater(measure.quietest_window_db(x), -30.0)
 
 
 class Mix(unittest.TestCase):
@@ -187,6 +200,7 @@ class Arrangement(unittest.TestCase):
             ("kick", 0.50),
             ("snare", 0.34),
             ("hat", 0.32),
+            ("roll", 0.60),
         ),
         "advance": (
             ("edge_lead", 0.32),
@@ -195,6 +209,7 @@ class Arrangement(unittest.TestCase):
             ("kick", 0.50),
             ("snare", 0.34),
             ("hat", 0.30),
+            ("roll", 1.30),
         ),
     }
 
@@ -203,21 +218,23 @@ class Arrangement(unittest.TestCase):
     # per voice; the slack is uniform because it is the same claim each time.
     CONTRIBUTION_DB = {
         "parade": {
-            "brass_lead": -1.0,
-            "stab": -17.7,
-            "tuba_bass": -8.8,
-            "pad": -19.0,
-            "kick": -12.5,
-            "snare": -21.4,
-            "hat": -28.2,
+            "brass_lead": -0.9,
+            "stab": -17.8,
+            "tuba_bass": -8.4,
+            "pad": -19.2,
+            "kick": -10.8,
+            "snare": -21.5,
+            "hat": -27.8,
+            "roll": -21.2,
         },
         "advance": {
-            "edge_lead": -1.9,
-            "stab": -14.7,
-            "drive_bass": -6.3,
-            "kick": -9.2,
-            "snare": -18.9,
-            "hat": -25.9,
+            "edge_lead": -2.4,
+            "stab": -17.6,
+            "drive_bass": -6.4,
+            "kick": -9.0,
+            "snare": -19.0,
+            "hat": -28.6,
+            "roll": -12.2,
         },
     }
 
