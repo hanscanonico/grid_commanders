@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import unittest
 
-from spritegen import atlas, autotile, terrain
+from spritegen import atlas, autotile, pipeline, terrain
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, Pose
 
-from pixel_helpers import terrain_sheet, units_sheet
+from pixel_helpers import pose_cell, terrain_sheet, units_sheet
 
 
 class AtlasContract(unittest.TestCase):
@@ -138,6 +138,23 @@ class FigureSheet(unittest.TestCase):
             units_sheet(Pose.A, shadow=False).tobytes(),
             units_sheet(Pose.B, shadow=False).tobytes(),
         )
+
+
+class ExportedCells(unittest.TestCase):
+    """The reference cells under `assets/sprites/units`, cut out of the sheet
+    rather than rendered again — so the name on the file and the crop it comes
+    from are the only thing left to get wrong."""
+
+    def test_every_exported_cell_is_the_cell_its_name_claims(self):
+        exports = {o.rel: o.build for o in pipeline.unit_cells()}
+        self.assertEqual(
+            len(exports), len(ATLAS_ORDER) * len(FACTIONS), sorted(exports)
+        )
+        for uid in ATLAS_ORDER:
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    build = exports[f"{pipeline.UNIT_CELLS}/{uid}_{fac.team}.png"]
+                    self.assertEqual(build().tobytes(), pose_cell(uid, fac).tobytes())
 
 
 if __name__ == "__main__":
