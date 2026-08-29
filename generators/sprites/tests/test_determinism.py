@@ -21,15 +21,18 @@ from pathlib import Path
 ENTRY = Path(__file__).resolve().parents[1] / "sprite_generator.py"
 
 
-def _run(out: Path, hash_seed: str) -> dict[str, bytes]:
-    env = dict(os.environ, PYTHONHASHSEED=hash_seed)
-    subprocess.run(
+def _launch(out: Path, hash_seed: str) -> subprocess.Popen:
+    """The two runs go up together: a full render is ~40 s, and side by side
+    they cost the suite one of them rather than two."""
+    return subprocess.Popen(
         [sys.executable, str(ENTRY), "-o", str(out)],
         cwd=ENTRY.parent,
-        env=env,
-        check=True,
+        env=dict(os.environ, PYTHONHASHSEED=hash_seed),
         stdout=subprocess.DEVNULL,
     )
+
+
+def _read(out: Path) -> dict[str, bytes]:
     return {
         p.relative_to(out).as_posix(): p.read_bytes()
         for p in sorted(out.rglob("*"))
@@ -40,7 +43,10 @@ def _run(out: Path, hash_seed: str) -> dict[str, bytes]:
 class TwoProcessesAreOneProcess(unittest.TestCase):
     def test_every_output_is_byte_identical(self):
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
-            first, second = _run(Path(a), "0"), _run(Path(b), "1")
+            runs = [_launch(Path(a), "0"), _launch(Path(b), "1")]
+            for run in runs:
+                self.assertEqual(run.wait(), 0)
+            first, second = _read(Path(a)), _read(Path(b))
         self.assertEqual(sorted(first), sorted(second))
         self.assertIn("anim.json", first)
         self.assertIn("units_atlas.png", first)

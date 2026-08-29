@@ -413,7 +413,7 @@ audio-test:
 # animation manifest, the palette mirrored off the game's own code, and two
 # full runs of the pipeline in two processes byte for byte. Out of
 # `make verify` because it needs a Python venv a clone of this repo does not
-# have, and because it costs ~240 s — mostly the terrain and paint contract
+# have, and because it costs ~300 s — mostly the terrain and paint contract
 # suites, which render sheets to read them back. CI runs it as its own job.
 sprites-test:
 	$(call require-spritegen)
