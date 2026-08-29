@@ -47,9 +47,15 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 | `CommanderVisuals`, `SideIdentity` | `test_side_identity.gd`, `test_side_identity_roster.gd` | the single authority for a side's presentation — a portrait, a faction theme, an atlas row, resolved once from the match's commander picks with no `Node` and no scene path |
 | `BattleStyle` (a `Resource`) and `BattleStyleDB` (`RefCounted`) | `test_battle_styles.gd` | weapon-signature data rather than drawing, so every unit naming a style that exists is checked without staging a cut-in |
 
-## The two that are not Node-free — but whose suites never build one
+## The ones that are not Node-free — but whose suites never build one
 
 `PathArrow` extends `Node2D` and `MapThumbnail` extends `Control`. Neither suite builds one:
 `PathArrow.segments()` and `MapThumbnail.sheet_path()` / `sheet_region()` — the pure functions the
 `_draw` of each only paints — are static, and are all `test_path_arrow.gd` and
 `test_map_thumbnail.gd` call. Same shape as `SeatStrip.normalised_sides` and `TransitionInput`.
+
+`EditorBoard`, `EditorPalette` and `EditorNewMapPanel` join them on exactly those terms
+(COM-263). Which cell a press lands on, where a board too big for its frame is scrolled to,
+which order the brushes come in and which board sizes the new-map page offers are all static,
+pure answers over a `MapDocument`, a rect and the `TerrainDB` — so `test_map_editor.gd` calls
+them directly and builds no editor. The page itself is verified by painting on it.

@@ -250,9 +250,15 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # main_menu.gd 778 -> 777: Speed and the three toggles are one row now (COM-258).
 # The height the second row and its rule were spending went to the map picker,
 # which is the control this page exists for.
+#
+# main_menu.gd 777 -> 785: the Map Editor button (COM-263). A ghost row in the
+# action stack, its press, its scene path and its field — the whole of the menu's
+# share of the editor, since everything the editor does is the editor's own
+# scene. Paid for honestly rather than by thinning a neighbour: there is nothing
+# left on this page whose removal would be a simplification rather than a loss.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1195
-scenes/menu/main_menu.gd 777
+scenes/menu/main_menu.gd 785
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
 scenes/battle/battle_scenario_driver.gd 668
