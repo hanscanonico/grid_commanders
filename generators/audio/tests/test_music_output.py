@@ -51,8 +51,9 @@ class Contract(unittest.TestCase):
                 self.assertTrue(30.0 <= t <= 90.0, f"{t:.2f}s outside [30, 90]")
 
     def test_each_loop_runs_exactly_the_score(self):
-        # The file is the loop, so its length is the score's: a bar dropped
-        # from a strain or a tempo edited past its melody lands here.
+        # The file is the loop, so its length must be the score's to the
+        # sample: a render that padded or trimmed the tail would move the
+        # seam every loop gate below measures.
         for name in CONTRACT:
             builder, _peak = music.MUSIC[name]
             song = builder()
