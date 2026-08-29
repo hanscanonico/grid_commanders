@@ -167,8 +167,8 @@ the one cell `TerrainAutotiles` leaves on that column; mountain on all three pha
 The worst cell of each set is unmoved to two decimals either way (woods 0.21 / 0.36 / 0.67, mountain
 0.24 / 0.23 / 0.23). Against a bar of two ramp steps, the largest move anywhere is **0.009 of a
 step**, and at the rung the board is most often played at — rung 1, the one
-`tests/fixtures/legibility_baseline.csv` is taken over — woods goes the **wrong** way: a net three
-cells that clear the bar there stop clearing it.
+`tests/fixtures/legibility_baseline.csv` is taken over — woods goes the **wrong** way: four cells
+that clear the bar there stop clearing it and one starts, a net three the ratchet would refuse.
 
 That reading is of the *plain* rule, with nothing exempt, which is the largest version of the change
 there is. A keep-mask over the canopy edge folds a subset of those same pixels, so it can only move
@@ -204,7 +204,7 @@ how they are drawn, which is why the column is taken as speaking for them.
 ## Method
 
 The contour section's two runs are scratch and were not kept: the treated sheets were written over
-`assets/tiles` in a throwaway worktree to be read, then reverted, and the probe that walked
+this branch's `assets/tiles` from a backup, read, then restored, and the probe that walked
 `LegibilitySweep`'s composites at three sizes was deleted with them. Nothing shipped, so there is
 nothing for a committed instrument to hold in step — re-running it means writing it again, from the
 recipe in that section.
