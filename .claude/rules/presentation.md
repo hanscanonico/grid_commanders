@@ -405,3 +405,85 @@ forms named in the root index are in `docs/design_record.md`.
   through both doors otherwise. `tools/run_mobile_soak.gd` (`make mobile-soak`) is an instrument out
   of `make verify` and `docs/mobile_soak.md` is its dated record, superseded wholesale by a later
   soak rather than edited.
+
+## The autoloads
+
+`project.godot` registers `_mcp_game_helper` beside the game's own singletons — the godot_ai editor
+addon's runtime. It loads in every run today; keeping it out of export builds is an open decision,
+recorded here so the extra autoload is never a surprise.
+
+## The battle scene's seams — the long form
+
+`CLAUDE.md`'s **Working in this repo** section states each of these in one or two lines. The full
+shape lives here, where it loads with the files it governs.
+
+- **`BattlePerspective` is the one adapter from the vision rules to viewer policy.**
+  `scenes/battle/battle_perspective.gd` owns viewing team plus hot-seat blackout, firing geometry
+  delegated to `AttackRange`, typed transport drop options, and how much of a unit's reach and fire
+  ring an overlay may show (that rule is the range-preview plan's, above). `Battle`, `BattleView`,
+  `BattleAnimator`, `BattleCommandPipeline`, `BattleTargeting`, `BattleHandoff` and
+  `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private
+  helper, and the runner drives AI turns through `Battle`'s own named entry points. The rule
+  authority itself is `core/rules/vision.gd` — its rationale is in `docs/design_record.md`.
+- **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`
+  (`BattleCommandPipeline`) is the only live-scene owner of command validation, application and
+  result presentation; both `Battle` and `BattleAiRunner` enter through `Battle.execute_command`.
+  It captures combat/join/drop references before apply, replays `AttackCommand.result` and
+  `CaptureCommand.result`, gates AI movement through `BattlePerspective`, and reconciles sprites,
+  properties, fog, the panel and the HUD. Its typed `BattleCommandReceipt` returns validation,
+  turn, winner, watch and ambush facts. The callers still own selection/input transitions, AI
+  planning and pacing, save policy, and victory presentation — do not move those into the
+  pipeline. The headless `BalanceMatchEngine` stays separate.
+- **Which match to play is a typed request, not an autoload's fields.**
+  `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, which of its
+  seats play (`seats`, empty = every one; `--seats=` is read before `--co=` because the commander
+  list is positional over the seats that play), who plays them, how they group into sides, fog,
+  tier, commanders, resume, seed, watch, day cap, raw side specs, the recording to watch — and is
+  built by one of four adapters: `from_menu`, `from_match` (a rematch, derived from the *live*
+  `GameState`, so a match resumed from a save replays its own board and commanders), `from_replay`
+  (a recording, which states its own board, seating, grouping, commanders and fog in its opening
+  envelope, so naming the file is the whole request) and `apply_cmdline`, layered over any of them
+  on **every** battle boot, which is how a headless capture and a menu launch reach the same board
+  by the same route. `BattleSetup.build(request, …)` reads no autoload, scans no command line and
+  writes nothing back; it returns `null` with a pushed error when the board or the state cannot be
+  built (`assert` is stripped from a release build), and `Battle` disables itself rather than
+  dereferencing a null map. `MatchConfig` carries exactly one staged request, and `take()` clearing
+  is load-bearing rather than tidy: it is what makes a resume that found no save on disk unable to
+  latch into the next boot.
+- **The command line is parsed in one place.** `scenes/common/cmd_args.gd` (`CmdArgs`) — `user()`
+  is the only `OS.get_cmdline_user_args()` call outside `tools/`, and the six inline scans it
+  replaced are why one flag was last-wins and another first-wins with nobody deciding either.
+  `value()` is last-wins, `flag()` matches a bare switch, and `has()` exists because an *empty*
+  flag is not an *absent* one — `--co=` clears the commanders the menu picked and `--seed=` pins
+  seed 0 — so gate an override on `has`, never on a non-empty value. `autoload/settings.gd`
+  deliberately keeps its own ordered walk (its `pin()` latches, so there the *first* `--speed=`
+  lands and `--reset-hints` must see the flags before it); a comment there says so.
+- **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one
+  seam — its one live call site, `BattleCommandPipeline`, `await`s it, and it returns exactly once,
+  full-screen cut-in or on-map hit. Inside `scenes/battle/cutscene/` everything is a pure function
+  of one clock: skipping sets the clock to the end rather than cancelling tweens, which makes "any
+  press, at any beat, lands on the right board" true by construction. That clock is literally one
+  object — `cutscene_playback.gd` (`CutscenePlayback`), the shell both directors compose: it owns
+  the clock, the letterbox, the camera's return to rest, the cue ledger and what counts as a skip
+  press, so no cut-in gets a second opinion on any of them. A director owns only its beat sheet and
+  what it paints in the band. Every number the cut-in shows was handed to it (the result's two HP
+  snapshots, the units themselves); none is recomputed from the damage chart or the RNG. It is
+  suppressed while `capturing` — so `make screenshot` stays byte-stable, posed cut-ins go through
+  `pose_at` — and it only plays when the *viewer* can see both combatants, asked of
+  `BattlePerspective` (and so of `Vision`), never re-derived.
+- **A computer turn is held between commands, never inside one.** `Battle.pause_gate` is the one
+  point `BattleAiRunner` stops at, so Esc during an AI turn is *requested* and honoured at the next
+  boundary — where the board has settled and nothing of that turn's own is on screen, which is what
+  keeps "no interactive menu sits under a banner or a cut-in" (ux-recovery D3) true here rather
+  than by luck. The press still gets an answer of its own, so a pause never reads as a dead key.
+  `Battle.rest_state()` is the single answer to where a closing menu, sheet or banner lands — the
+  player's board, or the frozen board of a paused turn — because IDLE mid-computer-turn hands over
+  a board nobody may play; ask it, never spell `State.IDLE` for "back to rest" again. The pause is
+  presentation and nothing else: no rule, no command and nothing under `core/` or `ai/` learns it
+  happened, the runner picks its turn up where it stopped, and the only thing the menu itself
+  changes is `BattleMenus.map_actions(game, commandable)` dropping the two rows that would act for
+  the side on turn. The wake-up is a signal rather than a flag the runner polls, so leaving the
+  match from the pause menu takes the parked await with the scene instead of resuming into a board
+  that is gone. It matters most in a watched match, where every turn is a computer's and there was
+  otherwise no route to a menu — or out — at all; `ai_pause` in `BattleTransitionScenario` is the
+  driven proof, and the claim it exists for is that a resumed turn really resumes.

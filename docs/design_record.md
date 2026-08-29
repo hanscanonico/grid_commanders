@@ -10,7 +10,8 @@ clauses and the risk-register prose.
 `.lavish/*.html` plans are still the designs of record; this is the record of what was decided or
 measured *since* they were written, and where those two disagree this file wins.
 
-Only these nine are here. Every other plan is stated in full in its rule file under
+Only these nine *plans* are here, plus one appendix at the end — the rationale behind `CLAUDE.md`'s
+architecture rules, which belongs to no single plan. Every other plan is stated in full in its rule file under
 `.claude/rules/` and **has no copy in this file** — one entry, one place, because a decision
 written twice is updated in one of them. The text below is verbatim what the index carried before
 the split, so nothing has been re-summarised; an entry that has drifted from the index is a bug in
@@ -1580,3 +1581,64 @@ and which is given one back here. Reproduced otherwise verbatim.
   `docs/mobile_soak.md` §6 lists — a campaign mission, a four-army Bulwark round timed against §2's
   desktop figures, a replay watched to its end on Pause/Step/Resume alone (which is where the Step
   chip is proven), a save resumed after eviction, and audio interruption over all of it.
+
+
+## Appendix — the architecture rules' rationale
+
+Not a plan entry. `CLAUDE.md`'s **Working in this repo** section states each of these rules in one
+or two lines; the argument for them — the bugs that produced them, and the exact shape of each
+authority — is here, because none of it belongs to a single plan and none of it needs to be
+resident in every session.
+
+### Single authorities exist because independent second opinions were real bugs here
+
+- `core/rules/attack_range.gd` owns **who** a unit may shoot, **how far**, and **with which
+  weapon**: `can_engage`, `covers`, and `ready_shot` — the one selector, over
+  `DamageChart.select_shot`, that every caller from `AttackCommand` to the overlays, the forecast,
+  the counter, the AI and the threat map goes through. `can_fire` is its yes or no. Nobody asks a
+  unit whether it has ammo: `Unit.ammo` is the primary pool alone, and only the selector knows a
+  dry primary can still fall back to an infinite secondary. Asking the damage chart directly was
+  the whole answer only until a submarine could be under the water.
+- `core/movement_resolver.gd` owns the movement budget, the per-step terrain cost and **where a
+  move may end** (`can_stop`) — all three **including inside `MoveCommand.validate`**, which
+  reaches them through `MoveCommand.move_error`, the seam a move-and-then command uses when it
+  already holds the mover's sight. A fourth opinion on movement made the range overlay offer cells
+  the command then refused.
+- Countering is the one deliberate exception on distance, documented on
+  `CombatResolver._counter_shot`.
+- `LoadCommand.carriage_error` owns **may this rider be inside this transport at all** —
+  transport, cargo class, capacity, no second level of nesting, same team — asked by
+  `LoadCommand.validate` before a board and by `SaveCodec` per wired carrier link. While the codec
+  kept its own opinion, a hand-edited save could seat a battleship in an infantry.
+- `core/grid.gd` (`Grid.manhattan`, and `Grid.ring_offsets` for the Manhattan diamond every ring is
+  cut to) is the smallest of them and the one every layer touches: this board measures distance
+  four-directionally everywhere — movement, every firing ring, sight, supply reach, the planner's
+  goals — so ask it rather than spelling the arithmetic again.
+
+### Doctrine hooks take an `Engagement`, not two `Unit`s
+
+`core/rules/engagement.gd` carries the effective values a shot is resolved with: the cell it is
+*actually* fired from and the HP the formula should use — which is what keeps the damage preview
+and the resolved attack on identical numbers. `CombatResolver.forecast_at` takes the defender's
+cell for the same reason, so the AI can ask "how hard am I hit if I stop here?" without standing a
+live unit somewhere to ask it. Forecasting is a pure read — if a query has to mutate the board, it
+is wrong.
+
+### Movement domains are data, not code
+
+A move class is a key in each terrain's `move_costs` (`air` on every terrain, `ship`/`lander` on
+the water) — aircraft and hulls needed no `MovementResolver` change. What a property builds and
+refits is `TerrainType.builds` / `services`, read by `BuildCommand`, the build menu and the AI's
+production alike — never a terrain id checked in three places.
+
+### Fog is enforced in the presentation layer
+
+`core/rules/vision.gd` is the single authority for "what can this player see?". The sim stays
+permissive; the UI refuses to target or inspect what the viewer cannot see. The AI deliberately
+sees everything **except** units a doctrine hides — it asks `Vision.is_hidden_from` for that one
+case; don't widen the exception without a matching plan decision. The one made widening: a
+committed path is planned and walked with the mover's *own* visibility, so a unit hidden from the
+AI can spring an ambush on its move exactly as one can on a human's — the AI's *pathing* is
+fog-limited, its *targeting* stays omniscient-except-doctrine-hidden. A submerged submarine is
+hidden through the same hook even with fog off. The live scene's adapter from this authority to
+viewer policy is `BattlePerspective`, whose entry is in `.claude/rules/presentation.md`.

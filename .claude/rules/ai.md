@@ -251,3 +251,18 @@ root index are in `docs/design_record.md`.
   contract — `0.0` on every tier, and measured worthless by the arena's first search campaign —
   rather than live like supply.
   **Load and Drop stay out**, on the naval plan's standing R1: the planner cannot plan a ferry.
+
+## `AIController` is a façade, not a planning bucket — the long form
+
+`CLAUDE.md` states this rule in a line; its shape is here, where it loads with `ai/`.
+
+`AIController` asks for Command Power first, then delegates to exactly two coarse collaborators:
+`AIUnitActionPlanner` and `AIProductionPlanner`. `AIPlanningContext` is the one owner of
+scan-ordered per-decision facts (friendlies, visible enemies, properties, unit types, goals,
+capture claims and the production roster) and the threat map cache shared across decisions in a
+turn. `AIPlanCache` is the planner's own, keeping each ready unit's `AIUnitPlan` between the
+commands of one turn and dropping what a **board diff** — never the returned `Command` — says could
+have moved; rescoring every survivor after every command is load-bearing (it is how a wounded
+target's kill reaches the next attacker), so the cache may drop a plan that still held and may
+never keep one that did not (arena plan AR1). Preserve strict comparator order and profile reads
+when moving AI code; never tune a `.tres` in an extraction.
