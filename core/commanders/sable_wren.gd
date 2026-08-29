@@ -1,8 +1,8 @@
 class_name SableWren
 extends CommanderType
 ## Verdant League. Ambush doctrine: her army is worth more in cover than in the
-## open, to the point of being punished for using roads. Vanish makes that cover
-## absolute for a round.
+## open — cover hardens it and sharpens its shots, with no matching punishment
+## for standing anywhere else. Vanish makes that cover absolute for a round.
 ##
 ## Vanish is the reworked version (decision D4). As originally written — "units
 ## in Woods can only be revealed from an adjacent tile" — it was a no-op, because
@@ -15,9 +15,8 @@ extends CommanderType
 ## end of her own turn would never be there when the opponent walked into it.
 
 @export var woods_star_bonus: int = 1
-## Negative on purpose: the price of the cover bonus is being caught in the open.
-@export var road_defense_pct: int = -10
-@export var road_terrain: StringName = &"road"
+## What an everyday shot out of cover gains, power or no power.
+@export var cover_attack_pct: int = 20
 @export var ambush_attack_pct: int = 40
 ## Tiles of progress a quiet move gives up to stand in cover — the everyday
 ## preference, and the strong one once Vanish is banked or running.
@@ -29,17 +28,17 @@ func star_bonus(state: GameState, fight: Engagement) -> int:
 	return woods_star_bonus if _is_cover(state, fight.defender_cell) else 0
 
 
-func defense_bonus(state: GameState, fight: Engagement) -> int:
-	return road_defense_pct if _terrain_at(state, fight.defender_cell) == road_terrain else 0
-
-
-## The ambush itself. "First attack from cover" and "an attack from cover" are
-## the same thing in practice — a unit acts once per turn — so this does not
-## carry per-unit state it would then have to save and restore.
+## Shooting out of cover, and the ambush on top of it. "First attack from cover"
+## and "an attack from cover" are the same thing in practice — a unit acts once
+## per turn — so this does not carry per-unit state it would then have to save
+## and restore. The two stack additively, like every other bonus the formula
+## reads.
 func attack_bonus(state: GameState, fight: Engagement) -> int:
-	if not _is_active(state, fight.attacker.team):
+	if not _is_cover(state, fight.attacker_cell):
 		return 0
-	return ambush_attack_pct if _is_cover(state, fight.attacker_cell) else 0
+	if _is_active(state, fight.attacker.team):
+		return cover_attack_pct + ambush_attack_pct
+	return cover_attack_pct
 
 
 func hides_unit(state: GameState, unit: Unit) -> bool:
@@ -84,8 +83,3 @@ func _has_unit_in_cover(state: GameState, team: int) -> bool:
 func _is_cover(state: GameState, cell: Vector2i) -> bool:
 	var terrain := state.map.terrain_at(cell)
 	return terrain != null and terrain.conceals
-
-
-func _terrain_at(state: GameState, cell: Vector2i) -> StringName:
-	var terrain := state.map.terrain_at(cell)
-	return terrain.id if terrain != null else &""
