@@ -104,9 +104,43 @@ func test_renaming_moves_the_board_and_refuses_to_bury_another() -> void:
 	assert_true(UserMaps.exists("second_draft"))
 
 
+func test_duplicating_a_board_writes_the_same_text_under_a_free_name() -> void:
+	assert_eq(_save("gulf", BOARD), "")
+	var copy := UserMaps.copy_name("gulf")
+	assert_eq(copy, "gulf_copy")
+	_written.append(copy)
+	assert_eq(UserMaps.copy_to("gulf", copy), "")
+	assert_true(UserMaps.exists("gulf"), "the original stays")
+	var made := UserMaps.load_map(copy, Fixture.terrain_db())
+	assert_not_null(made, "and the copy parses")
+	if made != null:
+		assert_eq(made.description, "A board somebody drew.")
+
+
+func test_a_second_copy_takes_the_next_free_name() -> void:
+	assert_eq(_save("gulf", BOARD), "")
+	_written.append("gulf_copy")
+	assert_eq(UserMaps.copy_to("gulf", "gulf_copy"), "")
+	assert_eq(UserMaps.copy_name("gulf"), "gulf_copy_2")
+
+
+func test_a_copy_never_writes_over_a_board() -> void:
+	assert_eq(_save("gulf", BOARD), "")
+	assert_eq(_save("gulf_copy", BOARD), "")
+	assert_ne(UserMaps.copy_to("gulf", "gulf_copy"), "")
+
+
+func test_a_copy_of_a_long_name_still_fits_the_cap() -> void:
+	var long_name := "x".repeat(UserMaps.MAX_NAME_LENGTH)
+	assert_eq(_save(long_name, BOARD), "")
+	var copy := UserMaps.copy_name(long_name)
+	assert_eq(UserMaps.name_error(copy), "", "'%s' should be a usable name" % copy)
+
+
 func test_removing_a_board_that_is_not_there_says_so() -> void:
 	assert_ne(UserMaps.delete("never_existed"), "")
 	assert_ne(UserMaps.rename("never_existed", "somewhere"), "")
+	assert_ne(UserMaps.copy_to("never_existed", "somewhere"), "")
 
 
 func _save(name: String, text: String) -> String:

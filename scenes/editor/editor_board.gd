@@ -107,9 +107,33 @@ func set_cursor(cell: Vector2i) -> void:
 
 
 ## One rung in or out, whichever end of the ladder the step falls off.
-func zoom_step(rungs: int) -> void:
-	_rung = clampi(_rung + rungs, 0, _rungs.size() - 1)
+func zoom_step(step: int) -> void:
+	settle_at(rung_index() + step)
+
+
+## Puts the board on a rung, which is the one way onto one: a board can no more
+## rest between two rungs under a pinch than under a key.
+func settle_at(index: int) -> void:
+	var wanted := clampi(index, 0, _rungs.size() - 1)
+	if wanted == _rung:
+		return
+	_rung = wanted
 	refresh()
+
+
+## The ladder this board offers and which rung it stands on. A pinch is measured
+## from the rung it began on, so the hand needs both (`EditorTouch`).
+func rungs() -> PackedFloat64Array:
+	return _rungs
+
+
+func rung_index() -> int:
+	return maxi(_rung, 0)
+
+
+## The draft's size in cells, which is what a gesture clamps a walked cursor to.
+func board_size() -> Vector2i:
+	return _doc.size() if _doc != null else Vector2i.ZERO
 
 
 ## A cell's width on screen, which is what the scroll and the cursor measure in.

@@ -1,7 +1,7 @@
 class_name UserMaps
 extends RefCounted
-## Storage for the boards the player draws: reads, writes, renames and deletes
-## files under `MapCatalog.USER_DIR`, and nothing else.
+## Storage for the boards the player draws: reads, writes, renames, copies and
+## deletes files under `MapCatalog.USER_DIR`, and nothing else.
 ##
 ## Everything about *what* a board contains belongs to `MapData` and
 ## `MapDocument`, and whether it plays belongs to `MapValidator` — the same split
@@ -24,6 +24,10 @@ const NAME_CHARACTERS := "abcdefghijklmnopqrstuvwxyz0123456789_-"
 ## How long a name may be — twice the longest board that ships
 ## (`coal_and_crown`, at 14), which is room for a title and none for a paragraph.
 const MAX_NAME_LENGTH := 28
+## What a copy is called, and how much of the cap the number after it may take —
+## `_99`, which is more copies of one board than anybody makes.
+const COPY_SUFFIX := "_copy"
+const COPY_NUMBER_ROOM := 3
 
 
 ## The file `name` is kept in, whether or not anything is there yet.
@@ -126,6 +130,33 @@ static func rename(from: String, to: String) -> String:
 	if dir == null or dir.rename(path_for(from), path_for(to)) != OK:
 		return "'%s' could not be renamed." % slug(from)
 	return ""
+
+
+## Writes a second copy of a board under `to`, byte for byte — the text is the
+## board, so a copy is the file rather than a re-serialised document, and a
+## board hand-edited outside the game copies exactly as it stands. Returns "" on
+## success, else why not.
+static func copy_to(from: String, to: String) -> String:
+	if not exists(from):
+		return "There is no map called '%s'." % slug(from)
+	if exists(to):
+		return "You already have a map called '%s'." % slug(to)
+	return save(to, FileAccess.get_file_as_string(path_for(from)))
+
+
+## A free name for a copy of `name`: the board's own with a `_copy` suffix, and a
+## number after it once that is taken too. Here rather than at the button that
+## offers it, because which names are free is this file's answer and a caller
+## guessing one would be a second opinion about the folder.
+static func copy_name(name: String) -> String:
+	var room := MAX_NAME_LENGTH - COPY_SUFFIX.length() - COPY_NUMBER_ROOM
+	var stem := slug(name).left(room) + COPY_SUFFIX
+	if not exists(stem):
+		return stem
+	var next := 2
+	while exists("%s_%d" % [stem, next]):
+		next += 1
+	return "%s_%d" % [stem, next]
 
 
 static func _ensure_dir() -> bool:

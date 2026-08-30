@@ -83,14 +83,14 @@ func _build() -> void:
 		"Save", "", UiTheme.ButtonVariant.PRIMARY, UiTheme.menu_identity().theme(1), 96
 	)
 	_save_button.pressed.connect(_confirm)
-	actions.add_child(_save_button)
+	actions.add_child(UiKit.touchable(_save_button))
 	var back := UiKit.action_button("Cancel", "", UiTheme.ButtonVariant.GHOST, null, 96)
 	back.pressed.connect(
 		func() -> void:
 			hide()
 			cancelled.emit()
 	)
-	actions.add_child(back)
+	actions.add_child(UiKit.touchable(back))
 	main.add_child(actions)
 	main.add_child(UiKit.key_legend("ENTER  SAVE      ESC  BACK"))
 
@@ -105,26 +105,10 @@ func _labelled(caption: String, field: LineEdit) -> Control:
 	return row
 
 
-## A typed line, dressed as the cream controls beside it. The game has no other
-## text field, so the dress is stated here rather than in the shared kit — a
-## widget with one caller is that caller's until it has two.
+## A typed line at the page's reading width. The dress is `UiKit.text_field`'s —
+## the rename prompt in the map picker types into the same control.
 func _field(placeholder: String, max_length: int) -> LineEdit:
-	var field := LineEdit.new()
-	field.placeholder_text = placeholder
-	field.max_length = max_length
-	field.custom_minimum_size = Vector2(_ROW_WIDTH, 18)
-	field.add_theme_font_override("font", UiTheme.stat())
-	field.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	field.add_theme_color_override("font_color", UiTheme.INK)
-	field.add_theme_color_override("font_placeholder_color", UiTheme.NEUTRAL)
-	field.add_theme_color_override("caret_color", UiTheme.INK)
-	field.add_theme_stylebox_override(
-		"normal", UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
-	)
-	field.add_theme_stylebox_override(
-		"focus", UiTheme.bordered(UiTheme.PAPER_RAISED, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
-	)
-	return field
+	return UiKit.text_field(placeholder, max_length, _ROW_WIDTH)
 
 
 ## What the name currently is, and whether it may be written: a refusal disables
