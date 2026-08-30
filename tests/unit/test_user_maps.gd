@@ -79,6 +79,22 @@ func test_a_name_that_ships_with_the_game_is_refused() -> void:
 	assert_eq(MapCatalog.resolve(shipped), MapCatalog.paths()[0], "so the roster still wins")
 
 
+## Opening a shipped board in the editor is opening a copy: the name is blanked
+## there, and every other route to that file is closed here — a board the game
+## ships can only be saved under a name of the player's own, in their own folder.
+func test_a_shipped_board_cannot_be_written_back_to_its_own_file() -> void:
+	var shipped_path: String = MapCatalog.paths()[0]
+	var shipped: String = shipped_path.get_file().trim_suffix(".txt")
+	var before := FileAccess.get_file_as_string(shipped_path)
+	assert_ne(UserMaps.save(shipped, BOARD), "", "saving under a shipped name is refused")
+	assert_eq(FileAccess.get_file_as_string(shipped_path), before, "the shipped board is untouched")
+	assert_false(UserMaps.exists(shipped), "and nothing was written under that name either")
+	assert_true(
+		UserMaps.path_for("anything at all").begins_with(MapCatalog.USER_DIR),
+		"and the only file this class can name is one of the player's own"
+	)
+
+
 func test_a_name_longer_than_the_cap_is_refused() -> void:
 	assert_ne(UserMaps.name_error("x".repeat(UserMaps.MAX_NAME_LENGTH + 1)), "")
 	assert_eq(UserMaps.name_error("x".repeat(UserMaps.MAX_NAME_LENGTH)), "")

@@ -21,6 +21,7 @@ const _BUTTON_W := 44
 
 var _undo: Button
 var _redo: Button
+var _erase: Button
 var _headline: Label
 
 
@@ -33,7 +34,7 @@ func configure(with_brushes: bool) -> void:
 	add_child(title)
 	_undo = _button("Undo", func() -> void: undo_asked.emit())
 	_redo = _button("Redo", func() -> void: redo_asked.emit())
-	_button("Erase", func() -> void: erase_asked.emit())
+	_erase = _button("Erase", func() -> void: erase_asked.emit())
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(gap)
@@ -45,12 +46,21 @@ func configure(with_brushes: bool) -> void:
 	_headline.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	add_child(_headline)
 	show_history(false, false)
+	show_erase(false)
 
 
 ## Lights Undo and Redo only while there is something behind or ahead.
 func show_history(undo_ready: bool, redo_ready: bool) -> void:
 	_undo.disabled = not undo_ready
 	_redo.disabled = not redo_ready
+
+
+## Whether the Erase brush is the one in hand. The row is a row of plates, so
+## the armed one takes the accent every chosen action in this game wears —
+## nothing else on the page may read as chosen at the same time.
+func show_erase(active: bool) -> void:
+	var variant := UiTheme.ButtonVariant.PRIMARY if active else UiTheme.ButtonVariant.SECONDARY
+	UiTheme.apply_button(_erase, variant, null, UiTheme.SIZE_BUTTON)
 
 
 ## What the draft is, in the corner of the row: its size and its seats.

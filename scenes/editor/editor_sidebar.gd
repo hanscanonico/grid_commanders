@@ -45,6 +45,9 @@ var _seat: int = MapData.PLAYER_TEAMS[0]
 ## Which row of `_unit_buttons` is lit. Row 0 is the eraser, so a fresh column
 ## has no unit in hand and the first press on the board cannot stand one.
 var _unit := 0
+## Whether the unit brush is the one the next press stands. The seat is not
+## covered by this: it aims every brush, so its chip stays lit throughout.
+var _unit_armed := false
 var _size := Vector2i.ZERO
 var _width_value: Label
 var _height_value: Label
@@ -83,6 +86,14 @@ func unit() -> UnitType:
 func unit_name() -> String:
 	var unit_type := unit()
 	return unit_type.display_name if unit_type != null else "NO UNIT"
+
+
+## Whether the unit brush is the one in hand.
+func show_unit_armed(active: bool) -> void:
+	if _unit_armed == active:
+		return
+	_unit_armed = active
+	_restyle()
 
 
 ## Shows the board's size, which the steppers walk from.
@@ -223,7 +234,7 @@ func _restyle() -> void:
 		var accent := UiTheme.NEUTRAL if team == MapData.NEUTRAL else identity.theme(team).color
 		UiKit.style_segment(_seat_buttons[i], team == _seat, i > 0, accent)
 	for i in _unit_buttons.size():
-		var chosen := i == _unit
+		var chosen := _unit_armed and i == _unit
 		var variant := UiTheme.ButtonVariant.SECONDARY if chosen else UiTheme.ButtonVariant.GHOST
 		UiTheme.apply_button(_unit_buttons[i], variant, null, UiTheme.SIZE_BUTTON)
 		_unit_labels[i].add_theme_color_override(

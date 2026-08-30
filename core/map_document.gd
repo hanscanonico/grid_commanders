@@ -112,6 +112,9 @@ func resize(map_width: int, map_height: int) -> void:
 ## which is a board the validator rightly refuses. `MapData.NEUTRAL` leaves the
 ## cell's ownership as it stands. Ownership clears when the cell stops being a
 ## property: a team owns a building, not the ground it stood on.
+##
+## An army has one home, so painting a headquarters for a seat that already
+## holds one *moves* it: the old cell goes back to bare ground.
 func paint(cell: Vector2i, terrain_id: StringName, team: int = MapData.NEUTRAL) -> bool:
 	var terrain := _db.by_id(terrain_id)
 	if terrain == null:
@@ -128,7 +131,30 @@ func paint(cell: Vector2i, terrain_id: StringName, team: int = MapData.NEUTRAL) 
 	return true
 
 
-## Hands `cell` to `team`, or back to nobody with `MapData.NEUTRAL`.
+## Where `team`'s headquarters stand — none on a board that has not named one
+## yet, and more than one only on a draft that was opened already holding them.
+func headquarters_of(team: int) -> Array[Vector2i]:
+	var homes: Array[Vector2i] = []
+	for cell: Vector2i in _owners:
+		if _owners[cell] == team and terrain_at(cell).is_headquarters:
+			homes.append(cell)
+	return homes
+
+
+## Takes `team`'s headquarters back to bare ground, `keeping` aside. Whatever
+## stands on the old cell stays standing: the army is moving house, not
+## disbanding.
+func _take_the_old_home(team: int, keeping: Vector2i) -> void:
+	for cell in headquarters_of(team):
+		if cell == keeping:
+			continue
+		_terrain[cell.y * width + cell.x] = _db.ground()
+		_owners.erase(cell)
+
+
+## Hands `cell` to `team`, or back to nobody with `MapData.NEUTRAL`. Handing an
+## army a headquarters takes away the one it already held: an army has one home,
+## and a board naming two is one the validator refuses.
 func set_owner(cell: Vector2i, team: int) -> bool:
 	if not in_bounds(cell):
 		push_error("MapDocument: cell %s out of bounds" % cell)
@@ -142,6 +168,8 @@ func set_owner(cell: Vector2i, team: int) -> bool:
 	if not terrain_at(cell).is_property:
 		push_error("MapDocument: cell %s is not a property, cannot be owned" % cell)
 		return false
+	if terrain_at(cell).is_headquarters:
+		_take_the_old_home(team, cell)
 	_owners[cell] = team
 	return true
 

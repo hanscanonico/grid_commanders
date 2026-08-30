@@ -96,6 +96,42 @@ func test_a_building_painted_for_a_seat_is_that_seats() -> void:
 	assert_eq(doc.owner_at(Vector2i(1, 0)), MapData.NEUTRAL, "and open ground is owned by nobody")
 
 
+## An army has one home. Painting a second headquarters for a seat moves the one
+## it had rather than adding to it, so an author who wanted their HQ elsewhere
+## does not have to erase the old one to be allowed to save.
+func test_an_army_keeps_exactly_one_headquarters() -> void:
+	var doc := MapDocument.blank(4, 1, terrain_db)
+	assert_true(doc.paint(Vector2i(0, 0), &"hq", 1), "seat 1 takes a home")
+	assert_true(doc.paint(Vector2i(1, 0), &"hq", 1), "and then wants it one cell over")
+	assert_eq(doc.headquarters_of(1), [Vector2i(1, 0)] as Array[Vector2i], "one home, the new one")
+	assert_eq(
+		doc.terrain_at(Vector2i(0, 0)).id, TerrainDB.GROUND_ID, "the old cell is bare ground again"
+	)
+	assert_eq(doc.owner_at(Vector2i(0, 0)), MapData.NEUTRAL, "owned by nobody")
+
+	assert_true(doc.paint(Vector2i(3, 0), &"hq", 2), "seat 2 takes a home of its own")
+	assert_eq(doc.headquarters_of(1), [Vector2i(1, 0)] as Array[Vector2i], "seat 1 keeps its own")
+	assert_eq(doc.headquarters_of(2), [Vector2i(3, 0)] as Array[Vector2i], "beside seat 2's")
+	assert_eq(
+		MapValidator.draft_errors(doc, terrain_db).filter(
+			func(text: String) -> bool: return text.contains("headquarters")
+		),
+		[] as Array[String],
+		"and the validator has nothing to say about either army's home"
+	)
+
+
+## The owner brush hands over a building that is already painted, so it is the
+## second way to give an army a second home and answers the rule the same way.
+func test_handing_an_army_a_second_headquarters_moves_its_home() -> void:
+	var doc := MapDocument.blank(2, 1, terrain_db)
+	doc.paint(Vector2i(0, 0), &"hq", 1)
+	doc.paint(Vector2i(1, 0), &"hq", 2)
+	assert_true(doc.set_owner(Vector2i(1, 0), 1), "seat 1 takes seat 2's home")
+	assert_eq(doc.headquarters_of(1), [Vector2i(1, 0)] as Array[Vector2i], "and gives up its own")
+	assert_eq(doc.terrain_at(Vector2i(0, 0)).id, TerrainDB.GROUND_ID, "which is ground again")
+
+
 func test_resizing_keeps_the_overlap_and_drops_what_falls_off() -> void:
 	var doc := MapDocument.blank(3, 3, terrain_db)
 	doc.paint(Vector2i(0, 0), &"mountain")

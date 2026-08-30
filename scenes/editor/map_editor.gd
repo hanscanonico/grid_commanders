@@ -63,9 +63,15 @@ var _sheet: EditorToolSheet
 var _touch: EditorTouch
 var _open_panel: EditorOpenPanel
 var _save_dialog: EditorSaveDialog
+var _leave_guard: EditorLeaveGuard
 var _toolbar: EditorToolbar
 var _status: Label
 var _brush := Brush.TERRAIN
+## The seat the last press on a chip named. Kept because a chip pressed while it
+## is already in hand means something else than one that changes the seat: the
+## seat aims every brush, so re-pressing it is the one way to ask for the owner
+## brush, which has no column of its own to be picked from.
+var _seat_in_hand: int = MapData.PLAYER_TEAMS[0]
 ## Everything wrong with the draft as it stands, re-read after every edit.
 var _defects: Array[MapDefect] = []
 ## Why the press that just landed changed nothing, in the author's words. Set by
@@ -78,6 +84,10 @@ var _history := MapHistory.new()
 ## Whether the stroke in hand has changed anything yet. A drag that crossed only
 ## cells already holding what the brush lays is not a step to take back.
 var _stroke_changed := false
+## Whether the draft holds work that is not on disk. Cleared by a save and by
+## taking up another draft, never by undoing back to where a stroke started —
+## the file is what it was written as, not what the history remembers.
+var _dirty := false
 ## One step per gesture, the board's convention (see DirectionalInput).
 var _dirs := DirectionalInput.new()
 
@@ -102,7 +112,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _history_key(event):
 		return
 	if event.is_action_pressed(&"cancel"):
-		_leave()
+		_ask_leave()
 		return
 	if event.is_action_pressed(&"zoom_in"):
 		_board.zoom_step(1)
@@ -144,6 +154,7 @@ func _page_is_open() -> bool:
 		_new_map.visible
 		or _open_panel.visible
 		or _save_dialog.visible
+		or _leave_guard.visible
 		or (_sheet != null and _sheet.visible)
 	)
 
@@ -164,19 +175,27 @@ func _open_path(path: String) -> void:
 	var map := MapData.load_from_file(path, _db)
 	if map == null:
 		_status.text = "THAT BOARD COULD NOT BE READ"
+		if _doc == null:
+			_new_map.begin()
 		return
 	var doc := MapDocument.from_map(map, _db)
-	if not path.begins_with(MapCatalog.USER_DIR):
+	var shipped := not path.begins_with(MapCatalog.USER_DIR)
+	if shipped:
 		doc.map_name = ""
 	_seats = doc.player_count()
 	_adopt(doc)
+	if shipped:
+		_status.text = "OPENED AS A COPY — SAVE IT UNDER A NAME OF YOUR OWN"
 
 
 func _adopt(doc: MapDocument) -> void:
 	_doc = doc
 	_history.begin(_doc)
+	_stroke_changed = false
+	_dirty = false
 	_board.show_document(_doc, _db, _unit_db)
 	_inspector.show_size(_doc.size())
+	_show_history()
 	_revalidate()
 	_say_cursor()
 
@@ -185,7 +204,10 @@ func _adopt(doc: MapDocument) -> void:
 ## board, the validator and the status line all read the restored draft, exactly
 ## as they read a stroke that had just been laid.
 func _step_history(forward: bool) -> void:
+	if _doc == null:
+		return
 	var moved := _history.redo(_doc) if forward else _history.undo(_doc)
+	_show_history()
 	if not moved:
 		_status.text = "NOTHING TO REDO" if forward else "NOTHING TO UNDO"
 		return
@@ -208,8 +230,10 @@ func _end_stroke() -> void:
 	if not _stroke_changed:
 		return
 	_stroke_changed = false
+	_dirty = true
 	_history.record(_doc)
 	_show_history()
+	_revalidate()
 
 
 func _show_history() -> void:
@@ -218,16 +242,16 @@ func _show_history() -> void:
 
 ## Lays the brush on `cell`, and does nothing at all where it would change
 ## nothing — a drag crosses the same cell many times, and each stroke re-reads
-## the whole board.
+## the whole board. What the draft still lacks is read once the stroke closes:
+## the validator floods the whole board, and a held drag would run it per cell.
 func _apply_at(cell: Vector2i) -> void:
-	if not _doc.in_bounds(cell):
+	if _doc == null or not _doc.in_bounds(cell):
 		return
 	_board.set_cursor(cell)
 	_refusal = ""
 	if _apply_brush(cell):
 		_stroke_changed = true
 		_board.refresh()
-		_revalidate()
 	if _refusal.is_empty():
 		_say_cursor()
 	else:
@@ -251,9 +275,14 @@ func _apply_brush(cell: Vector2i) -> bool:
 		Brush.ERASE:
 			return _doc.clear(cell)
 	var terrain := _palette.selected()
-	if terrain == null or _doc.terrain_at(cell).id == terrain.id:
+	if terrain == null:
 		return false
-	return _doc.paint(cell, terrain.id, _inspector.seat())
+	var seat := _inspector.seat()
+	var same_ground: bool = _doc.terrain_at(cell).id == terrain.id
+	var same_owner: bool = seat == MapData.NEUTRAL or _doc.owner_at(cell) == seat
+	if same_ground and same_owner:
+		return false
+	return _doc.paint(cell, terrain.id, seat)
 
 
 func _stand_unit(cell: Vector2i) -> bool:
@@ -282,6 +311,8 @@ func _revalidate() -> void:
 
 
 func _ask_save() -> void:
+	if _doc == null:
+		return
 	_hand_the_board_back()
 	if not _defects.is_empty():
 		_status.text = "FIX WHAT IS LISTED BELOW THE BOARD FIRST"
@@ -290,12 +321,15 @@ func _ask_save() -> void:
 
 
 func _on_saved(map_name: String, description: String) -> void:
+	var previous := _doc.description
 	_doc.description = description
 	var error := UserMaps.save(map_name, _doc.to_text())
 	if error != "":
+		_doc.description = previous
 		_save_dialog.refuse(error)
 		return
 	_doc.map_name = UserMaps.slug(map_name)
+	_dirty = false
 	_save_dialog.close()
 	_hand_the_board_back()
 	_status.text = "SAVED AS %s" % _doc.map_name.to_upper()
@@ -320,6 +354,16 @@ func _on_open_cancelled() -> void:
 	_on_page_cancelled()
 
 
+## Leaving is the one action the editor asks about first, and only while there
+## is work no file holds.
+func _ask_leave() -> void:
+	if not _dirty:
+		_leave()
+		return
+	_hand_the_board_back()
+	_leave_guard.begin()
+
+
 func _leave() -> void:
 	get_tree().change_scene_to_file(MENU_SCENE)
 
@@ -332,11 +376,32 @@ func _leave() -> void:
 ## the new brush at once rather than at the next thing the cursor does.
 func _arm(brush: Brush) -> void:
 	_brush = brush
+	_show_brush()
 	if _sheet != null:
 		_sheet.close()
 	_hand_the_board_back()
 	if _doc != null:
 		_say_cursor()
+
+
+## Every control that can hold a brush says whether it is holding this one, so
+## the page never shows two brushes chosen at once.
+func _show_brush() -> void:
+	_toolbar.show_erase(_brush == Brush.ERASE)
+	_palette.show_armed(_brush == Brush.TERRAIN)
+	_inspector.show_unit_armed(_brush == Brush.UNIT)
+	if _sheet != null:
+		_sheet.show_erase(_brush == Brush.ERASE)
+
+
+## The seat aims every brush rather than being one: picking one keeps the
+## terrain or the unit in hand and only changes the army it is laid for. Pressing
+## the chip already in hand is the ask for the owner brush, which recolours a
+## building without repainting it.
+func _on_seat_picked(team: int) -> void:
+	var again := team == _seat_in_hand
+	_seat_in_hand = team
+	_arm(Brush.OWNER if again or _brush == Brush.ERASE else _brush)
 
 
 ## Takes the focus off whatever menu control holds it. **The board is not a
@@ -351,13 +416,12 @@ func _hand_the_board_back() -> void:
 ## Grows or crops the draft under the cursor, which is the only way back from a
 ## board the validator refuses for its size.
 func _on_resize_asked(board_size: Vector2i) -> void:
-	if _doc.size() == board_size:
+	if _doc == null or _doc.size() == board_size:
 		return
 	_doc.resize(board_size.x, board_size.y)
 	_stroke_changed = true
 	_end_stroke()
 	_board.fit_cursor()
-	_revalidate()
 	_say_cursor()
 
 
@@ -369,6 +433,8 @@ func _on_resize_asked(board_size: Vector2i) -> void:
 ## is swallowed, so a right-click on the board cannot read as the cancel it also
 ## is and walk the author out of their draft.
 func _on_board_input(event: InputEvent) -> void:
+	if _doc == null:
+		return
 	if _touch != null:
 		if _touch.handle(event):
 			_board.accept_event()
@@ -415,7 +481,7 @@ func _build() -> void:
 	_inspector = EditorSidebar.new()
 	_inspector.custom_minimum_size = Vector2(_INSPECTOR_W, 0)
 	_inspector.configure(_unit_db)
-	_inspector.seat_picked.connect(func(_team: int) -> void: _arm(Brush.OWNER))
+	_inspector.seat_picked.connect(_on_seat_picked)
 	_inspector.unit_picked.connect(func(_unit_type: UnitType) -> void: _arm(Brush.UNIT))
 	_inspector.resize_asked.connect(_on_resize_asked)
 
@@ -431,6 +497,7 @@ func _build() -> void:
 	main.add_child(UiKit.key_legend(LEGEND_TOUCH if MobileProfile.active() else LEGEND_KEYS))
 
 	_build_pages()
+	_show_brush()
 
 
 func _build_board_column() -> Control:
@@ -477,6 +544,12 @@ func _build_pages() -> void:
 	add_child(_save_dialog)
 	_save_dialog.saved.connect(_on_saved)
 	_save_dialog.cancelled.connect(_on_page_cancelled)
+
+	_leave_guard = EditorLeaveGuard.new()
+	add_child(_leave_guard)
+	_leave_guard.discarded.connect(_leave)
+	_leave_guard.save_asked.connect(_ask_save)
+	_leave_guard.cancelled.connect(_on_page_cancelled)
 
 	if not MobileProfile.active():
 		return
