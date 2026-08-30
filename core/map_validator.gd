@@ -164,15 +164,14 @@ static func _seat_defects(map: MapData) -> Array[MapDefect]:
 ## Every seat with nothing of its own, in one sentence rather than one apiece.
 static func _unseated_defect(seats: Array[int]) -> MapDefect:
 	var subject := "Seat %d holds nothing" % seats[0]
+	var remedy := "give it a headquarters"
 	if seats.size() > 1:
 		subject = "Seats %s hold nothing" % _listed(seats)
+		remedy = "give each a headquarters"
 	return MapDefect.at(
 		(
-			subject
-			+ (
-				". Seats are numbered from 1 with no gaps, so give each a headquarters or "
-				+ "drop the higher seats."
-			)
+			"%s. Seats are numbered from 1 with no gaps, so %s or drop the higher seats."
+			% [subject, remedy]
 		)
 	)
 
