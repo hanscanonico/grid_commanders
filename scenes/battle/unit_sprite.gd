@@ -172,10 +172,9 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	acted_label = hp_label.duplicate()
 	acted_label.text = "Z"
 	acted_label.position = ACTED_LABEL_OFFSET / SPRITE_SCALE
-	# A status mark, not a stat: muted grey and a size below HP's, so the two are
-	# different categories at a glance. The dark outline is what the duplicate is
-	# for and stays, since reading at the far zoom rungs is the badge's whole job.
-	# Amber is spoken for — that is FuelLabel's attention colour.
+	# Muted grey, so a status mark and a stat are different categories at a glance,
+	# and never amber — that is FuelLabel's attention colour. The outline the
+	# duplicate carries stays: reading at the far zoom rungs is the badge's job.
 	acted_label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	acted_label.add_theme_font_size_override("font_size", ACTED_LABEL_SIZE)
 	add_child(acted_label)
