@@ -185,11 +185,16 @@ func _draw_army(entry: Dictionary, tile: float, identity: SideIdentity) -> void:
 	var team: int = entry.team
 	var art := UnitSprite.texture_for(type, identity.atlas_row(team))
 	var cell: Vector2i = entry.cell
+	draw_texture_rect(art, army_rect(cell, _origin, tile), false)
+
+
+## Where that art lands: anchored by its footprint, the way `UnitSprite.ART_OFFSET`
+## anchors it in a match, so the bottom square covers the tile and the headroom
+## rides above it. Static and pure so the footprint is checkable without a board,
+## the way `cell_from` is.
+static func army_rect(cell: Vector2i, origin: Vector2, tile: float) -> Rect2:
 	var size_px := Vector2(UnitSprite.SPRITE_W, UnitSprite.SPRITE_H) * tile / UnitSprite.SPRITE_W
-	# Anchored by its footprint, the way UnitSprite.ART_OFFSET anchors it in a
-	# match: the bottom square lands on the tile and the headroom rides above it.
-	var at := _origin + Vector2(cell) * tile - Vector2(0, size_px.y - tile)
-	draw_texture_rect(art, Rect2(at, size_px), false)
+	return Rect2(origin + Vector2(cell) * tile - Vector2(0, size_px.y - tile), size_px)
 
 
 ## The liveries this board is painted in: every seat the format allows, never
