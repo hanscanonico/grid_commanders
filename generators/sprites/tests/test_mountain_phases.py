@@ -106,9 +106,19 @@ class MountainPhases(unittest.TestCase):
         tops = [min(_rock_rows(tile)) for tile in self._phases()]
         self.assertTrue(all(top <= tops[0] + 4 for top in tops), tops)
 
+    def test_one_summit_dominates_every_phase(self):
+        """The tile is about ONE peak: the snow line is measured down from the
+        tallest summit (`buildings.MASSIF_CAP`), so a shoulder that reached it
+        would wear a cap of its own and the cell would be a rock pile again."""
+        for phase, (peaks, _) in enumerate(terrain.MOUNTAIN_PHASES):
+            with self.subTest(phase=phase):
+                snow_line = peaks[0][2] - buildings.MASSIF_CAP
+                shoulders = [h for _, _, h in peaks[1:]]
+                self.assertTrue(all(h < snow_line for h in shoulders), peaks)
+
     def test_every_phase_wears_a_cap(self):
         """Snow is what tells a summit from a quarry at the board's 4:1 rung
-        (`buildings.MASSIF_SNOW`), so every phase has to reach it — and reach
+        (`buildings.MASSIF_CAP`), so every phase has to reach it — and reach
         it at the TOP: a cap that has slid down the flank is a snowfield, and
         the rock a phase is mostly made of has to stay rock."""
         for phase, tile in enumerate(self._phases()):
