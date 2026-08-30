@@ -246,14 +246,11 @@ func _pose_seats() -> void:
 ## `_apply_menu_motion`, so the Menu motion toggle takes effect on the press
 ## rather than on the next boot.
 func _build() -> void:
-	# The fullest board in the roster (largest, so last in MapCatalog.ordered()) is
-	# what drifts behind the page, baked by the thumbnail renderer — so the scenery
-	# can never disagree with the picker (plan R2).
-	var roster := _map_picker.maps()
-	var scenery: MapData = null
-	if not roster.is_empty():
-		scenery = roster[roster.size() - 1]
-	_motion.paint_backdrop(self, scenery)
+	# The fullest board on the picker's shelf is what drifts behind the page, baked
+	# by the thumbnail renderer — so the scenery can never disagree with the picker
+	# (plan R2). The picker measures it rather than the menu taking the roster's last
+	# entry: a board the player drew is listed after the shipped ones at any size.
+	_motion.paint_backdrop(self, MapPicker.fullest(_map_picker.maps()))
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)

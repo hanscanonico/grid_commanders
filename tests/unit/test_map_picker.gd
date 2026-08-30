@@ -123,3 +123,23 @@ func test_a_board_the_player_drew_is_badged_custom() -> void:
 func test_a_shipped_board_is_never_custom() -> void:
 	for map in MapCatalog.ordered(Fixture.terrain_db()):
 		assert_false(MapPicker.is_custom(map), map.source_path)
+
+
+## The menu's backdrop is the largest board on the shelf, and stays that board
+## when a small one the player drew is appended after the shipped roster.
+func test_the_backdrop_is_the_largest_board_not_the_last_one() -> void:
+	var db := Fixture.terrain_db()
+	var maps := MapCatalog.ordered(db)
+	var largest := MapPicker.fullest(maps)
+	for map in maps:
+		assert_true(
+			map.width * map.height <= largest.width * largest.height,
+			"%s is no larger than %s" % [map.source_path, largest.source_path]
+		)
+	maps.append(MapData.load_from_file(MapCatalog.TUTORIAL_MAP_PATH, db))
+	assert_eq(MapPicker.fullest(maps), largest, "a small board appended takes no backdrop")
+
+
+func test_an_empty_shelf_has_no_backdrop() -> void:
+	var maps: Array[MapData] = []
+	assert_null(MapPicker.fullest(maps))

@@ -171,6 +171,17 @@ func maps() -> Array[MapData]:
 	return _maps
 
 
+## The largest board on the shelf — what the menu bakes its drifting backdrop
+## from. Measured rather than read off the end of the roster: the boards the
+## player drew come after the shipped ones, whatever size they are.
+static func fullest(maps_on_shelf: Array[MapData]) -> MapData:
+	var largest: MapData = null
+	for map in maps_on_shelf:
+		if largest == null or map.width * map.height > largest.width * largest.height:
+			largest = map
+	return largest
+
+
 func _map_at(index: int) -> MapData:
 	if index < 0 or index >= _maps.size():
 		return null
