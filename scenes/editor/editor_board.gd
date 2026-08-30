@@ -30,6 +30,9 @@ var _marks: Array[Vector2i] = []
 
 var _doc: MapDocument
 var _db: TerrainDB
+## The roster the starting armies are drawn from: a board's units are stored by
+## map symbol and the artwork is asked for by `UnitType`.
+var _units: UnitDB
 ## The draft as the parser reads it, kept from the last refresh: it is what the
 ## thumbnail is drawn from, and what the starting armies are drawn from.
 var _preview: MapData
@@ -44,6 +47,9 @@ var _origin := Vector2.ZERO
 
 func _init() -> void:
 	clip_contents = true
+	# The armies are drawn straight from the units atlas, which is pixel art at
+	# four times the world grid: anything but nearest filtering softens it.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_thumb = MapThumbnail.new()
 	# Behind this control's own `_draw`, since a child paints over its parent and
 	# the cursor is the one thing that may not be painted over.
@@ -57,9 +63,10 @@ func _ready() -> void:
 
 ## Points the board at the draft it is painting, opening at the closest rung to
 ## the one a match opens on.
-func show_document(doc: MapDocument, db: TerrainDB) -> void:
+func show_document(doc: MapDocument, db: TerrainDB, units: UnitDB) -> void:
 	_doc = doc
 	_db = db
+	_units = units
 	_rung = -1
 	cursor_cell = Vector2i.ZERO
 	refresh()
@@ -154,8 +161,9 @@ func _draw() -> void:
 	var tile := tile_px()
 	# A draft the parser refuses has no armies to draw and still has a cursor.
 	if _preview != null:
+		var identity := _identity()
 		for entry: Dictionary in _preview.starting_units:
-			_draw_army_pip(entry, tile)
+			_draw_army(entry, tile, identity)
 	for cell in _marks:
 		var mark := _origin + Vector2(cell) * tile
 		draw_rect(Rect2(mark, Vector2(tile, tile)), DEFECT_INK, false, CURSOR_WIDTH)
@@ -163,18 +171,25 @@ func _draw() -> void:
 	draw_rect(Rect2(at, Vector2(tile, tile)), CURSOR_INK, false, CURSOR_WIDTH)
 
 
-## A starting unit's chip, in the seat's own colour: `MapThumbnail` draws the
-## ground and the buildings on it and nothing that stands on them, so an army
-## the author placed would otherwise be invisible on the board they placed it on.
-## Which unit it is stays the status line's answer — a chip this size can say
-## whose it is and no more.
-func _draw_army_pip(entry: Dictionary, tile: float) -> void:
+## A starting unit, in its seat's own livery and in the footprint a match draws
+## it in: `MapThumbnail` draws the ground and the buildings on it and nothing
+## that stands on them, so an army the author placed would otherwise be invisible
+## on the board they placed it on. The art is the board's own — the whole cell,
+## headroom and all, scaled by the rung the editor stands on — so a unit here
+## looks exactly like the same unit in a match at the same zoom.
+func _draw_army(entry: Dictionary, tile: float, identity: SideIdentity) -> void:
+	var symbol: String = entry.symbol
+	var type := _units.by_symbol(symbol)
+	if type == null:
+		return
+	var team: int = entry.team
+	var art := UnitSprite.texture_for(type, identity.atlas_row(team))
 	var cell: Vector2i = entry.cell
-	var pip := Rect2(
-		_origin + (Vector2(cell) + Vector2.ONE * 0.25) * tile, Vector2.ONE * tile * 0.5
-	)
-	draw_rect(pip, _identity().theme(entry.team).color)
-	draw_rect(pip, UiTheme.SLATE_900, false, CURSOR_WIDTH)
+	var size_px := Vector2(UnitSprite.SPRITE_W, UnitSprite.SPRITE_H) * tile / UnitSprite.SPRITE_W
+	# Anchored by its footprint, the way UnitSprite.ART_OFFSET anchors it in a
+	# match: the bottom square lands on the tile and the headroom rides above it.
+	var at := _origin + Vector2(cell) * tile - Vector2(0, size_px.y - tile)
+	draw_texture_rect(art, Rect2(at, size_px), false)
 
 
 ## The liveries this board is painted in: every seat the format allows, never
