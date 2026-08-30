@@ -41,9 +41,9 @@ func handle_action(action: StringName) -> void:
 		return
 	var team := _battle.game.current_team
 	if action == &"off":
-		_disable(team)
+		await _disable(team)
 	else:
-		_enable(team, action)
+		await _enable(team, action)
 	if _battle.state == Battle.State.MENU:
 		_battle.state = _battle.rest_state()
 
@@ -53,6 +53,15 @@ func handle_action(action: StringName) -> void:
 ## in `ai_teams`) — handed off immediately below — or a turn already on Auto,
 ## paused, and the player is only swapping tiers, which `planner_for` picks up
 ## on the runner's next planned command with no restart needed.
+##
+## The banner is **awaited** before the turn is handed over, because
+## `present_banner` owns ANIMATING for the length of its beat and rests the board
+## at the end of it. Left running, it was still holding that claim when the
+## computer's first turn opened its own day banner, and the Auto banner's epilogue
+## rested the board out from under it — `_begin_turn` reads its state back and
+## gives way to whatever moved it, so the next side never took its turn and the
+## board sat interactive on a computer's. The Auto row is not offered there, which
+## is what made a seat handed over impossible to take back.
 func _enable(team: int, tier_id: StringName) -> void:
 	var tier := _battle.difficulty_db.by_id(tier_id)
 	_battle.auto_tiers[team] = tier_id
@@ -60,7 +69,7 @@ func _enable(team: int, tier_id: StringName) -> void:
 	if team not in _battle.ai_teams:
 		_battle.ai_teams.append(team)
 	_battle.refresh_fog()
-	_battle.present_banner(
+	await _battle.present_banner(
 		"%s: Auto (%s)" % [_battle.view.identity.display_name(team), tier.display_name]
 	)
 	if _battle.rest_state() == Battle.State.IDLE:
@@ -73,10 +82,13 @@ func _enable(team: int, tier_id: StringName) -> void:
 ## its pause_gate() await; the runner's own guard there notices `team` has
 ## left `ai_teams` and returns without planning another command, leaving
 ## `state` at IDLE (rest_state(), once resume_turn() has cleared the pause).
+##
+## The banner is awaited for the same reason `_enable`'s is: it says so over the
+## board that is still held, and the turn is handed back once it has cleared.
 func _disable(team: int) -> void:
 	_battle.ai_teams.erase(team)
 	_battle.auto_tiers.erase(team)
 	_battle.last_human_team = team
 	_battle.refresh_fog()
-	_battle.present_banner("%s: Auto off" % _battle.view.identity.display_name(team))
+	await _battle.present_banner("%s: Auto off" % _battle.view.identity.display_name(team))
 	_battle.resume_turn()

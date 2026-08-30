@@ -166,6 +166,17 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # because the two that act for the side on turn have to be gone, and a menu that
 # still carried them would photograph exactly as well.
 #
+# auto_off is the Auto row's round trip, and it is a check rather than a picture:
+# the player hands their own seat to the computer, pauses that seat's own Auto
+# turn, and takes it back off the Off row. Turning Auto on has never been in
+# doubt; the way back is what nobody could reach, because the hand-off banner was
+# left running while the computer's first turn opened its own, and the first
+# banner's epilogue rested the board to IDLE underneath the second — an
+# interactive board on a computer's turn, where the Auto row is not offered at
+# all. Every step of that photographs perfectly well, so the mode reads the rows
+# off the live menu, checks the seat really left ai_teams, and then watches the
+# handed-back seat for a command it must no longer issue.
+#
 # after_build_menu is COM-11's, and it is a *sequence* rather than a screen: the
 # three battle menus share one ActionMenu, a PanelContainer grows to fit its rows
 # and never shrinks back on its own, and the eleven-row build menu used to leave its
@@ -338,7 +349,7 @@ DEFAULT_MODES=(
 	rejected_confirm enemy_range_preview end_turn_ready_units field_overlays
 	power_range_readout
 	turn_banner_build_attempt outcome_mash_guard
-	powermenu capture_power victory aiturn ai_pause
+	powermenu capture_power victory aiturn ai_pause auto_off
 	mission_strip mission_strip_retired objective_panel mission_event mission_defection
 	campaign_mapmenu campaign_win_stops_ai
 	powermenu+fog victory+fog ambush vanish preview_fog
