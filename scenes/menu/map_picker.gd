@@ -420,7 +420,10 @@ func _make_random_cell() -> Button:
 	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	label.add_theme_color_override("font_color", UiTheme.INK)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# On the name line every other cell writes its board on, rather than centred in
+	# a cell as tall as a thumbnail: a half-scrolled first row shows its names and
+	# would show this one an empty box.
+	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	button.add_child(label)
 	UiTheme.make_decoration(label)
 

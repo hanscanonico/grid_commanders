@@ -386,7 +386,8 @@ func _build_seats_row() -> Control:
 ## gave back is the map picker's second shelf of boards (COM-258).
 func _build_options_row() -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+	# Wider than the gap inside a toggle: each ON/OFF belongs to the label it follows.
+	row.add_theme_constant_override("separation", 2 * UiKit.TOGGLE_GAP)
 	row.add_child(_build_speed_col())
 	row.add_child(
 		_toggle_col(
@@ -456,6 +457,8 @@ func _toggle_col(
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Packed to the bottom: the taller speed column sets this row's help baseline.
+	col.alignment = BoxContainer.ALIGNMENT_END
 	col.add_child(UiKit.toggle(text, is_on, tip, tip_detail, on_change))
 	col.add_child(_option_help(help))
 	return col
