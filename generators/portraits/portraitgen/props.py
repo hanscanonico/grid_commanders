@@ -240,8 +240,8 @@ def _axe_back(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 def _hammer_back(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     _shape(canvas, [(162.0, 68.0), (180.0, 68.0), (176.0, 216.0), (158.0, 216.0)], WOOD)
-    _shape(canvas, _box(146.0, 42.0, 194.0, 76.0), STEEL)
-    canvas.rect((180.0, 44.0, 192.0, 74.0), (*SLATE, 255))
+    _shape(canvas, _box(148.0, 64.0, 192.0, 96.0), STEEL)
+    canvas.rect((180.0, 66.0, 190.0, 94.0), (*SLATE, 255))
 
 
 # --- what carries them, drawn in front ---------------------------------------

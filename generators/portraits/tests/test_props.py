@@ -167,6 +167,18 @@ class TheCigarClearsTheMouth(unittest.TestCase):
         self.assertIn((*props.GOLD, 255), colours)
 
 
+class TheHammerClearsTheTopOfTheFrame(unittest.TestCase):
+    """Radek Morn's hammer head was cut flat by the first row of the portrait,
+    which reads as a crop accident. It is the head's own edge that has to clear
+    the frame, so this is measured on the hammer rather than on every prop:
+    Ivar Thorne's axe leaves the same edge on a diagonal, which reads as an
+    object continuing past the frame instead of one sliced off by it."""
+
+    def test_the_head_stops_short_of_the_first_row(self):
+        top = bust.prop_art(roster.FACES["radek_morn"]).getbbox()[1]
+        self.assertGreater(top, 0)
+
+
 class EveryPropCasts(unittest.TestCase):
     def test_the_shadow_lands_outside_the_prop(self):
         for key in sorted(props.PROPS):
