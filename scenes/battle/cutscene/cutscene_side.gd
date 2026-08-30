@@ -387,7 +387,7 @@ func _draw_scenery(arena: Rect2) -> void:
 		var lit := lerpf(0.86, 1.0, clampf((slot.y - _GROUND_TOP) / _GROUND_DEPTH, 0.0, 1.0))
 		var shade := Color(tint.r * lit, tint.g * lit, tint.b * lit, 1.0)
 		CutsceneScenery.draw_contact_shadow(self, base, height * 0.3, 0.22)
-		CutsceneScenery.draw_shape(self, kind, base, height, shade)
+		CutsceneScenery.draw_shape(self, kind, base, height, shade, lit)
 
 
 ## Cinematic framing: the arena darkens toward its edges so the eye lands on the

@@ -28,8 +28,29 @@ const SCENERY_EDGE := 1.6
 ## The scenery's colour is averaged over this and nothing else.
 const OBJECT_WINDOW := Rect2i(20, 14, 24, 30)
 
-## The snowline on a ridge, and a building's two window states.
-const SNOW := Color(0.933, 0.953, 0.965)
+## How far down a summit the snow reaches, how much of the mass at its foot is
+## talus, and how thick the lit line along a crest is drawn.
+const SNOW_DROP := 0.34
+const SCREE_BAND := 0.07
+const RIDGE_RIM_PX := 1.4
+## The snowline, walked from the summit down the shaded edge, back along the
+## underside and up the sunward one. `x` is a share of the cap's half-width at
+## that depth and `y` a share of its drop, so a tongue past 1.0 is snow running
+## down a gully rather than a straight hem. The sunward slice is the tail of the
+## same walk, redrawn a rung lighter.
+const SNOW_FINGERS: Array[Vector2] = [
+	Vector2(0.0, 0.0),
+	Vector2(1.0, 1.0),
+	Vector2(0.60, 0.84),
+	Vector2(0.32, 1.30),
+	Vector2(0.08, 0.76),
+	Vector2(-0.30, 1.22),
+	Vector2(-0.60, 0.82),
+	Vector2(-1.0, 1.0),
+]
+const SNOW_SUNWARD := 4
+
+## A building's two window states.
 const WINDOW_LIT := Color(CutscenePalette.GOLD, 0.85)
 const WINDOW_DARK := Color(CutscenePalette.SKY_HORIZON, 0.45)
 
@@ -55,15 +76,24 @@ static func height_of(kind: StringName) -> float:
 			return BUILDING_PX
 
 
-## One piece of scenery, standing on `base` at `height` in `shade`.
+## One piece of scenery, standing on `base` at `height` in `shade`. `distance` is
+## how much contrast the stage leaves a shape standing this far back: the shapes
+## drawn in `shade` already carry it, because the stage multiplies it into the
+## cell colour it hands them, and the ridge — which is drawn in stone of its own
+## rather than in that colour — takes it here.
 static func draw_shape(
-	canvas: CanvasItem, kind: StringName, base: Vector2, height: float, shade: Color
+	canvas: CanvasItem,
+	kind: StringName,
+	base: Vector2,
+	height: float,
+	shade: Color,
+	distance: float = 1.0
 ) -> void:
 	match kind:
 		TerrainType.TREES:
 			_draw_tree(canvas, base, height, shade)
 		TerrainType.PEAKS:
-			_draw_peak(canvas, base, height, shade)
+			_draw_peak(canvas, base, height, distance)
 		_:
 			_draw_building(canvas, base, height, shade)
 
@@ -116,27 +146,95 @@ static func _outlined_triangle(
 	canvas.draw_colored_polygon(PackedVector2Array([a, b, c]), fill)
 
 
-## A ridge: one broad triangle with a snowline capping it.
-static func _draw_peak(canvas: CanvasItem, base: Vector2, height: float, shade: Color) -> void:
+## A ridge, drawn the way the board paints the tile: a snowcapped summit with a
+## lower shoulder beside it, each faceted into a sunward and a shaded flank, over
+## the talus the mass spills into at its foot.
+##
+## Its stone is the tile's own rock and snow ramps rather than the cell average
+## every other shape here is coloured from, and that is the point: averaging a
+## grey peak drawn on a green square lands between the two, which is how this
+## came to be a near-black triangle standing next to a ridged grey mountain.
+static func _draw_peak(canvas: CanvasItem, base: Vector2, height: float, distance: float) -> void:
 	var half := height * 0.78
-	var apex := Vector2(base.x, base.y - height)
-	_outlined_triangle(
+	var apex := Vector2(base.x - half * 0.24, base.y - height)
+	var shoulder := Vector2(base.x + half * 0.44, base.y - height * 0.64)
+	var summit_right := Vector2(base.x + half * 0.56, base.y)
+	# The shoulder first, so the taller summit's flank overlaps it rather than
+	# the two meeting on a seam.
+	_draw_ridge(
 		canvas,
-		Vector2(base.x - half, base.y),
+		Vector2(base.x - half * 0.06, base.y),
 		Vector2(base.x + half, base.y),
-		apex,
-		shade.darkened(0.28)
+		shoulder,
+		distance
 	)
-	var cap := height * 0.34
-	var cap_half := half * cap / height
-	var snowline := PackedVector2Array(
+	_draw_ridge(canvas, Vector2(base.x - half, base.y), summit_right, apex, distance)
+	_draw_snowcap(canvas, apex, Vector2(base.x - half, base.y), summit_right, distance)
+	_draw_scree(canvas, base, half, height, distance)
+
+
+## One summit: the mass in the flank the sun is turned away from, the sunward
+## flank split off it along the crest, and the lit line the crest itself catches.
+## The board's sun is up and to the left, so the flank on the left is the lit one.
+static func _draw_ridge(
+	canvas: CanvasItem, foot_left: Vector2, foot_right: Vector2, summit: Vector2, distance: float
+) -> void:
+	var crest_foot := Vector2(lerpf(summit.x, foot_right.x, 0.22), foot_right.y)
+	_outlined_triangle(
+		canvas, foot_left, foot_right, summit, _faded(CutscenePalette.ROCK_SHADE, distance)
+	)
+	canvas.draw_colored_polygon(
+		PackedVector2Array([summit, crest_foot, foot_left]),
+		_faded(CutscenePalette.ROCK_BODY, distance)
+	)
+	canvas.draw_line(
+		summit,
+		summit.lerp(crest_foot, 0.42),
+		_faded(CutscenePalette.ROCK_RIM, distance),
+		RIDGE_RIM_PX
+	)
+
+
+## The cap on the taller summit, fingering down the gullies under it. Every point
+## is measured off the summit's own two edges, so the snow reaches the silhouette
+## and never crosses it whatever the ridge is shaped like.
+static func _draw_snowcap(
+	canvas: CanvasItem, apex: Vector2, foot_left: Vector2, foot_right: Vector2, distance: float
+) -> void:
+	var drop := (foot_left.y - apex.y) * SNOW_DROP
+	var left := (apex.x - foot_left.x) * SNOW_DROP
+	var right := (foot_right.x - apex.x) * SNOW_DROP
+	var cap := PackedVector2Array()
+	for finger in SNOW_FINGERS:
+		var span := right if finger.x > 0.0 else left
+		cap.append(apex + Vector2(span * finger.x, drop * finger.y))
+	canvas.draw_colored_polygon(cap, _faded(CutscenePalette.SNOW_SHADE, distance))
+	var sunward := PackedVector2Array([apex])
+	sunward.append_array(cap.slice(SNOW_SUNWARD))
+	canvas.draw_colored_polygon(sunward, _faded(CutscenePalette.SNOW_LIT, distance))
+
+
+## The scree at the foot: the darkest rung of the ramp, in a band across the base,
+## which is what stands the mass on the ground instead of ending it on a hard line.
+static func _draw_scree(
+	canvas: CanvasItem, base: Vector2, half: float, height: float, distance: float
+) -> void:
+	var top := base.y - height * SCREE_BAND
+	var span := half * 0.78
+	var talus := PackedVector2Array(
 		[
-			Vector2(apex.x - cap_half, apex.y + cap),
-			Vector2(apex.x + cap_half, apex.y + cap),
-			apex,
+			Vector2(base.x - half, base.y),
+			Vector2(base.x + half, base.y),
+			Vector2(base.x + span, top),
+			Vector2(base.x - span, top),
 		]
 	)
-	canvas.draw_colored_polygon(snowline, SNOW)
+	canvas.draw_colored_polygon(talus, _faded(CutscenePalette.ROCK_SCREE, distance))
+
+
+## A ramp colour at the contrast the stage leaves a shape standing this far back.
+static func _faded(stone: Color, distance: float) -> Color:
+	return Color(stone.r * distance, stone.g * distance, stone.b * distance, 1.0)
 
 
 ## A block with a darker parapet and lit windows. The windows are what sell it at
