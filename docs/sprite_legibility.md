@@ -190,6 +190,26 @@ is inside that regression, not a reading of this change.
 The baseline digest was rewritten for it (`make legibility-baseline`), which is what that target is
 for after an intended art change.
 
+## Re-read 2026-08-30, after the movement wash was made a claim
+
+The reach overlay's baked tile went to a hard edge (fill 86 → 160, edge 127 → 255 in
+`generators/sprites/spritegen/chrome.py`) and `OverlayPalette.MOVE` turned mint; `ATTACK`'s palette
+alpha dropped so its fill lands where it did. The sweep reads the shipped overlay tile and the
+shipped palette, so it answers for the change: **31,832 failing (86.7%) clear and 7,037 (81.4%)
+fogged**, against 34,212 (93.2%) / 7,037 (81.4%) above. **2,542 verdicts moved — 2,461 recovered
+and 81 regressed** — and both sides are the two washes that changed: 2,451 recoveries and 77 losses
+under `move`, 10 and 4 under `attack`, none under `threat`, `fog` or `none`. The `move` row is now
+67.8% failing against `attack`'s 95.8% and `threat`'s 95.6%.
+
+The mechanism is that the wash lies under the figure: a denser, brighter mint ground puts more
+separation behind a dark contour, which is most of the board. The 81 losses are the other end of
+the same lever — the pale hulls on the pale grounds, 39 of them the **sub** and 14 the
+**battleship**, 47 of the 81 **iron**, and 40 of them on `shoal` or `sea`, where the wash lifts a
+ground that was already close to the figure past it. It is a finding for the art, not a colour to
+move back: the wash exists to be seen, and the reach it delimits is the more gameplay-critical read.
+
+The digest was rewritten for it (`make legibility-baseline`) and the gallery redrawn with it.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in
