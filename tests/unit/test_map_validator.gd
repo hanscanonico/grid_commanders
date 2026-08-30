@@ -102,9 +102,11 @@ func test_a_seat_with_two_headquarters_is_refused() -> void:
 	)
 
 
-func test_a_seat_that_cannot_build_is_refused() -> void:
+## A seat holding only its HQ fights with the army it opens with. That is a board
+## somebody meant — a line to defend — so production is not asked about.
+func test_a_seat_with_no_factory_draws_no_complaint() -> void:
 	var text := GOOD.replace(".QB....BQ.", ".Q.....BQ.").replace("1 2 1\n", "")
-	assert_has_error(_errors(text), "Seat 1 owns nothing")
+	assert_eq(_errors(text), [] as Array[String])
 
 
 func test_a_headquarters_nobody_owns_is_refused() -> void:
@@ -147,6 +149,21 @@ func test_a_draft_is_read_as_the_board_it_would_be_saved_as() -> void:
 	assert_eq(MapValidator.draft_errors(doc, terrain_db), [] as Array[String])
 	doc.set_owner(Vector2i(1, 1), MapData.NEUTRAL)
 	assert_has_error(MapValidator.draft_errors(doc, terrain_db), "belongs to nobody")
+
+
+## The editor's own path: a headquarters laid with a seat picked is that seat's,
+## so moving seat 1's HQ across the board draws no complaint about it. Painted
+## unowned, the same stroke earned two — an HQ nobody holds, and a seat holding
+## none.
+func test_a_headquarters_painted_for_a_seat_is_that_seats() -> void:
+	var map := MapData.parse(GOOD, terrain_db)
+	assert_not_null(map)
+	if map == null:
+		return
+	var doc := MapDocument.from_map(map, terrain_db)
+	doc.paint(Vector2i(1, 1), TerrainDB.GROUND_ID)
+	doc.paint(Vector2i(4, 1), &"hq", 1)
+	assert_eq(MapValidator.draft_errors(doc, terrain_db), [] as Array[String])
 
 
 ## Every complaint is one whole sentence addressed to the author — the reason the

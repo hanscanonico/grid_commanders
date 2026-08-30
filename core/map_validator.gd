@@ -108,8 +108,10 @@ static func _size_defect(map: MapData) -> MapDefect:
 	return null
 
 
-## What each seat owes: a place on the board, one headquarters, and something
-## that builds. Seats run 1..N with no gaps (MapData.roster_for), so a board
+## What each seat owes: a place on the board and one headquarters. A seat with
+## no factory of its own is a board somebody meant — a line to defend with the
+## army it opens with — so nothing here asks about production.
+## Seats run 1..N with no gaps (MapData.roster_for), so a board
 ## naming seat 3 and skipping seat 2 seats an army with nothing — reported as the
 ## empty seat it is, and nothing further is asked of it, since every other
 ## complaint about that seat says the same thing again. Empty seats are named
@@ -124,13 +126,9 @@ static func _seat_defects(map: MapData) -> Array[MapDefect]:
 			continue
 		var owned := _owned_properties(map, team)
 		var hqs: Array[Vector2i] = []
-		var factories := 0
 		for cell in owned:
-			var terrain := map.terrain_at(cell)
-			if terrain.is_headquarters:
+			if map.terrain_at(cell).is_headquarters:
 				hqs.append(cell)
-			if not terrain.builds.is_empty():
-				factories += 1
 		if hqs.size() != 1:
 			found.append(
 				MapDefect.at(
@@ -142,16 +140,6 @@ static func _seat_defects(map: MapData) -> Array[MapDefect]:
 						+ "can never be beaten by capture."
 					),
 					hqs if not hqs.is_empty() else owned
-				)
-			)
-		if factories == 0:
-			found.append(
-				MapDefect.at(
-					(
-						"Seat %d owns nothing that builds units, so it can never spend its income."
-						% team
-					),
-					owned
 				)
 			)
 	if unseated.is_empty():
