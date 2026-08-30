@@ -18,10 +18,15 @@ extends Control
 
 ## The gold every other surface marks a selection in.
 const CURSOR_INK := UiTheme.SELECT_GOLD
+## The ink a cell a complaint names is ringed in — the shell's one refusal
+## colour, so a board's problems read as the strip's problems do.
+const DEFECT_INK := UiTheme.DANGER
 ## The cursor's outline, in canvas pixels.
 const CURSOR_WIDTH := 1.0
 
 var cursor_cell := Vector2i.ZERO
+
+var _marks: Array[Vector2i] = []
 
 var _doc: MapDocument
 var _db: TerrainDB
@@ -76,6 +81,20 @@ func refresh() -> void:
 	queue_redraw()
 
 
+## Rings the cells the validator's complaints name, replacing whatever was
+## ringed before. The board picks none of them itself (see MapDefect).
+func mark_cells(cells: Array[Vector2i]) -> void:
+	_marks = cells
+	queue_redraw()
+
+
+## Puts the cursor back inside a board that has just changed size, keeping the
+## rung the author is working at.
+func fit_cursor() -> void:
+	cursor_cell = cursor_cell.clamp(Vector2i.ZERO, _doc.size() - Vector2i.ONE)
+	refresh()
+
+
 func set_cursor(cell: Vector2i) -> void:
 	if not _doc.in_bounds(cell) or cell == cursor_cell:
 		return
@@ -105,6 +124,9 @@ func _draw() -> void:
 	if _doc == null:
 		return
 	var tile := tile_px()
+	for cell in _marks:
+		var mark := _origin + Vector2(cell) * tile
+		draw_rect(Rect2(mark, Vector2(tile, tile)), DEFECT_INK, false, CURSOR_WIDTH)
 	var at := _origin + Vector2(cursor_cell) * tile
 	draw_rect(Rect2(at, Vector2(tile, tile)), CURSOR_INK, false, CURSOR_WIDTH)
 

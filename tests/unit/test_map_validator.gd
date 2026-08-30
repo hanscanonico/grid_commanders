@@ -136,6 +136,41 @@ func test_every_complaint_reads_as_a_sentence() -> void:
 		assert_eq(error, error.strip_edges(), "'%s' should not be padded" % error)
 
 
+## Every complaint the editor can put a mark on names the cells it is about, so
+## the strip and the board can never disagree about which building is wrong.
+func test_a_complaint_names_the_cells_it_is_about() -> void:
+	assert_eq(
+		_cells_of(GOOD.replace("....CC....", "....CQ...."), "belongs to nobody"), [Vector2i(5, 3)]
+	)
+	assert_eq(
+		_cells_of(GOOD + "[units]\n1 i 4 3\n", "no side should open the match"), [Vector2i(4, 3)]
+	)
+	assert_eq(_cells_of(WALLED, "No infantry can walk"), [Vector2i(1, 1), Vector2i(8, 1)])
+	# Two headquarters: both of the seat's own, and neither of the other seat's.
+	assert_eq(
+		_cells_of(GOOD.replace("....CC....", "....CQ....") + "1 5 3\n", "owns 2 headquarters"),
+		[Vector2i(1, 1), Vector2i(5, 3)]
+	)
+
+
+## A complaint about the board rather than about a cell of it points at nothing —
+## an editor marking a cell for it would be marking one it picked itself.
+func test_a_complaint_about_the_whole_board_names_no_cell() -> void:
+	var text := "[terrain]\n" + ".....\n".repeat(4) + "[owners]\n"
+	assert_eq(_cells_of(text, "a map must be at least"), [] as Array[Vector2i])
+
+
+## A draft with no board at all is one complaint and no more: nothing else can be
+## asked of a board that does not exist.
+func test_a_draft_with_no_board_is_one_complaint() -> void:
+	var doc := MapDocument.blank(0, 0, terrain_db)
+	var found := MapValidator.draft_defects(doc, terrain_db)
+	assert_push_error("map has no terrain rows")
+	assert_eq(found.size(), 1)
+	assert_true(found[0].text.contains("cannot be saved as a map file"), found[0].text)
+	assert_eq(found[0].cells, [] as Array[Vector2i])
+
+
 func assert_has_error(errors: Array[String], needle: String) -> void:
 	for error in errors:
 		if error.contains(needle):
@@ -149,3 +184,17 @@ func _errors(text: String) -> Array[String]:
 	if map == null:
 		return [] as Array[String]
 	return MapValidator.errors(map)
+
+
+## The cells of the one complaint mentioning `needle`, and a failure when no
+## complaint does.
+func _cells_of(text: String, needle: String) -> Array[Vector2i]:
+	var map := MapData.parse(text, terrain_db)
+	assert_not_null(map, "the crafted board should still parse")
+	if map == null:
+		return [] as Array[Vector2i]
+	for defect in MapValidator.defects(map):
+		if defect.text.contains(needle):
+			return defect.cells
+	fail_test("no complaint mentioning '%s'" % needle)
+	return [] as Array[Vector2i]

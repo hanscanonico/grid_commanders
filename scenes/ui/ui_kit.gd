@@ -188,6 +188,32 @@ static func star_bar(filled: int, of: int) -> String:
 	return "★".repeat(lit) + "☆".repeat(maxi(of, 0) - lit)
 
 
+## One number and the two buttons that walk it: a caption, the value's own label —
+## the caller keeps it and writes the number into it, since what the number *is*
+## is the caller's — and a step of -1 or +1. How wide the row stands is the
+## caller's too, set on the control it is handed.
+static func stepper(caption: String, value: Label, on_step: Callable) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+
+	var name_label := micro_label(caption)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_label)
+
+	var less := action_button("-", "", UiTheme.ButtonVariant.SECONDARY, null, 20)
+	less.pressed.connect(func() -> void: on_step.call(-1))
+	row.add_child(less)
+
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value.custom_minimum_size = Vector2(24, 0)
+	row.add_child(value)
+
+	var more := action_button("+", "", UiTheme.ButtonVariant.SECONDARY, null, 20)
+	more.pressed.connect(func() -> void: on_step.call(1))
+	row.add_child(more)
+	return row
+
+
 ## A thin ink divider between a panel's rows (handoff --border-soft).
 static func rule() -> Control:
 	var line := ColorRect.new()
