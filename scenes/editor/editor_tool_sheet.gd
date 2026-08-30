@@ -1,0 +1,59 @@
+class_name EditorToolSheet
+extends Control
+## The two brush columns as a sheet a finger opens, for the build that is played
+## with one (mobile plan D8).
+##
+## On a desktop the palette and the sidebar flank the board and are always up; on
+## a phone the two of them are more than half the width of a landscape screen, and
+## what is left is a board too small to aim at. So on a touch build they stand in
+## a page instead, over the board rather than beside it — which costs a press to
+## open and gives the whole screen back to the thing being painted.
+##
+## It holds no brush and decides nothing: the columns are the editor's, handed
+## over as they are built, and picking from one closes the sheet because the very
+## next press is meant for the board.
+
+signal closed
+
+## The columns' width in here. They are drawn narrow enough to flank a board, and
+## a sheet has no such constraint — so they take a reading width, which is also
+## what puts a row's whole plate under a thumb.
+const COLUMN_W := 150
+
+
+## Takes the columns the editor built and stands them side by side.
+func configure(columns: Array[Control]) -> void:
+	UiKit.page_veil(self)
+	var main := UiKit.page_body(self, 6)
+	main.add_child(UiKit.page_title("BRUSHES"))
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", UiTheme.GAP)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for column in columns:
+		column.custom_minimum_size = Vector2(COLUMN_W, 0)
+		row.add_child(column)
+	main.add_child(row)
+
+	var back := UiKit.action_button("Paint", "", UiTheme.ButtonVariant.PRIMARY, null, 96)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(close)
+	main.add_child(UiKit.touchable(back))
+	hide()
+
+
+func begin() -> void:
+	show()
+
+
+func close() -> void:
+	if not visible:
+		return
+	hide()
+	closed.emit()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if TransitionInput.dismissed_by_cancel(self, event):
+		close()

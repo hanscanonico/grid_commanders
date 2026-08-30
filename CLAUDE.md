@@ -77,7 +77,8 @@ res://
 ├─ data/       # .tres: units/, terrain/, commanders/, ai/, difficulty/, battle_anim/,
 │             # campaigns/, damage_chart, rules
 ├─ scenes/     # battle/ (+ cutscene/ = the two cut-ins), menu/, ui/ (HUD, menus, damage
-│             # preview, mission card, touch dock), common/ (MatchRequest, CmdArgs, …)
+│             # preview, mission card, touch dock), common/ (MatchRequest, CmdArgs, …),
+│             # editor/ (the map editor: a board the player paints, saved to user://maps)
 ├─ autoload/   # EventBus, MatchConfig, Settings, Sfx, Music, CampaignSession
 ├─ ai/         # AIController façade + context + planners; ai_profile.gd owns every weight
 ├─ maps/       # map scenes / resources (campaign boards under maps/campaign/)

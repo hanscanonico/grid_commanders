@@ -10,9 +10,12 @@ extends VBoxContainer
 ## The boards the player drew themselves come after the shipped roster, badged
 ## Custom and otherwise ordinary cells: the same live thumbnail, the same
 ## selection, the same launch — a user map is a map file like any other, so
-## nothing downstream of here learns where it came from. The Remove link beside
-## the caption is the one control they add, and it is up only while one of them
-## is the board in hand — so a machine with none lays out as it did before.
+## nothing downstream of here learns where it came from. The Manage map link
+## beside the caption is the one control they add, and it is up only while one of
+## them is the board in hand — so a machine with none lays out as it did before.
+## Behind it are rename, duplicate and delete, none of which decides anything:
+## `UserMaps` owns which name is free, what a copy is called, and whether a
+## rename may happen at all.
 ##
 ## Its own widget rather than the menu's (COM-38), the shape SeatStrip already is:
 ## the roster, the selection and every word read off it are one piece of state,
@@ -45,6 +48,9 @@ const CONFIRM_LAYER := 10
 ## Its two buttons, at a page footer's width rather than a menu stack's: they sit
 ## side by side, so neither may take the column.
 const CONFIRM_BUTTON_W := 120
+## The manage page's four, which stand in one row and so are narrower — the width
+## of its longest word, `Duplicate`, and no more.
+const MANAGE_BUTTON_W := 84
 
 ## The panel's header-right "name · size". Built here and parented by the setup
 ## panel's title bar, so the words and the label that sets them stay together.
@@ -71,8 +77,9 @@ var _terrain_db: TerrainDB
 var _confirm: CanvasLayer
 ## Its page, which is what a cancel press is asked about.
 var _confirm_page: Control
-## The delete affordance, live only while a board the player drew is in hand.
-var _remove_link: Button
+## The way to Rename, Duplicate and Delete — up only while a board the player
+## drew is in hand, since none of the three may be done to a shipped board.
+var _manage_link: Button
 
 
 ## Parses the roster and draws the widget. Called before the picker is in the
@@ -116,18 +123,22 @@ func configure(db: TerrainDB) -> void:
 	_map_caption.max_lines_visible = MAP_CAPTION_LINES
 	_map_caption.add_theme_constant_override("line_spacing", 1)
 
-	# The Remove link shares the caption's line rather than standing on a cell: a
-	# cell is a picture of a board and the caption is where this picker talks about
-	# the board in hand. It is hidden for every shipped board, and a hidden control
+	# The link shares the caption's line rather than standing on a cell: a cell is
+	# a picture of a board and the caption is where this picker talks about the
+	# board in hand. It is hidden for every shipped board, and a hidden control
 	# takes no space in a container — so a machine with no boards of its own lays
-	# this row out exactly as it did before.
+	# this row out exactly as it did before. One link and not three: links share
+	# the caption's width, so a second would cost that caption a line on some
+	# board, which is the COM-5 class again — a layout budget that depends on the
+	# selection. The three actions live on the page it opens.
 	var facts := HBoxContainer.new()
 	facts.add_theme_constant_override("separation", UiTheme.GAP)
 	facts.add_child(_map_caption)
-	_remove_link = UiKit.text_link("Remove map")
-	_remove_link.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_remove_link.pressed.connect(_ask_remove)
-	facts.add_child(_remove_link)
+	_manage_link = UiKit.text_link("Manage map")
+	_manage_link.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_manage_link.pressed.connect(_ask_manage)
+	UiKit.touchable(_manage_link)
+	facts.add_child(_manage_link)
 	add_child(facts)
 	select(0)
 
@@ -230,7 +241,7 @@ func show_map(index: int) -> void:
 ## can drift from it. Tooltips repeat the facts but are never required to choose.
 func _refresh_facts() -> void:
 	var map := selected_map()
-	_remove_link.visible = map != null and is_custom(map)
+	_manage_link.visible = map != null and is_custom(map)
 	if map == null:
 		_map_header.text = ""
 		_map_caption.text = ""
@@ -486,8 +497,106 @@ func _unhandled_input(event: InputEvent) -> void:
 ## is the one thing this page has to say before it does that.
 func _ask_remove() -> void:
 	var map := selected_map()
-	if map == null or not is_custom(map) or _confirm != null:
+	if map == null or not is_custom(map):
 		return
+	var body := _open_page(
+		"Delete %s?" % MapCatalog.display_name(map.source_path),
+		"The map file is removed from this machine for good."
+	)
+	if body == null:
+		return
+	var remove := UiKit.action_button(
+		"Delete", "", UiTheme.ButtonVariant.PRIMARY, null, CONFIRM_BUTTON_W
+	)
+	remove.pressed.connect(_remove.bind(map))
+	body.add_child(_actions([remove], "Keep", CONFIRM_BUTTON_W))
+
+
+## Everything that may be done to a board the player drew: rename it, take a copy
+## of it, or delete it. `UserMaps` decides all three — the page types a name and
+## reports what it is told, and a refused rename leaves the page open on the name
+## that failed, exactly as the editor's save dialog does.
+func _ask_manage() -> void:
+	var map := selected_map()
+	if map == null or not is_custom(map):
+		return
+	var body := _open_page(
+		MapCatalog.display_name(map.source_path).to_upper(),
+		"The name is the file's, and what `--map=` calls this board."
+	)
+	if body == null:
+		return
+	var field := UiKit.text_field("Name", UserMaps.MAX_NAME_LENGTH, CONFIRM_BUTTON_W)
+	field.text = _user_name_of(map)
+	field.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	body.add_child(field)
+	var notice := UiKit.page_note("")
+	notice.add_theme_color_override("font_color", UiTheme.DANGER)
+	body.add_child(notice)
+
+	var rename_now := func() -> void: _rename(map, field.text, notice)
+	field.text_submitted.connect(func(_text: String) -> void: rename_now.call())
+	var rename_button := UiKit.action_button(
+		"Rename", "", UiTheme.ButtonVariant.PRIMARY, null, MANAGE_BUTTON_W
+	)
+	rename_button.pressed.connect(rename_now)
+
+	var copy := UiKit.action_button(
+		"Duplicate", "", UiTheme.ButtonVariant.SECONDARY, null, MANAGE_BUTTON_W
+	)
+	copy.pressed.connect(_duplicate)
+	var remove := UiKit.action_button(
+		"Delete", "", UiTheme.ButtonVariant.SECONDARY, null, MANAGE_BUTTON_W
+	)
+	remove.pressed.connect(
+		func() -> void:
+			_close_confirm()
+			_ask_remove()
+	)
+	body.add_child(_actions([rename_button, copy, remove], "Close", MANAGE_BUTTON_W))
+	# After the footer's own deferred grab, so the page opens on the name rather
+	# than on the way out — this is the one page that is typed into.
+	field.grab_focus.call_deferred()
+
+
+func _rename(map: MapData, wanted: String, notice: Label) -> void:
+	var error := UserMaps.rename(_user_name_of(map), wanted)
+	if error != "":
+		notice.text = error
+		return
+	_close_confirm()
+	await _reload_on(UserMaps.slug(wanted))
+
+
+## A second copy of the board in hand, under a free name of its own, and the
+## selection lands on it — a duplicate is made to be drawn on, so the board the
+## player then opens in the editor is the copy rather than the original.
+func _duplicate() -> void:
+	var map := selected_map()
+	if map == null or not is_custom(map):
+		return
+	var copy := UserMaps.copy_name(_user_name_of(map))
+	var error := UserMaps.copy_to(_user_name_of(map), copy)
+	_close_confirm()
+	if error != "":
+		push_error("map picker: %s" % error)
+		return
+	await _reload_on(copy)
+
+
+func _remove(map: MapData) -> void:
+	_close_confirm()
+	var error := UserMaps.delete(_user_name_of(map))
+	if error != "":
+		push_error("map picker: %s" % error)
+	await _reload()
+
+
+## The page every one of the three actions opens on, or null while one is
+## already up. Its own canvas layer for the reason CONFIRM_LAYER names.
+func _open_page(title: String, note: String) -> VBoxContainer:
+	if _confirm != null:
+		return null
 	_confirm = CanvasLayer.new()
 	_confirm.layer = CONFIRM_LAYER
 	add_child(_confirm)
@@ -495,33 +604,43 @@ func _ask_remove() -> void:
 	_confirm_page.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_confirm.add_child(_confirm_page)
 	UiKit.page_veil(_confirm_page)
-
 	var body := UiKit.page_body(_confirm_page, UiTheme.GAP)
 	body.alignment = BoxContainer.ALIGNMENT_CENTER
-	body.add_child(UiKit.page_title("Delete %s?" % MapCatalog.display_name(map.source_path)))
-	body.add_child(UiKit.page_note("The map file is removed from this machine for good."))
-
-	var actions := HBoxContainer.new()
-	actions.alignment = BoxContainer.ALIGNMENT_CENTER
-	actions.add_theme_constant_override("separation", UiTheme.GAP)
-	body.add_child(actions)
-	var remove := UiKit.action_button(
-		"Delete", "", UiTheme.ButtonVariant.PRIMARY, null, CONFIRM_BUTTON_W
-	)
-	remove.pressed.connect(_remove.bind(map))
-	actions.add_child(remove)
-	var keep := UiKit.action_button("Keep", "", UiTheme.ButtonVariant.GHOST, null, CONFIRM_BUTTON_W)
-	keep.pressed.connect(_close_confirm)
-	actions.add_child(keep)
-	keep.grab_focus()
+	body.add_child(UiKit.page_title(title))
+	body.add_child(UiKit.page_note(note))
+	return body
 
 
-func _remove(map: MapData) -> void:
-	_close_confirm()
-	var error := UserMaps.delete(map.source_path.get_file().trim_suffix(UserMaps.EXTENSION))
-	if error != "":
-		push_error("map picker: %s" % error)
+## The page's footer: the actions it was opened for, then the way out. The way out
+## takes the focus, so a page opened by mistake is dismissed by the key already
+## under the player's hand.
+func _actions(buttons: Array[Button], cancel_text: String, width: int) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", UiTheme.GAP)
+	for button in buttons:
+		row.add_child(UiKit.touchable(button))
+	var back := UiKit.action_button(cancel_text, "", UiTheme.ButtonVariant.GHOST, null, width)
+	back.pressed.connect(_close_confirm)
+	row.add_child(UiKit.touchable(back))
+	back.grab_focus.call_deferred()
+	return row
+
+
+## The name a board the player drew is filed under — its own filename, which is
+## what every `UserMaps` call takes.
+static func _user_name_of(map: MapData) -> String:
+	return map.source_path.get_file().trim_suffix(UserMaps.EXTENSION)
+
+
+## Re-reads the shelf and lands on the board called `name`, or on where the
+## selection was when the shelf no longer holds it.
+func _reload_on(name: String) -> void:
 	await _reload()
+	for i in _maps.size():
+		if _user_name_of(_maps[i]) == name:
+			await show_map(i)
+			return
 
 
 func _close_confirm() -> void:

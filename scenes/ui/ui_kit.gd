@@ -43,6 +43,9 @@ enum BustCrop { WHOLE_FITTED, WHOLE_COVERED, FACE }
 const _BUST_MIN_H := 64
 const _BUST_ART := &"Bust"
 
+## A text field's height: one line of Silkscreen with the border either side of it.
+const FIELD_HEIGHT := 18
+
 ## A toggle's ✓-box, and the gap between the three things on its row.
 const TOGGLE_CHECK := 12
 const TOGGLE_GAP := 5
@@ -256,6 +259,28 @@ static func action_button(
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.custom_minimum_size = Vector2(maxi(width, 0), 20)
 	return button
+
+
+## A typed line, dressed as the cream controls beside it. The editor's save
+## dialog owned this while it was the game's only text field; the picker's rename
+## prompt is the second caller, which is when a widget stops being its caller's.
+static func text_field(placeholder: String, max_length: int, width: int) -> LineEdit:
+	var field := LineEdit.new()
+	field.placeholder_text = placeholder
+	field.max_length = max_length
+	field.custom_minimum_size = Vector2(width, FIELD_HEIGHT)
+	field.add_theme_font_override("font", UiTheme.stat())
+	field.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
+	field.add_theme_color_override("font_color", UiTheme.INK)
+	field.add_theme_color_override("font_placeholder_color", UiTheme.NEUTRAL)
+	field.add_theme_color_override("caret_color", UiTheme.INK)
+	field.add_theme_stylebox_override(
+		"normal", UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
+	)
+	field.add_theme_stylebox_override(
+		"focus", UiTheme.bordered(UiTheme.PAPER_RAISED, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
+	)
+	return field
 
 
 ## A text link: the lightest action the system has, for the one row that belongs

@@ -29,6 +29,12 @@ const DIR_ACTIONS: Dictionary = {
 	&"cursor_right": Vector2i.RIGHT,
 }
 
+## What the page says the board answers to. Two legends because a touch build has
+## no arrows and a desktop one has no second finger; which is printed is
+## `MobileProfile`'s answer, never a caller's.
+const LEGEND_KEYS := "ARROWS  MOVE      ENTER  APPLY      +/-  ZOOM      ESC  MENU"
+const LEGEND_TOUCH := "TAP  PAINT      DRAG  PAN      PINCH  ZOOM      BRUSHES  TOOLS"
+
 ## How wide the two columns stand. Wide enough for the longest terrain and unit
 ## name in the display face beside its swatch.
 const _PALETTE_W := 108
@@ -50,6 +56,11 @@ var _palette: EditorPalette
 var _inspector: EditorSidebar
 var _strip: EditorValidationStrip
 var _new_map: EditorNewMapPanel
+## The two brush columns as a page, on a touch build only — null on a desktop
+## one, where they flank the board and there is no sheet to build (mobile D5).
+var _sheet: EditorToolSheet
+## The hand on the board, null on a desktop build for the same reason.
+var _touch: EditorTouch
 var _open_panel: EditorOpenPanel
 var _save_dialog: EditorSaveDialog
 var _headline: Label
@@ -105,7 +116,12 @@ func _unhandled_input(event: InputEvent) -> void:
 ## while one is up — a cursor walked behind a dialog is a cursor the author did
 ## not move.
 func _page_is_open() -> bool:
-	return _new_map.visible or _open_panel.visible or _save_dialog.visible
+	return (
+		_new_map.visible
+		or _open_panel.visible
+		or _save_dialog.visible
+		or (_sheet != null and _sheet.visible)
+	)
 
 
 # --- the draft ---------------------------------------------------------------
@@ -253,6 +269,8 @@ func _leave() -> void:
 ## the new brush at once rather than at the next thing the cursor does.
 func _arm(brush: Brush) -> void:
 	_brush = brush
+	if _sheet != null:
+		_sheet.close()
 	_hand_the_board_back()
 	if _doc != null:
 		_say_cursor()
@@ -284,6 +302,10 @@ func _on_resize_asked(board_size: Vector2i) -> void:
 ## is swallowed, so a right-click on the board cannot read as the cancel it also
 ## is and walk the author out of their draft.
 func _on_board_input(event: InputEvent) -> void:
+	if _touch != null:
+		if _touch.handle(event):
+			_board.accept_event()
+		return
 	var click := event as InputEventMouseButton
 	if click != null:
 		_board.accept_event()
@@ -318,23 +340,26 @@ func _build() -> void:
 
 	_palette = EditorPalette.new()
 	_palette.custom_minimum_size = Vector2(_PALETTE_W, 0)
-	body.add_child(_palette)
 	_palette.configure(_db)
 	_palette.picked.connect(func(_terrain: TerrainType) -> void: _arm(Brush.TERRAIN))
 
-	body.add_child(_build_board_column())
-
 	_inspector = EditorSidebar.new()
 	_inspector.custom_minimum_size = Vector2(_INSPECTOR_W, 0)
-	body.add_child(_inspector)
 	_inspector.configure(_unit_db)
 	_inspector.seat_picked.connect(func(_team: int) -> void: _arm(Brush.OWNER))
 	_inspector.unit_picked.connect(func(_unit_type: UnitType) -> void: _arm(Brush.UNIT))
 	_inspector.resize_asked.connect(_on_resize_asked)
 
+	if MobileProfile.active():
+		body.add_child(_build_board_column())
+	else:
+		body.add_child(_palette)
+		body.add_child(_build_board_column())
+		body.add_child(_inspector)
+
 	_status = UiKit.key_legend("")
 	main.add_child(_status)
-	main.add_child(UiKit.key_legend("ARROWS  MOVE      ENTER  APPLY      +/-  ZOOM      ESC  MENU"))
+	main.add_child(UiKit.key_legend(LEGEND_TOUCH if MobileProfile.active() else LEGEND_KEYS))
 
 	_build_pages()
 
@@ -381,6 +406,15 @@ func _build_pages() -> void:
 	_save_dialog.saved.connect(_on_saved)
 	_save_dialog.cancelled.connect(_on_page_cancelled)
 
+	if not MobileProfile.active():
+		return
+	_sheet = EditorToolSheet.new()
+	add_child(_sheet)
+	var columns: Array[Control] = [_palette, _inspector]
+	_sheet.configure(columns)
+	_sheet.closed.connect(_hand_the_board_back)
+	_touch = EditorTouch.new(_board, _apply_at, _on_defect_focused)
+
 
 func _build_header() -> Control:
 	var row := HBoxContainer.new()
@@ -389,6 +423,8 @@ func _build_header() -> Control:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(title)
+	if MobileProfile.active():
+		row.add_child(_header_button("Brushes", func() -> void: _sheet.begin()))
 	row.add_child(_header_button("Open", func() -> void: _open_panel.begin()))
 	row.add_child(_header_button("Save", _ask_save))
 	_headline = UiKit.micro_label("")
