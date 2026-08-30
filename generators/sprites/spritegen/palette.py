@@ -640,10 +640,20 @@ _SHARED_RAMPS: dict[str, Ramp] = {
 # spends the rungs around it on the three planes — top at S4, the up-left
 # flank at S3, the flank turned away at S2. `scree` is the same rock a band
 # down, for the talus a massif's foot spills into.
+#
+# Snow sits a band ABOVE that convention, and it is the one material that does:
+# its lit plane landed at L160 against rock's own L145, which is inside the
+# noise of a 16px cell, so the cap that is supposed to say "summit" said
+# nothing. On S4 the cap's three planes are the snow ramp's own top three
+# rungs and its brightest is L172 — still under `TERRAIN_VALUE_CEILING`, so
+# the band an army keys into is untouched. Darkening the rock UNDER the line
+# instead was the rejected answer: it reads well on its own and it spends the
+# massif's darkest rung over the middle of the cell, which is where a unit
+# stands (`make legibility-ratchet` failed 22 mountain cells on it).
 TERRAIN_MATERIALS: dict[str, MaterialSlot] = {
     "scarp": MaterialSlot(_ROCK_SLOT, S_BODY, MID_GUNMETAL),
     "scree": MaterialSlot(_ROCK_SLOT, S_SHADOW, MID_GUNMETAL),
-    "snowcap": MaterialSlot(_SNOW_SLOT, S_BODY, MID_GUNMETAL),
+    "snowcap": MaterialSlot(_SNOW_SLOT, S_TOP, MID_GUNMETAL),
 }
 
 

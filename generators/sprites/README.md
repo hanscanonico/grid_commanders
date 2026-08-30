@@ -559,6 +559,19 @@ the model's voxel grid and reseeds the relief its spurs and gullies come out
 of; the mass stands on the same row in every phase, so a ridge of mountains
 stands on one horizon.
 
+The three phases are **one dominant summit with shoulders under it**, not three
+summits of a height: playtest read the earlier trio as rock piles, because
+nothing in the silhouette said which peak the tile was about. Two things answer
+that — the shoulders drop well under the peak, and the snow line is measured
+**down from the tallest summit** (`buildings.MASSIF_CAP`), so only that peak
+wears a cap. The cap is also the sheet's one material lifted a slot above its
+family's convention (`palette.TERRAIN_MATERIALS`): snow may not be made whiter,
+`SNOW_RAMP` stopping just under the ceiling that reserves the top band for
+units, so what a cap gains it gains from the rungs it is drawn at. Darkening
+the rock under the line instead is the rejected answer — it spends the massif's
+darkest rung over the middle of the cell, where a unit stands, and
+`make legibility-ratchet` failed 22 mountain cells on it.
+
 The massif itself is a **voxel height field**, rasterised by the same
 `render_indexed` the units and the buildings go through
 (`buildings.massif`). It used to be the one object on the sheet drawn in a

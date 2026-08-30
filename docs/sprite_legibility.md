@@ -210,6 +210,30 @@ move back: the wash exists to be seen, and the reach it delimits is the more gam
 
 The digest was rewritten for it (`make legibility-baseline`) and the gallery redrawn with it.
 
+## Re-read 2026-08-30, after the mountain became one peak with a cap
+
+The redraw above kept three near-equal summits and a cap too dim to tell from the rock beside it;
+playtest still read the tile as a rock pile. This pass gives every phase **one dominant summit with
+shoulders under it**, measures the snow line **down from that summit** so only it wears a cap, and
+draws the cap a ramp slot higher (`palette.TERRAIN_MATERIALS`, `snowcap` on S4) — the snow ramp's
+own top three rungs, brightest L172, still under the ceiling that reserves the top band for units.
+
+It **buys the board cells**: **34,207 failing (93.2%) clear and 7,011 (81.1%) fogged**, against the
+previous baseline's 34,212 (93.2%) / 7,037 (81.4%), and the `mountain` row is 94.3% of its 3,672
+cells against 94.4%. **51 verdicts changed, all of them mountain's: 41 crossed to passing and 10
+the other way**, a net 31 cells of 45,360. Nothing was tuned in response, and no unit, faction,
+overlay or other terrain moved by a cell.
+
+One thing the sweep did say out loud, and the art answered: a first cut drew the band of rock
+**under** the snow line a rung darker, which is how a real snow line reads and read well on the
+tile. It puts the massif's darkest rung over the middle of the cell, which is where a unit stands,
+and the ratchet came back with 22 mountain cells that had passed and no longer did — almost all of
+them `acted` or fogged units, whose own values are dimmed. That band is not in the shipped art; the
+cap is read by its own rungs alone.
+
+The baseline digest was rewritten again (`make legibility-baseline`), so the 41 gains are the line
+the next change is held to.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in

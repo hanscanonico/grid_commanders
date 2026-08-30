@@ -105,12 +105,17 @@ MASSIF_SPAN = 13  # voxels across the footprint, on both ground axes
 # plateau, not a peak. 1.5 still read as a squat quarry heap, because a cone
 # that shallow is wider than the tile: the bottom half of the silhouette was
 # the wall it got cut off at. 2.1 lands the whole cone inside the footprint,
-# so the mass narrows all the way down to the talus below.
+# so the mass narrows all the way down to the talus below. Steepening it past
+# that buys a number rather than a picture: what the silhouette follows is the
+# crest the ridges draw, `RIDGE_GAIN` proud of the cone.
 MASSIF_SLOPE = 2.1
-# Above this height a column is snow. A cap is the one thing that tells a
-# summit from a quarry at the board's 4:1 rung, and it is deliberately small:
-# the snow ramp is the brightest material on any tile.
-MASSIF_SNOW = 13
+# The cap, in voxels under the TALLEST summit — a snow line rather than an
+# absolute height, so a phase's own peak wears it and a shoulder does not. It
+# used to be an absolute 13 against summits of 17, 14 and 9, which put flecks
+# on two of the three and a cap on none. A cap is the one thing that tells a
+# summit from a quarry at the board's 4:1 rung, and it stays small for the
+# reason it always did: snow is the brightest material on any tile.
+MASSIF_CAP = 4
 # Under this height a column is talus rather than scarp — one ramp band down,
 # so the foot the grass apron meets is in the mass's own shadow. Two rather
 # than three since the apron below: a fan that wide in the darker band puts
@@ -122,9 +127,11 @@ MASSIF_TALUS = 2
 # the flanks are too steep to reach it themselves — so the rock still meets
 # the grass along the cell's own dimetric edge, the one contour a projection
 # claim can be exact about, and it meets it as a spilled apron rather than as
-# a cut-off wall.
-MASSIF_APRON = 4.5
-MASSIF_APRON_SLOPE = 0.25
+# a cut-off wall. Lower than the 4.5 it was authored at: a fan standing three
+# voxels proud around the whole footprint is a bench, and a peak on a bench
+# reads as a quarry heap.
+MASSIF_APRON = 2.4
+MASSIF_APRON_SLOPE = 0.11
 
 
 def _relief(vx: int, vy: int, seed: int, lattice: int) -> float:
@@ -146,11 +153,14 @@ def _relief(vx: int, vy: int, seed: int, lattice: int) -> float:
 
 # How far the two relief fields move the surface: the coarse one stretches and
 # pinches the plan (a spur reaches out, a gully cuts in), the fine one roughens
-# the surface by under a voxel. It used to be 2.0, which scattered isolated
-# light voxels down the flanks as speckle; at 1.0 what is left reads as the
-# gullies between the ridges below.
-_PLAN_RELIEF = 0.35
-_CRAG_RELIEF = 1.0
+# the surface by under a voxel. The fine one used to be 2.0, which scattered
+# isolated light voxels down the flanks as speckle, and 1.0 after that; 0.6 is
+# where a flank stops reading as gravel. Quietening it alone brings back the
+# concentric terraces `int(h)` cuts out of a smooth cone, so the coarse field
+# takes the work over: at 0.55 it wanders the plan far enough that a contour
+# never closes into a ring.
+_PLAN_RELIEF = 0.55
+_CRAG_RELIEF = 0.6
 
 # The ridges. A mountain is read by continuous crest lines running summit to
 # foot, which an isotropic relief field cannot make: it has no direction, so it
@@ -161,8 +171,11 @@ _CRAG_RELIEF = 1.0
 # crest falls at the flank's own authored slope rather than bulging, and it
 # fades in over the summit's own `_RIDGE_CROWN` voxels, which is what keeps the
 # peak the highest point on the mass instead of a ring of fins around a saddle.
-RIDGE_ARMS = 3
-RIDGE_GAIN = 1.6
+# Five arms rather than three, and a voxel taller: with the crag field turned
+# down to 0.6 the ridges are what is left holding the flanks together, and
+# three of them leave two faces of a five-sided cone plain.
+RIDGE_ARMS = 5
+RIDGE_GAIN = 2.0
 _RIDGE_CROWN = 1.5
 _RIDGE_WIDTH = 1.3
 
@@ -202,6 +215,9 @@ def massif(peaks: tuple[tuple[int, int, int], ...], seed: int) -> Model:
     than the same one slid sideways.
     """
     m = Model()
+    # The tallest summit sets the snow line for the whole mass, so a shoulder
+    # is bare rock and the eye is told which peak the tile is about.
+    snow_line = peaks[0][2] - MASSIF_CAP
     arms = [_ridge_arms(px, py, seed) for px, py, _ in peaks]
     for vx in range(MASSIF_SPAN + 1):
         for vy in range(MASSIF_SPAN + 1):
@@ -218,7 +234,10 @@ def massif(peaks: tuple[tuple[int, int, int], ...], seed: int) -> Model:
             # silhouette the tile is read by.
             h += _CRAG_RELIEF * min(1.0, near / 3.0) * _relief(vx, vy, seed + 31, 2)
             top = max(int(h), 1)
-            snow = MASSIF_SNOW + int(h01(vx, vy, seed + 7) * 4)
+            # A snow line zigzags either way around its own altitude. The
+            # jitter used to be one-sided, which only ever pushed the cap up a
+            # cone that narrows this fast — so half the summit lost it.
+            snow = snow_line + int(h01(vx, vy, seed + 7) * 3) - 1
             for z in range(top + 1):
                 if z >= snow:
                     m.set(vx, vy, z, "snowcap")
