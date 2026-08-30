@@ -408,8 +408,7 @@ static func style_segment(seg: Button, active: bool, divided: bool, accent: Colo
 
 
 ## The width a toggle needs to say its whole piece: the box, the words and the
-## ON/OFF, with the row's two gaps and a third of trailing slack so the status
-## never sits against the column's edge. The row inside the button is anchored
+## ON/OFF, with the row's two gaps. The row inside the button is anchored
 ## rather than parented by a container, so the button has to state this itself —
 ## without it a narrow column clips the words instead of the layout refusing.
 static func toggle_width(text: String) -> float:
@@ -419,13 +418,17 @@ static func toggle_width(text: String) -> float:
 	var status := UiTheme.stat().get_string_size(
 		"OFF", HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_STAT
 	)
-	return TOGGLE_CHECK + words.x + status.x + 3 * TOGGLE_GAP
+	return TOGGLE_CHECK + words.x + status.x + 2 * TOGGLE_GAP
 
 
 ## A toggle row: a ✓-box (capture green on, grey off), a label, and a Silkscreen
 ## ON/OFF status. The whole row is one focusable button (handoff Toggle), so mouse,
 ## keyboard and controller all flip it — and, like a segmented group, its
 ## explanation hangs off the words rather than off the whole row.
+##
+## The status sits tight after its own label rather than pushed to the row's far
+## edge: hard right it landed against the *next* toggle's box, and a state word
+## reads as belonging to whichever label it touches (COM-258 QA).
 static func toggle(
 	text: String, is_on: bool, tip: String, tip_detail: String, on_change: Callable
 ) -> Button:
@@ -463,15 +466,10 @@ static func toggle(
 	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	label.add_theme_color_override("font_color", UiTheme.INK)
 	# Shrunk to its own string, so the underlined words and the hover target are
-	# the same rect; the spacer below keeps ON/OFF hard right where FILL had it.
+	# the same rect.
 	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(label)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(spacer)
 
 	var status := Label.new()
 	status.add_theme_font_override("font", UiTheme.stat())
