@@ -88,6 +88,9 @@ const HP_LABEL_OFFSET := Vector2(1, 0)
 const FUEL_LABEL_OFFSET := Vector2(-8, 0)
 ## The acted corner mark sits above the fuel badge, clear of both.
 const ACTED_LABEL_OFFSET := Vector2(-8, -8)
+## One step under HpLabel's 8: enough to read as a mark rather than a number,
+## not so small the glyph loses its shape at the far zoom rungs.
+const ACTED_LABEL_SIZE := 7
 
 var unit: Unit
 ## Team whose turn it is. Only that team's units grey out when exhausted;
@@ -138,9 +141,10 @@ var _frame: int = 0
 @onready var hp_label: Label = $HpLabel
 @onready var fuel_label: Label = $FuelLabel
 ## The scrim's redundant corner mark: at zoom-out a one-pixel checker can
-## read weakly, so an acted unit also wears a small "Z". Built in code as
-## HpLabel's twin rather than authored in the scene, so the two can never
-## drift in font or size.
+## read weakly, so an acted unit also wears a small "Z". Duplicated from HpLabel
+## rather than authored in the scene — the font and the outline that make it
+## legible zoomed out can then never drift — and restyled in `setup` where it
+## must read as a status mark rather than a second number.
 var acted_label: Label
 
 
@@ -168,6 +172,12 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	acted_label = hp_label.duplicate()
 	acted_label.text = "Z"
 	acted_label.position = ACTED_LABEL_OFFSET / SPRITE_SCALE
+	# A status mark, not a stat: muted grey and a size below HP's, so the two are
+	# different categories at a glance. The dark outline is what the duplicate is
+	# for and stays, since reading at the far zoom rungs is the badge's whole job.
+	# Amber is spoken for — that is FuelLabel's attention colour.
+	acted_label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	acted_label.add_theme_font_size_override("font_size", ACTED_LABEL_SIZE)
 	add_child(acted_label)
 	refresh()
 
