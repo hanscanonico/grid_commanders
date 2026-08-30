@@ -23,6 +23,9 @@ var _terrains: Array[TerrainType] = []
 var _buttons: Array[Button] = []
 var _labels: Array[Label] = []
 var _selected := 0
+## Whether the terrain brush is the one the next press lays. A column that lit
+## its row while the eraser was armed would show two brushes in one hand.
+var _armed := true
 
 
 ## Ground first, then the properties, each group by name: a board is laid down
@@ -76,6 +79,14 @@ func selected() -> TerrainType:
 	return _terrains[_selected] if _selected < _terrains.size() else null
 
 
+## Whether this column's brush is the one in hand.
+func show_armed(active: bool) -> void:
+	if _armed == active:
+		return
+	_armed = active
+	_restyle()
+
+
 ## Puts a brush in hand: what a row's press runs, and the seam a later route to
 ## the palette (a hotkey, a touch dock) picks a brush through.
 func select(index: int) -> void:
@@ -116,10 +127,10 @@ func _swatch(terrain: TerrainType, db: TerrainDB) -> Control:
 
 
 ## The selected row wears the cream plate every chosen thing in this game wears;
-## the rest are ghosts.
+## the rest are ghosts, and so is it while another column holds the brush.
 func _restyle() -> void:
 	for i in _buttons.size():
-		var chosen := i == _selected
+		var chosen := _armed and i == _selected
 		var variant := UiTheme.ButtonVariant.SECONDARY if chosen else UiTheme.ButtonVariant.GHOST
 		UiTheme.apply_button(_buttons[i], variant, null, UiTheme.SIZE_BUTTON)
 		_labels[i].add_theme_color_override("font_color", UiTheme.INK if chosen else UiTheme.WHITE)

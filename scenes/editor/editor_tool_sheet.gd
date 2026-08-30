@@ -23,6 +23,8 @@ signal erase_asked
 ## what puts a row's whole plate under a thumb.
 const COLUMN_W := 150
 
+var _erase: Button
+
 
 ## Takes the columns the editor built and stands them side by side.
 func configure(columns: Array[Control]) -> void:
@@ -42,14 +44,21 @@ func configure(columns: Array[Control]) -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", UiTheme.GAP)
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
-	var erase := UiKit.action_button("Erase", "", UiTheme.ButtonVariant.SECONDARY, null, 96)
-	erase.pressed.connect(func() -> void: erase_asked.emit())
-	actions.add_child(UiKit.touchable(erase))
+	_erase = UiKit.action_button("Erase", "", UiTheme.ButtonVariant.SECONDARY, null, 96)
+	_erase.pressed.connect(func() -> void: erase_asked.emit())
+	actions.add_child(UiKit.touchable(_erase))
 	var back := UiKit.action_button("Paint", "", UiTheme.ButtonVariant.PRIMARY, null, 96)
 	back.pressed.connect(close)
 	actions.add_child(UiKit.touchable(back))
 	main.add_child(actions)
 	hide()
+
+
+## Whether the Erase brush is the one in hand, so a sheet opened again shows the
+## brush the board is actually painting with.
+func show_erase(active: bool) -> void:
+	var variant := UiTheme.ButtonVariant.PRIMARY if active else UiTheme.ButtonVariant.SECONDARY
+	UiTheme.apply_button(_erase, variant, null, UiTheme.SIZE_BUTTON)
 
 
 func begin() -> void:
