@@ -469,10 +469,11 @@ func show_power_banner(commander: CommanderType, team: int) -> void:
 ## decides nothing about who was affected. An empty list is the ordinary quiet
 ## case: a power fired where the viewer can see none of it.
 ##
-## Every unit a mark names blinks in that mark's own colour while its mark lifts,
-## so the power is read off the pieces it touched rather than off the tiles they
-## happen to stand on. An aimed square that took what was standing in it gets the
-## meteor first — the strike itself, before the receipt.
+## Every unit a mark names blinks colourless while its mark lifts, so the power is
+## read off the pieces it touched rather than off the tiles they happen to stand
+## on, and the piece stays its owner's while it flashes. An aimed square that took
+## what was standing in it gets the meteor first — the strike itself, before the
+## receipt.
 ##
 ## While capturing the marks pose at rest, exactly as the card holds, because
 ## there they are the frame's subject, and the blink poses at its brightest for
