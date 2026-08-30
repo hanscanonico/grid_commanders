@@ -285,7 +285,10 @@ class TheGreyArmyWearsTheVillainsFace(unittest.TestCase):
 
     SOFT_MOUTHS = ("grin", "laugh", "neutral", "open", "smile", "wry")
     HARD_EYES = ("lidded", "narrow")
-    WIDEST_EYE = 0.94
+    # The widest Iron eye on the sheet. It was 0.94, and at that dial a
+    # narrowed lid still leaves a round, bright sclera that reads friendly at
+    # bust size, which is the QA finding this cap was tightened for.
+    WIDEST_EYE = 0.90
 
     def iron_faces(self) -> list[roster.Face]:
         return [f for k, f in roster.FACES.items() if bust.FACTION_OF[k] == "iron"]
