@@ -128,6 +128,11 @@ func paint(cell: Vector2i, terrain_id: StringName, team: int = MapData.NEUTRAL) 
 		_owners.erase(cell)
 	elif team != MapData.NEUTRAL:
 		set_owner(cell, team)
+	elif _owners.has(cell):
+		# Handed back to the owner it already had, through the one authority on
+		# ownership, so painting a headquarters over that seat's own city still
+		# costs the seat the home it had.
+		set_owner(cell, _owners[cell])
 	return true
 
 
