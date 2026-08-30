@@ -83,14 +83,14 @@ func _build() -> void:
 		"Save", "", UiTheme.ButtonVariant.PRIMARY, UiTheme.menu_identity().theme(1), 96
 	)
 	_save_button.pressed.connect(_confirm)
-	actions.add_child(_save_button)
+	actions.add_child(UiKit.touchable(_save_button))
 	var back := UiKit.action_button("Cancel", "", UiTheme.ButtonVariant.GHOST, null, 96)
 	back.pressed.connect(
 		func() -> void:
 			hide()
 			cancelled.emit()
 	)
-	actions.add_child(back)
+	actions.add_child(UiKit.touchable(back))
 	main.add_child(actions)
 	main.add_child(UiKit.key_legend("ENTER  SAVE      ESC  BACK"))
 

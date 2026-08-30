@@ -378,12 +378,15 @@ func _build_board_column() -> Control:
 	frame.add_child(_board)
 
 	_strip = EditorValidationStrip.new()
-	_strip.focused.connect(_on_defect_focused)
+	_strip.focused.connect(_look_at)
 	col.add_child(_strip)
 	return col
 
 
-func _on_defect_focused(cell: Vector2i) -> void:
+## Walks the cursor to a cell somebody else named — the strip's complaint, or the
+## finger a pan moved. The board is handed back first, since either way the next
+## press is the board's.
+func _look_at(cell: Vector2i) -> void:
 	_hand_the_board_back()
 	_board.set_cursor(cell)
 	_say_cursor()
@@ -413,7 +416,7 @@ func _build_pages() -> void:
 	var columns: Array[Control] = [_palette, _inspector]
 	_sheet.configure(columns)
 	_sheet.closed.connect(_hand_the_board_back)
-	_touch = EditorTouch.new(_board, _apply_at, _on_defect_focused)
+	_touch = EditorTouch.new(_board, _apply_at, _look_at)
 
 
 func _build_header() -> Control:
@@ -437,6 +440,7 @@ func _header_button(text: String, on_press: Callable) -> Button:
 	var button := UiKit.action_button(text, "", UiTheme.ButtonVariant.SECONDARY, null, 44)
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.pressed.connect(on_press)
+	UiKit.touchable(button)
 	return button
 
 

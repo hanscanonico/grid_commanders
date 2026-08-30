@@ -80,21 +80,21 @@ func _build() -> void:
 		"Create", "", UiTheme.ButtonVariant.PRIMARY, UiTheme.menu_identity().theme(1), 96
 	)
 	_create_button.pressed.connect(_confirm)
-	actions.add_child(_create_button)
+	actions.add_child(UiKit.touchable(_create_button))
 	var open_button := UiKit.action_button("Open", "", UiTheme.ButtonVariant.SECONDARY, null, 96)
 	open_button.pressed.connect(
 		func() -> void:
 			hide()
 			open_asked.emit()
 	)
-	actions.add_child(open_button)
+	actions.add_child(UiKit.touchable(open_button))
 	var back := UiKit.action_button("Cancel", "", UiTheme.ButtonVariant.GHOST, null, 96)
 	back.pressed.connect(
 		func() -> void:
 			hide()
 			cancelled.emit()
 	)
-	actions.add_child(back)
+	actions.add_child(UiKit.touchable(back))
 	main.add_child(actions)
 	main.add_child(UiKit.key_legend("ENTER  CREATE      ESC  BACK      MOUSE OK"))
 

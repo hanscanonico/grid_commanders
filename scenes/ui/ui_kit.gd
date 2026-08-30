@@ -205,7 +205,7 @@ static func stepper(caption: String, value: Label, on_step: Callable) -> Control
 
 	var less := action_button("-", "", UiTheme.ButtonVariant.SECONDARY, null, 20)
 	less.pressed.connect(func() -> void: on_step.call(-1))
-	row.add_child(less)
+	row.add_child(touchable(less))
 
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	value.custom_minimum_size = Vector2(24, 0)
@@ -213,7 +213,7 @@ static func stepper(caption: String, value: Label, on_step: Callable) -> Control
 
 	var more := action_button("+", "", UiTheme.ButtonVariant.SECONDARY, null, 20)
 	more.pressed.connect(func() -> void: on_step.call(1))
-	row.add_child(more)
+	row.add_child(touchable(more))
 	return row
 
 

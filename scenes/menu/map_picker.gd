@@ -522,7 +522,7 @@ func _ask_manage() -> void:
 		return
 	var body := _open_page(
 		MapCatalog.display_name(map.source_path).to_upper(),
-		"The name is the file's, and what `--map=` calls this board."
+		"The name is the file's, and what --map= calls this board."
 	)
 	if body == null:
 		return
