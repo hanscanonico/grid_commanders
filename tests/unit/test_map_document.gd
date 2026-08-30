@@ -84,6 +84,18 @@ func test_ownership_clears_when_a_cell_stops_being_a_property() -> void:
 	assert_push_error("is not a property, cannot be owned")
 
 
+func test_a_building_painted_for_a_seat_is_that_seats() -> void:
+	var doc := MapDocument.blank(2, 1, terrain_db)
+	assert_true(doc.paint(Vector2i(0, 0), &"hq", 2), "the HQ goes down for seat 2")
+	assert_eq(doc.owner_at(Vector2i(0, 0)), 2, "and belongs to it at once")
+	doc.paint(Vector2i(0, 0), &"city", MapData.NEUTRAL)
+	assert_eq(
+		doc.owner_at(Vector2i(0, 0)), 2, "naming nobody leaves the cell's ownership as it stands"
+	)
+	doc.paint(Vector2i(1, 0), &"woods", 1)
+	assert_eq(doc.owner_at(Vector2i(1, 0)), MapData.NEUTRAL, "and open ground is owned by nobody")
+
+
 func test_resizing_keeps_the_overlap_and_drops_what_falls_off() -> void:
 	var doc := MapDocument.blank(3, 3, terrain_db)
 	doc.paint(Vector2i(0, 0), &"mountain")

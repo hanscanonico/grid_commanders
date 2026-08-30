@@ -190,7 +190,7 @@ func _apply_brush(cell: Vector2i) -> bool:
 	var terrain := _palette.selected()
 	if terrain == null or _doc.terrain_at(cell).id == terrain.id:
 		return false
-	return _doc.paint(cell, terrain.id)
+	return _doc.paint(cell, terrain.id, _inspector.seat())
 
 
 func _stand_unit(cell: Vector2i) -> bool:

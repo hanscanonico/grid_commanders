@@ -68,7 +68,8 @@ func configure(units: UnitDB) -> void:
 	_restyle()
 
 
-## The seat both brushes are aimed at.
+## The seat every brush is aimed at: who owns a building the terrain brush lays,
+## who owns one the owner brush hands over, and who a placed unit fights for.
 func seat() -> int:
 	return _seat
 

@@ -107,9 +107,12 @@ func resize(map_width: int, map_height: int) -> void:
 			_units.erase(cell)
 
 
-## Lays `terrain_id` on `cell`. Ownership clears when the cell stops being a
+## Lays `terrain_id` on `cell`, handed to `team` when what goes down is a
+## property — a building painted with nobody named is a building nobody owns,
+## which is a board the validator rightly refuses. `MapData.NEUTRAL` leaves the
+## cell's ownership as it stands. Ownership clears when the cell stops being a
 ## property: a team owns a building, not the ground it stood on.
-func paint(cell: Vector2i, terrain_id: StringName) -> bool:
+func paint(cell: Vector2i, terrain_id: StringName, team: int = MapData.NEUTRAL) -> bool:
 	var terrain := _db.by_id(terrain_id)
 	if terrain == null:
 		push_error("MapDocument: unknown terrain id '%s'" % terrain_id)
@@ -120,6 +123,8 @@ func paint(cell: Vector2i, terrain_id: StringName) -> bool:
 	_terrain[cell.y * width + cell.x] = terrain
 	if not terrain.is_property:
 		_owners.erase(cell)
+	elif team != MapData.NEUTRAL:
+		set_owner(cell, team)
 	return true
 
 
