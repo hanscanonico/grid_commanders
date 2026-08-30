@@ -15,7 +15,7 @@ extends Control
 ## confirmed there.
 ## "Continue" bypasses selection — a saved match restores its own commanders. It
 ## is disabled, not hidden, when there is nothing to resume (plan section 2), and
-## it names what it would resume on the micro-line beneath it: "DAY 4 · SCRIMMAGE".
+## it names what it would resume on the line beneath it: "Day 4 · Scrimmage".
 ## Disabled rather than hidden is also what keeps the two layouts the same height:
 ## a save's presence may never change the layout budget (UX-recovery D2), which is
 ## what `--demo=menu_with_save` / `--demo=menu_no_save` photograph and what
@@ -354,7 +354,6 @@ func _build_setup_panel() -> Control:
 	# for, and every other row here says its piece in a fixed number of lines.
 	_map_picker.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(_map_picker)
-	body.add_child(UiKit.rule())
 	body.add_child(_build_seats_row())
 	body.add_child(_build_options_row())
 	return panel
@@ -367,24 +366,23 @@ func _build_setup_panel() -> Control:
 func _build_seats_row() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
-	# No section label: each row already says which seat it is, and the panel's
-	# height budget is real (see `_chrome`).
+	col.add_child(UiKit.section_header("Seats"))
 	if _difficulties.is_empty():
 		push_error("main menu: no difficulty tiers found in %s" % DifficultyDB.DIFFICULTY_DIR)
 	_seat_strip = SeatStrip.new()
 	_seat_strip.configure(_difficulties)
 	col.add_child(_seat_strip)
-	# No help line: the grouping buttons name themselves, each segment carries the
-	# sentence as a tip, and the panel's height is fixed — a line spent here is a
-	# line off the map picker.
 	return col
 
 
-## Speed and the three checkboxes, one row: pacing on the left, then fog — this
-## match's — and the two animation settings, which are the device's (game-speed
-## D1). One row rather than two, and no rule between them, because the height they
-## gave back is the map picker's second shelf of boards (COM-258).
+## Speed and the three checkboxes under one section header: pacing on the left,
+## then fog — this match's — and the two animation settings, which are the
+## device's (game-speed D1). One row rather than two, because the height they gave
+## back is the map picker's second shelf of boards (COM-258).
 func _build_options_row() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	col.add_child(UiKit.section_header("Rules"))
 	var row := HBoxContainer.new()
 	# Wider than the gap inside a toggle: each ON/OFF belongs to the label it follows.
 	row.add_theme_constant_override("separation", 2 * UiKit.TOGGLE_GAP)
@@ -419,14 +417,14 @@ func _build_options_row() -> Control:
 			_on_menu_animations_toggled
 		)
 	)
-	return row
+	col.add_child(row)
+	return col
 
 
 func _build_speed_col() -> Control:
 	# No Difficulty segment: how well the computer plays is per seat now (COM-225)
 	# and the seat strip is the one control that says it. Two controls writing one
 	# fact is the drift a single authority exists to prevent.
-	var meridian := UiTheme.menu_identity().theme(1)
 	var speed_labels := PackedStringArray()
 	var speed_selected := 0
 	for i in _speed_tiers.size():
@@ -438,7 +436,7 @@ func _build_speed_col() -> Control:
 		"Speed",
 		speed_labels,
 		speed_selected,
-		meridian.color,
+		UiTheme.CONTROL_ACCENT,
 		"How fast moves and battles play out",
 		speed_detail,
 		_on_speed_selected
@@ -446,6 +444,9 @@ func _build_speed_col() -> Control:
 	# Shorter than the tip: the four options share a row and the help lines set it.
 	speed.add_child(_option_help("Pacing, not outcomes"))
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A segment clips rather than sizing to its label, so the tier run states the
+	# width it must stand at: an even share of this row set "Instant" as "Instan".
+	speed.custom_minimum_size = Vector2(UiKit.segment_min_width(speed_labels), 0)
 	return speed
 
 
@@ -464,6 +465,10 @@ func _toggle_col(
 	return col
 
 
+## The rail, read top to bottom: the primary action, the card that resumes a
+## match, the three quiet ways off this page, then a footer — who is at the table,
+## the blink, and Quit pinned last. Grouped rather than evenly spaced, because a
+## column of equally-separated rows says nothing about which of them matters.
 func _build_action_stack() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 5)
@@ -473,46 +478,23 @@ func _build_action_stack() -> Control:
 	# One action where there were two modes: who is playing is the seat strip's to
 	# say now, so this button only has to mean "with these seats" (plan D6).
 	_start_button = UiKit.action_button(
-		"Start", "MATCH", UiTheme.ButtonVariant.PRIMARY, identity.theme(1)
+		"Start", "Match", UiTheme.ButtonVariant.PRIMARY, identity.theme(1)
 	)
 	col.add_child(_start_button)
-	_seat_refusal = UiKit.micro_label("")
+	_seat_refusal = UiKit.help_label("")
 	_seat_refusal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_seat_refusal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_seat_refusal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_seat_refusal)
 
 	_continue = ContinueSlot.new(col, func() -> void: _start([] as Array[int], true, {}))
-
-	# Above Replays, below Continue: an authored war is a different offer from the
-	# skirmish this page is otherwise about, and it is the one a first-time player
-	# is most likely to want. Chrome-less, like Replays: the two of them are ways
-	# out of this page rather than ways to start the match it sets up.
-	_campaign_button = UiKit.action_button("Campaign", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_campaign_button)
-
-	# Below Continue: it is the third thing you can do with a match, and the only
-	# surface that tells a player their matches are being recorded at all.
-	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_replay_button)
-
-	# Last of the ghosts: authoring a board is the one thing on this page that is
-	# not playing the game (COM-263).
-	_editor_button = UiKit.action_button("Map Editor", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_editor_button)
+	col.add_child(_build_secondary_group())
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
 
-	# Out of the stack and down at the column's foot: leaving is not one of the
-	# things this page offers, and a full-width row is what made it read as a
-	# button someone forgot to dress.
-	_quit_button = UiKit.text_link("Quit")
-	col.add_child(_quit_button)
-
-	# One chip per seat the board deals, rebuilt when the map changes — the pair
-	# used to be spelled out here, which is why a third army had nowhere to appear.
-	# Flowed: four chips in a row are wider than the stack they sit under.
+	# One chip per seat, rebuilt when the map changes, and flowed because four
+	# chips in a row are wider than the stack they sit under.
 	_chips = HFlowContainer.new()
 	_chips.add_theme_constant_override("h_separation", 4)
 	_chips.alignment = FlowContainer.ALIGNMENT_CENTER
@@ -526,12 +508,31 @@ func _build_action_stack() -> Control:
 	_press_start.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_press_start)
 	_motion.blink(self, _press_start)
+
+	# Pinned last: leaving is not one of the things this page offers, and a
+	# full-width row is what made it read as a button someone forgot to dress.
+	_quit_button = UiKit.text_link("Quit")
+	col.add_child(_quit_button)
 	return col
 
 
-## Re-deals the footer chips for a board that seats `count` armies. Every seat
-## gets its colour and its P-number, so the strip above and the chips below name
-## the same table.
+## The three ways off this page, tight against one another so they read as one
+## group a step below Continue: an authored war, the recordings of matches
+## already played, and authoring a board — which is the one thing here that is not
+## playing the game (COM-263). Chrome-less, because none of them starts the match
+## this page sets up.
+func _build_secondary_group() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 1)
+	_campaign_button = UiKit.action_button("Campaign", "", UiTheme.ButtonVariant.GHOST, null)
+	col.add_child(_campaign_button)
+	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.GHOST, null)
+	col.add_child(_replay_button)
+	_editor_button = UiKit.action_button("Map Editor", "", UiTheme.ButtonVariant.GHOST, null)
+	col.add_child(_editor_button)
+	return col
+
+
 ## One chip per army at the table — the seats that play, not the seats the board
 ## deals, so closing one takes its livery off the footer as it takes it off the
 ## board. Resolved over that same roster, which is what the battle resolves over.
@@ -599,8 +600,7 @@ func _on_menu_animations_toggled(pressed: bool) -> void:
 ## footer.
 func _refresh_seats() -> void:
 	_start_button.disabled = not _seat_strip.valid()
-	_seat_refusal.text = _seat_strip.refusal().to_upper()
-	_seat_refusal.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
+	_seat_refusal.text = _seat_strip.refusal()
 	# The chips are dressed from the table too, not from the board: a seat closed
 	# here is an army that will not be on the map, so its livery leaves the footer
 	# in the same tap (open-seats plan D4).
@@ -746,7 +746,7 @@ func setup_context_ready() -> bool:
 	if map == null or not MapCatalog.teaches(map.source_path):
 		push_error("main menu setup context: tutorial board is not the default")
 		passed = false
-	elif not _map_picker.caption().text.contains(map.description.to_upper()):
+	elif not _map_picker.caption().text.contains(map.description):
 		push_error("main menu setup context: selected map description is not visible")
 		passed = false
 	for label in _setup_help_labels:

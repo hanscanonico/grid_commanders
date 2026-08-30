@@ -76,6 +76,13 @@ const HARD_BORDER := CommanderVisuals.HARD_BORDER  # the darkest outline
 
 ## A thin ink rule between two rows (handoff --border-soft): INK faded to 45%.
 const BORDER_SOFT := Color(INK, 0.45)
+## What a *selected* quiet control is filled with: a seat's Human/CPU run, its
+## tier chip, the Speed tier, a checked toggle box. Ink, because the shell has one
+## accent and it is spent on the primary action and the board in hand — a segment
+## that lit up in a faction hue put four controls in competition with Start, which
+## is the whole of "one accent". A faction hue on this panel now says exactly one
+## thing: which army a seat is.
+const CONTROL_ACCENT := HARD_BORDER
 ## The wash a map cell takes on hover, unselected: PAPER_RAISED faded to 35%.
 const HOVER_WASH := Color(PAPER_RAISED, 0.35)
 

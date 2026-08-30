@@ -13,12 +13,14 @@ func test_the_teaching_board_wears_its_badge() -> void:
 	var cell_name := MapPicker.cell_name(map, false)
 	assert_string_contains(cell_name, MapCatalog.display_name(map.source_path))
 	assert_string_contains(cell_name, "Tutorial")
-	assert_false(cell_name.ends_with("✓"), "an unselected cell wears no tick")
+	assert_false(cell_name.contains("✓"), "an unselected cell wears no tick")
 
 
+## The tick leads, because a cell's label is clipped to the cell and the boards
+## with the longest names are the ones a trailing tick would fall off.
 func test_the_selected_cell_is_ticked() -> void:
 	var map := _map(MapCatalog.TUTORIAL_MAP_PATH)
-	assert_true(MapPicker.cell_name(map, true).ends_with("✓"))
+	assert_true(MapPicker.cell_name(map, true).begins_with("✓"))
 
 
 ## A duel says nothing about its seats; a board that deals more than two says how
@@ -40,10 +42,10 @@ func test_the_caption_quotes_the_board() -> void:
 	var map := _map(MapCatalog.TUTORIAL_MAP_PATH)
 	var caption := MapPicker.caption_text(map)
 	assert_string_contains(caption, "%d×%d" % [map.width, map.height])
-	assert_string_contains(caption, "%d PROPERTIES" % map.property_cells().size())
-	assert_string_contains(caption, MapPicker.armies_label(map.player_count()).to_upper())
-	assert_string_contains(caption, map.description.to_upper())
-	assert_eq(caption, caption.to_upper(), "the caption is set in caps")
+	assert_string_contains(caption, "%d properties" % map.property_cells().size())
+	assert_string_contains(caption, MapPicker.armies_label(map.player_count()))
+	assert_string_contains(caption, map.description)
+	assert_ne(caption, caption.to_upper(), "the caption reads as prose, not as a caps label")
 
 
 ## Random is an action, not a selection: it draws a board from the roster the

@@ -1,6 +1,6 @@
 class_name MapPicker
 extends VBoxContainer
-## The map picker: a scrollable three-up grid of live board thumbnails, the whole
+## The map picker: a scrollable four-up grid of live board thumbnails, the whole
 ## roster with its teaching board first (MapCatalog.ordered) — the dropdown is
 ## gone (MN2). The selected cell gets the raised cream surface, the meridian
 ## border and a ✓; scroll follows keyboard focus so every board is reachable
@@ -35,11 +35,26 @@ signal map_selected(index: int)
 const MAP_CAPTION_LINES := 2
 ## The gap between cells, in both axes.
 const GRID_GAP := 8
+## How many boards a shelf row holds. Four rather than three since the setup panel
+## grew its section headers: a shorter cell four-up puts a whole shelf and the top
+## of the next in a viewport that used to hold three cells and a sliver, so the
+## roster reads further down for less of the panel's fixed height.
+const GRID_COLUMNS := 4
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
-## A cell's picture. The Random cell has none and is sized off it anyway, so the
-## grid's three columns are one height whichever cell is in them.
-const THUMB := Vector2(112.0 - 2 * CARD_PAD, 56)
+## A cell's picture: the shelf's width shared `GRID_COLUMNS` ways with the gutters
+## taken out, less this frame's own inset. Every cell is this size — the Random
+## cell draws a die in it — so the grid's rows and gutters are one shape whichever
+## cell is in them.
+const THUMB := Vector2(81.0 - 2 * CARD_PAD, 40)
+## The Random cell's die: one pip, the air between two of them, and the frame's
+## inset. Sized so the whole face lands well inside a cell's picture slot.
+const DIE_PIP := 4
+const DIE_PIP_GAP := 3
+const DIE_PAD := 3
+## Which of the 3x3 pip cells are inked — the five face, read left to right and
+## top to bottom.
+const DIE_FACE: Array[int] = [0, 2, 4, 6, 8]
 ## The layer the delete confirmation is drawn on. Its own canvas rather than a
 ## control in this column: the prompt covers the whole menu, and a full-screen
 ## page parented inside a panel row would be laid out by that row and drawn under
@@ -89,7 +104,7 @@ func configure(db: TerrainDB) -> void:
 	_terrain_db = db
 	_maps = _roster()
 	add_theme_constant_override("separation", 3)
-	add_child(UiKit.micro_label("Map"))
+	add_child(UiKit.section_header("Map"))
 
 	_map_header = Label.new()
 	_map_header.add_theme_font_override("font", UiTheme.stat())
@@ -111,7 +126,7 @@ func configure(db: TerrainDB) -> void:
 	add_child(_map_scroll)
 
 	_grid = GridContainer.new()
-	_grid.columns = 3
+	_grid.columns = GRID_COLUMNS
 	_grid.add_theme_constant_override("h_separation", GRID_GAP)
 	_grid.add_theme_constant_override("v_separation", GRID_GAP)
 	_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -296,8 +311,13 @@ static func is_custom(map: MapData) -> bool:
 	return map.source_path.begins_with(MapCatalog.USER_DIR)
 
 
-## The name a cell wears: the board, its teaching or Custom badge, its army count
-## past a duel, and the ✓ the selected cell alone carries.
+## The name a cell wears: the ✓ the selected cell alone carries, then the board,
+## its teaching or Custom badge and its army count past a duel.
+##
+## The tick leads rather than trails because a cell's label is clipped to the cell
+## (`ListRow.clipped`) and the boards with the longest names are exactly the ones
+## whose badge runs past the edge — a trailing tick was the first thing to go, on
+## the one cell that has to carry it.
 static func cell_name(map: MapData, selected: bool) -> String:
 	var name_text := MapCatalog.display_name(map.source_path)
 	if MapCatalog.teaches(map.source_path):
@@ -306,9 +326,7 @@ static func cell_name(map: MapData, selected: bool) -> String:
 		name_text += " · Custom"
 	if map.player_count() > 2:
 		name_text += " · %dP" % map.player_count()
-	if selected:
-		name_text += " ✓"
-	return name_text
+	return "✓ " + name_text if selected else name_text
 
 
 ## The caption `_refresh_facts` shows for `map`, factored out so the budget check
@@ -321,7 +339,7 @@ static func caption_text(map: MapData) -> String:
 		map.property_cells().size(),
 		map.description,
 	]
-	return ("%d×%d · %s · %d properties · %s" % parts).to_upper()
+	return "%d×%d · %s · %d properties · %s" % parts
 
 
 ## "4 armies" for a board whose seats all have to be filled, "2–4 armies" for one
@@ -416,6 +434,11 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 ## The roll's cell: the grid's first, so it is reachable without scrolling the
 ## viewport, and wearing the unselected cell's frame — it is never ticked,
 ## because pressing it leaves a real board selected.
+##
+## Laid out as every other cell is — a picture over a name on the same line — so
+## the grid's first shelf is a row of pictures and names rather than one cell of
+## empty outline beside them. The picture is the die below, because the one thing
+## this cell cannot show is a board.
 func _make_random_cell() -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(THUMB.x + 2 * CARD_PAD, _cell_height())
@@ -426,21 +449,25 @@ func _make_random_cell() -> Button:
 		Tooltip.Side.BOTTOM
 	)
 
-	var label := Label.new()
-	label.text = "RANDOM"
-	label.set_anchors_and_offsets_preset(
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 1)
+	content.set_anchors_and_offsets_preset(
 		Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, CARD_PAD
 	)
+	button.add_child(content)
+
+	var die := _die_face()
+	die.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(die)
+
+	var label := Label.new()
+	label.text = "Random"
 	label.add_theme_font_override("font", UiTheme.display())
 	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	label.add_theme_color_override("font_color", UiTheme.INK)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	# On the name line every other cell writes its board on, rather than centred in
-	# a cell as tall as a thumbnail: a half-scrolled first row shows its names and
-	# would show this one an empty box.
-	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	button.add_child(label)
-	UiTheme.make_decoration(label)
+	content.add_child(label)
+	UiTheme.make_decoration(content)
 
 	# A soft outline rather than the selection's meridian one: a map cell reads as
 	# a cell because it holds a picture and this one holds a word, so it needs a
@@ -459,6 +486,34 @@ func _make_random_cell() -> Button:
 	# roster, and a roll on focus would draw a new board on every arrow pass.
 	button.pressed.connect(_roll_map)
 	return button
+
+
+## The roll's picture: a five-pip die face, built out of the shell's own boxes
+## rather than drawn or typed as a glyph — the vendored faces carry no die
+## character, and a `_draw` for one shape would be a whole class the picker is the
+## only caller of.
+func _die_face() -> Control:
+	var centre := CenterContainer.new()
+	var frame := PanelContainer.new()
+	var box := UiTheme.bordered(UiTheme.PAPER, UiTheme.CONTROL_ACCENT, UiTheme.BORDER)
+	box.set_corner_radius_all(UiTheme.RADIUS)
+	box.set_content_margin_all(DIE_PAD)
+	frame.add_theme_stylebox_override("panel", box)
+	var pips := GridContainer.new()
+	pips.columns = 3
+	pips.add_theme_constant_override("h_separation", DIE_PIP_GAP)
+	pips.add_theme_constant_override("v_separation", DIE_PIP_GAP)
+	for cell in 9:
+		var pip := Panel.new()
+		pip.custom_minimum_size = Vector2(DIE_PIP, DIE_PIP)
+		if DIE_FACE.has(cell):
+			pip.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.CONTROL_ACCENT))
+		else:
+			pip.add_theme_stylebox_override("panel", UiTheme.flat(Color(0, 0, 0, 0)))
+		pips.add_child(pip)
+	frame.add_child(pips)
+	centre.add_child(frame)
+	return centre
 
 
 func _roll_map() -> void:
