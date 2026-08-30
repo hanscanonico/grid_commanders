@@ -61,31 +61,11 @@ func _draw() -> void:
 
 func _draw_mark(font: Font, origin: Vector2, mark: PowerEffects.Mark) -> void:
 	if mark.kind == PowerEffects.Kind.DESTROYED:
-		_draw_cross(origin, colour_for(mark.kind))
+		_draw_cross(origin)
 	if mark.pips <= 0:
 		return
 	var sign := "-" if falls(mark.kind) else "+"
 	_draw_number(font, origin, "%s%d" % [sign, mark.pips])
-
-
-## What each kind is painted in — the cross on the board, and the flash the
-## animator puts on the units the mark names. Health speaks the board's own two colours —
-## capture green for a pip back, critical red for one lost — while stores take the
-## amber every ammo bar and charge meter is already drawn with, a refreshed unit
-## takes the reach overlay's blue because that is what it just got back, and a
-## doctrine mark takes the gold that means "chosen" everywhere else in the shell.
-static func colour_for(kind: PowerEffects.Kind) -> Color:
-	match kind:
-		PowerEffects.Kind.HEALED:
-			return UiTheme.CAPTURE
-		PowerEffects.Kind.RESUPPLIED:
-			return UiTheme.AMMO
-		PowerEffects.Kind.REFRESHED:
-			return Color(OverlayPalette.MOVE, 1.0)
-		PowerEffects.Kind.EMPOWERED:
-			return UiTheme.SELECT_GOLD
-		_:
-			return UiTheme.DANGER
 
 
 ## True for the marks that are bad news for whoever is standing there: their
@@ -94,15 +74,18 @@ static func falls(kind: PowerEffects.Kind) -> bool:
 	return kind in [PowerEffects.Kind.HARMED, PowerEffects.Kind.HINDERED]
 
 
-func _draw_cross(origin: Vector2, colour: Color) -> void:
+## The one coloured thing a mark carries: critical red, for the one kind that is
+## a loss. Every other kind is its signed number, the units under it blinking
+## colourless so they stay their owner's.
+func _draw_cross(origin: Vector2) -> void:
 	var top_left := origin + Vector2(-CROSS_HALF, 0.0)
 	var top_right := origin + Vector2(CROSS_HALF, 0.0)
 	var bottom_left := origin + Vector2(-CROSS_HALF, CROSS_H)
 	var bottom_right := origin + Vector2(CROSS_HALF, CROSS_H)
 	draw_line(top_left, bottom_right, UiTheme.HARD_BORDER, OUTLINE + 1.0)
 	draw_line(top_right, bottom_left, UiTheme.HARD_BORDER, OUTLINE + 1.0)
-	draw_line(top_left, bottom_right, colour, OUTLINE)
-	draw_line(top_right, bottom_left, colour, OUTLINE)
+	draw_line(top_left, bottom_right, UiTheme.DANGER, OUTLINE)
+	draw_line(top_right, bottom_left, UiTheme.DANGER, OUTLINE)
 
 
 ## Centred on the tile, the number being the whole mark now that no glyph stands

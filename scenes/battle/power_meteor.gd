@@ -44,18 +44,20 @@ const TRAIL_WIDTH := 0.8
 const PUFF_EVERY := 0.1
 const PUFF_MIN := 4.0
 const PUFF_MAX := 11.0
-## The impact flash's radius as the body lands and as it dies away, measured
+## The impact flash's half-width as the body lands and as it dies away, measured
 ## against the square's own width, so it reads as a blast over the footprint
 ## rather than as the footprint painted white.
-const FLASH_FROM := 0.62
-const FLASH_TO := 0.25
+const FLASH_FROM := 0.55
+const FLASH_TO := 0.2
 ## How dark the square the strike took stays under the flash.
 const FOOTPRINT_ALPHA := 0.35
-## The shock ring's radius as it leaves the crater and where it ends up, in tiles.
+## The shock ring's half-width as it leaves the crater and where it ends up, in
+## tiles.
 const RING_FROM := 0.9
 const RING_TO := 3.2
-const RING_POINTS := 48
 const RING_WIDTH := 4.0
+## How many segments the falling body's outline is drawn with.
+const OUTLINE_POINTS := 48
 ## The dust thrown up around the crater: how many puffs, how far out they drift
 ## in tiles, and how wide each one grows.
 const DUST_PUFFS := 8
@@ -164,7 +166,7 @@ func _draw_fall(phase: float) -> void:
 		PackedVector2Array([head + side, head - side, tail]), Color(UiTheme.DANGER, 0.45)
 	)
 	draw_circle(head, radius, UiTheme.DANGER)
-	draw_arc(head, radius, 0.0, TAU, RING_POINTS, UiTheme.HARD_BORDER, BODY_OUTLINE)
+	draw_arc(head, radius, 0.0, TAU, OUTLINE_POINTS, UiTheme.HARD_BORDER, BODY_OUTLINE)
 	draw_circle(head + heading * radius * CORE_LEAD, radius * CORE_RADIUS, UiTheme.WHITE)
 
 
@@ -189,12 +191,13 @@ func _draw_smoke(phase: float) -> void:
 
 ## The landing, drawn from the ground up: the square the strike took, the dust it
 ## threw, the ring running out of it, and the flash over all of it.
+##
+## The ring and the flash are square because the footprint is: the preview aims a
+## SPAN x SPAN block, so a round blast over it would disagree with what the player
+## was shown about which units were hit. The body falling is the only round thing.
 func _draw_aftermath(phase: float) -> void:
 	var square := float(SPAN * TILE)
-	draw_rect(
-		Rect2(Vector2(-square, -square) * 0.5, Vector2(square, square)),
-		Color(UiTheme.DANGER, (1.0 - phase) * FOOTPRINT_ALPHA)
-	)
+	_draw_square(square * 0.5, Color(UiTheme.DANGER, (1.0 - phase) * FOOTPRINT_ALPHA), 0.0)
 	for i in DUST_PUFFS:
 		var out := Vector2.RIGHT.rotated(TAU * float(i) / float(DUST_PUFFS))
 		draw_circle(
@@ -202,17 +205,19 @@ func _draw_aftermath(phase: float) -> void:
 			lerpf(DUST_MIN, DUST_MAX, phase),
 			Color(UiTheme.NEUTRAL_DARK, (1.0 - phase) * 0.55)
 		)
-	draw_arc(
-		Vector2.ZERO,
+	_draw_square(
 		lerpf(RING_FROM, RING_TO, phase) * TILE,
-		0.0,
-		TAU,
-		RING_POINTS,
 		Color(UiTheme.DANGER, 1.0 - phase),
 		maxf(RING_WIDTH * (1.0 - phase), 1.0)
 	)
-	draw_circle(
-		Vector2.ZERO,
+	_draw_square(
 		lerpf(FLASH_FROM, FLASH_TO, phase) * square,
-		Color(UiTheme.WHITE, pow(1.0 - phase, 2.0))
+		Color(UiTheme.WHITE, pow(1.0 - phase, 2.0)),
+		0.0
 	)
+
+
+## A square centred on the crater, filled at width 0 and an outline otherwise.
+func _draw_square(half: float, colour: Color, width: float) -> void:
+	var rect := Rect2(Vector2(-half, -half), Vector2(half, half) * 2.0)
+	draw_rect(rect, colour, width <= 0.0, width)
