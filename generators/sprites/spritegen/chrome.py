@@ -43,14 +43,14 @@ ICON_GRID: RGBA = (72, 84, 96, 255)
 ICON_MERIDIAN: RGBA = (216, 74, 60, 255)
 ICON_AURORA: RGBA = (60, 100, 216, 255)
 ICON_MARK: RGBA = (224, 169, 46, 255)
-# Every measure is a multiple of the 4px rule, so the platforms' 64 and 32 land
-# on whole pixels: a rule is one pixel at 32, a token is six. The 16 halves the
-# rule, and is the one size the gridlines soften at.
+# Every measure is a multiple of the 8px rule, so all four platform sizes —
+# 128, 64, 32 and the 16 the desktop shrinks to — land on whole pixels: a rule
+# is one pixel at 16, a cell is four, the mark's arms two.
 ICON_CORNER = 8
-ICON_LINE, ICON_CELL = 4, 32
+ICON_LINE, ICON_CELL = 8, 32
 ICON_INSET = (ICON - (4 * ICON_LINE + 3 * ICON_CELL)) // 2
-ICON_TOKEN = 24
-ICON_MARK_ARM, ICON_MARK_THICK = 28, 8
+ICON_TOKEN = 32
+ICON_MARK_ARM, ICON_MARK_THICK = 32, 16
 
 
 def _fill(img: Image.Image, box: tuple[int, int, int, int], color: RGBA) -> None:
@@ -108,8 +108,13 @@ def _cell_origin(col: int, row: int) -> tuple[int, int]:
 
 
 def _plate(img: Image.Image) -> None:
-    """The dark table, its four corners cut away so it reads as rounded."""
+    """The dark table the board is ruled onto."""
     _fill(img, (0, 0, ICON, ICON), ICON_PLATE)
+
+
+def _round(img: Image.Image) -> None:
+    """Cut the four corners away so the icon reads as rounded. Last, because
+    the board fills the plate and its frame reaches the corners."""
     for x in (0, ICON - ICON_CORNER):
         for y in (0, ICON - ICON_CORNER):
             _fill(img, (x, y, ICON_CORNER, ICON_CORNER), (0, 0, 0, 0))
@@ -146,4 +151,5 @@ def icon() -> Image.Image:
     _token(img, 0, 2, ICON_MERIDIAN)
     _token(img, 2, 0, ICON_AURORA)
     _mark(img)
+    _round(img)
     return img

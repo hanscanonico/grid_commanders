@@ -11,6 +11,8 @@ from __future__ import annotations
 import colorsys
 import unittest
 
+from PIL import Image
+
 from spritegen import chrome
 from spritegen.palette import faction_by_key
 
@@ -85,11 +87,13 @@ class Icon(unittest.TestCase):
         self.assertEqual(span + 2 * chrome.ICON_INSET, chrome.ICON)
 
     def test_the_corners_are_cut_away(self):
+        """The board fills the plate, so the corners are cut last and what is
+        left at the edge between them is the board's own frame."""
         px = chrome.icon().load()
         far = chrome.ICON - 1
         for x, y in ((0, 0), (far, 0), (0, far), (far, far)):
             self.assertEqual(px[x, y][3], 0, (x, y))
-        self.assertEqual(px[chrome.ICON_CORNER, 0], chrome.ICON_PLATE)
+        self.assertEqual(px[chrome.ICON_CORNER, 0], chrome.ICON_GRID)
 
     def test_the_rules_frame_nine_cells(self):
         px = chrome.icon().load()
@@ -122,8 +126,8 @@ class Icon(unittest.TestCase):
         self.assertEqual(counts[chrome.ICON_MARK], arms - chrome.ICON_MARK_THICK**2)
 
     def test_nothing_is_thinner_than_a_rule(self):
-        """Every feature is a multiple of the 4px rule, so the platforms' 64
-        and 32 land on whole pixels; the 16 halves the rule."""
+        """Every feature is a multiple of the 8px rule, so every platform size
+        down to 16 lands on whole pixels."""
         for size in (
             chrome.ICON_CORNER,
             chrome.ICON_LINE,
@@ -134,6 +138,24 @@ class Icon(unittest.TestCase):
             chrome.ICON_MARK_THICK,
         ):
             self.assertEqual(size % chrome.ICON_LINE, 0, size)
+
+    def test_it_survives_the_sixteen_pixel_downsample(self):
+        """The desktop shrinks the icon by eight. Every feature has to land on
+        a whole pixel there: the plate, both tokens, the mark, and a frame that
+        keeps all four rules rather than half of them."""
+        small = chrome.icon().resize((16, 16), Image.NEAREST)
+        px = small.load()
+        scale = chrome.ICON // 16
+        self.assertEqual(px[8, 8], chrome.ICON_MARK)
+        for (col, row), color in (
+            ((0, 2), chrome.ICON_MERIDIAN),
+            ((2, 0), chrome.ICON_AURORA),
+        ):
+            x, y = chrome._cell_origin(col, row)
+            half = chrome.ICON_CELL // (2 * scale)
+            self.assertEqual(px[x // scale + half, y // scale + half], color)
+        rules = [x for x in range(16) if px[x, 8] == chrome.ICON_GRID]
+        self.assertEqual(rules, [0, 5, 10, 15])
 
 
 class ChromeDrift(unittest.TestCase):
