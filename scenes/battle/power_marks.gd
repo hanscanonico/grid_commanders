@@ -68,8 +68,9 @@ func _draw_mark(font: Font, origin: Vector2, mark: PowerEffects.Mark) -> void:
 	_draw_number(font, origin, "%s%d" % [sign, mark.pips])
 
 
-## What each kind is painted in — the cross on the board, and the flash the
-## animator puts on the units the mark names. Health speaks the board's own two colours —
+## What each kind's cross on the board is painted in — the mark alone, the units
+## themselves blinking colourless so they stay their owner's.
+## Health speaks the board's own two colours —
 ## capture green for a pip back, critical red for one lost — while stores take the
 ## amber every ammo bar and charge meter is already drawn with, a refreshed unit
 ## takes the reach overlay's blue because that is what it just got back, and a

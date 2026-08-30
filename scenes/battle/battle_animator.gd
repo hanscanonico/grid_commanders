@@ -48,10 +48,13 @@ const PUNCH_SECONDS := 0.11
 ## rather than a caption on one, and it flinches the board harder than a shot.
 const METEOR_SCALE := 2.5
 const METEOR_SHAKE := 5.0
-## How many times a touched unit blinks over its mark's lift, and how far past
-## full brightness the flash goes.
+## How many times a touched unit blinks over its mark's lift, and the flash
+## itself: a colourless overdrive, so a blinking unit keeps the faction hue
+## `BattleView.refresh_sprite` wrote and stays its owner's. Which kind of mark
+## it took is said by the cross over it, not by recolouring the unit.
 const BLINK_PULSES := 3
 const BLINK_GAIN := 2.5
+const BLINK_FLASH := Color(BLINK_GAIN, BLINK_GAIN, BLINK_GAIN)
 ## Where each blocking card sits in `_cards`.
 const _TURN_CARD := 0
 const _POWER_CARD := 1
@@ -542,7 +545,7 @@ func _blink_marked(marks: Array[PowerEffects.Mark], step: float) -> void:
 			continue
 		var tween := node.create_tween()
 		for _pulse in BLINK_PULSES:
-			tween.tween_property(sprite, "self_modulate", _blink_tint(mark.kind), step)
+			tween.tween_property(sprite, "self_modulate", BLINK_FLASH, step)
 			tween.tween_property(sprite, "self_modulate", Color.WHITE, step)
 
 
@@ -550,15 +553,7 @@ func _pose_blink(marks: Array[PowerEffects.Mark]) -> void:
 	for mark in marks:
 		var sprite := view.sprite_for(mark.unit) if mark.unit != null else null
 		if sprite != null:
-			sprite.self_modulate = _blink_tint(mark.kind)
-
-
-## The mark's own colour, overdriven so it reads as a flash on a sprite rather
-## than as a tint. `self_modulate` and never `modulate`, which carries the team
-## colours `BattleView.refresh_sprite` writes.
-static func _blink_tint(kind: PowerEffects.Kind) -> Color:
-	var colour := PowerMarks.colour_for(kind)
-	return Color(colour.r * BLINK_GAIN, colour.g * BLINK_GAIN, colour.b * BLINK_GAIN)
+			sprite.self_modulate = BLINK_FLASH
 
 
 ## One beat of scripted mission dialogue, on the board the beat landed on. The
