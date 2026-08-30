@@ -75,6 +75,18 @@ func test_a_seat_with_nothing_on_the_board_is_refused() -> void:
 	assert_has_error(_errors(GOOD.replace("2 7 1\n2 8 1", "3 7 1\n3 8 1")), "Seat 2 holds nothing")
 
 
+## Several empty seats are one complaint naming them all: the same sentence said
+## once per seat is four lines of a strip and no more information than one.
+func test_every_empty_seat_is_named_in_one_complaint() -> void:
+	var errors := _errors(GOOD.replace("1 1 1\n1 2 1\n2 7 1\n2 8 1", "3 1 1\n3 2 1\n3 7 1\n3 8 1"))
+	assert_has_error(errors, "Seats 1 and 2 hold nothing")
+	var about_seating := 0
+	for error in errors:
+		if error.contains("hold"):
+			about_seating += 1
+	assert_eq(about_seating, 1, "one complaint for every empty seat, not one apiece")
+
+
 func test_a_seat_with_two_headquarters_is_refused() -> void:
 	assert_has_error(
 		_errors(GOOD.replace("....CC....", "....CQ....") + "1 5 3\n"), "Seat 1 owns 2 headquarters"
