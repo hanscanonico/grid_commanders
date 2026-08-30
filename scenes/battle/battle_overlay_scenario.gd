@@ -5,7 +5,7 @@ extends BattleScenario
 ## threat lens shading everywhere the other side could shoot.
 ##
 ## Together on purpose. Each is legible alone, and the question the slice has to
-## answer is whether they are legible *at once* — three reds and a blue over the
+## answer is whether they are legible *at once* — three reds and a mint over the
 ## same terrain — which no per-overlay capture can show.
 ##
 ## Its own class rather than more methods on BattleScenarioDriver, the way

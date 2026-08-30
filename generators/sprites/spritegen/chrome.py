@@ -22,11 +22,14 @@ RGBA = tuple[int, int, int, int]
 TILE = 16
 ICON = 128
 
-# The overlay is white and the scene modulates it: blue for movement range,
-# red for threat. The border is the darker half of the two so a lit cell has
-# an edge without a second sprite.
-OVERLAY_FILL: RGBA = (255, 255, 255, 86)
-OVERLAY_EDGE: RGBA = (255, 255, 255, 127)
+# The overlay is white and the scene modulates it: mint for movement range,
+# red for fire. The border is the denser half of the two so a lit cell has an
+# edge without a second sprite, and it is opaque here: the boundary of a
+# movement range is the most gameplay-critical edge on the board, and after
+# the scene's modulate it is what makes a stepped range read as a claim rather
+# than as a rendering fault.
+OVERLAY_FILL: RGBA = (255, 255, 255, 160)
+OVERLAY_EDGE: RGBA = (255, 255, 255, 255)
 
 # The cursor is four corner brackets, each a 6x2 arm along the tile's edge and
 # a 2x6 arm down it, dropped one pixel onto their own shadow.

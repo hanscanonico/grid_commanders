@@ -22,7 +22,7 @@ const ATLAS_SOURCE_ID := 0
 ## TILE — see `_build_threat_tile_set`.
 const THREAT_STRIPE := 4
 
-## Reachable cells, in blue.
+## Reachable cells, in mint.
 var move_layer: TileMapLayer
 ## Cells that can be fired into: the R fire ring, the pickable targets while an
 ## attack is being aimed, and the square under an aimed Command Power. Solid, with
