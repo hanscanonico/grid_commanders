@@ -95,7 +95,7 @@ func _run_rejected_confirms() -> String:
 	if error != "":
 		return error
 
-	_battle.confirm_at(Vector2i(10, 5))  # nowhere near the blue reach
+	_battle.confirm_at(Vector2i(10, 5))  # nowhere near the mint reach
 	error = _expect_reason(feedback, "Out of reach.")
 	if error != "":
 		return error

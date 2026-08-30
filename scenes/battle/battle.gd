@@ -143,7 +143,7 @@ var selected: Unit
 var move_range: MovementResolver.MoveRange
 var planned_path: Array[Vector2i] = []
 ## A unit inspected but not commanded — an enemy, or one of ours that has acted.
-## Its move range shows in blue; `selected` stays null, so the menu flow keeps its
+## Its move range shows in mint; `selected` stays null, so the menu flow keeps its
 ## meaning of "a unit I am commanding" and no command can act on a previewed one.
 var _previewed: Unit
 ## Whether R's red fire ring is painted; every exit from a range state clears it.
@@ -723,7 +723,7 @@ func clear_selection(refresh_board: bool = true) -> void:
 		refresh_fog()
 
 
-## Previews a unit we cannot command. Its move range shows in blue and R adds the
+## Previews a unit we cannot command. Its move range shows in mint and R adds the
 ## fire ring; `selected` stays clear so the command flow never touches it.
 func _enter_preview(unit: Unit) -> void:
 	Sfx.play(&"select")
@@ -946,7 +946,7 @@ func _handle_map_action(action: StringName) -> void:
 
 
 func _request_end_turn() -> void:
-	# The bar's button reaches here from a preview as well as from rest, and the blue
+	# The bar's button reaches here from a preview as well as from rest, and the mint
 	# reach a preview painted belongs to the turn being ended: nothing on the turn
 	# path clears it, so it would otherwise be handed to the next side still up.
 	if state == State.PREVIEW:
