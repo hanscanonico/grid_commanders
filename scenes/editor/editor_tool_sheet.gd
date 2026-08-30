@@ -14,6 +14,9 @@ extends Control
 ## next press is meant for the board.
 
 signal closed
+## The one brush that is not in a column: it clears a cell rather than laying
+## anything, so it has no swatch and no row to be picked from.
+signal erase_asked
 
 ## The columns' width in here. They are drawn narrow enough to flank a board, and
 ## a sheet has no such constraint — so they take a reading width, which is also
@@ -36,10 +39,16 @@ func configure(columns: Array[Control]) -> void:
 		row.add_child(column)
 	main.add_child(row)
 
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", UiTheme.GAP)
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	var erase := UiKit.action_button("Erase", "", UiTheme.ButtonVariant.SECONDARY, null, 96)
+	erase.pressed.connect(func() -> void: erase_asked.emit())
+	actions.add_child(UiKit.touchable(erase))
 	var back := UiKit.action_button("Paint", "", UiTheme.ButtonVariant.PRIMARY, null, 96)
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(close)
-	main.add_child(UiKit.touchable(back))
+	actions.add_child(UiKit.touchable(back))
+	main.add_child(actions)
 	hide()
 
 

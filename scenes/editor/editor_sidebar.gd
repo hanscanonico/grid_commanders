@@ -18,7 +18,7 @@ extends PanelContainer
 
 ## The seat the two brushes are aimed at, `MapData.NEUTRAL` for nobody's.
 signal seat_picked(team: int)
-## The unit brush, null for the eraser that clears a cell.
+## The unit brush, null for the row that takes a unit off a cell.
 signal unit_picked(unit_type: UnitType)
 signal resize_asked(board_size: Vector2i)
 
@@ -137,7 +137,7 @@ func _unit_row(index: int, text: String, unit_type: UnitType) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 	button.tooltip_text = (
-		"Clear the cell under the cursor" if index == 0 else "Stand one at the cursor"
+		"Take the unit off the cursor's cell" if index == 0 else "Stand one at the cursor"
 	)
 	button.pressed.connect(_pick_unit.bind(index))
 	var face := ListRow.face(ROW_INSET)

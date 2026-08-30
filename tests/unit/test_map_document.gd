@@ -130,6 +130,35 @@ func test_a_cell_holds_one_unit() -> void:
 	)
 
 
+func test_clearing_a_cell_empties_all_three_layers() -> void:
+	var doc := MapDocument.blank(2, 1, terrain_db)
+	doc.paint(Vector2i(0, 0), &"hq", 1)
+	doc.place_unit(Vector2i(0, 0), unit_db.by_id(&"infantry"), 1)
+
+	assert_true(doc.clear(Vector2i(0, 0)), "the cell had something to take away")
+	assert_eq(
+		doc.terrain_at(Vector2i(0, 0)).id, TerrainDB.GROUND_ID, "and is the ground a blank board is"
+	)
+	assert_eq(doc.owner_at(Vector2i(0, 0)), MapData.NEUTRAL, "owned by nobody")
+	assert_true(doc.unit_at(Vector2i(0, 0)).is_empty(), "with nothing standing on it")
+	assert_false(doc.clear(Vector2i(0, 0)), "clearing open ground changes nothing")
+
+
+func test_a_copied_draft_is_its_own_board() -> void:
+	var doc := MapDocument.blank(2, 1, terrain_db)
+	doc.map_name = "scratch"
+	doc.paint(Vector2i(0, 0), &"city", 1)
+	doc.place_unit(Vector2i(1, 0), unit_db.by_id(&"tank"), 2)
+
+	var copy := doc.copy()
+	assert_eq(copy.to_text(), doc.to_text(), "a copy is the board it was taken of")
+	assert_eq(copy.map_name, "scratch", "and saves to the same file")
+	doc.clear(Vector2i(0, 0))
+	doc.remove_unit(Vector2i(1, 0))
+	assert_eq(copy.terrain_at(Vector2i(0, 0)).id, &"city", "painting on one leaves the other")
+	assert_eq(copy.unit_at(Vector2i(1, 0)).symbol, "t", "army and all")
+
+
 func test_the_same_board_writes_the_same_bytes_whatever_order_it_was_painted() -> void:
 	var cells := [Vector2i(0, 0), Vector2i(2, 0), Vector2i(1, 1)]
 	var forwards := _board_with_bases(cells)

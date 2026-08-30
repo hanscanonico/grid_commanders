@@ -32,8 +32,8 @@ const DIR_ACTIONS: Dictionary = {
 ## What the page says the board answers to. Two legends because a touch build has
 ## no arrows and a desktop one has no second finger; which is printed is
 ## `MobileProfile`'s answer, never a caller's.
-const LEGEND_KEYS := "ARROWS  MOVE      ENTER  APPLY      +/-  ZOOM      ESC  MENU"
-const LEGEND_TOUCH := "TAP  PAINT      DRAG  PAN      PINCH  ZOOM      BRUSHES  TOOLS"
+const LEGEND_KEYS := "ARROWS  MOVE     ENTER  APPLY     CTRL+Z  UNDO     +/-  ZOOM     ESC  MENU"
+const LEGEND_TOUCH := "TAP  PAINT     DRAG  PAN     PINCH  ZOOM     BRUSHES  TOOLS     ERASE"
 
 ## How wide the two columns stand. Wide enough for the longest terrain and unit
 ## name in the display face beside its swatch.
@@ -43,7 +43,7 @@ const _INSPECTOR_W := 96
 ## What the next press on the board lays. Picking from a column arms that
 ## column's brush, because the last thing an author chose is the thing they mean
 ## — an editor with a separate mode switch asks the same question twice.
-enum Brush { TERRAIN, OWNER, UNIT }
+enum Brush { TERRAIN, OWNER, UNIT, ERASE }
 
 var _db: TerrainDB
 var _unit_db: UnitDB
@@ -63,7 +63,7 @@ var _sheet: EditorToolSheet
 var _touch: EditorTouch
 var _open_panel: EditorOpenPanel
 var _save_dialog: EditorSaveDialog
-var _headline: Label
+var _toolbar: EditorToolbar
 var _status: Label
 var _brush := Brush.TERRAIN
 ## Everything wrong with the draft as it stands, re-read after every edit.
@@ -73,6 +73,11 @@ var _defects: Array[MapDefect] = []
 var _refusal := ""
 ## True while a held mouse button is dragging a stroke across the board.
 var _painting := false
+## What the draft looked like before each stroke, one step per stroke.
+var _history := MapHistory.new()
+## Whether the stroke in hand has changed anything yet. A drag that crossed only
+## cells already holding what the brush lays is not a step to take back.
+var _stroke_changed := false
 ## One step per gesture, the board's convention (see DirectionalInput).
 var _dirs := DirectionalInput.new()
 
@@ -94,6 +99,8 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _doc == null or _page_is_open():
 		return
+	if _history_key(event):
+		return
 	if event.is_action_pressed(&"cancel"):
 		_leave()
 		return
@@ -104,12 +111,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		_board.zoom_step(-1)
 		return
 	if event.is_action_pressed(&"confirm"):
-		_apply_at(_board.cursor_cell)
+		_paint_once(_board.cursor_cell)
 		return
 	var dir := _dirs.step(event, DIR_ACTIONS.keys())
 	if not dir.is_empty():
 		_board.set_cursor(_board.cursor_cell + DIR_ACTIONS[dir])
 		_say_cursor()
+
+
+## Undo and redo off the keyboard. Read before the board's own actions, because
+## a bare Z is `confirm` and Godot matches an action whatever modifiers are held
+## on top of it — so Ctrl+Z would paint before it could ever undo.
+func _history_key(event: InputEvent) -> bool:
+	var key := event as InputEventKey
+	if key == null or not key.pressed or key.echo or not key.is_command_or_control_pressed():
+		return false
+	match key.keycode:
+		KEY_Z:
+			_step_history(key.shift_pressed)
+		KEY_Y:
+			_step_history(true)
+		_:
+			return false
+	return true
 
 
 ## Whether a full-screen page stands over the board. The board keeps no state
@@ -150,10 +174,46 @@ func _open_path(path: String) -> void:
 
 func _adopt(doc: MapDocument) -> void:
 	_doc = doc
+	_history.begin(_doc)
 	_board.show_document(_doc, _db, _unit_db)
 	_inspector.show_size(_doc.size())
 	_revalidate()
 	_say_cursor()
+
+
+## Takes one step back or forward through the strokes, and says which — the
+## board, the validator and the status line all read the restored draft, exactly
+## as they read a stroke that had just been laid.
+func _step_history(forward: bool) -> void:
+	var moved := _history.redo(_doc) if forward else _history.undo(_doc)
+	if not moved:
+		_status.text = "NOTHING TO REDO" if forward else "NOTHING TO UNDO"
+		return
+	_inspector.show_size(_doc.size())
+	_board.fit_cursor()
+	_revalidate()
+	_say_cursor()
+	_status.text = "REDO" if forward else "UNDO"
+
+
+## One press, one step: the press paints and the stroke closes behind it. A held
+## mouse button is the other case, and closes on the release.
+func _paint_once(cell: Vector2i) -> void:
+	_apply_at(cell)
+	_end_stroke()
+
+
+## Files the stroke in hand, if it changed anything.
+func _end_stroke() -> void:
+	if not _stroke_changed:
+		return
+	_stroke_changed = false
+	_history.record(_doc)
+	_show_history()
+
+
+func _show_history() -> void:
+	_toolbar.show_history(_history.can_undo(), _history.can_redo())
 
 
 ## Lays the brush on `cell`, and does nothing at all where it would change
@@ -165,6 +225,7 @@ func _apply_at(cell: Vector2i) -> void:
 	_board.set_cursor(cell)
 	_refusal = ""
 	if _apply_brush(cell):
+		_stroke_changed = true
 		_board.refresh()
 		_revalidate()
 	if _refusal.is_empty():
@@ -187,6 +248,8 @@ func _apply_brush(cell: Vector2i) -> bool:
 			)
 		Brush.UNIT:
 			return _stand_unit(cell)
+		Brush.ERASE:
+			return _doc.clear(cell)
 	var terrain := _palette.selected()
 	if terrain == null or _doc.terrain_at(cell).id == terrain.id:
 		return false
@@ -288,7 +351,11 @@ func _hand_the_board_back() -> void:
 ## Grows or crops the draft under the cursor, which is the only way back from a
 ## board the validator refuses for its size.
 func _on_resize_asked(board_size: Vector2i) -> void:
+	if _doc.size() == board_size:
+		return
 	_doc.resize(board_size.x, board_size.y)
+	_stroke_changed = true
+	_end_stroke()
 	_board.fit_cursor()
 	_revalidate()
 	_say_cursor()
@@ -315,6 +382,8 @@ func _on_board_input(event: InputEvent) -> void:
 		_painting = click.pressed
 		if click.pressed:
 			_apply_at(_board.cell_at(_board.get_local_mouse_position()))
+		else:
+			_end_stroke()
 		return
 	if event is InputEventMouseMotion:
 		var cell := _board.cell_at(_board.get_local_mouse_position())
@@ -416,38 +485,26 @@ func _build_pages() -> void:
 	var columns: Array[Control] = [_palette, _inspector]
 	_sheet.configure(columns)
 	_sheet.closed.connect(_hand_the_board_back)
-	_touch = EditorTouch.new(_board, _apply_at, _look_at)
+	_sheet.erase_asked.connect(func() -> void: _arm(Brush.ERASE))
+	_touch = EditorTouch.new(_board, _paint_once, _look_at)
 
 
 func _build_header() -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	var title := UiKit.page_title("MAP EDITOR")
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(title)
-	if MobileProfile.active():
-		row.add_child(_header_button("Brushes", func() -> void: _sheet.begin()))
-	row.add_child(_header_button("Open", func() -> void: _open_panel.begin()))
-	row.add_child(_header_button("Save", _ask_save))
-	_headline = UiKit.micro_label("")
-	_headline.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_headline)
-	return row
-
-
-func _header_button(text: String, on_press: Callable) -> Button:
-	var button := UiKit.action_button(text, "", UiTheme.ButtonVariant.SECONDARY, null, 44)
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.pressed.connect(on_press)
-	UiKit.touchable(button)
-	return button
+	_toolbar = EditorToolbar.new()
+	_toolbar.configure(MobileProfile.active())
+	_toolbar.undo_asked.connect(func() -> void: _step_history(false))
+	_toolbar.redo_asked.connect(func() -> void: _step_history(true))
+	_toolbar.erase_asked.connect(func() -> void: _arm(Brush.ERASE))
+	_toolbar.brushes_asked.connect(func() -> void: _sheet.begin())
+	_toolbar.open_asked.connect(func() -> void: _open_panel.begin())
+	_toolbar.save_asked.connect(_ask_save)
+	return _toolbar
 
 
 ## What the draft is and what is under the brush — the two lines the page keeps
 ## current, since neither is anything the board itself draws.
 func _say_cursor() -> void:
-	_headline.text = (
+	_toolbar.show_headline(
 		"%d x %d · SEATS %d/%d" % [_doc.width, _doc.height, _doc.player_count(), _seats]
 	)
 	_status.text = "%s      BRUSH  %s" % [_cell_words(_board.cursor_cell), _brush_words()]
@@ -466,6 +523,8 @@ func _cell_words(cell: Vector2i) -> String:
 
 func _brush_words() -> String:
 	match _brush:
+		Brush.ERASE:
+			return "ERASE"
 		Brush.OWNER:
 			var seat := _inspector.seat()
 			return "NOBODY OWNS IT" if seat == MapData.NEUTRAL else "SEAT %d OWNS IT" % seat
