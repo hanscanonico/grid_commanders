@@ -36,14 +36,16 @@ const MAP_CAPTION_LINES := 2
 ## The gap between cells, in both axes.
 const GRID_GAP := 8
 ## How many boards a shelf row holds. Four rather than three since the setup panel
-## grew its section headers: a shorter cell four-up shows six boards in the same
-## viewport three-up showed four and a half, so the roster reads further down for
-## less of the panel's fixed height.
+## grew its section headers: a shorter cell four-up puts a whole shelf and the top
+## of the next in a viewport that used to hold three cells and a sliver, so the
+## roster reads further down for less of the panel's fixed height.
 const GRID_COLUMNS := 4
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
-## A cell's picture. Every cell is this size — the Random cell draws a die in it —
-## so the grid's rows and gutters are one shape whichever cell is in them.
+## A cell's picture: the shelf's width shared `GRID_COLUMNS` ways with the gutters
+## taken out, less this frame's own inset. Every cell is this size — the Random
+## cell draws a die in it — so the grid's rows and gutters are one shape whichever
+## cell is in them.
 const THUMB := Vector2(81.0 - 2 * CARD_PAD, 40)
 ## The Random cell's die: one pip, the air between two of them, and the frame's
 ## inset. Sized so the whole face lands well inside a cell's picture slot.
@@ -434,9 +436,9 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 ## because pressing it leaves a real board selected.
 ##
 ## Laid out as every other cell is — a picture over a name on the same line — so
-## the grid's first row is three pictures and three names rather than two of each
-## and an empty outline. The picture is the die below, because the one thing this
-## cell cannot show is a board.
+## the grid's first shelf is a row of pictures and names rather than one cell of
+## empty outline beside them. The picture is the die below, because the one thing
+## this cell cannot show is a board.
 func _make_random_cell() -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(THUMB.x + 2 * CARD_PAD, _cell_height())
