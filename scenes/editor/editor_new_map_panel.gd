@@ -9,6 +9,8 @@ extends Control
 ## of; ownership is what will make it true.
 
 signal created(board_size: Vector2i, seats: int)
+## The author would rather start from a board that already exists.
+signal open_asked
 signal cancelled
 
 ## The smallest board worth authoring — under this there is no room for two HQs
@@ -62,12 +64,12 @@ func _build() -> void:
 	UiKit.page_veil(self)
 	var main := UiKit.page_body(self, 6)
 	main.add_child(UiKit.page_title("NEW MAP"))
-	main.add_child(UiKit.page_note("Paint the ground first. Properties and armies come next."))
+	main.add_child(UiKit.page_note("Paint the ground first, or open a board you already have."))
 
 	_width_value = UiKit.micro_label("")
 	_height_value = UiKit.micro_label("")
-	main.add_child(_stepper("Width", _width_value, func(step: int) -> void: _step_width(step)))
-	main.add_child(_stepper("Height", _height_value, func(step: int) -> void: _step_height(step)))
+	main.add_child(_size_row("Width", _width_value, func(step: int) -> void: _step_width(step)))
+	main.add_child(_size_row("Height", _height_value, func(step: int) -> void: _step_height(step)))
 	main.add_child(_build_seats())
 	_show_size()
 
@@ -79,6 +81,13 @@ func _build() -> void:
 	)
 	_create_button.pressed.connect(_confirm)
 	actions.add_child(_create_button)
+	var open_button := UiKit.action_button("Open", "", UiTheme.ButtonVariant.SECONDARY, null, 96)
+	open_button.pressed.connect(
+		func() -> void:
+			hide()
+			open_asked.emit()
+	)
+	actions.add_child(open_button)
 	var back := UiKit.action_button("Cancel", "", UiTheme.ButtonVariant.GHOST, null, 96)
 	back.pressed.connect(
 		func() -> void:
@@ -90,28 +99,11 @@ func _build() -> void:
 	main.add_child(UiKit.key_legend("ENTER  CREATE      ESC  BACK      MOUSE OK"))
 
 
-## One measurement: its name, its value, and the two buttons that walk it.
-func _stepper(name_text: String, value: Label, on_step: Callable) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+## One measurement, at this page's row width.
+func _size_row(name_text: String, value: Label, on_step: Callable) -> Control:
+	var row := UiKit.stepper(name_text, value, on_step)
 	row.custom_minimum_size = Vector2(_ROW_WIDTH, 0)
 	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-
-	var caption := UiKit.micro_label(name_text)
-	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(caption)
-
-	var less := UiKit.action_button("-", "", UiTheme.ButtonVariant.SECONDARY, null, 20)
-	less.pressed.connect(func() -> void: on_step.call(-1))
-	row.add_child(less)
-
-	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	value.custom_minimum_size = Vector2(24, 0)
-	row.add_child(value)
-
-	var more := UiKit.action_button("+", "", UiTheme.ButtonVariant.SECONDARY, null, 20)
-	more.pressed.connect(func() -> void: on_step.call(1))
-	row.add_child(more)
 	return row
 
 
