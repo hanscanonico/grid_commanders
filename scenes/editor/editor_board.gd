@@ -102,9 +102,9 @@ func _reframe() -> void:
 		scroll_axis(size.y, board.y, cursor_cell.y * tile, tile, _origin.y)
 	)
 	_thumb.position = _origin
+	_thumb.size = board
 	if tile != _framed_tile:
 		_framed_tile = tile
-		_thumb.size = board
 		_thumb.setup(_preview, _identity(), board)
 	queue_redraw()
 
