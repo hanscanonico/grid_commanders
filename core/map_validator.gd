@@ -112,19 +112,15 @@ static func _size_defect(map: MapData) -> MapDefect:
 ## that builds. Seats run 1..N with no gaps (MapData.roster_for), so a board
 ## naming seat 3 and skipping seat 2 seats an army with nothing — reported as the
 ## empty seat it is, and nothing further is asked of it, since every other
-## complaint about that seat says the same thing again.
+## complaint about that seat says the same thing again. Empty seats are named
+## together, in one sentence: an author reading the same words four times over
+## learns nothing the seat numbers do not already say.
 static func _seat_defects(map: MapData) -> Array[MapDefect]:
 	var found: Array[MapDefect] = []
+	var unseated: Array[int] = []
 	for team in map.teams():
 		if not _is_seated(map, team):
-			found.append(
-				MapDefect.at(
-					(
-						"Seat %d holds nothing. Seats are numbered from 1 with no gaps, so " % team
-						+ "give it a headquarters or drop the higher seats."
-					)
-				)
-			)
+			unseated.append(team)
 			continue
 		var owned := _owned_properties(map, team)
 		var hqs: Array[Vector2i] = []
@@ -158,7 +154,35 @@ static func _seat_defects(map: MapData) -> Array[MapDefect]:
 					owned
 				)
 			)
-	return found
+	if unseated.is_empty():
+		return found
+	var merged: Array[MapDefect] = [_unseated_defect(unseated)]
+	merged.append_array(found)
+	return merged
+
+
+## Every seat with nothing of its own, in one sentence rather than one apiece.
+static func _unseated_defect(seats: Array[int]) -> MapDefect:
+	var subject := "Seat %d holds nothing" % seats[0]
+	var remedy := "give it a headquarters"
+	if seats.size() > 1:
+		subject = "Seats %s hold nothing" % _listed(seats)
+		remedy = "give each a headquarters"
+	return MapDefect.at(
+		(
+			"%s. Seats are numbered from 1 with no gaps, so %s or drop the higher seats."
+			% [subject, remedy]
+		)
+	)
+
+
+static func _listed(numbers: Array[int]) -> String:
+	var words: PackedStringArray = []
+	for number in numbers:
+		words.append(str(number))
+	var last := words[-1]
+	words.remove_at(words.size() - 1)
+	return ", ".join(words) + " and " + last
 
 
 ## A board holds at least one property per seat — below that there is nothing to
