@@ -37,9 +37,10 @@ func begin() -> void:
 		child.queue_free()
 	_first = null
 	_add_group("Your maps")
-	for map_name in UserMaps.list():
+	var mine := UserMaps.list()
+	for map_name in mine:
 		_add_row(map_name.capitalize(), UserMaps.path_for(map_name))
-	if UserMaps.list().is_empty():
+	if mine.is_empty():
 		_rows.add_child(UiKit.help_label("None yet — start one from a board below."))
 	_add_group("Start from a shipped board")
 	for path in MapCatalog.paths():

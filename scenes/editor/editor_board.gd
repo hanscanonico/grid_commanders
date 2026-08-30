@@ -43,6 +43,10 @@ var _rungs := PackedFloat64Array([BattleZoom.DEFAULT_ZOOM])
 ## frame old has no frame to measure against.
 var _rung := -1
 var _origin := Vector2.ZERO
+## The tile size the miniature was last laid out at, and 0 for one that has to be
+## laid out again: the draft only has to be re-read into `MapThumbnail` when its
+## content or its scale changed, never when the frame merely scrolled under it.
+var _framed_tile := 0.0
 
 
 func _init() -> void:
@@ -58,7 +62,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	resized.connect(refresh)
+	resized.connect(_reframe)
 
 
 ## Points the board at the draft it is painting, opening at the closest rung to
@@ -77,6 +81,18 @@ func show_document(doc: MapDocument, db: TerrainDB, units: UnitDB) -> void:
 func refresh() -> void:
 	if _doc == null:
 		return
+	_preview = preview_of(_doc, _db)
+	_framed_tile = 0.0
+	_reframe()
+
+
+## Moves the frame over a draft that has not changed: the ladder, the scroll and
+## the cursor, with the miniature merely carried along. A walked cursor takes
+## this path, so stepping one cell no longer writes the whole board out and parses
+## it back in (`preview_of`) to redraw art that could not have moved.
+func _reframe() -> void:
+	if _doc == null:
+		return
 	_rungs = BattleZoom.rungs_for(BattleZoom.floor_for(size, _world_px()))
 	_rung = opening_rung(_rungs) if _rung < 0 else clampi(_rung, 0, _rungs.size() - 1)
 	var tile := tile_px()
@@ -86,9 +102,10 @@ func refresh() -> void:
 		scroll_axis(size.y, board.y, cursor_cell.y * tile, tile, _origin.y)
 	)
 	_thumb.position = _origin
-	_thumb.size = board
-	_preview = preview_of(_doc, _db)
-	_thumb.setup(_preview, _identity(), board)
+	if tile != _framed_tile:
+		_framed_tile = tile
+		_thumb.size = board
+		_thumb.setup(_preview, _identity(), board)
 	queue_redraw()
 
 
@@ -110,7 +127,7 @@ func set_cursor(cell: Vector2i) -> void:
 	if not _doc.in_bounds(cell) or cell == cursor_cell:
 		return
 	cursor_cell = cell
-	refresh()
+	_reframe()
 
 
 ## One rung in or out, whichever end of the ladder the step falls off.
@@ -125,7 +142,7 @@ func settle_at(index: int) -> void:
 	if wanted == _rung:
 		return
 	_rung = wanted
-	refresh()
+	_reframe()
 
 
 ## The ladder this board offers and which rung it stands on. A pinch is measured
