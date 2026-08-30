@@ -393,7 +393,11 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	thumb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	content.add_child(thumb)
 
-	var name_label := Label.new()
+	# Clipped, because the name is the player's to choose: a board they called
+	# something long would otherwise set its label at full width and paint straight
+	# across the cells beside it. The header and the facts caption under the grid
+	# still carry the whole name.
+	var name_label := ListRow.clipped(Label.new())
 	name_label.text = cell_name(map, false)
 	name_label.add_theme_font_override("font", UiTheme.display())
 	name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)

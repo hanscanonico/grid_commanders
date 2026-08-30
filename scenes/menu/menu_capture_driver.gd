@@ -267,8 +267,10 @@ func menu_preset() -> int:
 
 ## The slot the current mode poses: a resumable match on `menu_with_save`, and an
 ## empty slot on `menu_no_save`, whatever the running machine has saved. The match
-## named is on the roster's longest-named board, so the posed caption is the widest
-## the shipped maps can actually produce.
+## named is on the longest-named *shipped* board, so the posed caption is the
+## widest the roster can actually produce — a board the player drew is skipped for
+## the reason this class reads no save file either: the frame may not depend on
+## what the machine taking it happens to hold.
 func posed_slot(maps: Array[MapData]) -> SaveGame.Slot:
 	if _demo != DEMO_WITH_SAVE:
 		return SaveGame.Slot.absent()
@@ -276,6 +278,8 @@ func posed_slot(maps: Array[MapData]) -> SaveGame.Slot:
 	summary.day = POSED_SAVE_DAY
 	var width := 0
 	for map in maps:
+		if MapPicker.is_custom(map):
+			continue
 		var length := MapCatalog.display_name(map.source_path).length()
 		if length > width:
 			width = length
