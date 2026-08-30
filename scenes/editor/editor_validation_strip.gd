@@ -66,10 +66,16 @@ func _row(defect: MapDefect) -> Control:
 	button.tooltip_text = "Show me"
 	button.pressed.connect(func() -> void: focused.emit(defect.cells[0]))
 	UiTheme.apply_button(button, UiTheme.ButtonVariant.GHOST, null, UiTheme.SIZE_BUTTON)
-	var face := ListRow.face(ROW_INSET)
-	face.add_child(label)
-	button.add_child(face)
-	return UiKit.touchable(button)
+	UiKit.touchable(button)
+	# The row takes its height from the words and the plate stands behind them: a
+	# Button lays out no child and asks for no height for one, so a complaint
+	# hung inside it drew over the complaint below as soon as it wrapped.
+	var row := MarginContainer.new()
+	row.add_theme_constant_override("margin_left", ROW_INSET)
+	row.add_theme_constant_override("margin_right", ROW_INSET)
+	row.add_child(button)
+	row.add_child(label)
+	return row
 
 
 ## A complaint is a whole sentence, so it wraps rather than being cut short — and
