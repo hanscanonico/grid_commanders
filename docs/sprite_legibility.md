@@ -218,20 +218,40 @@ shoulders under it**, measures the snow line **down from that summit** so only i
 draws the cap a ramp slot higher (`palette.TERRAIN_MATERIALS`, `snowcap` on S4) — the snow ramp's
 own top three rungs, brightest L172, still under the ceiling that reserves the top band for units.
 
-It **buys the board cells**: **34,207 failing (93.2%) clear and 7,011 (81.1%) fogged**, against the
-previous baseline's 34,212 (93.2%) / 7,037 (81.4%), and the `mountain` row is 94.3% of its 3,672
-cells against 94.4%. **51 verdicts changed, all of them mountain's: 41 crossed to passing and 10
-the other way**, a net 31 cells of 45,360. Nothing was tuned in response, and no unit, faction,
-overlay or other terrain moved by a cell.
+It **buys the board cells**: **31,811 failing (86.63%) clear and 7,011 (81.15%) fogged**, against
+the previous baseline's 31,832 (86.69%) / 7,037 (81.45%), and the `mountain` row is 86.88% of its
+4,536 cells against 87.92%. **73 verdicts changed, every one of them mountain's: 60 crossed to
+passing and 13 the other way**, a net 47 cells of 45,360. Nothing was tuned in response, and no
+unit, faction, overlay or other terrain moved by a cell.
 
 One thing the sweep did say out loud, and the art answered: a first cut drew the band of rock
 **under** the snow line a rung darker, which is how a real snow line reads and read well on the
 tile. It puts the massif's darkest rung over the middle of the cell, which is where a unit stands,
-and the ratchet came back with 22 mountain cells that had passed and no longer did — almost all of
+and the ratchet came back with mountain cells that had passed and no longer did — almost all of
 them `acted` or fogged units, whose own values are dimmed. That band is not in the shipped art; the
 cap is read by its own rungs alone.
 
-The baseline digest was rewritten again (`make legibility-baseline`), so the 41 gains are the line
+The 13 losses were read one by one and accepted; darkening the cap's top rung to answer them would
+trade away the light terminal that bought the 60. They fall in three classes:
+
+- **Nine are the accepted grey-on-grey residual** — seven iron and two neutral, eight in clear
+  view and one fogged (`walk_a|b_copter|iron|ready|mountain|fog`). Grey liveries on grey rock is
+  the pairing this page has named since round 9 and the cap does not change it.
+- **`walk_a|rockets|aurora|ready|mountain|fog` is its own item, under the fog residual** — a
+  chromatic livery the shroud pulls to the rock's own value. Named here so it is findable if the
+  fog isolation rate is ever revisited.
+- **Two are a new class, `acted`-under-wash** — `fighter|aurora|acted|mountain|move` and
+  `recon|aurora|acted|mountain|move`: the deliberate `acted` dim meeting the lit mint reach wash
+  the section above installed. Neither the mountain's problem nor grey-on-grey's, and the watch
+  condition is that the class stays on mountain. If it ever appears on another ground, the answer
+  is the wash's value or the `acted` dim's floor — a renderer and overlay ruling — and never
+  per-terrain art.
+
+The remaining cell, `idle_b|apc|verdant|ready|mountain|attack`, is logged against the standing
+verdant hue-gap follow-up (round 11's saturation residual, finding 7 below) as that follow-up's
+concrete worst case.
+
+The baseline digest was rewritten again (`make legibility-baseline`), so the 60 gains are the line
 the next change is held to.
 
 ## What the generator changed

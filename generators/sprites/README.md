@@ -570,7 +570,7 @@ family's convention (`palette.TERRAIN_MATERIALS`): snow may not be made whiter,
 units, so what a cap gains it gains from the rungs it is drawn at. Darkening
 the rock under the line instead is the rejected answer — it spends the massif's
 darkest rung over the middle of the cell, where a unit stands, and
-`make legibility-ratchet` failed 22 mountain cells on it.
+`make legibility-ratchet` failed a score of mountain cells on it.
 
 The massif itself is a **voxel height field**, rasterised by the same
 `render_indexed` the units and the buildings go through

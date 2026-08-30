@@ -226,6 +226,7 @@ Darkening the rock UNDER the line was tried and rejected — a band of `scree`
 four voxels deep beneath the snow, which is how a real snow line reads and
 which read well on the tile. It puts the massif's darkest rung (L66, scree's
 turned-away face) over the middle of the cell, and the middle of the cell is
-where a unit stands: `make legibility-ratchet` came back with 22 mountain cells
-that had passed and no longer did, almost all of them `acted` or fogged units,
-whose own values are dimmed. The cap is read by its own rungs alone.
+where a unit stands: `make legibility-ratchet` came back with a score of
+mountain cells that had passed and no longer did, almost all of them `acted`
+or fogged units, whose own values are dimmed. The cap is read by its own rungs
+alone.
