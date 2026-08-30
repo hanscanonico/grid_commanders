@@ -150,7 +150,7 @@ func _open_path(path: String) -> void:
 
 func _adopt(doc: MapDocument) -> void:
 	_doc = doc
-	_board.show_document(_doc, _db)
+	_board.show_document(_doc, _db, _unit_db)
 	_inspector.show_size(_doc.size())
 	_revalidate()
 	_say_cursor()

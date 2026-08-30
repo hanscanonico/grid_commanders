@@ -1,7 +1,8 @@
 extends GutTest
 ## The editor's pure answers: which cell a press lands on, where a board sits in
-## a frame too small for it, which order the brushes come in, and what a new
-## board's dialog will let an author ask for. Statics over a draft and a rect,
+## a frame too small for it, where a starting unit's art stands on its cell,
+## which order the brushes come in, and what a new board's dialog will let an
+## author ask for. Statics over a draft and a rect,
 ## like MapThumbnail's region choice, so the arithmetic the page is laid out by
 ## is checked without building the page.
 
@@ -59,6 +60,17 @@ func test_the_preview_is_the_board_the_parser_makes_of_the_draft() -> void:
 	assert_eq(preview.size(), Vector2i(4, 3))
 	assert_eq(preview.terrain_at(Vector2i(1, 1)).id, sea.id)
 	assert_eq(preview.terrain_at(Vector2i(0, 0)).id, db.ground().id)
+
+
+func test_a_starting_unit_stands_on_its_own_cell_at_every_rung() -> void:
+	for tile: float in [8.0, 16.0, 40.0]:
+		var rect := EditorBoard.army_rect(Vector2i(2, 3), Vector2.ZERO, tile)
+		# The footprint square is the cell, and the headroom rides above it —
+		# the same anchoring UnitSprite.ART_OFFSET gives a unit in a match.
+		assert_eq(rect.size.x, tile, "the art is a cell wide at tile %d" % tile)
+		assert_eq(rect.size.y, tile * UnitSprite.SPRITE_H / UnitSprite.SPRITE_W)
+		assert_eq(rect.position.x, 2.0 * tile)
+		assert_eq(rect.end.y, 4.0 * tile, "the feet land on the cell at tile %d" % tile)
 
 
 func test_the_palette_offers_the_ground_before_the_properties() -> void:

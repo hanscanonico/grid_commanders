@@ -27,6 +27,9 @@ signal resize_asked(board_size: Vector2i)
 ## read as a different kind of control.
 const ROW_HEIGHT := EditorPalette.ROW_HEIGHT
 const ROW_INSET := EditorPalette.ROW_INSET
+## A unit's icon is one tile wide, the size the palette's swatch and the HUD's
+## unit icon are: the two columns flank the same board and read as one control.
+const ICON := EditorPalette.SWATCH
 ## What the neutral seat is called on its chip. A dash rather than the word,
 ## because the chip is four characters wide.
 const NEUTRAL_LABEL := "—"
@@ -35,6 +38,9 @@ var _units: Array[UnitType] = []
 var _seat_buttons: Array[Button] = []
 var _unit_buttons: Array[Button] = []
 var _unit_labels: Array[Label] = []
+## One icon per unit row, in `_units` order — the eraser's row carries a blank
+## of the same width instead, so every name in the column starts at one inset.
+var _unit_icons: Array[TextureRect] = []
 var _seat: int = MapData.PLAYER_TEAMS[0]
 ## Which row of `_unit_buttons` is lit. Row 0 is the eraser, so a fresh column
 ## has no unit in hand and the first press on the board cannot stand one.
@@ -116,9 +122,9 @@ func _build_units() -> Control:
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 1)
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rows.add_child(_unit_row(0, "No unit"))
+	rows.add_child(_unit_row(0, "No unit", null))
 	for i in _units.size():
-		rows.add_child(_unit_row(i + 1, _units[i].display_name))
+		rows.add_child(_unit_row(i + 1, _units[i].display_name, _units[i]))
 	var frame := UiKit.vscroll()
 	frame.add_child(rows)
 	var padded := UiKit.pad(frame, ROW_INSET, ROW_INSET)
@@ -126,7 +132,7 @@ func _build_units() -> Control:
 	return padded
 
 
-func _unit_row(index: int, text: String) -> Button:
+func _unit_row(index: int, text: String, unit_type: UnitType) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 	button.tooltip_text = (
@@ -134,6 +140,7 @@ func _unit_row(index: int, text: String) -> Button:
 	)
 	button.pressed.connect(_pick_unit.bind(index))
 	var face := ListRow.face(ROW_INSET)
+	face.add_child(_icon(unit_type))
 	var label := ListRow.cell(text.to_upper(), UiTheme.WHITE)
 	face.add_child(label)
 	button.add_child(face)
@@ -141,6 +148,25 @@ func _unit_row(index: int, text: String) -> Button:
 	_unit_buttons.append(button)
 	_unit_labels.append(label)
 	return button
+
+
+## The unit's own artwork, cut to the tile it stands on — the same call the HUD's
+## unit icon and the build menu's rows make, so a row here and a row there are
+## the same picture. The eraser gets a blank of the same width rather than no
+## child at all, which is what keeps the names in one column.
+func _icon(unit_type: UnitType) -> Control:
+	if unit_type == null:
+		var blank := Control.new()
+		blank.custom_minimum_size = Vector2(ICON, ICON)
+		return blank
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(ICON, ICON)
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_unit_icons.append(icon)
+	return icon
 
 
 ## The two steppers a board is grown or cropped with. Resizing after creation is
@@ -202,3 +228,9 @@ func _restyle() -> void:
 		_unit_labels[i].add_theme_color_override(
 			"font_color", UiTheme.INK if chosen else UiTheme.WHITE
 		)
+	# The column wears the seat in hand, since that is the army the next press
+	# stands. The neutral chip owns no unit — `_stand_unit` refuses one — so its
+	# rows keep seat 1's livery rather than going grey over a brush nobody owns.
+	var row := identity.atlas_row(MapData.PLAYER_TEAMS[0] if _seat == MapData.NEUTRAL else _seat)
+	for i in _unit_icons.size():
+		_unit_icons[i].texture = UnitSprite.tile_texture_for(_units[i], row)
