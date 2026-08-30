@@ -57,6 +57,8 @@ func test_four_commander_less_armies_each_get_a_colour() -> void:
 	_assert_all_distinct(identity, [1, 2, 3, 4])
 	assert_eq(_key(identity, 1), &"meridian", "and the first two are still red then blue")
 	assert_eq(_key(identity, 2), &"aurora")
+	assert_eq(_key(identity, 3), &"iron")
+	assert_eq(_key(identity, 4), &"gold", "the fourth army wears Gilded Concord, not green")
 
 
 func test_three_armies_sharing_one_faction_still_wear_three_colours() -> void:
