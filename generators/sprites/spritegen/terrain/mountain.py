@@ -16,18 +16,24 @@ from .tones import CELL, GRASS_DARK, _rect, _shade, _tone, luminance
 # identical peaks wherever one is repeated. An entry is (summits, relief seed):
 # where the massif's three summits stand in the model's own VOXEL grid, as
 # (x, y, height) with the tallest first, and the seed the ridges, spurs and
-# gullies of the height field are keyed off (`buildings.massif`). The three are
-# a twin peak over a saddle, one dominant spire, and a long crested ridge — a
-# phase is a different mountain rather than the same one slid sideways, and
-# a seed that turns the ridge arms is half of what makes it one. Nothing else
-# varies —
-# the mass stands on one row in every phase, so a range sits on one horizon,
-# and the rock and snow are the same two ramps throughout. Phase 0 is the
-# atlas column, so a board that has not adopted the sheet is unchanged.
+# gullies of the height field are keyed off (`buildings.massif`).
+#
+# Every phase is ONE dominant summit with shoulders under it — a spire with a
+# shoulder to the right, one with a ridge running left, and a peak with a
+# second, lower summit beside it. The three used to be near-equal summits
+# (17/14/9, 17/12/9, 16/15/10), and three peaks of a height is a rock pile:
+# nothing in the silhouette says which one the tile is about, and the snow
+# line has no summit to belong to. The shoulders sit well under the cap now,
+# so the cap is on the peak and the peak is the read.
+#
+# Nothing else varies — the mass stands on one row in every phase, so a range
+# sits on one horizon, and the rock and snow are the same two ramps
+# throughout. Phase 0 is the atlas column, so a board that has not adopted the
+# sheet is unchanged.
 MOUNTAIN_PHASES: tuple[tuple[tuple[tuple[int, int, int], ...], int], ...] = (
-    (((6, 8, 17), (11, 4, 14), (2, 4, 9)), 13),
-    (((8, 5, 17), (4, 9, 12), (11, 10, 9)), 11),
-    (((3, 7, 16), (7, 10, 15), (10, 3, 10)), 33),
+    (((7, 6, 18), (11, 9, 12), (3, 10, 9)), 13),
+    (((6, 6, 18), (10, 11, 11), (2, 7, 10)), 17),
+    (((7, 6, 18), (11, 11, 10), (2, 9, 10)), 19),
 )
 
 # Where the massif's front corner stands. Fixed across the phases: a ridge of

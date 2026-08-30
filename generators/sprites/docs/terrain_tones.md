@@ -204,3 +204,29 @@ against the same tile drawn with no offset.
 The woods keep `GRASS_DARK`: that fringe is a line under each crown's shaded
 rim rather than one massing's cast silhouette, and the clearings between the
 crowns are the plains plate `WoodsSeam` measures the tile on.
+
+## The snow cap gets a band of its own (2026-08-30)
+
+The mountain read as a rock pile, and one of the three reasons was tonal: the
+cap was drawn at `S_BODY` like the rock beside it, so its lit plane landed at
+L160 against scarp's L145 and its shaded one at L140 against scarp's L118.
+Fifteen luma is inside the noise of a cell the board samples at 4:1 — the
+brightest material on the sheet was saying nothing.
+
+Snow cannot answer by getting whiter. `SNOW_RAMP` already stops at L172,
+authored just under `TERRAIN_VALUE_CEILING` so the band units key into stays
+theirs. So the cap moved a slot instead — `snowcap` is `S_TOP`, the one
+material on the sheet lifted above the scenery convention — and its three
+planes are now the snow ramp's own top three rungs (172 / 160 / 140) against
+the rock's 145 / 118 / 95. Nothing new was mixed and nothing crossed the
+ceiling: `MountainPhases`' band and share readings pass untouched, at 0.07-0.08
+of the mass rather than the 0.10 they bound.
+
+Darkening the rock UNDER the line was tried and rejected — a band of `scree`
+four voxels deep beneath the snow, which is how a real snow line reads and
+which read well on the tile. It puts the massif's darkest rung (L66, scree's
+turned-away face) over the middle of the cell, and the middle of the cell is
+where a unit stands: `make legibility-ratchet` came back with a score of
+mountain cells that had passed and no longer did, almost all of them `acted`
+or fogged units, whose own values are dimmed. The cap is read by its own rungs
+alone.
