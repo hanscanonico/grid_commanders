@@ -33,7 +33,7 @@ const DIR_ACTIONS: Dictionary = {
 ## no arrows and a desktop one has no second finger; which is printed is
 ## `MobileProfile`'s answer, never a caller's.
 const LEGEND_KEYS := "ARROWS  MOVE     ENTER  APPLY     CTRL+Z  UNDO     +/-  ZOOM     ESC  MENU"
-const LEGEND_TOUCH := "TAP  PAINT     DRAG  PAN     PINCH  ZOOM     BRUSHES  TOOLS     ERASE"
+const LEGEND_TOUCH := "TAP  PAINT   DRAG  PAN   PINCH  ZOOM   BRUSHES  TOOLS   ERASE  WHOLE CELL"
 
 ## How wide the two columns stand. Wide enough for the longest terrain and unit
 ## name in the display face beside its swatch.
