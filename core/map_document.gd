@@ -164,6 +164,45 @@ func remove_unit(cell: Vector2i) -> void:
 	_units.erase(cell)
 
 
+## Empties `cell` back to what a blank board holds there: the ground `blank`
+## fills with, nobody owning it, nothing standing on it. Whether anything was
+## there to take away, so a stroke that changed nothing stays out of the history.
+func clear(cell: Vector2i) -> bool:
+	if not in_bounds(cell):
+		push_error("MapDocument: cell %s out of bounds" % cell)
+		return false
+	var bare := _db.ground()
+	var changed := _units.erase(cell)
+	changed = _owners.erase(cell) or changed
+	if _terrain[cell.y * width + cell.x] != bare:
+		_terrain[cell.y * width + cell.x] = bare
+		changed = true
+	return changed
+
+
+## This draft as a second one nothing here can reach — what a history step is
+## made of (`MapHistory`).
+func copy() -> MapDocument:
+	var doc := MapDocument.new()
+	doc.adopt(self)
+	return doc
+
+
+## Becomes `other`, cell for cell. A restored draft is the same object it was,
+## so whoever is already drawing this document keeps drawing the right one.
+func adopt(other: MapDocument) -> void:
+	map_name = other.map_name
+	description = other.description
+	symmetric = other.symmetric
+	grouping = other.grouping
+	width = other.width
+	height = other.height
+	_db = other._db
+	_terrain = other._terrain.duplicate()
+	_owners = other._owners.duplicate(true)
+	_units = other._units.duplicate(true)
+
+
 ## The armies this draft seats, answered by `MapData.roster_for` off the seats
 ## the draft names — the board is the roster authority (four-players plan D1),
 ## and a draft has to say the same thing about itself that it will say once it

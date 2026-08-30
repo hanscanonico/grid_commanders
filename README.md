@@ -589,7 +589,11 @@ straight). Start a blank board at a size you pick, or open one of your own — o
 opens as an untitled copy, since a name the game already ships is refused. The terrain palette is
 down the left, the owner seat, the starting army and the two size steppers down the right, and
 whichever you last picked from is the brush the next press on the board lays: arrows walk the
-cursor, Enter paints, `+`/`-` zoom, and the mouse paints a stroke while it is held. The seat picked
+cursor, Enter paints, `+`/`-` zoom, and the mouse paints a stroke while it is held. The toolbar
+across the top carries **Undo**, **Redo** and **Erase**: undo steps back one whole stroke — a press,
+a drag, a resize — and Ctrl/Cmd+Z does the same, with Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y for redo;
+Erase is the brush that empties a cell entirely, its terrain, its owner and whatever stood on it
+(the **No unit** row in the army column still only takes the unit off). The seat picked
 under **Owner** is who every brush works for, so a building laid while a seat is picked is that
 seat's the moment it goes down; pick the **—** chip, the one nobody owns, to lay the neutral
 properties both sides fight over.
