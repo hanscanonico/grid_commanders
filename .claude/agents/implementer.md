@@ -32,9 +32,8 @@ scenario headless and read the frame as an image). A shared, loaded machine make
 slow; slowness is not failure.
 
 Ship: commit in repo style (present-tense imperative subject, focused body only if
-needed). End the commit message with the Co-Authored-By / Claude-Session trailers the
-orchestrator provides in the task; if none were provided, use
-`Co-Authored-By: Claude <noreply@anthropic.com>`. Push with
+needed). Add only the commit trailers the orchestrator provides in the task; if none were
+provided, add none — never a Co-Authored-By or generated-with line. Push with
 `git push -u origin improve/<slug>` and open a PR with `gh pr create --base main`
 (concise body: what + why + how verified, ending with any footer the orchestrator
 provides).

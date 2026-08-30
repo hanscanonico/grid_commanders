@@ -13,7 +13,7 @@ export const meta = {
 //   slug       names the worktree (improve-<slug>) and branch (improve/<slug>)
 //   task       the full task brief (may point at a spec file the orchestrator wrote)
 //   reviewNote extra context for the reviewer (what to independently verify)
-//   trailers   commit-trailer block for this session (Co-Authored-By + Claude-Session)
+//   trailers   optional commit-trailer block; empty means no trailer at all
 //   footer     PR-body footer for this session (generated-with + session link)
 // Some harness routes deliver args as a JSON string rather than a parsed value.
 const raw = typeof args === 'string' ? JSON.parse(args) : args
@@ -44,7 +44,7 @@ const REVIEW = {
 	},
 }
 
-const trailers = input.trailers || 'Co-Authored-By: Claude <noreply@anthropic.com>'
+const trailers = input.trailers || ''
 const footer = input.footer || ''
 
 phase('Implement')
@@ -52,13 +52,13 @@ const results = await pipeline(
 	input.tasks,
 	(t) =>
 		agent(
-			`Task slug: ${t.slug}\n\n${t.task}\n\nCommit trailers to use (end the commit message with these lines):\n\n${trailers}${footer ? '\n\nPR body footer (end the PR body with these lines):\n\n' + footer : ''}`,
+			`Task slug: ${t.slug}\n\n${t.task}\n\n${trailers ? 'Commit trailers to use (end the commit message with these lines):\n\n' + trailers : 'Do not add any Co-Authored-By, Generated-with or session trailer to commits or PR bodies — the user is the sole author.'}${footer ? '\n\nPR body footer (end the PR body with these lines):\n\n' + footer : ''}`,
 			{ label: `impl:${t.slug}`, phase: 'Implement', agentType: 'implementer', schema: IMPL }
 		),
 	(impl, t) => {
 		if (!impl || !impl.verify_pass) return { impl, review: null }
 		return agent(
-			`Review the PR in worktree ${impl.worktree} (branch ${impl.branch}, PR ${impl.pr_url}).\n\nThe task it implements:\n${t.task}\n${t.reviewNote ? '\nWhat to verify independently: ' + t.reviewNote : ''}\n\nIf you commit fixes, end the commit message with:\n\n${trailers}`,
+			`Review the PR in worktree ${impl.worktree} (branch ${impl.branch}, PR ${impl.pr_url}).\n\nThe task it implements:\n${t.task}\n${t.reviewNote ? '\nWhat to verify independently: ' + t.reviewNote : ''}${trailers ? '\n\nIf you commit fixes, end the commit message with:\n\n' + trailers : '\n\nDo not add any Co-Authored-By or attribution trailer to commits.'}`,
 			{ label: `review:${t.slug}`, phase: 'Review', agentType: 'reviewer', schema: REVIEW }
 		).then((review) => ({ impl, review }))
 	}
