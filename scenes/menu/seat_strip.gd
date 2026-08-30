@@ -160,6 +160,10 @@ var _tier: Array[int] = []
 ## Per seat: the tier chip. Held so it can be relabelled on a press and greyed for
 ## a seat the computer is not playing, the same way the Empty button is.
 var _tier_buttons: Array[Button] = []
+## Per seat: the "P1" label at the head of its row. Held because it is the row's
+## identity swatch — it is set in the livery that seat's army wears, and a table
+## that has just lost a seat is a different roster (`_repaint_seats`).
+var _seat_labels: Array[Label] = []
 
 
 ## Sets the tiers the chips cycle through — the one thing about a row the strip
@@ -442,24 +446,31 @@ func _settle_seats() -> void:
 	_repaint_seats()
 
 
-## Every row in the colour its own army wears, and one selected fill per row: the
-## seat's word, its tier chip and its side letter all take the same accent, so
-## "selected" reads as one state rather than three. A dead control still wears it
-## — `UiKit.style_segment` mixes the *same* accent toward paper for its disabled
-## dress, which is the pale chip on a seat the computer does not play, and the
-## fade is the difference between live and dead rather than a second fill.
+## Every row painted twice over, in two vocabularies. **Who plays a seat and how
+## well is chrome**, so those two runs fill in `UiTheme.CONTROL_ACCENT` like every
+## other quiet control on the panel; **which army a seat is** is the only thing a
+## faction hue says here, so it is spent on the side letters and on the seat's own
+## P-label, which is the row's identity swatch. Before this split a row lit three
+## controls in a saturated hue and put all of them in competition with Start.
 ##
-## The strip paints its own rows because a row's accent is not fixed at build
+## A dead control still wears its run's accent — `UiKit.style_segment` mixes the
+## *same* accent toward paper for its disabled dress, so the fade is the difference
+## between live and dead rather than a second fill.
+##
+## The strip paints its own rows because a row's identity is not fixed at build
 ## time: closing a seat re-resolves the whole table's liveries, so the paint has
 ## to be able to run again over buttons that already exist.
 func _repaint_seats() -> void:
 	_resolve_identity()
 	for i in _seats.size():
-		var accent := _accent_for(i)
-		_paint_run(_who_buttons[i], _who[i], accent)
+		var livery := _accent_for(i)
+		_paint_run(_who_buttons[i], _who[i], UiTheme.CONTROL_ACCENT)
 		# No letter lit on a closed seat: it brings no army and stands on no side.
-		_paint_run(_side_buttons[i], _side[i] if _who[i] != Seat.EMPTY else -1, accent)
-		UiKit.style_segment(_tier_buttons[i], true, false, accent)
+		_paint_run(_side_buttons[i], _side[i] if _who[i] != Seat.EMPTY else -1, livery)
+		UiKit.style_segment(_tier_buttons[i], true, false, UiTheme.CONTROL_ACCENT)
+		_seat_labels[i].add_theme_color_override(
+			"font_color", livery if _who[i] != Seat.EMPTY else UiTheme.NEUTRAL_DARK
+		)
 
 
 ## The liveries for the table as it now stands, over the seats that play — the
@@ -489,6 +500,7 @@ func _rebuild() -> void:
 	_who_buttons.clear()
 	_side_buttons.clear()
 	_tier_buttons.clear()
+	_seat_labels.clear()
 	_resolve_identity()  # the rows are built in their liveries, then repainted in them
 	add_theme_constant_override("separation", 3)
 	# Two seats to a line: a duel is one row, the height the panel already had, and
@@ -532,6 +544,7 @@ func _seat_row(index: int) -> Control:
 	var name_label := UiKit.micro_label("P%d" % _seats[index])
 	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(name_label)
+	_seat_labels.append(name_label)
 	var choices := PackedStringArray()
 	for label: String in SEAT_LABELS:
 		choices.append(label)
@@ -540,7 +553,7 @@ func _seat_row(index: int) -> Control:
 		"",
 		choices,
 		_who[index],
-		_accent_for(index),
+		UiTheme.CONTROL_ACCENT,
 		"",
 		"",
 		func(choice: int) -> void: _set_seat(index, choice),
@@ -597,8 +610,8 @@ func _seat_row(index: int) -> Control:
 ## Built on every row of every board and greyed where the computer is not playing
 ## that seat (COM-224, and the COM-19 rule the panel's one Difficulty segment used
 ## to carry): a chip that vanished with the seat's owner would restack the row.
-## Greyed, it wears the row's own accent faded — the one selected fill of
-## `_repaint_seats`, not a second tint.
+## Greyed, it wears the chrome accent faded — the same fill `_repaint_seats` gives
+## it live, not a second tint.
 func _tier_chip(index: int) -> Button:
 	var chip := Button.new()
 	chip.clip_text = true
@@ -608,7 +621,7 @@ func _tier_chip(index: int) -> Button:
 	chip.add_theme_font_override("font", UiTheme.display())
 	chip.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
 	chip.text = _tier_label(index)
-	UiKit.style_segment(chip, true, false, _accent_for(index))
+	UiKit.style_segment(chip, true, false, UiTheme.CONTROL_ACCENT)
 	Tooltip.attach(
 		chip,
 		"How well the computer plays this seat",
@@ -704,7 +717,7 @@ func _refresh_presets() -> void:
 		)
 		button.pressed.connect(func() -> void: _apply_preset(preset))
 		_presets.add_child(button)
-	_preset_reason.text = reason.to_upper()
+	_preset_reason.text = reason
 	_preset_reason.visible = not offered
 
 

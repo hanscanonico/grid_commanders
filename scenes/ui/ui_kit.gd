@@ -50,6 +50,10 @@ const FIELD_HEIGHT := 18
 const TOGGLE_CHECK := 12
 const TOGGLE_GAP := 5
 
+## The air either side of a segment's word, over `UiTheme.segment_box`'s own
+## margins — what `segment_min_width` adds per box.
+const SEGMENT_PAD := 6.0
+
 
 ## The veil a full-screen page is laid over, added to `page` as its first child.
 ##
@@ -154,11 +158,35 @@ static func micro_label(text: String) -> Label:
 
 ## Always-visible setup copy. Tooltips can elaborate on these lines, but the
 ## choice can be made without hover, a mouse, or prior knowledge.
+##
+## Set in the display face rather than in `micro_label`'s Silkscreen, which is a
+## caps-only cut: a sentence rendered in it SHOUTS, and a wall of shouted captions
+## under every control is what left the setup panel with no reading order at all.
+## Caps are the section label's, and a caption is prose.
 static func help_label(text: String) -> Label:
-	var label := micro_label(text)
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.display())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	label.add_theme_color_override("font_color", UiTheme.NEUTRAL)
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return label
+
+
+## The heading over a group of rows: the section's name in small caps, then a
+## hairline that runs to the edge of whatever holds it. The rule is what makes a
+## header a *container* — a bare label floating over a flat sheet reads as one more
+## row, where a label with a line off its shoulder reads as everything under it.
+static func section_header(text: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	row.add_child(micro_label(text))
+	var line := rule()
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(line)
+	return row
 
 
 ## A full-screen page's centred explanatory line: what this page is, or what it
@@ -401,6 +429,26 @@ static func segment(
 	return col
 
 
+## How wide a segmented run has to stand for its longest label to fit inside every
+## one of its boxes. A segment clips rather than sizing to its text — the seat
+## strip's rows bank on that, which is why this is asked for rather than always
+## applied — so a run that must read whole states its width here, measured in the
+## face it is drawn in rather than guessed at.
+static func segment_min_width(labels: PackedStringArray) -> float:
+	var widest := 0.0
+	for text in labels:
+		widest = maxf(
+			widest,
+			(
+				UiTheme
+				. display()
+				. get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_SEGMENT)
+				. x
+			)
+		)
+	return labels.size() * (widest + SEGMENT_PAD)
+
+
 ## One segment of a segmented row, in every state. Public because the seat strip
 ## dresses its own rows and its tier chips with it, so a seat row is the same
 ## control the speed row is.
@@ -446,10 +494,15 @@ static func toggle_width(text: String) -> float:
 	return TOGGLE_CHECK + words.x + status.x + 2 * TOGGLE_GAP
 
 
-## A toggle row: a ✓-box (capture green on, grey off), a label, and a Silkscreen
-## ON/OFF status. The whole row is one focusable button (handoff Toggle), so mouse,
+## A toggle row: a ✓-box (ink on, cream off), a label, and a Silkscreen ON/OFF
+## status. The whole row is one focusable button (handoff Toggle), so mouse,
 ## keyboard and controller all flip it — and, like a segmented group, its
 ## explanation hangs off the words rather than off the whole row.
+##
+## Ink and not the capture green it wore until this pass: green is the board's
+## word for a property changing hands, and three traffic-light boxes in a row of
+## match options both said something the board says and fought the one accent the
+## shell allows itself (UiTheme.CONTROL_ACCENT).
 ##
 ## The status sits tight after its own label rather than pushed to the row's far
 ## edge: hard right it landed against the *next* toggle's box, and a state word
@@ -478,7 +531,7 @@ static func toggle(
 	mark.text = "✓"
 	mark.add_theme_font_override("font", UiTheme.stat(true))
 	mark.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	mark.add_theme_color_override("font_color", UiTheme.SLATE_900)
+	mark.add_theme_color_override("font_color", UiTheme.PAPER)
 	mark.set_anchors_preset(Control.PRESET_FULL_RECT)
 	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -511,7 +564,7 @@ static func toggle(
 	var repaint := func(on: bool) -> void:
 		_paint_check(check, mark, on)
 		status.text = "ON" if on else "OFF"
-		status.add_theme_color_override("font_color", UiTheme.CAPTURE if on else UiTheme.NEUTRAL)
+		status.add_theme_color_override("font_color", UiTheme.INK if on else UiTheme.NEUTRAL)
 	repaint.call(is_on)
 	# After the decoration pass and after the tip, for the reason stated on
 	# `touchable`: the 12x12 check box inside this row is the smallest control in
@@ -532,7 +585,10 @@ static func toggle(
 static func identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
 	var theme := identity.theme(team)
 	var chip := PanelContainer.new()
-	var box := UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
+	# Thin-bordered and unshadowed: the chip names who is at the table, it is not
+	# something to press, and a raised outline on a footer tag put it at the same
+	# depth as the actions above it.
+	var box := UiTheme.bordered(UiTheme.PAPER, UiTheme.BORDER_SOFT, UiTheme.BORDER)
 	box.content_margin_left = 4
 	box.content_margin_right = 4
 	box.content_margin_top = 1
@@ -544,7 +600,7 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 	var dot := Panel.new()
 	dot.custom_minimum_size = Vector2(6, 6)
 	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	dot.add_theme_stylebox_override("panel", UiTheme.bordered(theme.color, UiTheme.HARD_BORDER))
+	dot.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
 	row.add_child(dot)
 
 	var label := Label.new()
@@ -663,8 +719,11 @@ static func _tip_label(into: Container, text: String, tip: String, tip_detail: S
 	return Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM)
 
 
+## Flat and thin-bordered, with no hard shadow: the drop shadow is reserved for
+## the raised things a press moves (a button, the selected board), and a checkbox
+## wearing one made every option on the panel sit at the same depth as Start.
 static func _paint_check(check: Panel, mark: Label, on: bool) -> void:
-	var fill := UiTheme.CAPTURE if on else UiTheme.PAPER_2
-	var box := UiTheme.bordered(fill, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
+	var fill := UiTheme.CONTROL_ACCENT if on else UiTheme.PAPER
+	var box := UiTheme.bordered(fill, UiTheme.CONTROL_ACCENT, UiTheme.BORDER)
 	check.add_theme_stylebox_override("panel", box)
 	mark.visible = on

@@ -12,6 +12,9 @@ extends RefCounted
 ## that is the disk or a posed capture stays the menu's decision; this class
 ## reads no autoload and no command line.
 
+## The air the card keeps around the button and the line under it.
+const CARD_PAD := 3
+
 ## The slot as it was last handed over, so a press that fails to open the save can
 ## re-say the row without asking the menu where slots come from.
 var _slot := SaveGame.Slot.absent()
@@ -29,21 +32,37 @@ var _on_resume: Callable
 
 func _init(into: VBoxContainer, on_resume: Callable) -> void:
 	_on_resume = on_resume
+	# One card, not two floating rows. The button and the line under it are a title
+	# and its subtitle — "Continue" alone says nothing about which match — and a
+	# caption left standing loose in the action column read as another orphan of the
+	# rail rather than as this button's own words.
+	var card := PanelContainer.new()
+	# Flat and thin-edged: a card groups, it is not pressed, so the hard shadow
+	# stays the button's inside it.
+	var box := UiTheme.bordered(UiTheme.SLATE_800, UiTheme.HARD_BORDER, UiTheme.BORDER)
+	box.set_content_margin_all(CARD_PAD)
+	card.add_theme_stylebox_override("panel", box)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 2)
+	card.add_child(body)
+	into.add_child(card)
+
 	# The one filled row under Start: resuming is the action a returning player came
 	# for, so it outranks the two offers below it and stays a step under the match
 	# it must not compete with.
 	_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
 	_button.pressed.connect(_press)
-	into.add_child(_button)
+	body.add_child(_button)
 	# What Continue resumes, on its own line rather than as the button's inline
-	# suffix: "DAY 12 · THE STRAITS" is longer than the 122px action stack can set
-	# at button size, and a micro-label under the control is the panel's own idiom.
-	# It is metadata about the button above it, not a control — hence muted ink and
-	# no dotted rule. `refresh` sets the words.
-	_caption = UiKit.micro_label("")
+	# suffix: "Day 12 · The Straits" is longer than the 122px action stack can set
+	# at button size. It is metadata about the button above it, not a control —
+	# hence muted ink and no dotted rule. `refresh` sets the words.
+	# Deliberately not wrapped: how tall this card stands may not depend on whether
+	# there is a match to come back to (UX-recovery D2), and a wrapped subtitle is a
+	# card one line taller on exactly the boards with the longest names.
+	_caption = UiKit.help_label("")
 	_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_caption.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	into.add_child(_caption)
+	body.add_child(_caption)
 	# The tip hangs off the button itself: a disabled control still answers the
 	# pointer, so the one control here that can be disabled is also the one place
 	# the explanation is always reachable.
@@ -71,16 +90,16 @@ func refresh(slot: SaveGame.Slot) -> void:
 
 func _render() -> void:
 	if _slot.state == SaveGame.Slot.State.ABSENT:
-		_refuse("NO SAVED MATCH", "Nothing saved yet", "Save in battle from the map menu")
+		_refuse("No saved match", "Nothing saved yet", "Save in battle from the map menu")
 		return
 	# The codec's words when the slot itself will not read, the press's when the save
 	# was nameable and would not open.
 	var refusal := _slot.reason if _slot.state == SaveGame.Slot.State.UNREADABLE else _refusal
 	if refusal != "":
-		_refuse("SAVED MATCH UNREADABLE", "That save cannot be opened", refusal)
+		_refuse("Saved match unreadable", "That save cannot be opened", refusal)
 		return
 	_button.disabled = false
-	_caption.text = _slot.summary.label().to_upper()
+	_caption.text = _slot.summary.label()
 	# Muted, because it is a note about the button above it rather than something to
 	# press — but not the dimmer NEUTRAL_DARK, which is barely legible out here.
 	_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL)
