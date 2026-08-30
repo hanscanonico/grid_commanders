@@ -474,16 +474,12 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	if cleared:
 		face.add_child(ListRow.cell("✓", UiTheme.CAPTURE))
 	var words := ListRow.words()
-	var title := ListRow.cell("%02d · %s" % [index + 1, mission.title], ink)
-	title.clip_text = true
-	words.add_child(title)
+	words.add_child(ListRow.clipped(ListRow.cell("%02d · %s" % [index + 1, mission.title], ink)))
 	if open:
 		var record: CampaignState.MissionRecord = _progress.records.get(mission.id)
 		var detail := row_detail(mission, _commanders, record)
 		if detail != "":
-			var line := ListRow.detail(detail, UiTheme.INK_3)
-			line.clip_text = true
-			words.add_child(line)
+			words.add_child(ListRow.clipped(ListRow.detail(detail, UiTheme.INK_3)))
 	face.add_child(words)
 	if not open:
 		face.add_child(ListRow.cell("NOT TAKEN" if skipped else "LOCKED", _locked_ink()))
@@ -491,12 +487,53 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	if mission.fog_enabled:
 		face.add_child(ListRow.cell("FOG", UiTheme.AMMO))
 	var most := MissionRuntime.new(mission).max_stars()
-	var earned := _progress.stars_for(mission.id) if cleared else 0
-	if earned > 0:
-		face.add_child(ListRow.cell("★".repeat(earned), UiTheme.SELECT_GOLD))
-	if most - earned > 0:
-		face.add_child(ListRow.cell("☆".repeat(most - earned), UiTheme.INK_3))
+	face.add_child(_star_cell(_progress.stars_for(mission.id) if cleared else 0, most))
 	return face
+
+
+## The row's stars: what was earned in gold, what is still on offer hollow, in a
+## cell as wide as the war's best-rated mission needs and right-aligned in it.
+##
+## The width is the war's rather than the row's because missions are not all
+## rated out of the same number of stars: sized per row, a seven-star mission's
+## cell ate 120px more of its subtitle than a three-star one's, and the subtitles
+## stopped at four different columns down a page whose cell was meant to line up.
+func _star_cell(earned: int, most: int) -> Control:
+	var cell := HBoxContainer.new()
+	cell.add_theme_constant_override("separation", 0)
+	cell.alignment = BoxContainer.ALIGNMENT_END
+	cell.custom_minimum_size.x = star_width(star_span(_campaign))
+	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if earned > 0:
+		cell.add_child(ListRow.cell("★".repeat(earned), UiTheme.SELECT_GOLD))
+	if most - earned > 0:
+		cell.add_child(ListRow.cell("☆".repeat(most - earned), UiTheme.INK_3))
+	return cell
+
+
+## The most stars any one of the war's missions is rated out of — the number of
+## glyphs the fixed cell has to hold.
+##
+## Static and argument-taking for `expanded_blocks`' reason.
+static func star_span(campaign: CampaignDefinition) -> int:
+	var most := 0
+	for mission: MissionDefinition in campaign.missions:
+		if mission == null:
+			continue
+		most = maxi(most, MissionRuntime.new(mission).max_stars())
+	return most
+
+
+## What that many stars measure in the display face. Both glyphs are asked
+## because a cleared row is all gold and an open one all hollow, and the cell has
+## to hold whichever of the two sets wider.
+static func star_width(count: int) -> float:
+	var face := UiTheme.display()
+	var size := UiTheme.SIZE_BUTTON
+	return maxf(
+		face.get_string_size("★".repeat(count), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x,
+		face.get_string_size("☆".repeat(count), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	)
 
 
 ## A row's second line: where the fight is, who it is against, the day it is

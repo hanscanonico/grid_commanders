@@ -54,6 +54,13 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 `_draw` of each only paints — are static, and are all `test_path_arrow.gd` and
 `test_map_thumbnail.gd` call. Same shape as `SeatStrip.normalised_sides` and `TransitionInput`.
 
+`CampaignHubPanel` and `CampaignPickerPanel` join them too. What a hub row's second line says
+(`row_detail`), how wide the star cell every row shares has to be (`star_span`), what a picker row
+reads (`row_text`) and how many lines of premise a card has room for (`premise_lines`) are static,
+pure answers over a campaign and its progress, so `test_campaign_hub_rows.gd`,
+`test_campaign_card_copy.gd`, `test_campaign_db.gd` and `test_campaign_route.gd` call them and build
+no page.
+
 `EditorBoard`, `EditorPalette` and `EditorNewMapPanel` join them on exactly those terms
 (COM-263). Which cell a press lands on, where a board too big for its frame is scrolled to,
 which order the brushes come in and which board sizes the new-map page offers are all static,
