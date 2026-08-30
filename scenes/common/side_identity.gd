@@ -45,12 +45,14 @@ const FACTION_ROWS := 5
 ##
 ## Generic (commander-less) sides claim classics in this order, meridian then
 ## aurora, so a match with no commanders at all renders exactly as it did before
-## factions: side 1 red, side 2 blue (plan D4). Gold comes before verdant so
-## these sides never put meridian beside verdant, the closest pair the
-## colour-blind sweep reads (test_side_identity_colorblind.gd); a mirror side
-## borrowing below can still reach for verdant, which is why the two orders
-## differ.
-const _GENERIC_ORDER: Array[StringName] = [&"meridian", &"aurora", &"iron", &"gold", &"verdant"]
+## factions: side 1 red, side 2 blue (plan D4). Iron is last because slate reads
+## close to the neutral grey a board is already full of, and a board seats at
+## most four armies, so putting it fifth keeps it off a commander-less quartet
+## entirely — red, blue, verdant, gold (user ruling 2026-08-30). That does seat
+## meridian beside verdant, the closest pair the colour-blind sweep reads, which
+## clears its floor (test_side_identity_colorblind.gd). A mirror side borrowing
+## below still reaches for iron early, which is why the two orders differ.
+const _GENERIC_ORDER: Array[StringName] = [&"meridian", &"aurora", &"verdant", &"gold", &"iron"]
 ## A mirror side — one whose faction an earlier slot already wears — borrows in
 ## this order instead, aurora then meridian, taking the first that is hue-distinct
 ## from what is already on the board (plan D3). Iron v Iron -> slate + blue;
