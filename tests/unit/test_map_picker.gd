@@ -104,3 +104,22 @@ func test_a_single_board_roster_draws_that_board() -> void:
 func test_an_empty_roster_draws_nothing() -> void:
 	var maps: Array[MapData] = []
 	assert_eq(MapPicker.random_index(maps, 0, _rng(1)), -1)
+
+
+## A board the player drew wears the Custom badge, so the shelf says where a cell
+## came from without the menu keeping a second list of which cells those are.
+func test_a_board_the_player_drew_is_badged_custom() -> void:
+	var name := "test_map_picker_custom_board"
+	var text := FileAccess.get_file_as_string(MapCatalog.TUTORIAL_MAP_PATH)
+	assert_eq(UserMaps.save(name, text), "", "the scratch board saved")
+	var map := UserMaps.load_map(name, Fixture.terrain_db())
+	assert_true(MapPicker.is_custom(map), "a board in user://maps is the player's own")
+	var cell_name := MapPicker.cell_name(map, false)
+	assert_string_contains(cell_name, "Custom")
+	assert_false(cell_name.contains("Tutorial"), "a copy of the teaching board does not teach")
+	assert_eq(UserMaps.delete(name), "", "the scratch board cleaned up")
+
+
+func test_a_shipped_board_is_never_custom() -> void:
+	for map in MapCatalog.ordered(Fixture.terrain_db()):
+		assert_false(MapPicker.is_custom(map), map.source_path)

@@ -117,6 +117,19 @@ func test_an_unknown_map_name_is_refused_rather_than_silently_swapped() -> void:
 	assert_eq(request.map_path, MatchRequest.DEFAULT_MAP_PATH, "board unchanged")
 
 
+## A board the player drew is named by a `--map=` flag exactly as a shipped one
+## is, and resolves to the file in `user://maps` — which is what lets the picker
+## hand a user map to the same launch every other board goes through.
+func test_a_board_the_player_saved_is_named_like_any_other() -> void:
+	var name := "test_request_user_board"
+	var shipped := FileAccess.get_file_as_string(MatchRequest.DEFAULT_MAP_PATH)
+	assert_eq(UserMaps.save(name, shipped), "", "the scratch board saved")
+	var request := MatchRequest.new()
+	request.apply_cmdline(Fixture.args(["--map=%s" % name]))
+	assert_eq(request.map_path, UserMaps.path_for(name), "resolved to the player's own board")
+	assert_eq(UserMaps.delete(name), "", "the scratch board cleaned up")
+
+
 # --- --co ---------------------------------------------------------------------
 
 
