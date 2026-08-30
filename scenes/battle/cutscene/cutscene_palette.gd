@@ -53,3 +53,18 @@ const GROUND_SHADOW := Color(0.078, 0.102, 0.133)
 ## The hard offset shadow under a figure's own art, at the alpha the figure fades
 ## through.
 const FIGURE_SHADOW := UiTheme.SLATE_900
+
+## The board's own stone and snow: four rungs off the rock ramp the sprite
+## generator paints a massif with, and two off its snow ramp
+## (generators/sprites/spritegen/palette.py, ROCK_RAMP / SNOW_RAMP). The cut-in's
+## ridge is drawn rather than blitted, so these are what keep it the same
+## mountain the board shows. The ramp's own split is warm stone in the light and
+## cool stone in the shade, under the tile's sun — up and to the left. The rim is
+## the ramp's top rung and belongs to the crest alone: a whole flank painted
+## there leaves nothing for the snow above it to be brighter than.
+const ROCK_RIM := Color(0.643, 0.639, 0.624)
+const ROCK_BODY := Color(0.478, 0.459, 0.439)
+const ROCK_SHADE := Color(0.353, 0.373, 0.431)
+const ROCK_SCREE := Color(0.247, 0.259, 0.298)
+const SNOW_LIT := Color(0.659, 0.678, 0.698)
+const SNOW_SHADE := Color(0.525, 0.549, 0.604)
