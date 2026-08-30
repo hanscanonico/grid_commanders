@@ -245,7 +245,7 @@ func _run_demo(mode: String) -> void:
 			await _stage_leave_routes()
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
-		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff", "ai_pause":
+		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff", "ai_pause", "auto_off":
 			_fail_if(await BattleTransitionScenario.new(_battle).run(mode))
 		"ambush", "vanish":
 			_run_vanish_demo(mode)

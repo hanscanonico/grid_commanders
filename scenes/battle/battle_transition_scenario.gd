@@ -22,6 +22,12 @@ const TURN_WAIT_FRAMES := 1800
 ## The computer's seat on the default board `ai_pause` runs on — the one side
 ## Battle plays itself unless `--hotseat` clears it.
 const AI_SEAT := 2
+## What the map menu's Auto row and its submenu's Off row read, so `auto_off`
+## finds them on the live menu instead of asking the builder it is testing.
+const AUTO_LABEL := "Auto: "
+const OFF_LABEL := "Off"
+## How long a handed-back seat is watched for a command it must no longer issue.
+const RESUME_WATCH_FRAMES := 120
 
 
 func run(mode: String) -> String:
@@ -34,6 +40,8 @@ func run(mode: String) -> String:
 			return await _run_mixed_seat_handoff()
 		"ai_pause":
 			return await _run_ai_pause()
+		"auto_off":
+			return await _run_auto_off()
 	return "unknown transition scenario: %s" % mode
 
 
@@ -229,6 +237,106 @@ func _run_ai_pause() -> String:
 			return ""
 		await _battle.get_tree().process_frame
 	return "the pause notice never cleared"
+
+
+## The Auto row's round trip: the player hands their own seat to the computer,
+## then takes it back. Turning it on is the easy half and has never been in
+## doubt; what this exists for is the way back, which is only ever offered while
+## that seat's own Auto turn is held at the pause.
+##
+## Every claim here photographs exactly like its opposite:
+##  - the Auto row is on the menu the pause opened, and its submenu offers Off;
+##  - choosing Off empties the seat out of `ai_teams`;
+##  - the board comes back to the player rather than to a held pause;
+##  - and the runner really stops, which is the failure worth catching — a seat
+##    that keeps planning after Off is a match the player never gets back.
+func _run_auto_off() -> String:
+	var seat := _battle.game.current_team
+	var error := await _hand_seat_over(seat)
+	if error != "":
+		return error
+	return await _take_seat_back(seat)
+
+
+## The easy half: the map menu's Auto row, opened from the player's own board,
+## hands this seat to the computer at the gentlest tier the roster carries.
+func _hand_seat_over(seat: int) -> String:
+	await _press_key(KEY_ESCAPE)
+	var error := await _wait_for_state(Battle.State.MENU, "Esc on the player's own turn")
+	if error != "":
+		return error
+	error = await _open_auto_submenu("the player's own turn")
+	if error != "":
+		return error
+	_battle.action_menu.choose(_battle.difficulty_db.all()[0].id)
+	error = await _wait_for_state(Battle.State.AI_TURN, "handing the seat to the computer")
+	if error != "":
+		return error
+	if seat not in _battle.ai_teams:
+		return "the Auto row left seat %d off the computer's list" % seat
+	# The hand-off says so with a banner, and a banner eats the next press as its
+	# own skip — so the pause below is asked for on a board with nothing over it,
+	# which is where a player would ask for it too.
+	if not await _wait_for_banner(false):
+		return "the Auto hand-off banner never cleared"
+	return ""
+
+
+## The half this scenario exists for: Esc during that seat's own Auto turn, the
+## Off row underneath the Auto one, and the board back in the player's hands with
+## the runner stopped.
+func _take_seat_back(seat: int) -> String:
+	await _press_key(KEY_ESCAPE)
+	var error := await _wait_for_state(Battle.State.MENU, "Esc during the seat's own Auto turn")
+	if error != "":
+		return error
+	if _battle.game.current_team != seat:
+		return (
+			"the pause landed on team %d's turn, not the seat %d the player put on Auto"
+			% [_battle.game.current_team, seat]
+		)
+	error = await _open_auto_submenu("the paused Auto turn")
+	if error != "":
+		return error
+	if not _row_labels().has(OFF_LABEL):
+		return "the Auto submenu offers no Off row (%s)" % ", ".join(_row_labels())
+	_battle.action_menu.choose(&"off")
+	error = await _wait_for_state(Battle.State.IDLE, "taking the seat back")
+	if error != "":
+		return error
+	if seat in _battle.ai_teams:
+		return "Off left seat %d on the computer's list" % seat
+	var acted := _acted_count(seat)
+	for frame in RESUME_WATCH_FRAMES:
+		await _battle.get_tree().process_frame
+	if _acted_count(seat) != acted or _battle.game.current_team != seat:
+		return "the runner kept playing seat %d after it was handed back" % seat
+	return ""
+
+
+## Walks the live map menu to the Auto submenu, naming the row that was missing
+## rather than choosing into a menu that has none — `ActionMenu.choose` is silent
+## about an id it does not carry, so the flow would otherwise stall on a wait.
+func _open_auto_submenu(where: String) -> String:
+	var labels := _row_labels()
+	var auto_row := ""
+	for label in labels:
+		if label.begins_with(AUTO_LABEL):
+			auto_row = label
+	if auto_row == "":
+		return "the menu on %s offers no Auto row (%s)" % [where, ", ".join(labels)]
+	_battle.action_menu.choose(&"auto")
+	await _battle.get_tree().process_frame
+	return ""
+
+
+## The open menu's rows, read off the live buttons. ActionMenu prints a
+## two-character arm marker ahead of every label, so each is read from behind it.
+func _row_labels() -> PackedStringArray:
+	var labels := PackedStringArray()
+	for button: Button in _battle.action_menu.rows.get_children():
+		labels.append(button.text.substr(2))
+	return labels
 
 
 ## The rows the pause menu was opened with, read back off the live buttons rather
