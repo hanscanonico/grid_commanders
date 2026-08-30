@@ -591,7 +591,8 @@ down the left, the owner seat, the starting army and the two size steppers down 
 whichever you last picked from is the brush the next press on the board lays: arrows walk the
 cursor, Enter paints, `+`/`-` zoom, and the mouse paints a stroke while it is held. The seat picked
 under **Owner** is who every brush works for, so a building laid while a seat is picked is that
-seat's the moment it goes down; pick **Nobody** to lay the neutral properties both sides fight over.
+seat's the moment it goes down; pick the **—** chip, the one nobody owns, to lay the neutral
+properties both sides fight over.
 Under the board is every reason the map is not yet playable — an HQ nobody owns, two HQs for one
 seat, a unit standing on a property — read from the same validator the picker keeps unplayable
 boards out with, and each complaint rings the cell it names. Save is closed until the list is empty.
