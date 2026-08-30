@@ -105,6 +105,12 @@ const ART_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 ## Commander" still reads as a deliberate, styled choice rather than a blank.
 const NEUTRAL_KEY := &"neutral"
 
+## The order every surface lists the factions in — the select page's tab row
+## first among them. The Iron Dominion, the campaigns' antagonist, closes the
+## row. Listing order only: the atlas row a faction is baked into
+## (`SideIdentity._ROW_FOR_KEY`) is pinned by the sprite sheets and differs.
+const FACTION_ORDER: Array[StringName] = [&"meridian", &"aurora", &"verdant", &"gold", &"iron"]
+
 ## Faction display string -> short theme key. Kept here so a .tres that names a
 ## faction and this adapter can never drift; an unknown faction falls back to the
 ## neutral theme rather than crashing.
@@ -207,12 +213,12 @@ static func theme_for(commander: CommanderType) -> FactionTheme:
 	return theme_for_key(key_for_faction(commander.faction))
 
 
-## Every faction theme except neutral, in the plan's tab order. The selection
-## page groups the roster under these.
+## Every faction theme except neutral, in `FACTION_ORDER`. The selection page
+## groups the roster under these.
 static func faction_themes() -> Array[FactionTheme]:
 	_build_themes()
 	var ordered: Array[FactionTheme] = []
-	for key: StringName in [&"meridian", &"iron", &"aurora", &"verdant", &"gold"]:
+	for key: StringName in FACTION_ORDER:
 		ordered.append(_themes[key])
 	return ordered
 
