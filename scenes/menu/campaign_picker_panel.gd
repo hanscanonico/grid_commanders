@@ -160,15 +160,30 @@ func _row_face(campaign: CampaignDefinition, progress: CampaignState, ink: Color
 	if thumb != null:
 		face.add_child(thumb)
 	var words := ListRow.words()
-	var headline := ListRow.cell(row_text(campaign, progress), ink)
-	headline.clip_text = true
-	words.add_child(headline)
+	words.add_child(ListRow.clipped(ListRow.cell(row_text(campaign, progress), ink)))
+	var line_height := UiTheme.stat().get_height(UiTheme.SIZE_STAT)
+	var room := _ROW_HEIGHT - UiTheme.display().get_height(UiTheme.SIZE_BUTTON)
 	if not campaign.antagonist.is_empty():
 		words.add_child(_micro(campaign.antagonist.to_upper(), _faded(ink, _ANTAGONIST_FADE), 1))
+		room -= line_height
 	if not campaign.premise.is_empty():
-		words.add_child(_micro(campaign.premise, _faded(ink, _PREMISE_FADE), 2))
+		var lines := premise_lines(room, line_height)
+		words.add_child(_micro(campaign.premise, _faded(ink, _PREMISE_FADE), lines))
 	face.add_child(words)
 	return face
+
+
+## How many lines of the premise the card has room for below the lines above it.
+## Measured rather than fixed: a line the card cannot hold is not trimmed by its
+## own label — the next card's plate paints over it, so the premise reads as
+## sliced copy instead of as a cut, which is what a two-line premise did in a
+## card measured for one.
+##
+## Static and argument-taking for `row_text`'s reason.
+static func premise_lines(room: float, line_height: float) -> int:
+	if line_height <= 0.0:
+		return 1
+	return maxi(1, floori(room / line_height))
 
 
 ## The war's opening ground. A board that will not load costs the row its picture

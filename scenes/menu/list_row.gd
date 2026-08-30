@@ -36,6 +36,17 @@ static func words() -> VBoxContainer:
 	return column
 
 
+## A line that gives way when the row is narrower than it: clipped to its column
+## and ended with an ellipsis, so a cut reads as a cut rather than as a word that
+## stops. Asked for by the caller rather than set on every line, because a label
+## that may be trimmed also stops claiming its full text width — which is exactly
+## what a fixed cell beside it needs it to keep.
+static func clipped(label: Label) -> Label:
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	return label
+
+
 ## A row's spoken line, in the display face. The ink is the caller's, because a
 ## row on a coloured plate resolves its own label colour.
 static func cell(text: String, ink: Color) -> Label:

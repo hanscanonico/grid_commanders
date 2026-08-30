@@ -103,3 +103,27 @@ func test_the_unlock_override_deals_the_whole_war() -> void:
 	assert_eq(CampaignHubPanel.expanded_blocks(_war(), progress).size(), 3)
 	assert_true(MenuCampaignFlow.unlocks_all(PackedStringArray([MenuCampaignFlow.UNLOCK_ARG])))
 	assert_false(MenuCampaignFlow.unlocks_all(PackedStringArray(["--fog"])), "and only on request")
+
+
+## A war rated out of different numbers of stars: one mission out of one, one out
+## of seven. The cell has to be the war's widest, or a row's subtitle is cut at a
+## different column from its neighbour's.
+func _rated_war() -> CampaignDefinition:
+	var campaign := _war()
+	campaign.missions[3].par_day = 6
+	for index in 5:
+		campaign.missions[3].bonus_objectives.append(DayDeadlineObjective.new())
+	return campaign
+
+
+func test_the_star_cell_is_the_widest_mission_in_the_war() -> void:
+	assert_eq(CampaignHubPanel.star_span(_rated_war()), 7, "one star, par, and five bonuses")
+
+
+func test_a_war_rated_out_of_one_asks_for_one_star() -> void:
+	assert_eq(CampaignHubPanel.star_span(_war()), 1, "finishing is every mission's own star")
+
+
+func test_a_war_with_no_missions_asks_for_none() -> void:
+	var campaign := CampaignDefinition.new()
+	assert_eq(CampaignHubPanel.star_span(campaign), 0, "no rows, no cell")
