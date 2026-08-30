@@ -75,8 +75,8 @@ const GLOW_ALPHA := 0.20
 
 ## The field's own variety: patches of a rougher green lying in each row, and
 ## tufts standing in the rows near enough the front to hold one. Both are
-## scattered off `_scatter`, never off a draw, and both step light and dark by
-## turns so the field gains texture without gaining or losing tone.
+## scattered off `_scatter`, never off a draw, and both alternate light and dark
+## about the row's own shade, so the field gains texture and stays its own green.
 const PATCHES_PER_ROW := 7
 const PATCH_POINTS := 12
 const PATCH_WIDE := 0.13
