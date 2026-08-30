@@ -210,3 +210,15 @@ func test_a_tinted_cell_wears_its_owners_row() -> void:
 func test_untinted_ground_wears_nobodys_colours() -> void:
 	var plains := Fixture.terrain_db().by_id(&"plains")
 	assert_eq(SideIdentity.terrain_row(plains, 3), SideIdentity.NEUTRAL_ROW)
+
+
+# --- what order a surface lists the factions in ------------------------------
+
+
+func test_the_listing_order_ends_on_iron() -> void:
+	# The commander-select tab row reads left to right in this order, with the
+	# Iron Dominion last. Not the atlas rows below it, which the sheets pin.
+	var keys: Array[StringName] = []
+	for theme: CommanderVisuals.FactionTheme in CommanderVisuals.faction_themes():
+		keys.append(theme.key)
+	assert_eq(keys, [&"meridian", &"aurora", &"verdant", &"gold", &"iron"] as Array[StringName])
