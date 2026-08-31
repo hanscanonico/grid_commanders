@@ -16,10 +16,10 @@ flag = &"forgery_proven"
 at_least = 1
 at_most = -1
 
-[sub_resource type="Resource" id="Objective_hold_three_of_the_four_towns"]
+[sub_resource type="Resource" id="Objective_hold_four_of_the_six_towns"]
 script = ExtResource("2")
-text = "Hold three of the four towns."
-count = 3
+text = "Hold four of the six towns."
+count = 4
 terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
@@ -35,12 +35,12 @@ text = "Draeg's feelings are noted and beside the point. I have his sector now, 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Thin is thin. Two men in the whole sector and four towns nobody's standing on. I can be on two of them before she finishes reading her orders."
+text = "Thin is thin. Two men in the whole sector and six towns nobody's standing on. I can be on two of them before she finishes reading her orders."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Three towns, ours. Whatever was left of Draeg's line gave way without him in it."
+text = "Four towns, ours. Whatever was left of Draeg's line gave way without him in it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -73,7 +73,7 @@ lines = Array[Resource]([SubResource("Event_line_1")])
 [sub_resource type="Resource" id="Trigger_holdouts_behind_our_line"]
 script = ExtResource("8")
 tag = &"draeg_holdouts"
-cells = Array[Vector2i]([Vector2i(5, 2), Vector2i(5, 7), Vector2i(1, 4), Vector2i(1, 5)])
+cells = Array[Vector2i]([Vector2i(5, 2), Vector2i(5, 10), Vector2i(1, 4), Vector2i(1, 5)])
 
 [sub_resource type="Resource" id="Effect_veterans_spared"]
 script = ExtResource("10")
@@ -111,11 +111,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_towns")])
+objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_towns")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_holdouts"), SubResource("Event_they_marched_home")])
-par_day = 5
+par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Even a thin line held, and the sector stayed Iron's a while longer."

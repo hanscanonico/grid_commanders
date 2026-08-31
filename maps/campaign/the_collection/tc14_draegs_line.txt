@@ -1,29 +1,40 @@
 # The Collection — Act III, M14 — "Draeg's Line". This sector was
 # Viktor Draeg's to hold. Word reached his column that the reparations
 # ledger was forged, and his professionals refused the order — the line here is thin for a reason.
+# Wide, well-built country: a road grid over open ground, towns at the junctions, almost nobody on it.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
 [terrain]
-...............
-...............
-...F.C...C.F...
-...............
-.Q...........B.
-.B...........Q.
-...............
-...F.C...C.F...
-...............
-...............
+M...................M
+.M.................M.
+..===C=========C=B=..
+.....=....=....=.....
+.Q...=.FF.C....=.....
+.B...=.FF.=....=.....
+..=================B.
+.....=....=.FF.=...Q.
+.....=....C.FF.=.....
+..B..=....=....=.....
+..===C=========C===..
+.M.................M.
+M...................M
 [owners]
 # team x y
 1 1 4
-2 13 5
-2 13 4
 1 1 5
+1 2 9
+2 19 7
+2 19 6
+2 17 2
 [units]
 # team symbol x y
 1 i 1 3
-1 t 2 4
-1 r 1 6
+1 i 2 10
 1 m 2 6
-2 i 13 3 draeg_holdouts
-2 r 12 6
+1 r 3 5
+1 t 2 4
+1 t 3 9
+1 g 1 6
+2 i 9 3 draeg_holdouts
+2 r 17 3
+2 t 18 6
+2 a 18 10
