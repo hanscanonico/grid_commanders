@@ -1,24 +1,24 @@
 # The Quiet War 10 — "The Relay Tower". Every column Morn moves reports
 # through one relay hidden in a border city. Sable Wren cuts the line
 # before the next raid gets its marching orders.
-# Symbols: . plains  F woods  C city  Q HQ
+# Symbols: . plains  F woods  = road  C city  Q HQ
 [terrain]
-F............F
-.Q.....FF.....
-F.....F..C....
-..F.....FF....
-F......F......
-..F.....F....Q
-...F..........
-..............
-..............
+FF...F......F..F
+.Q..F..........F
+F..F.....C.....F
+..F...FFC=C.....
+F..F....F=.F....
+...F....F=....F.
+..F......=====Q.
+FF...F.......F..
+....F.......F...
 [owners]
 1 1 1
 2 9 2
-2 13 5
+2 14 6
 [units]
 1 m 2 1
 1 i 3 2
 2 i 9 4
-2 r 10 2 morn_courier
-2 i 11 5
+2 i 10 2
+2 r 11 6 morn_courier

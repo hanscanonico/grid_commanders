@@ -15,7 +15,7 @@
 [sub_resource type="Resource" id="Objective_take_the_waystation"]
 script = ExtResource("2")
 text = "Take the waystation."
-cell = Vector2i(9, 2)
+cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Bonus_take_the_courier"]
 script = ExtResource("5")
@@ -60,7 +60,7 @@ day = 3
 [sub_resource type="Resource" id="Spawn_depot_watch"]
 script = ExtResource("10")
 unit_type = ExtResource("11")
-cell = Vector2i(10, 3)
+cell = Vector2i(6, 5)
 
 [sub_resource type="Resource" id="Effect_depot_watch"]
 script = ExtResource("9")
