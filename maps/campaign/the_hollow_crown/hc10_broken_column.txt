@@ -1,46 +1,51 @@
 # The Hollow Crown — "Broken Column".
-# Four seats at the corners: you and your Iron ally north of the ridge,
-# two rival marshals south of it. Three passes are the only way across
-# for anything on treads.
+# Four seats at the corners of a ridge with one road cutting through it.
+# Treads cross at the centre or not at all; two foot saddles let infantry
+# over the shoulder where armour cannot follow. The relay sits north of
+# the cutting, on the road the column never finished walking.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 # Draeg's lead company is named: losing it is what brings Meridian's second
 # company onto the ridge road.
 [terrain]
-.....................
-.....................
-..QB=============BQ..
-.....=....=....=.....
-...C.=....C....=.C...
-.....=....=....=.....
-....F=....=....=.....
-.MMMM=MMMM=MMMM=MMMM.
-.MMMM=MMMM=MMMM=MMMM.
-.....=....=....=F....
-.....=....=....=.....
-...C.=....=....=.C...
-..QB=============BQ..
-.....................
-.....................
+.......................
+.......................
+..QB===============BQ..
+...........=...........
+.....C.....C.....C.....
+....F......=......F....
+...........=...........
+.MMMMMMMMMM=MMMMMMMMMM.
+.MMM.MMMMMM=MMMMMM.MMM.
+....F......=......F....
+.....C.....=.....C.....
+...........=...........
+..QB===============BQ..
+.......................
+.......................
 [owners]
 1 2 2
 1 3 2
-2 18 2
-2 17 2
-3 18 12
-3 17 12
+2 20 2
+2 19 2
+3 20 12
+3 19 12
 4 2 12
 4 3 12
 [units]
 1 i 2 3
 1 i 3 3
 1 r 4 2
-2 i 18 3
-2 i 17 3 draeg_column_lead
-2 r 16 2
-3 i 18 11
-3 i 17 10
-3 r 16 12
+1 t 5 2
+2 i 20 3
+2 i 19 3 draeg_column_lead
+2 r 18 2
+2 t 17 2
+3 i 20 11
+3 i 19 11
+3 r 18 12
+3 t 17 12
 4 i 2 11
-4 i 3 10
+4 i 3 11
 4 r 4 12
+4 t 5 12
