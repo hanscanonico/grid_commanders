@@ -24,7 +24,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Nothing quiet about this one. Vance is advancing in the open, in daylight, like a woman who's run out of things worth hiding. Every scrap of cover the network bought him is worthless now."
+text = "Nothing quiet about this one. Vance is advancing in the open, in daylight, like a woman who's run out of things worth hiding. Every scrap of cover Orlov's network bought her is worthless now."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
