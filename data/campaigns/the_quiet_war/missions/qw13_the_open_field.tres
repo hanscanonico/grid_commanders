@@ -65,7 +65,7 @@ text = "Orlov wanted this fought in shadows because he didn't think we could win
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Won in daylight, in front of witnesses, and for once Orlov's people will have to report it exactly the way it happened."
+text = "Orlov's people will have to write this one up exactly as it happened, and I'd pay real money to read the draft they try first."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -94,7 +94,7 @@ text = "No more screens. No more hunches. Second Corps is on the road behind you
 [sub_resource type="Resource" id="Event_line_second_corps_holt"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "It's daylight, an audience, and a second corps coming up the road behind us like a parade, after three years of moving this army so nobody would notice it."
+text = "It's daylight, an audience, and a second corps coming up the road like a parade, after months of moving this army so carefully nobody would write it down."
 
 [sub_resource type="Resource" id="Event_second_corps"]
 script = ExtResource("6")

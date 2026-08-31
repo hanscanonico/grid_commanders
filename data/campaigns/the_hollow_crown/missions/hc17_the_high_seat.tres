@@ -30,15 +30,15 @@ script = ExtResource("5")
 speaker = &"gideon_holt"
 text = "Whatever it is, it's the last checkpoint before Morn's own fortress. Convenient, that."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
-speaker = &"gideon_holt"
-text = "Ferrow armoured this one on borrowed money. Take the towns off him first. You can't pay a raider out of ground he doesn't hold."
-
 [sub_resource type="Resource" id="Line_2b"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
 text = "He's spent more holding this seat than the seat has ever been worth, and he's honest enough about it that I half want him to keep it."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Ferrow armoured this one on borrowed money. Take the towns off him first. You can't pay a raider out of ground he doesn't hold."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

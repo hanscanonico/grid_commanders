@@ -39,7 +39,7 @@ text = "Then city hall it is. I do love a deadline that comes with a villain alr
 [sub_resource type="Resource" id="Line_4b"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Fog all the way to the river, so we'll find him by rumour and reach him by road, and we'll do all of it before the light goes."
+text = "Fog the whole way and one road worth walking, so we'll be finding him by rumour and hoping the rumour keeps better time than he does."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -102,7 +102,7 @@ note = "The governor's ledger went into evidence with a name still on it."
 [sub_resource type="Resource" id="Event_line_ledger"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "That ledger's in evidence now with a name still on it, which in this town counts as a loaded weapon."
+text = "Somebody left the name in that ledger before they filed it, and I gave up years ago on telling carelessness apart from a favour."
 
 [sub_resource type="Resource" id="Event_the_ledger_is_filed"]
 script = ExtResource("5")
