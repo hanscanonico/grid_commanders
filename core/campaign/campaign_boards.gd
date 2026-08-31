@@ -97,16 +97,17 @@ static func shared_board_error(db: TerrainDB) -> String:
 ## The groups that have outlived their share, one line each naming the boards
 ## that no longer stand on anyone's ground but their own, so the list is pruned
 ## by the same run that separates them. Takes `groups()`'s reading rather than
-## the disk, so a test can hand it a board set that does not exist yet.
+## the disk, and the allowlist rather than reading it, so a test can hand it a
+## board set and a group list that do not exist yet.
 static func stale_group_errors(
-	by_digest: Dictionary[String, PackedStringArray]
+	by_digest: Dictionary[String, PackedStringArray], declared: Array[Array] = SHARED_BOARDS
 ) -> PackedStringArray:
 	var digests: Dictionary[String, String] = {}
 	for digest in by_digest:
 		for name in by_digest[digest]:
 			digests[name] = digest
 	var lines := PackedStringArray()
-	for group in SHARED_BOARDS:
+	for group in declared:
 		var gone := PackedStringArray()
 		for name in group:
 			if not _shares_within(name, group, digests):
