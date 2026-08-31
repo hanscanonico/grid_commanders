@@ -34,6 +34,26 @@ if [ -z "$RUN" ]; then
 	fi
 fi
 
+# The pids of an arena_search.py driving THIS run. `--out` is optional: given
+# none, the driver names the run after its `--base` profile (arena_search.py's
+# resolve_out call) — which is how the grind starts every campaign — so a check
+# that only matched the explicit flag reported every one of them as finished.
+search_pids() {
+	local want="${1#reports/}" pid cmd out
+	want="${want%/}"
+	pgrep -af 'arena_search\.py' 2>/dev/null | while read -r pid cmd; do
+		if [[ $cmd =~ --out=([^[:space:]]+) ]]; then
+			out="${BASH_REMATCH[1]}"
+		elif [[ $cmd =~ --base=([^[:space:]]+) ]]; then
+			out="ai_arena/search/$(basename "${BASH_REMATCH[1]}" .tres)"
+		else
+			continue
+		fi
+		out="${out#reports/}"
+		[ "${out%/}" = "$want" ] && echo "$pid"
+	done
+}
+
 draw() {
 	local run=$1
 	if [ ! -d "$run" ]; then
@@ -45,7 +65,7 @@ draw() {
 	# Scoped to THIS run: a second campaign in another directory is somebody
 	# else's, and reporting a finished run as live is the one lie that matters.
 	local out="${run#reports/}"
-	if pgrep -f "arena_search.py.*--out=(reports/)?$out" >/dev/null 2>&1; then
+	if [ -n "$(search_pids "$run")" ]; then
 		printf 'state    RUNNING (%s godot workers)\n' \
 			"$(pgrep -f "run_ai_arena.gd.*$out" 2>/dev/null | wc -l | tr -d ' ')"
 	else
