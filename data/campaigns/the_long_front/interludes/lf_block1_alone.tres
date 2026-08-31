@@ -42,30 +42,30 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Three nations lost the same morning and only heard about each other six days later. Each of them counted the loss in something different: a road, a harbour, a wood."
+text = "Three nations lost the same morning and heard nothing of each other for six days. Each counted the loss in something different: a road, a harbour, a wood. Nobody thought to count them together."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Meridian's account for the week. The customs column got behind Voss's line, wagon for wagon, and is quartered east of the Arden."
+text = "Meridian's account for the week: the customs column got behind Voss's line wagon for wagon, and it's quartered east of the Arden tonight."
 requires = SubResource("Column_saved")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Meridian's account for the week. Not all of the customs column got behind the line, and I'm not writing down how much did."
+text = "Meridian's account for the week: not all of the customs column got behind the line, and I'm not writing down how much of it didn't."
 requires = SubResource("Column_lost")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "Aurora's is shorter. The port's gone, the coast watch is inland with its lists, and I can still tell you where every name on them is."
+text = "Aurora's is shorter: the port's gone, the coast watch is inland with its lists, and I can still tell you where every name on them is."
 requires = SubResource("Watch_saved")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "Aurora's is shorter. The port's gone, the coast watch was lost with the beach road, and nobody's left who can tell me who else was."
+text = "Aurora's is shorter. The port's gone and the coast watch was lost with the beach road. There's nobody left on that shore who can tell me who else went into the water with them."
 requires = SubResource("Watch_lost")
 
 [sub_resource type="Resource" id="Line_6"]
@@ -77,13 +77,13 @@ requires = SubResource("Shrine_saved")
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"ines_calder"
-text = "The League lost the Greenwood and the grove with it. The keepers were still in the shrine when the fighting reached it, and I will carry that."
+text = "The League lost the Greenwood and the grove with it. The keepers were still in the shrine when the fighting reached it. I'll be carrying that one a good deal longer than the League will be missing the trees."
 requires = SubResource("Shrine_lost")
 
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "Three retreats, one road. They all arrive at the narrows, and past that there is nowhere left to arrive separately."
+text = "Three retreats, one road. They all arrive at the narrows, and past that there's nowhere left to arrive separately."
 
 [resource]
 script = ExtResource("1")

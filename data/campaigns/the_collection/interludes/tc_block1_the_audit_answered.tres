@@ -18,29 +18,29 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Six weeks of collection, and the Directorate's audit ends the season with the same four columns it opened with: claimed, collateral, interest, paid. Only the last one has anything in it."
+text = "Six weeks of collection, and the Directorate's audit ended the season on the same four columns it opened with. Claimed, collateral, interest, paid. Only the last of them has an entry under it, and the clerks ruled the other three anyway, out of habit."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "The province never changed hands. Whatever that paper says it's owed, we've answered it town by town."
+text = "The province never changed hands. Not a town of it. Whatever that paper says we owe, we've answered it town by town."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "And the auction closed with four of the five in our hands. The Directorate has to file that under paid."
+text = "And the auction closed with four of the five towns in our hands, so they can file that under paid or leave the column blank; it's four towns either way."
 requires = SubResource("Province_held")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"dane_ferrow"
-text = "The raiders went home paid. That's the only entry I ever cared about, and you wrote it yourself."
+text = "The raiders went home paid, every one of them, and that's the only entry I ever cared about; you wrote it yourself."
 requires = SubResource("Bounty_paid")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "The Directorate's stopped pretending Ferrow is a debt collector. They've handed the war to the man who lends him the money."
+text = "The Directorate's stopped pretending Ferrow is a debt collector. The war's gone to the man who lends him the money. Vale doesn't need a bounty to move a border."
 
 [resource]
 script = ExtResource("1")

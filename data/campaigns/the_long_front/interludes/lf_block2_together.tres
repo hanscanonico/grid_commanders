@@ -30,18 +30,18 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Six weeks of falling back ended at a narrow road nobody had heard of. The alliance spent the weeks after it finding out how much of the front it could take back."
+text = "Six weeks of falling back ended at a narrow road nobody had heard of, and the alliance spent the weeks after it finding out how much of the front it could take back."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "Carrow fell inside the window, before Vale's second line closed. The east came cheap, and nothing in this war has come cheap."
+text = "Carrow fell inside the window, before Vale's second line closed, so the east came cheap, and nothing else in this war has."
 requires = SubResource("Carrow_early")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "Carrow went the hard way, through a second line that was finished before we got there. The east is ours and we paid full price for it."
+text = "Carrow went the hard way. Vale's second line was finished before we got there, and we walked into all of it. The east is ours and we've paid full price for it."
 requires = SubResource("Carrow_late")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -53,18 +53,18 @@ requires = SubResource("Averyn_held")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Averyn's land came back the slow way, after he had garrisoned the ashes and charged us for them. Write down the cost and keep walking. There is a highland range in front of us."
+text = "Averyn's land came back the slow way, after he had garrisoned the ashes and charged us for them. Write down the cost and keep walking. There's a highland range in front of us."
 requires = SubResource("Averyn_lost")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Orlov's camp is the last ground the spearhead took, and we're standing on it. Past the foothills my maps stop being any use at all."
+text = "Orlov's camp is the last ground the spearhead took and we're standing on it; past the foothills my maps stop being any use at all."
 
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "So we go and make new ones. The front stops holding here and starts moving."
+text = "So we go and make new ones, and the front stops holding here and starts moving."
 
 [resource]
 script = ExtResource("1")

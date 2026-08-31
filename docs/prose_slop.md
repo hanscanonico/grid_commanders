@@ -149,7 +149,26 @@ prose: speaker sentence-length σ spans 2.42 to 5.31 words
 Every campaign's mean fell (0.145–0.165 down to 0.079–0.092) while the per-speaker cadence
 spread widened at both ends. Konrad Vale and Lyra Quill still do not contract on purpose;
 a handful of ", Commander" vocatives survive as one signature moment per Iron marshal.
-The worst remaining text is the interludes — a candidate for a second, smaller pass.
+The worst remaining text was the interludes, and the pass below is what became of them.
+
+## After the interlude pass — measured 2026-08-31
+
+#605 rewrote the eight worst interlude pages — The Collection's three, `fw@1`, `hc@0`, `sm@3`,
+`lf@0`, `lf@1` — plus one flagged line on `lf@2`. 49 lines, text only:
+
+```
+prose: 1067 lines, 23 voices
+prose: mean score 0.086 | mean sentence 10.0 words | sentence-count entropy 1.53 bits
+prose: fired on — lockstep 54%, aphorism 1%, negation 2%, em_dash 3%,
+                  cadence 77%, triad 6%, stock 0%, vocative 1%, register 52%
+prose: speaker sentence-length σ spans 2.68 to 5.95 words
+```
+
+The interlude slice is what moved: mean 0.105 → 0.072, two-sentence share 63% → 34%, entropy
+1.38 → 1.70 bits, and its sentence counts spread from 12/78/31 one-, two- and three-sentence
+lines to 34/42/45 at the same words per line. The Collection's three pages went 0.167 → 0.041
+with no two-sentence line left. What tops the slice now is Konrad Vale's `negation` and
+`register`, which is the first false positive on the list above.
 
 ## The control corpus
 

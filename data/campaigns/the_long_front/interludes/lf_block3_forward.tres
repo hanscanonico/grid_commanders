@@ -71,7 +71,7 @@ requires = SubResource("Watch_saved")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"ines_calder"
-text = "The Greenwood burned and the shrine's keepers did not. They are replanting the grove this season, which is the League's whole answer to the Dominion."
+text = "The Greenwood burned and the shrine's keepers didn't, and they're replanting the grove this season, which is the whole of the League's answer to the Dominion."
 requires = SubResource("Shrine_saved")
 
 [sub_resource type="Resource" id="Line_6"]
