@@ -13,7 +13,7 @@
 [sub_resource type="Resource" id="Objective_take_orlovs_hq"]
 script = ExtResource("2")
 text = "Take Orlov's headquarters."
-cell = Vector2i(18, 9)
+cell = Vector2i(19, 11)
 
 [sub_resource type="Resource" id="Draeg_unbloodied"]
 script = ExtResource("5")

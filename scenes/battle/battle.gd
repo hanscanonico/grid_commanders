@@ -12,8 +12,9 @@ extends Node2D
 ## `execute_command` and `conclude_command` are the AI runner's committed-action
 ## seam. The first delegates to BattleCommandPipeline; the second consumes its
 ## turn/winner facts only after the caller has finished its own interaction-state
-## cleanup. `pause_gate` is the runner's third: the one point a computer turn can
-## be held at. `start_turn`, `enter_victory`, `refresh_fog`, `refresh_hud`, and
+## cleanup. `pause_gate` is the runner's third — the one point a computer turn can
+## be held at — and `handle_input` its fourth: the keys that reach a turn nobody
+## may play. `start_turn`, `enter_victory`, `refresh_fog`, `refresh_hud` and
 ## `refresh_panel` are the remaining public presentation entry points.
 
 ## The wake-up a paused computer turn waits on. A signal rather than a flag the
@@ -202,7 +203,9 @@ var _stepping := false
 var recorder: ReplayRecorder
 
 ## Owns the camera zoom level, its clamp against the view, and the zoom keys.
-var _zoom: BattleZoom
+## Public because the ladder answers during a computer turn too, and the runner
+## that plays that turn is what asks it.
+var zoom: BattleZoom
 ## Owns where a click, a tap, a drag and a pinch land on the board.
 var pointer: BoardPointer
 ## Answers "was that one step?" for the board cursor, so an analog stick moves a
@@ -309,9 +312,9 @@ func _ready() -> void:
 	view.end_turn_pressed.connect(_request_end_turn)
 	handoff.setup(%HandoffScreen, %HandoffBackdrop, %HandoffLabel, %HandoffHint, %HandoffButton)
 	commander_info_sheet.closed.connect(_close_commander_info)
-	_zoom = BattleZoom.new(view.board_camera)
-	_zoom.setup()
-	pointer = BoardPointer.new(self, _zoom)
+	zoom = BattleZoom.new(view.board_camera)
+	zoom.setup()
+	pointer = BoardPointer.new(self, zoom)
 	set_cursor_cell(Vector2i.ZERO)
 	animator.capturing = _capturing
 	if _capturing:
@@ -379,14 +382,14 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 		enter_victory()
 
 
-## Asks for the board back while the computer is playing. Private: the only route
-## in is the Esc arm below, which the AI-turn legend advertises and a scripted
-## driver presses. The answer is immediate even though the pause is not: the runner stops
+## Asks for the board back while the computer is playing. The only route in is the
+## runner's Esc arm, which the AI-turn legend advertises and a scripted driver
+## presses. The answer is immediate even though the pause is not: the runner stops
 ## at its next command boundary, up to one animation away, so the press says it
 ## landed rather than leaving the player pressing it again. A second press re-arms
 ## nothing, but it is answered again: the chip fades on a clock of its own, and a
 ## slow command outlives it, so the key would otherwise read as dead.
-func _request_pause() -> void:
+func request_pause() -> void:
 	if _paused:
 		return
 	_pause_requested = true
@@ -549,13 +552,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			leave_handoff()
 		return
 	if state == State.AI_TURN:
-		# Esc is the one key that does something here: it asks for the board back.
-		if event.is_action_pressed(&"cancel"):
-			_request_pause()
-			return
-		# The computer's turn refuses play, but it says so rather than going quiet.
-		if TransitionInput.is_confirm(event):
-			confirm_at(cursor_cell)
+		_ai_runner.handle_input(event)
 		return
 	if state == State.PAUSED:
 		# The confirm *key* hands the turn back, Esc reopens the menu, and everything
@@ -582,7 +579,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		# menu, the guard, the sheet — read by the key path and the touch dock alike,
 		# so a finger and a key can never disagree about which of them are dead.
 		return
-	if _zoom.handle_input(event) or pointer.handle(event):
+	if zoom.handle_input(event) or pointer.handle(event):
 		return
 	if event.is_action_pressed(&"confirm"):
 		confirm_at(cursor_cell)

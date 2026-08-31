@@ -17,11 +17,23 @@ const TILE := BattleView.TILE
 const ORIGIN := Vector2(TILE * 0.5, -6.0)
 ## How far a mark travels while it fades, in world pixels.
 const LIFT := 7.0
-## The destroyed cross: half its width, and its height. Two pixels of dark
-## outline are grown off these, so the shape reads on any terrain.
-const CROSS_HALF := 4.0
-const CROSS_H := 7.0
+## Grown off a shape rather than drawn over it, so a spike keeps its colour.
 const OUTLINE := 2.0
+## The blast a struck cell goes up in: the flame's spikes, how far it opens from
+## and to in world pixels, and how deep the notches between the spikes cut. It
+## opens from wide enough to read red at rest, which is where a capture poses it.
+const BURST_SPIKES := 9
+const BURST_FROM := 8.0
+const BURST_TO := 13.0
+const BURST_NOTCH := 0.55
+## How far the flame turns while it opens, as a share of the gap between two of
+## its outline's points, and how much of its red it has lost by the end.
+const BURST_TWIST := 0.5
+const BURST_FADE := 0.45
+## The white core inside the flame, as a fraction of it, and the beat on the
+## lift by which it has burnt out.
+const CORE_RADIUS := 0.45
+const CORE_OUT := 0.5
 ## The baseline the digits sit on.
 const BASELINE := 5.0
 
@@ -56,16 +68,12 @@ func _draw() -> void:
 	var font := UiTheme.stat(true)
 	var lift := Vector2(0.0, -LIFT * rise)
 	for mark in _marks:
-		_draw_mark(font, Vector2(mark.cell * TILE) + ORIGIN + lift, mark)
-
-
-func _draw_mark(font: Font, origin: Vector2, mark: PowerEffects.Mark) -> void:
-	if mark.kind == PowerEffects.Kind.DESTROYED:
-		_draw_cross(origin)
-	if mark.pips <= 0:
-		return
-	var sign := "-" if falls(mark.kind) else "+"
-	_draw_number(font, origin, "%s%d" % [sign, mark.pips])
+		var tile := Vector2(mark.cell * TILE)
+		if mark.kind == PowerEffects.Kind.DESTROYED:
+			_draw_burst(tile + Vector2(TILE, TILE) * 0.5)
+		if mark.pips > 0:
+			var sign := "-" if falls(mark.kind) else "+"
+			_draw_number(font, tile + ORIGIN + lift, "%s%d" % [sign, mark.pips])
 
 
 ## True for the marks that are bad news for whoever is standing there: their
@@ -74,18 +82,35 @@ static func falls(kind: PowerEffects.Kind) -> bool:
 	return kind in [PowerEffects.Kind.HARMED, PowerEffects.Kind.HINDERED]
 
 
-## The one coloured thing a mark carries: critical red, for the one kind that is
-## a loss. Every other kind is its signed number, the units under it blinking
-## colourless so they stay their owner's.
-func _draw_cross(origin: Vector2) -> void:
-	var top_left := origin + Vector2(-CROSS_HALF, 0.0)
-	var top_right := origin + Vector2(CROSS_HALF, 0.0)
-	var bottom_left := origin + Vector2(-CROSS_HALF, CROSS_H)
-	var bottom_right := origin + Vector2(CROSS_HALF, CROSS_H)
-	draw_line(top_left, bottom_right, UiTheme.HARD_BORDER, OUTLINE + 1.0)
-	draw_line(top_right, bottom_left, UiTheme.HARD_BORDER, OUTLINE + 1.0)
-	draw_line(top_left, bottom_right, UiTheme.DANGER, OUTLINE)
-	draw_line(top_right, bottom_left, UiTheme.DANGER, OUTLINE)
+## The one coloured thing a mark carries: the blast a struck cell goes up in,
+## sitting on the tile rather than lifting with the numbers, since that is where
+## it happened. Every other kind is its signed number, the units under it
+## blinking colourless so they stay their owner's.
+##
+## The meteor's vocabulary at a cell's scale — critical red under a dark rule,
+## with a white core that burns out first — so the strike and what it took read
+## as one event.
+func _draw_burst(centre: Vector2) -> void:
+	var radius := lerpf(BURST_FROM, BURST_TO, rise)
+	var fade := 1.0 - rise * BURST_FADE
+	draw_colored_polygon(_burst_points(centre, radius + OUTLINE), Color(UiTheme.HARD_BORDER, fade))
+	draw_colored_polygon(_burst_points(centre, radius), Color(UiTheme.DANGER, fade))
+	var core := 1.0 - minf(rise / CORE_OUT, 1.0)
+	if core > 0.0:
+		draw_circle(centre, radius * CORE_RADIUS, Color(UiTheme.WHITE, core))
+
+
+## The flame's outline: BURST_SPIKES points out at `radius` with a notch between
+## each pair, turned as it opens so it never poses the same shape twice. Drawn
+## twice per burst — once grown by OUTLINE for the dark rule under it.
+func _burst_points(centre: Vector2, radius: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var step := TAU / float(BURST_SPIKES * 2)
+	var twist := step * BURST_TWIST * rise
+	for i in BURST_SPIKES * 2:
+		var reach := radius if i % 2 == 0 else radius * BURST_NOTCH
+		points.append(centre + Vector2.RIGHT.rotated(twist + step * float(i)) * reach)
+	return points
 
 
 ## Centred on the tile, the number being the whole mark now that no glyph stands

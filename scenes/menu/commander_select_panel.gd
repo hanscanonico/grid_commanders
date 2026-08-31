@@ -25,6 +25,11 @@ signal cancelled
 const DUEL_SEATS := 2
 
 const _MINI_H := 82
+## How far back a portrait an earlier seat already commands is faded, over the
+## dead button it also becomes. A general commands one army (`CommanderPicks`),
+## and the page says so by greying rather than by refusing a press — the same
+## answer the seat strip gives a seat it will not close (COM-224).
+const _TAKEN_TINT := Color(1.0, 1.0, 1.0, 0.45)
 ## The private slate/muted palette swaps for the shared UiTheme tokens it already
 ## sat a shade from, so the select page and the menu speak one grey (plan MN3).
 ## The selection gold moved the same way and for the same reason (COM-89): it is
@@ -303,12 +308,44 @@ func _action_button(text: String) -> Button:
 # --- roster navigation -------------------------------------------------------
 
 
-## Switches the active faction and previews its first member. Does not move focus,
-## so arrowing Left/Right across the tab row browses factions cleanly.
+## Switches the active faction and previews its first member still free. Does not
+## move focus, so arrowing Left/Right across the tab row browses factions cleanly.
+##
+## A faction whose every general is already commanding somebody previews No
+## Commander: the card has to show what confirming would lock, and the members
+## drawn beside it are all dead.
 func _set_faction(index: int) -> void:
 	_show_faction(index)
-	if not _members().is_empty():
-		_preview(_members()[0])
+	var free := _free_members()
+	if free.is_empty():
+		_preview_neutral()
+		return
+	_preview(free[0])
+
+
+## The faction's members no earlier seat is already commanding, in roster order.
+func _free_members() -> Array[CommanderType]:
+	var free: Array[CommanderType] = []
+	for commander in _members():
+		if _free_to_take(commander.id):
+			free.append(commander)
+	return free
+
+
+## The generals locked so far in this walk, seat-keyed — the seats *before* the
+## one in hand. The slots after it hold last walk's picks, which Back is on its
+## way to re-confirm, so counting them would let a seat block itself.
+func _locked_picks() -> Dictionary:
+	var locked: Dictionary = {}
+	for i in _slot:
+		locked[_seats[i]] = _picks[i]
+	return locked
+
+
+## Whether the seat in hand may command `id` — the walk's view of the one rule,
+## asked of `CommanderPicks` rather than restated here.
+func _free_to_take(id: StringName) -> bool:
+	return CommanderPicks.available(_locked_picks(), _seats[_slot], id)
 
 
 ## Opens a faction's tab and roster without choosing anybody from it — the half of
@@ -340,9 +377,15 @@ func _grab(button: Control) -> void:
 		button.grab_focus.call_deferred()
 
 
+## Lands focus on the first portrait this seat may still take. A faction with
+## none left hands focus to No Commander instead of to a dead button, so the
+## keyboard always has somewhere to be.
 func _grab_first_mini() -> void:
-	if not _mini_buttons.is_empty():
-		_grab(_mini_buttons[0])
+	for button in _mini_buttons:
+		if not button.disabled:
+			_grab(button)
+			return
+	_grab(_no_co_button)
 
 
 func _rebuild_minis() -> void:
@@ -414,7 +457,23 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 
 	button.focus_entered.connect(_preview.bind(commander))
 	button.pressed.connect(_preview.bind(commander))
+	_mark_taken(button, commander)
 	return button
+
+
+## Greys the portrait of a general an earlier seat already commands, and says
+## which seat holds them: a dead control with no reason is the affordance this
+## menu has been burned by once (COM-13). Disabled rather than absent, so the
+## roster row is the same row at the same widths for every seat of the walk.
+func _mark_taken(button: Button, commander: CommanderType) -> void:
+	var seat := CommanderPicks.holder(_locked_picks(), commander.id)
+	if seat == 0:
+		return
+	button.disabled = true
+	button.modulate = _TAKEN_TINT
+	Tooltip.attach(
+		button, commander.display_name, "Already commanding seat %d" % seat, Tooltip.Side.BOTTOM
+	)
 
 
 func _preview(commander: CommanderType) -> void:
@@ -437,21 +496,36 @@ func _preview_neutral() -> void:
 ##
 ## Focus stays on Random rather than following the draw onto its portrait, which
 ## is what keeps that re-roll one keystroke away.
+##
+## The draw is without replacement: a general an earlier seat commands is out of
+## the pool, so rolling for the last seat of a four-army table can never hand it
+## somebody already on the field.
 func _preview_random() -> void:
-	if _random_pool.is_empty():
+	var pool := _free_pool()
+	if pool.is_empty():
+		_preview_neutral()
 		return
-	var drawn: CommanderType = _random_pool[randi() % _random_pool.size()]
+	var drawn: CommanderType = pool[randi() % pool.size()]
 	var index := _faction_keys.find(CommanderVisuals.key_for_faction(drawn.faction))
 	if index >= 0:
 		_show_faction(index)
 	_preview(drawn)
 
 
+## Every general still free for the seat in hand, flat, for Random to draw from.
+func _free_pool() -> Array[CommanderType]:
+	var free: Array[CommanderType] = []
+	for commander in _random_pool:
+		if _free_to_take(commander.id):
+			free.append(commander)
+	return free
+
+
 # --- confirm / back ----------------------------------------------------------
 
 
 func _confirm() -> void:
-	if _current == null:
+	if _current == null or not _free_to_take(_current.id):
 		return
 	_picks[_slot] = _current.id
 	if _slot + 1 < _picks.size():
@@ -517,8 +591,8 @@ func _focus_commander(id: StringName) -> void:
 	var key := CommanderVisuals.key_for_faction(commander.faction)
 	var index := _faction_keys.find(key)
 	_set_faction(index if index >= 0 else 0)
-	for i in _members().size():
-		if _members()[i].id == id and i < _mini_buttons.size():
+	for i in mini(_members().size(), _mini_buttons.size()):
+		if _members()[i].id == id and not _mini_buttons[i].disabled:
 			_grab(_mini_buttons[i])
 			return
 	_grab_first_mini()

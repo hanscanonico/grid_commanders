@@ -8,9 +8,14 @@ Node-free (or a static, pure function on a Node type) — never to make a scene 
 ## The Node-free layers themselves
 
 `core/`, `ai/`, the offline balance harness in `tools/balance/`, the arena's grammar, scorer and
-pools in `tools/arena/`, the replay analyser in `tools/replay/`, and the composite legibility
-metric in `tools/legibility/` — all Node-free for exactly this reason. That's where the rules live
-and where bugs hurt.
+pools in `tools/arena/`, the replay analyser in `tools/replay/`, the composite legibility
+metric in `tools/legibility/`, and the dialogue scorer in `tools/prose/` — all Node-free for
+exactly this reason. That's where the rules live and where bugs hurt.
+
+`ProseMetrics` and `ProseReport` are arithmetic over strings, and their suites are built from
+crafted fixtures rather than shipped dialogue: `make prose` is a measurement, so a suite pinned to
+authored lines would fail on a dialogue pass instead of on a bug. `docs/prose_slop.md` holds the
+measured numbers.
 
 `LegibilityMetric` is the arithmetic only. The render sweep it reports in is an offline instrument
 like the Balance Lab and stays out of `make verify`; `LegibilityBaseline` is the committed verdict
@@ -24,6 +29,7 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 |---|---|---|
 | `MatchRequest`, `CmdArgs` (`scenes/common/`) | `test_match_request.gd` and the flag-grammar suites | the flag grammar every `make smoke` scenario and Balance Lab row is launched with |
 | `MatchConfig`'s staging | `test_match_config.gd` | reachable without a scene, and where `take()` clearing is held |
+| `CommanderPicks` (`scenes/common/`) | `test_commander_picks.gd` | the one rule that a general commands a single army, stated Node-free and database-free so the picker, the menu adapter and `--co=` all inherit it rather than each restating it |
 | `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
 | `CampaignSession` | `tests/unit/test_campaign_session.gd` | the autoload is up for the whole headless run and reachable without a scene; its lifecycle — armed by `begin`, silent for every skirmish, emptied whole by `clear` — is what the suite pins |
 

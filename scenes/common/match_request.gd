@@ -61,6 +61,10 @@ var difficulty: StringName = Difficulty.DEFAULT_ID
 var seat_difficulty: Dictionary = {}
 ## team -> commander id. A team with no entry plays without a commander, which is
 ## the default and reproduces the pre-commander game exactly.
+##
+## Distinct by the time a request is assembled: a general commands one army,
+## which is `CommanderPicks`' rule and the adapters', never `BattleSetup`'s. The
+## Lab's `side_specs` below are outside it, a mirror being a measurement.
 var commanders: Dictionary = {}
 ## Resume `SaveGame.SAVE_PATH` instead of starting fresh. The saved match brings
 ## its own board, sides, commanders and tier, so everything above is ignored when
@@ -143,7 +147,7 @@ static func from_menu(
 	request.ai_teams = ai_teams_in.duplicate()
 	request.fog_enabled = fog_enabled_in
 	request.difficulty = difficulty_in
-	request.commanders = commanders_in.duplicate()
+	request.commanders = CommanderPicks.deduplicated(commanders_in, seats_in)
 	request.resume = resume_in
 	request.sides = sides_in.duplicate()
 	request.seats = seats_in.duplicate()
@@ -367,6 +371,11 @@ static func parse_seats_flag(value: String) -> Array[int]:
 ## Positional over `roster`, which is the seats that actually play: commanders
 ## belong to armies, so on `--seats=1,3` the second id is seat 3's general and not a
 ## pick for a chair nobody is in.
+##
+## A name written twice is corrected rather than refused whole, out loud: the
+## earlier seat keeps the general and the later one plays without one, which is
+## `CommanderPicks`' rule — the same one the picker enforces by greying a taken
+## portrait, asked here rather than restated.
 static func parse_co_flag(value: String, roster: Array[int] = GameState.TEAMS) -> Dictionary:
 	var picked: Dictionary = {}
 	var ids := value.split(",")
@@ -374,4 +383,4 @@ static func parse_co_flag(value: String, roster: Array[int] = GameState.TEAMS) -
 		var id := ids[i].strip_edges()
 		if id != "":
 			picked[roster[i]] = StringName(id)
-	return picked
+	return CommanderPicks.deduplicated(picked, roster)

@@ -164,9 +164,9 @@ const LEGENDS: Dictionary = {
 	# — and nothing about a unit's shot has ever cost the player anything to miss.
 	POWER_TARGETING: "ENTER · STRIKE   ESC · BACK",
 	ANIMATING: "ANY KEY · SKIP",
-	# The computer's turn is not a dead end: the one key that works in it is the
-	# one that takes the board back, so the legend names it rather than only
-	# saying whose turn it is.
+	# The computer's turn is not a dead end: the key that takes the board back is
+	# named here rather than only saying whose turn it is. The camera keys work
+	# here too, as they do in every context IDLE's line already names them for.
 	AI_TURN: "CPU PLAYING   ESC · PAUSE",
 	# A replay borrows AI_TURN's state — somebody else is playing and you are
 	# watching — so it needs its own words to say that nobody is playing at all.

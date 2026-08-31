@@ -51,7 +51,7 @@ const METEOR_SHAKE := 5.0
 ## How many times a touched unit blinks over its mark's lift, and the flash
 ## itself: a colourless overdrive, so a blinking unit keeps the faction hue
 ## `BattleView.refresh_sprite` wrote and stays its owner's. Which kind of mark
-## it took is said by the cross over it, not by recolouring the unit.
+## it took is said by the mark over it, not by recolouring the unit.
 const BLINK_PULSES := 3
 const BLINK_GAIN := 2.5
 const BLINK_FLASH := Color(BLINK_GAIN, BLINK_GAIN, BLINK_GAIN)

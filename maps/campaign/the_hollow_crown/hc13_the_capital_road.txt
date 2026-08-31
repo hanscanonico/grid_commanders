@@ -1,29 +1,34 @@
 # The Hollow Crown — "The Capital Road".
-# The last open road to the capital: HQ facing HQ down one paved line with
-# two towns on it, two woods above it and two below. Two armies, no allies.
+# One wide road — two paved lanes — running east from Ash's headquarters to the
+# walled city Orlov is dug into, with three towns strung along it and mountain
+# shoulders closing both flanks. The wall is mountain the whole way round except
+# the two-lane gate at column 16: infantry climb it, armour has to come through
+# the gate. Two armies, no allies.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-.......M...........
-....F.......F......
-.Q...............Q.
-.====C=======C====.
-.B...............B.
-......F.......F....
-...........M.......
+...MM..........MMMMMM
+.....M..F....F..MMMMM
+.......F........MMMMM
+..F..........F..M....
+.Q===C========C====Q.
+.B========C========B.
+.....F.......F..M....
+........F.......MMMMM
+...MM..........MMMMMM
 [owners]
-1 1 2
 1 1 4
-2 17 2
-2 17 4
+1 1 5
+2 19 4
+2 19 5
 [units]
-1 i 2 2
-1 i 2 4
-1 m 3 3
-1 r 2 3
-1 t 3 2
-2 i 15 2
-2 i 15 4
-2 m 14 3
-2 r 15 3
-2 t 14 2
+1 i 2 3
+1 i 2 6
+1 m 2 5
+1 r 2 4
+1 t 3 4
+2 i 18 3
+2 i 18 6
+2 m 18 5
+2 r 20 4
+2 t 18 4
