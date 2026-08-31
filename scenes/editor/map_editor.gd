@@ -351,8 +351,7 @@ func _arm(brush: Brush) -> void:
 	if _sheet != null:
 		_sheet.close()
 	_hand_the_board_back()
-	if _doc != null:
-		_say_cursor()
+	_say_cursor()
 
 
 ## Every control that can hold a brush says whether it is holding this one, so
