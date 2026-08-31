@@ -78,7 +78,7 @@ requires = SubResource("Column_short")
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "I'll leave the road count open."
+text = "That road's still got people on it."
 requires = SubResource("Column_short")
 
 [sub_resource type="Resource" id="Trigger_column_home"]
