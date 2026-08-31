@@ -1,8 +1,8 @@
 # The Hollow Crown — "Broken Column".
 # Four seats at the corners of a ridge with one road cutting through it.
-# Treads cross at the centre or not at all; two foot saddles let infantry
-# over the shoulder where armour cannot follow. The relay sits north of
-# the cutting, on the road the column never finished walking.
+# Treads take the cutting or the long way round the ridge's ends; two foot
+# saddles let infantry over the shoulder where armour cannot follow. The relay
+# sits north of the cutting, on the road the column never finished walking.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 # Draeg's lead company is named: losing it is what brings Meridian's second

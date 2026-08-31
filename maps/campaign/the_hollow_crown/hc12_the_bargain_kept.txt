@@ -1,7 +1,8 @@
 # The Hollow Crown — "The Bargain Kept".
-# Four seats at the corners of two mountain massifs that meet in the middle.
-# One causeway runs between them and nothing else does: armour and foot take
-# the same three squares, and the relay waits on the road at its north mouth.
+# Four seats at the corners of two mountain massifs that all but meet in the
+# middle. One causeway runs between them: armour and foot take the same three
+# squares there, or the long way round the massifs' ends. The relay waits on
+# the road a square north of the crossing.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 # Two of Ferrow's outriders are named: they were Draeg's before they were his,
