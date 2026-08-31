@@ -21,12 +21,13 @@ extends BattleScenario
 ## that shows the most.
 ##
 ## One clock cannot sit inside seven impacts once a per-weapon wind-up has pulled
-## the firing times 0.28 s apart, and this number picks the five that draw a
-## burst: `cannon`, `artillery`, `rocket`, `bomb` and `torpedo` are all
-## mid-impact here — the howitzer's only just, its shell being the last to land —
-## while `small_arms` and `autocannon`, the two whose `impact_radius` is 0 so
-## their hit is a spark stitch rather than a burst, have settled past theirs and
-## show the ticked HP, the callout and the figures going down instead.
+## the firing times 0.22 s apart (small arms at 0.40, the howitzer at 0.62), and
+## this number picks the five that leave a mark: `cannon`, `artillery`, `rocket`
+## and `bomb` are all mid-burst here and `torpedo` mid-foam — the howitzer's only
+## just, its shell being the last to land — while `small_arms` and `autocannon`,
+## the two whose `impact_radius` is 0 so their hit is a spark stitch rather than a
+## burst, have settled past theirs and show the ticked HP, the callout and the
+## figures going down instead.
 const CUT_IN_POSE := 1.05
 ## `cutin_ko` sits on the blast at its brightest, a third of the way into the
 ## death beat with the K.O. tag already up. Only the cannon matchup poses here.

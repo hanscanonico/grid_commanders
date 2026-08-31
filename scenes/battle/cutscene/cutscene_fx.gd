@@ -36,12 +36,12 @@ const SPARK_TINT := Color(1.0, 0.878, 0.541)
 ## The puffs it leaves, and how far back along its own arc each one sits.
 const ROCKET_PUFFS := 7
 const ROCKET_PUFF_LAG := 0.09
-## How long one of those puffs takes to fade out, in travel progress, how far
-## past the round's own arrival the column it left is still drawn, and how dark
-## the thickest of it goes. The column is what a launcher is recognised by once
-## the dart is a dot, so it outlives the round rather than switching off with it.
+## How long one of those puffs takes to fade out, in travel progress, how dark
+## the thickest of it goes and how fast it spreads. `LIFE` is what makes the
+## column long: seven puffs laid `PUFF_LAG` apart span two thirds of the travel,
+## so the oldest smoke is still on screen while the dart is most of the way
+## across, which is what a launcher is recognised by once the dart is a dot.
 const ROCKET_SMOKE_LIFE := 0.66
-const ROCKET_SMOKE_LINGER := 0.18
 const ROCKET_SMOKE_ALPHA := 0.46
 const ROCKET_SMOKE_GROWTH := 9.0
 ## How deep the waists of a muzzle flash's star cut, as a share of its reach: a
@@ -343,17 +343,14 @@ func _draw_volley() -> void:
 		return
 	var rounds := mini(volley_style.shots_per_figure * maxi(volley_figures, 1), MAX_ROUNDS)
 	for i in rounds:
+		# `lag` can never reach 1.0: the director only hands this overlay a volley
+		# while its own window is open, and every round is at or behind it. A
+		# round that has arrived is off screen because the window it crossed in
+		# has closed, not because it was dropped here.
 		var lag := volley_p - i * ROUND_STAGGER - _fire_lead(i)
 		if lag <= 0.0:
 			continue
-		if lag < 1.0:
-			_draw_round(lag, i)
-		elif volley_style.projectile == BattleStyle.ROCKET and lag < 1.0 + ROCKET_SMOKE_LINGER:
-			# Every other round is simply gone once it has arrived. A rocket's
-			# column is not: it is what the launcher is recognised by long after
-			# the dart is a dot, so it is drawn on and eased out from here.
-			var spent := 1.0 - (lag - 1.0) / ROCKET_SMOKE_LINGER
-			_draw_rocket_smoke(lag, round_alpha(i) * spent)
+		_draw_round(lag, i)
 
 
 ## A sustained weapon's stream. Same silhouettes as a volley — a machine gun throws
