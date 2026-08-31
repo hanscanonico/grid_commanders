@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -44,6 +44,11 @@ text = "Three depots this time, spaced so no single column of yours reaches all 
 script = ExtResource("5")
 speaker = &"lyra_quill"
 text = "Spread out is not the same as safe. The far depot pays for the middle one, so take the far one first."
+
+[sub_resource type="Resource" id="Line_ward"]
+script = ExtResource("5")
+speaker = &"alina_ward"
+text = "Three at once, Quill, which is the longest stretch of the fuel road anyone's tried to open in one week."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -143,6 +148,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2"), SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_far_depots_books"), SubResource("Event_the_ashen_road_runs")])
 par_day = 6
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ward"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The ashen road stayed shut, and the column sent to open it is gone."
