@@ -223,7 +223,6 @@ func _apply() -> void:
 	_atk.flash = maxf(0.0, 1.0 - atk_hit / 0.3) if atk_hit > 0.0 else 0.0
 	_atk.hp_shown = _tick(_result.attacker_hp_before, _result.attacker_hp_after, atk_hit)
 	_atk.casualty_p = _play.window(_beats.atk_casualty)
-	_atk.fall_p = _atk.casualty_p
 	_atk.squad_alpha = 1.0 - atk_gone
 	_style_pose(_atk, _atk_style)
 	_atk.queue_redraw()
@@ -236,7 +235,6 @@ func _apply() -> void:
 	_def.flash = maxf(0.0, 1.0 - def_hit / 0.3) if def_hit > 0.0 else 0.0
 	_def.hp_shown = _tick(_result.defender_hp_before, _result.defender_hp_after, def_hit)
 	_def.casualty_p = _play.window(_beats.def_casualty)
-	_def.fall_p = _def.casualty_p
 	_def.squad_alpha = 1.0 - def_gone
 	_style_pose(_def, _def_style)
 	_def.queue_redraw()

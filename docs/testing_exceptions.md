@@ -66,6 +66,15 @@ light is drawn from, so `test_capture_backdrop.gd` triangulates it directly and 
 A polygon's defect is in its winding — a self-crossing quad is refused by the triangulator and
 simply does not draw — which is exactly what a captured frame cannot show.
 
+`CutsceneSide` joins them on the same terms. The combat cut-in's squad motion — where a figure
+sits while it rolls into its firing slot (`arrive_offset` / `march_progress`), how far its weapon
+lifts and tips over the wind-up (`aim_offset` / `aim_tilt`), the scuff polygon and how a casualty's
+own run splits into a knock-back and a fall (`topple_fall` / `topple_jerk`) — is static arithmetic
+on the pose scalars `CombatCutscene` writes, so `test_cutscene_side_motion.gd` calls them and stages
+no cut-in. The load-bearing one is `arrive_offset` returning **exactly** `Vector2.ZERO` for a posted
+squad: every posed frame sits after the arrive beat closes, so an eighth of a pixel there moves a
+dozen baselines for nothing, and that is a check no captured frame makes.
+
 `CampaignHubPanel` and `CampaignPickerPanel` join them too. What a hub row's second line says
 (`row_detail`), how wide the star cell every row shares has to be (`star_span`), what a picker row
 reads (`row_text`) and how many lines of premise a card has room for (`premise_lines`) are static,
