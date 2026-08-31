@@ -59,7 +59,7 @@ requires = SubResource("Nothing_proven")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"ines_calder"
-text = "The auditor is alive and talking, which was never in the budget. Cost us one escort and a night's fuel."
+text = "The auditor is alive and talking, which was never in the budget. Cost us a night's fuel and nothing else."
 requires = SubResource("Witnesses_talking")
 
 [sub_resource type="Resource" id="Line_6"]
