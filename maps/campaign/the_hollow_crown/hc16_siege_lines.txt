@@ -1,46 +1,65 @@
-# The Hollow Crown — "Siege Lines".
-# Four seats at the corners: you and your Iron ally north of the ridge,
-# two rival marshals south of it. Three passes are the only way across
-# for anything on treads.
+# The Hollow Crown — "Siege Lines": the relay at the centre of a closing ring.
+# The relay town sits dead centre in open ground and opens neutral — it is the
+# ground the mission is about. Two arcs of mountain and woods, Ferrow's to the
+# west and Orlov's to the east, curve around it and all but meet north and
+# south: those two gaps, and the town in the middle of each arc, are the only
+# ways through. The besiegers hold two bases apiece outside the ring; you and
+# the marshal camp in the open ground inside it with one base each.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
-# The marshal himself stands with the eastern infantry: he walks with his column
-# rather than scouting ahead of it, and the mission is lost if he falls.
+# Marshal Draeg walks with his own column as the mech beside his camp, inside
+# the ring rather than behind it, and the mission is lost if he falls.
 [terrain]
 .....................
 .....................
-..QB=============BQ..
-.....=....=....=.....
-...C.=....C....=.C...
-.....=....=....=.....
-....F=....=....=.....
-.MMMM=MMMM=MMMM=MMMM.
-.MMMM=MMMM=MMMM=MMMM.
-.....=....=....=F....
-.....=....=....=.....
-...C.=....=....=.C...
-..QB=============BQ..
+......MMF...FMM......
+.....MF.......FM.....
+.C..MF.........FM....
+....M......BQ...M....
+...MF...C.......FM...
+.B.M.............M.B.
+.Q.C......C......C.Q.
+.B.M.............M.B.
+...MF.......C...FM...
+....M...QB......M....
+....MF.........FM..C.
+.....MF.......FM.....
+......MMF...FMM......
 .....................
 .....................
 [owners]
-1 2 2
-1 3 2
-2 18 2
-2 17 2
-3 18 12
-3 17 12
-4 2 12
-4 3 12
+1 8 11
+1 9 11
+1 12 10
+2 12 5
+2 11 5
+2 8 6
+3 19 8
+3 19 7
+3 19 9
+3 19 12
+4 1 8
+4 1 7
+4 1 9
+4 1 4
 [units]
-1 i 2 3
-1 i 3 3
-1 r 4 2
-2 i 18 3 marshal_draeg
-2 i 17 3
-2 r 16 2
-3 i 18 11
-3 i 17 10
-3 r 16 12
-4 i 2 11
-4 i 3 10
-4 r 4 12
+1 i 8 10
+1 i 9 10
+1 m 7 11
+1 t 10 11
+1 g 8 12
+2 i 12 6
+2 i 11 6
+2 m 13 5 marshal_draeg
+2 t 10 5
+2 g 12 4
+3 i 20 9
+3 i 20 7
+3 m 18 8
+3 t 18 10
+3 g 18 6
+4 i 0 7
+4 i 0 9
+4 m 2 8
+4 t 2 6
+4 g 2 10
