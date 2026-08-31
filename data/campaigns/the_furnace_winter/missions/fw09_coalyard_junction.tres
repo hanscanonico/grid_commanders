@@ -52,7 +52,7 @@ text = "The coalyard is mine, Rook. I get paid for every column of yours I cut o
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Noted. We move as one column, not three — nothing for you to isolate."
+text = "Noted. We move as one column, not three. Nothing for you to isolate."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -90,7 +90,7 @@ note = "Ferrow caught our column under the strength it rode in with at least onc
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "Your line came out shorter than it went in. The bill is on its way."
+text = "Your line came out shorter than it went in. I counted the gap and billed Vale for it."
 
 [sub_resource type="Resource" id="Event_invoice_submitted"]
 script = ExtResource("7")
@@ -150,7 +150,7 @@ note = "The coalyard spur was reopened with its depots still working."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Both yards ours with a day still in hand, and the coal still on the pad. Log the spur open."
+text = "Both yards ours with a day still in hand, coal still on the pad, spur logged open."
 
 [sub_resource type="Resource" id="Event_the_coalyard_runs"]
 script = ExtResource("7")

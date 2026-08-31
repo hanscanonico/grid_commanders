@@ -27,7 +27,7 @@ text = "Vale closed the depots at first frost. There is no factory behind us. Th
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Then it's a race, Commander. My garrison's already dug in, and I get paid whether you show up or not."
+text = "Then it's a race. My garrison's already dug in, and I get paid whether you show up or not."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -61,7 +61,7 @@ units = Array[Resource]([SubResource("Spawn_crossroads_picket")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Told you it was a race, Commander. My people reached the crossroads while yours were still reading the map."
+text = "Race called. My people had the crossroads while yours were still reading the map, and I'll be billing Vale for the early start."
 
 [sub_resource type="Resource" id="Event_the_garrison_arrives"]
 script = ExtResource("5")

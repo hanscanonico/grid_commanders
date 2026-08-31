@@ -49,12 +49,12 @@ tag = &"siege_gun"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "You are standing in my smelter yard, Commander. I have already worked out what taking it back costs."
+text = "You're standing in my smelter yard. I have the price of taking it back already written down."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Then your books are wrong. The yard cost us men, and we are not giving it back."
+text = "Then your books are wrong. The yard cost us men, and we're not giving it back."
 
 [sub_resource type="Resource" id="Cond_depots_ten"]
 script = ExtResource("15")
@@ -71,17 +71,17 @@ requires = SubResource("Cond_depots_ten")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Eight days. Her gun shells the approach, her columns come in waves. We dig in and we count."
+text = "She'll shell the approach and send her columns in waves. Eight days of it. We dig in and we count."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Relief's in the yard and the smelters still answer to us. Held, all eight days of it."
+text = "Relief's in the yard and the smelters still answer to us. Eight days, and the woods behind us never gave her a road in."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "I costed that attack down to the last shell, and the yard did not move. My mistake."
+text = "I costed that attack down to the last shell, and the yard didn't move."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("8")
@@ -105,7 +105,7 @@ units = Array[Resource]([SubResource("Spawn_wave_one_tank"), SubResource("Spawn_
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "First instalment, Commander. The recovery is budgeted in waves."
+text = "First instalment. The recovery is budgeted in waves."
 
 [sub_resource type="Resource" id="Event_the_first_instalment"]
 script = ExtResource("7")
@@ -132,7 +132,7 @@ units = Array[Resource]([SubResource("Spawn_wave_two_tank")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Second wave. I can pay for more than you can dig for, Commander."
+text = "Second wave. I can pay for more than you can dig for."
 
 [sub_resource type="Resource" id="Event_the_second_instalment"]
 script = ExtResource("7")
@@ -164,7 +164,7 @@ units = Array[Resource]([SubResource("Spawn_relief_tank"), SubResource("Spawn_re
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Lights on the ridge road — the relief column made it through the depots. One more day."
+text = "Lights on the ridge road. The relief column came through the depots. One more day."
 
 [sub_resource type="Resource" id="Event_the_relief_column"]
 script = ExtResource("7")

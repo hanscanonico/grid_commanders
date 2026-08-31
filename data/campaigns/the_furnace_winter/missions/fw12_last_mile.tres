@@ -50,7 +50,7 @@ text = "I garrisoned the last mile myself, Ash. The foundry road is behind it, a
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"perrin_ash"
-text = "Three depots, eight days. Every one's the last thing standing between us and you."
+text = "Eight days for three depots. Every one of them is the last thing standing between us and you."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
@@ -65,7 +65,7 @@ text = "Last mile's open. The foundry road runs clear ahead of us."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "I withdrew east. First time all winter. Take a moment — you've earned it."
+text = "I withdrew east. First time all winter. Take a moment. You have earned it."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("6")
@@ -125,7 +125,7 @@ note = "The last mile was opened intact, and the foundry road runs on it."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"perrin_ash"
-text = "Three depots, a day to spare, and not one pump smashed. The last mile is open."
+text = "Three depots, a day to spare, and not one pump smashed. From up here the road runs clear to the foundry gate."
 
 [sub_resource type="Resource" id="Event_the_last_mile_runs"]
 script = ExtResource("7")

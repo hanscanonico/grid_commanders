@@ -43,7 +43,7 @@ text = "Three depots this time, spaced so no single column of yours reaches all 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "Spread out is not the same as safe. The far depot pays for the middle one — take that one first."
+text = "Spread out is not the same as safe. The far depot pays for the middle one, so take the far one first."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -58,7 +58,7 @@ text = "The crossing is open. That chain was never good odds."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "The chain didn't hold. I will not space them the same way twice."
+text = "The chain didn't hold. I won't space them the same way twice."
 
 [sub_resource type="Resource" id="Trigger_far_depot_ours"]
 script = ExtResource("7")
@@ -78,7 +78,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "The far depot's pay chest came with it, and the middle one is still owed. Their wages are ours now."
+text = "The far depot's pay chest came with it, and the middle one is still owed. Two garrisons, one payroll, and we are holding the payroll."
 
 [sub_resource type="Resource" id="Event_the_far_depots_books"]
 script = ExtResource("6")
@@ -112,7 +112,7 @@ note = "The ashen crossing was reopened end to end with its depots still working
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "Three depots, both bridges standing. Nobody bet on that."
+text = "All three depots, both bridges standing. Nobody bet on that."
 
 [sub_resource type="Resource" id="Event_the_ashen_road_runs"]
 script = ExtResource("6")

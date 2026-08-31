@@ -47,7 +47,7 @@ text = "Thirteen depots run from the causeway to the foundry gate. By the thaw t
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"perrin_ash"
-text = "Ten of the thirteen came out of it whole, pumps still turning. That is a working supply line, quartermaster, not a souvenir."
+text = "Ten of the thirteen came out of it whole, pumps still turning. That's a working supply line, quartermaster, not a souvenir."
 requires = SubResource("Cond_road_runs_whole")
 
 [sub_resource type="Resource" id="Line_3"]
@@ -59,19 +59,19 @@ requires = SubResource("Cond_road_runs_short")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"perrin_ash"
-text = "We took every depot and left the road behind us in pieces. Whatever the furnace costs, we carry it in ourselves."
+text = "We took every depot and left the road behind us in pieces. Nothing runs east on its own now, so whatever the furnace needs, we fly it in."
 requires = SubResource("Cond_road_runs_nowhere")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "And Ferrow was never paid once on that road. Every column he looked at was at full strength, and a raider paid per kill cannot bill for a line with no gaps in it."
+text = "Ferrow never collected a coin on that road. Every column he looked at was at full strength, and a raider paid per kill can't bill for a line with no gaps in it."
 requires = SubResource("Cond_ledger_clean")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "Ferrow got paid. Not often and not well, but he has a column now that he did not have in the autumn. We bought it for him."
+text = "Ferrow got paid. Never well, never on time, and he still rode out of the depots with a column we bought him."
 requires = SubResource("Cond_ledger_paid")
 
 [sub_resource type="Resource" id="Line_7"]

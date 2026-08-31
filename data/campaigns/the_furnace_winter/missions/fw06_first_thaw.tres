@@ -31,7 +31,7 @@ cell = Vector2i(11, 2)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "The Director of Supply does not usually take the field. This pass is worth the exception."
+text = "The Director of Supply does not usually take the field. Kestrel is worth the exception, and I intend to be standing on it when you arrive."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -51,7 +51,7 @@ text = "You withdrew from the pass yourself. That's not a thing you do twice."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "No. It is not. This valley was never the whole of it, Commander."
+text = "No. It is not. This valley was never the whole of it."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("6")
@@ -98,7 +98,7 @@ note = "Kestrel Pass was taken inside the first week of the thaw, before Vale ha
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"halden_marr"
-text = "Inside the week. He never got time to dig in here, and he is not getting another chance."
+text = "Inside the week. He never got time to dig in, and he isn't getting another."
 
 [sub_resource type="Resource" id="Event_the_pass_taken_early"]
 script = ExtResource("7")

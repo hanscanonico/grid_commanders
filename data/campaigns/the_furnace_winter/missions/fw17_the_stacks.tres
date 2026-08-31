@@ -69,7 +69,7 @@ text = "The stacks burn coal day and night. The whole district fights under its 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"gideon_holt"
-text = "Richest start we have faced all winter, Vale. It still will not be enough."
+text = "Richest start we've faced all winter, Vale. It still won't be enough."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")

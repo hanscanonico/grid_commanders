@@ -40,7 +40,7 @@ text = "Cheaper for me. You're welcome to the ash, quartermaster."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "That mech on the road is his torch squad. Reach the base first — or put the squad down on the way."
+text = "That mech on the road is his torch squad. Reach the base first, or put the squad down on the way."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -71,7 +71,7 @@ note = "Milltown's granary came through the freeze — Ferrow's match never reac
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Silos intact, roof on, not a drum of fuel poured. Milltown keeps its winter."
+text = "Silos intact, roof on, not a drum of fuel poured. Milltown keeps its grain and Ferrow keeps his matches, which is the best trade I've made all winter."
 
 [sub_resource type="Resource" id="Event_the_match_never_struck"]
 script = ExtResource("5")

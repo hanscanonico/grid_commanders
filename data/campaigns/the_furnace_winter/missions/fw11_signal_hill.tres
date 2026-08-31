@@ -52,7 +52,7 @@ tag = &"paymaster"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Three relays, Flux. Dug in on all of them — figured you'd besiege one at a time."
+text = "Three relays, Flux. Dug in on all three. Figured you'd besiege them one at a time and pay me by the day."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -96,7 +96,7 @@ units = Array[Resource]([SubResource("Spawn_rider_north"), SubResource("Spawn_ri
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Fast is what I sell, Flux. Two more riders on the hill. Let us see your three columns be in three places."
+text = "Fast is what I sell, Flux. Two more riders on the hill. Let's see three columns be in three places at once."
 
 [sub_resource type="Resource" id="Event_two_more_riders"]
 script = ExtResource("5")
@@ -159,7 +159,7 @@ objective_id = &"the_paymaster"
 [sub_resource type="Resource" id="Event_line_4"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "The middle relay's log is still warm. His paymaster rides tonight — one rider, heavy bag."
+text = "The middle relay's log is still warm. His paymaster rides tonight, one rider with the whole hill's payroll in a bag."
 
 [sub_resource type="Resource" id="Event_the_intercept"]
 script = ExtResource("5")
