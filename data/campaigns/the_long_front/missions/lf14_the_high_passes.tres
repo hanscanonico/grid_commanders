@@ -10,10 +10,10 @@
 [ext_resource type="Resource" path="res://data/units/md_tank.tres" id="8"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="9"]
 
-[sub_resource type="Resource" id="Objective_hold_four_cities"]
+[sub_resource type="Resource" id="Objective_hold_five_cities"]
 script = ExtResource("2")
-text = "Hold all four highland cities."
-count = 4
+text = "Hold five of the highland cities."
+count = 5
 terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
@@ -24,12 +24,12 @@ text = "Vance is throwing a second heavy column into the passes to keep the high
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"halden_marr"
-text = "Mixed force, no domain advantage on rock and passes. We take and hold all four cities anyway."
+text = "Mixed force, no domain advantage on rock and passes. We take and hold five of them anyway."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "Four cities, one column trying to stand in front of all four. Move faster than she can shift it between them and she loses three saving one."
+text = "Seven cities, one column trying to stand in front of every one of them. Move faster than she can shift it between them and she loses four saving one."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -39,7 +39,7 @@ text = "Speed it is. Weather's clear — that won't last either."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "All four cities fly allied colours by nightfall. Her column falls back deeper into the highlands."
+text = "Five of the highland cities fly allied colours by nightfall. Her column falls back deeper into the highlands."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
@@ -94,11 +94,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_hold_four_cities")])
+objectives = Array[Resource]([SubResource("Objective_hold_five_cities")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_second_column")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Vance held enough of the four to bleed the advance dry, and the passes stayed contested."
+defeat = "Vance held enough of them to bleed the advance dry, and the passes stayed contested."

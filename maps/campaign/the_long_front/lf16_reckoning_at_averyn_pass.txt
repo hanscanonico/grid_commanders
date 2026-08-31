@@ -4,20 +4,24 @@
 # intend to lose it.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-MMM..............MMM
-M..Q====......CMMMMM
-....=......MMM..MMMM
-....=...C......B....
-FF..=======.....MMMM
-....F......C....MMMM
-........======......
-...........====...Q.
-MMM..............MMM
+MMM..............MMMMMMM
+M..Q====......CMMMMM....
+....=......MMM..MMMM....
+....=...C......B....B...
+FF.B=======.....MMMM....
+....F......C....MMMM....
+........======........MM
+...........====...Q.....
+MMM.......C......MMM....
+....F........F.....C....
+MMM..................MMM
 [owners]
 1 3 1
 2 15 3
 2 18 7
 1 8 3
+1 3 4
+2 20 3
 [units]
 # team symbol x y [tag] — the battery behind the pass is the one Morn ranged
 # Averyn with, and the mission names it once it is seen.
@@ -28,6 +32,8 @@ MMM..............MMM
 1 t 5 4
 1 t 6 4
 1 a 4 4
+1 T 3 5
+1 g 3 6
 2 i 14 3
 2 i 14 5
 2 r 15 5
@@ -35,3 +41,5 @@ MMM..............MMM
 2 t 13 5
 2 T 12 5
 2 g 15 6 hammer_battery
+2 T 17 3
+2 a 14 6
