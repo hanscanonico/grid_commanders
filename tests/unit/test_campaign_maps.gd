@@ -8,7 +8,7 @@ extends GutTest
 
 ## A share the test owns, so the behaviour under test does not ride on which
 ## boards the shipped allowlist happens to hold — or on it holding any.
-const ONE_DECLARED_GROUP: Array[Array] = [["board_a", "board_b"]]
+const ONE_DECLARED_GROUP: Array[Array] = [["board_a", "board_b", "board_c"]]
 
 var terrain_db: TerrainDB
 
@@ -40,7 +40,7 @@ func test_a_board_that_differs_by_one_cell_is_not_a_share() -> void:
 
 func test_a_board_given_its_own_ground_must_leave_the_allowlist() -> void:
 	var still_sharing: Dictionary[String, PackedStringArray] = {
-		"shared ground": PackedStringArray(["board_a", "board_b"]),
+		"shared ground": PackedStringArray(["board_a", "board_b", "board_c"]),
 	}
 	assert_eq(
 		CampaignBoards.stale_group_errors(still_sharing, ONE_DECLARED_GROUP),
@@ -48,17 +48,18 @@ func test_a_board_given_its_own_ground_must_leave_the_allowlist() -> void:
 		"a group whose boards still share reads clean"
 	)
 	var separated: Dictionary[String, PackedStringArray] = {
-		"shared ground": PackedStringArray(["board_b"]),
+		"shared ground": PackedStringArray(["board_b", "board_c"]),
 		"its own ground": PackedStringArray(["board_a"]),
 	}
 	var errors := CampaignBoards.stale_group_errors(separated, ONE_DECLARED_GROUP)
 	assert_eq(errors.size(), 1, "one line, naming the group that stopped sharing")
 	assert_string_contains(errors[0], "board_a")
+	assert_false(errors[0].contains("board_b"), "the two boards still sharing are not named")
 
 
 func test_an_empty_allowlist_reports_nothing_stale() -> void:
 	var by_digest: Dictionary[String, PackedStringArray] = {
-		"shared ground": PackedStringArray(["board_a", "board_b"]),
+		"shared ground": PackedStringArray(["board_a", "board_b", "board_c"]),
 	}
 	var no_group_declared: Array[Array] = []
 	assert_eq(CampaignBoards.stale_group_errors(by_digest, no_group_declared), PackedStringArray())
