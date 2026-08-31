@@ -18,12 +18,12 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Ferrow is not here to hold ground, Wren. He is here to burn what feeds it. The whole line runs on these three cities."
+text = "Ferrow isn't here to hold ground, Wren. He's here to burn what feeds it. The whole allied line runs on these three cities."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"sable_wren"
-text = "Then he spends his columns for nothing. Hold the wood line, hold the cities."
+text = "He spends them for nothing, then. Wood line. Cities. Nothing else."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -38,12 +38,12 @@ text = "Watch the tree line. That's all."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Ferrow's raiders pull back with less funding than they came with. The woods gave nothing away for free."
+text = "Ferrow's raiders pull back with less funding than they came with. Everything they took out of the wood, they bled for twice over."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"sable_wren"
-text = "Supply district still feeds the front. That's the whole of what this was for."
+text = "Supply district still feeds the front. Job done."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("5")

@@ -23,12 +23,12 @@ text = "Orlov's fortified camp is the last thing standing between us and the foo
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Then it is the last thing between defending and attacking. Take the camp, and the front stops holding and starts moving."
+text = "Then it's the last thing between defending and attacking. Take the camp and the front stops holding, starts moving."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Six weeks of retreat, three nations, one alliance — and now we're the ones advancing. Feels strange to say out loud."
+text = "Six weeks of retreat, three nations, one alliance, and now we're the ones advancing. I've read the order twice — it says advance both times."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -43,7 +43,7 @@ text = "The camp falls, and with it the last piece of ground his spearhead took 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "I'm looking east, past the foothills, to where the highlands start. We've never fought there before."
+text = "I'm looking east, past the foothills, to where the highlands start. None of the three of us has ever fought up there."
 
 [sub_resource type="Resource" id="Trigger_road_city_ours"]
 script = ExtResource("5")
@@ -68,7 +68,7 @@ units = Array[Resource]([SubResource("Spawn_forward_armour"), SubResource("Spawn
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Road city's ours. Bring the line forward — all of it, not a screen."
+text = "Road city's ours. Bring the line forward, all of it. I don't want a screen out there, I want the army."
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("3")

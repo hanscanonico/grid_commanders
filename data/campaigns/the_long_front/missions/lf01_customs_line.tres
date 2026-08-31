@@ -28,12 +28,12 @@ count = 1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Draeg's armour crossed at first light, Commander. Four units is what you have between the border and the column."
+text = "Draeg's armour crossed at first light. Four units between the border and the refugee column, and no reserve behind them. That's what the depot had."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then four units is what holds it. I don't need to win this line — I need to keep it standing."
+text = "Four units hold it, then. I don't need to win this line — I need it still standing when the last wagon is past."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -43,7 +43,7 @@ text = "The column clears by day six if you do. Every hour past that, someone in
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then we don't blink for six days. Get everyone off the road who isn't fighting on it."
+text = "Six days without blinking. Get everyone off that road who isn't fighting on it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -53,7 +53,7 @@ text = "The column's clear. Draeg's tanks own the customs road now, and nothing 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "I fold the map and fall back to the next line. This won't be the last one."
+text = "Fold the map. We fall back to the next line, and the one after that, and I hold each of them the same way."
 
 [sub_resource type="Resource" id="Trigger_column_home"]
 script = ExtResource("7")
@@ -70,7 +70,7 @@ note = "The customs-road column reached the line behind you."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Column's behind the line and off your road, Commander. Every hour after this one is yours to spend."
+text = "Column's behind the line and off your road. Every hour after this one is yours to spend."
 
 [sub_resource type="Resource" id="Event_the_column_is_home"]
 script = ExtResource("6")
