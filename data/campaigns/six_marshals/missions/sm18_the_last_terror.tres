@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=70 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=73 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -62,6 +62,11 @@ text = "The heartland held. Morn is finished, and so is the fight over who leads
 script = ExtResource("5")
 speaker = &"gideon_holt"
 text = "Six marshals crossed the border. Six marshals were answered."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "You never blinked."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("8")
@@ -298,6 +303,18 @@ effects = Array[Resource]([SubResource("Effect_the_old_charge")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_morn")])
 
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Ferrow still has what he took off us in the passes. He'll spend it somewhere warm and tell the story like he won something."
+requires = SubResource("Ferrow_was_paid")
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("5")
+speaker = &"alina_ward"
+text = "Draeg sent Morn one tank and kept his column at home. That's a man who keeps his word to whoever is holding it, and one day that won't be us."
+requires = SubResource("Draegs_column_intact")
+
 [resource]
 script = ExtResource("1")
 id = &"sm18_the_last_terror"
@@ -320,5 +337,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_fo
 events = Array[Resource]([SubResource("Event_ferrow_sold_it_on"), SubResource("Event_the_crossroads_outlives_him"), SubResource("Event_orlov_keeps_what_he_catches"), SubResource("Event_vance_still_compounding"), SubResource("Event_draegs_column_keeps_its_word"), SubResource("Event_morn_never_spent_it"), SubResource("Event_the_charge_is_ready"), SubResource("Event_the_directorate_recalls_him")])
 par_day = 9
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_6")])
 defeat = "The line bunched under pressure, and Morn's last strike ended the war on his terms."
