@@ -203,9 +203,12 @@ reached rather than the mission lost. A run also writes `missions.csv` and
 ## The measurement, 2026-08-17
 
 108 missions, 9 seeds each, 24-day horizon, after the pass above. A later sweep
-supersedes this table wholesale rather than editing it. Its one edited row is
+supersedes this table wholesale rather than editing it. Two rows are edited:
 `qw05_the_watch_at_thornfield`, re-measured 2026-08-22 above, because a stale 0%
-beside a mission that has since been fixed reads as a fault still open.
+beside a mission that has since been fixed reads as a fault still open; and
+`qw18_the_man_himself`, re-measured 2026-08-31 on the new board that split the
+Quiet War's finale from the Long Front's, because the row no longer described
+any board the game ships.
 
 | war | mission | tier | win% | median day | deadline | odds | income | most common ending |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
