@@ -62,6 +62,53 @@ const SLOTS: Array[Vector2] = [
 ]
 ## How far apart, in fall progress, consecutive figures start toppling.
 const TOPPLE_STAGGER := 0.13
+## The knock-back a figure takes before it tips: how far outward it is thrown and
+## how long that jerk lasts. The length is in **seconds of the casualty beat**,
+## asked of the window CombatBeats sized rather than counted in frames, so a
+## two-figure loss — whose window is longer — gives each figure the same jerk
+## rather than a proportionally slower one.
+const KNOCK_PX := 4.0
+const KNOCK_SECONDS := 0.08
+## The shove a standing figure takes as its half is hit, decaying with the flash.
+const BRACE_PX := 2.0
+## The roll-in: how far outward of its firing slot a squad starts, how far past
+## the slot it dips as it halts, and the share of the run that settle happens
+## over. The dip is what makes the halt read as weight rather than as a stop.
+const ARRIVE_PX := 26.0
+const SETTLE_PX := 2.0
+const SETTLE_BAND := 0.15
+## A marching rank sets off in order rather than as a block — five men translated
+## together read as one cut-out on a conveyor — and each figure bobs as it comes.
+const MARCH_STAGGER := 0.10
+const TRUDGE_PX := 1.5
+const TRUDGE_STEPS := 2.0
+## Below this much scuff a land half is on foot: it staggers and trudges in where
+## a hull rolls in as one piece. Read off the scuff a style kicks rather than off
+## a style id, which would be the same "checked in three places" smell the
+## movement domains are data to avoid.
+const FOOT_DUST := 0.2
+## How far an aircraft drops into its slot over the arrive, and how far a hull
+## rides the swell there. The aircraft's bank is a vertical offset and nothing
+## else: these are the board's three-quarter-view cells, and rolling one reads as
+## a rendering glitch — the same reason the topple's tip is capped (plan R3).
+const BANK_PX := 6.0
+const SWELL_PX := 3.0
+## The wind-up: the share of it the lift and the tip ease over before holding,
+## how far the figure drifts away from the seam as a share of that lift, and the
+## tip a style is allowed. A pitch past this is a data error rather than a pose —
+## a board sprite rotated further stops reading as a weapon being aimed.
+const AIM_EASE := 0.6
+const AIM_DRIFT := 0.4
+const AIM_PITCH_MAX := 0.10
+## The scuff kicked at the ground line: how many puffs, how wide the first is,
+## how far apart they step outward, and how flat they lie on the plane. The floor
+## is CutsceneFx.MIN_FLARE_REACH's discipline — a polygon ramped from zero lands
+## its points on one float and the triangulator refuses it.
+const SCUFF_PUFFS := 3
+const SCUFF_REACH := 8.0
+const SCUFF_STEP := 12.0
+const SCUFF_FLAT := 0.34
+const SCUFF_MIN_REACH := 0.5
 ## How high aircraft ride above their own ground, and the bob they hold there.
 ## The phase step keeps a flight of four from pulsing in unison.
 const HOVER_HEIGHT := 34.0
@@ -139,8 +186,6 @@ var hp_shown := 10
 ## is already half over.
 var squad_now := MAX_FIGURES
 var squad_was := MAX_FIGURES
-## 0 -> 1 as the surplus figures rise, spin and fall away.
-var fall_p := 0.0
 ## 0 -> 1 as the squad rolls the last stretch into its firing slot. 1.0 is
 ## posted, and a posted half must draw exactly the frame it drew before there was
 ## an arrive beat at all.
@@ -150,8 +195,7 @@ var arrive_p := 1.0
 ## projectile exists (CombatBeats).
 var aim_p := 0.0
 ## 0 -> 1 over the casualty beat, which the sheet sizes off how many figures this
-## side lost. `fall_p` is written to the same value until the side-motion slice
-## retires it.
+## side lost: the surplus figures are knocked back, then rise, spin and fall away.
 var casualty_p := 0.0
 ## The style's own look numbers, copied on by the director rather than looked up:
 ## how much scuff this half kicks, how far its weapon lifts (+) or settles (-)
@@ -432,25 +476,93 @@ func _draw_vignette(arena: Rect2) -> void:
 func _draw_squad(arena: Rect2) -> void:
 	if squad_alpha <= 0.0:
 		return
+	_draw_scuff(arena)
 	var posted := maxi(squad_now, squad_was)
 	# Each falls a beat after the one before it, so a squad losing three figures
 	# reads as three going down rather than a row vanishing. `reach` is what pays
 	# for that: the last one to start still has a full fall left when the window
 	# closes, so the run has to be long enough for all of them to finish it.
 	var reach := 1.0 + TOPPLE_STAGGER * maxf(posted - squad_now - 1, 0.0)
+	var knock := _knock_share()
 	for slot in range(posted - 1, -1, -1):
 		var ground := _figure_point(arena, slot)
 		var toppling := slot >= squad_now
-		var fall := 0.0
+		var run := 0.0
 		if toppling:
-			fall = clampf(fall_p * reach - (slot - squad_now) * TOPPLE_STAGGER, 0.0, 1.0)
+			run = clampf(casualty_p * reach - (slot - squad_now) * TOPPLE_STAGGER, 0.0, 1.0)
+		var fall := topple_fall(run, knock)
 		if fall >= 1.0:
 			continue
-		# The shadow stays on the ground whatever the figure is doing above it —
-		# which is exactly what makes an aircraft read as flying rather than as a
-		# tank drawn too high.
-		_draw_shadow(ground, 1.0 - fall)
-		_draw_figure(ground + Vector2(_inward(lunge), _altitude(slot, fall)), fall, not toppling)
+		var standing := not toppling
+		var roll := arrive_offset(arrive_p, arrive_scale, unit.type.domain, slot, clock, _on_foot())
+		# The shadow travels with the squad as it rolls in — that is the whole
+		# vehicle crossing the plane — and stays put for everything after, which
+		# is what makes an aircraft read as flying rather than as a tank drawn
+		# too high, and a casualty as thrown rather than as sliding.
+		_draw_shadow(ground + Vector2(_inward(roll.x), 0.0), 1.0 - fall)
+		_draw_figure(
+			ground + _pose_offset(roll, slot, fall, standing),
+			fall,
+			standing,
+			topple_jerk(run, knock)
+		)
+
+
+## Everything that moves a figure off its own patch of ground: the roll-in it
+## arrives on, the wind-up it holds, the recoil along the firing axis, the shove
+## of taking a hit, and an aircraft's cruising height. Composed in the inward
+## frame — positive points at the seam — and mirrored once, at the end.
+##
+## Only a figure still on its feet braces: one already being knocked back is
+## being thrown outward, and shoving it inward at the same time cancels half of
+## the hit it is reading.
+func _pose_offset(roll: Vector2, slot: int, fall: float, standing: bool) -> Vector2:
+	var offset := roll + aim_offset(aim_p, aim_lift)
+	offset.x += lunge + (BRACE_PX * flash if standing else 0.0)
+	return Vector2(_inward(offset.x), offset.y + _altitude(slot, fall))
+
+
+## Whether this half marches in rather than rolling in, off the scuff its style
+## kicks — a style id read here would be a second opinion on what a weapon is.
+## `dust` is written 0.0 until the styles carry it, so every land half marches
+## for now: a pixel and a half of bob on the roll-in and nothing else.
+func _on_foot() -> bool:
+	return dust <= FOOT_DUST and not _flying and not _floating
+
+
+## What share of a casualty's own run is the knock-back. KNOCK_SECONDS is stated
+## against the window CombatBeats really sized — asked of it rather than
+## re-derived — so the jerk keeps its length whatever the clock is running at.
+func _knock_share() -> float:
+	var lost := squad_was - squad_now
+	var window := CombatBeats.casualty_window(Vector2(0.0, CombatBeats.IMPACT), lost)
+	var span := window.y - window.x
+	if span <= 0.0:
+		return 0.0
+	return clampf(KNOCK_SECONDS / span, 0.0, 1.0)
+
+
+## The scuff a squad kicks off the ground line as it rolls into its slot, and
+## again as its own recoil thrusts: three flat puffs outward of the outermost
+## figure, sized by how much dirt this style throws. Nothing at all for a hull
+## over water or a wing over nothing — and nothing yet for anything, `dust` being
+## written 0.0 until the styles carry it.
+func _draw_scuff(arena: Rect2) -> void:
+	if dust <= 0.0 or _flying or _floating:
+		return
+	var kick := maxf(
+		CutsceneFx.ramp(arrive_p, [0.0, 0.7, 1.0], [0.3, 1.0, 0.0]), clampf(lunge / 13.0, 0.0, 1.0)
+	)
+	if kick <= 0.0:
+		return
+	# The dirt is the ground's own colour lifted, so a beach kicks sand and a
+	# forest floor kicks loam without a table of dust colours anywhere.
+	var dirt := _ridge_tint.lightened(0.45)
+	var at := _figure_point(arena, 0)
+	var outward := -_inward(1.0)
+	for i in SCUFF_PUFFS:
+		var tint := Color(dirt, 0.22 * dust * kick * (1.0 - i * 0.25))
+		draw_colored_polygon(scuff_polygon(at, outward, kick, i), tint)
 
 
 ## How far above its own patch of ground a figure sits. Aircraft ride high and
@@ -497,8 +609,11 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## are the board's own three-quarter-view sprites, and spinning one right over
 ## reads as a rendering glitch rather than a casualty (plan R3).
 ##
+## `jerk` above zero is the knock-back that precedes the fall: the round has
+## landed on this figure and it is thrown outward and lit before it goes over.
+##
 ## A figure already on its way down does not flash: it has taken its hit.
-func _draw_figure(feet: Vector2, fall: float, hittable: bool) -> void:
+func _draw_figure(feet: Vector2, fall: float, hittable: bool, jerk: float) -> void:
 	var flip := Vector2(-1.0 if mirror else 1.0, 1.0)
 	var box := Rect2(
 		-CutscenePlates.FIGURE_PX * 0.5,
@@ -508,29 +623,164 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool) -> void:
 	)
 	var lift := 0.0
 	var spin := 0.0
+	var tip := aim_tilt(aim_p, aim_pitch)
 	var alpha := squad_alpha
 	var tint := Color(1.0, 1.0, 1.0)
 	if fall > 0.0:
+		tip = 0.0
 		lift = CutsceneFx.ramp(fall, [0.0, 0.3, 1.0], [0.0, -13.0, 46.0])
 		spin = CutsceneFx.ramp(fall, [0.0, 1.0], [0.0, _inward(-0.55)])
 		alpha *= CutsceneFx.ramp(fall, [0.0, 0.55, 1.0], [1.0, 1.0, 0.0])
 		tint = tint.lerp(WRECK_TINT, CutsceneFx.ramp(fall, [0.0, 0.35, 1.0], [0.0, 0.85, 1.0]))
 	elif hittable:
 		tint = tint.lerp(Color(3.4, 3.4, 3.4), flash)
-	var at := feet + Vector2(_inward(-fall * 10.0), lift)
+	else:
+		tint = tint.lerp(Color(3.4, 3.4, 3.4), jerk)
+	var at := feet + Vector2(_inward(-fall * 10.0 - KNOCK_PX * jerk), lift)
 	draw_set_transform_matrix(Transform2D(spin, flip, 0.0, at))
 	var shadow := Color(CutscenePalette.FIGURE_SHADOW, 0.4 * alpha)
 	var art := _figure_now()
-	draw_texture_rect(art, Rect2(box.position + Vector2(2.0, 3.0), box.size), false, shadow)
+	_draw_tipped(art, Rect2(box.position + Vector2(2.0, 3.0), box.size), tip, shadow)
 	tint.a = alpha
-	draw_texture_rect(art, box, false, tint)
+	_draw_tipped(art, box, tip, tint)
 	draw_set_transform_matrix(Transform2D.IDENTITY)
+
+
+## The art in its box, tipped by `tilt` radians about its own feet — as a
+## **whole-pixel shear**, in bands that each step one pixel, rather than as a
+## rotation.
+##
+## A rotation resamples the cell's own texels, and the wind-up's tip is *held*:
+## it is the pose the frame is stared at through the whole volley and impact, so
+## a silhouette that jags along its edges is a permanent artefact rather than a
+## passing one. A band keeps its texel grid intact and steps a whole pixel, which
+## is the discipline the zoom ladder keeps for the same reason. The topple's tip
+## is still a real rotation — it is over in a third of a second, and it goes far
+## enough that a shear would shred it.
+##
+## Inside this transform +x already points at the seam on both halves, so the
+## lean needs no mirroring of its own.
+func _draw_tipped(art: AtlasTexture, box: Rect2, tilt: float, tint: Color) -> void:
+	var lean := sin(tilt)
+	var bands := ceili(absf(lean) * box.size.y)
+	if bands <= 1:
+		draw_texture_rect(art, box, false, tint)
+		return
+	var step := box.size.y / bands
+	var source := art.region
+	var cut := source.size.y / bands
+	for i in bands:
+		var top := box.position.y + step * i
+		var height := box.position.y + box.size.y - (top + step * 0.5)
+		draw_texture_rect_region(
+			art.atlas,
+			Rect2(box.position.x + roundf(lean * height), top, box.size.x, step),
+			Rect2(source.position + Vector2(0.0, cut * i), Vector2(source.size.x, cut)),
+			tint
+		)
 
 
 ## Which pose of the idle clip the squad is standing in, off this cut-in's own
 ## clock at the board's ambient cadence.
 func _figure_now() -> AtlasTexture:
 	return CutscenePlates.figure_now(_figures, clock)
+
+
+# --- the motion, as pure functions of the pose --------------------------------
+#
+# Every one of these is arithmetic on a scalar CombatCutscene wrote and a figure
+# index. No tween, no accumulator, no RNG — which is what makes a skip and a
+# posed still land on the same frame as playing the beat through would.
+
+
+## Where a figure sits relative to its firing slot while the squad is still
+## rolling in: outward and easing to nothing, past the slot by SETTLE_PX and back
+## as it halts. Positive x points at the seam, as everywhere else here.
+##
+## The roll-in is a *translation of the idle pose*, deliberately: the cut-in cuts
+## its figures from the shadow-subtracted sheet, only the ambient pair has one,
+## and drawing the walk clip here would bring the tile's baked contact shadow
+## back to double against the ellipse this half draws for itself.
+##
+## A posted squad returns exactly zero, so every frame after the beat closes is
+## the frame it was before there was an arrive beat at all.
+static func arrive_offset(
+	arrive_p: float, arrive_scale: float, domain: StringName, slot: int, clock: float, on_foot: bool
+) -> Vector2:
+	if arrive_p >= 1.0:
+		return Vector2.ZERO
+	var p := march_progress(arrive_p, slot if on_foot else 0)
+	var run := pow(1.0 - p, 3.0)
+	var settle := (
+		SETTLE_PX
+		* CutsceneFx.ramp(p, [1.0 - SETTLE_BAND, 1.0 - SETTLE_BAND * 0.5, 1.0], [0.0, 1.0, 0.0])
+	)
+	var rise := 0.0
+	if domain == UnitType.AIR:
+		rise = -BANK_PX * run
+	elif domain == UnitType.SEA:
+		rise = sin(clock * HOVER_RATE) * SWELL_PX * (1.0 - p)
+	elif on_foot:
+		rise = sin(p * TAU * TRUDGE_STEPS) * TRUDGE_PX
+	return Vector2(settle - ARRIVE_PX * arrive_scale * run, rise)
+
+
+## Where one figure of a marching rank is in its own arrival. The rank sets off
+## in order, and each figure's run is compressed rather than merely delayed, so
+## the last man still lands exactly as the beat closes.
+static func march_progress(arrive_p: float, slot: int) -> float:
+	var lag := MARCH_STAGGER * clampi(slot, 0, MAX_FIGURES - 1)
+	return clampf((arrive_p - lag) / (1.0 - lag), 0.0, 1.0)
+
+
+## The wind-up's pose: the weapon lifts `lift` px and the figure drifts back off
+## the seam with it, both easing out over the front of the beat and then held —
+## the hold is what a player stares at for the whole volley and impact.
+static func aim_offset(aim_p: float, lift: float) -> Vector2:
+	var ease := _aim_ease(aim_p)
+	return Vector2(-lift * AIM_DRIFT * ease, -lift * ease)
+
+
+## And how far it tips over that same beat, about its own feet. Clamped rather
+## than honoured past AIM_PITCH_MAX: a board sprite tipped further reads as a
+## rendering fault, not as a barrel coming up.
+static func aim_tilt(aim_p: float, pitch: float) -> float:
+	return clampf(pitch, -AIM_PITCH_MAX, AIM_PITCH_MAX) * _aim_ease(aim_p)
+
+
+static func _aim_ease(aim_p: float) -> float:
+	return 1.0 - pow(1.0 - clampf(aim_p / AIM_EASE, 0.0, 1.0), 3.0)
+
+
+## One scuff puff, lying flat on the ground plane: a lens of dust centred
+## `outward` of `at`, each one further out and wider than the last as the kick
+## spreads. Floored at SCUFF_MIN_REACH so a puff ramped from nothing never lands
+## its points on one float for the triangulator to refuse.
+static func scuff_polygon(
+	at: Vector2, outward: float, spread: float, index: int
+) -> PackedVector2Array:
+	var reach := maxf(SCUFF_MIN_REACH, SCUFF_REACH * (0.4 + spread) * (1.0 + index * 0.3))
+	var center := at + Vector2(outward * SCUFF_STEP * (index + spread), -reach * SCUFF_FLAT)
+	var points := PackedVector2Array()
+	for i in 8:
+		var angle := float(i) * TAU / 8.0
+		points.append(center + Vector2(cos(angle) * reach, sin(angle) * reach * SCUFF_FLAT))
+	return points
+
+
+## A casualty's own run, split in two: it is knocked back first and tips after,
+## so a hit reads as men being struck rather than as men deciding to fall over.
+static func topple_fall(run: float, knock: float) -> float:
+	if run <= knock or knock >= 1.0:
+		return 0.0
+	return (run - knock) / (1.0 - knock)
+
+
+## The knock-back itself — out and back once, over the front of that run.
+static func topple_jerk(run: float, knock: float) -> float:
+	if knock <= 0.0 or run <= 0.0 or run >= knock:
+		return 0.0
+	return CutsceneFx.ramp(run, [0.0, knock * 0.5, knock], [0.0, 1.0, 0.0])
 
 
 # --- plates ------------------------------------------------------------------
