@@ -51,7 +51,7 @@ func test_the_roll_in_closes_monotonically_until_the_settle() -> void:
 	for i in range(1, steps + 1):
 		var at := i * 0.01
 		var reach := absf(_offset(at, 0, LAND, false).x)
-		assert_lte(reach, previous, "the roll-in grew again at %f" % at)
+		assert_lt(reach, previous, "the roll-in stalled or grew again at %f" % at)
 		previous = reach
 
 

@@ -493,6 +493,7 @@ func _draw_squad(arena: Rect2) -> void:
 		var fall := topple_fall(run, knock)
 		if fall >= 1.0:
 			continue
+		var standing := not toppling
 		var roll := arrive_offset(arrive_p, arrive_scale, unit.type.domain, slot, clock, _on_foot())
 		# The shadow travels with the squad as it rolls in — that is the whole
 		# vehicle crossing the plane — and stays put for everything after, which
@@ -500,7 +501,10 @@ func _draw_squad(arena: Rect2) -> void:
 		# too high, and a casualty as thrown rather than as sliding.
 		_draw_shadow(ground + Vector2(_inward(roll.x), 0.0), 1.0 - fall)
 		_draw_figure(
-			ground + _pose_offset(roll, slot, fall), fall, not toppling, topple_jerk(run, knock)
+			ground + _pose_offset(roll, slot, fall, standing),
+			fall,
+			standing,
+			topple_jerk(run, knock)
 		)
 
 
@@ -508,9 +512,13 @@ func _draw_squad(arena: Rect2) -> void:
 ## arrives on, the wind-up it holds, the recoil along the firing axis, the shove
 ## of taking a hit, and an aircraft's cruising height. Composed in the inward
 ## frame — positive points at the seam — and mirrored once, at the end.
-func _pose_offset(roll: Vector2, slot: int, fall: float) -> Vector2:
+##
+## Only a figure still on its feet braces: one already being knocked back is
+## being thrown outward, and shoving it inward at the same time cancels half of
+## the hit it is reading.
+func _pose_offset(roll: Vector2, slot: int, fall: float, standing: bool) -> Vector2:
 	var offset := roll + aim_offset(aim_p, aim_lift)
-	offset.x += lunge + BRACE_PX * flash
+	offset.x += lunge + (BRACE_PX * flash if standing else 0.0)
 	return Vector2(_inward(offset.x), offset.y + _altitude(slot, fall))
 
 
