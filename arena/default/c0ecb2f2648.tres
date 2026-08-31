@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_uotpa"]
+
+[resource]
+script = ExtResource("1_uotpa")
+kill_bonus = 1.5
+counter_weight = 0.95
+min_useful_score = 50.0
+condition_weight = 0.05

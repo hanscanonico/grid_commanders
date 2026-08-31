@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_xmy3w"]
+
+[resource]
+script = ExtResource("1_xmy3w")
+condition_weight = 1.0
+join_weight = 0.15

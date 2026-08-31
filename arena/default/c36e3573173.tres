@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_f14pu"]
+
+[resource]
+script = ExtResource("1_f14pu")
+threat_aversion = 0.15
+advance_threat_tiles = 1.25
+withdraw_weight = 0.05
+cover_tiles = 0.25

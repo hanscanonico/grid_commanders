@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_iht28"]
+
+[resource]
+script = ExtResource("1_iht28")
+retreat_hp = 55
+cohesion_tiles = 2.0
+cohesion_radius = 1

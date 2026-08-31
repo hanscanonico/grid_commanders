@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_iwsfl"]
+
+[resource]
+script = ExtResource("1_iwsfl")
+capture_unit_target = 4
+duplicate_priority_cost = 0
+save_up_turns = 0
+build_reactivity = 0.6

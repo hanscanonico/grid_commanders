@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_eqw3f"]
+
+[resource]
+script = ExtResource("1_eqw3f")
+kill_bonus = 1.0
+counter_weight = 1.0
+retreat_hp = 60
+min_useful_score = 80.0
+build_priority = Array[StringName]([&"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter", &"rockets"])
+capture_unit_target = 2
+threat_aversion = 0.3
+advance_threat_tiles = 3.0
+defend_weight = 0.0
+cohesion_tiles = 0.5
+cohesion_radius = 4
+capture_units_per_property = 0.0
+spend_ceiling_turns = 0.0
+supply_weight = 0.1
+goal_engageability = 0.0

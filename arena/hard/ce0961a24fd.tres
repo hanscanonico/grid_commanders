@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_hanoq"]
+
+[resource]
+script = ExtResource("1_hanoq")
+kill_bonus = 2.0
+counter_weight = 0.4
+build_priority = Array[StringName]([&"md_tank", &"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter", &"rockets"])
+threat_aversion = 0.1
+advance_threat_tiles = 6.0
+build_reactivity = 0.6
+defend_weight = 2.5
+cohesion_tiles = 1.5
+supply_weight = 0.35

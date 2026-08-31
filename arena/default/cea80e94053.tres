@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1_pxm6e"]
+
+[resource]
+script = ExtResource("1_pxm6e")
+cohesion_tiles = 1.5
+capture_units_per_property = 0.75
+capture_claim_depth = 2
+production_capture_multiplier = 0.5
+capture_goal_value_tiles = 2.0
