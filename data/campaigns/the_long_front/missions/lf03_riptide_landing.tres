@@ -28,7 +28,7 @@ count = 1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "A second column is ashore behind the picket line, Rook. Meridian lost its border the same morning. That is no coincidence."
+text = "A second column is ashore behind the picket line, Rook. Meridian lost its border the same morning. That's no coincidence."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -43,7 +43,7 @@ text = "Four units against a beachhead. The tide won't cover for you twice."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "Then we make the first tide count. Get the coast watch moving inland the moment the road's secure."
+text = "We make the first tide count. Get the coast watch moving inland the moment the road's secure."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")

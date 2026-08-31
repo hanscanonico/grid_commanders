@@ -28,12 +28,12 @@ at_most = 0
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "The Arden won't stop his infantry, but it stops his tanks. Everything that matters funnels onto one bridge."
+text = "The Arden won't stop his infantry. It stops his tanks, and everything that matters funnels onto one bridge."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then the bridge is where we make him pay for every yard. Hold the crossing, nothing else."
+text = "The bridge is where he pays for every yard. Hold the crossing. Nothing else on this map matters today."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -55,7 +55,7 @@ requires = SubResource("Column_lost")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then we count the fight in hours, not ground. That's a trade I can make."
+text = "Hours, not ground. That's a trade I can make all week."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -65,7 +65,7 @@ text = "The bridge held long enough. His armour's still stacked on the wrong ban
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "It's a delay, not a victory. I know the difference — keep moving."
+text = "A delay. Don't write it up as a victory — I know the difference and so does he."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("6")
@@ -84,7 +84,7 @@ text = "Column's past the ridge fork. Three more days and they're behind the nex
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then three more days is what the bridge costs him."
+text = "Three more days. That's what the bridge costs him, and he pays it standing on the wrong bank."
 
 [sub_resource type="Resource" id="Event_past_the_ridge_fork"]
 script = ExtResource("5")

@@ -39,19 +39,19 @@ text = "Draeg's fortress is a day's march past this outpost. Orlov's holding it 
 [sub_resource type="Resource" id="Line_1a"]
 script = ExtResource("3")
 speaker = &"tomas_reed"
-text = "The pass battery is scrap, so nothing shells this approach while you clear it. That detour is paying for itself now."
+text = "The pass battery is scrap, so nothing shells this approach while you clear it. That detour we argued about is paying for itself by the hour."
 requires = SubResource("Battery_silenced")
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("3")
 speaker = &"tomas_reed"
-text = "Morn's battery came out of the pass with him and it ranges this hill. Don't bunch up on the open ground."
+text = "Morn's battery came out of the pass with him and it ranges this hill. Don't bunch up on the open ground. He only needs you to stand still once."
 requires = SubResource("Battery_standing")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "Then I clear the approach. Nothing about the final push works if this ground's still contested behind it."
+text = "I clear the approach, then. Nothing about the final push works if this ground's still contested behind it."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -87,7 +87,7 @@ amount = 8000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("3")
 speaker = &"cass_orlov"
-text = "Everything the Dominion has left to spare is on this hill, Warden. When it is gone there is only the keep."
+text = "Everything the Dominion has left to spare is standing on this hill. Come up and take it. There's nothing behind us but the keep."
 
 [sub_resource type="Resource" id="Event_everything_left_to_spare"]
 script = ExtResource("6")

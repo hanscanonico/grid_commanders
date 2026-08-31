@@ -32,7 +32,7 @@ text = "Averyn had barely any garrison. Morn's Command Power hit it overnight an
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Then we're not marching to save the town. We're marching so he doesn't get to keep the ground it stood on."
+text = "We're not marching to save the town. There is no town. We're marching so he doesn't get to keep the ground it stood on."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -47,7 +47,7 @@ text = "Take it anyway. Every acre he keeps after that is a second atrocity, not
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Averyn's ashes fly the alliance's colours again. Not a victory anyone's celebrating."
+text = "Averyn's ashes fly the alliance's colours again. I've filed happier reports about worse days."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
@@ -77,7 +77,7 @@ units = Array[Resource]([SubResource("Spawn_bill_collector_armour"), SubResource
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "Take the ashes, Commander. I will bill you for the ground underneath them."
+text = "Take the ashes. I'll bill you for the ground underneath them."
 
 [sub_resource type="Resource" id="Event_morn_bills_the_ground"]
 script = ExtResource("6")
@@ -101,7 +101,7 @@ note = "Averyn's ground flew allied colours again before Morn could garrison the
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "His engineers never got a spade into the ruins, Ward. The land is back on our maps and he never garrisoned it."
+text = "His engineers never got a spade into the ruins, Ward. The land's back on our maps and he never garrisoned an acre of it."
 
 [sub_resource type="Resource" id="Event_averyn_inside_the_week"]
 script = ExtResource("6")

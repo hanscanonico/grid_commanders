@@ -47,7 +47,7 @@ requires = SubResource("Carrow_late")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Averyn's ground was back on our maps inside the week. Not the town — Morn saw to that — but the acres, and he never got to garrison them."
+text = "Averyn's ground was back on our maps inside the week. Not the town; Morn saw to that. The acres, though, and he never got to garrison one of them."
 requires = SubResource("Averyn_held")
 
 [sub_resource type="Resource" id="Line_5"]
@@ -59,12 +59,12 @@ requires = SubResource("Averyn_lost")
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Orlov's camp is the last ground the spearhead took, and we are standing on it. Past the foothills the maps stop being ours entirely."
+text = "Orlov's camp is the last ground the spearhead took, and we're standing on it. Past the foothills my maps stop being any use at all."
 
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "Then we go and make new ones. The front stops holding here and starts moving."
+text = "So we go and make new ones. The front stops holding here and starts moving."
 
 [resource]
 script = ExtResource("1")

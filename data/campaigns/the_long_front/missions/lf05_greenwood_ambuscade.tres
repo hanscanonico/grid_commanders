@@ -17,27 +17,27 @@ day = 6
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "Draeg's third column is into our home trees, Thorne. Open ground is gone — this is what's left to trade."
+text = "Draeg's third column is into our home trees, Thorne. The open ground is gone. Trees are what's left to trade."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Then we trade cover for time. The woods won't stop tanks forever, but they'll slow them long enough."
+text = "We trade cover for time. Woods don't stop tanks. They make tanks bleed for every mile, and bleeding is the whole idea."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "Six days of slowing costs us the tree line either way. Just tell me it's worth losing."
+text = "Six days of slowing costs us the tree line either way. I can replace the units. Tell me the wood is worth it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Everything's worth losing if it buys the road. Hold until day six — that's the whole fight."
+text = "Everything's worth losing if it buys the road. Hold until day six. That's the whole fight."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "The column ground to a crawl in the tree line. Never found the road it needed."
+text = "The column ground to a crawl in the tree line and never found the road it needed."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
@@ -66,7 +66,7 @@ units = Array[Resource]([SubResource("Spawn_warden_north"), SubResource("Spawn_w
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "The wardens know these trees better than the map does. They came when they heard the engines."
+text = "The wardens know these trees better than the map does, and they came the moment they heard engines."
 
 [sub_resource type="Resource" id="Event_the_wardens_rise"]
 script = ExtResource("4")

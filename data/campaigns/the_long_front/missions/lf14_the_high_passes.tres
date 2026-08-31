@@ -29,7 +29,7 @@ text = "Mixed force, no domain advantage on rock and passes. We take and hold al
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "Four cities, one column trying to stop you taking any of them. The numbers favour speed over caution."
+text = "Four cities, one column trying to stand in front of all four. Move faster than she can shift it between them and she loses three saving one."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -44,7 +44,7 @@ text = "All four cities fly allied colours by nightfall. Her column falls back d
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"halden_marr"
-text = "We dig in on ground that produces for the front instead of against it. Good trade for a bad coast to leave behind."
+text = "We dig in on ground that produces for the front instead of against it. I've swapped a bad coast for a good ridge and I'd do it again tomorrow."
 
 [sub_resource type="Resource" id="Trigger_day_5"]
 script = ExtResource("5")
