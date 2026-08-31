@@ -25,7 +25,8 @@ line whose speaker is not on the commander roster, or a seat cast as a commander
 who is not. A briefing with nothing to say when it is won. A briefing, debrief or
 interlude with no unconditional line — a page that can render empty. A deadline
 filed in `objectives` or `bonus_objectives` rather than in `failures`, and a
-`par_day` falling past the mission's own deadline. A launch that does not build.
+`par_day` falling past the mission's own deadline, or before the day a hold
+objective says the mission cannot be won. A launch that does not build.
 
 **The script.** A mission that scripts nothing — D9's own clause, a content bar
 rather than a definition one. A beat that waits for nothing or does nothing. Two
@@ -407,7 +408,8 @@ gated — which is the shape trap 1's check is written to allow.
    authored it goes in `failures` — never in `objectives`, and never in
    `bonus_objectives` either, since its truth is "the day has passed" and both
    goal lists read "satisfied = good", so as a bonus it would pay a star for
-   being slow. `par_day` has to fall inside it.
+   being slow. `par_day` has to fall inside it — and, where the primary is a
+   `SurviveUntilDay`, no earlier than its day, since nothing is won before it.
 6. **Author the beat.** One beat minimum, per D9. Its trigger is something the
    board can answer; its line is the sentence the briefing already promised; its
    effect is the smallest true board fact.
