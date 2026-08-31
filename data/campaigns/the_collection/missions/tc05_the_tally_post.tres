@@ -25,12 +25,12 @@ tag = &"tally_courier"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The tally post is where Ferrow keeps his count of what the ledger claims. Burn it and the count goes back to nothing."
+text = "That post is where Ferrow keeps his running count of what the ledger claims. Burn it. He starts the season again at zero."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"iris_colt"
-text = "I've had worse days than climbing two passes at once. We take it through whichever one he leaves thin."
+text = "Two passes. I've had worse days. We go through whichever one he leaves thin."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -40,12 +40,12 @@ text = "Just take it before he reinforces both."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"iris_colt"
-text = "The tally post is ours. Whatever Ferrow was counting, the count starts over."
+text = "Post is ours. Whatever Ferrow was counting, he counts it again from one."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Nothing owed, nothing collected. That is the sum he hates most."
+text = "Nothing owed, nothing collected, and a burnt post to write it in."
 
 [sub_resource type="Resource" id="Trigger_courier_taken"]
 script = ExtResource("7")
@@ -60,7 +60,7 @@ note = "The courier's satchel put the running count in Ferrow's own hand."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iris_colt"
-text = "Got the courier. The whole count is in this satchel — and every line of it is in Ferrow's own hand."
+text = "Got the courier. The whole count is in this satchel, every line of it in Ferrow's own hand."
 
 [sub_resource type="Resource" id="Event_the_courier"]
 script = ExtResource("6")

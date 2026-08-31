@@ -23,24 +23,24 @@ text = "Six weeks of collection, and the Directorate's audit ends the season wit
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "The province never changed hands. Whatever that paper says it is owed, it has been answered town by town."
+text = "The province never changed hands. Whatever that paper says it's owed, we've answered it town by town."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "And the auction closed with four of the five in our hands. That is a number the Directorate cannot argue with on paper."
+text = "And the auction closed with four of the five in our hands. The Directorate has to file that under paid."
 requires = SubResource("Province_held")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"dane_ferrow"
-text = "The raiders went home paid, Commander. That is the only entry I ever cared about, and you wrote it yourself."
+text = "The raiders went home paid. That's the only entry I ever cared about, and you wrote it yourself."
 requires = SubResource("Bounty_paid")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "The Directorate has stopped pretending Ferrow is a debt collector. They have handed the war to the man who lends him the money."
+text = "The Directorate's stopped pretending Ferrow is a debt collector. They've handed the war to the man who lends him the money."
 
 [resource]
 script = ExtResource("1")

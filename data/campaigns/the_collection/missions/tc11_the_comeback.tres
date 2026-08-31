@@ -31,12 +31,12 @@ at_most = 0
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four of the five towns are gone, and Vale's expensive army holds all of them. This is the bottom of the squeeze."
+text = "Four of the five towns are gone. Vale's expensive army holds every one of them. It doesn't get lower than this."
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "The border blockade is still paying dividends here, Commander. Do enjoy them."
+text = "The border blockade is still paying dividends here. Do enjoy them."
 requires = SubResource("Interest_drawn")
 
 [sub_resource type="Resource" id="Line_1c"]

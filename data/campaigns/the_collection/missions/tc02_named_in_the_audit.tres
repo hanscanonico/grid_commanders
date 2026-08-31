@@ -28,18 +28,18 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The forged audit lists these four towns as payment owed. Ferrow means to take on paper what he cannot win outright."
+text = "Four towns. The forged audit lists every one of them as payment owed. Ferrow means to take on paper what he can't win outright."
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "And he was paid off us on the depot road. That money was banked before he read a word of this."
+text = "And he was paid off us on the depot road — banked that before he'd read a word of this."
 requires = SubResource("Paid_already")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "A paper claim means nothing without men standing on the ground. Let us not give him the men."
+text = "A paper claim needs men standing on the ground. Don't give him any."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -78,7 +78,7 @@ units = Array[Resource]([SubResource("Spawn_collector_north"), SubResource("Spaw
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "The audit says these towns are mine. I have sent someone for the keys."
+text = "The audit says these towns are mine. I've sent someone for the keys."
 
 [sub_resource type="Resource" id="Event_the_collectors"]
 script = ExtResource("5")
@@ -108,7 +108,7 @@ points = 3000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Down to two, and I get paid for every wreck. Thank you, Commander."
+text = "Down to two. Every wreck of yours pays me. Thank you."
 
 [sub_resource type="Resource" id="Event_bounty_banked"]
 script = ExtResource("5")

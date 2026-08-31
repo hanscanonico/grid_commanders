@@ -36,7 +36,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The counting house is where Vale's occupation gets paid. Take it and the whole squeeze runs out of money at once."
+text = "The counting house is where Vale's occupation gets paid. Take it and the squeeze runs out of money in a morning."
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
@@ -47,7 +47,7 @@ requires = SubResource("Witnesses_talking")
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "Ground holds better than a treasury does. Take the house, and the roads he's been buying stop being his."
+text = "Ground holds better than a treasury. Take the house and the roads he's been buying stop being his."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -103,7 +103,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "The ledgers left for the interior an hour ago, Commander. You may still have the man who kept them."
+text = "The ledgers left for the interior an hour ago. You may still have the man who kept them."
 
 [sub_resource type="Resource" id="Event_the_ledgers_move"]
 script = ExtResource("7")

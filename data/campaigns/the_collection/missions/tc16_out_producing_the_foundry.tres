@@ -34,12 +34,12 @@ at_most = 0
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "This belt built the army that crossed our border in the first place. Take the majority and it starts building ours instead."
+text = "This belt built the army that crossed our border. Take the majority. Then it builds ours instead."
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale is finished, but his money is not. What he earned off the blockade is in Vance's hands now."
+text = "Vale's finished. His money isn't — what he earned off the blockade is in Vance's hands now."
 requires = SubResource("Interest_drawn")
 
 [sub_resource type="Resource" id="Line_1c"]
@@ -51,7 +51,7 @@ requires = SubResource("Interest_denied")
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"sable_wren"
-text = "Every one of those foundries has trees beside it. Sit in the trees, let her walk onto the property, and she pays twice for ground I never left."
+text = "Trees beside every one of those foundries. Sit in them. Let her walk onto the property and pay twice for ground I never left."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -84,7 +84,7 @@ amount = 6000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Vale's money outlived Vale. Three percent a day, Commander, and it is all still adding up."
+text = "Vale's money outlived Vale. Three percent a day, and it's all still adding up."
 
 [sub_resource type="Resource" id="Event_vales_money_outlives_him"]
 script = ExtResource("6")

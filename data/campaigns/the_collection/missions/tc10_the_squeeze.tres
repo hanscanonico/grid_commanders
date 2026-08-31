@@ -26,12 +26,12 @@ last_day = 11
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale has three of the four towns and the income to match. This is the worst position of the war so far."
+text = "Vale has three of the four towns and the income to match, and we've never been this far behind in the whole war."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"ivar_thorne"
-text = "Good. My units hit harder the worse they look, and by day seven they will all look terrible. Hold, and let them get angry."
+text = "Good. My units hit harder the worse they look, and by day seven they'll all look terrible. Hold. Let them get angry."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -107,7 +107,7 @@ units = Array[Resource]([SubResource("Spawn_bought_tank")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "The blockade paid for this one, Commander. You left it standing six days. This is what six days buys."
+text = "The blockade paid for this one. You left it standing six days. This is what six days buys."
 
 [sub_resource type="Resource" id="Event_bought_and_paid"]
 script = ExtResource("5")

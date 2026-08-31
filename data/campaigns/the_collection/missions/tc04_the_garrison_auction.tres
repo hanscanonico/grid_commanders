@@ -33,12 +33,12 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The forged audit \"auctions\" these towns to whoever holds them when it closes. Ferrow is racing the clock as much as we are."
+text = "The forged audit \"auctions\" these towns to whoever holds them when it closes. So Ferrow's racing the clock as hard as we are."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"halden_marr"
-text = "No water anywhere on this board, so today I am just another commander. That suits the job. Five towns, five walks, and whoever starts first owns them when the books close."
+text = "No water anywhere on this board, so today I'm just another commander. Suits the job. Five towns, five walks, and whoever starts first owns them when the books close."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -77,7 +77,7 @@ units = Array[Resource]([SubResource("Spawn_bidder_north"), SubResource("Spawn_b
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Books close on day nine. Everything you are not standing on is mine."
+text = "Books close on day nine. Everything you're not standing on is mine."
 
 [sub_resource type="Resource" id="Event_last_bidders"]
 script = ExtResource("6")
@@ -104,7 +104,7 @@ note = "Four of the five auction towns were ours before the books closed."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"halden_marr"
-text = "Four of five, and three days to spare. Whatever that audit is worth, it is ours now."
+text = "Four of five, and three days to spare. Whatever that audit is worth, it's ours now."
 
 [sub_resource type="Resource" id="Event_the_books_are_ours"]
 script = ExtResource("6")

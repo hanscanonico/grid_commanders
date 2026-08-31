@@ -28,12 +28,12 @@ max_losses = 8
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The forged ledger bought Ferrow two provinces on paper. This is where he starts paying it back — on his own ground."
+text = "The forged ledger bought Ferrow two provinces on paper. He starts paying it back here, on his own ground."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"perrin_ash"
-text = "Crossing now. Clean approach, no hesitation — that foundry opens the whole province behind it."
+text = "Crossing now. Clean approach, no hesitation. That foundry opens the whole province behind it."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -81,7 +81,7 @@ tags = Array[StringName]([&"border_levy"])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"viktor_draeg"
-text = "Ferrow. The audit is a forgery, and my men will not die for it. Nor will your border levy. They have put their rifles down and gone home."
+text = "Ferrow. The audit is a forgery, and my men won't die for it. Nor will your border levy. They've put their rifles down and gone home."
 
 [sub_resource type="Resource" id="Event_the_border_levy"]
 script = ExtResource("6")
@@ -104,7 +104,7 @@ units = Array[Resource]([SubResource("Spawn_ferrows_own")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "This is my ground, Commander, and I am standing on it personally. Price it accordingly."
+text = "This is my ground, and I'm standing on it personally. Price it accordingly."
 
 [sub_resource type="Resource" id="Event_ferrow_digs_in"]
 script = ExtResource("6")

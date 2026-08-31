@@ -36,12 +36,12 @@ max_losses = 9
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three depots on one road, all feeding the same production line. Morn is defending output, not ground, and he will spend units to keep it running."
+text = "Three depots on one road, all feeding the same production line. Morn is defending output rather than ground, and he'll spend units to keep it running."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"tomas_reed"
-text = "Then we make it cost more than it is worth. Take all three, and keep the column spread out while we do."
+text = "Then we make it cost more than it's worth. Take all three, and keep the column spread out while we do."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -76,7 +76,7 @@ units = Array[Resource]([SubResource("Spawn_line_replacement")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "One depot off the line, and the line replaced it the same afternoon. That is what output means, Commander."
+text = "One depot off the line. The line replaced it the same afternoon. Bring more."
 
 [sub_resource type="Resource" id="Event_the_line_replaces_it"]
 script = ExtResource("6")
