@@ -1,8 +1,8 @@
 # The Hollow Crown — "Shared Supply".
-# One lateral supply road runs the whole width. Marshland walls it off north
+# One lateral supply road runs the whole width. A river walls it off north
 # and south, so treads reach the road only over the two bridged forks: the
 # northern fork at x=8, where the depot relay stands, and the southern at x=14.
-# Infantry wade the marsh anywhere; nothing on wheels or tracks does.
+# Infantry ford the river anywhere; nothing on wheels or tracks does.
 # Draeg holds the half of the depot road you are not on. Take the relay inside
 # five days and his column is what spent the crossing covering the rest of the
 # ridge, which is what opens the ridge-road mission that asks you to carry him.
