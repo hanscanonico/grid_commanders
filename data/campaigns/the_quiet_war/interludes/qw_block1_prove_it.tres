@@ -47,7 +47,7 @@ requires = SubResource("Thornfield_held")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"ivar_thorne"
-text = "So we have proved it. That is the smallest part of this — the towns are still flipping, and now he knows we can read his handwriting."
+text = "So we've proved it. That's the smallest part of this. The towns are still flipping, and now he knows we can read his handwriting."
 
 [resource]
 script = ExtResource("1")

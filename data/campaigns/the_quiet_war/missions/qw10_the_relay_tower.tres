@@ -25,7 +25,7 @@ tag = &"morn_courier"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Every column Morn moves reports through one relay hidden in a border city. Cut the line and the next raid moves blind."
+text = "Every column Morn moves reports through one relay, and it's hidden in a border city. Cut that line and his next raid goes wherever it was already pointed."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -35,7 +35,7 @@ text = "Four days before the relay's next scheduled report. That's the whole win
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Four days to cost him a whole network's worth of orders. I'd call that a bargain."
+text = "Four days to cost him a whole network's worth of orders, which is the cheapest thing I'll buy all war."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -63,7 +63,7 @@ objective_id = &"destroy_morn_courier"
 [sub_resource type="Resource" id="Event_line_ride"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "If the line is going to be cut, send the orders by hand. Ride."
+text = "Cut line or not, the orders move. By hand. Ride."
 
 [sub_resource type="Resource" id="Event_orders_by_hand"]
 script = ExtResource("6")
@@ -86,7 +86,7 @@ note = "The rider was caught with the orders still on him; the network is deaf a
 [sub_resource type="Resource" id="Event_line_run_down"]
 script = ExtResource("4")
 speaker = &"sable_wren"
-text = "Run down in open ground with the orders still in his hand. Nothing east of here has been told anything."
+text = "Rider's down in open ground, orders still in his hand. Nobody east of here knows a thing about what he was carrying."
 
 [sub_resource type="Resource" id="Event_the_rider_is_run_down"]
 script = ExtResource("6")

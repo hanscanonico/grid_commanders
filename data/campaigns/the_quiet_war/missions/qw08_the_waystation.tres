@@ -26,12 +26,12 @@ tag = &"ferrow_courier"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Ferrow keeps a hidden depot behind every column that has crossed unnoticed. You found it on a hunch, Flux. Do not waste the head start."
+text = "Ferrow keeps a hidden depot behind every column that's crossed unnoticed. You found it on a hunch, Flux. Don't waste the head start."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "My screen sees further than most, which is where the hunch came from. Hit it before the garrison learns the depot is not hidden any more."
+text = "My screen sees further than most. That's where the hunch came from. Hit it before the garrison finds out the depot isn't hidden any more."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -70,7 +70,7 @@ units = Array[Resource]([SubResource("Spawn_depot_watch")])
 [sub_resource type="Resource" id="Event_line_double_the_watch"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Somebody's been reading my routes. Double the depot watch and bill it to Vale."
+text = "Somebody's been reading my routes. Double the depot watch, and bill Vale at my rate."
 
 [sub_resource type="Resource" id="Event_the_garrison_learns"]
 script = ExtResource("6")
@@ -94,7 +94,7 @@ note = "Ferrow's courier is down and his route book is ours; that column crosses
 [sub_resource type="Resource" id="Event_line_route_book"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Courier's down and the route book came off him intact. That's a month of his crossings, backwards."
+text = "Courier's down. The route book came off him intact, which is a month of his crossings read backwards."
 
 [sub_resource type="Resource" id="Event_the_route_book"]
 script = ExtResource("6")

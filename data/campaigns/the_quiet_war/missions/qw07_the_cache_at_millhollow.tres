@@ -48,7 +48,7 @@ text = "Good enough odds to move on. Let's not give the clock a vote."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Millhollow falls with the week not yet out. He got his crates onto the road; he does not get the town that fed them."
+text = "Millhollow falls with a day of the week to spare. He got his crates onto the road. He doesn't get the town that fed them."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
