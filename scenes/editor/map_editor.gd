@@ -2,12 +2,13 @@ class_name MapEditor
 extends Control
 ## The map editor: a board somebody paints (COM-263).
 ##
-## The draft is a `MapDocument` and nothing else — the editor holds one from the
-## moment the new-map page is answered until it leaves for the menu, and every
-## edit is a call on it. Which cell holds what is therefore the document's
-## answer, never this page's: what is on screen is `EditorBoard`'s reading of the
-## draft, taken again after every stroke, so there is no second copy of the board
-## here to fall out of step with the file it saves to.
+## The draft is a `MapDocument` and nothing else — the editor opens on a blank
+## one and holds one until it leaves for the menu, so no page ever stands over an
+## empty board and every edit is a call on the draft. Which cell holds what is
+## therefore the document's answer, never this page's: what is on screen is
+## `EditorBoard`'s reading of the draft, taken again after every stroke, so there
+## is no second copy of the board here to fall out of step with the file it saves
+## to.
 ##
 ## Whether the draft *plays* is `MapValidator`'s answer, taken again just as
 ## often and shown under the board. The editor decides nothing about a board and
@@ -48,14 +49,10 @@ enum Brush { TERRAIN, OWNER, UNIT, ERASE }
 var _db: TerrainDB
 var _unit_db: UnitDB
 var _doc: MapDocument
-## The armies the new-map page said this board is meant to seat. Carried, not
-## enforced: the roster is what the board's properties name (four-players D1).
-var _seats: int = MapData.DEFAULT_TEAMS.size()
 var _board: EditorBoard
 var _palette: EditorPalette
 var _inspector: EditorSidebar
 var _strip: EditorValidationStrip
-var _new_map: EditorNewMapPanel
 ## The two brush columns as a page, on a touch build only — null on a desktop
 ## one, where they flank the board and there is no sheet to build (mobile D5).
 var _sheet: EditorToolSheet
@@ -96,18 +93,14 @@ func _ready() -> void:
 	_db = TerrainDB.load_default()
 	_unit_db = UnitDB.load_default()
 	_build()
+	_open(EditorSidebar.DEFAULT_SIZE)
 	var shot_path := ScreenshotUtil.requested()
 	if shot_path != "":
-		# A capture photographs the editor, not the page it opens on: the frame is
-		# of a board under a palette, which is the thing this scene is.
-		_open(EditorNewMapPanel.DEFAULT_SIZE, _seats)
 		await ScreenshotUtil.capture_and_quit(self, shot_path)
-		return
-	_new_map.begin()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _doc == null or _page_is_open():
+	if _page_is_open():
 		return
 	if _history_key(event):
 		return
@@ -151,8 +144,7 @@ func _history_key(event: InputEvent) -> bool:
 ## not move.
 func _page_is_open() -> bool:
 	return (
-		_new_map.visible
-		or _open_panel.visible
+		_open_panel.visible
 		or _save_dialog.visible
 		or _leave_guard.visible
 		or (_sheet != null and _sheet.visible)
@@ -163,8 +155,7 @@ func _page_is_open() -> bool:
 
 
 ## Opens a fresh draft of `board_size` on open ground.
-func _open(board_size: Vector2i, seats: int) -> void:
-	_seats = seats
+func _open(board_size: Vector2i) -> void:
 	_adopt(MapDocument.blank(board_size.x, board_size.y, _db))
 
 
@@ -175,14 +166,11 @@ func _open_path(path: String) -> void:
 	var map := MapData.load_from_file(path, _db)
 	if map == null:
 		_status.text = "THAT BOARD COULD NOT BE READ"
-		if _doc == null:
-			_new_map.begin()
 		return
 	var doc := MapDocument.from_map(map, _db)
 	var shipped := not path.begins_with(MapCatalog.USER_DIR)
 	if shipped:
 		doc.map_name = ""
-	_seats = doc.player_count()
 	_adopt(doc)
 	if shipped:
 		_status.text = "OPENED AS A COPY — SAVE IT UNDER A NAME OF YOUR OWN"
@@ -204,8 +192,6 @@ func _adopt(doc: MapDocument) -> void:
 ## board, the validator and the status line all read the restored draft, exactly
 ## as they read a stroke that had just been laid.
 func _step_history(forward: bool) -> void:
-	if _doc == null:
-		return
 	var moved := _history.redo(_doc) if forward else _history.undo(_doc)
 	_show_history()
 	if not moved:
@@ -245,7 +231,7 @@ func _show_history() -> void:
 ## the whole board. What the draft still lacks is read once the stroke closes:
 ## the validator floods the whole board, and a held drag would run it per cell.
 func _apply_at(cell: Vector2i) -> void:
-	if _doc == null or not _doc.in_bounds(cell):
+	if not _doc.in_bounds(cell):
 		return
 	_board.set_cursor(cell)
 	_refusal = ""
@@ -311,8 +297,6 @@ func _revalidate() -> void:
 
 
 func _ask_save() -> void:
-	if _doc == null:
-		return
 	_hand_the_board_back()
 	if not _defects.is_empty():
 		_status.text = "FIX WHAT IS LISTED BELOW THE BOARD FIRST"
@@ -335,23 +319,10 @@ func _on_saved(map_name: String, description: String) -> void:
 	_status.text = "SAVED AS %s" % _doc.map_name.to_upper()
 
 
-## Backing out of the new-map page is backing out of the editor while there is no
-## draft behind it, and an ordinary cancel once there is one.
+## Backing out of any page lands on the draft it stood over.
 func _on_page_cancelled() -> void:
-	if _doc == null:
-		_leave()
-		return
 	_hand_the_board_back()
 	_say_cursor()
-
-
-## Backing out of the open list lands on the page it was reached from, which is
-## the new-map page while there is no draft to go back to.
-func _on_open_cancelled() -> void:
-	if _doc == null:
-		_new_map.begin()
-		return
-	_on_page_cancelled()
 
 
 ## Leaving is the one action the editor asks about first, and only while there
@@ -380,8 +351,7 @@ func _arm(brush: Brush) -> void:
 	if _sheet != null:
 		_sheet.close()
 	_hand_the_board_back()
-	if _doc != null:
-		_say_cursor()
+	_say_cursor()
 
 
 ## Every control that can hold a brush says whether it is holding this one, so
@@ -416,7 +386,7 @@ func _hand_the_board_back() -> void:
 ## Grows or crops the draft under the cursor, which is the only way back from a
 ## board the validator refuses for its size.
 func _on_resize_asked(board_size: Vector2i) -> void:
-	if _doc == null or _doc.size() == board_size:
+	if _doc.size() == board_size:
 		return
 	_doc.resize(board_size.x, board_size.y)
 	_stroke_changed = true
@@ -433,8 +403,6 @@ func _on_resize_asked(board_size: Vector2i) -> void:
 ## is swallowed, so a right-click on the board cannot read as the cancel it also
 ## is and walk the author out of their draft.
 func _on_board_input(event: InputEvent) -> void:
-	if _doc == null:
-		return
 	if _touch != null:
 		if _touch.handle(event):
 			_board.accept_event()
@@ -529,16 +497,10 @@ func _look_at(cell: Vector2i) -> void:
 
 
 func _build_pages() -> void:
-	_new_map = EditorNewMapPanel.new()
-	add_child(_new_map)
-	_new_map.created.connect(_open)
-	_new_map.open_asked.connect(func() -> void: _open_panel.begin())
-	_new_map.cancelled.connect(_on_page_cancelled)
-
 	_open_panel = EditorOpenPanel.new()
 	add_child(_open_panel)
 	_open_panel.chosen.connect(_open_path)
-	_open_panel.cancelled.connect(_on_open_cancelled)
+	_open_panel.cancelled.connect(_on_page_cancelled)
 
 	_save_dialog = EditorSaveDialog.new()
 	add_child(_save_dialog)
@@ -577,9 +539,7 @@ func _build_header() -> Control:
 ## What the draft is and what is under the brush — the two lines the page keeps
 ## current, since neither is anything the board itself draws.
 func _say_cursor() -> void:
-	_toolbar.show_headline(
-		"%d x %d · SEATS %d/%d" % [_doc.width, _doc.height, _doc.player_count(), _seats]
-	)
+	_toolbar.show_headline("%d x %d · SEATS %d" % [_doc.width, _doc.height, _doc.player_count()])
 	_status.text = "%s      BRUSH  %s" % [_cell_words(_board.cursor_cell), _brush_words()]
 
 

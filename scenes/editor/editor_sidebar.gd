@@ -33,6 +33,13 @@ const ICON := EditorPalette.SWATCH
 ## What the neutral seat is called on its chip. A dash rather than the word,
 ## because the chip is four characters wide.
 const NEUTRAL_LABEL := "—"
+## The smallest board worth authoring — under this there is no room for two HQs
+## and the ground between them — and the largest one a player can still pan
+## across. Bulwark, the biggest board that ships, is 49x32.
+const MIN_SIDE := 8
+const MAX_SIDE := 60
+## The board the editor opens on, big enough to paint a duel across.
+const DEFAULT_SIZE := Vector2i(20, 15)
 
 var _units: Array[UnitType] = []
 var _seat_buttons: Array[Button] = []
@@ -51,6 +58,12 @@ var _unit_armed := false
 var _size := Vector2i.ZERO
 var _width_value: Label
 var _height_value: Label
+
+
+## Every board side the editor offers, so a stepper can never walk a draft to a
+## size `MapDocument` would have to be resized out of.
+static func clamp_side(value: int) -> int:
+	return clampi(value, MIN_SIDE, MAX_SIDE)
 
 
 ## Stocks the column from the unit database and dresses it.
@@ -196,7 +209,7 @@ func _build_size() -> Control:
 
 func _step(step: int, axis: int) -> void:
 	var wanted := _size
-	wanted[axis] = EditorNewMapPanel.clamp_side(wanted[axis] + step)
+	wanted[axis] = clamp_side(wanted[axis] + step)
 	if wanted == _size:
 		return
 	show_size(wanted)

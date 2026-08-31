@@ -1,8 +1,8 @@
 extends GutTest
 ## The editor's pure answers: which cell a press lands on, where a board sits in
 ## a frame too small for it, where a starting unit's art stands on its cell,
-## which order the brushes come in, and what a new board's dialog will let an
-## author ask for. Statics over a draft and a rect,
+## which order the brushes come in, and which sizes the board steppers offer.
+## Statics over a draft and a rect,
 ## like MapThumbnail's region choice, so the arithmetic the page is laid out by
 ## is checked without building the page.
 
@@ -89,23 +89,13 @@ func test_the_palette_offers_the_ground_before_the_properties() -> void:
 	assert_true(seen_property, "the palette offers no property to paint")
 
 
-func test_a_new_board_is_never_smaller_or_wider_than_the_editor_offers() -> void:
-	assert_eq(
-		EditorNewMapPanel.clamp_side(EditorNewMapPanel.MIN_SIDE - 1), EditorNewMapPanel.MIN_SIDE
-	)
-	assert_eq(
-		EditorNewMapPanel.clamp_side(EditorNewMapPanel.MAX_SIDE + 1), EditorNewMapPanel.MAX_SIDE
-	)
-	assert_eq(EditorNewMapPanel.clamp_side(20), 20)
+func test_a_board_is_never_stepped_smaller_or_wider_than_the_editor_offers() -> void:
+	assert_eq(EditorSidebar.clamp_side(EditorSidebar.MIN_SIDE - 1), EditorSidebar.MIN_SIDE)
+	assert_eq(EditorSidebar.clamp_side(EditorSidebar.MAX_SIDE + 1), EditorSidebar.MAX_SIDE)
+	assert_eq(EditorSidebar.clamp_side(20), 20)
 
 
-func test_a_new_board_plans_for_between_two_and_four_armies() -> void:
-	assert_eq(EditorNewMapPanel.clamp_seats(1), MapData.DEFAULT_TEAMS.size())
-	assert_eq(EditorNewMapPanel.clamp_seats(9), MapData.PLAYER_TEAMS.size())
-	assert_eq(EditorNewMapPanel.clamp_seats(3), 3)
-
-
-func test_the_default_board_is_one_the_dialog_can_offer() -> void:
-	var wanted := EditorNewMapPanel.DEFAULT_SIZE
-	assert_eq(EditorNewMapPanel.clamp_side(wanted.x), wanted.x)
-	assert_eq(EditorNewMapPanel.clamp_side(wanted.y), wanted.y)
+func test_the_board_the_editor_opens_on_is_one_the_steppers_can_reach() -> void:
+	var wanted := EditorSidebar.DEFAULT_SIZE
+	assert_eq(EditorSidebar.clamp_side(wanted.x), wanted.x)
+	assert_eq(EditorSidebar.clamp_side(wanted.y), wanted.y)

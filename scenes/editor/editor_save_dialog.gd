@@ -15,8 +15,8 @@ extends Control
 signal saved(map_name: String, description: String)
 signal cancelled
 
-## The reading column's width — the same 180 the new-map page's rows stand at, so
-## the two pages of the editor are one page-width.
+## The width the name and the pitch stand at. Narrower than the page on purpose:
+## a caption stranded a page-width from its field reads as a separate control.
 const _ROW_WIDTH := 180
 ## How long a pitch may be. The map list shows one line under a name.
 const MAX_DESCRIPTION := 72
