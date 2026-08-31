@@ -1,22 +1,31 @@
 # The Furnace Winter, The Freeze — "Last Granary".
-# Teaching board: the player owns the HQ and one back-line city, neither of
-# which builds. Nothing is built until the crossroads base at the centre is
-# taken — capture-before-production.
+# Teaching board: nothing the player starts with builds. The HQ and the
+# back-line city pay, the granary base at the centre is the only thing on the
+# map that produces, and it is neutral — capture-before-production.
+#
+# The mill race runs down column 4 and cuts the board in two: the player's
+# column starts west of it, the granary and Ferrow's torch squad east. Two
+# bridges cross it — the granary road at (4,4) and the mill lane at (4,6) —
+# and picking one is the day-1 decision the board asks for. The race's dry
+# head at (4,0) is the long way round, not a third crossing.
+# data/terrain/river.tres admits boots but not tires, so Ferrow's mech fords
+# the race wherever it likes while the player's recon is held to a bridge.
+#
 # Ferrow's mech is tagged the_match: the torch squad. The burn beat fires
 # when it stands on the granary base, so shooting it down on the road is
 # the other way to save Milltown.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-......M......
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-..........BQ.
-......M......
+.....M..F....
+.Q..~...FF...
+.==.~....C...
+..==~..FF....
+..==+=B=====.
+..F.~......C.
+...C+....F...
+.F..~.....BQ.
+..F.~M.......
 [owners]
 1 1 1
 2 11 7
