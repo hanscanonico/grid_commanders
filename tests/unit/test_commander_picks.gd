@@ -59,6 +59,20 @@ func test_the_walk_order_decides_who_keeps_a_contested_general() -> void:
 	assert_eq(settled, {BLUE: ALINA}, "the seat walked first keeps her")
 
 
+## `from_menu` takes `seats` empty to mean every seat plays, so the walk has to
+## answer for an order that names nobody: the picks' own order is what is left,
+## and a seat the order forgot is still walked rather than silently dropped.
+func test_a_seat_the_order_does_not_name_is_still_walked() -> void:
+	var settled := CommanderPicks.deduplicated({RED: ALINA, BLUE: ALINA}, [] as Array[int])
+	assert_push_error("can command only one army")
+	assert_eq(settled, {RED: ALINA}, "red was named first, so red keeps her")
+	assert_eq(
+		CommanderPicks.deduplicated({RED: ALINA, BLUE: VIKTOR}, [BLUE] as Array[int]),
+		{BLUE: VIKTOR, RED: ALINA},
+		"a half-named order keeps both, the named seat first"
+	)
+
+
 func test_distinct_picks_pass_through_untouched() -> void:
 	var picks := {RED: ALINA, BLUE: VIKTOR, GREEN: NONE}
 	assert_eq(CommanderPicks.deduplicated(picks, [RED, BLUE, GREEN]), picks, "nothing to correct")
