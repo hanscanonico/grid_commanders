@@ -141,6 +141,26 @@ var squad_now := MAX_FIGURES
 var squad_was := MAX_FIGURES
 ## 0 -> 1 as the surplus figures rise, spin and fall away.
 var fall_p := 0.0
+## 0 -> 1 as the squad rolls the last stretch into its firing slot. 1.0 is
+## posted, and a posted half must draw exactly the frame it drew before there was
+## an arrive beat at all.
+var arrive_p := 1.0
+## 0 -> 1 over the wind-up before this side fires. Its *length* is the weapon's,
+## which is most of what tells a howitzer from a rifle before a single pixel of
+## projectile exists (CombatBeats).
+var aim_p := 0.0
+## 0 -> 1 over the casualty beat, which the sheet sizes off how many figures this
+## side lost. `fall_p` is written to the same value until the side-motion slice
+## retires it.
+var casualty_p := 0.0
+## The style's own look numbers, copied on by the director rather than looked up:
+## how much scuff this half kicks, how far its weapon lifts (+) or settles (-)
+## and tips (nose-toward-the-seam positive) over the wind-up, and how far out it
+## starts its roll-in.
+var dust := 0.0
+var aim_lift := 0.0
+var aim_pitch := 0.0
+var arrive_scale := 1.0
 ## Recoil offset along the firing axis: negative pulls back, positive thrusts.
 var lunge := 0.0
 ## 0 -> 1 white over-brighten on taking a hit.

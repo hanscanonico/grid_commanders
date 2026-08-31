@@ -50,6 +50,9 @@ static func unarmed() -> BattleStyle:
 		_unarmed.projectile = BattleStyle.NONE
 		_unarmed.muzzle = 0.0
 		_unarmed.recoil = 0.0
+		_unarmed.aim_seconds = 0.0
+		_unarmed.aim_lift = 0.0
+		_unarmed.aim_pitch = 0.0
 	return _unarmed
 
 

@@ -16,26 +16,10 @@ extends CutsceneDirector
 ## jumping to its end rather than a race between cancelled tweens, and the
 ## awaitable `play()` resolves exactly once whatever the player presses (plan R2).
 ## The randomness in the shake is a function of the clock too, so a posed frame is
-## the same frame every run (R4). This file owns the beat sheet and what goes in
-## the band; the lifecycle and the shell around it — letterbox, dim, camera punch,
-## cue ledger — are shared with CaptureCutscene.
-
-## Beat budgets, in seconds. A clean kill runs ~1.8 s and a full exchange with a
-## counter ~2.3 s, which is the tempo the plan's beat sheet asks for: long enough
-## to read, short enough to sit through two hundred times. Those seconds are the
-## default speed tier's; CutscenePlayback is the one place a tier scales them.
-const WIPE_IN := 0.20
-const PLATES := 0.22
-const ANTICIPATION := 0.16
-const TRAVEL := 0.29
-const IMPACT := 0.40
-const DEATH := 0.35
-const HOLD := 0.25
-const WIPE_OUT := 0.20
-## The hold can be trimmed away entirely when the pacing asks for it, but the
-## wipe cannot: a cut-in that vanishes on one frame reads as a glitch rather than
-## as a fast exit.
-const MIN_WIPE_SCALE := 0.4
+## the same frame every run (R4). What the beat sheet *is* belongs to CombatBeats,
+## which is Node-free and therefore checkable without a scene; this file owns what
+## goes in the band, and the lifecycle and the shell around it — letterbox, dim,
+## camera punch, cue ledger — are shared with CaptureCutscene.
 
 ## How far each half slides in from its own edge.
 const SLIDE_PX := 60.0
@@ -55,31 +39,15 @@ const INDIRECT_LOB := 1.5
 ## How long a barrel stays alight after it fires. A sustained weapon ignores this
 ## and burns for its whole volley instead — see `_flashing`.
 const FLASH_HOLD := 0.12
-
-
-## The windows every beat is read out of, in seconds from the wipe. A window of
-## zero length is a beat this exchange does not have — an unanswered volley has
-## no counter, a survivor has no death.
-class Beats:
-	var atk_ready := Vector2.ZERO
-	var atk_fire := 0.0
-	var atk_travel := Vector2.ZERO
-	var def_impact := Vector2.ZERO
-	var def_death := Vector2.ZERO
-	var ctr_ready := Vector2.ZERO
-	var def_fire := 0.0
-	var def_travel := Vector2.ZERO
-	var atk_impact := Vector2.ZERO
-	var atk_death := Vector2.ZERO
-	var wipe_out := Vector2.ZERO
-	var total := 0.0
-
+## How long the band's entry push is held at full before it eases off. It opens
+## with the arrive, which is where the halves have finished sliding in.
+const PUSH_HOLD := 0.3
 
 var _atk: CutsceneSide
 var _def: CutsceneSide
 var _fx: CutsceneFx
 
-var _beats := Beats.new()
+var _beats := CombatBeats.new()
 var _result: CombatSnapshot.CombatResult
 ## The two weapon signatures this exchange fires with. Read from data, never
 ## decided here — see BattleStyle.
@@ -171,12 +139,12 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 	_def.hp_shown = result.defender_hp_before
 	_squads(_atk, result.attacker_hp_before, result.attacker_hp_after, result.attacker_died)
 	_squads(_def, result.defender_hp_before, result.defender_hp_after, result.defender_died)
-	_beats = _plan(
-		result,
-		TRAVEL * _atk_style.travel_scale,
-		TRAVEL * _def_style.travel_scale,
-		clampf(tail_scale, 0.0, 1.0)
-	)
+	# How fast the clock this sheet will be played on runs, read once here and
+	# never again: CombatBeats stretches the wind-up against it, and a rate read
+	# per frame would re-plan the sheet mid-run. `FastForward` is deliberately out
+	# — the player holding it has asked for the compression.
+	var rate := Settings.speed.cutscene_rate() * speed
+	_beats = CombatBeats.plan(result, _atk_style, _def_style, clampf(tail_scale, 0.0, 1.0), rate)
 
 
 ## How many figures a side posts and how many it keeps. A side that dies keeps
@@ -225,38 +193,6 @@ func _terrain_at(cell: Vector2i) -> TerrainType:
 	return view.map.terrain_at(cell)
 
 
-## The beat sheet, laid out on the clock. Reads only the result's flags, so an
-## exchange with no counter is genuinely shorter rather than padded with a pause.
-## The two travel budgets come from the firing styles — an arcing shell is given
-## longer to get there than a burst of tracer — and `tail` trims the closing hold
-## and wipe, which is the only part the pacing is allowed to take.
-static func _plan(
-	result: CombatSnapshot.CombatResult, atk_travel: float, def_travel: float, tail: float
-) -> Beats:
-	var beats := Beats.new()
-	beats.atk_ready = Vector2(WIPE_IN, WIPE_IN + ANTICIPATION)
-	beats.atk_fire = beats.atk_ready.y
-	beats.atk_travel = Vector2(beats.atk_fire, beats.atk_fire + atk_travel)
-	beats.def_impact = Vector2(beats.atk_travel.y - 0.02, beats.atk_travel.y - 0.02 + IMPACT)
-	var settled := beats.def_impact.y
-	if result.defender_died:
-		beats.def_death = Vector2(settled - 0.05, settled - 0.05 + DEATH)
-		settled = beats.def_death.y
-	elif result.countered:
-		beats.ctr_ready = Vector2(settled, settled + ANTICIPATION)
-		beats.def_fire = beats.ctr_ready.y
-		beats.def_travel = Vector2(beats.def_fire, beats.def_fire + def_travel)
-		beats.atk_impact = Vector2(beats.def_travel.y - 0.02, beats.def_travel.y - 0.02 + IMPACT)
-		settled = beats.atk_impact.y
-		if result.attacker_died:
-			beats.atk_death = Vector2(settled - 0.05, settled - 0.05 + DEATH)
-			settled = beats.atk_death.y
-	var hold := settled + HOLD * tail
-	beats.wipe_out = Vector2(hold, hold + WIPE_OUT * maxf(tail, MIN_WIPE_SCALE))
-	beats.total = beats.wipe_out.y
-	return beats
-
-
 ## How long this exchange runs: the beat sheet's own end.
 func _total() -> float:
 	return _beats.total
@@ -268,15 +204,12 @@ func _total() -> float:
 ## Everything the cut-in shows — sounds go through `_play.cue`, which is what
 ## keeps a beat crossed twice heard once.
 func _apply() -> void:
-	var present := clampf(
-		_play.window(Vector2(0.0, WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
-	)
-	var plates := _play.window(Vector2(WIPE_IN * 0.5, WIPE_IN * 0.5 + PLATES)) * present
+	var present := clampf(_play.window(_beats.wipe_in) - _play.window(_beats.wipe_out), 0.0, 1.0)
+	var plates := _play.window(_beats.plates) * present
 	_play.frame(present, _beats.wipe_out)
 	_frame_band(present)
 
-	var atk_ready := _play.window(_beats.atk_ready)
-	var ctr_ready := _play.window(_beats.ctr_ready)
+	var arrive := _play.window(_beats.arrive)
 	var def_hit := _play.window(_beats.def_impact)
 	var atk_hit := _play.window(_beats.atk_impact)
 	var def_gone := _play.window(_beats.def_death)
@@ -284,24 +217,43 @@ func _apply() -> void:
 
 	_atk.clock = _play.t
 	_atk.plate_p = plates
-	_atk.lunge = _lunge(atk_ready, _atk_style.recoil)
+	_atk.arrive_p = arrive
+	_atk.aim_p = _play.window(_beats.atk_ready)
+	_atk.lunge = _lunge(_play.window(_beats.atk_recoil), _atk_style.recoil)
 	_atk.flash = maxf(0.0, 1.0 - atk_hit / 0.3) if atk_hit > 0.0 else 0.0
 	_atk.hp_shown = _tick(_result.attacker_hp_before, _result.attacker_hp_after, atk_hit)
-	_atk.fall_p = _play.window(_topple(_beats.atk_impact))
+	_atk.casualty_p = _play.window(_beats.atk_casualty)
+	_atk.fall_p = _atk.casualty_p
 	_atk.squad_alpha = 1.0 - atk_gone
+	_style_pose(_atk, _atk_style)
 	_atk.queue_redraw()
 
 	_def.clock = _play.t
 	_def.plate_p = plates
-	_def.lunge = _lunge(ctr_ready, _def_style.recoil)
+	_def.arrive_p = arrive
+	_def.aim_p = _play.window(_beats.ctr_ready)
+	_def.lunge = _lunge(_play.window(_beats.def_recoil), _def_style.recoil)
 	_def.flash = maxf(0.0, 1.0 - def_hit / 0.3) if def_hit > 0.0 else 0.0
 	_def.hp_shown = _tick(_result.defender_hp_before, _result.defender_hp_after, def_hit)
-	_def.fall_p = _play.window(_topple(_beats.def_impact))
+	_def.casualty_p = _play.window(_beats.def_casualty)
+	_def.fall_p = _def.casualty_p
 	_def.squad_alpha = 1.0 - def_gone
+	_style_pose(_def, _def_style)
 	_def.queue_redraw()
 
 	_frame_fx(present)
 	_sound()
+
+
+## The look numbers a half draws its arrive, its wind-up and its scuff with —
+## the style's own, copied on beside the beat progress above so both halves are
+## posed from one place. `arrive_scale` and `dust` are literals until the styles
+## carry them: a uniform roll-in distance and no scuff is exactly today's frame.
+static func _style_pose(side: CutsceneSide, style: BattleStyle) -> void:
+	side.aim_lift = style.aim_lift
+	side.aim_pitch = style.aim_pitch
+	side.arrive_scale = 1.0
+	side.dust = 0.0
 
 
 ## The two halves slide in from their own edges, and the whole band pushes in
@@ -319,7 +271,8 @@ func _frame_band(present: float) -> void:
 		+ CutscenePlayback.decay(_play.window(_beats.def_death))
 		+ CutscenePlayback.decay(_play.window(_beats.atk_death))
 	)
-	_play.frame_band(present, jolt, SHAKE_FREQ, _play.window(Vector2(WIPE_IN, WIPE_IN + 0.3)))
+	var push := Vector2(_beats.arrive.x, _beats.arrive.x + PUSH_HOLD)
+	_play.frame_band(present, jolt, SHAKE_FREQ, _play.window(push))
 
 
 ## Which side is firing, what it is firing, and where the blast goes off. Only
@@ -330,6 +283,7 @@ func _frame_fx(present: float) -> void:
 	var returning := _play.window(_beats.def_travel)
 	_fx.volley_p = 0.0
 	_fx.volley_style = null
+	_fx.volley_lead = PackedFloat32Array()
 	if outgoing > 0.0 and outgoing < 1.0:
 		_aim(_atk, _def, outgoing, _atk_style, _result.attacker_indirect)
 	elif returning > 0.0 and returning < 1.0:
@@ -337,6 +291,7 @@ func _frame_fx(present: float) -> void:
 		# why the result snapshots the opening shot's stance and no other.
 		_aim(_def, _atk, returning, _def_style, false)
 	_fx.muzzles = PackedVector2Array()
+	_fx.muzzle_lit = PackedFloat32Array()
 	_fx.muzzle_radius = 0.0
 	_fx.muzzle_kind = BattleStyle.NONE
 	if _flashing(_beats.atk_fire, _beats.atk_travel, _atk_style) and _atk_style.fires():
@@ -354,11 +309,11 @@ func _frame_fx(present: float) -> void:
 	_fx.vs_alpha = present * (1.0 - clampf(_play.t / maxf(_beats.atk_fire, 0.01), 0.0, 1.0))
 	_fx.def_amount = _result.defender_hp_before - _result.defender_hp_after
 	_fx.def_tag = CutsceneFx.KO_TAG if _result.defender_died else ""
-	_fx.def_p = _play.window(_callout(_beats.def_impact, _beats.def_death))
+	_fx.def_p = _play.window(CombatBeats.callout_window(_beats.def_impact, _beats.def_death))
 	_fx.def_at = _head_of(_def)
 	_fx.atk_amount = _result.attacker_hp_before - _result.attacker_hp_after
 	_fx.atk_tag = CutsceneFx.KO_TAG if _result.attacker_died else ""
-	_fx.atk_p = _play.window(_callout(_beats.atk_impact, _beats.atk_death))
+	_fx.atk_p = _play.window(CombatBeats.callout_window(_beats.atk_impact, _beats.atk_death))
 	_fx.atk_at = _head_of(_atk)
 	_fx.modulate.a = present
 	_fx.queue_redraw()
@@ -410,6 +365,7 @@ func _frame_impact() -> void:
 	var atk_hit := _play.window(_beats.atk_impact)
 	_fx.impact_p = 0.0
 	_fx.impact_style = null
+	_fx.impact_debris = 0
 	if def_hit > 0.0 and def_hit < 1.0 and _result.attack_damage > 0:
 		_fx.impact_p = def_hit
 		_fx.impact_style = _atk_style
@@ -437,31 +393,18 @@ func _sound() -> void:
 # --- curves ------------------------------------------------------------------
 
 
-## The window surplus figures topple over: it opens just after the round lands
-## and closes with the impact, leaving room for the per-figure stagger.
-static func _topple(impact: Vector2) -> Vector2:
-	if impact.y <= impact.x:
-		return Vector2.ZERO
-	return Vector2(impact.x + 0.06, impact.y + 0.1)
-
-
-## The window a damage callout is shown over: it outlives the impact, and a
-## death holds it until the explosion has finished.
-static func _callout(impact: Vector2, death: Vector2) -> Vector2:
-	if impact.y <= impact.x:
-		return Vector2.ZERO
-	var end := (death.y if death.y > death.x else impact.y) + 0.3
-	return Vector2(impact.x + 0.08, end)
-
-
-## Pull back, then thrust, then settle — the recoil every volley opens with, scaled
+## Pull back, then thrust, then settle — the recoil the volley leaves on, scaled
 ## by how much of it the weapon earns. A cannon slams its hull back and a machine
 ## gun barely twitches, which is the difference between the two reads of the same
 ## tank the whole feature is about.
-static func _lunge(ready: float, recoil: float) -> float:
-	if ready <= 0.0:
+##
+## `progress` is the recoil window CombatBeats sized, which ends as the barrel
+## lights rather than spanning the whole wind-up: the ramp is the shot being
+## taken, not the aim being held.
+static func _lunge(progress: float, recoil: float) -> float:
+	if progress <= 0.0:
 		return 0.0
-	return CutsceneFx.ramp(ready, [0.0, 0.4, 0.7, 1.0], [0.0, -7.0, 13.0, 5.0]) * recoil
+	return CutsceneFx.ramp(progress, [0.0, 0.4, 0.7, 1.0], [0.0, -7.0, 13.0, 5.0]) * recoil
 
 
 ## HP holds for the first third of the impact, then runs down to the number the

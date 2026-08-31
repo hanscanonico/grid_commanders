@@ -51,6 +51,22 @@ const PROJECTILES: Array[StringName] = [NONE, TRACER, SHELL, FLAK, ROCKET, BOMB,
 @export var tint: Color = Color(1.0, 0.949, 0.659)
 ## Radius of the muzzle starburst. Zero draws none, which is what `NONE` wants.
 @export var muzzle: float = 12.0
+## How long this weapon winds up before it fires, in seconds at the default speed
+## tier: the beat between the squad halting in its firing slot and the barrel
+## lighting. Most of what tells the weapon classes apart happens here, before a
+## single pixel of projectile exists — a rifle squad shoulders and goes, a
+## howitzer visibly elevates and holds. CombatBeats owns how it lands on the
+## clock, including the floor that keeps it readable at high playback rates.
+@export_range(0.0, 0.5) var aim_seconds: float = 0.16
+## How far the weapon rises over that beat, in pixels: positive lifts (a turret
+## settling up, a bow coming out of the water as the tubes flood), negative
+## settles (a bomber's nose dropping into its run).
+@export var aim_lift: float = 0.0
+## And how far it tips over the same beat, in radians, nose-toward-the-seam
+## positive. A second scalar rather than one reinterpreted per domain: a bank and
+## a barrel rise are different motions, and the branch that told them apart would
+## be the same answer spelled in three places.
+@export var aim_pitch: float = 0.0
 ## True when this weapon fires *continuously* for as long as its volley is in the
 ## air, rather than launching one salvo and falling silent. It changes both halves
 ## of what that looks like: the barrel strobes for the whole window instead of

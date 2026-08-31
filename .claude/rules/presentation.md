@@ -103,6 +103,30 @@ forms named in the root index are in `docs/design_record.md`.
   through the board's own sampling rather than argued, and the tone and the parity are the
   generator's alone: there is no shadow tone and no parity anywhere in `scenes/`, which is what
   keeps the figure sheet's subtraction exact.
+  **The beat sheet is `CombatBeats` and it is Node-free** (2026-08-31):
+  `scenes/battle/cutscene/combat_beats.gd`, a `RefCounted` whose
+  `plan(result, atk_style, def_style, tail, rate)` is pure, is **the single statement of what
+  windows exist and when** — nothing else under `scenes/battle/cutscene/` computes one, and
+  `tests/unit/test_combat_beats.gd` is the first check the cut-in's timing has ever had without a
+  scene. It added an **arrive** beat (0.20 → 0.34, opening where the wipe's own inward slide *ends*,
+  since two opposed translations on one axis make the squad jerk) and a **per-weapon aim** beat
+  whose *length* is `BattleStyle.aim_seconds`; `aim_lift` and `aim_pitch` are **two** signed scalars
+  rather than one reinterpreted per domain. The recoil ramp ends as the barrel lights and runs back
+  `max(0.4 × aim, 0.10)`, allowed to open inside the arrive. The **casualty** beat gates the
+  counter (`settled = max(impact.y, casualty.y)`) and its tail is flat and capped at two steps —
+  0 / +0.10 / +0.20 — so a single loss **does** cost 0.10 s and four figures buy only ~0.10 s more
+  than one; multi-figure losses read *better*, not fully, and the lever if playtest disagrees is a
+  third cap step, never the uncapped per-figure form.
+  **The streak lever's shape is now recorded correctly**: `CutsceneDirector._process` advances the
+  clock by `delta * speed`, so `cutscene.speed` is a **global rate over the whole sheet** and
+  compresses the volley, the impact and the HP tick along with everything else — only `tail_scale`
+  is selective, and it takes the closing hold and wipe. The claim that the lever spares the volley
+  and the impact was false and is not to be re-recorded. The one beat defended is the wind-up:
+  `CombatBeats.aim_stretch` multiplies it by `max(1, rate / AIM_RATE_CEILING)` (ceiling 1.5), so a
+  style's *real* wind-up floors at `aim_seconds / 1.5`. `rate` is read **once** in
+  `CombatCutscene._pose` before `run()` — a per-frame read would re-plan the sheet mid-run — and
+  `FastForward` is deliberately out of it. Long form, with the budget table, the pose constants and
+  the rejected mechanisms: `docs/design_record.md` § `battle-animations-plan.html`.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
