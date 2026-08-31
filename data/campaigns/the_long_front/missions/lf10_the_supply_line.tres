@@ -23,7 +23,7 @@ text = "Ferrow isn't here to hold ground, Wren. He's here to burn what feeds it.
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"sable_wren"
-text = "He spends them for nothing, then. Wood line. Cities. Nothing else."
+text = "He spends his columns for nothing, then. Wood line. Cities. Nothing else."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
