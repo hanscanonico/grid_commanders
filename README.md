@@ -991,7 +991,10 @@ a very low decibel to be inaudible. Every step lives in one table at the top of
 
 **Campaign** on the main menu opens six authored wars against the Iron Dominion — *The Six
 Marshals*, *The Collection*, *The Furnace Winter*, *The Hollow Crown*, *The Long Front* and *The
-Quiet War* — eighteen missions each, every mission on its own board under `maps/campaign/`. You
+Quiet War* — eighteen missions each, on authored boards under `maps/campaign/`. A few missions
+still share ground with another: `core/campaign/campaign_boards.gd` holds the list, `make
+campaigns` and `make test` fail on any share that is not on it, and the *Furnace Winter* pipeline
+pair is the one there on purpose. You
 play the other three factions' commanders; the casting, seating, grouping, fog and difficulty are
 each mission's own (`data/campaigns/<campaign>/missions/`), so an act can be a 2v2 as easily as a
 duel, and difficulty is always one of the shipped tiers — no mission carries tuned AI numbers of
