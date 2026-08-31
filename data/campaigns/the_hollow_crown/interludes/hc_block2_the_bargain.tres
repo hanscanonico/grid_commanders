@@ -23,24 +23,24 @@ text = "Six months earlier the three border nations had been fighting three sepa
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "I keep accounts the same as Vance does, Commander. Mine are shorter, and mine are honest. This is what the ridge cost."
+text = "I keep accounts the same as Vance does. Mine are shorter. This is what the ridge cost."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "Four crossings my column should not have survived, and it survived every one behind somebody else's guns. That debt is written down, and it is mine."
+text = "Four crossings my column shouldn't have survived, and it survived every one behind somebody else's guns. Four. I have the dates written down."
 requires = SubResource("ColumnBroken")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "Both armies crossed the ridge intact — mine as well as yours. Neither of us managed that alone last winter, and I am not going to pretend I managed it this time."
+text = "Both armies crossed the ridge intact, mine as well as yours. Neither of us managed that alone last winter, and I'm not going to pretend I managed it this time."
 requires = SubResource("ColumnWhole")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"dane_ferrow"
-text = "Two of my outriders under his banner, and he calls that a bargain kept. The bill is still open, Draeg. It always is."
+text = "Two of my outriders under his banner, and he calls that a bargain kept. The bill on that one stays open until somebody pays it, Draeg."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")

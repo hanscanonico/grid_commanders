@@ -39,17 +39,17 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"cass_orlov"
-text = "I commit by the numbers. Ferrow raids for bounty. A strange pairing, but not a weak one."
+text = "I commit by the numbers. Ferrow raids for bounty. It holds together well enough to bury you."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "My column took losses at the last crossing, Commander. I cannot take this fight alone."
+text = "My column took losses at the last crossing, Voss. I can't take this one alone."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"mara_voss"
-text = "Then you won't. I hold, I don't chase — hold the relay, keep his army whole."
+text = "Then you won't. I hold ground, I don't chase it. Take the relay and keep his column standing."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
@@ -59,7 +59,7 @@ text = "Relay holds. Your column's bloodied, but whole."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "Orlov's numbers and Ferrow's bounty both came up short against two armies fighting as one. I will not forget it."
+text = "Two armies on one ridge, and neither Orlov's numbers nor Ferrow's bounty bought through it."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("9")
@@ -75,7 +75,7 @@ note = "One more crossing fought with the marshal's banner still on the field."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "What is left of my column is on the ridge road with yours, Commander. Thin, but it is there."
+text = "What's left of my column is on the ridge road beside yours. Thin, and it'll hold as long as your line does."
 
 [sub_resource type="Resource" id="Event_the_thin_column_marches"]
 script = ExtResource("8")
@@ -102,12 +102,12 @@ units = Array[Resource]([SubResource("Spawn_second_company")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "I told you it was thin. Hold the ridge, Commander — I cannot."
+text = "I told you it was thin. Hold the ridge. I can't."
 
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("6")
 speaker = &"mara_voss"
-text = "Then I will. Meridian's second company is already on the ridge road."
+text = "Then I will. Meridian's second company is on the ridge road already, and it doesn't step back."
 
 [sub_resource type="Resource" id="Event_meridian_takes_the_ridge"]
 script = ExtResource("8")

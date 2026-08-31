@@ -29,7 +29,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "I styled myself regent the moment the Directorate fell, Wren. This gate is the proof I need."
+text = "I styled myself regent the hour the Directorate fell, Wren. The gate is the only entry that makes it true."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
@@ -49,7 +49,7 @@ text = "Gate's ours. Your proof, gone."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Whatever I call myself now, it is not regent. Noted, for my own ledger."
+text = "Whatever I call myself now, it isn't regent. Noted, in my own book."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("8")
@@ -73,7 +73,7 @@ condition = SubResource("Condition_ledger_seized")
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "You closed three of my entries at the watchtower, Wren. I have opened four more behind you."
+text = "You closed three of my entries at the watchtower, Wren. I've opened four more behind you."
 
 [sub_resource type="Resource" id="Event_four_more_entries"]
 script = ExtResource("7")
@@ -96,7 +96,7 @@ condition = SubResource("Condition_ledger_untouched")
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Every checkpoint on this road is an entry in my book, Wren. You are welcome to audit it."
+text = "Every checkpoint on this road is an entry in my book. Three of them between you and the gate. Audit them if you can reach them."
 
 [sub_resource type="Resource" id="Event_audit_it_then"]
 script = ExtResource("7")

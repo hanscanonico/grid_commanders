@@ -24,7 +24,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "My ledger and his bounty book both close here, Warden. The outer wall is the last garrison before the throne room."
+text = "My ledger and his bounty book both close here, Rowan. The outer wall is the last garrison before the throne room."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
@@ -39,12 +39,12 @@ text = "Take the relay. Nothing left behind this wall but the crown."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"nia_rowan"
-text = "Outer wall's ours. Both ledger and bounty book close for good."
+text = "Outer wall's ours. Vance closes her ledger, Ferrow closes his book, and neither of them gets past this road."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "Nothing stands between us and the throne room now, Commander. I have not forgotten what I said at the ridge."
+text = "Nothing stands between us and the throne room now. I haven't forgotten what I said at the ridge."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("8")
@@ -94,7 +94,7 @@ tags = Array[StringName]([&"ferrow_paychest_wall", &"ferrow_purse"])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "You emptied my ledger at the customs fort, Commander. I am not fighting a second season for free."
+text = "You emptied my ledger at the customs fort, Rowan. I'm not fighting a second season for free."
 
 [sub_resource type="Resource" id="Event_no_second_season_for_free"]
 script = ExtResource("7")

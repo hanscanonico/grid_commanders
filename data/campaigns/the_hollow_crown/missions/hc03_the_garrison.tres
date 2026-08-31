@@ -37,7 +37,7 @@ text = "Then we cost you more than we're worth. Nine days before your paymaster 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"ines_calder"
-text = "He is paid for what he breaks, and nothing he fields is armoured. Cheap units forward, in the woods. He cannot afford to trade with us."
+text = "He's paid for what he breaks, and nothing he fields is armoured. Cheap units forward, in the woods. He can't afford to trade with us."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -62,7 +62,7 @@ note = "Ferrow's season went unpaid at the customs fort."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "That was the season's take, Calder. You have just made this unprofitable and personal at once."
+text = "That was the season's take, Calder. You've just made this unprofitable and personal at once."
 
 [sub_resource type="Resource" id="Event_the_paychest_burns"]
 script = ExtResource("7")

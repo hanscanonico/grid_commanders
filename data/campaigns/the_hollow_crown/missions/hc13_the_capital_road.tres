@@ -36,17 +36,17 @@ text = "Your numbers are honest, same as ever. Ours have to be better today."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"perrin_ash"
-text = "From up here it is one road and two towns, Commander, with nothing to hide behind but those woods. He will gather on the road, so do not meet him on it."
+text = "From up here it's one road and two towns, with nothing on either side of it to hide behind but those woods. He'll gather on the road, so don't meet him on it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"perrin_ash"
-text = "Road's open. Your honest numbers weren't honest enough."
+text = "Road's open. Your honest numbers weren't."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "No. They were not. The walls are yours to look at now, Commander — make of that what you will."
+text = "No. They weren't. The walls are yours to look at from here."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("8")
@@ -80,7 +80,7 @@ units = Array[Resource]([SubResource("Spawn_two_companies_1"), SubResource("Spaw
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "I said we reach the capital together. Two of mine are on your right, Commander, and not one of them under your orders."
+text = "I said we reach the capital together. Two of mine are on your right, Ash, and not one of them takes your orders."
 
 [sub_resource type="Resource" id="Event_the_marshal_pays_up"]
 script = ExtResource("7")
@@ -113,7 +113,7 @@ units = Array[Resource]([SubResource("Spawn_one_company")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "One company is what the ridge left me. It is still yours."
+text = "One company is what the ridge left me. It's still yours."
 
 [sub_resource type="Resource" id="Event_what_the_ridge_left_him"]
 script = ExtResource("7")

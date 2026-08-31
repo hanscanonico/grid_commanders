@@ -43,7 +43,7 @@ text = "The line broke exactly where the numbers said it would, once the numbers
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "Withdrawn, no ceremony. I will be back with better numbers."
+text = "Withdrawn, no ceremony. I'll be back with better numbers."
 
 [sub_resource type="Resource" id="Trigger_eastern_crossing_ours"]
 script = ExtResource("7")
@@ -63,7 +63,7 @@ units = Array[Resource]([SubResource("Spawn_the_reserve")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "You have the eastern crossing. I committed to this ground, Holt. I do not un-commit."
+text = "You have the eastern crossing. I committed to this ground, Holt. I don't un-commit."
 
 [sub_resource type="Resource" id="Event_he_does_not_un_commit"]
 script = ExtResource("6")

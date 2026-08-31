@@ -29,7 +29,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"radek_morn"
-text = "Ferrow and I together are the worst pairing left on this board, Flux. A planner and a raider."
+text = "Ferrow and I are the worst pairing left on this board, Flux. He takes what he can carry and I take the rest."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -39,7 +39,7 @@ text = "This is the ridge's last crossing. Past it, the road runs straight to th
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"orin_flux"
-text = "Hold the relay, keep his army standing. The bargain was never going to be easy to keep."
+text = "Hold the relay, keep his army standing. I'll have their channels full of static while you do it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
@@ -49,12 +49,12 @@ text = "Last crossing is ours. Your banner's still flying at the end of the ridg
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "The bargain held through its hardest test, Commander. Whatever the capital holds, we reach it together."
+text = "The bargain held. Whatever's waiting at the capital, we reach it together."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("6")
 speaker = &"orin_flux"
-text = "Together. Noted — we'll hold you to it."
+text = "Together. Noted, and we'll hold you to it."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("8")
@@ -70,7 +70,7 @@ note = "One more crossing fought with the marshal's banner still on the field."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "Last crossing, Commander, and my army is standing on it with yours. Whatever else the bargain was, it was not words."
+text = "Last crossing, and my army is standing on it beside yours. Count the banners before you decide what my word is worth."
 
 [sub_resource type="Resource" id="Event_the_last_crossing"]
 script = ExtResource("7")
@@ -104,7 +104,7 @@ text = "Ferrow's outriders were mine before they were his. They remember which m
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Two of them, Draeg. Bill me for the difference."
+text = "Two of them, Draeg. Bill me."
 
 [sub_resource type="Resource" id="Event_the_outriders_remember"]
 script = ExtResource("7")

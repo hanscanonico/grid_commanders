@@ -25,7 +25,7 @@ count = 6
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "The line gets tested every spring, Commander. This year I brought more than a probing column."
+text = "Every spring I test this line, Rook, and this year I brought more than a probing column."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
@@ -35,17 +35,17 @@ text = "Noted for the record. Officially the Directorate still stands. Nobody at
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "One road, two towns, woods on both sides. He is slightly better than us on every square, so take the ones he is not standing on yet."
+text = "One road, two towns, woods on both sides. He's a shade better than us on every square, so take the ones he isn't standing on yet."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Column withdrew in good order. For Morn, that counts as a warning shot answered."
+text = "Column withdrew in good order. No rout, no panic. He'll be back on this road before autumn."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "It does. Enjoy the quiet, Commander — it is not going to last."
+text = "It does. Enjoy the quiet, Rook. It won't last the year."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("10")
@@ -64,7 +64,7 @@ units = Array[Resource]([SubResource("Spawn_the_road_behind")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "I said more than a probing column, Commander. The rest of it is on the road behind me."
+text = "I told you: more than a probing column. The rest of it is on the road behind me."
 
 [sub_resource type="Resource" id="Event_the_rest_of_the_column"]
 script = ExtResource("6")
@@ -87,7 +87,7 @@ note = "Morn's vanguard was broken at the spring crossing."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "My armour, in a morning. Whatever I take from this border next year, Commander, I will not be asking for it first."
+text = "My armour, in a morning. Next year I take what I want off this border without asking first."
 
 [sub_resource type="Resource" id="Event_the_vanguard_breaks"]
 script = ExtResource("6")

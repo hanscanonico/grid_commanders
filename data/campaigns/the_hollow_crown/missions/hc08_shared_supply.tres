@@ -35,12 +35,12 @@ text = "I want this depot for the bounty. Vance wants it for the ledger. Either 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "My column is thinner than I let on, Commander. Losing me loses the alliance with it."
+text = "My column is thinner than I let on, Lark. Lose me and you lose the alliance."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"sera_lark"
-text = "Then we hold the relay and keep his army in the field. Both, not either."
+text = "Then we do both. Hold the relay, keep his army in the field. We've got the legs for it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
@@ -50,7 +50,7 @@ text = "Depot road's shared, and your banner's still standing at the end of it."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "Ferrow and Vance retreat to lick two very different wounds. I do not forget who stood with me here."
+text = "Ferrow rides off short a bounty. Vance short a ledger entry. I don't forget who held this road with me."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("8")
@@ -66,7 +66,7 @@ note = "One more crossing fought with the marshal's banner still on the field."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "The depot road is yours as far as the fork, Commander. What I have left is holding the other half of it."
+text = "The depot road is yours as far as the fork. Past it the road is mine, and what I have left is holding it."
 
 [sub_resource type="Resource" id="Event_the_road_is_shared"]
 script = ExtResource("7")
@@ -93,7 +93,7 @@ note = "The relay fell inside five days, and it was Draeg's column that spent th
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "Five days to the relay, Commander. My column held the rest of the ridge to buy them for you, and there is not much of it left."
+text = "Five days to the relay. My column bought them holding the rest of the ridge, and there isn't much of it left."
 
 [sub_resource type="Resource" id="Event_how_thin_the_column_is"]
 script = ExtResource("7")

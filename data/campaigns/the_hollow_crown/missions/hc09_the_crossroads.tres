@@ -27,7 +27,7 @@ text = "Vance and I rarely cooperate, Thorne. The crossroads is worth the except
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "Whoever holds it holds the shortest road to the capital. That is worth more to us than to them."
+text = "Whoever holds that relay holds the shortest road to the capital, and we need it more than they do."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -55,7 +55,7 @@ tags = Array[StringName]([&"vance_flank"])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Morn's column is spent. I do not spend mine covering a man who would not cover me."
+text = "Morn's column is spent. I don't spend mine covering a man who wouldn't cover me."
 
 [sub_resource type="Resource" id="Event_the_exception_ends"]
 script = ExtResource("6")

@@ -43,12 +43,12 @@ text = "Then you'll lose both. Ten days, this fortress, and it ends."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "You are not fighting for a throne, Rook. You are clearing ground for Draeg to stand on. Ask yourself whose war that makes this."
+text = "You're not fighting for a throne, Rook. You're clearing ground for Draeg to stand on. Ask yourself whose war that makes this."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Fortress falls. Whatever Morn wanted, a war with no end, it ends today."
+text = "Fortress falls. The war with no end ends today."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
@@ -58,7 +58,7 @@ text = "Does it. Ask Draeg what he does with an empty seat before you call this 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "We will. The fighting's over — what he does with the quiet is his to answer for now."
+text = "We will. The fighting's over. What he does with the quiet is his to answer for."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("8")
@@ -73,7 +73,7 @@ note = "Draeg's divisions reached the fortress, and nobody gave them the order."
 [sub_resource type="Resource" id="Event_line_morn"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "Look at what has just arrived, Rook, and tell me again whose war this is."
+text = "Look at what's just arrived, Rook, and tell me again whose war this is."
 
 [sub_resource type="Resource" id="Condition_three_crossings"]
 script = ExtResource("6")
@@ -103,7 +103,7 @@ units = Array[Resource]([SubResource("Spawn_two_divisions_1"), SubResource("Spaw
 [sub_resource type="Resource" id="Event_line_two"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "I keep my word, Commander. Two divisions on your flank — and not one of them under your orders."
+text = "I keep my word, Rook. Two divisions on your flank, and not one of them takes your orders."
 
 [sub_resource type="Resource" id="Event_two_divisions_arrive"]
 script = ExtResource("7")
@@ -146,7 +146,7 @@ units = Array[Resource]([SubResource("Spawn_three_divisions_1"), SubResource("Sp
 [sub_resource type="Resource" id="Event_line_three"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "Every crossing you carried me over, Commander, I am paying back at once. Three divisions on your flank — and not one of them under your orders."
+text = "Every crossing you carried me over, I'm paying back at once. Three divisions on your flank, and not one of them takes your orders."
 
 [sub_resource type="Resource" id="Event_three_divisions_arrive"]
 script = ExtResource("7")

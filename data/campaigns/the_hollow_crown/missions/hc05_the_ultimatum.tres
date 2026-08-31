@@ -40,12 +40,12 @@ text = "Eight days to answer you with force instead of a courier."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"halden_marr"
-text = "No coast on this crossing, Commander. Three towns on one road and no way round the flank. We win it head on or not at all."
+text = "No coast on this crossing, and no way round the flank. Three towns on one road. We win it head on or not at all."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"halden_marr"
-text = "Ultimatum answered itself the moment his headquarters fell."
+text = "Ultimatum answered. His headquarters fell first."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
@@ -69,7 +69,7 @@ units = Array[Resource]([SubResource("Spawn_the_deadline_1")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "Half your eight days are spent, Marr, and my terms have not improved with keeping."
+text = "Half your eight days are spent, Marr, and my terms haven't improved with keeping."
 
 [sub_resource type="Resource" id="Event_the_terms_expire"]
 script = ExtResource("7")
