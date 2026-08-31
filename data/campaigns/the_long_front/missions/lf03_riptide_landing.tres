@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_hold_the_coast"]
 script = ExtResource("2")
@@ -45,15 +46,34 @@ script = ExtResource("3")
 speaker = &"cassian_rook"
 text = "We make the first tide count. Get the coast watch moving inland the moment the road's secure."
 
+[sub_resource type="Resource" id="Watch_inland"]
+script = ExtResource("9")
+flag = &"coast_watch_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Watch_stranded"]
+script = ExtResource("9")
+flag = &"coast_watch_saved"
+at_least = 0
+at_most = 0
+
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"orin_flux"
 text = "Picket held the road long enough. Coast watch is inland and accounted for."
+requires = SubResource("Watch_inland")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
 text = "Three units left standing. I'll call that a win worth having."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Picket held the road. The coast watch never got off it. They're still on that shore tonight with the sea at their backs and nothing I can send them."
+requires = SubResource("Watch_stranded")
 
 [sub_resource type="Resource" id="Trigger_watch_inland"]
 script = ExtResource("7")
@@ -102,5 +122,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_watch_inland")])
 events = Array[Resource]([SubResource("Event_the_watch_is_inland")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
 defeat = "The coast road broke before the watch got out, and behind them there was only the sea."

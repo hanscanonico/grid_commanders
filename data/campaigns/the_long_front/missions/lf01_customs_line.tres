@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_hold_the_line"]
 script = ExtResource("2")
@@ -45,15 +46,40 @@ script = ExtResource("3")
 speaker = &"mara_voss"
 text = "Six days without blinking. Get everyone off that road who isn't fighting on it."
 
+[sub_resource type="Resource" id="Column_saved"]
+script = ExtResource("9")
+flag = &"column_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Column_short"]
+script = ExtResource("9")
+flag = &"column_saved"
+at_least = 0
+at_most = 0
+
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
 text = "The column's clear. Draeg's tanks own the customs road now, and nothing they were sent to take."
+requires = SubResource("Column_saved")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"mara_voss"
 text = "Fold the map. We fall back to the next line, and the one after that, and I hold each of them the same way."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Draeg's tanks own the customs road and nothing else they came for. The column's the part I can't file cleanly. Some of it's behind the line and some of it stopped where it was."
+requires = SubResource("Column_short")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "I'll leave the road count open."
+requires = SubResource("Column_short")
 
 [sub_resource type="Resource" id="Trigger_column_home"]
 script = ExtResource("7")
@@ -103,5 +129,5 @@ events = Array[Resource]([SubResource("Event_the_column_is_home")])
 par_day = 6
 carry_out = true
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6"), SubResource("Line_8")])
 defeat = "The column was still on the road when the line broke. Draeg's armour did not stop to count what it drove over."

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_hold_the_grove"]
 script = ExtResource("2")
@@ -39,15 +40,40 @@ script = ExtResource("4")
 speaker = &"nia_rowan"
 text = "I'll buy you as many as the ground has got in it."
 
+[sub_resource type="Resource" id="Shrine_emptied"]
+script = ExtResource("9")
+flag = &"shrine_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Shrine_unreached"]
+script = ExtResource("9")
+flag = &"shrine_saved"
+at_least = 0
+at_most = 0
+
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"ines_calder"
 text = "The shrine's keepers were out of the grove before the fighting reached it. We carried the old ones. Nobody was driven anywhere."
+requires = SubResource("Shrine_emptied")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
 text = "Three nations lost ground on the same morning. None of us lost it alone. I'll take what comfort there is in that."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "We held the grove six days and never got up to the shrine. Whoever was inside it when the line came apart is inside it still. Don't ask me for a number tonight."
+requires = SubResource("Shrine_unreached")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "Take that comfort for both of us. I'm not there yet."
+requires = SubResource("Shrine_unreached")
 
 [sub_resource type="Resource" id="Trigger_shrine_ours"]
 script = ExtResource("6")
@@ -101,5 +127,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_shrine_city")])
 events = Array[Resource]([SubResource("Event_the_keepers_are_out")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6"), SubResource("Line_8")])
 defeat = "The grove fell with the shrine still standing in it, and standing was not enough."
