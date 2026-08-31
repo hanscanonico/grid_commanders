@@ -27,12 +27,12 @@ text = "Reed's staff logged the hour it reached the border. Two Iron companies t
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "Six marshals, six armies, and no crown left for any of them to answer to. Every border we hold now borders a different war."
+text = "Six marshals, six armies, no crown left for any of them to answer to, and every border we're holding now borders a different war."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"radek_morn"
-text = "I came out of the spring a column lighter. Whatever I take from you next, I won't be asking first."
+text = "I came out of the spring a column lighter, so whatever I take from you next, I won't be asking first."
 requires = SubResource("Bloodied")
 
 [sub_resource type="Resource" id="Line_5"]

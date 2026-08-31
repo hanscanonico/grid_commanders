@@ -24,30 +24,30 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "The account is closed. The Directorate withdrew its audit in one line, without ever admitting that anything in it had been invented, and the border went back to where it had always been."
+text = "The account is closed. The Directorate withdrew its audit in a single line and never admitted that any of it had been invented. The border went back to the line it started on, and nobody drew a new map."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Every entry in that ledger is now filed beside the man who wrote it. It will outlast him, which is more than his war managed."
+text = "Every entry in that ledger is filed beside the man who wrote it now, and it'll outlast him and his war both."
 requires = SubResource("Books_taken")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"radek_morn"
-text = "I carried a charge from the foundry chain to the core and spent it on a line that would not bunch up. Write that down. I have."
+text = "I carried a charge from the foundry chain to the core and spent it on a line that wouldn't bunch up. Write that down. I have."
 requires = SubResource("Charge_banked")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "My holdouts went home rather than into the ground. Neither ledger has a column for that."
+text = "My holdouts went home rather than into the ground, and there isn't a column in either ledger for that."
 requires = SubResource("Veterans_spared")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Cities as collateral, convoys as interest. The only debt anybody could prove was the one he ran up himself."
+text = "Cities as collateral. Convoys as interest. The only debt anybody ever proved was the one he'd run up himself."
 
 [resource]
 script = ExtResource("1")
