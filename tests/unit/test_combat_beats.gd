@@ -128,6 +128,10 @@ func test_a_streak_stretches_the_wind_up_rather_than_collapsing_it() -> void:
 	assert_gte(cannon_real, 0.105, "a cannon's wind-up in real seconds")
 	assert_gte(howitzer_real, 0.180, "a howitzer's wind-up in real seconds")
 	assert_gte(howitzer_real - cannon_real, 0.075, "the spread the two are told apart by")
+	var answered := CombatBeats.plan(
+		_counter(), _style(&"cannon"), _style(&"rocket"), 1.0, STREAK_RATE
+	)
+	assert_almost_eq(_span(answered.ctr_ready), 0.24 * stretch, 0.0001, "the counter's too")
 
 
 ## The floor is what keeps a short wind-up's recoil from vanishing, and the ramp
@@ -226,6 +230,23 @@ func test_the_posed_stills_land_in_the_beats_they_claim() -> void:
 	killed.defender_died = true
 	var ko := CombatBeats.plan(killed, _style(&"cannon"), _style(&"cannon"), 1.0, 1.0)
 	_assert_inside("cutin_ko", BattleCutsceneScenario.KO_POSE, ko.def_death)
+
+
+## One clock cannot sit inside six impact windows once the wind-up has pulled the
+## firing times 0.18 s apart, so CUT_IN_POSE's comment states which split it
+## picks. That split is the assertion: a signature that draws a burst is
+## mid-impact at the pose, and the ones whose `impact_radius` is 0 — their hit is
+## a spark stitch, not a burst — have settled past theirs. Without it the sweep
+## keeps photographing frames that no longer show what the constant claims.
+func test_the_impact_pose_splits_the_signatures_the_way_it_claims() -> void:
+	for id in STYLE_IDS:
+		var style := _style(id)
+		var beats := CombatBeats.plan(_losing(1), style, _style(&"cannon"), 1.0, 1.0)
+		var at := BattleCutsceneScenario.CUT_IN_POSE
+		if style.impact_radius > 0.0:
+			_assert_inside("cutin:%s" % id, at, beats.def_impact)
+		else:
+			assert_gt(at, beats.def_impact.y, "%s is still bursting at the impact pose" % id)
 
 
 func test_every_signature_still_has_a_round_in_the_air_at_the_volley_pose() -> void:
