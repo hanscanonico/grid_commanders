@@ -12,7 +12,7 @@
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
 text = "Take the customs fort and end Ferrow's season here."
-cell = Vector2i(17, 2)
+cell = Vector2i(17, 1)
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")

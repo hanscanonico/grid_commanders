@@ -1,31 +1,39 @@
 # The Hollow Crown — "The Garrison".
 # A standard two-army front. No allies here yet — the succession war has
 # not reached this crossing.
+#
+# One road spine between the two posts, with the customs treeline overlooking
+# it from (7,1)-(9,1) and two more copses south of it on row 5. The towns at
+# (3,3) and (15,3) are deliberately off the road: the road is the fast way and
+# the woods are the cheap way, and Calder's briefing tells the player to take
+# the second. Mountain shoulders close the corners so neither army can simply
+# go around.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 # Ferrow's recon carries the season's take: breaking it is what empties his
 # ledger, and an empty ledger is what he remembers in missions fourteen and seventeen.
 [terrain]
-.......M...........
-....F.......F......
-.Q...............Q.
-.====C=======C====.
-.B...............B.
-......F.......F....
-...........M.......
+MM...............MM
+.Q.....FFF.......Q.
+.B===============B.
+...C...........C...
+....M.........M....
+.....FF.....FF.....
+..M.............M..
+MM...............MM
 [owners]
+1 1 1
 1 1 2
-1 1 4
+2 17 1
 2 17 2
-2 17 4
 [units]
-1 i 2 2
-1 i 2 4
-1 m 3 3
-1 r 2 3
-1 t 3 2
-2 i 15 2
-2 i 15 4
-2 m 14 3
-2 r 15 3 ferrow_paychest
-2 t 14 2
+1 i 2 1
+1 i 2 3
+1 m 3 2
+1 r 2 2
+1 t 3 1
+2 i 16 1
+2 i 16 3
+2 m 15 2
+2 r 16 2 ferrow_paychest
+2 t 15 1
