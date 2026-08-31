@@ -25,7 +25,14 @@ const STREAK_RATE := 2.16
 
 ## Every shipped signature, so a rule that must hold for all of them says so.
 const STYLE_IDS: Array[StringName] = [
-	&"small_arms", &"cannon", &"autocannon", &"rocket", &"bomb", &"torpedo", &"unarmed"
+	&"small_arms",
+	&"cannon",
+	&"artillery",
+	&"autocannon",
+	&"rocket",
+	&"bomb",
+	&"torpedo",
+	&"unarmed",
 ]
 
 var styles: BattleStyleDB
@@ -120,7 +127,9 @@ func test_the_sheet_is_unchanged_at_and_below_the_rate_ceiling() -> void:
 func test_a_streak_stretches_the_wind_up_rather_than_collapsing_it() -> void:
 	var stretch := STREAK_RATE / CEILING_RATE
 	var cannon := CombatBeats.plan(_clean(), _style(&"cannon"), _style(&"cannon"), 1.0, STREAK_RATE)
-	var howitzer := CombatBeats.plan(_clean(), _artillery(), _style(&"cannon"), 1.0, STREAK_RATE)
+	var howitzer := CombatBeats.plan(
+		_clean(), _style(&"artillery"), _style(&"cannon"), 1.0, STREAK_RATE
+	)
 	assert_almost_eq(_span(cannon.atk_ready), 0.16 * stretch, 0.0001)
 	assert_almost_eq(_span(howitzer.atk_ready), 0.28 * stretch, 0.0001)
 	var cannon_real := _span(cannon.atk_ready) / STREAK_RATE
@@ -199,7 +208,7 @@ func test_the_sheet_holds_its_budgets() -> void:
 	_assert_budget("cannon, no casualty", _clean(), _style(&"cannon"), 1.53)
 	_assert_budget("cannon, one casualty", _losing(1), _style(&"cannon"), 1.63)
 	_assert_budget("small arms, no casualty", _clean(), _style(&"small_arms"), 1.35)
-	_assert_budget("howitzer, no casualty", _clean(), _artillery(), 1.76)
+	_assert_budget("howitzer, no casualty", _clean(), _style(&"artillery"), 1.76)
 	_assert_budget("torpedo, no casualty", _clean(), _style(&"torpedo"), 1.67)
 
 
@@ -249,10 +258,36 @@ func test_the_impact_pose_splits_the_signatures_the_way_it_claims() -> void:
 			assert_gt(at, beats.def_impact.y, "%s is still bursting at the impact pose" % id)
 
 
+## Every signature that puts something on screen has it on screen at the volley
+## pose. The silent one is skipped rather than held to it: nothing leaves an
+## unarmed barrel at any moment of any sheet, and the roster's three transports
+## can never be the attacker in the first place — holding a window nothing is
+## ever drawn in would pin the pose against a frame that does not exist.
 func test_every_signature_still_has_a_round_in_the_air_at_the_volley_pose() -> void:
 	for id in STYLE_IDS:
-		var beats := CombatBeats.plan(_clean(), _style(id), _style(&"cannon"), 1.0, 1.0)
+		var style := _style(id)
+		if not style.fires():
+			continue
+		var beats := CombatBeats.plan(_clean(), style, _style(&"cannon"), 1.0, 1.0)
 		_assert_inside("cutin_volley:%s" % id, BattleCutsceneScenario.VOLLEY_POSE, beats.atk_travel)
+
+
+## And the two fences that leave it only 26 ms to sit in, named so a style moved
+## past either of them fails here rather than in a frame nobody looks at. The
+## howitzer fires last, at 0.62; small arms' stream is the first gone, at 0.6465.
+func test_the_volley_pose_sits_between_the_last_barrel_and_the_first_arrival() -> void:
+	var latest := CombatBeats.plan(_clean(), _style(&"artillery"), _style(&"cannon"), 1.0, 1.0)
+	var earliest := CombatBeats.plan(_clean(), _style(&"small_arms"), _style(&"cannon"), 1.0, 1.0)
+	assert_gt(
+		BattleCutsceneScenario.VOLLEY_POSE,
+		latest.atk_fire,
+		"the pose has to be after the last barrel in the roster lights"
+	)
+	assert_lt(
+		BattleCutsceneScenario.VOLLEY_POSE,
+		earliest.atk_travel.y,
+		"and before the first volley in the roster has arrived"
+	)
 
 
 # --- helpers -------------------------------------------------------------------
@@ -273,17 +308,6 @@ func _assert_inside(what: String, at: float, window: Vector2) -> void:
 
 func _style(id: StringName) -> BattleStyle:
 	return styles.by_id(id)
-
-
-## The howitzer the weapon-fx slice splits off the tank's cannon. Built here
-## rather than loaded because its `.tres` arrives with that slice, and the
-## budgets it sets the ceiling for are this sheet's to hold today.
-func _artillery() -> BattleStyle:
-	var style := BattleStyle.new()
-	style.id = &"artillery"
-	style.aim_seconds = 0.28
-	style.travel_scale = 1.5
-	return style
 
 
 ## A hit the defender survives and does not answer, with its whole squad left.

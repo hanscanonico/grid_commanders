@@ -19,3 +19,7 @@ aim_pitch = 0.0
 sustained = true
 recoil = 0.40
 impact_radius = 0.0
+fire_stagger = 0.045
+arrive_scale = 0.7
+dust = 0.15
+impact_debris = 0

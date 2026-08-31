@@ -121,9 +121,12 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # `cutin_volley` is the same staging frozen with the round still in the air, and it
 # exists because the impact pose above shows what a hit looks like and nothing at
 # all of what threw it. Since a unit picks its weapon by matchup, that is where the
-# five signatures actually differ: tank-vs-mech is the machine gun's stream and
+# six signatures actually differ: tank-vs-mech is the machine gun's stream and
 # plain `cutin_volley` is the same tank's cannon, mech-vs-tank the rocket, and the
-# bomber, sub and anti-air entries the lobbed drop, the wake and the flak. The
+# bomber, sub and anti-air entries the lobbed drop, the wake and the flak.
+# `cutin_volley:artillery:mech` is the sixth: the howitzer is the only style that
+# arcs its shell over its own indirect lob, and it fires late enough that the pose
+# constant is measured against it (BattleCutsceneScenario.VOLLEY_POSE). The
 # paired impact frames (cutin:tank:mech, cutin:mech:tank) are the other half of it:
 # a strafing hit leaves sparks and no burst, a rocket leaves a hole.
 #
@@ -362,6 +365,7 @@ DEFAULT_MODES=(
 	cutin:tank:mech cutin:mech:tank
 	cutin_volley cutin_volley:tank:mech cutin_volley:mech:tank
 	cutin_volley:bomber:tank cutin_volley:sub:cruiser cutin_volley:anti_air:infantry
+	cutin_volley:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
 	menu_with_save menu_no_save menu_setup_context menu_four_seats menu_replays
 	menu_campaigns menu_campaign_hub menu_campaign_brief menu_campaign_debrief

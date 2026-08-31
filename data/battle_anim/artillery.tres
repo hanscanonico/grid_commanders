@@ -4,22 +4,22 @@
 
 [resource]
 script = ExtResource("1")
-id = &"cannon"
+id = &"artillery"
 projectile = &"shell"
-label = &"CANNON"
+label = &"HOWITZER"
 shots_per_figure = 1
 sfx = &"shot"
-travel_scale = 1.15
-arc = 35.0
+travel_scale = 1.5
+arc = 62.0
 tint = Color(1, 0.83, 0.45, 1)
-muzzle = 16.0
-aim_seconds = 0.16
-aim_lift = 3.0
-aim_pitch = -0.02
+muzzle = 20.0
+aim_seconds = 0.28
+aim_lift = 6.0
+aim_pitch = -0.06
 sustained = false
 recoil = 1.00
-impact_radius = 21.0
+impact_radius = 34.0
 fire_stagger = 0.0
 arrive_scale = 1.0
-dust = 0.5
-impact_debris = 4
+dust = 0.7
+impact_debris = 5

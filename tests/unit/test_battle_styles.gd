@@ -24,6 +24,16 @@ func before_each() -> void:
 	chart = Fixture.chart()
 
 
+## How far a lobbed round may rise above the firing line, in pixels. The number
+## the howitzer's `arc` is really about is `arc x INDIRECT_LOB`, artillery being
+## always indirect, so what the file authors is never the height drawn: at 90 the
+## product is 135 and the shell spends ~150 ms clipped outside a 313 px half-band
+## with nothing to say where it went; at 62 it is 93 and stays in frame. An arc
+## that genuinely leaves the band needs an exit cue — a puff at the top edge and
+## a re-entry streak — and that is a decision rather than a side effect.
+const MAX_LOB_PX := 100.0
+
+
 func test_every_unit_names_a_style_that_exists() -> void:
 	assert_gt(units.size(), 0, "no units loaded, so this would pass vacuously")
 	for type in units.all():
@@ -34,6 +44,65 @@ func test_every_unit_names_a_style_that_exists() -> void:
 				% [type.id, type.battle_style, BattleStyleDB.STYLE_DIR]
 			)
 		)
+		assert_true(
+			styles.has(type.secondary_battle_style),
+			(
+				"%s names secondary_battle_style '%s', which is not in %s"
+				% [type.id, type.secondary_battle_style, BattleStyleDB.STYLE_DIR]
+			)
+		)
+
+
+## The howitzer, split off the tank's cannon: a shell that visibly elevates,
+## hangs and lands, rather than a tank round fired from a gun with three times
+## the range. `battle_style` is a presentation key like `atlas_col`, so the split
+## moved no rule and no stat — which is exactly why the two units it re-dresses
+## are pinned here by name.
+func test_the_howitzer_is_registered_and_dresses_the_two_units_that_lob() -> void:
+	assert_true(styles.has(&"artillery"), "the howitzer style is on the shelf")
+	var howitzer := styles.by_id(&"artillery")
+	assert_has(BattleStyle.PROJECTILES, howitzer.projectile)
+	assert_eq(howitzer.projectile, BattleStyle.SHELL)
+	for id: StringName in [&"artillery", &"battleship"]:
+		assert_eq(units.by_id(id).battle_style, &"artillery", "%s should fire the howitzer" % id)
+
+
+func test_a_lobbed_shell_stays_inside_the_band() -> void:
+	var howitzer := styles.by_id(&"artillery")
+	assert_lt(
+		howitzer.arc * CombatCutscene.INDIRECT_LOB,
+		MAX_LOB_PX,
+		"an indirect howitzer round lobs arc x INDIRECT_LOB above the firing line"
+	)
+
+
+## The four look scalars the weapon-fx slice added. A `.tres` is not held to an
+## `@export_range` — the range guides the inspector and nothing checks a file
+## written by hand — so a stagger authored in the wrong unit, or a hit throwing
+## twenty chips, would ship as a frame full of noise with nothing said.
+func test_every_style_declares_the_look_scalars_in_range() -> void:
+	assert_gt(styles.size(), 0, "no styles loaded, so this would pass vacuously")
+	for id: StringName in styles.ids():
+		var style := styles.by_id(id)
+		assert_between(style.fire_stagger, 0.0, 0.2, "%s fire_stagger" % id)
+		assert_between(style.arrive_scale, 0.5, 1.5, "%s arrive_scale" % id)
+		assert_between(style.dust, 0.0, 1.0, "%s dust" % id)
+		assert_between(style.impact_debris, 0, 5, "%s impact_debris" % id)
+
+
+## The built fallback and `unarmed.tres` are one answer, which is the whole of
+## BattleStyleDB's contract: a style it cannot honour stages as the silent one,
+## and a silent one that differed from the file would make the fallback its own
+## third weapon.
+func test_the_built_fallback_and_the_silent_style_agree() -> void:
+	var built := BattleStyleDB.unarmed()
+	var shipped := styles.by_id(&"unarmed")
+	assert_eq(built.fire_stagger, shipped.fire_stagger)
+	assert_eq(built.arrive_scale, shipped.arrive_scale)
+	assert_eq(built.dust, shipped.dust)
+	assert_eq(built.impact_debris, shipped.impact_debris)
+	assert_eq(built.fire_stagger, 0.0, "nothing that never fires staggers its barrels")
+	assert_eq(built.impact_debris, 0, "nothing that never fires throws chips")
 
 
 func test_secondary_units_name_the_small_arms_style() -> void:
@@ -115,7 +184,8 @@ const MATCHUPS: Array[Array] = [
 	[&"rockets", &"tank", &"rocket"],
 	[&"bomber", &"tank", &"bomb"],
 	[&"sub", &"battleship", &"torpedo"],
-	[&"artillery", &"mech", &"cannon"],
+	[&"artillery", &"mech", &"artillery"],
+	[&"battleship", &"tank", &"artillery"],
 ]
 ## And the three that never fire at anything. A transport is only ever a defender,
 ## so what matters is that it stays silent rather than which weapon it would pick.

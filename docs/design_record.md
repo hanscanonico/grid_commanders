@@ -1251,6 +1251,30 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   flash goes out at 0.62, and a sustained weapon strobes at 18 Hz. **A style with `aim_seconds` past
   ~0.275 fires after that frame and photographs an empty sky**, so the howitzer split off the cannon
   is exactly the change that has to re-measure the constant.
+  **The howitzer is that split, and it re-measured it** (2026-09-01). `data/battle_anim/artillery.tres`
+  is a seventh signature — `arc` 62, `travel_scale` 1.5, `impact_radius` 34, `aim_seconds` 0.28 —
+  and `data/units/artillery.tres` and `battleship.tres` name it, `battle_style` being a presentation
+  key exactly like `atlas_col`: no rule, stat or chart row moved, and the two units that lob stopped
+  firing like a tank. Its arc is **62 and not 90 because artillery is always indirect**, so what is
+  drawn is `arc × INDIRECT_LOB` — 93 px, inside the band, where 90 would have been 135 and spent
+  ~150 ms clipped outside it with nothing to say where the shell went; an arc that genuinely leaves
+  the band needs an exit cue (a puff at the top edge, a re-entry streak) and that is a decision
+  rather than a side effect of a number. **`VOLLEY_POSE` went 0.615 → 0.633.** The howitzer fires at
+  `ARRIVE_END + 0.28` = **0.62**, after the frame the old constant took, so it photographed an empty
+  sky; small arms' stream is gone at 0.40 + 0.29 × 0.85 = **0.6465**. Those two are the fences, they
+  leave 26 ms, and 0.633 is the middle. **What gives way is the cannon's flash, not its round** —
+  `FLASH_HOLD` puts that out at 0.62, one frame before the howitzer's own barrel lights, and no
+  value holds both; a round in flight is what the frame is for, and at 0.633 the cannon has five
+  shells strung across the band. `test_combat_beats.gd` pins both fences by name and skips the
+  silent style, which has no round in the air at any moment of any sheet.
+  **Four look scalars ride with it** — `fire_stagger`, `arrive_scale`, `dust`, `impact_debris`
+  (capped at 5) — and `CutsceneFx` spends the first and the last: a rank's barrels light one after
+  another rather than as a block, and a hit throws chips on the kill blast's own arithmetic at a
+  fraction of its reach, **suppressed entirely while the blast is up**. `small_arms` and
+  `autocannon` are separated by **cadence, not wind-up**: 45 ms between barrels against 30, their
+  0.06/0.09 wind-ups being below the perceptual floor and widening them the rejected answer. The
+  stagger is derived in the overlay off the style and the volley's own progress rather than copied
+  into the director, which owns when a beat opens and nothing about how a rank lights inside it.
 
 
 ## The zoom ladder and the animation milestone

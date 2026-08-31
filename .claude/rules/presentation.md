@@ -127,6 +127,16 @@ forms named in the root index are in `docs/design_record.md`.
   `CombatCutscene._pose` before `run()` — a per-frame read would re-plan the sheet mid-run — and
   `FastForward` is deliberately out of it. Long form, with the budget table, the pose constants and
   the rejected mechanisms: `docs/design_record.md` § `battle-animations-plan.html`.
+  **The howitzer is a seventh signature** (2026-09-01): `data/battle_anim/artillery.tres`, named by
+  Artillery and Battleship, since `battle_style` is a presentation key like `atlas_col` and the
+  split moved no rule and no stat. Its `arc` is **62, not 90**, because artillery is always indirect
+  and what is drawn is `arc × INDIRECT_LOB` — 93 px, inside the band. It fires at 0.62, which is
+  **after the frame `VOLLEY_POSE` used to take**, so that constant is re-measured to **0.633**,
+  between the howitzer's barrel lighting and small arms' stream arriving at 0.6465; the cannon's
+  flash going out at 0.62 is what gives way, no value holding both, and a round in flight is what
+  the frame exists for. Four look scalars ship with it — `fire_stagger`, `arrive_scale`, `dust`,
+  `impact_debris` (capped at 5) — and **`small_arms` and `autocannon` are told apart by cadence, not
+  by wind-up length**; widening their 0.06/0.09 to compensate is the rejected answer.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips

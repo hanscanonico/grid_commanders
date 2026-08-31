@@ -53,6 +53,10 @@ static func unarmed() -> BattleStyle:
 		_unarmed.aim_seconds = 0.0
 		_unarmed.aim_lift = 0.0
 		_unarmed.aim_pitch = 0.0
+		_unarmed.fire_stagger = 0.0
+		_unarmed.arrive_scale = 1.0
+		_unarmed.dust = 0.1
+		_unarmed.impact_debris = 0
 	return _unarmed
 
 

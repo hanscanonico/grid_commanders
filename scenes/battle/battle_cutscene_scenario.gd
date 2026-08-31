@@ -20,29 +20,35 @@ extends BattleScenario
 ## byte-stable — the cut-in is a pure function of its clock — but this is the one
 ## that shows the most.
 ##
-## One clock cannot sit inside six impacts once a per-weapon wind-up has pulled
-## the firing times 0.18 s apart, and this number picks the four that draw a
-## burst: `cannon`, `rocket`, `bomb` and `torpedo` are all mid-impact here, while
-## `small_arms` and `autocannon` — the two whose `impact_radius` is 0, so their
-## hit is a spark stitch rather than a burst — have settled past theirs and show
-## the ticked HP, the callout and the figures going down instead.
+## One clock cannot sit inside seven impacts once a per-weapon wind-up has pulled
+## the firing times 0.28 s apart, and this number picks the five that draw a
+## burst: `cannon`, `artillery`, `rocket`, `bomb` and `torpedo` are all
+## mid-impact here — the howitzer's only just, its shell being the last to land —
+## while `small_arms` and `autocannon`, the two whose `impact_radius` is 0 so
+## their hit is a spark stitch rather than a burst, have settled past theirs and
+## show the ticked HP, the callout and the figures going down instead.
 const CUT_IN_POSE := 1.05
 ## `cutin_ko` sits on the blast at its brightest, a third of the way into the
 ## death beat with the K.O. tag already up. Only the cannon matchup poses here.
 const KO_POSE := 1.22
-## `cutin_volley` freezes the round in the air with the barrels still alight —
-## which is what makes it the frame the weapon *signatures* are checkable in,
-## where the impact pose shows only what a hit looks like and nothing of what
-## threw it. It is a tight fit and the fences are worth writing down: the last
-## barrel to light is the rocket's at 0.58, the first round to arrive is small
-## arms' at 0.6465, the cannon's flash goes out at 0.62, and a sustained weapon
-## strobes at 18 Hz so only the even half-cycles are alight. 0.615 is inside all
-## four.
+## `cutin_volley` freezes a round in the air — which is what makes it the frame
+## the weapon *signatures* are checkable in, where the impact pose shows only
+## what a hit looks like and nothing of what threw it.
 ##
-## A style whose `aim_seconds` runs past ~0.275 fires *after* this frame and
-## photographs an empty sky, so the howitzer the weapon-fx slice splits off the
-## cannon is exactly the change that has to re-measure this number.
-const VOLLEY_POSE := 0.615
+## The howitzer split off the cannon closed the old fit and this is the
+## re-measurement it forced. Every window, at the default tier: a style fires at
+## `ARRIVE_END + aim_seconds` and its volley is in the air for
+## `TRAVEL * travel_scale` after that, so artillery (aim 0.28) fires at **0.62**
+## and small arms' stream is gone by **0.6465** (0.40 + 0.29 x 0.85). Those two
+## are the fences, they leave 26 ms between them, and 0.633 is the middle of it.
+##
+## What gives way is the *cannon's flash*, not its round: `FLASH_HOLD` puts that
+## out at 0.62, one frame before the howitzer's own barrel lights, and no value
+## can hold both. There is none to hold, because a round in flight is what this
+## frame is for — at 0.633 the cannon has five shells strung across the band, the
+## howitzer's barrel is lit with its shell leaving it, and the rocket, the bomb,
+## the torpedo, the tracer stream and the flak are all in the air.
+const VOLLEY_POSE := 0.633
 ## Cut-in modes are `cutin[_ko][:<attacker>:<defender>]`, so they are recognised
 ## by prefix and parsed rather than matched name-for-name.
 const CUT_IN_MODE := "cutin"
