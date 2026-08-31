@@ -102,7 +102,7 @@ units = Array[Resource]([SubResource("Spawn_claim_tank"), SubResource("Spawn_cla
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "The province was never the prize, Commander. The claim was. Take all of it — I will still have written it down."
+text = "The province was never the prize. The claim was. Take all of it; I'll still have it written down."
 
 [sub_resource type="Resource" id="Event_the_claim_stands"]
 script = ExtResource("8")

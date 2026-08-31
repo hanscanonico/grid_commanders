@@ -36,7 +36,7 @@ cell = Vector2i(13, 4)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Every post on this road reports straight to Orlov. Cut all three and his witnesses stop being found."
+text = "Every post on this road reports straight to Orlov. Cut all three and he stops finding witnesses."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -98,7 +98,7 @@ units = Array[Resource]([SubResource("Spawn_wire_patrol")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"cass_orlov"
-text = "The wire went quiet in one place, so I am walking down it. Slowly."
+text = "The wire went quiet in one place. I'm walking down it now. Slowly."
 
 [sub_resource type="Resource" id="Event_walking_the_wire"]
 script = ExtResource("6")

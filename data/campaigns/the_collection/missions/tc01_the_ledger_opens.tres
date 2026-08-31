@@ -26,7 +26,7 @@ text = "A Directorate audit appeared overnight, claiming this depot as payment o
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Then he does not get the kills. His raiders are too thin-skinned to trade evenly. Hold formation and make him pay to come near us."
+text = "Then he doesn't get the kills. His raiders are too thin-skinned to trade evenly. Hold formation. Make him pay to come near us."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -61,7 +61,7 @@ units = Array[Resource]([SubResource("Spawn_collector")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Ground taken is ground I can price, Commander. Let us see what holding it costs you."
+text = "Ground taken is ground I can price. Let's see what holding it costs you."
 
 [sub_resource type="Resource" id="Event_ferrow_collects"]
 script = ExtResource("5")
@@ -91,7 +91,7 @@ points = 3000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "There. Their column is down to two, and the depot has not even changed hands. I get paid for every wreck. Keep them coming."
+text = "There. Column's down to two and the depot hasn't even changed hands. I get paid by the wreck. Keep them coming."
 
 [sub_resource type="Resource" id="Event_paid_off_the_kills"]
 script = ExtResource("5")

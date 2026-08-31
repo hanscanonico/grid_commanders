@@ -33,7 +33,7 @@ text = "Ferrow's collection was only the opening move. Konrad Vale is the one pa
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "Paying for a war is not theft, Commander. It is just better sums."
+text = "Paying for a war is not theft. It is better sums than yours."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -72,7 +72,7 @@ units = Array[Resource]([SubResource("Spawn_bought_garrison")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "A garrison is just a cost, Commander. I have approved another one."
+text = "A garrison is merely a cost. I have approved another."
 
 [sub_resource type="Resource" id="Event_another_line_item"]
 script = ExtResource("6")
@@ -115,7 +115,7 @@ note = "The blockade town stood six days, and Vale drew the interest on it."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "Six days of interest, Commander. I have bought another garrison with it."
+text = "Six days of interest. I have bought another garrison with it."
 
 [sub_resource type="Resource" id="Event_interest_accrues"]
 script = ExtResource("6")

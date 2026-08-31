@@ -35,19 +35,19 @@ requires = SubResource("Books_taken")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"radek_morn"
-text = "I carried a charge from the foundry chain to the core and spent it on a line that would not bunch up. Write that down, Commander. I have."
+text = "I carried a charge from the foundry chain to the core and spent it on a line that would not bunch up. Write that down. I have."
 requires = SubResource("Charge_banked")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "My holdouts went home rather than into the ground. That is the one thing this war did that neither ledger recorded."
+text = "My holdouts went home rather than into the ground. Neither ledger has a column for that."
 requires = SubResource("Veterans_spared")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Cities as collateral, convoys as interest. In the end the only debt anybody could prove was the one he ran up himself."
+text = "Cities as collateral, convoys as interest. The only debt anybody could prove was the one he ran up himself."
 
 [resource]
 script = ExtResource("1")

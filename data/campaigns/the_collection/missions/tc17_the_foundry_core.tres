@@ -27,12 +27,12 @@ max_losses = 9
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Everything we have taken comes down to holding this ground. Morn is throwing what is left at it, Hammerfall included."
+text = "Everything we've taken comes down to holding this ground. Morn is throwing what's left at it, Hammerfall included."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Then nothing bunches up, and he never gets a target worth the charge. I have held worse ground on less."
+text = "Then nothing bunches up. He never gets a target worth the charge, and I've held worse ground on less."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -66,7 +66,7 @@ units = Array[Resource]([SubResource("Spawn_last_wave")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "I am not manoeuvring, Commander. I am arriving. Stand where you like."
+text = "I am not manoeuvring. I am arriving. Stand where you like."
 
 [sub_resource type="Resource" id="Event_the_last_wave"]
 script = ExtResource("6")
@@ -108,7 +108,7 @@ units = Array[Resource]([SubResource("Spawn_banked_armour"), SubResource("Spawn_
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "You gave me nine days at the chain. I have spent them here."
+text = "You gave me nine days at the chain. I've spent them here."
 
 [sub_resource type="Resource" id="Event_spent_them_here"]
 script = ExtResource("6")

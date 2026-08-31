@@ -26,7 +26,7 @@ tag = &"witness_column"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Orlov is not here to fight. He is here to hold ground until the witnesses in these towns go quiet. And he still hits fifteen percent harder against anything wounded."
+text = "Orlov isn't here to fight. He's here to hold ground until the witnesses in these towns go quiet, and he still hits fifteen percent harder at anything wounded."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -41,7 +41,7 @@ text = "He holds three, we hold one, and the fifth sits unclaimed in the middle 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "The witnesses are still talking, and I brought home everything I marched in with. Cheap is the only way I know how to win."
+text = "The witnesses are still talking. I brought home everything I marched in with, down to the last supply truck."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -90,7 +90,7 @@ note = "The auditor reached the occupied towns, and her witnesses are still talk
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Our escort is standing in one of his towns with the auditor's notes signed. Cheaper than I expected."
+text = "Escort's standing in one of his towns with the auditor's notes signed. Orlov never turned around once."
 
 [sub_resource type="Resource" id="Event_the_auditor_gets_out"]
 script = ExtResource("6")

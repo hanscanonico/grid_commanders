@@ -46,23 +46,23 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "This is the foundry the forged ledger was written to protect. Ferrow's got nowhere left to fall back to."
+text = "This is it. The foundry the forged ledger was written to protect, and Ferrow's got nowhere behind it to fall back to."
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "We have the courier's count and Vale's payment book. Every entry in that audit can be read back to the men holding this ground."
+text = "We've got the courier's count and Vale's payment book. Every entry in that audit can be read back to the men holding this ground."
 requires = SubResource("Books_in_hand")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Every war ends in a ledger, Commander. Mine just happens to be honest about it."
+text = "Every war ends in a ledger. Mine just says so on the front page."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Then let's close it. Take the foundry, and the debt he invented is finally paid — by him."
+text = "Then let's close it. Take the foundry and the debt he invented gets paid by the man who invented it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -100,7 +100,7 @@ units = Array[Resource]([SubResource("Spawn_bought_armour"), SubResource("Spawn_
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Every unit you lost on the border bought a piece of this. Thank you for the funding."
+text = "Every unit you lost on the border bought a piece of this foundry. You've been funding me since the depot road."
 
 [sub_resource type="Resource" id="Event_paid_for_by_you"]
 script = ExtResource("7")
@@ -128,7 +128,7 @@ units = Array[Resource]([SubResource("Spawn_counterattack")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Standing on it is not the same as owning it, Commander. Owning it means still being there tomorrow."
+text = "Standing on it isn't the same as owning it. Come back tomorrow and we'll see whose it is."
 
 [sub_resource type="Resource" id="Event_the_foundry_answers"]
 script = ExtResource("7")
@@ -149,7 +149,7 @@ tags = Array[StringName]([&"ledger_guard"])
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Read it out. Every entry, every signature — his. His own men can hear it."
+text = "Read it out. Every entry, every signature, all his. Let his own men hear it."
 
 [sub_resource type="Resource" id="Event_read_it_out"]
 script = ExtResource("7")
