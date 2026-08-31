@@ -25,7 +25,6 @@ const CAMPAIGN_DIR := "res://maps/campaign"
 ## quietly re-license a copy between boards somebody had already separated, and
 ## the README points a reader here for what still shares.
 const SHARED_BOARDS: Array[Array] = [
-	["fw01_dry_taps", "fw02_last_granary"],
 	["hc07_uneasy_alliance", "hc10_broken_column", "hc12_the_bargain_kept"],
 ]
 
