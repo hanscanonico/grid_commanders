@@ -340,7 +340,7 @@ to 13 so the interludes' "thirteen depots, end to end" is the counter's own trut
 | `fw_granary_saved` | fw02 (early capture, or the torch squad hunted down) | **fw05 (gate)**, fw18, interludes 0 & 2 |
 | `fw_ice_road_open` | fw04 (the fuel sledge reaches the east landing) | fw07, interlude 0 |
 | `fw_kestrel_held` | fw06 | fw17, interlude 0 |
-| `fw_depots_open` | fw07 +2, fw08 +2, fw09 +2, fw10 +3, fw11 +2, fw12 +2 | fw15, fw18, interludes 1 & 2 |
+| `fw_depots_open` | fw07 +2, fw08 +2, fw09 +2, fw10 +3, fw11 +2, fw12 +2 | fw13, fw15, fw18, interludes 1 & 2 |
 | `fw_bounty_paid` | fw09, fw11, fw14, fw16 | fw14 (both branch beats), **fw16 (gate)**, fw18, interludes 1 & 2 |
 | `fw_vale_withdrew` | fw12 | fw13, interlude 1 |
 | `fw_siege_broken` | fw15 (the siege gun silenced) | fw17, interlude 2 |

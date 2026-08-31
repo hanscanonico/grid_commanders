@@ -61,7 +61,7 @@ requires = SubResource("Cond_ice_road_open")
 [sub_resource type="Resource" id="Line_holt"]
 script = ExtResource("6")
 speaker = &"gideon_holt"
-text = "Thirteen depots on that road, and Milltown has drawn fuel from none of them since first frost. Open these two and I'll put a tally on the wall."
+text = "Milltown hasn't drawn a drum off that road since first frost. Open these two, Colt, and I'll start a tally on the wall for the rest of them."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
