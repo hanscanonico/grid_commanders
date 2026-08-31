@@ -537,6 +537,20 @@ campaign-difficulty:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_campaign_difficulty.gd -- $(CAMPAIGN)
 
+# How machine-written the campaign dialogue looks, measured rather than argued:
+# every spoken line scored on nine structural readings — the two-sentence
+# lockstep, the aphoristic closer, uncontracted negations, cadence uniformity,
+# cross-speaker voice overlap — plus the corpus-wide tables no single line shows.
+# A measurement, not a gate: it exits 0 whatever it finds, stays out of
+# `make verify` and `make test`, and edits no content. docs/prose_slop.md is the
+# committed record and the false positives to read before acting on a row.
+# Narrow it while working through a war:
+#   make prose PROSE="--campaign=the_quiet_war --worst=50"
+PROSE ?=
+prose:
+	$(call require-godot)
+	$(GODOT) --headless --path . -s res://tools/run_prose_check.gd -- $(PROSE)
+
 # The grind box: every instrument above, rotated on a machine nobody is sitting
 # at, and a digest a person can read in the morning. Nothing new is measured —
 # the jobs are these same targets, run under `nice`, logged, resumed where the
@@ -634,5 +648,5 @@ mobile-soak:
 	generators-venv portraits import campaign-difficulty export-android export-ios \
 	screenshot menu-screenshot gallery-screenshot editor-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
-	balance-watch replay replay-report campaigns legibility-check legibility-ratchet legibility-baseline mobile-soak \
+	balance-watch replay replay-report campaigns prose legibility-check legibility-ratchet legibility-baseline mobile-soak \
 	grind grind-status

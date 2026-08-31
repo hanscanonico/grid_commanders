@@ -8,9 +8,14 @@ Node-free (or a static, pure function on a Node type) — never to make a scene 
 ## The Node-free layers themselves
 
 `core/`, `ai/`, the offline balance harness in `tools/balance/`, the arena's grammar, scorer and
-pools in `tools/arena/`, the replay analyser in `tools/replay/`, and the composite legibility
-metric in `tools/legibility/` — all Node-free for exactly this reason. That's where the rules live
-and where bugs hurt.
+pools in `tools/arena/`, the replay analyser in `tools/replay/`, the composite legibility
+metric in `tools/legibility/`, and the dialogue scorer in `tools/prose/` — all Node-free for
+exactly this reason. That's where the rules live and where bugs hurt.
+
+`ProseMetrics` and `ProseReport` are arithmetic over strings, and their suites are built from
+crafted fixtures rather than shipped dialogue: `make prose` is a measurement, so a suite pinned to
+authored lines would fail on a dialogue pass instead of on a bug. `docs/prose_slop.md` holds the
+measured numbers.
 
 `LegibilityMetric` is the arithmetic only. The render sweep it reports in is an offline instrument
 like the Balance Lab and stays out of `make verify`; `LegibilityBaseline` is the committed verdict
