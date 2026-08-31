@@ -49,7 +49,7 @@ text = "You have named this pass after a town I flattened. Draeg took the armour
 [sub_resource type="Resource" id="Line_draeg"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "That column I let off the customs road is in the line facing you, Morn, with two other flags beside it. I made three enemies out of one retreat. Hold the pass while I make the last of them regret it."
+text = "Morn. The customs-road column my tanks missed on the first morning is in the line climbing your pass, and it brought two other flags with it. One retreat, three enemies. Hold as long as the ground lets you; I'd rather they reached my gate thin."
 requires = SubResource("Column_saved")
 
 [sub_resource type="Resource" id="Line_1a"]
