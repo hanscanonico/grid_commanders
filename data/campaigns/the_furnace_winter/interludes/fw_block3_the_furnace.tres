@@ -34,13 +34,13 @@ text = "The toll is over. That is the whole finding, and it is worth saying plai
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "The fuel road runs east tonight, depot by depot, all the way back to the causeway. It will still be running in the spring."
+text = "The fuel road runs east tonight, depot by depot, all the way back to the causeway, and it will still be running in the spring."
 requires = SubResource("Cond_road_runs_whole")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "And Ferrow rode all winter without once finding our line a man short. He says that is the only kind of defeat he understands. He is right."
+text = "Ferrow rode all winter and never once found our line a man short. He says that's the only kind of defeat he understands. He's right."
 requires = SubResource("Cond_ledger_clean")
 
 [sub_resource type="Resource" id="Line_5"]
@@ -58,7 +58,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"nia_rowan"
-text = "The smelter yard held all eight days, and her siege gun never fired again. Every road east of here is quieter for it."
+text = "The smelter yard held all eight days and her siege gun never fired again. The ridge road is quiet enough now to hear a sledge coming up from the depots."
 requires = SubResource("Cond_siege_broken")
 
 [sub_resource type="Resource" id="Line_6"]

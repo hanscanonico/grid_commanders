@@ -50,7 +50,7 @@ text = "Handed by Vale. Same doctrine, every enforcer richer than us. We've foug
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"ivar_thorne"
-text = "The column is his pay — the armour and the outrider. Break both and this row is worth nothing to him."
+text = "The armour and the outrider are his pay. Break both and this row is worth nothing to him."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
@@ -60,7 +60,7 @@ text = "Column's broken on its own slag. Your best-paying ground just stopped pa
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Every raid I ran from here — gone with it. This one cost me."
+text = "Every raid I ran from here, gone with it. This one cost me."
 
 [sub_resource type="Resource" id="Trigger_column_is_short"]
 script = ExtResource("8")
@@ -88,7 +88,7 @@ note = "Ferrow caught our column under the strength it rode in with at least onc
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "You are riding this row under strength, Warden. A short line pays well. That is the whole business."
+text = "You're riding this row under strength, Thorne. A short line pays well."
 
 [sub_resource type="Resource" id="Event_the_business_model"]
 script = ExtResource("7")
@@ -157,7 +157,7 @@ tags = Array[StringName]([&"unpaid_picket"])
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Post nine has not been paid all winter, so post nine walked out. I do not blame them. I bill for them."
+text = "Post nine hasn't been paid all winter, so post nine walked out. I don't blame them. I bill for them."
 
 [sub_resource type="Resource" id="Event_the_unpaid_picket"]
 script = ExtResource("7")

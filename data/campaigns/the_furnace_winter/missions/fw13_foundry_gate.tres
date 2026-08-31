@@ -24,12 +24,12 @@ count = 7
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Two bases and more money than you, Commander. That is Vale's doing, not luck."
+text = "Two bases and more money than you. Vale signed for both."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"sera_lark"
-text = "Rich or not, a headquarters is a headquarters. Take it and she cannot close the gate any more."
+text = "Rich or not, a headquarters is a headquarters. Take it and she can't close the gate on anyone again."
 
 [sub_resource type="Resource" id="Cond_vale_withdrew"]
 script = ExtResource("10")
@@ -40,13 +40,13 @@ at_most = -1
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
 speaker = &"sera_lark"
-text = "He gave up the last mile without burning it. He is saving what he has for ground he means to hold."
+text = "He gave up the last mile without burning it. He's saving what he has for ground he means to hold."
 requires = SubResource("Cond_vale_withdrew")
 
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("5")
 speaker = &"sera_lark"
-text = "The column that opened the last mile is still with me. Every scar on it walked here from the causeway."
+text = "Same column that opened the last mile, same boots that walked up from the causeway."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -107,7 +107,7 @@ units = Array[Resource]([SubResource("Spawn_second_base_again")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "And again, as promised. The gate does not tire, Commander. Do you?"
+text = "And again, as promised. The gate doesn't tire. Do you?"
 
 [sub_resource type="Resource" id="Event_the_gate_arithmetic"]
 script = ExtResource("6")

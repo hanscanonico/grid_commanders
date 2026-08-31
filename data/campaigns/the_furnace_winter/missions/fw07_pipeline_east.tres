@@ -39,7 +39,7 @@ count = 6
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Two depots stand between you and the eastern fields, Commander. Both closed, both mine."
+text = "Two depots stand between you and the eastern fields. Both closed, both mine, and both cheaper to hold than you can afford to take."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -96,7 +96,7 @@ units = Array[Resource]([SubResource("Spawn_depot_2_watch"), SubResource("Spawn_
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Depot one is yours. Depot two has fresh troops in it — I keep a reserve for exactly this."
+text = "Depot one is yours. Depot two has fresh troops in it. I keep a reserve for exactly this."
 
 [sub_resource type="Resource" id="Event_re_staffed"]
 script = ExtResource("7")

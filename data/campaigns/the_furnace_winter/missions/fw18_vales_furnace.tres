@@ -31,7 +31,7 @@ count = 9
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"konrad_vale"
-text = "This is the furnace, Commander. I'm not leaving it to an enforcer, not after everything it took to hold."
+text = "This is the furnace. I am not leaving it to an enforcer, not after what it cost to hold."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
@@ -63,7 +63,7 @@ text = "Your headquarters is ours. The furnace floor with it. The toll is over."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"konrad_vale"
-text = "The toll bought a winter without open war, Commander. Weigh that against what you are about to spend."
+text = "The toll bought a winter without open war. Weigh that against what you are about to spend."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
@@ -79,7 +79,7 @@ at_most = 0
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "And Ferrow rode all winter without being paid once. Send him the figures. He will appreciate them."
+text = "And Ferrow rode all winter without being paid once. Send him the figures. He'll appreciate them."
 requires = SubResource("Cond_ledger_stayed_clean")
 
 [sub_resource type="Resource" id="Cond_road_open"]
@@ -91,7 +91,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_9"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "The fuel road runs east tonight, depot by depot, all the way back to Milltown. It was never yours to close."
+text = "The fuel road runs east tonight, depot by depot, all the way back to Milltown."
 requires = SubResource("Cond_road_open")
 
 [sub_resource type="Resource" id="Trigger_day_2"]
@@ -198,7 +198,7 @@ units = Array[Resource]([SubResource("Spawn_doorstep_sortie")])
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("5")
 speaker = &"konrad_vale"
-text = "I gave up the last mile so I would still have something to spend here. This is what I saved, Commander."
+text = "I gave up the last mile so I would still have something to spend here. Every coin of it is on this floor now."
 
 [sub_resource type="Resource" id="Event_the_saved_stock"]
 script = ExtResource("6")
