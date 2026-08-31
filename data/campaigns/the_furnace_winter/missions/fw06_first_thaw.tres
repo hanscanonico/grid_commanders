@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="13"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("3")
@@ -27,6 +28,18 @@ days = 2
 script = ExtResource("2")
 text = "Take the border relay above the pass — nothing crosses unseen."
 cell = Vector2i(11, 2)
+
+[sub_resource type="Resource" id="Fact_kestrel_early"]
+script = ExtResource("13")
+flag = &"fw_kestrel_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Fact_kestrel_late"]
+script = ExtResource("13")
+flag = &"fw_kestrel_held"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
@@ -47,11 +60,25 @@ text = "Hold four properties and take the pass. After that the roads start openi
 script = ExtResource("6")
 speaker = &"halden_marr"
 text = "You withdrew from the pass yourself. That's not a thing you do twice."
+requires = SubResource("Fact_kestrel_early")
+
+[sub_resource type="Resource" id="Line_4_dug_in"]
+script = ExtResource("6")
+speaker = &"halden_marr"
+text = "You'd dug the pass in before we got there, and you gave it up anyway."
+requires = SubResource("Fact_kestrel_late")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
 text = "No. It is not. This valley was never the whole of it."
+requires = SubResource("Fact_kestrel_early")
+
+[sub_resource type="Resource" id="Line_5_on_schedule"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "I left on my own schedule, and I intend the record to say so. There is a great deal more of this than one valley."
+requires = SubResource("Fact_kestrel_late")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("6")
@@ -130,5 +157,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_vale_withdraws_from_kestrel"), SubResource("Event_the_pass_taken_early")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_dug_in"), SubResource("Line_5"), SubResource("Line_5_on_schedule"), SubResource("Line_6")])
 defeat = "Vale held the pass himself, and the Freeze goes on exactly as he designed it."

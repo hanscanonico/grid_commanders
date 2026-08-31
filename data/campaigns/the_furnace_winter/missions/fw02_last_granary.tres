@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="14"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="15"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="16"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="17"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -26,6 +27,18 @@ cell = Vector2i(9, 2)
 script = ExtResource("14")
 text = "Put the torch squad down on the road."
 tag = &"the_match"
+
+[sub_resource type="Resource" id="Fact_granary_saved"]
+script = ExtResource("17")
+flag = &"fw_granary_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Fact_granary_lost"]
+script = ExtResource("17")
+flag = &"fw_granary_saved"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -46,6 +59,13 @@ text = "That mech on the road is his torch squad. Reach the base first, or put t
 script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Base held. Milltown eats through the winter, and so do we."
+requires = SubResource("Fact_granary_saved")
+
+[sub_resource type="Resource" id="Line_4_late"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Base is ours, late and short of what was in it. Milltown eats off our wagons now, which means it eats whatever we can spare off the line. I'll be signing for that all winter."
+requires = SubResource("Fact_granary_lost")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -155,5 +175,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_t
 events = Array[Resource]([SubResource("Event_the_match_never_struck"), SubResource("Event_he_strikes_the_match"), SubResource("Event_the_match_goes_down")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_late"), SubResource("Line_5")])
 defeat = "The base burned rather than change hands, and Milltown starves through the freeze."
