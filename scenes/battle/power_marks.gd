@@ -17,11 +17,13 @@ const TILE := BattleView.TILE
 const ORIGIN := Vector2(TILE * 0.5, -6.0)
 ## How far a mark travels while it fades, in world pixels.
 const LIFT := 7.0
+## Grown off a shape rather than drawn over it, so a spike keeps its colour.
 const OUTLINE := 2.0
-## The blast a destroyed unit goes out in: the flame's spikes, how far it opens
-## from and to in world pixels, and how deep the notches between the spikes cut.
+## The blast a struck cell goes up in: the flame's spikes, how far it opens from
+## and to in world pixels, and how deep the notches between the spikes cut. It
+## opens from wide enough to read red at rest, which is where a capture poses it.
 const BURST_SPIKES := 9
-const BURST_FROM := 4.0
+const BURST_FROM := 8.0
 const BURST_TO := 13.0
 const BURST_NOTCH := 0.55
 ## How far the flame turns while it opens, as a share of the gap between two of
@@ -80,29 +82,27 @@ static func falls(kind: PowerEffects.Kind) -> bool:
 	return kind in [PowerEffects.Kind.HARMED, PowerEffects.Kind.HINDERED]
 
 
-## The one coloured thing a mark carries: the blast the unit goes out in, on the
-## cell it stood on rather than lifting with the numbers, since that is where it
-## happened. Every other kind is its signed number, the units under it blinking
-## colourless so they stay their owner's.
+## The one coloured thing a mark carries: the blast a struck cell goes up in,
+## sitting on the tile rather than lifting with the numbers, since that is where
+## it happened. Every other kind is its signed number, the units under it
+## blinking colourless so they stay their owner's.
 ##
 ## The meteor's vocabulary at a cell's scale — critical red under a dark rule,
 ## with a white core that burns out first — so the strike and what it took read
 ## as one event.
 func _draw_burst(centre: Vector2) -> void:
 	var radius := lerpf(BURST_FROM, BURST_TO, rise)
-	var flame := _burst_points(centre, radius)
 	var fade := 1.0 - rise * BURST_FADE
-	draw_colored_polygon(flame, Color(UiTheme.DANGER, fade))
-	var rule := flame.duplicate()
-	rule.append(flame[0])
-	draw_polyline(rule, Color(UiTheme.HARD_BORDER, fade), OUTLINE)
+	draw_colored_polygon(_burst_points(centre, radius + OUTLINE), Color(UiTheme.HARD_BORDER, fade))
+	draw_colored_polygon(_burst_points(centre, radius), Color(UiTheme.DANGER, fade))
 	var core := 1.0 - minf(rise / CORE_OUT, 1.0)
 	if core > 0.0:
 		draw_circle(centre, radius * CORE_RADIUS, Color(UiTheme.WHITE, core))
 
 
 ## The flame's outline: BURST_SPIKES points out at `radius` with a notch between
-## each pair, turned as it opens so it never poses the same shape twice.
+## each pair, turned as it opens so it never poses the same shape twice. Drawn
+## twice per burst — once grown by OUTLINE for the dark rule under it.
 func _burst_points(centre: Vector2, radius: float) -> PackedVector2Array:
 	var points := PackedVector2Array()
 	var step := TAU / float(BURST_SPIKES * 2)
