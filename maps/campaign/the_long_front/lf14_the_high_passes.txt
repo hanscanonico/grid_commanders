@@ -1,23 +1,28 @@
 # The Long Front 14 — "The High Passes". Iona Vance commits a second
-# heavy column to keep the highlands' four cities out of allied hands.
+# heavy column to keep the highland cities out of allied hands.
 # Halden Marr's mixed force has to hold ground in terrain that favours
 # nobody's domain over another's.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-MMMM............MMMM
-M..Q====....C...MMMM
-....=....MMM....MMMM
-....=...C...MMMM....
-FF..=======...C.....
-....F.....C....MMM..
-........======....MM
-...........====.B...
-.................Q..
-MMMM............MMMM
+MMMM............MMMMMMMM
+M..Q====....C...MMMM....
+....=....MMM....MMMM....
+....=...C...MMMM....B...
+FF.B=======...C.........
+....F.....C....MMM....MM
+...C....======....MM....
+...........====.B.......
+.................Q......
+MMMM............MMMMC...
+....F......C......F.....
+MMMM................MMMM
 [owners]
 1 3 1
 2 17 8
 2 16 7
+1 3 4
+1 3 6
+2 20 3
 [units]
 1 i 4 2
 1 i 5 3
@@ -26,6 +31,8 @@ MMMM............MMMM
 1 t 5 4
 1 t 6 4
 1 a 4 4
+1 T 3 5
+1 g 4 6
 2 i 15 6
 2 i 14 7
 2 r 18 5
@@ -33,3 +40,5 @@ MMMM............MMMM
 2 t 13 7
 2 T 16 6
 2 a 14 5
+2 R 19 8
+2 i 19 3
