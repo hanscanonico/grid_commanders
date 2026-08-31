@@ -9,6 +9,9 @@ paths:
   - "scenes/ui/mission_*"
   - "scenes/menu/*campaign*"
   - "tools/check_campaigns.gd"
+  - "tools/prose/**"
+  - "tools/run_prose_check.gd"
+  - "docs/prose_slop.md"
 ---
 
 # The campaign — designs of record
@@ -163,7 +166,15 @@ root index are in `docs/design_record.md`.
   the hub's briefing, `CampaignDebriefPanel` (the briefing's mirror, which plays the victory
   dialogue or the defeat line on the way back from a battle before the hub), since CD3
   `MissionSpeechCard` over the board, and since CD6 `CampaignInterludePanel` between two blocks, so
-  a general sounds the same mid-battle as between missions.
+  a general sounds the same mid-battle as between missions. **How that dialogue *reads* is
+  measured rather than argued**: `make prose` (`tools/run_prose_check.gd` over `tools/prose/`)
+  scores every spoken line for structural AI-slop — the two-sentence lockstep, the aphoristic
+  closer, uncontracted negations, cadence uniformity, cross-speaker voice overlap — and
+  `docs/prose_slop.md` is the committed record, the known false positives and the before-numbers a
+  rewrite is held to. It is a measurement on `make campaign-difficulty`'s terms: exit 0 whatever it
+  finds, out of `make verify`, editing no content, and it scores no `MissionObjective.text` because
+  objective wording is `docs/campaign_authoring.md`'s convention rather than something a general
+  says. `make campaigns` stays the gate; the scorer only says which lines to read first.
   Five decisions:
   D1: **a mission states its match as `MatchRequest`'s own field list — seats and sides included —
   and `MissionDefinition.to_request()` is the one conversion.** The handoff's `player_team` /
