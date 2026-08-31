@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="2"]
@@ -36,6 +36,11 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Then city hall it is. I do love a deadline that comes with a villain already attached."
 
+[sub_resource type="Resource" id="Line_4b"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Fog all the way to the river, so we'll find him by rumour and reach him by road, and we'll do all of it before the light goes."
+
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"orin_flux"
@@ -45,6 +50,11 @@ text = "City hall's yours before the ink dried on anything. Governor in custody.
 script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Confirms what you already suspected, Flux. This was never one town. It's a list."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Somewhere a clerk alphabetised that list, and I'd like to shake his hand and then ask what else is in his drawer."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("6")
@@ -65,13 +75,18 @@ script = ExtResource("4")
 speaker = &"cass_orlov"
 text = "The governor found his courage at the last minute. I lent him some men to keep it."
 
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Lent. Of course it's lent. Nothing in this town belongs to the man standing on it."
+
 [sub_resource type="Resource" id="Event_the_governors_courage"]
 script = ExtResource("5")
 id = &"the_governors_courage"
 triggers = Array[Resource]([SubResource("Trigger_day_4")])
 effects = Array[Resource]([SubResource("Effect_lent_men")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
 [sub_resource type="Resource" id="Trigger_opening"]
 script = ExtResource("6")
@@ -84,13 +99,18 @@ mode = 1
 value = 1
 note = "The governor's ledger went into evidence with a name still on it."
 
+[sub_resource type="Resource" id="Event_line_ledger"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "That ledger's in evidence now with a name still on it, which in this town counts as a loaded weapon."
+
 [sub_resource type="Resource" id="Event_the_ledger_is_filed"]
 script = ExtResource("5")
 id = &"the_ledger_is_filed"
 triggers = Array[Resource]([SubResource("Trigger_opening")])
 effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
-lines = Array[Resource]([])
+lines = Array[Resource]([SubResource("Event_line_ledger")])
 
 [resource]
 script = ExtResource("1")
@@ -113,6 +133,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_governors_courage"), SubResource("Event_the_ledger_is_filed")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_4b")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
 defeat = "The papers were signed, and the city became Iron ground the same way Selwich did — without anyone firing a shot."

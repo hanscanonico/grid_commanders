@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -35,6 +35,11 @@ script = ExtResource("5")
 speaker = &"gideon_holt"
 text = "Orlov hits the wounded hardest, and apart from our own base those two towns on the road are the only place we can repair. Nothing of ours stays in the open below half."
 
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Above half he's only a determined man on a straight road, and I'll take that trade every day of the week."
+
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
@@ -44,6 +49,11 @@ text = "The line broke exactly where the numbers said it would, once the numbers
 script = ExtResource("5")
 speaker = &"cass_orlov"
 text = "Withdrawn, no ceremony. I'll be back with better numbers."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "He will, and he'll write ahead to tell us so, which is the only part of him I've never had to guess at."
 
 [sub_resource type="Resource" id="Trigger_eastern_crossing_ours"]
 script = ExtResource("7")
@@ -65,13 +75,18 @@ script = ExtResource("5")
 speaker = &"cass_orlov"
 text = "You have the eastern crossing. I committed to this ground, Holt. I don't un-commit."
 
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "I know. That's why we took the eastern crossing first. A man who can't back out is a man you can plan around."
+
 [sub_resource type="Resource" id="Event_he_does_not_un_commit"]
 script = ExtResource("6")
 id = &"he_does_not_un_commit"
 triggers = Array[Resource]([SubResource("Trigger_eastern_crossing_ours")])
 effects = Array[Resource]([SubResource("Effect_the_reserve")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -94,6 +109,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_he_does_not_un_commit")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The numbers favoured Orlov today, and the crossing stayed his."

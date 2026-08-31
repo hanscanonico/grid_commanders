@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=19 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -29,6 +29,11 @@ script = ExtResource("5")
 speaker = &"viktor_draeg"
 text = "Whoever holds that relay holds the shortest road to the capital, and we need it more than they do."
 
+[sub_resource type="Resource" id="Line_2b"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Two marshals who can't stand each other are sharing one road for a week, and I'd wager the payroll on four days."
+
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"ivar_thorne"
@@ -57,13 +62,18 @@ script = ExtResource("5")
 speaker = &"iona_vance"
 text = "Morn's column is spent. I don't spend mine covering a man who wouldn't cover me."
 
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "There it goes. Nobody had to break that alliance for them. They'd brought their own crowbar."
+
 [sub_resource type="Resource" id="Event_the_exception_ends"]
 script = ExtResource("6")
 id = &"the_exception_ends"
 triggers = Array[Resource]([SubResource("Trigger_morn_lead_gone")])
 effects = Array[Resource]([SubResource("Effect_vance_pulls_her_flank")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -88,6 +98,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_exception_ends")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_2b"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The crossroads stayed contested, and the shortest road to the capital stayed closed to us."
