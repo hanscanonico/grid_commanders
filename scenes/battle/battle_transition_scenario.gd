@@ -279,6 +279,20 @@ func _hand_seat_over(seat: int) -> String:
 	# which is where a player would ask for it too.
 	if not await _wait_for_banner(false):
 		return "the Auto hand-off banner never cleared"
+	return await _zoom_holds(seat)
+
+
+## The camera belongs to whoever is watching, not to whoever is playing: a seat on
+## Auto still zooms (COM-267). Stepped in and straight back out, so the rung the
+## rest of this mode is photographed at is the one it opened on.
+func _zoom_holds(seat: int) -> String:
+	var rung := _battle.view.camera.zoom.x
+	await _press_key(KEY_EQUAL)
+	if is_equal_approx(_battle.view.camera.zoom.x, rung):
+		return "zooming in during seat %d's Auto turn did nothing" % seat
+	await _press_key(KEY_MINUS)
+	if not is_equal_approx(_battle.view.camera.zoom.x, rung):
+		return "zooming back out during seat %d's Auto turn missed its rung" % seat
 	return ""
 
 

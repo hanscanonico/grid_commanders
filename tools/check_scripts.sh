@@ -256,8 +256,12 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # share of the editor, since everything the editor does is the editor's own
 # scene. Paid for honestly rather than by thinning a neighbour: there is nothing
 # left on this page whose removal would be a simplification rather than a loss.
+# battle.gd 1195 -> 1192: the keys that reach a computer turn are the runner's
+# now (COM-267). Battle held an arm that answered three of them and refused the
+# zoom ladder, which moves the camera and no unit; BattleAiRunner.handle_input is
+# that arm, beside the pause it already owns, and the move paid for the ladder.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1195
+scenes/battle/battle.gd 1192
 scenes/menu/main_menu.gd 785
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665

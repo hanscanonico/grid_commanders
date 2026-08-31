@@ -13,7 +13,8 @@ extends RefCounted
 ##
 ## It is also where a computer turn can be paused: `Battle.pause_gate` is awaited
 ## between commands, so the player's Esc is honoured at a boundary where the board
-## has settled rather than in the middle of one — see the two call sites.
+## has settled rather than in the middle of one — see the two call sites. The keys
+## that reach a turn nobody may play are `handle_input`'s, for the same reason.
 
 ## Safety net: a planner bug can never hang the match, only force a turn to end.
 ## Read from the harness rather than declared here, because the headless engine
@@ -63,6 +64,19 @@ func run() -> void:
 		await _battle.pause_gate()
 	push_error("AI hit the per-turn command cap; forcing end of turn")
 	await _execute(EndTurnCommand.new())
+
+
+## What a key does while the computer plays. The zoom ladder answers first and
+## keeps answering: it moves the camera and never a unit, so watching a turn from
+## further out is not playing it (COM-267). Esc asks for the board back, and
+## anything else refuses play but says so rather than going quiet.
+func handle_input(event: InputEvent) -> void:
+	if _battle.zoom.handle_input(event):
+		return
+	if event.is_action_pressed(&"cancel"):
+		_battle.request_pause()
+	elif TransitionInput.is_confirm(event):
+		_battle.confirm_at(_battle.cursor_cell)
 
 
 ## True when the team on turn left `ai_teams` while this pause was held — the
