@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -23,6 +23,11 @@ script = ExtResource("4")
 flag = &"cities_burned"
 at_least = 0
 at_most = 0
+
+[sub_resource type="Resource" id="Line_0"]
+script = ExtResource("3")
+speaker = &"konrad_vale"
+text = "These works were costed to keep this road open for Viktor Draeg's column for a season. You are early, and early is merely expensive. I built to the estimate regardless."
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -134,6 +139,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_bring_the_guns_forward"), SubResource("Event_the_depots_are_full")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_0"), SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Vale's works held the passes, and the highlands stayed exactly what they have always been: Iron ground."

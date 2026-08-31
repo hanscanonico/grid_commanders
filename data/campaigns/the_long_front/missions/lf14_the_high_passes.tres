@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -15,6 +15,11 @@ script = ExtResource("2")
 text = "Hold five of the highland cities."
 count = 5
 terrain_id = &"city"
+
+[sub_resource type="Resource" id="Line_0"]
+script = ExtResource("3")
+speaker = &"iona_vance"
+text = "Seven cities, and every one of them fuels the road Draeg's column is on. I don't have to beat you here. I only have to keep it open until he is through."
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -99,6 +104,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_second_column")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_0"), SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Vance held enough of the highland cities to bleed the advance dry, and the passes stayed contested."

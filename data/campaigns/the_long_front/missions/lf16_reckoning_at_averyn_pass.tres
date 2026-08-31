@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -10,6 +10,12 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+
+[sub_resource type="Resource" id="Column_saved"]
+script = ExtResource("4")
+flag = &"column_saved"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Averyn_held"]
 script = ExtResource("4")
@@ -35,10 +41,16 @@ id = &"silence_the_battery"
 hidden = true
 tag = &"hammer_battery"
 
-[sub_resource type="Resource" id="Line_1"]
+[sub_resource type="Resource" id="Line_morn"]
 script = ExtResource("3")
-speaker = &"gideon_holt"
-text = "The pass carries Averyn's name now. Morn garrisons it as if the town he flattened were worth defending."
+speaker = &"radek_morn"
+text = "You have named this pass after a town I flattened. Draeg took the armour east and left me the ashes to garrison, so I garrison them. Come up when you're ready."
+
+[sub_resource type="Resource" id="Line_draeg"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "Morn. The customs-road column my tanks missed on the first morning is in the line climbing your pass, and it brought two other flags with it. One retreat, three enemies. Hold as long as the ground lets you; I'd rather they reached my gate thin."
+requires = SubResource("Column_saved")
 
 [sub_resource type="Resource" id="Line_1a"]
 script = ExtResource("3")
@@ -148,6 +160,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_silence_the_battery")])
 events = Array[Resource]([SubResource("Event_the_guns_that_ranged_averyn"), SubResource("Event_the_battery_falls")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_morn"), SubResource("Line_draeg"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The garrison held the pass, and Morn's Command Power still has an army to shelter behind."

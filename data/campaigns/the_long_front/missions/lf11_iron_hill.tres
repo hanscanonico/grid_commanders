@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -21,6 +21,11 @@ at_most = -1
 script = ExtResource("2")
 text = "Hold Iron Hill until day 7."
 day = 7
+
+[sub_resource type="Resource" id="Line_0"]
+script = ExtResource("3")
+speaker = &"iona_vance"
+text = "Colt. Draeg's spearhead cleared the highland road four days ago, and every hour you spend standing on this hill is an hour it climbs unwatched. Call that interest."
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -76,13 +81,18 @@ script = ExtResource("3")
 speaker = &"iona_vance"
 text = "The second column is on your line, Colt. Balance the books or be balanced."
 
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "Vance. Three flags on one hill, and they had to learn how to stand on it together. Take it apart today, before they get the practice."
+
 [sub_resource type="Resource" id="Event_the_second_column"]
 script = ExtResource("5")
 id = &"the_second_column"
 triggers = Array[Resource]([SubResource("Trigger_day_4")])
 effects = Array[Resource]([SubResource("Effect_the_second_column")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -106,6 +116,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_second_column")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_0"), SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Iron Hill broke, and the allied front lost the high ground it had held since the narrows."
