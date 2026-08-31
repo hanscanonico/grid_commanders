@@ -42,7 +42,7 @@ text = "Three of the towns are our side of the wood line. The fourth is his; he 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"sable_wren"
-text = "Three towns. Draeg's bonus never found a lane wide enough to matter."
+text = "Three towns. Draeg's bonus never found a lane."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

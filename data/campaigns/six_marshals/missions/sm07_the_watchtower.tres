@@ -39,7 +39,7 @@ text = "Then nothing hurt stays in his sight line. Pull it back the moment it bl
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"halden_marr"
-text = "Take the watchtower and hold it clean, with nothing of ours still bleeding anywhere on that ridge where he can see it."
+text = "Take the watchtower and hold it clean. Nothing of ours still bleeding where he can see it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

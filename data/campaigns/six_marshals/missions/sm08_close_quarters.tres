@@ -39,7 +39,7 @@ text = "Close ground, close range. Orlov's bonus bites hardest on anything under
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"ivar_thorne"
-text = "Then we bleed on our terms, not his. Rotate anything hurt back out of his reach before he ever gets the shot at it."
+text = "Then we bleed on our terms, not his. Rotate the wounded out before he ever gets the shot."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
