@@ -16,9 +16,9 @@ extends RefCounted
 const CAMPAIGN_DIR := "res://maps/campaign"
 
 ## The shares that may stand, one group per entry, by board filename without the
-## suffix. fw07/fw08 are the same battlefield twice on purpose — the second
-## mission is the counter-attack over the first one's ground. The rest are
-## unpaid authoring debt, listed so a *new* share cannot slip in beside them.
+## suffix. What is left is unpaid authoring debt, listed so a *new* share
+## cannot slip in beside it. fw07/fw08 used to be the one deliberate share; the
+## thaw gave fw08 its own ground, so nothing here is meant any more.
 ##
 ## A group is checked in both directions: a board that has since been given
 ## ground of its own has to leave the list. An entry kept past its share would
@@ -26,7 +26,6 @@ const CAMPAIGN_DIR := "res://maps/campaign"
 ## the README points a reader here for what still shares.
 const SHARED_BOARDS: Array[Array] = [
 	["fw01_dry_taps", "fw02_last_granary"],
-	["fw07_pipeline_east", "fw08_pipeline_west", "hc03_the_garrison"],
 	["hc07_uneasy_alliance", "hc10_broken_column", "hc12_the_bargain_kept"],
 	["tc10_the_squeeze", "tc14_draegs_line"],
 ]

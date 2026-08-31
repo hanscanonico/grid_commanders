@@ -2,14 +2,22 @@
 # The inversion of fw07: the player opens already holding depot 1 (Voss took
 # it at speed), and Vance counterattacks to take it back while depot 2 still
 # has to be won. Her picket at (4,3) sits at depot 1's gate on purpose.
+#
+# Same ground as fw07, a week and a thaw later. Meltwater has opened a channel
+# down column 9 and the fuel road crosses it on the bridge at (9,3); the
+# shelling took the north-western treeline at (4,1). River admits air, boot and
+# foot only (data/terrain/river.tres), so every tread and tire — the player's
+# tank, both recons, Vance's day-5 column — either takes the bridge or walks
+# the rows 5-6 detour under the channel's southern end. That is a flank, not a
+# wall: do not extend the channel to row 5, or the halves stop talking.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-.......M...........
-....F.......F......
-.Q...............Q.
-.====C=======C====.
-.B...............B.
+.......M.~.........
+.........~..F......
+.Q.......~.......Q.
+.====C===+===C====.
+.B.......~.......B.
 ......F.......F....
 ...........M.......
 [owners]
