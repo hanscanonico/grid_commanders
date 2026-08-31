@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -57,6 +57,11 @@ script = ExtResource("6")
 speaker = &"iris_colt"
 text = "We still hold the causeway from the freeze. Open this road and the fuel has somewhere to go."
 requires = SubResource("Cond_ice_road_open")
+
+[sub_resource type="Resource" id="Line_holt"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Thirteen depots on that road, and Milltown has drawn fuel from none of them since first frost. Open these two and I'll put a tally on the wall."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
@@ -156,6 +161,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_re_staffed"), SubResource("Event_the_east_road_runs")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The road stayed closed, and the eastern fields stayed dark for another season."

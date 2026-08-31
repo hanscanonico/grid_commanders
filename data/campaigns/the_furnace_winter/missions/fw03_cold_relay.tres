@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -28,6 +28,11 @@ text = "Every checkpoint on this road answers to my ledger, and nothing moves on
 script = ExtResource("4")
 speaker = &"ines_calder"
 text = "The relay's still unclaimed. That's one signature we can outrun."
+
+[sub_resource type="Resource" id="Line_ward"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Supply office still has that relay down as unassigned, Calder. Nobody's signed for it. Nobody could reach it in this weather."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -92,6 +97,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_a_checkpoint_countersigned")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ward"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Vance's garrison held the relay, and the road stayed closed to us."

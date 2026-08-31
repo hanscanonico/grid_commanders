@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -48,6 +48,11 @@ text = "Arsenal Road. My favourite ground, Wren. Rich pickings for anyone paid p
 script = ExtResource("6")
 speaker = &"sable_wren"
 text = "Vale's extra base. Same as always. We take your headquarters instead."
+
+[sub_resource type="Resource" id="Line_holt"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Ferrow has ridden all winter without filing one invoice, Wren. Take the arsenal off him and he'll have to bill us for the ride home."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
@@ -145,6 +150,6 @@ par_day = 7
 carry_in = true
 carry_out = true
 carry_floor_hp = 50
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The arsenal stayed his hunting ground, and we paid for it."
