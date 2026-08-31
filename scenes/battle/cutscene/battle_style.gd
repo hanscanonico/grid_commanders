@@ -81,6 +81,24 @@ const PROJECTILES: Array[StringName] = [NONE, TRACER, SHELL, FLAK, ROCKET, BOMB,
 ## which is what a stream of small rounds wants, since it flickers with sparks
 ## instead (see CutsceneFx). Suppressed entirely when the shot cost nothing.
 @export var impact_radius: float = 0.0
+## How far apart, in seconds, consecutive figures of a squad open fire. Zero is a
+## rank that lights as one, which is what a single heavy gun wants. It is where
+## the difference between a rifle squad and an autocannon lives: their wind-ups
+## are 30 ms apart, which nobody can see, and their *cadence* is not — five
+## barrels 45 ms apart read as a loose stream where four 30 ms apart read as one
+## wall of fire.
+@export_range(0.0, 0.2) var fire_stagger: float = 0.0
+## Multiplies how far this weapon's squad rolls in over the arrive beat. A bomber
+## comes in from further out than a rifle squad walks.
+@export_range(0.5, 1.5) var arrive_scale: float = 1.0
+## How much scuff the squad kicks arriving and firing, 0 for something that never
+## touches the ground.
+@export_range(0.0, 1.0) var dust: float = 0.0
+## How many chips this weapon throws out of whatever it hits. Capped low on
+## purpose: at 640x360 a hit that throws more than a handful stops reading as
+## debris and starts reading as noise, and the kill blast — which throws twelve
+## and owns the frame — suppresses these entirely rather than adding to them.
+@export_range(0, 5) var impact_debris: int = 0
 
 
 ## True when this weapon puts anything on screen at all. An APC, a T-Copter and a

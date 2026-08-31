@@ -34,8 +34,16 @@ const ROCKET_PITCH := deg_to_rad(22.0)
 const SHELL_BODY := Color(0.184, 0.200, 0.220)
 const SPARK_TINT := Color(1.0, 0.878, 0.541)
 ## The puffs it leaves, and how far back along its own arc each one sits.
-const ROCKET_PUFFS := 4
+const ROCKET_PUFFS := 7
 const ROCKET_PUFF_LAG := 0.09
+## How long one of those puffs takes to fade out, in travel progress, how dark
+## the thickest of it goes and how fast it spreads. `LIFE` is what makes the
+## column long: seven puffs laid `PUFF_LAG` apart span two thirds of the travel,
+## so the oldest smoke is still on screen while the dart is most of the way
+## across, which is what a launcher is recognised by once the dart is a dot.
+const ROCKET_SMOKE_LIFE := 0.66
+const ROCKET_SMOKE_ALPHA := 0.46
+const ROCKET_SMOKE_GROWTH := 9.0
 ## How deep the waists of a muzzle flash's star cut, as a share of its reach: a
 ## hair sharper than a spark's, which is what the two were drawn at and so what
 ## keeps their pixels where they are.
@@ -61,6 +69,40 @@ const STREAM_CYCLE := 1.45
 ## Fixed vertical spread across a stream's rounds, so a burst walks across the
 ## target instead of drilling one hole. Deterministic, like everything here.
 const STREAM_SPREAD := 5.0
+## How far a barrel dims between its own rounds and how far through its gap it is
+## at its darkest. Only a sustained weapon uses them: a gun's one flash is either
+## alight or over, and what a burst weapon needs is a rank that crackles rather
+## than one that pulses as a block.
+const BARREL_DIP := 0.45
+const BARREL_FLOOR := 0.42
+## Where a stream's ricochets land, as a share of the way to the target: how far
+## up the line the nearest tick sits at the start of the burst and at its end,
+## how far apart the ticks march, how big each is and how fast it blinks.
+const RICOCHET_TICKS := 3
+const RICOCHET_WALK := Vector2(0.55, 0.88)
+const RICOCHET_STEP := 0.085
+const RICOCHET_SIZE := 4.0
+const RICOCHET_FLICKER := 15.0
+## How far below a target's own middle its footing line runs — where a ricochet
+## kicks up and where a falling bomb's shadow lies. The same offset CutsceneSide
+## centres a figure at above its feet, which is what makes this the ground the
+## target is standing on rather than a line picked to look right.
+const FOOTING_DROP := 28.0
+## The shock a heavy gun throws off its own muzzle. It opens as the flash goes
+## out — the flash's length over this volley's travel, so a howitzer's sits later
+## than a tank's without either being written down twice — and runs for this much
+## of the travel, out to this radius.
+const SHOCK_SPAN := 0.28
+const SHOCK_REACH := Vector2(6.0, 34.0)
+## A falling bomb's shadow: its radius at release and at the moment it lands, and
+## how flat it lies on the ground.
+const BOMB_SHADOW := Vector2(11.0, 4.5)
+const BOMB_SHADOW_SQUASH := 0.32
+## A torpedo's impact: how many foam rings run out along the waterline, how far
+## the widest of them reaches, and how flat they lie on it.
+const FOAM_RINGS := 2
+const FOAM_REACH := 46.0
+const FOAM_SQUASH := 0.3
 ## How far below the firing line a torpedo runs. The firing line is at the hull's
 ## gun, so this is roughly the waterline the wake belongs on. Four dashes behind
 ## it, each fainter and thinner than the last.
@@ -94,6 +136,11 @@ const WRECK_SMOKE := Color(0.35, 0.34, 0.36)
 ## circle again once the teeth get that fine.
 const IMPACT_SPOKES := 12
 const BLAST_SPOKES := 18
+## How many chips the kill blast throws, and how much of that throw an ordinary
+## impact's handful gets. The blast owns the frame; a hit inside one has to stay
+## well under it.
+const BLAST_CHIPS := 12
+const IMPACT_CHIP_SPREAD := 0.4
 ## Smallest fireball worth drawing, in pixels of radius. An impact burst ramps its
 ## reach up from zero, and a star that fine has its spokes land on the same float:
 ## the triangulator refuses the degenerate polygon and the frame logs an error. Half
@@ -121,7 +168,14 @@ var volley_figures := 1
 ## every unit that names it.
 var volley_arc := 0.0
 ## How far behind the first round each figure's leaves, in travel progress and
-## parallel to the figures firing. Empty is one wave, which is today's read.
+## parallel to the figures firing. Empty is one wave, which is what every style
+## that states no `fire_stagger` fires.
+##
+## Laid out by `_stagger_the_rank` off the style and the volley's own progress —
+## the two things the director already handed over — rather than in the director,
+## which owns when a beat opens and nothing about how a rank of barrels lights
+## inside it. The director clearing it every frame is what keeps a rank from
+## outliving the volley that lit it.
 var volley_lead := PackedFloat32Array()
 ## Every barrel alight this frame — one per standing figure. Empty for all but
 ## the handful of frames after a volley leaves, and for the dark half of a
@@ -129,7 +183,8 @@ var volley_lead := PackedFloat32Array()
 var muzzles := PackedVector2Array()
 ## How brightly each of those barrels is alight, parallel to `muzzles`. Empty is
 ## every listed barrel at full, which is what a squad whose barrels light as one
-## draws — and what every style with no stagger will keep drawing.
+## draws — and what every style with no stagger keeps drawing. Filled beside
+## `volley_lead` and off the same arithmetic.
 var muzzle_lit := PackedFloat32Array()
 var muzzle_radius := 0.0
 ## Which flash the alight barrels wear. Held as the projectile kind rather than
@@ -144,8 +199,10 @@ var muzzle_toward := 1.0
 var impact_p := 0.0
 var impact_at := Vector2.ZERO
 var impact_style: BattleStyle
-## How many chips this hit throws out of the target, 0..5. Zero is the impact the
-## file already draws.
+## How many chips this hit throws out of the target, 0..5. Taken off the style
+## that landed, as the hit is drawn; zero — what the director leaves here every
+## frame — is the impact this file already drew, which is what a frame with
+## nothing landing reads.
 var impact_debris := 0
 ## The kill blast, 0 -> 1, and where it goes off.
 var blast_p := 0.0
@@ -172,10 +229,11 @@ func _ready() -> void:
 
 
 func _draw() -> void:
+	_stagger_the_rank()
 	if vs_alpha > 0.0:
 		_draw_vs()
-	for at in muzzles:
-		_draw_muzzle(at)
+	for barrel in muzzles.size():
+		_draw_muzzle(muzzles[barrel], _barrel_alpha(barrel))
 	if volley_p > 0.0 and volley_p < 1.0 and volley_style != null:
 		_draw_volley()
 	if impact_p > 0.0 and impact_p < 1.0 and impact_style != null:
@@ -186,6 +244,89 @@ func _draw() -> void:
 	_draw_callout(def_at, def_amount, def_tag, def_p)
 
 
+## When each barrel of this rank lights and when each figure's rounds leave, laid
+## out once before anything is painted. Both are pure functions of the style the
+## director handed over and the volley's own progress, so a posed still catches
+## the same rank every run.
+##
+## A style that states no stagger leaves both empty, which is the read every
+## frame of a single heavy gun has always had.
+func _stagger_the_rank() -> void:
+	if volley_style == null or volley_style.fire_stagger <= 0.0:
+		return
+	var step := barrel_step(volley_style)
+	volley_lead = PackedFloat32Array()
+	for figure in maxi(volley_figures, 1):
+		volley_lead.append(step * figure)
+	# The rounds keep the stagger as authored; the *flashes* are fitted into the
+	# window the director keeps the barrels alight for, which for a gun is one
+	# FLASH_HOLD. A rank whose wind ran longer than that would leave its last
+	# launchers firing dark — the same compression CutsceneSide's `reach` makes
+	# on the topple, for the same reason.
+	var lit_step := minf(step, _flash_share() / maxf(muzzles.size() - 1, 1))
+	muzzle_lit = PackedFloat32Array()
+	for barrel in muzzles.size():
+		muzzle_lit.append(
+			barrel_light(_figure_at(barrel), volley_p, lit_step, volley_style.sustained)
+		)
+
+
+## One figure's share of the wind through a staggered rank, in travel progress.
+## `fire_stagger` is authored in seconds and everything this overlay is handed is
+## a share of the volley's own travel, so the conversion is the travel budget the
+## beat sheet gave that volley.
+static func barrel_step(style: BattleStyle) -> float:
+	return style.fire_stagger / maxf(CombatBeats.TRAVEL * style.travel_scale, 0.01)
+
+
+## How much of this volley's travel the barrels stay alight for: one flash for a
+## gun, the whole crossing for a weapon that is still firing while its stream is
+## in the air.
+func _flash_share() -> float:
+	if volley_style.sustained:
+		return 1.0
+	return CombatCutscene.FLASH_HOLD / maxf(CombatBeats.TRAVEL * volley_style.travel_scale, 0.01)
+
+
+## How brightly one figure's barrel burns. Dark until its turn comes; a gun's
+## then holds at full for the one flash it gets, and a burst weapon's dips
+## between its own rounds so five barrels 45 ms apart crackle where four 30 ms
+## apart read as one wall of fire. That cadence is the whole of what separates a
+## rifle squad from an autocannon — their wind-ups are 30 ms apart, which nobody
+## can see, and widening them to compensate is the rejected answer.
+static func barrel_light(figure: int, progress: float, step: float, sustained: bool) -> float:
+	var lead := step * figure
+	if progress < lead:
+		return 0.0
+	if not sustained or step <= 0.0:
+		return 1.0
+	return ramp(
+		fposmod(progress - lead, step) / step, [0.0, BARREL_DIP, 1.0], [1.0, BARREL_FLOOR, 1.0]
+	)
+
+
+## Which figure a listed barrel belongs to. The rank is listed outermost first
+## and the volley leaves from the innermost, so the wind runs from the seam
+## outward: the barrel the rounds come off is the one that lights first.
+func _figure_at(barrel: int) -> int:
+	return muzzles.size() - 1 - barrel
+
+
+## How brightly barrel `index` is drawn — every listed barrel at full until a
+## style states a stagger.
+func _barrel_alpha(index: int) -> float:
+	return muzzle_lit[index] if index < muzzle_lit.size() else 1.0
+
+
+## How far behind the first round the one at `index` leaves: its own figure's
+## place in the staggered rank, on top of the spacing its rounds already keep.
+func _fire_lead(index: int) -> float:
+	if volley_lead.is_empty():
+		return 0.0
+	var shots := maxi(volley_style.shots_per_figure, 1)
+	return volley_lead[mini(index / shots, volley_lead.size() - 1)]
+
+
 ## The volley in flight, drawn the way its style says. Rounds are staggered along
 ## the firing line so a squad's burst reads as several shots rather than one
 ## thick dash, and the whole thing is a function of `volley_p` like everything
@@ -193,13 +334,21 @@ func _draw() -> void:
 func _draw_volley() -> void:
 	if not volley_style.fires():
 		return
+	if volley_style.projectile == BattleStyle.TRACER or volley_style.projectile == BattleStyle.FLAK:
+		_draw_ricochets()
+	if volley_style.projectile == BattleStyle.SHELL:
+		_draw_muzzle_shock()
 	if volley_style.sustained:
 		_draw_stream()
 		return
 	var rounds := mini(volley_style.shots_per_figure * maxi(volley_figures, 1), MAX_ROUNDS)
 	for i in rounds:
-		var lag := clampf(volley_p - i * ROUND_STAGGER, 0.0, 1.0)
-		if lag <= 0.0 or lag >= 1.0:
+		# `lag` can never reach 1.0: the director only hands this overlay a volley
+		# while its own window is open, and every round is at or behind it. A
+		# round that has arrived is off screen because the window it crossed in
+		# has closed, not because it was dropped here.
+		var lag := volley_p - i * ROUND_STAGGER - _fire_lead(i)
+		if lag <= 0.0:
 			continue
 		_draw_round(lag, i)
 
@@ -216,7 +365,7 @@ func _draw_volley() -> void:
 func _draw_stream() -> void:
 	var rounds := mini(volley_style.shots_per_figure * maxi(volley_figures, 1), STREAM_ROUNDS)
 	for i in rounds:
-		var lag := volley_p * STREAM_CYCLE - i * STREAM_STAGGER
+		var lag := volley_p * STREAM_CYCLE - i * STREAM_STAGGER - _fire_lead(i)
 		if lag <= 0.0 or lag >= 1.0:
 			continue
 		_draw_round(lag, i)
@@ -238,7 +387,7 @@ static func _rung(index: int) -> float:
 func _draw_round(lag: float, index: int) -> void:
 	var at := volley_from.lerp(volley_to, lag)
 	var toward := signf(volley_to.x - volley_from.x)
-	var tint := Color(volley_style.tint, 1.0 - index * 0.09)
+	var tint := Color(volley_style.tint, round_alpha(index))
 	match volley_style.projectile:
 		BattleStyle.TORPEDO:
 			_draw_torpedo(at, toward, tint)
@@ -247,6 +396,7 @@ func _draw_round(lag: float, index: int) -> void:
 			# a little, tips over and lands on the target rather than flying at
 			# it. Sum of the two, not a choice between them: the lob is what makes
 			# it read as thrown and the fall is what makes it read as dropped.
+			_draw_bomb_shadow(at.x, lag, tint.a)
 			at.y -= sin(lag * PI) * volley_arc
 			at.y += lag * lag * BOMB_FALL + (index % 2) * 9.0
 			_draw_bomb(at, tint)
@@ -265,6 +415,62 @@ func _draw_round(lag: float, index: int) -> void:
 		BattleStyle.TRACER:
 			at.y += _rung(index)
 			_draw_tracer_dash(at, toward, tint)
+
+
+## How solid the round at `index` is drawn. The ones behind the leader thin out,
+## so a salvo reads front to back rather than as one wall of identical marks.
+static func round_alpha(index: int) -> float:
+	return maxf(1.0 - index * 0.09, 0.0)
+
+
+## Where a burst is landing short: ticks kicked off the target's own footing
+## line, each strictly nearer it than the last, and the whole march walking on as
+## the burst runs. A scatter reads as spray going everywhere; a march reads as
+## fire being walked onto the squad, which is what a stream of small rounds does.
+func _draw_ricochets() -> void:
+	var alpha := ramp(volley_p, [0.0, 0.2, 0.85, 1.0], [0.0, 1.0, 1.0, 0.0])
+	if alpha <= 0.0:
+		return
+	var walk := lerpf(RICOCHET_WALK.x, RICOCHET_WALK.y, volley_p)
+	var line := volley_to.y + FOOTING_DROP
+	for tick in RICOCHET_TICKS:
+		if (int(volley_p * RICOCHET_FLICKER) + tick) % 3 == 0:
+			continue
+		var share := walk - (RICOCHET_TICKS - 1 - tick) * RICOCHET_STEP
+		var at := Vector2(lerpf(volley_from.x, volley_to.x, share), line)
+		draw_colored_polygon(
+			four_point_star(at, RICOCHET_SIZE, SPARK_INNER), Color(SPARK_TINT, alpha * 0.85)
+		)
+
+
+## The shock a heavy gun throws off its own muzzle a beat after the flash: one
+## ring running out of the barrel the volley left from and thinning as it goes.
+## It outlives the flash on purpose — the flash says the shot was taken, and this
+## says how much gun took it.
+func _draw_muzzle_shock() -> void:
+	var travel := maxf(CombatBeats.TRAVEL * volley_style.travel_scale, 0.01)
+	var flash := CombatCutscene.FLASH_HOLD / travel
+	var progress := inverse_lerp(flash, flash + SHOCK_SPAN, volley_p)
+	if progress <= 0.0 or progress >= 1.0:
+		return
+	var reach := lerpf(SHOCK_REACH.x, SHOCK_REACH.y, progress)
+	var alpha := ramp(progress, [0.0, 0.25, 1.0], [0.0, 0.45, 0.0])
+	if reach < MIN_FLARE_REACH or alpha <= 0.0:
+		return
+	draw_arc(volley_from, reach, 0.0, TAU, 22, Color(SMOKE_TINT.lightened(0.4), alpha), 2.0)
+
+
+## The shadow a bomb runs across the ground on its way down, tightening under it
+## as it falls. The one cue that says how far there is left to fall, on a round
+## whose whole read is vertical.
+func _draw_bomb_shadow(at_x: float, lag: float, alpha: float) -> void:
+	var reach := maxf(lerpf(BOMB_SHADOW.x, BOMB_SHADOW.y, lag), MIN_FLARE_REACH)
+	var ink := Color(CutscenePalette.STROKE, alpha * ramp(lag, [0.0, 1.0], [0.14, 0.42]))
+	draw_set_transform(
+		Vector2(at_x, volley_to.y + FOOTING_DROP), 0.0, Vector2(1.0, BOMB_SHADOW_SQUASH)
+	)
+	draw_circle(Vector2.ZERO, reach, ink)
+	draw_set_transform(Vector2.ZERO)
 
 
 ## The default: a bright dash with a hard outline, so it reads over sky, ground
@@ -308,14 +514,9 @@ func _draw_flak(at: Vector2, lag: float, tint: Color) -> void:
 ## A rocket: a grey fuselage with a red nosecone and a swept tail fin, flame out
 ## the back, riding its arc nose-first — pitched up while it is climbing and down
 ## once it is falling, which is the one cue that tells a launcher from a gun at a
-## glance. Behind it, four puffs left along the same arc it flew.
+## glance. Behind it, the column of smoke it left along the same arc.
 func _draw_rocket(at: Vector2, toward: float, lag: float, tint: Color) -> void:
-	for puff in ROCKET_PUFFS:
-		var back := lag - (puff + 1) * ROCKET_PUFF_LAG
-		if back <= 0.0:
-			continue
-		var fade := clampf(0.42 - puff * 0.09, 0.0, 1.0) * tint.a
-		draw_circle(_arced(back), 3.0 + puff * 0.75, Color(SMOKE_TINT.lightened(0.45), fade))
+	_draw_rocket_smoke(lag, tint.a)
 	# Pitch follows the arc's own slope: nose up over the climb, level at the top,
 	# nose down into the target. The mirror rides in the transform's x scale, so the
 	# body below is written once, forward-facing, for both halves of the frame.
@@ -341,6 +542,32 @@ func _draw_rocket_body(alpha: float) -> void:
 		PackedVector2Array([Vector2(4.0, -1.6), Vector2(4.0, 1.6), Vector2(7.5, 0.0)]),
 		Color(KO_RED, alpha)
 	)
+
+
+## The column of its own smoke a rocket drags behind it, laid along the arc it
+## flew and thickening as it spreads.
+##
+## Every puff's alpha is a continuous ramp off its own age — it comes up from
+## nothing as it is laid and eases out to nothing as it hangs — rather than the
+## fixed value per puff this used to draw. A stepped fade reads as the trail
+## blinking off, which is the one thing a column that has to outlive its round
+## cannot do.
+func _draw_rocket_smoke(lag: float, alpha: float) -> void:
+	if alpha <= 0.0:
+		return
+	for puff in ROCKET_PUFFS:
+		var age := (puff + 1) * ROCKET_PUFF_LAG
+		var back := lag - age
+		if back <= 0.0:
+			continue
+		var born := minf(back / ROCKET_PUFF_LAG, 1.0)
+		var spent := clampf(1.0 - age / ROCKET_SMOKE_LIFE, 0.0, 1.0)
+		var fade := ROCKET_SMOKE_ALPHA * born * spent * spent * alpha
+		if fade <= 0.0:
+			continue
+		draw_circle(
+			_arced(back), 3.0 + age * ROCKET_SMOKE_GROWTH, Color(SMOKE_TINT.lightened(0.45), fade)
+		)
 
 
 ## A point on the volley's own arc, at `lag` along it. What the rocket's smoke
@@ -381,23 +608,23 @@ func _draw_torpedo(at: Vector2, toward: float, tint: Color) -> void:
 ## A launcher is the one that differs: a tube vents as much backwards as forwards,
 ## so it gets a round flash and a cone of backblast out of its own rear instead of
 ## a gun's four-pointed star.
-func _draw_muzzle(at: Vector2) -> void:
-	if muzzle_radius <= 0.0:
+func _draw_muzzle(at: Vector2, lit: float) -> void:
+	if muzzle_radius <= 0.0 or lit <= 0.0:
 		return
 	if muzzle_kind == BattleStyle.ROCKET:
 		# Three rings falling off rather than one disc: a tube lights the air around
 		# it, and a hard edge on that reads as a painted dot.
-		_draw_backblast(at)
-		draw_circle(at, muzzle_radius, Color(FLASH_GOLD, 0.35))
-		draw_circle(at, muzzle_radius * 0.72, Color(FLASH_GOLD, 0.8))
-		draw_circle(at, muzzle_radius * 0.38, Color(1.0, 1.0, 1.0, 0.95))
+		_draw_backblast(at, lit)
+		draw_circle(at, muzzle_radius, Color(FLASH_GOLD, 0.35 * lit))
+		draw_circle(at, muzzle_radius * 0.72, Color(FLASH_GOLD, 0.8 * lit))
+		draw_circle(at, muzzle_radius * 0.38, Color(1.0, 1.0, 1.0, 0.95 * lit))
 		return
-	draw_colored_polygon(four_point_star(at, muzzle_radius, MUZZLE_INNER), FLASH_GOLD)
-	draw_circle(at, muzzle_radius * 0.35, Color(1.0, 1.0, 1.0, 0.95))
+	draw_colored_polygon(four_point_star(at, muzzle_radius, MUZZLE_INNER), Color(FLASH_GOLD, lit))
+	draw_circle(at, muzzle_radius * 0.35, Color(1.0, 1.0, 1.0, 0.95 * lit))
 
 
 ## The wedge of exhaust out of the back of a launch tube, widening away from it.
-func _draw_backblast(at: Vector2) -> void:
+func _draw_backblast(at: Vector2, lit: float) -> void:
 	var back := -muzzle_toward
 	var reach := muzzle_radius * BACKBLAST_REACH
 	var flare := muzzle_radius * BACKBLAST_FLARE
@@ -410,7 +637,7 @@ func _draw_backblast(at: Vector2) -> void:
 				at + Vector2(back * reach, -flare),
 			]
 		),
-		Color(ROCKET_HULL, 0.32)
+		Color(ROCKET_HULL, 0.32 * lit)
 	)
 
 
@@ -420,17 +647,59 @@ func _draw_backblast(at: Vector2) -> void:
 ## to leave a hole. Suppressed entirely when the shot cost the target nothing, and
 ## kept well under the kill blast, which owns the frame when it comes.
 func _draw_impact() -> void:
+	impact_debris = impact_style.impact_debris
 	if impact_style.impact_radius <= 0.0:
 		_draw_sparks()
 		return
-	var reach := ramp(impact_p, [0.0, 0.35, 1.0], [0.0, 1.0, 0.78]) * impact_style.impact_radius
-	var alpha := ramp(impact_p, [0.0, 0.15, 0.75, 1.0], [0.0, 1.0, 0.55, 0.0])
-	_draw_smoke_squares(alpha)
-	# Torn rings rather than nested discs, for the reason the kill blast gives
-	# below: three concentric circles at this size read as a bullseye.
-	_draw_flare(impact_at, reach, Color(KO_RED, alpha * 0.9), 0.0, IMPACT_SPOKES)
-	_draw_flare(impact_at, reach * 0.62, Color(FLASH_GOLD, alpha), 0.4, IMPACT_SPOKES)
-	_draw_flare(impact_at, reach * 0.3, Color(1.0, 1.0, 1.0, alpha), 0.8, IMPACT_SPOKES)
+	if impact_style.projectile == BattleStyle.TORPEDO:
+		_draw_foam()
+	else:
+		var reach := ramp(impact_p, [0.0, 0.35, 1.0], [0.0, 1.0, 0.78]) * impact_style.impact_radius
+		var alpha := ramp(impact_p, [0.0, 0.15, 0.75, 1.0], [0.0, 1.0, 0.55, 0.0])
+		_draw_smoke_squares(alpha)
+		# Torn rings rather than nested discs, for the reason the kill blast gives
+		# below: three concentric circles at this size read as a bullseye.
+		_draw_flare(impact_at, reach, Color(KO_RED, alpha * 0.9), 0.0, IMPACT_SPOKES)
+		_draw_flare(impact_at, reach * 0.62, Color(FLASH_GOLD, alpha), 0.4, IMPACT_SPOKES)
+		_draw_flare(impact_at, reach * 0.3, Color(1.0, 1.0, 1.0, alpha), 0.8, IMPACT_SPOKES)
+	_draw_impact_chips()
+
+
+## What a torpedo leaves instead of a hole: foam running out along the waterline
+## it ran under, and a mound of water thrown up over the hit. A land burst does
+## not belong here — fire on the sea reads as the wrong weapon having landed.
+func _draw_foam() -> void:
+	var line := impact_at + Vector2(0.0, WAKE_DEPTH)
+	var alpha := ramp(impact_p, [0.0, 0.12, 0.7, 1.0], [0.0, 1.0, 0.55, 0.0])
+	if alpha <= 0.0:
+		return
+	draw_set_transform(line, 0.0, Vector2(1.0, FOAM_SQUASH))
+	for ring in FOAM_RINGS:
+		var reach := ramp(impact_p, [0.0, 1.0], [4.0, FOAM_REACH - ring * 17.0])
+		if reach < MIN_FLARE_REACH:
+			continue
+		draw_arc(
+			Vector2.ZERO,
+			reach,
+			0.0,
+			TAU,
+			26,
+			Color(1.0, 1.0, 1.0, alpha * (0.85 - ring * 0.3)),
+			2.0
+		)
+	draw_set_transform(Vector2.ZERO)
+	var mound := ramp(impact_p, [0.0, 0.3, 1.0], [2.0, 15.0, 5.0])
+	draw_circle(line + Vector2(0.0, -mound * 0.4), mound, Color(1.0, 1.0, 1.0, alpha * 0.7))
+
+
+## The chips this weapon throws out of what it hit, up to what its style says.
+## Suppressed entirely while the kill blast is up: that already throws twelve on
+## the same arithmetic and owns the frame, and a smaller set inside it reads as
+## noise rather than as a second hit.
+func _draw_impact_chips() -> void:
+	if impact_debris <= 0 or blast_p > 0.0:
+		return
+	_draw_chips(impact_at, impact_p, impact_debris, IMPACT_CHIP_SPREAD)
 
 
 ## Four squares of smoke thrown up out of the burst along a fan and lifting as they
@@ -527,15 +796,23 @@ func _draw_flare(at: Vector2, reach: float, tint: Color, turn: float, spokes: in
 	draw_colored_polygon(points, tint)
 
 
-## Wreckage thrown clear: out fast, then dragged down, so it arcs instead of
-## sliding along a straight line out of the fireball.
+## Wreckage thrown clear of the kill blast.
 func _draw_debris() -> void:
-	var alpha := ramp(blast_p, [0.0, 0.1, 0.75, 1.0], [0.0, 1.0, 0.9, 0.0])
-	for i in 12:
-		var angle := float(i) * TAU / 12.0 + (i % 3) * 0.17
-		var reach := ramp(blast_p, [0.0, 0.6, 1.0], [4.0, 58.0 + (i % 4) * 16.0, 96.0])
-		var drop := blast_p * blast_p * 54.0
-		var at := blast_at + Vector2(cos(angle), sin(angle) * 0.7) * reach + Vector2(0.0, drop)
+	_draw_chips(blast_at, blast_p, BLAST_CHIPS, 1.0)
+
+
+## Chips thrown out of a hit: out fast, then dragged down, so they arc instead of
+## sliding along a straight line out of the fire. `spread` is how much of the
+## kill blast's throw this one gets — an ordinary impact's handful comes off the
+## same arithmetic at a fraction of its reach, which is what keeps the two from
+## reading as the same event at two sizes.
+func _draw_chips(center: Vector2, progress: float, count: int, spread: float) -> void:
+	var alpha := ramp(progress, [0.0, 0.1, 0.75, 1.0], [0.0, 1.0, 0.9, 0.0])
+	for i in count:
+		var angle := float(i) * TAU / count + (i % 3) * 0.17
+		var reach := ramp(progress, [0.0, 0.6, 1.0], [4.0, 58.0 + (i % 4) * 16.0, 96.0]) * spread
+		var drop := progress * progress * 54.0 * spread
+		var at := center + Vector2(cos(angle), sin(angle) * 0.7) * reach + Vector2(0.0, drop)
 		var chip := 7.0 - (i % 3) * 1.5
 		draw_rect(
 			Rect2(at - Vector2(chip, chip) * 0.5, Vector2(chip, chip)),
