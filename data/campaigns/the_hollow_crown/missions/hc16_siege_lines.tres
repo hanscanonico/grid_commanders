@@ -35,12 +35,12 @@ text = "Ferrow and I have dug siege lines around the capital, Ward. Each of us m
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "My army is what stands between those lines closing. Keep me in the field, Commander."
+text = "My army is what stands between those lines closing. Keep me in the field, Ward."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"alina_ward"
-text = "We take the relay. That breaks the siege from the inside."
+text = "We take the relay and hold it two days. That breaks the ring from the inside, and it takes every arm we have."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
@@ -50,7 +50,7 @@ text = "Siege lines are broken. Your banner still flies at the centre of them."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "Orlov and Ferrow starved nothing but their own claims. This is the last I ask of you, Commander — the rest of the capital is mine to finish."
+text = "Orlov and Ferrow starved nothing but their own claims. That's the last I ask of you, Ward. The rest of the capital is mine to finish."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("8")
@@ -66,7 +66,7 @@ note = "One more crossing fought with the marshal's banner still on the field."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "I am inside the ring with you, Commander, not behind it. Whatever else the marshals say of me, say that."
+text = "I'm inside the ring with you, not behind it. Say that much when the other marshals ask."
 
 [sub_resource type="Resource" id="Event_inside_the_ring"]
 script = ExtResource("7")

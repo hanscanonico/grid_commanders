@@ -37,12 +37,12 @@ text = "Finish this fight. The next one won't look anything like it."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"tomas_reed"
-text = "Your line fell, and the smoke behind it wasn't ours. Iron's burning its own roads."
+text = "Your line fell. The smoke behind it wasn't ours. Iron's burning its own roads now."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "The Directorate is dead. Whatever comes next, it will not be six marshals answering one crown."
+text = "The Directorate is dead. Whatever comes next, it won't be six marshals answering one crown."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
@@ -66,12 +66,12 @@ note = "The Directorate stopped giving orders, and its marshals stopped taking t
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "That order came from a capital with nobody left in it. My own column has stopped listening — to me as much as to you."
+text = "That order came from a capital with nobody left in it. My own column has stopped listening. To me as much as to you."
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"tomas_reed"
-text = "Two of his companies just turned round and walked off the field. That is not a retreat, Marshal. That is a chain of command falling apart in front of us."
+text = "Two of his companies just turned round and walked off the field, Marshal. No orders. Nobody chasing them either."
 
 [sub_resource type="Resource" id="Event_the_column_stops_answering"]
 script = ExtResource("6")

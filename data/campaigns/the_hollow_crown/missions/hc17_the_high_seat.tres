@@ -33,7 +33,7 @@ text = "Whatever it is, it's the last checkpoint before Morn's own fortress. Con
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Ferrow keeps no reserve and armours nothing. Take the towns off him first. Raiders cannot be paid out of ground they do not hold."
+text = "Ferrow keeps no reserve and armours nothing. Take the towns off him first. You can't pay a raider out of ground he doesn't hold."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -69,7 +69,7 @@ reason = "Ferrow sold the high seat back rather than die on it."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "Ambition is expensive, Holt, and I have not been paid since the customs fort. There is still money in walking away."
+text = "I haven't been paid since the customs fort, Holt. Ambition's expensive. There's money in the road out."
 
 [sub_resource type="Resource" id="Event_money_in_walking_away"]
 script = ExtResource("7")

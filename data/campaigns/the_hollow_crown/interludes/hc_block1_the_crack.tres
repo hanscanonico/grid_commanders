@@ -32,19 +32,19 @@ text = "Six marshals, six armies, and no crown left for any of them to answer to
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"radek_morn"
-text = "I came out of the spring a column lighter, Commander. Whatever I take from you next, I will not be asking for it first."
+text = "I came out of the spring a column lighter. Whatever I take from you next, I won't be asking first."
 requires = SubResource("Bloodied")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"radek_morn"
-text = "I came out of the spring with everything I marched in with, and an ultimatum that answered itself. Neither of us is short of practice now."
+text = "I came out of the spring with everything I marched in with. My ultimatum answered itself. We've both had the practice now."
 requires = SubResource("Unbloodied")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "There is one marshal at your border who does not want the throne, Commander. I want the winter, and somebody to survive it beside. I will be in touch."
+text = "There's one marshal at your border who doesn't want the throne. I want the winter, and somebody to survive it beside. I'll be in touch."
 
 [resource]
 script = ExtResource("1")

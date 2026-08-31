@@ -49,13 +49,13 @@ requires = SubResource("StoodWithHim")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "You carried me over every crossing there was, Commander, including the one nobody made you fight. That does not buy me the seat. It buys you the right to ask what I do with it."
+text = "You carried me over every crossing there was, including the one nobody made you fight. That doesn't buy me the seat. It buys you the right to ask what I do with it."
 requires = SubResource("CarriedHim")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "Then we'll ask. Every spring, if we have to — the same way he used to test our line."
+text = "Then we'll ask. Every spring, if we have to, the same way he used to test our line."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")

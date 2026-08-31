@@ -24,27 +24,27 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "I will not survive the winter without allies, Commander. I suspect neither will you."
+text = "I won't survive the winter alone, Colt, and neither will you."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"iris_colt"
-text = "Orlov and Morn both want the succession for themselves. That makes this easy, in its way."
+text = "Orlov and Morn both want the succession. That leaves exactly one marshal we can stand beside."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "Fight beside my army, not around it. The relay on the ridge is worth sharing first."
+text = "Fight beside my armour, not around it. Take the ridge relay first and we share it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"iris_colt"
-text = "Relay's ours, and your banner's still flying beside ours."
+text = "Relay's ours. Your banner's still up beside it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "An uneasy alliance held its first test. I keep my word, Commander — remember that."
+text = "It held. I keep my word, Colt, and you'll see the whole of it before the capital."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -63,7 +63,7 @@ units = Array[Resource]([SubResource("Spawn_the_left_flank")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "My left flank is yours, Commander. I do not offer it to anyone twice."
+text = "My left flank is yours, Colt. I don't offer it twice."
 
 [sub_resource type="Resource" id="Event_the_flank_is_offered"]
 script = ExtResource("6")

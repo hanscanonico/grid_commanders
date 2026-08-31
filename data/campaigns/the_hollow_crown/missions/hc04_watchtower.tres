@@ -22,7 +22,7 @@ count = 7
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "This stretch runs the same as everywhere I'm posted, Commander. Like a ledger."
+text = "I'm posted where the takings are, Sol, and this road takes more than any other on my book."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
@@ -32,17 +32,17 @@ text = "Three checkpoints, nine days. You won't leave any undefended for a tenth
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"rhea_sol"
-text = "All three checkpoints ours in the same moment. That is the only entry that closes her ledger."
+text = "All three checkpoints ours in the same moment, not one taken and then the next while she walks the first one back. I want them on the grid together or not at all."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"rhea_sol"
-text = "Watchtower road is ours. Her busiest entry, gone."
+text = "Watchtower road is ours, post to post. Her busiest entry, gone."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "For once the numbers favour you. I will remember them."
+text = "For once the numbers favour you. I'll remember them."
 
 [sub_resource type="Resource" id="Trigger_middle_checkpoint_ours"]
 script = ExtResource("7")
@@ -57,7 +57,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "The middle post kept the road's takings, Commander. Spend them faster than I collected them."
+text = "The middle post kept the road's takings, Sol. Spend them faster than I collected them."
 
 [sub_resource type="Resource" id="Event_the_middle_checkpoint"]
 script = ExtResource("6")
@@ -81,7 +81,7 @@ note = "Vance's far checkpoint and its books were taken on the watchtower road."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Three posts closed in one move, Commander. I am revising my figures downward."
+text = "Three posts closed in one move. I'm revising my figures downward."
 
 [sub_resource type="Resource" id="Event_the_far_checkpoint"]
 script = ExtResource("6")
