@@ -20,8 +20,8 @@ extends SceneTree
 ##     --worst=25                 how many lines to list (default 25)
 ##     --min=0.0                  list only lines at or above this score
 ##     --csv=reports/prose/slop.csv   where the full table goes (gitignored)
-##     --reference                also score the commanders' power quotes and
-##                                doctrine blurbs, as a control corpus
+##     --reference                score the commanders' power quotes and doctrine
+##                                blurbs *instead* of the campaigns, as a control
 
 const TOOL := "prose"
 const DEFAULT_CSV := "reports/prose/slop.csv"
@@ -59,9 +59,14 @@ var _reference := false
 
 func _initialize() -> void:
 	_parse_args(CmdArgs.user())
-	var lines := ProseCorpus.gather(CampaignDB.load_default())
-	if _reference:
-		lines.append_array(ProseCorpus.commander_lines(CommanderDB.load_default()))
+	# The control corpus replaces the campaigns rather than joining them: a power
+	# quote is written to be one aphorism, so scored in the same table it would
+	# both top the worst-N list and drag every campaign mean it is averaged into.
+	var lines := (
+		ProseCorpus.commander_lines(CommanderDB.load_default())
+		if _reference
+		else ProseCorpus.gather(CampaignDB.load_default())
+	)
 	lines = ProseCorpus.narrow(lines, _campaign, _speaker)
 	if lines.is_empty():
 		print("%s: no dialogue matched that filter" % TOOL)

@@ -11,7 +11,7 @@ measured against.
 make prose                                        # everything
 make prose PROSE="--campaign=the_quiet_war"       # one war
 make prose PROSE="--speaker=konrad_vale --worst=50"
-make prose PROSE="--reference"                    # add the commanders' quotes as a control
+make prose PROSE="--reference"                    # the commanders' quotes instead, as a control
 ```
 
 The full per-line table lands in `reports/prose/slop.csv` (gitignored). The corpus is
@@ -135,9 +135,10 @@ Openings shared across voices: "then we" (23 uses, 11 voices), "the column" (12 
 
 ## The control corpus
 
-`make prose PROSE="--reference"` adds the commanders' `power_quotes` and `doctrine_text` under the
-pseudo-campaign `(commanders)`. They are written to a different brief — a power quote is *meant* to
-be one aphorism — so they are the control, not rows in the same table:
+`make prose PROSE="--reference"` scores the commanders' `power_quotes` and `doctrine_text` — filed
+under the pseudo-campaign `(commanders)` — *instead of* the campaigns. They are written to a
+different brief, a power quote being *meant* to be one aphorism, so they are the control run rather
+than rows in the same table:
 
 ```
 prose: 88 lines, 22 voices

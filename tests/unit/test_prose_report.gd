@@ -102,10 +102,18 @@ func test_voice_overlap_finds_the_interchangeable_pair() -> void:
 	assert_almost_eq(float(overlap[0]["jaccard"]), 1.0, 0.01)
 
 
+## The short voice's three trigrams are all shared with the long one, so the pair
+## would top the table on five words if `MIN_TRIGRAMS` did not drop it first.
 func test_voice_overlap_ignores_a_voice_too_small_to_judge() -> void:
 	var lines: Array[ProseLine] = [
-		_line("m01", "briefing", 0, "a", "Go now."),
-		_line("m01", "briefing", 1, "b", "Go now."),
+		_line(
+			"m01",
+			"briefing",
+			0,
+			"wordy",
+			"the relief column will cross the river before the thaw takes the ford out"
+		),
+		_line("m01", "briefing", 1, "brief", "the relief column will cross"),
 	]
 	assert_eq(ProseReport.voice_overlap(lines).size(), 0)
 
