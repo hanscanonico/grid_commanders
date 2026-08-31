@@ -1,19 +1,21 @@
 # The Long Front 15 — "The Airfield Raid". Dane Ferrow has turned a
 # captured Iron airfield into a raiding base against the allied advance.
 # Perrin Ash takes it back before it fields anything that can fly.
-# Symbols: . plains  F woods  M mountain  = road  C city  A airport  Q HQ
+# Symbols: . plains  F woods  M mountain  = road  C city  A airport
+#          B base  Q HQ
 [terrain]
 MMM..............MMM
 M..Q====.....C..MMMM
-....=......MM...MMMM
+....=B.....MM...MMMM
 ....=...C...A...MMMM
 FF..=======....MMMMM
 ....F......C....MMMM
-........======......
+........=C====......
 ...........====...Q.
 MMM..............MMM
 [owners]
 1 3 1
+1 5 2
 2 12 3
 2 18 7
 [units]
@@ -24,9 +26,11 @@ MMM..............MMM
 1 t 5 4
 1 t 6 4
 1 a 4 4
+1 a 6 3
 2 i 15 5
 2 i 14 6
 2 r 15 6
 2 t 12 5
 2 t 13 6
 2 a 14 5
+2 h 12 4
