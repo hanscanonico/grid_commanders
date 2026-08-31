@@ -32,3 +32,29 @@ func test_a_board_that_differs_by_one_cell_is_not_a_share() -> void:
 	var plain := MapData.parse("[terrain]\n...\n", terrain_db)
 	var wooded := MapData.parse("[terrain]\n.F.\n", terrain_db)
 	assert_ne(CampaignBoards.terrain_digest(plain), CampaignBoards.terrain_digest(wooded))
+
+
+func test_a_board_given_its_own_ground_must_leave_the_allowlist() -> void:
+	var by_digest := _every_group_still_sharing()
+	assert_eq(CampaignBoards.stale_group_errors(by_digest), PackedStringArray())
+	var group: Array = CampaignBoards.SHARED_BOARDS[0]
+	var separated: String = group[0]
+	var rest: PackedStringArray = by_digest["group0"]
+	rest.remove_at(0)
+	by_digest["group0"] = rest
+	by_digest["its own ground"] = PackedStringArray([separated])
+	var errors := CampaignBoards.stale_group_errors(by_digest)
+	assert_eq(errors.size(), 1, "one line, naming the group that stopped sharing")
+	assert_string_contains(errors[0], separated)
+
+
+## Every declared group reading as one shared digest — the tree the allowlist
+## was written for, before a test moves one board off it.
+func _every_group_still_sharing() -> Dictionary[String, PackedStringArray]:
+	var by_digest: Dictionary[String, PackedStringArray] = {}
+	for i in CampaignBoards.SHARED_BOARDS.size():
+		var names := PackedStringArray()
+		for name in CampaignBoards.SHARED_BOARDS[i]:
+			names.append(name)
+		by_digest["group%d" % i] = names
+	return by_digest

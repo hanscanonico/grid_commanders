@@ -20,9 +20,10 @@ const CAMPAIGN_DIR := "res://maps/campaign"
 ## mission is the counter-attack over the first one's ground. The rest are
 ## unpaid authoring debt, listed so a *new* share cannot slip in beside them.
 ##
-## A group that no longer shares is simply unused rather than an error: these
-## boards are being replaced a few at a time, and a lint that failed the moment
-## somebody fixed one would be a lint everybody learned to edit around.
+## A group is checked in both directions: a board that has since been given
+## ground of its own has to leave the list. An entry kept past its share would
+## quietly re-license a copy between boards somebody had already separated, and
+## the README points a reader here for what still shares.
 const SHARED_BOARDS: Array[Array] = [
 	["fw01_dry_taps", "fw02_last_granary"],
 	["fw07_pipeline_east", "fw08_pipeline_west", "hc03_the_garrison", "hc13_the_capital_road"],
@@ -92,8 +93,8 @@ static func groups(db: TerrainDB) -> Dictionary[String, PackedStringArray]:
 	return by_digest
 
 
-## Every undeclared share, one line each, or "" when no two missions are fighting
-## over ground that is not in `SHARED_BOARDS`.
+## Every undeclared share and every declared group that has stopped being one,
+## a line each, or "" when the boards and `SHARED_BOARDS` agree.
 static func shared_board_error(db: TerrainDB) -> String:
 	var lines := PackedStringArray()
 	var by_digest := groups(db)
@@ -101,8 +102,46 @@ static func shared_board_error(db: TerrainDB) -> String:
 		if names.size() < 2 or _is_declared(names):
 			continue
 		lines.append("boards share terrain and are not in SHARED_BOARDS: %s" % ", ".join(names))
+	lines.append_array(stale_group_errors(by_digest))
 	lines.sort()
 	return "\n".join(lines)
+
+
+## The groups that have outlived their share, one line each naming the boards
+## that no longer stand on anyone's ground but their own, so the list is pruned
+## by the same run that separates them. Takes `groups()`'s reading rather than
+## the disk, so a test can hand it a board set that does not exist yet.
+static func stale_group_errors(
+	by_digest: Dictionary[String, PackedStringArray]
+) -> PackedStringArray:
+	var digests: Dictionary[String, String] = {}
+	for digest in by_digest:
+		for name in by_digest[digest]:
+			digests[name] = digest
+	var lines := PackedStringArray()
+	for group in SHARED_BOARDS:
+		var gone := PackedStringArray()
+		for name in group:
+			if not _shares_within(name, group, digests):
+				gone.append(name)
+		if not gone.is_empty():
+			lines.append(
+				"SHARED_BOARDS lists boards that no longer share terrain: %s" % ", ".join(gone)
+			)
+	return lines
+
+
+## Whether some other board in the same group stands on this one's ground. A
+## board that no campaign holds any more answers no: a name nobody can look up
+## is as stale as a share that was fixed.
+static func _shares_within(name: String, group: Array, digests: Dictionary[String, String]) -> bool:
+	var digest: String = digests.get(name, "")
+	if digest == "":
+		return false
+	for other in group:
+		if other != name and digests.get(other, "") == digest:
+			return true
+	return false
 
 
 static func _is_declared(names: PackedStringArray) -> bool:
