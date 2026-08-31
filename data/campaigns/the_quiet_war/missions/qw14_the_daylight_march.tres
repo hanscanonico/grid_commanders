@@ -10,10 +10,10 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
 
-[sub_resource type="Resource" id="Objective_hold_four_cities"]
+[sub_resource type="Resource" id="Objective_hold_five_cities"]
 script = ExtResource("2")
-text = "Hold all four cities."
-count = 4
+text = "Hold five of the six cities."
+count = 5
 terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
@@ -39,7 +39,7 @@ text = "Then don't fight it that way. Fight me honestly, and we'll both know exa
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "All four cities held, in daylight, and nothing hidden about how you took them. I didn't expect to respect that. I do."
+text = "Five of six cities held, in daylight, and nothing hidden about how you took them. I didn't expect to respect that. I do."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
@@ -150,7 +150,7 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_hold_four_cities")])
+objectives = Array[Resource]([SubResource("Objective_hold_five_cities")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_draeg_answers_in_daylight"), SubResource("Event_the_vanguard_breaks"), SubResource("Event_the_division_is_spent"), SubResource("Event_the_march_stands")])
