@@ -2,21 +2,25 @@
 # her heaviest column of the war to break Iris Colt's line before the
 # alliance can bring up reserves. There is no fog to hide behind — only
 # the line itself.
-# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-MM..............MM
-.Q====......MM....
-..=......MM.......
-..=...C...........
-FF=======.........
-..F......C........
-......======......
-.........====....Q
-MM..............MM
+MM..................MM
+.Q====......MM........
+.B=......MM...........
+..=...C............C..
+FF=======.............
+..F......C............
+......======..........
+.........====....Q....
+...............B......
+.........C............
+MM..................MM
 [owners]
 1 1 1
+1 1 2
 1 6 3
 2 17 7
+2 15 8
 [units]
 1 i 2 2
 1 i 3 3
@@ -25,6 +29,9 @@ MM..............MM
 1 t 3 4
 1 t 4 4
 1 a 4 5
+1 T 5 4
+1 g 3 2
+1 a 5 5
 2 i 13 6
 2 i 14 5
 2 r 12 6
@@ -32,3 +39,6 @@ MM..............MM
 2 t 15 5
 2 T 14 6
 2 a 12 5
+2 T 15 6
+2 R 15 7
+2 a 16 4

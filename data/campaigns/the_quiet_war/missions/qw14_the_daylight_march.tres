@@ -12,8 +12,8 @@
 
 [sub_resource type="Resource" id="Objective_hold_four_cities"]
 script = ExtResource("2")
-text = "Hold all four cities."
-count = 4
+text = "Hold five of the six cities."
+count = 5
 terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
@@ -39,7 +39,7 @@ text = "Then don't fight it that way. Fight me honestly, and we'll both know exa
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "All four cities held, in daylight, and nothing hidden about how you took them. I didn't expect to respect that. I do."
+text = "Five of six cities held, in daylight, and nothing hidden about how you took them. I didn't expect to respect that. I do."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
