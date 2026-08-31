@@ -170,7 +170,7 @@ limits above, and two findings the rework did not move:
 - **The strongest commanders are cast as the enemy.** Of the missions never won,
   Iona Vance is the enemy in 11 of the 21 she plays, Radek Morn in 11 of 18 and
   Konrad Vale in 9 of 16 — three of the standing high names in
-  `docs/commander_balance.md` (90.0%, 78.6% and 62.5%, all WARN), against Dane
+  `docs/commander_balance.md` (78.6%, 90.0% and 62.5%, all WARN), against Dane
   Ferrow's 6 of 29 and Cass Orlov's 5 of 20, whose own standing rates are 41.4%
   and 44.7%. That is the commander matrix showing through the campaign, and its
   fix is a commander retune, not a mission edit: retuning a doctrine here would
@@ -226,8 +226,9 @@ Sable Wren was retuned (#547). `fw03_cold_relay` is that caveat with a name on
 it: same ground, same roster, same objective, 0% to 100%.
 
 Where the record stands: **47 of 108 never won** against the forty-nine it stood
-at, mean `win%` **43.1** against 42.5. No mission's clock is at or under its own
-median win day, so the instrument's 47 flagged rows are exactly the 47 never won.
+at, mean `win%` **43.1** against the 43.0 the superseded table read — a mean the
+noise below swallows whole. No mission's clock is at or under its own median win
+day, so the instrument's 47 flagged rows are exactly the 47 never won.
 
 ### Nine seeds is a wider band than the table looks
 
@@ -246,9 +247,9 @@ second sample, which is why these four are the ones named.
   ground or the drift above — not the opening arithmetic.
 - `fw03_cold_relay` **0 → 100%** (100%) with nothing about the mission changed
   but its dialogue.
-- `lf13_the_foothill_road` **0 → 56%** (33%), the largest opening improvement in
-  the sweep: 0.85 / 1.00 → 0.95 / **1.33**, the player's side now owning more
-  property than the enemy's.
+- `lf13_the_foothill_road` **0 → 56%** (33%), its opening up on both counts:
+  0.85 / 1.00 → 0.95 / **1.33**, the one board in the sweep whose property share
+  moved *above* parity rather than up to it.
 - `qw15_the_engineering_works` **67 → 0%** (0%) — the only win this record lost.
 
 Openings that moved without changing hands: `tc14_draegs_line` 3.00 → 1.45 (the
