@@ -2,26 +2,32 @@
 # border in the open until there was no border left to dissolve. Perrin
 # Ash finishes the war the way it should have started: an army, in
 # daylight, against the headquarters he thought nobody would find.
+# The forest Ash fought the whole war in ends at the ridge, and the one
+# road through the pass is the last cover before the compound: an HQ on
+# bare plain with its airstrip behind it. The base back in the trees is
+# Iron's, built there while nobody was looking.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base
 #          A airport  Q HQ
 [terrain]
-MMMM..............MMMM
-M..Q====..B....C..MMMM
-....=....MM..MMM..MMMM
-....=...C...A....MMMMM
-FF..========....MM....
-....F......C.....MM...
-........=======...MMM.
-...........====..MMM..
-..................B...
-..................Q...
-MMMM..............MMMM
+FF.F..F.....MM..........
+F..Q====..B.MM.C........
+.F.F.F.=.F..MM..........
+F...F..=C..BMM..........
+.F.F...=.F..MM..........
+F...F.F=...C............
+.F.F...=======..........
+F...F..F.F..............
+.F.F...F................
+F...F.......MM......A...
+.F.F...F....MM..........
+F...F..F....MM.....Q....
+.F.F..F.....MM..........
 [owners]
 1 3 1
 1 10 1
-2 12 3
-2 18 8
-2 18 9
+2 19 11
+2 20 9
+2 11 3
 [units]
 1 i 4 2
 1 i 5 3
@@ -32,12 +38,12 @@ MMMM..............MMMM
 1 T 4 4
 1 a 5 5
 1 g 4 5
-2 i 15 7
-2 i 14 8
-2 r 15 8
-2 t 14 7
-2 t 13 8
-2 T 16 7 iron_regular_a
-2 T 17 8 iron_regular_b
-2 a 14 6
-2 g 13 7
+2 i 17 9
+2 i 16 10
+2 r 17 10
+2 t 16 9
+2 t 15 10
+2 T 18 9 iron_regular_a
+2 T 19 10 iron_regular_b
+2 a 16 8
+2 g 15 9

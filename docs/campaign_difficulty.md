@@ -316,5 +316,5 @@ beside a mission that has since been fixed reads as a fault still open.
 | quiet war | `qw15_the_engineering_works` | hard | 67% | 15 | — | 1.19 | 1.00 | Your army was destroyed. |
 | quiet war | `qw16_holding_the_line_in_the_open` | hard | 0% | — | — | 0.70 | 2.00 | Your army was destroyed. |
 | quiet war | `qw17_the_last_outpost` | hard | 0% | — | — | 0.94 | 1.00 | Your army was destroyed. |
-| quiet war | `qw18_the_man_himself` | hard | 100% | 11 | — | 0.80 | 0.67 | — |
+| quiet war | `qw18_the_man_himself` | hard | 100% | 7 | — | 0.80 | 0.67 | — |
 
