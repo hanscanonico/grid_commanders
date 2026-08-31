@@ -26,23 +26,10 @@ const CAMPAIGN_DIR := "res://maps/campaign"
 ## the README points a reader here for what still shares.
 const SHARED_BOARDS: Array[Array] = [
 	["fw01_dry_taps", "fw02_last_granary"],
-	["fw07_pipeline_east", "fw08_pipeline_west", "hc03_the_garrison", "hc13_the_capital_road"],
-	["hc01_border_skirmish", "hc02_river_line"],
+	["fw07_pipeline_east", "fw08_pipeline_west", "hc03_the_garrison"],
 	["hc05_the_ultimatum", "hc15_the_regents_gate"],
 	["hc06_the_crack", "hc17_the_high_seat"],
-	[
-		"hc07_uneasy_alliance",
-		"hc08_shared_supply",
-		"hc09_the_crossroads",
-		"hc10_broken_column",
-		"hc11_two_fronts",
-		"hc12_the_bargain_kept",
-		"hc14_last_garrison",
-		"hc16_siege_lines",
-	],
-	["lf18_the_keep_at_draeg_hold", "qw18_the_man_himself"],
-	["qw07_the_cache_at_millhollow", "qw10_the_relay_tower"],
-	["qw08_the_waystation", "qw12_the_network_node"],
+	["hc07_uneasy_alliance", "hc10_broken_column", "hc12_the_bargain_kept"],
 	["tc10_the_squeeze", "tc14_draegs_line"],
 ]
 
