@@ -133,6 +133,24 @@ Openings shared across voices: "then we" (23 uses, 11 voices), "the column" (12 
 (10 / 7), "take the" (9 / 8). Narrowest cadence: `dane_ferrow` σ 1.89 over 62 lines, `tomas_reed`
 σ 2.09, `ivar_thorne` σ 2.26.
 
+## After the first rewrite pass — measured 2026-08-31
+
+One PR per campaign (#594–#599) rewrote 470-odd spoken lines against the numbers above,
+holding to the rewrite rules; `make prose` over merged main afterwards:
+
+```
+prose: 1067 lines, 23 voices
+prose: mean score 0.091 | mean sentence 9.7 words | sentence-count entropy 1.48 bits
+prose: fired on — lockstep 57%, aphorism 2%, negation 3%, em_dash 3%,
+                  cadence 79%, triad 6%, stock 0%, vocative 1%, register 54%
+prose: speaker sentence-length σ spans 2.42 to 5.31 words
+```
+
+Every campaign's mean fell (0.145–0.165 down to 0.079–0.092) while the per-speaker cadence
+spread widened at both ends. Konrad Vale and Lyra Quill still do not contract on purpose;
+a handful of ", Commander" vocatives survive as one signature moment per Iron marshal.
+The worst remaining text is the interludes — a candidate for a second, smaller pass.
+
 ## The control corpus
 
 `make prose PROSE="--reference"` scores the commanders' `power_quotes` and `doctrine_text` — filed
