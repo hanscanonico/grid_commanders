@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
 [ext_resource type="Resource" path="res://data/units/infantry.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="13"]
 
 [sub_resource type="Resource" id="Objective_take_the_tally_post_between_the_pass"]
 script = ExtResource("2")
@@ -21,6 +22,18 @@ cell = Vector2i(8, 5)
 script = ExtResource("5")
 text = "Destroy the courier carrying the running count."
 tag = &"tally_courier"
+
+[sub_resource type="Resource" id="Fact_count_in_hand"]
+script = ExtResource("13")
+flag = &"forgery_proven"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Fact_courier_clear"]
+script = ExtResource("13")
+flag = &"forgery_proven"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -41,6 +54,18 @@ text = "Just take it before he reinforces both."
 script = ExtResource("4")
 speaker = &"iris_colt"
 text = "Post is ours. Whatever Ferrow was counting, he counts it again from one."
+
+[sub_resource type="Resource" id="Line_4_satchel"]
+script = ExtResource("4")
+speaker = &"iris_colt"
+text = "The satchel's in a locked box on my truck, and it doesn't leave my sight until Ward is holding it herself."
+requires = SubResource("Fact_count_in_hand")
+
+[sub_resource type="Resource" id="Line_4_courier_clear"]
+script = ExtResource("4")
+speaker = &"iris_colt"
+text = "Their courier outran me. Whatever the count says, it's saying it somewhere north of here tonight, and we've nothing on paper to set against it."
+requires = SubResource("Fact_courier_clear")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -124,5 +149,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_destroy_the_tally_courier
 events = Array[Resource]([SubResource("Event_the_courier"), SubResource("Event_both_passes_paid")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_satchel"), SubResource("Line_4_courier_clear"), SubResource("Line_5")])
 defeat = "The post held, and the tally kept climbing in the raiders' favour."

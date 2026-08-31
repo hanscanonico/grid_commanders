@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="13"]
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
 script = ExtResource("2")
@@ -22,6 +23,18 @@ terrain_id = &"city"
 script = ExtResource("5")
 text = "The auditor's escort was destroyed."
 tag = &"witness_column"
+
+[sub_resource type="Resource" id="Fact_witnesses_on_record"]
+script = ExtResource("13")
+flag = &"witnesses_alive"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Fact_notes_unsigned"]
+script = ExtResource("13")
+flag = &"witnesses_alive"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -42,6 +55,13 @@ text = "He holds three, we hold one, and the fifth sits unclaimed in the middle 
 script = ExtResource("4")
 speaker = &"ines_calder"
 text = "The witnesses are still talking. I brought home everything I marched in with, down to the last supply truck."
+requires = SubResource("Fact_witnesses_on_record")
+
+[sub_resource type="Resource" id="Line_4_unsigned"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "The towns are ours. The auditor's alive, and her notes are still unsigned in the back of the wagon. Nobody down there has gone on the record yet."
+requires = SubResource("Fact_notes_unsigned")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -90,7 +110,7 @@ note = "The auditor reached the occupied towns, and her witnesses are still talk
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Escort's standing in one of his towns with the auditor's notes signed. Orlov never turned around once."
+text = "She's signed. Two of Orlov's own townsfolk put their names under hers, in the square, with his line close enough to watch it. He didn't move a man."
 
 [sub_resource type="Resource" id="Event_the_auditor_gets_out"]
 script = ExtResource("6")
@@ -122,5 +142,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_what_you_left_behind"), SubResource("Event_the_auditor_gets_out")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_unsigned"), SubResource("Line_5")])
 defeat = "The garrison held its ground, and the towns that knew the truth went silent."

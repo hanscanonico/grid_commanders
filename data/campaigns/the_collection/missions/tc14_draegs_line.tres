@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -15,6 +15,18 @@ script = ExtResource("5")
 flag = &"forgery_proven"
 at_least = 1
 at_most = -1
+
+[sub_resource type="Resource" id="Fact_veterans_spared"]
+script = ExtResource("5")
+flag = &"draeg_veterans_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Fact_veterans_lost"]
+script = ExtResource("5")
+flag = &"draeg_veterans_spared"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Objective_hold_four_of_the_six_towns"]
 script = ExtResource("2")
@@ -41,6 +53,18 @@ text = "Thin is thin. Two men in the whole sector and six towns nobody's standin
 script = ExtResource("4")
 speaker = &"sera_lark"
 text = "Four towns, ours. Whatever was left of Draeg's line gave way without him in it."
+
+[sub_resource type="Resource" id="Line_4_walked_out"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "You had my column in the open for two days and not one of you fired on it. I don't forget a thing like that. Neither will they."
+requires = SubResource("Fact_veterans_spared")
+
+[sub_resource type="Resource" id="Line_4_never_walked"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "My men were yours from the third day. They never came out of that sector, and I've had no word of them since. Whatever happened to them happened under your flag."
+requires = SubResource("Fact_veterans_lost")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -117,5 +141,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_holdouts"), SubResource("Event_they_marched_home")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_walked_out"), SubResource("Line_4_never_walked"), SubResource("Line_5")])
 defeat = "Even a thin line held, and the sector stayed Iron's a while longer."
