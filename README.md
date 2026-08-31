@@ -585,8 +585,9 @@ the victory screen.
 ## Map editor
 
 **Map Editor** on the main menu opens a board you paint yourself (`make editor-screenshot` boots it
-straight). Start a blank board at a size you pick, or open one of your own — or a shipped one, which
-opens as an untitled copy, since a name the game already ships is refused. The terrain palette is
+straight). It opens on a blank 20x15 board you can resize as you paint, and **Open** takes up one of
+your own — or a shipped one, which opens as an untitled copy, since a name the game already ships is
+refused. The terrain palette is
 down the left, the owner seat, the starting army and the two size steppers down the right, and
 whichever you last picked from is the brush the next press on the board lays: arrows walk the
 cursor, Enter paints, `+`/`-` zoom, and the mouse paints a stroke while it is held. The toolbar

@@ -67,9 +67,9 @@ pure answers over a campaign and its progress, so `test_campaign_hub_rows.gd`,
 `test_campaign_card_copy.gd`, `test_campaign_db.gd` and `test_campaign_route.gd` call them and build
 no page.
 
-`EditorBoard`, `EditorPalette` and `EditorNewMapPanel` join them on exactly those terms
+`EditorBoard`, `EditorPalette` and `EditorSidebar` join them on exactly those terms
 (COM-263). Which cell a press lands on, where a board too big for its frame is scrolled to,
 where a starting unit's art lands on its cell, which order the brushes come in and which board
-sizes the new-map page offers are all static, pure answers over a `MapDocument`, a rect and the
+sizes the steppers offer are all static, pure answers over a `MapDocument`, a rect and the
 `TerrainDB` — so `test_map_editor.gd` calls
 them directly and builds no editor. The page itself is verified by painting on it.
