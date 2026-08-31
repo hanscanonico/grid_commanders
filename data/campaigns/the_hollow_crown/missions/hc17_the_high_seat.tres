@@ -13,12 +13,12 @@
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
 text = "Take the high seat itself."
-cell = Vector2i(19, 3)
+cell = Vector2i(22, 6)
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
 text = "Every property on the hall's approach, held at once."
-count = 7
+count = 13
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
@@ -33,7 +33,7 @@ text = "Whatever it is, it's the last checkpoint before Morn's own fortress. Con
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Ferrow keeps no reserve and armours nothing. Take the towns off him first. You can't pay a raider out of ground he doesn't hold."
+text = "Ferrow armoured this one on borrowed money. Take the towns off him first. You can't pay a raider out of ground he doesn't hold."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -59,7 +59,7 @@ condition = SubResource("Condition_ledger_empty")
 script = ExtResource("9")
 team = 2
 bound = 0
-count = 3
+count = 5
 
 [sub_resource type="Resource" id="Effect_he_walks_away"]
 script = ExtResource("10")
@@ -99,7 +99,7 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_money_in_walking_away")])
-par_day = 5
+par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Ferrow held the high seat, and the last approach to the strongest claimant stayed shut."
