@@ -35,17 +35,17 @@ cell = Vector2i(6, 2)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Ferrow is paid by the kill, not the mile. He'll hit whatever's weakest and pull back before you can answer."
+text = "Ferrow's paid by the kill, not the mile. He'll hit whatever's weakest and pull back before you can answer."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Then nothing stands alone. Every position gets help within reach before we call the line held."
+text = "Then nothing stands alone. Every position keeps a neighbour inside one turn's march before we call the timber line held."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "His raiders are quick and thin-skinned — they can't trade evenly if you make them stand and fight."
+text = "His raiders are quick and thin-skinned. Make them stand and fight and the trade goes our way."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -78,7 +78,7 @@ note = "Ferrow's raiders went home paid, in wrecks off our own column."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "One. One more than you could afford, Commander. And I am not done with the timber."
+text = "One. One more than you could afford. I'm not done with the timber yet."
 
 [sub_resource type="Resource" id="Event_the_count_pays_out"]
 script = ExtResource("7")

@@ -41,17 +41,17 @@ text = "Five marshals have already lost their war. Morn thinks fear wins the six
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "Fear doesn't need to win, Commander. It only needs you to hesitate once."
+text = "Fear doesn't need to win. It only needs you to hesitate once."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Then we do not. Two passes through the mountain, two squares wide each, with eight squares of rock between them. Hold each one and keep everything behind it spread out."
+text = "Then we don't. Two passes through the mountain, two squares wide each, eight squares of rock between them. Hold each one and keep everything behind it spread out."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "Win here and the succession — and the border — is decided."
+text = "Win here and the succession is decided. So is the border."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
@@ -133,7 +133,7 @@ amount = 3000
 [sub_resource type="Resource" id="Event_line_ferrow"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "I sold him what I took off you, Commander. Do not imagine I gave him a discount."
+text = "I sold him what I took off you. Don't imagine I gave him a discount."
 
 [sub_resource type="Resource" id="Event_ferrow_sold_it_on"]
 script = ExtResource("7")
@@ -194,7 +194,7 @@ units = Array[Resource]([SubResource("Spawn_orlovs_hunter")])
 [sub_resource type="Resource" id="Event_line_orlov"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "I keep what I catch, Commander. I lent him one of my people to show him how."
+text = "I keep what I catch. I lent him one of mine to show him how."
 
 [sub_resource type="Resource" id="Event_orlov_keeps_what_he_catches"]
 script = ExtResource("7")
@@ -260,7 +260,7 @@ units = Array[Resource]([SubResource("Spawn_draegs_hull")])
 [sub_resource type="Resource" id="Event_line_draeg"]
 script = ExtResource("5")
 speaker = &"viktor_draeg"
-text = "My column keeps its word, Commander. Even to him."
+text = "My column keeps its word. Even to him."
 
 [sub_resource type="Resource" id="Event_draegs_column_keeps_its_word"]
 script = ExtResource("7")
@@ -288,7 +288,7 @@ points = 6000
 [sub_resource type="Resource" id="Event_line_morn"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "I have been carrying this since the wide field, Commander. It was never for you. It was for whoever was still standing at the end."
+text = "I have been carrying this since the wide field. It was never for you. It was for whoever was still standing at the end."
 
 [sub_resource type="Resource" id="Event_morn_never_spent_it"]
 script = ExtResource("7")

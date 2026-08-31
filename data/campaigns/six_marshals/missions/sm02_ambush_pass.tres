@@ -34,7 +34,7 @@ team = 2
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Ferrow's second column is probing the passes. He wants a way through, not a fight, and every kill he lands still pays him."
+text = "Ferrow's second column is probing the passes. He'd rather walk through than fight. Either way, every kill he lands pays him."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -49,12 +49,12 @@ text = "Let him commit to one gap, then close on him from the towns either side.
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "He got his lane and found nothing at the end of it. The column climbed all that way for nothing."
+text = "He got his lane. Climbed the whole pass for it and found nothing at the top worth the fuel."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "No kills, no bounty. That is the only number that matters today."
+text = "No kills, no bounty, and the passes are still ours."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -78,7 +78,7 @@ units = Array[Resource]([SubResource("Spawn_east_lane_1"), SubResource("Spawn_ea
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "East gap. I do like a lane nobody is standing in."
+text = "East gap. I do like a lane nobody's standing in."
 
 [sub_resource type="Resource" id="Event_he_commits"]
 script = ExtResource("6")
@@ -135,7 +135,7 @@ units = Array[Resource]([SubResource("Spawn_bought_raider")])
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "The customs road paid for this one, Commander. Your column bought my third raider. Do keep spending."
+text = "The customs road paid for this one. Your column bought my third raider. Do keep spending."
 
 [sub_resource type="Resource" id="Event_bought_on_the_border"]
 script = ExtResource("6")

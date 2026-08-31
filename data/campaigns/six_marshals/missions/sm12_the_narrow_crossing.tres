@@ -30,7 +30,7 @@ count = 1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "This is a short window, not a siege. Hold the bank, gather at the bridge, and go before her edge grows."
+text = "This is a short window. Hold the bank, gather at the bridge, and go before her edge grows."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -74,7 +74,7 @@ units = Array[Resource]([SubResource("Spawn_far_bank_armour")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Three days, Commander, and I have used every one of them. Whatever crosses that bridge meets what they paid for."
+text = "Three days, Commander. I've used every one. Whatever crosses that bridge meets what those days bought."
 
 [sub_resource type="Resource" id="Event_she_counts_the_days"]
 script = ExtResource("6")
@@ -95,7 +95,7 @@ objective_id = &"the_crossing"
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"perrin_ash"
-text = "Bank held. Bridges are ours to force — everything across, now."
+text = "Bank held. Bridges are ours to force. Everything across, now."
 
 [sub_resource type="Resource" id="Event_the_push"]
 script = ExtResource("6")
@@ -132,7 +132,7 @@ units = Array[Resource]([SubResource("Spawn_depot_dividend")])
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "The depot is still paying, Commander. It has been paying since the day you let me keep it."
+text = "The depot is still paying. It's been paying since the day you let me keep it."
 
 [sub_resource type="Resource" id="Event_the_depot_still_pays"]
 script = ExtResource("6")

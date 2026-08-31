@@ -17,7 +17,7 @@ text = "Draeg's column stopped at the river and stayed there. He made no complai
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "It came off your border in the same order it went on. That is the only thing I ever promised anyone, Commander, and it is why the others still fear me."
+text = "It came off your border in the same order it went on. That's the only thing I ever promised anyone, and it's why the others still fear me."
 requires = SubResource("Column_intact")
 
 [sub_resource type="Resource" id="Line_3"]

@@ -27,12 +27,12 @@ cell = Vector2i(5, 7)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Ferrow crossed at the coal bridge before dawn. He is not taking ground, Commander — he is taking payment."
+text = "Ferrow crossed at the coal bridge before dawn. He isn't here for ground. He's here for what our wrecks are worth."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Then we stop paying. What is he actually after?"
+text = "Then we stop paying. What's he actually after?"
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -42,7 +42,7 @@ text = "The customs city. Every column he breaks pays for the next one, and that
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Take the city, close the road. Nobody trades with him on open ground — make him come to us."
+text = "Take the city. Close the road. Nobody meets him on open ground — he comes to us."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -52,7 +52,7 @@ text = "Road's open. His columns pulled back east with less than they came for."
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "He was paid in nothing. That is the only language he reads."
+text = "He crossed for payment and went home with an empty column."
 
 [sub_resource type="Resource" id="Trigger_down_to_two"]
 script = ExtResource("7")
@@ -75,7 +75,7 @@ note = "Ferrow's raiders went home paid, in wrecks off our own column."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Two wrecks on the customs road. That is the toll, Commander, and you have just paid it."
+text = "Two wrecks on the customs road. That's the toll. You've paid it."
 
 [sub_resource type="Resource" id="Event_the_toll_is_paid"]
 script = ExtResource("6")

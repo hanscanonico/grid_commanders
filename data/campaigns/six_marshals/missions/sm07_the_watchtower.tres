@@ -24,12 +24,12 @@ max_losses = 11
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Vale's money is gone. Cass Orlov is different. He does not build armies — he hunts the wounded in ours."
+text = "Vale's money is gone. Cass Orlov doesn't build armies. He hunts the wounded in ours."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"cass_orlov"
-text = "Wounded birds sing loudest, Commander. I only have to listen."
+text = "Wounded birds sing loudest. I listen."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -39,7 +39,7 @@ text = "Then nothing hurt stays in his sight line. Pull it back the moment it bl
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"halden_marr"
-text = "Take the watchtower and hold it clean — no cripples standing watch."
+text = "Take the watchtower and hold it clean, with nothing of ours still bleeding anywhere on that ridge where he can see it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -77,7 +77,7 @@ note = "Orlov took a trophy off the ridge, and the other marshals have started a
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"cass_orlov"
-text = "There. The limp. I will be along shortly, Commander — I have sent someone ahead to keep it company."
+text = "There. The limp. I'll be along shortly, Commander. Someone of mine is already ahead of me, keeping it company."
 
 [sub_resource type="Resource" id="Event_the_limp"]
 script = ExtResource("6")

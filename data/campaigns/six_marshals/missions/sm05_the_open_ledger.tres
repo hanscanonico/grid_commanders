@@ -21,22 +21,22 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale's army costs more than it should and hits harder for it. Don't fight him fund for fund — outgrow him."
+text = "Vale's army costs more than it should and hits harder for it. Don't try to outspend him. Outgrow him."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Six towns out there, all paying. Every one we hold is one his money cannot buy back."
+text = "Six towns out there, all paying, and every one we hold is a town his money can never buy back."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four of the six sit closer to our base than his — the western pair and the middle pair, that one by a single tile. Take those four and we have the majority."
+text = "Four of the six sit closer to our base than to his: the western pair, and the middle pair by a single tile. Take those four and the majority is ours."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "He was still working out his first bid when it ended. We never out-shot him, Commander. We out-owned him, town by town."
+text = "He was still working out his first bid. We never out-shot him. We out-owned him."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -88,7 +88,7 @@ units = Array[Resource]([SubResource("Spawn_crossroads_missiles")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "The crossroads has started paying for itself. You left me a factory, Commander. This is what it built."
+text = "The crossroads has started paying for itself. You left me a factory. This is what it built."
 
 [sub_resource type="Resource" id="Event_the_crossroads_pays"]
 script = ExtResource("5")

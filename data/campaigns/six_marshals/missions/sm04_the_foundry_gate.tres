@@ -17,12 +17,12 @@ cell = Vector2i(7, 4)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Five marshals left, and the second is Konrad Vale. Everything he fields costs more and hits harder for it."
+text = "Five marshals left. The second is Konrad Vale, and everything he fields costs more and hits harder for it."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "Then we don't let him field it. The crossroads base finishes in nine days — we take it in six."
+text = "Then we don't let him field it. Crossroads base, nine days to completion. We take it on day six."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
