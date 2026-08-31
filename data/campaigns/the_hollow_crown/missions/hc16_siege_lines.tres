@@ -13,7 +13,7 @@
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
 text = "Hold the relay through two days of the siege closing."
-cell = Vector2i(10, 4)
+cell = Vector2i(10, 8)
 days = 2
 
 [sub_resource type="Resource" id="Failure_1"]
@@ -83,12 +83,12 @@ day = 5
 [sub_resource type="Resource" id="Effect_ferrow_takes_the_west"]
 script = ExtResource("9")
 team = 4
-cells = Array[Vector2i]([Vector2i(3, 11)])
+cells = Array[Vector2i]([Vector2i(3, 8)])
 
 [sub_resource type="Resource" id="Effect_orlov_takes_the_east"]
 script = ExtResource("9")
 team = 3
-cells = Array[Vector2i]([Vector2i(17, 11)])
+cells = Array[Vector2i]([Vector2i(17, 8)])
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
