@@ -65,11 +65,11 @@
 		},
 		{
 			"artifact": "",
-			"ended": 1788187036,
+			"ended": 1788190121,
 			"exit": 2,
 			"job": "difficulty-check",
 			"kind": "section",
-			"log": "reports/grind/logs/difficulty-check-20260831-163451.log",
+			"log": "reports/grind/logs/difficulty-check-20260831-172621.log",
 			"marker": "=== difficulty ladder ===",
 			"reading": [
 				"=== difficulty ladder ===",
@@ -81,7 +81,7 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1788186891,
+			"started": 1788189981,
 			"status": "failed"
 		},
 		{
@@ -406,11 +406,29 @@
 			"balance-pool-timberline",
 			"replay-survey-timberline"
 		],
-		"pass": 1,
+		"pass": 2,
 		"phase": "idle",
-		"queue": [],
+		"queue": [
+			"commander-balance",
+			"campaign-difficulty",
+			"legibility-ratchet",
+			"balance-pool-arsenal",
+			"replay-survey-arsenal",
+			"balance-pool-crossfire",
+			"replay-survey-crossfire",
+			"balance-pool-first_steps",
+			"replay-survey-first_steps",
+			"balance-pool-jet_stream",
+			"replay-survey-jet_stream",
+			"balance-pool-riverline",
+			"replay-survey-riverline",
+			"balance-pool-scrimmage",
+			"replay-survey-scrimmage",
+			"balance-pool-timberline",
+			"replay-survey-timberline"
+		],
 		"sha": "09fbc560",
 		"started": 0
 	},
-	"written": 1788189374
+	"written": 1788190122
 }
