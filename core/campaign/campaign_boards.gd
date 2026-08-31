@@ -24,8 +24,7 @@ const CAMPAIGN_DIR := "res://maps/campaign"
 ## ground of its own has to leave the list. An entry kept past its share would
 ## quietly re-license a copy between boards somebody had already separated, and
 ## the README points a reader here for what still shares.
-const SHARED_BOARDS: Array[Array] = [
-]
+const SHARED_BOARDS: Array[Array] = []
 
 
 ## Every board under `maps/campaign/`, alphabetically by campaign then filename —
