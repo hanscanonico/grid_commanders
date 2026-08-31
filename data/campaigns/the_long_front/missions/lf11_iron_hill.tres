@@ -25,7 +25,7 @@ day = 7
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Vance is committing a heavier column than anything we've faced since the crossing. She means to break the line in one push."
+text = "Vance is committing a heavier column than anything we've faced since the crossing. One push, everything in it. She isn't planning a second day."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -45,7 +45,7 @@ text = "I'll take having it. Doesn't mean I plan on needing it."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Her push wore itself out on ground that would not give. You are standing exactly where you started, and that is the win."
+text = "Her push wore itself out on ground that wouldn't give. You're standing exactly where you started, and that's the win."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")

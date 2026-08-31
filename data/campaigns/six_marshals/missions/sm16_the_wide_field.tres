@@ -22,17 +22,17 @@ max_losses = 11
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The last marshal. Radek Morn does not fight for ground, Gideon — he wipes it out. Hammerfall flattens a three-by-three block, whole."
+text = "The last marshal. Radek Morn doesn't fight for ground, Gideon. He erases it. Hammerfall flattens a three-by-three block, whole."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "Ground remembers nothing, Commander. Neither will yours."
+text = "Ground remembers nothing. Neither will yours."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Then we do not give him a block to flatten. Spread the advance out. Leave him no target worth the charge."
+text = "So we give him nothing that big to hit. Spread the advance out. Nothing he fires at should be worth the charge."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -47,7 +47,7 @@ text = "The relay's ours, and Morn never found three units close enough together
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Give him nothing to flatten and he never fires. That is how you beat him."
+text = "Give him nothing to flatten and he never fires."
 
 [sub_resource type="Resource" id="Trigger_day_7"]
 script = ExtResource("7")

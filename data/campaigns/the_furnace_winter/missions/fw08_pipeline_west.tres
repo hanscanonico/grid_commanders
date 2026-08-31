@@ -40,12 +40,12 @@ text = "The western depots match the eastern pair. I built them the same way. It
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"mara_voss"
-text = "Not identical now. Depot 1 flies our flag since dawn — this time your columns walk into the fire."
+text = "Not identical now. Depot 1 has flown our flag since dawn, and this time it's your columns walking onto a dug-in line."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"mara_voss"
-text = "We hold what's ours and take the second. She will come for the first — let her."
+text = "We hold what's ours and take the second. She'll come for the first. Let her."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
@@ -140,7 +140,7 @@ note = "The western fuel road was reopened with its depots still working."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"mara_voss"
-text = "Both depots ours and still standing on them. The western road runs."
+text = "Still standing on both depots. The western road runs."
 
 [sub_resource type="Resource" id="Event_the_west_road_runs"]
 script = ExtResource("7")

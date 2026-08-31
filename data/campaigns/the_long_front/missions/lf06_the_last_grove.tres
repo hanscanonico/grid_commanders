@@ -22,12 +22,12 @@ cell = Vector2i(13, 3)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Draeg's column is a day from the elder shrine, Rowan. We can't hold the whole wood — only buy the keepers time to empty it."
+text = "Draeg's column is a day from the elder shrine, Rowan. We can't hold the whole wood. We can buy the keepers time to empty it."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "Then that's the order. Reach the shrine if the fight allows it — nobody dies for a building."
+text = "That's the order, then. Reach the shrine if the fight allows it — nobody dies for a building."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -37,17 +37,17 @@ text = "I've got the evacuation route mapped. Every hour you buy me is people ou
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "Then I'll buy you as many as the ground has got in it."
+text = "I'll buy you as many as the ground has got in it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "The shrine's keepers are gone by the time the fighting reaches the grove. Carried out, not driven out."
+text = "The shrine's keepers were out of the grove before the fighting reached it. We carried the old ones. Nobody was driven anywhere."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "Three nations have lost ground on the same morning. None of us lost it alone — small comfort, but it's something."
+text = "Three nations lost ground on the same morning. None of us lost it alone. I'll take what comfort there is in that."
 
 [sub_resource type="Resource" id="Trigger_shrine_ours"]
 script = ExtResource("6")
@@ -69,7 +69,7 @@ points = 5000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Keepers are out — carried, not driven. The wood can burn now; nothing in it is ours any more."
+text = "Keepers are out. The wood can burn now. Nothing left in it is ours."
 
 [sub_resource type="Resource" id="Event_the_keepers_are_out"]
 script = ExtResource("5")

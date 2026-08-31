@@ -31,17 +31,17 @@ tag = &"draeg_van"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "His tanks hit hard but they have to queue for the bridge to do it. Dig in and make every crossing cost him."
+text = "His tanks hit hard, but they have to queue at the bridge to do it. Dig in. Charge them for the crossing."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Then we do not wait for them to get comfortable. Hit the front of that queue as soon as it forms."
+text = "So we don't wait for them to settle in; we hit the head of that queue the moment it forms."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Seven days. Relief is coming — the span just has to still be ours when it does."
+text = "Seven days. Relief is coming. The span only has to still be ours when it gets here."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -102,7 +102,7 @@ units = Array[Resource]([SubResource("Spawn_relief_rockets"), SubResource("Spawn
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Relief on the west road, and they are not stopping to ask."
+text = "Relief on the west road, and they aren't stopping to ask."
 
 [sub_resource type="Resource" id="Event_relief_on_the_west_road"]
 script = ExtResource("7")

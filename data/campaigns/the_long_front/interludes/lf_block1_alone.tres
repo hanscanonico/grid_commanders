@@ -53,25 +53,25 @@ requires = SubResource("Column_saved")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Meridian's account for the week. Not all of the customs column got behind the line, and I am not writing down how much did."
+text = "Meridian's account for the week. Not all of the customs column got behind the line, and I'm not writing down how much did."
 requires = SubResource("Column_lost")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "Aurora's is shorter. The port is gone, the coast watch is inland with its lists, and I can still tell you where every name on them is."
+text = "Aurora's is shorter. The port's gone, the coast watch is inland with its lists, and I can still tell you where every name on them is."
 requires = SubResource("Watch_saved")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "Aurora's is shorter. The port is gone, the coast watch was lost with the beach road, and nobody is left who can tell me who else was."
+text = "Aurora's is shorter. The port's gone, the coast watch was lost with the beach road, and nobody's left who can tell me who else was."
 requires = SubResource("Watch_lost")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"ines_calder"
-text = "The League lost the Greenwood and kept the shrine's keepers. Carried out, every one — the wood will grow back and they would not have."
+text = "The League lost the Greenwood and kept the shrine's keepers. Every one of them carried out. The wood grows back; they wouldn't have."
 requires = SubResource("Shrine_saved")
 
 [sub_resource type="Resource" id="Line_7"]

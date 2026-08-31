@@ -59,7 +59,7 @@ requires = SubResource("Column_saved")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "Not all of the column I bought that first morning for got behind the line. I fought eleven weeks for the road it was on, and I know exactly what that is worth."
+text = "Not all of the column I bought that first morning for got behind the line. I fought eleven weeks for the road it was on, and I know exactly what that's worth."
 requires = SubResource("Column_lost")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -89,18 +89,18 @@ requires = SubResource("Averyn_held")
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("2")
 speaker = &"tomas_reed"
-text = "The battery that ranged Averyn fired its last round at the gate of Draeg Hold. I am aware that is not justice. It was available, and justice was not."
+text = "The battery that ranged Averyn fired its last round at the gate of Draeg Hold. I know that isn't justice. It was available; justice wasn't."
 requires = SubResource("Battery_silenced")
 
 [sub_resource type="Resource" id="Line_9"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Draeg said the uniform outlasts the officer who wears it, Voss. He was talking about himself, and he was not wrong about the uniform."
+text = "Draeg said the uniform outlasts the officer who wears it, Voss. He was talking about himself, and he wasn't wrong about the uniform."
 
 [sub_resource type="Resource" id="Line_10"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "Then the uniform can wait behind a border it does not cross. I did not fight this front to sit at his desk. I fought it so three nations could go home and find something still standing."
+text = "Then the uniform can wait behind a border it doesn't cross. I didn't fight this front to sit at his desk. I fought it so three nations could go home and find something still standing."
 
 [resource]
 script = ExtResource("1")

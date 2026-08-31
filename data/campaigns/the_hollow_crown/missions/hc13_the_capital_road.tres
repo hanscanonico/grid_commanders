@@ -16,12 +16,12 @@
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
 text = "Take the roadhead. The capital road opens the moment it falls."
-cell = Vector2i(17, 2)
+cell = Vector2i(19, 4)
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
 text = "Every property on the capital road, ours at once."
-count = 6
+count = 7
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
@@ -36,7 +36,7 @@ text = "Your numbers are honest, same as ever. Ours have to be better today."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"perrin_ash"
-text = "From up here it's one road and two towns, with nothing on either side of it to hide behind but those woods. He'll gather on the road, so don't meet him on it."
+text = "From up here it's one road and three towns, with nothing on either side of it to hide behind but those woods. He'll gather on the road, so don't meet him on it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -65,12 +65,12 @@ condition = SubResource("Condition_column_whole")
 [sub_resource type="Resource" id="Spawn_two_companies_1"]
 script = ExtResource("11")
 unit_type = ExtResource("12")
-cell = Vector2i(2, 5)
+cell = Vector2i(1, 3)
 
 [sub_resource type="Resource" id="Spawn_two_companies_2"]
 script = ExtResource("11")
 unit_type = ExtResource("13")
-cell = Vector2i(3, 5)
+cell = Vector2i(1, 6)
 
 [sub_resource type="Resource" id="Effect_two_companies"]
 script = ExtResource("10")
@@ -103,7 +103,7 @@ condition = SubResource("Condition_column_broken")
 [sub_resource type="Resource" id="Spawn_one_company"]
 script = ExtResource("11")
 unit_type = ExtResource("13")
-cell = Vector2i(2, 5)
+cell = Vector2i(1, 3)
 
 [sub_resource type="Resource" id="Effect_one_company"]
 script = ExtResource("10")

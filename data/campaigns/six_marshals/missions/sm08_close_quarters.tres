@@ -34,7 +34,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Close ground, close range — and Orlov's bonus bites hardest on anything under half health."
+text = "Close ground, close range. Orlov's bonus bites hardest on anything under half health."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -44,12 +44,12 @@ text = "Then we bleed on our terms, not his. Rotate the wounded out before he ev
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four hamlets and four squares of trees on twelve squares of board, and nothing else. Anything that gets hurt goes into the trees. There is no rear to send it to."
+text = "Four hamlets and four squares of trees on twelve squares of board, and nothing else. Anything that gets hurt goes into the trees. There's no rear to send it to."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"ivar_thorne"
-text = "Three hamlets held, and every wound we took, we took on our feet."
+text = "Three hamlets held. Every wound we took standing."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -111,7 +111,7 @@ units = Array[Resource]([SubResource("Spawn_second_hunter")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"cass_orlov"
-text = "I still have the one I took off the ridge, Commander. It taught me which of yours limps first."
+text = "I still have the one I took off the ridge. It talks. It told me which of yours limps first."
 
 [sub_resource type="Resource" id="Event_the_trophy_talks"]
 script = ExtResource("6")

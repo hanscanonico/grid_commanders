@@ -23,7 +23,7 @@ last_day = 12
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale's whole column has to cross two bridges to reach us. Let his expensive units queue for the privilege."
+text = "Vale's whole column has to cross two bridges to reach us. Let his expensive units queue up for the privilege of arriving one at a time."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -33,7 +33,7 @@ text = "Two lanes, one result. Anything that comes through them is a bad trade f
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Two crossings, one square apart in the same gap. He cannot widen it, so everything he has comes at us in single file."
+text = "Two crossings, one square apart in the same gap. He can't widen it. Everything he owns arrives in single file."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -43,7 +43,7 @@ text = "Day eight. The odds were with us the whole way, and the bridges are full
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale finally found a fight money could not win."
+text = "Vale finally found a fight money couldn't win."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("7")
@@ -62,7 +62,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "The far town is mine as of this morning, Commander. I did not have to cross the river for it. I only had to outbid you."
+text = "The far town is mine as of this morning. I did not have to cross the river for it. I only had to outbid you."
 
 [sub_resource type="Resource" id="Event_the_far_bank_is_bought"]
 script = ExtResource("6")

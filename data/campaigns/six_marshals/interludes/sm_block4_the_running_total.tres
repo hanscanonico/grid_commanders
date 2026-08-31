@@ -18,18 +18,18 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Vance withdrew across the crossing in good order, on a timetable she wrote before the first shot. Nothing about her war was ever made up on the day."
+text = "Vance withdrew across the crossing in good order, on a timetable she wrote before the first shot."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"iona_vance"
-text = "You never gave me time to add anything up, Commander. My report has a date on it and a border I did not move."
+text = "You never gave me time to add anything up. My report has a date on it and a border I didn't move."
 requires = SubResource("Never_dug_in")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"iona_vance"
-text = "I am reporting my losses as an investment, Commander, and the Directorate's auditors will agree. Everything I spent on you counts against whoever comes next."
+text = "I'm reporting my losses as an investment, and the Directorate's auditors will agree. Everything I spent on you counts against whoever comes next."
 requires = SubResource("Dug_in")
 
 [sub_resource type="Resource" id="Line_4"]

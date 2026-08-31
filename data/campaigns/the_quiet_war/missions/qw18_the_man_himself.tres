@@ -13,7 +13,7 @@
 [sub_resource type="Resource" id="Objective_take_orlovs_hq"]
 script = ExtResource("2")
 text = "Take Orlov's headquarters."
-cell = Vector2i(18, 9)
+cell = Vector2i(19, 11)
 
 [sub_resource type="Resource" id="Draeg_unbloodied"]
 script = ExtResource("5")
@@ -36,17 +36,17 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Orlov never crossed a border in the open until there was nothing left to take quietly, Ash. Every flipped town, every ledger, every raid pointed here."
+text = "Every flipped town, every ledger, every raid pointed here. Orlov never crossed a border in the open until there was nothing left to take quietly, Ash."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"perrin_ash"
-text = "Then I finish it the way it should have started. An army, in daylight, against a headquarters that thought nobody would find it."
+text = "I finish it the way it should have started. An army, in daylight, against a headquarters that thought nobody would ever find it."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"cass_orlov"
-text = "Found, Commander Ash, but not finished. I have enjoyed watching you learn to read my handwriting. Genuinely."
+text = "Found, Ash. Not finished. I've enjoyed watching you learn to read my handwriting."
 
 [sub_resource type="Resource" id="Line_3b"]
 script = ExtResource("3")
@@ -62,7 +62,7 @@ text = "Enjoy it while it lasts. It ends today."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"cass_orlov"
-text = "A wall taken isn't a man caught, Commander. Remember that the next time you think a war is over."
+text = "A wall taken isn't a man caught. Remember that the next time you think a war's over."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
@@ -78,7 +78,7 @@ requires = SubResource("Every_town_saved")
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("3")
 speaker = &"perrin_ash"
-text = "We don't find Orlov himself among the papers. Some wars end with a wall taken, not a man caught."
+text = "No Orlov among the papers. We took the wall and he was already somewhere else."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("7")
@@ -95,7 +95,7 @@ tags = Array[StringName]([&"iron_regular_a", &"iron_regular_b"])
 [sub_resource type="Resource" id="Event_line_stand_down"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "My division was not raised to garrison a man's paperwork. We are standing down. What happens on that hill is his business, not ours."
+text = "My division wasn't raised to garrison a man's paperwork. We're standing down. What happens on that hill is his business."
 
 [sub_resource type="Resource" id="Event_the_regulars_stand_down"]
 script = ExtResource("6")
@@ -118,7 +118,7 @@ note = "Draeg's own regulars held Orlov's eastern wall to the end, because the m
 [sub_resource type="Resource" id="Event_line_the_wall"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "You broke my spearhead on the march, Commander Ash, and so you have the rest of me. My regulars hold that wall. Come and take it from them."
+text = "You broke my spearhead on the march, Ash, so you have the rest of me. My regulars hold that wall. Come and take it."
 
 [sub_resource type="Resource" id="Event_the_wall_is_held"]
 script = ExtResource("6")

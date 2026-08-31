@@ -64,7 +64,7 @@ text = "Every nation his spearhead drove back in the first week is standing on t
 [sub_resource type="Resource" id="Line_1a"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Averyn's ground flies our colours behind us, too. Not the town — the ground. It was what there was left to take back."
+text = "Averyn's ground flies our colours behind us, too. Not the town. The ground was all there was left to take back."
 requires = SubResource("Averyn_held")
 
 [sub_resource type="Resource" id="Line_1b"]
@@ -76,12 +76,12 @@ requires = SubResource("Averyn_lost")
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then I'll finish what I started there. Take Draeg's headquarters — there's nowhere left behind it for this war to go."
+text = "I'll finish what I started there. Take Draeg's headquarters — there's nowhere left behind it for this war to go."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "Eleven weeks, Commander Voss. I confess I did not expect to see you standing on this side of the line."
+text = "Eleven weeks, Voss. I confess I did not expect to see you standing on this side of the line."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -101,7 +101,7 @@ text = "The keep falls. The line that ran from the customs road to the highlands
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "You're standing where his desk stood this morning, Voss. Don't sit down yet — there's a great deal still to rebuild."
+text = "You're standing where his desk stood this morning, Voss. Don't sit down yet. Three nations have a great deal to rebuild and they'll want you awake for it."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("6")
@@ -176,7 +176,7 @@ units = Array[Resource]([SubResource("Spawn_pass_guns")])
 [sub_resource type="Resource" id="Event_line_ward"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Meridian's on your left, Aurora's on your right, and the League is behind both. That is the whole of what eleven weeks bought."
+text = "Meridian's on your left, Aurora's on your right, the League behind both. That's what eleven weeks of falling back and standing up bought."
 
 [sub_resource type="Resource" id="Event_line_voss"]
 script = ExtResource("3")
@@ -186,7 +186,7 @@ text = "Then it was worth the road. Open the gate."
 [sub_resource type="Resource" id="Event_line_meridian"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "The column I held the customs road for is standing on this hill, General. I'd like you to see it."
+text = "The column I held the customs road for is standing on this hill, General. Look at it. Every wagon you didn't catch is out there in the line."
 
 [sub_resource type="Resource" id="Event_line_aurora"]
 script = ExtResource("3")
@@ -196,7 +196,7 @@ text = "The coast watch I got off that beach kept every name on its lists. Auror
 [sub_resource type="Resource" id="Event_line_league"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "The shrine's keepers are alive because your line held the grove. The League does not send a company for less."
+text = "The shrine's keepers are alive because your line held the grove. The League doesn't send a company for less than that."
 
 [sub_resource type="Resource" id="Event_line_reed"]
 script = ExtResource("3")

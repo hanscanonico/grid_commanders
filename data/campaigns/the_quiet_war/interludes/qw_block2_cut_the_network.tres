@@ -35,7 +35,7 @@ text = "A cache, a depot, a relay and a forward base, in that order, and none of
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"sera_lark"
-text = "Two of his raid columns are off the board for good. That is two months of crossings that will not be crossing."
+text = "Two of his raid columns are off the board for good, which is two months of crossings that won't be crossing."
 requires = SubResource("Columns_broken")
 
 [sub_resource type="Resource" id="Line_3"]
@@ -59,7 +59,7 @@ requires = SubResource("Every_raid_town_saved")
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"radek_morn"
-text = "Quiet was Orlov's idea and I am done with it. The next column that crosses will not be looking for a town nobody notices."
+text = "Quiet was Orlov's idea. I'm done with it. The next column that crosses a border will be looking for the biggest thing on the map, and it will find it."
 
 [resource]
 script = ExtResource("1")

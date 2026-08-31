@@ -22,12 +22,12 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"iris_colt"
-text = "Morn's holding the ground between us and whatever Orlov calls a headquarters, Voss. Last outpost between here and the man himself."
+text = "Morn's holding the last ground between us and whatever Orlov calls a headquarters, Voss."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then I clear it. Nothing about the finish works if this ground's still his."
+text = "I clear it, then. Nothing about the finish works if this ground's still his."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -37,7 +37,7 @@ text = "You will have more open road to work with than your counterattacks have 
 [sub_resource type="Resource" id="Line_3b"]
 script = ExtResource("3")
 speaker = &"iris_colt"
-text = "His relay's been dark since Wren cut it, and his rider never got out. Whatever he's holding back, he's holding it alone."
+text = "His relay's been dark since Wren cut it and his rider never got out, so whatever he's holding back, he's holding it alone."
 requires = SubResource("Network_blind")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -67,7 +67,7 @@ points = 3500
 [sub_resource type="Resource" id="Event_line_stand_clear"]
 script = ExtResource("3")
 speaker = &"radek_morn"
-text = "If I cannot hold the road I will remove it. Stand clear of the ridge."
+text = "If I can't hold the road, I'll remove it. Stand clear of the ridge."
 
 [sub_resource type="Resource" id="Event_morn_banks_the_hammer"]
 script = ExtResource("6")

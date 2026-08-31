@@ -23,7 +23,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Every extra turn her doctrine bites harder. Race for the towns — don't stop to trade evenly with her."
+text = "Every extra turn her doctrine bites harder. Race for the towns. Don't stop to trade with her on the way."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -33,7 +33,7 @@ text = "No roads on this board, and no mountains either. The ground helps nobody
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Five of the six towns sit closer to our base than to hers. Only the far eastern one is properly hers. She does not have to beat us there — she only needs the walk to take long enough."
+text = "Five of the six towns sit closer to our base than to hers. Only the far eastern one is properly hers. She doesn't have to beat us there. She only needs the walk to take long enough."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -72,7 +72,7 @@ units = Array[Resource]([SubResource("Spawn_tally_armour"), SubResource("Spawn_t
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "You are counting towns. I am counting turns — and I have had five of them."
+text = "You're counting towns. I'm counting turns, and I've had five of them."
 
 [sub_resource type="Resource" id="Event_counting_turns"]
 script = ExtResource("5")
@@ -105,7 +105,7 @@ units = Array[Resource]([SubResource("Spawn_compound_guns")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "The depot paid for these guns, Commander. It is still paying."
+text = "The depot paid for these guns. It's still paying."
 
 [sub_resource type="Resource" id="Event_still_compounding"]
 script = ExtResource("5")

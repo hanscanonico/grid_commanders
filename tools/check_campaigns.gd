@@ -26,6 +26,10 @@ func _init() -> void:
 		_fail("no campaigns found under data/campaigns/")
 	for campaign in db.all():
 		_check_campaign(campaign, terrain_db, unit_db, chart, commander_db, difficulty_db)
+	# The one check no single mission can fail: two missions fighting over the
+	# same ground, which both of them load and play perfectly well.
+	for line in CampaignBoards.shared_board_error(terrain_db).split("\n", false):
+		_fail(line)
 	print("")
 	if _errors.is_empty():
 		print("check_campaigns: %d campaigns, %d missions, all playable" % [db.size(), _missions])

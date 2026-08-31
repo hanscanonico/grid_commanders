@@ -35,7 +35,7 @@ text = "Vale's second trench line is still open. That's the window — it won't 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Then we don't wait for it to close. Moving now."
+text = "We don't wait for it to close. Moving now."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -66,7 +66,7 @@ note = "Carrow fell inside the window, before Vale's second line closed."
 [sub_resource type="Resource" id="Event_line_window"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Bridge is ours and the second line is still open earth. That is the window, Rook, and we are standing in it."
+text = "Bridge is ours and the second line is still open earth. That's the window, Rook. We're standing in the middle of it and the road east is behind it."
 
 [sub_resource type="Resource" id="Event_inside_the_window"]
 script = ExtResource("4")

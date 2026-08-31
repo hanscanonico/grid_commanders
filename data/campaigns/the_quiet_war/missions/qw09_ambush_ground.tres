@@ -44,7 +44,7 @@ text = "Orlov's raiders picked this wood because the map calls it empty ground, 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "Then his ambush should cost him more than it saves. A cheaper, smaller force reaches the tree line first."
+text = "Then his ambush should cost him more than it saves. I'll put something cheap in the tree line first and let him spend his surprise on it."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -54,7 +54,7 @@ text = "That's the one thing his plan never accounted for. He's set the trap for
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "Good. I'd rather spend less than he expects and still walk away."
+text = "I'd rather spend less than he expects and still walk away with the wood."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -64,7 +64,7 @@ text = "The ambush springs on ground it can't hold. Your column was never where 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "His raiders scatter into terrain that no longer favours them either. Small price for a wasted trap."
+text = "His raiders scatter into terrain that stopped favouring them an hour ago, and the whole trap cost me less than one of his tanks."
 
 [sub_resource type="Resource" id="Trigger_tree_line_taken"]
 script = ExtResource("8")

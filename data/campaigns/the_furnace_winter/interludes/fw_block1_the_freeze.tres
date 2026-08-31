@@ -41,13 +41,13 @@ text = "Six weeks in, the freeze was not weather any more. It was policy. Every 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Milltown is still eating. We reached the granary before the torch did. Count that first — the rest of this winter is numbers."
+text = "Milltown is still eating. We reached the granary before the torch did. Count that first. The rest of this winter is numbers."
 requires = SubResource("Cond_granary_saved")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Milltown eats what we haul in. Ferrow lit his fire and we took the base back afterwards. That is not the same thing, and everyone down there knows it."
+text = "Milltown eats what we haul in. Ferrow lit his fire and we took the base back afterwards. That isn't the same thing, and everyone down there knows it."
 requires = SubResource("Cond_granary_burned")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -59,13 +59,13 @@ requires = SubResource("Cond_ice_road_open")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"halden_marr"
-text = "And Kestrel was ours inside the week. Vale never gives up ground once he is dug in, so we never let him dig in."
+text = "And Kestrel was ours inside the week. Vale never gives up ground once he's dug in, so we never let him dig in."
 requires = SubResource("Cond_kestrel_held")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"halden_marr"
-text = "We hold Kestrel, but it took long enough that he garrisoned the pass first. He gave it up on his own terms, in his own time, and he will want that on the record."
+text = "We hold Kestrel, but it took long enough that he garrisoned the pass first. He gave it up on his own terms, in his own time, and he'll want that on the record."
 requires = SubResource("Cond_kestrel_contested")
 
 [sub_resource type="Resource" id="Line_7"]

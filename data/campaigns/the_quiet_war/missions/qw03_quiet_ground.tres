@@ -29,27 +29,27 @@ text = "Three border towns have filed for Iron rail permits nobody in Meridian a
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "Then I don't fight for the towns. I sit on all three before the ink dries."
+text = "I won't fight for the towns, then. I'll sit on all three before the ink dries."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Three towns, one column, and a clock running on the permits. You'll need to split your force to make it."
+text = "Three towns, one column, and a clock running on the permits, so you'll be splitting your force whether you like it or not."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "I trust the ground more than I trust his paperwork. Splitting it is."
+text = "I trust the ground more than his paperwork. Splitting it is."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "All three towns fly Meridian colours before the ink would've dried. His rail office has nothing left to file."
+text = "All three towns fly Meridian colours before the ink would've dried, and Vale's rail office has nothing left to file."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "This won't be the last quiet annexation attempted this season. I'd bet the wood on it."
+text = "He'll try this again before the season's out. I'd bet the wood on it."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("7")

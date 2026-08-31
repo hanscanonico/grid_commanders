@@ -24,12 +24,12 @@ max_losses = 3
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "This board will not let you gather an army even if you want to. Every prize is in a different corner."
+text = "This board won't let you gather an army even if you want to. Six towns, and no two of them within reach of each other."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"tomas_reed"
-text = "Good. Nobody bunches up on my watch anyway — not with Morn on the other side of the map."
+text = "Good. Nobody bunches up on my watch."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -39,7 +39,7 @@ text = "Take two towns. Keep the columns apart the way the ground already wants 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"tomas_reed"
-text = "Two towns taken, and no two of my units ever close enough for one charge. The flags came down before he found a target."
+text = "Two towns taken. No two of my units ever stood close enough for one charge, and the flags came down before he found a target."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -58,7 +58,7 @@ points = 8000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "The charge is ready again, Commander. Four corners, four columns — one of them will stand too close."
+text = "The charge is ready again. Four corners, four columns. One of them will stand too close."
 
 [sub_resource type="Resource" id="Event_the_charge_is_ready_again"]
 script = ExtResource("6")

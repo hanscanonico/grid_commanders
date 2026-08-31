@@ -19,7 +19,7 @@ cell = Vector2i(6, 4)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Vance is the fourth marshal, and the hardest kind. In every fight she is a little stronger than the chart says."
+text = "Vance is the fourth marshal. In every fight she's a little stronger than the chart says."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -29,17 +29,17 @@ text = "Three percent here, three there. It costs you nothing to notice and ever
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"iris_colt"
-text = "Then we do not give her the turns to build on it. Fast and clean, before she settles in."
+text = "Then she doesn't get the turns. Go now."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"iris_colt"
-text = "Take the depot before she digs in — there's no version of this that gets easier tomorrow."
+text = "Take the depot before she digs in, and take it in one push instead of three tidy waves."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"iris_colt"
-text = "Fast and clean. The depot fell before Vance's army ever found its footing."
+text = "Fast and clean. The depot fell before her army found its footing."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
@@ -75,7 +75,7 @@ note = "Vance was given five days at the depot, and reported the cost of them as
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Day five. Three percent, five times over. You are already fighting a different army, Commander."
+text = "Day five. Three percent, five times over. You're fighting a different army than the one you counted."
 
 [sub_resource type="Resource" id="Event_three_percent_five_times"]
 script = ExtResource("5")

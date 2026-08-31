@@ -36,7 +36,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "The counting house burned for a day and a night, and the occupation could not pay its men in the morning. From here the war stops being financed and starts being fought."
+text = "The counting house burned for a day and a night, and the occupation couldn't pay its men in the morning. From here the war stops being financed and starts being fought."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
@@ -47,7 +47,7 @@ requires = SubResource("Books_taken")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "We have the courier's count and nothing to set beside it. One satchel is an accusation, not a proof."
+text = "We have the courier's count and nothing to set beside it. A satchel of figures, and no payment book to match them against."
 requires = SubResource("Count_only")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -59,13 +59,13 @@ requires = SubResource("Nothing_proven")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"ines_calder"
-text = "The auditor is alive and talking, which was never in the budget. Cheapest thing we bought all season."
+text = "The auditor is alive and talking, which was never in the budget. Cost us a night's fuel and nothing else."
 requires = SubResource("Witnesses_talking")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"konrad_vale"
-text = "What I earned at the blockade is already spent, Commander. It is standing on the border, and it will not be sending you a bill."
+text = "What I earned at the blockade is already spent. It is standing on the border, and it will not be sending you a bill."
 requires = SubResource("Interest_drawn")
 
 [sub_resource type="Resource" id="Line_7"]

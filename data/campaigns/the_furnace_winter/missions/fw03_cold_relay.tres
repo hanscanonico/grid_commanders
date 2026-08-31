@@ -22,7 +22,7 @@ cell = Vector2i(10, 2)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Every checkpoint on this road answers to my ledger, Commander. Nothing moves without my signature."
+text = "Every checkpoint on this road answers to my ledger, and nothing moves on it without my signature."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -32,7 +32,7 @@ text = "The relay's still unclaimed. That's one signature we can outrun."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "She has more men than us, and the blizzard blinds both sides. We win this with speed, not shells."
+text = "She has more men than us and the blizzard blinds us both. So we build cheap, we build a lot, and we reach the relay before her signature does."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -42,7 +42,7 @@ text = "Relay's ours. One less entry in her book."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "For now you build faster than I can reinforce. Enjoy that while it lasts."
+text = "For now you build faster than I can reinforce."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("6")

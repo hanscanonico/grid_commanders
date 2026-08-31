@@ -90,7 +90,7 @@ units = Array[Resource]([SubResource("Spawn_ammunition")])
 [sub_resource type="Resource" id="Event_line_sol"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "Three days, and I know why not. Bring the guns forward — we did not cross a border to look at a trench."
+text = "Three days, and I know why not. Bring the guns forward. We didn't cross a border to look at a trench."
 
 [sub_resource type="Resource" id="Event_line_ward"]
 script = ExtResource("3")

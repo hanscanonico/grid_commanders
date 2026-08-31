@@ -48,12 +48,12 @@ text = "One bridge, Reed. I only have to be standing on it once, and I'm paid ei
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"tomas_reed"
-text = "The sledge doesn't swim. Boots can wade the ice — clear the far bank before it rolls onto the bridge."
+text = "The sledge doesn't swim. Boots can wade the ice, so clear the far bank before it rolls onto the bridge."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"tomas_reed"
-text = "Convoy's across and the causeway builds for us. The ice road is a road again."
+text = "Convoy's across. The causeway builds for us. Ice road's a road again."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")

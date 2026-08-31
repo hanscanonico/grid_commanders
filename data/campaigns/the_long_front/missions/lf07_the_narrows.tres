@@ -44,7 +44,7 @@ text = "Three retreats met on one road and stopped retreating, Voss. Aurora and 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then it is not my line any more. It is ours. Draeg's spearhead has not slowed down — it has run out of ground to go round."
+text = "It isn't my line any more. It's ours. Draeg's spearhead hasn't slowed down; it's run out of ground to go round."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -54,7 +54,7 @@ text = "My picket bought a day at the seawall. I'll spend today the same way, on
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then hold what's yours and I'll hold what's mine. First time in six weeks that's actually true."
+text = "Hold what's yours. I'll hold what's mine. First time in six weeks that means anything."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -64,7 +64,7 @@ text = "The narrows held. First time since the crossing his column's stopped ins
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "We've got a base behind us now, and an alliance in front of us. Both are new — I intend to get used to them."
+text = "We've got a base behind us now and an alliance on either flank. Both are new. Give me a week and I'll be spending them like they'd always been there."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("6")
@@ -135,7 +135,7 @@ text = "Aurora's picket is on your left flank, Voss. What's left of it, anyway."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "And the wardens are on your right. We are done falling back separately."
+text = "And the wardens are on your right. We're done falling back separately."
 
 [sub_resource type="Resource" id="Event_line_meridian"]
 script = ExtResource("3")
@@ -145,12 +145,12 @@ text = "The customs-road column reached the depots and put a company back on the
 [sub_resource type="Resource" id="Event_line_aurora"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "My coast watch made it inland, so Aurora knows who is still standing and where. One more company than I promised you."
+text = "My coast watch made it inland, so Aurora knows who's still standing and where. That's one more company than I promised you, and I'm not apologising for it."
 
 [sub_resource type="Resource" id="Event_line_league"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "The shrine's keepers came out of the wood alive, and the wardens who carried them are here. The League pays that debt in the field."
+text = "The shrine's keepers came out of the wood alive. The wardens who carried them are standing on your flank. The League pays that kind of debt in the field."
 
 [sub_resource type="Resource" id="Event_the_line_forms"]
 script = ExtResource("5")

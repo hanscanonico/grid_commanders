@@ -38,12 +38,12 @@ max_losses = 8
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three depots, three line items on the forged ledger. Ferrow means to take the whole chain in one sweep."
+text = "Three depots. Three line items on the forged ledger, and Ferrow means to take the whole chain in one sweep."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "One road, no cover, three depots along it. That is artillery country. I can hold a depot without standing on it."
+text = "One road, no cover, three depots along it. That's artillery country. I can hold a depot without standing on it."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -53,7 +53,7 @@ text = "Two of the depots sit on the road itself, west and east. The middle one 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "All three, and the middle one was never even shot at. I had the road ranged before his sweep got there."
+text = "All three. The middle one was never shot at; I had the road ranged two days before his sweep got there."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -120,7 +120,7 @@ units = Array[Resource]([SubResource("Spawn_bought_raider")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "What I took off your border towns, I have spent on this road. You paid for it yourself, Commander."
+text = "What I took off your border towns, I've spent on this road. Every shell out there has one of your towns on the receipt."
 
 [sub_resource type="Resource" id="Event_spent_the_bounty"]
 script = ExtResource("7")

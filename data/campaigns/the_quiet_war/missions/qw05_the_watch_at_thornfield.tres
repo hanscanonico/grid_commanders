@@ -27,7 +27,7 @@ max_losses = 3
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Vale's column is moving on Thornfield before it can be garrisoned properly. You've got one picket and a wood line, Rook."
+text = "Vale's column is moving on Thornfield. It gets there before the garrison does, and all you have in the way is one picket and a wood line, Rook."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -103,7 +103,7 @@ note = "Thornfield was still Rook's on the fifth morning, with Vale's armour alr
 [sub_resource type="Resource" id="Event_line_fifth_morning"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "Fifth morning, and the town is still ours with his armour already in the tree line. The district can put that in a report."
+text = "Fifth morning. The town is still ours with his armour already in the tree line."
 
 [sub_resource type="Resource" id="Event_the_watch_stands"]
 script = ExtResource("5")

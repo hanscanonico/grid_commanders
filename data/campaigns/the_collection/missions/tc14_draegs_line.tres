@@ -25,17 +25,17 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Word off the wire: Draeg has stood his whole sector down. Even Iron's most honest marshal will not fight for a forged ledger."
+text = "Word off the wire: Draeg has stood his whole sector down. Even Iron's most honest marshal won't fight for a forged ledger."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Draeg's feelings are noted and beside the point. I have his sector now, thin as it is, and I do not need to be honest to hold it."
+text = "Draeg's feelings are noted and beside the point. I have his sector now, thin as it is, and I don't need to be honest to hold it."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Thin is thin. Two men in the whole sector and four towns nobody is standing on. I can be on two of them before she finishes reading her orders."
+text = "Thin is thin. Two men in the whole sector and four towns nobody's standing on. I can be on two of them before she finishes reading her orders."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -60,7 +60,7 @@ tags = Array[StringName]([&"draeg_holdouts"])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"viktor_draeg"
-text = "Vance can have the sector. She cannot have my men. They are walking, Commander — do not shoot them for it."
+text = "Vance can have the sector. She can't have my men. They're walking out unarmed. Don't shoot them for it."
 
 [sub_resource type="Resource" id="Event_the_holdouts"]
 script = ExtResource("6")
@@ -84,7 +84,7 @@ note = "Draeg's holdouts walked out of the sector alive, behind our line."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Draeg's squad is behind our line and out of this war. That's one column nobody has to bury."
+text = "Draeg's squad is behind our line. Out of this war, all of them. Nobody has to bury that column."
 
 [sub_resource type="Resource" id="Event_they_marched_home"]
 script = ExtResource("6")

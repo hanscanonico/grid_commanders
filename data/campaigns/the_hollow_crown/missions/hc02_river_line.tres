@@ -47,7 +47,7 @@ text = "Withdrawn, no ceremony. I'll be back with better numbers."
 
 [sub_resource type="Resource" id="Trigger_eastern_crossing_ours"]
 script = ExtResource("7")
-cell = Vector2i(11, 3)
+cell = Vector2i(12, 3)
 holder = 0
 
 [sub_resource type="Resource" id="Spawn_the_reserve"]

@@ -42,7 +42,7 @@ count = 7
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Arsenal Road. My favourite ground, Wren — rich pickings for a raider paid per kill."
+text = "Arsenal Road. My favourite ground, Wren. Rich pickings for anyone paid per kill."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -85,7 +85,7 @@ note = "Ferrow caught our column under the strength it rode in with at least onc
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "First entry in the book all winter, and it took you until Arsenal Road. Invoice submitted."
+text = "First entry in the book all winter, and it took you until Arsenal Road. I'd nearly forgotten what my own handwriting looked like."
 
 [sub_resource type="Resource" id="Event_invoice_submitted"]
 script = ExtResource("7")
@@ -110,7 +110,7 @@ tags = Array[StringName]([&"ferrow_riders_a", &"ferrow_riders_b"])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Nothing earned, and the road is yours. I do not die for districts, Wren. Neither do my riders. Boys — new employer."
+text = "Nothing earned, and the road is yours. I don't die for districts, Wren. Neither do my riders. Boys, new employer."
 
 [sub_resource type="Resource" id="Event_rode_out_with_an_empty_ledger"]
 script = ExtResource("7")
