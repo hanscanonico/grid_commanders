@@ -18,24 +18,24 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Orlov's hunters crossed back over the broken hills without being told to. He never commits to ground he cannot leave."
+text = "Orlov's hunters crossed back over the broken hills without being told to. He'd already decided the hills weren't worth what leaving them would cost."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"cass_orlov"
-text = "Nothing sang, Commander. Three weeks out there and nothing of yours ever limped. I have written you down as expensive."
+text = "Nothing sang. Three weeks out there and nothing of yours ever limped. I've written you down as expensive."
 requires = SubResource("No_trophy")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"cass_orlov"
-text = "I leave with one of yours, Commander, and a reputation. Vance has already asked me where your weak ones stand."
+text = "I leave with one of yours and a reputation, and Vance has already written to ask me which of yours limps first."
 requires = SubResource("Trophy")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Three answered. Iona Vance is the fourth. She does not need us to make a mistake — only time."
+text = "Three answered. Iona Vance is the fourth. She doesn't need us to make a mistake, only time."
 
 [resource]
 script = ExtResource("1")

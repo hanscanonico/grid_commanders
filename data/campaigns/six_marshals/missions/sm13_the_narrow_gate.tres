@@ -31,22 +31,22 @@ text = "The fifth marshal is no terror. Viktor Draeg is worse in a simpler way: 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"viktor_draeg"
-text = "I field an honest army, Commander. It simply outperforms yours."
+text = "I field an honest army. It simply outperforms yours."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"mara_voss"
-text = "Then we do not fight it on his terms. There is one gap in the wall. Hold it and his whole column stops there."
+text = "Then he doesn't get his terms. There is one gap in that wall, and every hull he owns has to come through it while we are standing in the middle of it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"mara_voss"
-text = "The gate held. Draeg's column never found the open ground it needed."
+text = "The gate held. Draeg's column never found open ground."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Honest or not, an army that can't move is an army that loses."
+text = "Honest or not, his column spent the whole war parked in that one gap."
 
 [sub_resource type="Resource" id="Trigger_spear_gone"]
 script = ExtResource("7")
@@ -60,7 +60,7 @@ points = 4000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"mara_voss"
-text = "Head of the column is gone. The rest of them are just tanks now — and the line knows it."
+text = "Head of the column is gone. The rest are just tanks now, and the line knows it."
 
 [sub_resource type="Resource" id="Event_the_spear_breaks"]
 script = ExtResource("6")
@@ -94,7 +94,7 @@ note = "Draeg's column came through the narrow gate whole, and it has not stoppe
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"viktor_draeg"
-text = "A gate is a gate, Commander. My column is through it, and it is still a column."
+text = "A gate is a gate. My column is through it, and it is still a column."
 
 [sub_resource type="Resource" id="Event_the_column_is_through"]
 script = ExtResource("6")
