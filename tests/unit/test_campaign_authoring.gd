@@ -266,6 +266,12 @@ func _deadline(last_day: int) -> DayDeadlineObjective:
 	return deadline
 
 
+func _hold_until(day: int) -> SurviveUntilDayObjective:
+	var hold := SurviveUntilDayObjective.new()
+	hold.day = day
+	return hold
+
+
 ## A mission that clears every content bar, which each assert below then breaks
 ## exactly one of.
 func _authored() -> MissionDefinition:
@@ -287,6 +293,13 @@ func test_a_mission_somebody_authored_clears_every_content_bar() -> void:
 		on_the_last_day.content_error(Fixture.commander_db()),
 		"",
 		"par on the deadline's own last day is still earnable"
+	)
+	var held := _authored()
+	held.objectives.append(_hold_until(4))
+	assert_eq(
+		held.content_error(Fixture.commander_db()),
+		"",
+		"par on the hold's own day is the earliest it can be won"
 	)
 
 
@@ -312,6 +325,9 @@ func test_every_content_bar_names_what_the_mission_is_missing() -> void:
 	var slow_par := _authored()
 	slow_par.par_day = 9
 	assert_string_contains(slow_par.content_error(db), "past its own deadline")
+	var par_before_the_hold := _authored()
+	par_before_the_hold.objectives.append(_hold_until(6))
+	assert_string_contains(par_before_the_hold.content_error(db), "before its own hold day")
 
 
 # --- a goal that costs nothing ----------------------------------------------

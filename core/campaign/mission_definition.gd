@@ -417,7 +417,9 @@ func _carry_error(map: MapData) -> String:
 ## "the day has passed", so in the first it is a mission won by running out of
 ## time and in the second a star paid for being slow — it belongs in `failures`
 ## alone. And where one is authored, `par_day` has to fall inside it or the speed
-## star is unearnable.
+## star is unearnable. A hold objective bounds par from the other end: the
+## mission is not won before its day, so a par below it is a star nobody can
+## take.
 func content_error(commander_db: CommanderDB) -> String:
 	if events.is_empty():
 		return "mission '%s' scripts nothing" % id
@@ -442,6 +444,12 @@ func _par_error() -> String:
 	for failure: MissionObjective in failures:
 		if failure is DayDeadlineObjective and par_day > (failure as DayDeadlineObjective).last_day:
 			return "mission '%s': par %d is past its own deadline" % [id, par_day]
+	for objective: MissionObjective in objectives:
+		if (
+			objective is SurviveUntilDayObjective
+			and par_day < (objective as SurviveUntilDayObjective).day
+		):
+			return "mission '%s': par %d is before its own hold day" % [id, par_day]
 	return ""
 
 
