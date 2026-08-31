@@ -1,29 +1,33 @@
 # The Hollow Crown — "The Committed Ground".
-# A standard two-army front. No allies here yet — the succession war has
-# not reached this crossing.
+# The river Orlov committed to. Infantry wade it anywhere, armour crosses only
+# at the two bridges, and the one town on each bank is the only repair either
+# army gets forward of its base. No allies here yet — the succession war has
+# not reached this crossing. Terrain mirrors about column 8.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-.......M.........
-....F.....F......
-.Q.............Q.
-.====C=====C====.
-.B.............B.
-......F.....F....
-.........M.......
+...F....~....F...
+..M.....~.....M..
+.Q..F...~...F..Q.
+.===C===+===C===.
+........~........
+...F....~....F...
+......==+==......
+.B......~......B.
+....M...~...M....
 [owners]
 1 1 2
-1 1 4
+1 1 7
 2 15 2
-2 15 4
+2 15 7
 [units]
 1 i 2 2
-1 i 2 4
-1 m 3 3
+1 i 2 6
+1 m 3 4
 1 r 2 3
-1 t 3 2
-2 i 13 2
-2 i 13 4
-2 m 12 3
-2 r 13 3
-2 t 12 2
+1 t 3 3
+2 i 14 2
+2 i 14 6
+2 m 13 4
+2 r 14 3
+2 t 13 3
