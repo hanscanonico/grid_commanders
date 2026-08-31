@@ -81,7 +81,7 @@ requires = SubResource("Fact_never_billed")
 [sub_resource type="Resource" id="Line_4_short"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Coalyard's running. It cost us more of the column than I meant to spend, and Ferrow had the gap counted before I did. He'll have billed Vale for it by morning."
+text = "Coalyard's running. It cost us more of the column than I meant to spend. Ferrow rode away from this road with something to show for it after all."
 requires = SubResource("Fact_bounty_paid")
 
 [sub_resource type="Resource" id="Line_5"]
@@ -93,7 +93,7 @@ requires = SubResource("Fact_never_billed")
 [sub_resource type="Resource" id="Line_5_invoiced"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "Your line came out lighter than it rode in, and I've already billed Vale for the difference."
+text = "Keep the yard, and know that what your column left on the road was worth more to me than the coal."
 requires = SubResource("Fact_bounty_paid")
 
 [sub_resource type="Resource" id="Line_6"]
