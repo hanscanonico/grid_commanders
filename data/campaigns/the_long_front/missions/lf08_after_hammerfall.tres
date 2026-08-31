@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
@@ -12,6 +12,7 @@
 [ext_resource type="Resource" path="res://data/units/infantry.tres" id="11"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="14"]
 
 [sub_resource type="Resource" id="Objective_break_the_garrison"]
 script = ExtResource("5")
@@ -44,15 +45,34 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "Take it anyway. Every acre he keeps after that is a second atrocity, not just the first."
 
+[sub_resource type="Resource" id="Averyn_early"]
+script = ExtResource("14")
+flag = &"averyn_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Averyn_slow"]
+script = ExtResource("14")
+flag = &"averyn_held"
+at_least = 0
+at_most = 0
+
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Averyn's ashes fly the alliance's colours again. I've filed happier reports about worse days."
+requires = SubResource("Averyn_early")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"alina_ward"
 text = "Log it as ground recovered and move on. There'll be time to grieve it later — not today."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Averyn's ashes fly our colours again. Morn had time to put engineers in the ruins first, so we've bought the acres back at his asking price. Nothing about this week goes in the good column."
+requires = SubResource("Averyn_slow")
 
 [sub_resource type="Resource" id="Trigger_averyn_retaken"]
 script = ExtResource("7")
@@ -133,5 +153,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_morn_bills_the_ground"), SubResource("Event_averyn_inside_the_week")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
 defeat = "Morn's garrison dug in before Holt reached the ruins, and Averyn stayed his."

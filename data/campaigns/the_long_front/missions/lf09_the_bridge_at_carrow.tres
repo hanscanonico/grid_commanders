@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
 [ext_resource type="Resource" path="res://data/units/mech.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_take_carrow"]
 script = ExtResource("2")
@@ -37,15 +38,34 @@ script = ExtResource("3")
 speaker = &"orin_flux"
 text = "We don't wait for it to close. Moving now."
 
+[sub_resource type="Resource" id="Carrow_in_window"]
+script = ExtResource("12")
+flag = &"carrow_early"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Carrow_after"]
+script = ExtResource("12")
+flag = &"carrow_early"
+at_least = 0
+at_most = 0
+
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
 text = "Carrow falls before the second trench line closes. Road east is open for the first time since the crossing."
+requires = SubResource("Carrow_in_window")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"orin_flux"
 text = "Marking it on the map. Already counting the properties beyond it."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Carrow's ours. The second trench line was finished and manned by the time we reached it, and we came through it a spade at a time. Road east is open, and it opened slow."
+requires = SubResource("Carrow_after")
 
 [sub_resource type="Resource" id="Trigger_carrow_ours"]
 script = ExtResource("5")
@@ -130,5 +150,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_inside_the_window"), SubResource("Event_the_window_closes")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
 defeat = "Vale's second trench line closed before we reached the bridge, and Carrow stayed the one crossing east that nobody could use."
