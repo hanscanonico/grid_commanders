@@ -11,8 +11,8 @@
 
 [sub_resource type="Resource" id="Objective_take_the_works"]
 script = ExtResource("2")
-text = "Take Vale's engineering works."
-cell = Vector2i(17, 7)
+text = "Take the works base behind the wall."
+cell = Vector2i(16, 2)
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -51,7 +51,7 @@ day = 4
 [sub_resource type="Resource" id="Spawn_wall_battery"]
 script = ExtResource("8")
 unit_type = ExtResource("9")
-cell = Vector2i(16, 6)
+cell = Vector2i(17, 5)
 
 [sub_resource type="Resource" id="Effect_wall_battery"]
 script = ExtResource("7")

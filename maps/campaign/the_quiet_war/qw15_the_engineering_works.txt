@@ -1,35 +1,40 @@
 # The Quiet War 15 — "The Engineering Works". Konrad Vale's border works
-# have gone from forged rail permits to a fortified position in the open
-# — the paperwork phase is over. Halden Marr takes it the honest way,
-# with an army.
+# have gone from forged rail permits to a walled position in the open — the
+# paperwork phase is over. A ring of rock and timber around a two-base
+# industrial core, with one road gate on the west face: infantry can climb
+# the wall, armour has to come through the gate.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
 ....................
-.Q====...B....C.....
-..=....MM..MMM......
-..=...C...FF........
-FF========....MM....
-....F.....C.....MM..
-........=======...MM
-...........====..B..
-..................Q.
+.Q.....F....MMMMMMM.
+.==....F.C..M.B.B.M.
+.B=.....F...M.===.M.
+..==============..M.
+....F.......M..=C.M.
+.C..F.......M..=Q.M.
+....FF...C..M.....M.
+............MMMMMMM.
+....................
 ....................
 [owners]
 1 1 1
-1 9 1
-2 17 7
-2 18 8
+1 1 3
+1 1 6
+2 14 2
+2 16 2
+2 16 5
+2 16 6
 [units]
 1 i 2 2
-1 i 3 3
-1 m 4 2
-1 r 2 1
-1 t 3 4
+1 i 2 5
+1 m 3 3
+1 r 3 4
 1 t 4 4
-1 a 3 5
-2 i 15 6
-2 i 14 7
-2 r 15 5
-2 t 14 6
-2 t 13 7
-2 g 13 5
+1 t 3 5
+1 a 2 4
+2 i 14 4
+2 i 16 4
+2 m 13 2
+2 r 17 3
+2 t 13 4
+2 a 15 5
