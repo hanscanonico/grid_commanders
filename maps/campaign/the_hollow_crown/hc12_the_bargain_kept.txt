@@ -1,7 +1,8 @@
 # The Hollow Crown — "The Bargain Kept".
-# Four seats at the corners: you and your Iron ally north of the ridge,
-# two rival marshals south of it. Three passes are the only way across
-# for anything on treads.
+# Four seats at the corners of two mountain massifs that all but meet in the
+# middle. One causeway runs between them: armour and foot take the same three
+# squares there, or the long way round the massifs' ends. The relay waits on
+# the road a square north of the crossing.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 # Two of Ferrow's outriders are named: they were Draeg's before they were his,
@@ -10,15 +11,17 @@
 .....................
 .....................
 ..QB=============BQ..
-.....=....=....=.....
-...C.=....C....=.C...
-.....=....=....=.....
-....F=....=....=.....
-.MMMM=MMMM=MMMM=MMMM.
-.MMMM=MMMM=MMMM=MMMM.
-.....=....=....=F....
-.....=....=....=.....
-...C.=....=....=.C...
+..........=..........
+..........=..........
+.....C....=....C.....
+.......F..C..F.......
+.MMMMMMMM.=.MMMMMMMM.
+.MMMMMMMM===MMMMMMMM.
+.MMMMMMMM.=.MMMMMMMM.
+.......F..=..F.......
+.....C....=....C.....
+..........=..........
+..........=..........
 ..QB=============BQ..
 .....................
 .....................
@@ -27,20 +30,24 @@
 1 3 2
 2 18 2
 2 17 2
-3 18 12
-3 17 12
-4 2 12
-4 3 12
+3 18 14
+3 17 14
+4 2 14
+4 3 14
 [units]
 1 i 2 3
 1 i 3 3
 1 r 4 2
+1 m 5 2
 2 i 18 3
 2 i 17 3
 2 r 16 2
-3 i 18 11
-3 i 17 10
-3 r 16 12
-4 i 2 11 ferrow_outrider_a
-4 i 3 10
-4 r 4 12 ferrow_outrider_b
+2 m 15 2
+3 i 18 13
+3 i 17 13
+3 r 16 14
+3 m 15 14
+4 i 2 13 ferrow_outrider_a
+4 i 3 13
+4 r 4 14 ferrow_outrider_b
+4 m 5 14

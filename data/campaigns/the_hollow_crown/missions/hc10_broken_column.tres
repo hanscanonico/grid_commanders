@@ -23,7 +23,7 @@ at_most = -1
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
 text = "Take the eastern relay the broken column was walking to."
-cell = Vector2i(10, 4)
+cell = Vector2i(11, 4)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("3")

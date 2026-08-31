@@ -13,7 +13,7 @@
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
 text = "Take the relay at the ridge's last crossing."
-cell = Vector2i(10, 4)
+cell = Vector2i(10, 6)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("3")
