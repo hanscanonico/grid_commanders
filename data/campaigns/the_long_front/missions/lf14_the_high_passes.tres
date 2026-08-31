@@ -29,7 +29,7 @@ text = "Mixed force, no domain advantage on rock and passes. We take and hold fi
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "Seven cities, one column trying to stand in front of every one of them. Move faster than she can shift it between them and she loses four saving one."
+text = "Seven cities, one column trying to stand in front of every one of them. Move faster than she can shift it between them and she loses six saving one."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -101,4 +101,4 @@ events = Array[Resource]([SubResource("Event_the_second_column")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Vance held enough of them to bleed the advance dry, and the passes stayed contested."
+defeat = "Vance held enough of the highland cities to bleed the advance dry, and the passes stayed contested."
