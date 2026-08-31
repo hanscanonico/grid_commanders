@@ -18,7 +18,7 @@ cell = Vector2i(6, 3)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "No shots fired, no declaration made. Selwich's garrison changed sides overnight, and the map office heard it from a farmer."
+text = "No shots fired. No declaration. Selwich's garrison changed sides overnight and the map office heard about it from a farmer."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -28,22 +28,22 @@ text = "A garrison doesn't just change its mind, Flux. Someone paid for that, or
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "My screen went to look. It's already Orlov's — whichever it was, it worked without a fight."
+text = "My screen went to look. It's already flying his colours. Paid or frightened, it worked without a shot."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "Then take it back the same way it was lost. Quietly, before he decides it's worth defending."
+text = "Then take it back the same way it was lost, and do it before he decides the place is worth a garrison."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Selwich comes back without a fight this time either. The garrison that flipped it isn't the one that held it."
+text = "Selwich comes back without a fight this time either. The garrison that flipped it wasn't the garrison that held it, and neither of them is from here."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "I don't like what that implies about the next town over. Neither should you."
+text = "I don't like what that implies about the next town over."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("6")
@@ -62,7 +62,7 @@ units = Array[Resource]([SubResource("Spawn_selwich_garrison")])
 [sub_resource type="Resource" id="Event_line_garrison"]
 script = ExtResource("3")
 speaker = &"cass_orlov"
-text = "So the map office does read its mail. Garrison Selwich; it has stopped being free."
+text = "So the map office reads its mail after all. Garrison Selwich. It's stopped being free."
 
 [sub_resource type="Resource" id="Event_orlov_garrisons"]
 script = ExtResource("5")

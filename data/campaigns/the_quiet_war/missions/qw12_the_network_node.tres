@@ -37,7 +37,7 @@ requires = SubResource("Relay_is_dark")
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Then we move fast. A network this exposed doesn't stay exposed for long."
+text = "We move fast, then. A network this exposed doesn't stay exposed long."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -47,7 +47,7 @@ text = "Agreed. This is the last piece I can hand you before the map runs out of
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Good. I'd rather run out of pieces than run out of time."
+text = "Suits me. Better to run out of pieces than out of time."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -81,7 +81,7 @@ units = Array[Resource]([SubResource("Spawn_morn_armour"), SubResource("Spawn_mo
 [sub_resource type="Resource" id="Event_line_done_being_a_rumour"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "Quiet was Orlov's idea, not mine. I am done being a rumour."
+text = "Quiet was Orlov's idea, not mine. I'm done being a rumour."
 
 [sub_resource type="Resource" id="Event_morn_stops_being_quiet"]
 script = ExtResource("6")

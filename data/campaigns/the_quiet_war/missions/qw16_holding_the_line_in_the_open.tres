@@ -37,7 +37,7 @@ text = "Vance is throwing her heaviest column of the war at the line before our 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"iris_colt"
-text = "Then I hold it the way I always have. Refuse, refit, refuse again."
+text = "I hold it the way I always have. Refuse, refit, refuse again."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -47,7 +47,7 @@ text = "I've held lines like that. It costs more in the open than it ever did in
 [sub_resource type="Resource" id="Line_3b"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Rook held a wood line with a picket once and the district still talks about it. Hold this one with an army."
+text = "Rook held a wood line with one picket and the district still talks about it. You've got an army. Hold."
 requires = SubResource("Thornfield_held")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -63,7 +63,7 @@ text = "Her push spends itself against a line that won't move. Everything she pu
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"iris_colt"
-text = "Second Wind found plenty of reasons to keep fighting today. I'll take that as a compliment."
+text = "Second Wind found plenty of reasons to keep fighting today, and I'll take that as a compliment."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("7")
@@ -87,7 +87,7 @@ units = Array[Resource]([SubResource("Spawn_reserve_heavy"), SubResource("Spawn_
 [sub_resource type="Resource" id="Event_line_reserve"]
 script = ExtResource("3")
 speaker = &"iona_vance"
-text = "This is the whole of my reserve, Commander Colt. I am spending it on one line and I expect it to be enough."
+text = "This is the whole of my reserve. I'm spending it on one line, and I expect the scales to tip."
 
 [sub_resource type="Resource" id="Event_her_whole_reserve"]
 script = ExtResource("6")

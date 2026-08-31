@@ -29,7 +29,7 @@ text = "The last act of the quiet war was fought in the open, in daylight, with 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "I took my division out of his war on the day I could see what it was. There is no honour in it — only the fact that I stopped."
+text = "I took my division out of his war on the day I could see what it was. There's no honour in that. Only the fact that I stopped."
 requires = SubResource("Draeg_stood_aside")
 
 [sub_resource type="Resource" id="Line_3"]

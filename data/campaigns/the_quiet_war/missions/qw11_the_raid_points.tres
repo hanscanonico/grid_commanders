@@ -35,7 +35,7 @@ days = 3
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "Three small towns have changed hands all month between Ferrow's raiders and whoever held them last week. Nobody has held all three at once."
+text = "Three small towns have traded back and forth all month between Ferrow's raiders and whoever held them last, and nobody's held all three at once."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -55,12 +55,12 @@ text = "This time I'm not leaving until it does."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "All three towns fly the same colours for the first time this month. His raiders have nothing left to trade for."
+text = "All three towns fly the same colours for the first time this month, and Ferrow's raiders have nothing left to trade for."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"tomas_reed"
-text = "I did what the last four garrisons couldn't. Held the ground long enough for it to matter."
+text = "Held it. All three of them, long enough for it to matter, which is more than the last four garrisons managed between them."
 
 [sub_resource type="Resource" id="Trigger_middle_town_ours"]
 script = ExtResource("8")
@@ -85,7 +85,7 @@ units = Array[Resource]([SubResource("Spawn_raider_north"), SubResource("Spawn_r
 [sub_resource type="Resource" id="Event_line_fifth_time"]
 script = ExtResource("3")
 speaker = &"dane_ferrow"
-text = "That town's traded four times this month, Reed. Nobody's ever paid me to let the fifth one stand."
+text = "Four trades this month on that town, Reed. Nobody's ever paid me to let a fifth one stand, and I don't work for free."
 
 [sub_resource type="Resource" id="Event_ferrow_comes_back"]
 script = ExtResource("7")

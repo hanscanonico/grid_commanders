@@ -35,12 +35,12 @@ text = "Then we take the source this time, not another symptom of it."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "It's defended lighter than it should be for what it's hiding. Orlov doesn't expect us to have found it yet."
+text = "It's defended lighter than it should be for what's inside, which tells you he doesn't think we've found it yet."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Good. I'll take his surprise over his strength any day."
+text = "Good. I'll take his surprise over his strength any day of the week."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -50,7 +50,7 @@ text = "The safehouse falls, and its files fall with it. Names, routes, towns no
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Not the end of his network. First time we've read its handwriting, though — that's worth the fight."
+text = "Not the end of his network. But it's the first time we've read its handwriting, and that was worth the fight."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("9")
@@ -86,7 +86,7 @@ note = "The handler was taken on the east road, and the file has a name where th
 [sub_resource type="Resource" id="Event_line_the_car_stops"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Staff car stopped short of the east road. Whatever he was carrying, he is carrying it for us now."
+text = "Staff car stopped short of the east road. Whatever he was carrying, he's carrying it for us now."
 
 [sub_resource type="Resource" id="Event_the_handler_taken"]
 script = ExtResource("6")

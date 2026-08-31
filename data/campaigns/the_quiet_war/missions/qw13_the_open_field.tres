@@ -24,12 +24,12 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "There is nothing quiet about this one, Commander. Vance's column is advancing in the open, in daylight. Everything the network needed to stay hidden is worthless now."
+text = "Nothing quiet about this one. Vance is advancing in the open, in daylight, like a woman who's run out of things worth hiding. Every scrap of cover the network bought him is worthless now."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Then we answer with an army instead of a screen. Take the base, and prove this is a war we can also fight in the open."
+text = "We answer with an army instead of a screen. Take the base, and prove this is a war we can fight in the open too."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -39,7 +39,7 @@ text = "No fog to plan behind, no rumour to chase. Just her column and ours."
 [sub_resource type="Resource" id="Line_3b"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Two of his raid columns are already off the board, for whatever that's worth out here. She's advancing anyway."
+text = "Two of his raid columns are already off the board, for whatever that's worth out here, and she's advancing anyway."
 requires = SubResource("Columns_broken")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -50,12 +50,12 @@ text = "Good. I'm tired of chasing rumours."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Her base falls in a fight neither side had to hide. We hold ground we took in daylight, and that is answer enough."
+text = "Her base falls in a fight neither side had to hide. We hold ground we took in daylight, and that's answer enough."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Orlov wanted this fought in shadows because he didn't think we could win it in the light. Today says otherwise."
+text = "Orlov wanted this fought in shadows because he didn't think we could win it in the light. Every axis moved at once and her base came apart between them."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -79,7 +79,7 @@ units = Array[Resource]([SubResource("Spawn_second_corps_road"), SubResource("Sp
 [sub_resource type="Resource" id="Event_line_second_corps"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "No more screens and no more hunches. Second Corps is on the road behind you — fight like it."
+text = "No more screens. No more hunches. Second Corps is on the road behind you, so fight like it."
 
 [sub_resource type="Resource" id="Event_second_corps"]
 script = ExtResource("6")

@@ -39,7 +39,7 @@ text = "Then city hall it is. I do love a deadline that comes with a villain alr
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "City hall's yours before the ink is dry on anything. Governor's in custody, ledger's in evidence."
+text = "City hall's yours before the ink dried on anything. Governor in custody. Ledger in evidence."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")

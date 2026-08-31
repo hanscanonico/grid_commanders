@@ -23,7 +23,7 @@ tag = &"pine_column"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "A whole company crossed the Aurora pine belt without a single patrol seeing them. Selwich was not a one-off, Wren."
+text = "A whole company crossed the Aurora pine belt. Not one patrol saw them go, which makes Selwich the first of these rather than the only one."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -33,7 +33,7 @@ text = "These woods, I know better than the map does. Find where it went to grou
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Signals go quiet near the pine city three nights running. That's your column."
+text = "Signals go quiet near the pine city three nights running, which is as close to an address as you're getting."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -48,7 +48,7 @@ text = "The column's flushed out of the tree line. Pine city flies its own colou
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"sable_wren"
-text = "I don't trust the quiet that follows. Orlov's people don't leave without a reason."
+text = "I don't trust the quiet after. Orlov's people don't leave a wood without a reason."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("6")
@@ -61,7 +61,7 @@ objective_id = &"destroy_pine_column"
 [sub_resource type="Resource" id="Event_line_signals"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Signals just went quiet again — eastern tree line, two miles in. That's them."
+text = "Signals just went quiet again. Eastern tree line, two miles in. That's them."
 
 [sub_resource type="Resource" id="Event_signals_go_quiet"]
 script = ExtResource("5")
