@@ -140,7 +140,7 @@ note = "The western fuel road was reopened with its depots still working."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"mara_voss"
-text = "Still standing on both of them. The western road runs."
+text = "Still standing on both depots. The western road runs."
 
 [sub_resource type="Resource" id="Event_the_west_road_runs"]
 script = ExtResource("7")
