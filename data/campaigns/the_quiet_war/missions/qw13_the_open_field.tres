@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -47,6 +47,11 @@ script = ExtResource("3")
 speaker = &"alina_ward"
 text = "Good. I'm tired of chasing rumours."
 
+[sub_resource type="Resource" id="Line_4b"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "We've spent the whole war being clever about it, so it'll be a novelty to just walk at somebody in the daylight."
+
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
@@ -56,6 +61,11 @@ text = "Her base falls in a fight neither side had to hide. We hold ground we to
 script = ExtResource("3")
 speaker = &"alina_ward"
 text = "Orlov wanted this fought in shadows because he didn't think we could win it in the light. Every axis moved at once and her base came apart between them."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Orlov's people will have to write this one up exactly as it happened, and I'd pay real money to read the draft they try first."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -81,13 +91,18 @@ script = ExtResource("3")
 speaker = &"alina_ward"
 text = "No more screens. No more hunches. Second Corps is on the road behind you, so fight like it."
 
+[sub_resource type="Resource" id="Event_line_second_corps_holt"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "It's daylight, an audience, and a second corps coming up the road like a parade, after months of moving this army so carefully nobody would write it down."
+
 [sub_resource type="Resource" id="Event_second_corps"]
 script = ExtResource("6")
 id = &"second_corps"
 triggers = Array[Resource]([SubResource("Trigger_day_3")])
 effects = Array[Resource]([SubResource("Effect_second_corps")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_second_corps")])
+lines = Array[Resource]([SubResource("Event_line_second_corps"), SubResource("Event_line_second_corps_holt")])
 
 [resource]
 script = ExtResource("1")
@@ -110,6 +125,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_second_corps")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4"), SubResource("Line_4b")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
 defeat = "Vance's base held, and the open war is not yet the alliance's to win outright."
