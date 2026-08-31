@@ -52,6 +52,7 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 | `TutorialHints`, `ControlHints` | `test_tutorial_copy.gd`, `test_control_hints.gd` | Node-free copy registries for the same reason `GameSpeed` is: which mission step is next and which key legend a context prints are pure functions of state the suite can hand them. One suite each — the two are two subjects — and each holds its subject to its character caps |
 | `CommanderVisuals`, `SideIdentity` | `test_side_identity.gd`, `test_side_identity_roster.gd` | the single authority for a side's presentation — a portrait, a faction theme, an atlas row, resolved once from the match's commander picks with no `Node` and no scene path |
 | `BattleStyle` (a `Resource`) and `BattleStyleDB` (`RefCounted`) | `test_battle_styles.gd` | weapon-signature data rather than drawing, so every unit naming a style that exists is checked without staging a cut-in |
+| `CombatBeats` (`RefCounted`) | `test_combat_beats.gd` | the battle cut-in's beat sheet on the same terms: `plan` is a pure function of a `CombatResult`, two `BattleStyle`s and two floats, with no `Node` and no clock in it, so this is timing arithmetic rather than drawing. It was a private static inside a `CanvasLayer` and nothing had ever checked it; the budgets are pinned at `rate = 1.0` because the aim stretch grows the sheet clock at high rates on purpose |
 
 ## The ones that are not Node-free — but whose suites never build one
 

@@ -1184,6 +1184,73 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   `CaptureStage.ROOF_WINDOW` are the airport's and the port's, which no shipped scenario stages.
   The legibility ruler was re-run and reads the board unchanged cell for cell, so
   `docs/sprite_legibility.md` is untouched.
+  **The beat sheet is `CombatBeats` and it is Node-free** (2026-08-31; this clause is its record).
+  It was a private `Beats` class and a private `_plan` static inside a `CanvasLayer` subclass, so
+  nothing had ever checked the cut-in's timing without staging a scene; it is now
+  `scenes/battle/cutscene/combat_beats.gd`, a `RefCounted` whose `plan(result, atk_style,
+  def_style, tail, rate)` is a pure function, and `tests/unit/test_combat_beats.gd` pins every
+  budget in it. **`CombatBeats` is the single statement of what windows exist and when** — nothing
+  else in `scenes/battle/cutscene/` computes one; the director reads a scalar out of `_play.window`
+  and paints it. Three things arrived with the move.
+  **An arrive beat and a per-weapon aim beat.** The squad rolls the last stretch into its firing
+  slot over `arrive` (0.20 → 0.34) — opening where the wipe's own 60 px inward slide *ends*, because
+  two opposed translations on one axis make it slide in, jerk back out and settle — and then winds
+  up for `BattleStyle.aim_seconds`, which is 0.06 for small arms and 0.28 for a howitzer. That
+  length is most of what tells the weapon classes apart before a single pixel of projectile exists.
+  `aim_lift` and `aim_pitch` ship beside it as **two** signed scalars rather than one reinterpreted
+  per domain: a bomber's bank and a turret's rise are different motions, and the branch that told
+  them apart would be the same answer spelled in three places. The fixed 0.16 s `ANTICIPATION` is
+  gone, `IMPACT` is trimmed 0.40 → 0.34 and `HOLD` 0.25 → 0.18, and those two trims are what pay for
+  the wind-up: without them the sheet breaks its own bars. The recoil ramp now **ends** as the barrel
+  lights and runs back `max(0.4 × aim, 0.10)`, the floor being what stops small arms' 24 ms — 11 ms
+  of real time at Quick on a four-cut-in streak, under one frame at 60 Hz — from vanishing. It is
+  allowed to open *inside* the arrive; a hull settling back as it finishes rolling in is the correct
+  read, and the alternative is lengthening every short-aim style's sheet to make room.
+  **The casualty beat is named, sized and gates the counter.** `settled = max(impact.y,
+  casualty.y)`, so the counter's wind-up cannot open until the last figure has landed — ungated, a
+  four-figure topple is still in the air 430 ms after the counter's muzzle lights, which reads as the
+  wrong side dying. Its tail is flat and capped at two steps: **0 for no loss, +0.10 for one, +0.20
+  for two or more**. Say the cost plainly rather than claiming the beat now reads: **a single-figure
+  loss does add 0.10 s** to the sheet, and the cap means **four figures lost buys only ~0.10 s more
+  than one — about 33 ms per extra death** — which `CutsceneSide`'s existing `reach` compression then
+  fits into whatever window it is handed. Multi-figure losses read *better*, not fully. The
+  per-figure form (`0.13 × (lost − 1)`) does let four deaths read separately, and combined with the
+  gate it puts the worst counter at 3.44 s, over every bar below. If playtest disagrees the lever is
+  a **third** cap step (+0.30) with the counter rows re-measured, not the uncapped form.
+  **Budgets, at the default tier with no streak**: cannon 1.53 s clean and 1.63 with a casualty,
+  small arms 1.35, a howitzer 1.76, torpedo 1.67, a kill 1.83, the typical counter 2.55, and the
+  worst the roster can produce — a rocket opener answered by a cannon with both squads losing two or
+  more — 2.86. The bars are ≤1.8 clean, ≤1.9 with casualties, ≤2.6 for a typical counter and ≤2.9
+  absolute, and `test_combat_beats.gd` pins every row **at `rate = 1.0`**. The pin is load-bearing:
+  the stretch below deliberately grows the *sheet clock* at high rates while real time holds, so an
+  unpinned fence would read the mechanism working as a regression.
+  **The streak lever, corrected.** `BattleAnimator._pace_cut_in` sets both `cutscene.speed` and
+  `cutscene.tail_scale`, and the animator's own comment used to claim the volley, the impact and the
+  HP tick were untouched. **That was false.** `CutsceneDirector._process` advances the clock by
+  `delta * speed`, so `speed` is a **global rate over the whole sheet** and only `tail_scale` is
+  selective — at Quick on a four-streak the clock runs 2.16×. The one beat defended against that is
+  the wind-up: `CombatBeats.aim_stretch` multiplies it by `max(1, rate / AIM_RATE_CEILING)` with the
+  ceiling at 1.5, so above the ceiling a style's *real* wind-up is exactly `aim_seconds / 1.5` — 107
+  ms for a cannon, 187 ms for a howitzer, an 80 ms spread that survives every setting. A flat clamp
+  is the rejected mechanism: it collapses every style onto the floor at high rates, defending
+  legibility by destroying the differentiation it exists to protect. Exempting the beat from `speed`
+  is rejected too — `speed` is applied to `delta` in the director and cannot be made selective
+  without a second clock, which the one-clock guarantee forbids. `rate` is read **once**, in
+  `CombatCutscene._pose` before `run()`, matching `CutscenePlayback.begin`'s read-once discipline; a
+  per-frame read would re-plan the sheet mid-run. `FastForward` is deliberately out of it, the player
+  holding it having asked for the compression. Under a capture `Settings` is pinned to Instant, whose
+  `cutscene_rate()` answers 1.0, so every posed frame plans at a stretch of 1.0 and stays byte-stable.
+  All seventeen combat cut-in frames moved, which is expected and is why the three pose constants in
+  `BattleCutsceneScenario` were recomputed against the new sheet rather than left: `CUT_IN_POSE`
+  0.95 → **1.05**, `KO_POSE` 1.15 → **1.22**, `VOLLEY_POSE` 0.46 → **0.615**. Two things about them
+  are worth recording. One clock cannot sit inside six impact windows once a per-weapon wind-up has
+  pulled the firing times 0.18 s apart, so `CUT_IN_POSE` picks the four styles that draw a burst and
+  the two whose `impact_radius` is 0 — `small_arms` and `autocannon`, whose hit is a spark stitch —
+  have settled past theirs. And `VOLLEY_POSE` is a tight fit by construction: the last barrel to
+  light is the rocket's at 0.58, the first round to arrive is small arms' at 0.6465, the cannon's
+  flash goes out at 0.62, and a sustained weapon strobes at 18 Hz. **A style with `aim_seconds` past
+  ~0.275 fires after that frame and photographs an empty sky**, so the howitzer split off the cannon
+  is exactly the change that has to re-measure the constant.
 
 
 ## The zoom ladder and the animation milestone

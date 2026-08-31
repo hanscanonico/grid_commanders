@@ -120,10 +120,17 @@ var volley_figures := 1
 ## and a Resource is shared — writing the nudge onto it would change the arc for
 ## every unit that names it.
 var volley_arc := 0.0
+## How far behind the first round each figure's leaves, in travel progress and
+## parallel to the figures firing. Empty is one wave, which is today's read.
+var volley_lead := PackedFloat32Array()
 ## Every barrel alight this frame — one per standing figure. Empty for all but
 ## the handful of frames after a volley leaves, and for the dark half of a
 ## sustained weapon's strobe, which the director simply does not populate.
 var muzzles := PackedVector2Array()
+## How brightly each of those barrels is alight, parallel to `muzzles`. Empty is
+## every listed barrel at full, which is what a squad whose barrels light as one
+## draws — and what every style with no stagger will keep drawing.
+var muzzle_lit := PackedFloat32Array()
 var muzzle_radius := 0.0
 ## Which flash the alight barrels wear. Held as the projectile kind rather than
 ## the style, because that is the vocabulary the rounds already switch on: a
@@ -137,6 +144,9 @@ var muzzle_toward := 1.0
 var impact_p := 0.0
 var impact_at := Vector2.ZERO
 var impact_style: BattleStyle
+## How many chips this hit throws out of the target, 0..5. Zero is the impact the
+## file already draws.
+var impact_debris := 0
 ## The kill blast, 0 -> 1, and where it goes off.
 var blast_p := 0.0
 var blast_at := Vector2.ZERO

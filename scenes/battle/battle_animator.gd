@@ -262,9 +262,13 @@ func _cut_in_applies(attacker: Unit, defender: Unit) -> bool:
 ## turn mixing attacks and captures tightens as a single run; the pacing is routed
 ## to both cutscenes and whichever one is about to play reads it.
 ##
-## What is *not* touched is the volley, the impact and the HP tick. Those carry
-## the information; trimming them would make the cut-in shorter and worse, which
-## is the wrong trade at any speed.
+## The two levers are not the same shape. `speed` is a global rate over the whole
+## sheet — CutsceneDirector._process advances the clock by `delta * speed` — so it
+## compresses the volley, the impact and the HP tick along with everything else.
+## Only `tail_scale` is selective, and what it takes is the closing hold and wipe.
+## The one beat defended against that compression is the wind-up, which CombatBeats
+## stretches against its own rate ceiling, so a howitzer still reads longer than a
+## rifle on the fourth cut-in of a streak.
 func _pace_cut_in() -> void:
 	var gap := Time.get_ticks_msec() - _last_cut_in_ms
 	_cut_in_streak = (
