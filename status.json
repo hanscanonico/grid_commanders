@@ -65,11 +65,11 @@
 		},
 		{
 			"artifact": "",
-			"ended": 1788169326,
+			"ended": 1788170074,
 			"exit": 2,
 			"job": "difficulty-check",
 			"kind": "section",
-			"log": "reports/grind/logs/difficulty-check-20260831-113945.log",
+			"log": "reports/grind/logs/difficulty-check-20260831-115213.log",
 			"marker": "=== difficulty ladder ===",
 			"reading": [
 				"=== difficulty ladder ===",
@@ -81,7 +81,7 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1788169185,
+			"started": 1788169933,
 			"status": "failed"
 		},
 		{
@@ -406,7 +406,7 @@
 			"balance-pool-timberline",
 			"replay-survey-timberline"
 		],
-		"pass": 17,
+		"pass": 18,
 		"phase": "idle",
 		"queue": [
 			"commander-balance",
@@ -430,5 +430,5 @@
 		"sha": "eb10c427",
 		"started": 0
 	},
-	"written": 1788169327
+	"written": 1788170074
 }
