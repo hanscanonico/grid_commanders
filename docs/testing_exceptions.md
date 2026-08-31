@@ -24,6 +24,7 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 |---|---|---|
 | `MatchRequest`, `CmdArgs` (`scenes/common/`) | `test_match_request.gd` and the flag-grammar suites | the flag grammar every `make smoke` scenario and Balance Lab row is launched with |
 | `MatchConfig`'s staging | `test_match_config.gd` | reachable without a scene, and where `take()` clearing is held |
+| `CommanderPicks` (`scenes/common/`) | `test_commander_picks.gd` | the one rule that a general commands a single army, stated Node-free and database-free so the picker, the menu adapter and `--co=` all inherit it rather than each restating it |
 | `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
 | `CampaignSession` | `tests/unit/test_campaign_session.gd` | the autoload is up for the whole headless run and reachable without a scene; its lifecycle — armed by `begin`, silent for every skirmish, emptied whole by `clear` — is what the suite pins |
 
