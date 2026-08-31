@@ -60,6 +60,11 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 `_draw` of each only paints — are static, and are all `test_path_arrow.gd` and
 `test_map_thumbnail.gd` call. Same shape as `SeatStrip.normalised_sides` and `TransitionInput`.
 
+`CaptureBackdrop` joins them: `light_shaft_wedge` is the static quad the capture cut-in's field
+light is drawn from, so `test_capture_backdrop.gd` triangulates it directly and stages no cut-in.
+A polygon's defect is in its winding — a self-crossing quad is refused by the triangulator and
+simply does not draw — which is exactly what a captured frame cannot show.
+
 `CampaignHubPanel` and `CampaignPickerPanel` join them too. What a hub row's second line says
 (`row_detail`), how wide the star cell every row shares has to be (`star_span`), what a picker row
 reads (`row_text`) and how many lines of premise a card has room for (`premise_lines`) are static,

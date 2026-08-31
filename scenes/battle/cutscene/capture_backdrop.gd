@@ -107,6 +107,10 @@ const SCATTER_STRIDE := 64
 ## disc down to the property's feet, at an alpha that tints rather than paints.
 const SHAFT_ALPHA := 0.06
 const SHAFT_SPREAD := 0.35
+## How wide a shaft is where it leaves the horizon, and how much wider its far
+## edge is at the feet: the wedge's taper.
+const SHAFT_MOUTH_PX := 4.0
+const SHAFT_FLARE_PX := 26.0
 
 
 ## The graded sky, the low sun and the two clouds above it.
@@ -283,15 +287,22 @@ static func draw_light_shaft(
 	canvas: CanvasItem, sun: Vector2, horizon: float, base: Vector2, accent: Color
 ) -> void:
 	var from := Vector2(sun.x, horizon)
-	var reach := (base - from).length() * SHAFT_SPREAD
 	for side in PackedFloat32Array([-1.0, 1.0]):
-		var foot := base.x + reach * side
-		var wedge := PackedVector2Array(
-			[
-				Vector2(from.x - 4.0, from.y),
-				Vector2(from.x + 4.0, from.y),
-				Vector2(foot + 26.0 * side, base.y),
-				Vector2(foot, base.y),
-			]
-		)
-		canvas.draw_colored_polygon(wedge, Color(accent, SHAFT_ALPHA))
+		canvas.draw_colored_polygon(light_shaft_wedge(from, base, side), Color(accent, SHAFT_ALPHA))
+
+
+## One shaft, from its mouth on the horizon out to `side` of the property's feet.
+## Both corners of the mouth are placed along `side` too, so the left shaft is the
+## right one mirrored: written with a fixed mouth, its bottom edge ran back under
+## the quad, and a self-crossing polygon is one the triangulator refuses outright —
+## the left half of the light never drew and every frame logged for it.
+static func light_shaft_wedge(from: Vector2, base: Vector2, side: float) -> PackedVector2Array:
+	var foot := base.x + (base - from).length() * SHAFT_SPREAD * side
+	return PackedVector2Array(
+		[
+			Vector2(from.x - SHAFT_MOUTH_PX * side, from.y),
+			Vector2(from.x + SHAFT_MOUTH_PX * side, from.y),
+			Vector2(foot + SHAFT_FLARE_PX * side, base.y),
+			Vector2(foot, base.y),
+		]
+	)
