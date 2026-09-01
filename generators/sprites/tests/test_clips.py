@@ -154,33 +154,70 @@ class AmbientFrames(unittest.TestCase):
                 self.assertEqual(a.origin[0], b.origin[0])
                 self.assertEqual(a.origin[1] - b.origin[1], bob)
 
-    def test_the_bob_lifts_the_whole_aircraft_and_nothing_else(self):
+    # The model delta from A to B, read the way the copters' rotor tick is
+    # (`test_the_copters_turn_one_rotor_rather_than_swapping_its_blades`):
+    # opaque coverage IoU between the two poses once `BOB_PX` is taken back
+    # out. Measured 2026-09-01 at 0.991 (fighter, both clips) and 1.000
+    # (bomber ambient) / 0.902 (bomber move) across every livery — the
+    # burner plume and the nacelle exhaust are a handful of voxels against a
+    # fuselage that otherwise does not move, so the floor sits under the
+    # copters' own 0.85 with headroom rather than at it.
+    MIN_AIR_DELTA_IOU = 0.80
+
+    def test_the_bob_lifts_the_airframe_and_a_named_delta_besides(self):
         """The placement above is a plan; this is the composed cell.
 
-        `fighter` and `bomber` draw the same voxels in both poses — the beat
-        IS the bob for them — so frame B has to be frame A moved up exactly
-        `BOB_PX` and nothing else: identical pixels from the hover line down,
-        which is where the cast shadow lives. A bob that moved a fraction of
-        a board texel, or that carried the shadow with it, fails here."""
+        `fighter` and `bomber` used to draw the same voxels in both poses —
+        the beat WAS the bob for them, and nothing else — which is the two
+        dead columns `tests/measure_motion.py` used to record. Each now
+        lights a named assembly on the off-beat (the fighter's afterburner
+        plume; the bomber's nacelle exhaust, but only under way, `MOVE_B`
+        alone) and retones another in place (the canopy glint, the
+        tailplane's tick — see `units/air.py`'s `beat(pose)` branches for
+        why those two are colour changes rather than moved voxels), so this
+        asks the model the hulls' question — it must differ, and still
+        share nearly every voxel with pose A — and the composed cell the
+        copters' question — opaque coverage must still mostly agree once
+        the bob is subtracted back out. What the beat may never do is reach
+        the hover line down, where the cast shadow lives: pose B's cell is
+        byte-identical to pose A's from `ground` down, in every livery."""
         # One board texel and not a pixel less: the board draws the 64x96
         # cell at 0.25 scale, so a bob under 4px moves no visible pixel at
         # all — it only changes which source pixel the resample keeps, which
         # is the flicker the 1px bob shipped as a hover.
         self.assertEqual(atlas.BOB_PX, 4)
         for uid in ("fighter", "bomber"):
-            self.assertEqual(build_model(uid, Pose.A).vox, build_model(uid, Pose.B).vox)
+            a_model = build_model(uid, Pose.A).vox
+            b_model = build_model(uid, Pose.B).vox
+            with self.subTest(unit=uid, reading="model"):
+                self.assertNotEqual(a_model, b_model)
+                shared = sum(1 for v, mat in a_model.items() if b_model.get(v) == mat)
+                self.assertGreater(shared / len(a_model), 0.9)
             ground = atlas.cell_placement(uid, Pose.A).ground
             for fac in FACTIONS:
                 a = pose_cell(uid, fac)
                 b = pose_cell(uid, fac, Pose.B)
-                with self.subTest(unit=uid, faction=fac.key):
-                    self.assertEqual(
-                        b.crop((0, 0, atlas.CELL_W, ground - atlas.BOB_PX)).tobytes(),
-                        a.crop((0, atlas.BOB_PX, atlas.CELL_W, ground)).tobytes(),
-                    )
+                with self.subTest(unit=uid, faction=fac.key, reading="shadow"):
                     self.assertEqual(
                         b.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
                         a.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
+                    )
+                nb = pose_cell(uid, fac, shadow=False)
+                bb = pose_cell(uid, fac, Pose.B, shadow=False)
+                pa, pb = nb.load(), bb.load()
+                w, h = nb.size
+                a_set = {
+                    (x, y) for y in range(h) for x in range(w) if pa[x, y][3] > 200
+                }
+                b_set = {
+                    (x, y + atlas.BOB_PX)
+                    for y in range(h)
+                    for x in range(w)
+                    if pb[x, y][3] > 200
+                }
+                with self.subTest(unit=uid, faction=fac.key, reading="iou"):
+                    self.assertGreaterEqual(
+                        len(a_set & b_set) / len(a_set | b_set), self.MIN_AIR_DELTA_IOU
                     )
 
     def test_every_hull_moves_a_part_and_not_only_its_altitude(self):

@@ -68,8 +68,10 @@ bob (guns, autocannon, periscope, bow visor):
   apc            86     6    0  6.00  |    340    25    0 25.00   before
                  86    17    3  4.67  |    340    75   15  4.00   after
                  95    34    8  3.25  |    375   133   32  3.16   remass
-  fighter        62    55   30  0.83  |    243   237  114  1.08
-  bomber        101    83   36  1.31  |    369   328  144  1.28
+  fighter        62    55   30  0.83  |    243   237  114  1.08   before
+                 62    54   30  0.80  |    243   238  115  1.07   after
+  bomber        101    83   36  1.31  |    369   328  144  1.28   before
+                101    83   36  1.31  |    369   328  144  1.28   after
   b_copter       44    49   25  0.96  |    209   207   97  1.13   before
                  44    49   28  0.75  |    209   209  107  0.95   after
                  45    52   31  0.68  |    215   218  112  0.95   thick tips
@@ -90,6 +92,7 @@ bob (guns, autocannon, periscope, bow visor):
                1367   731  299  1.44  |   5452  2937 1170  1.51   after
                1381   754  309  1.44  |   5503  3011 1203  1.50   remass
                1392   760  310  1.45  |   5530  3034 1218  1.49   thick tips
+               1392   759  310  1.45  |   5530  3035 1219  1.49   S2
 
 Before the pass the whole tracked family — tank, md tank, anti air,
 artillery, rockets, apc — moved nothing at either rung. Six of them crept a
@@ -124,12 +127,37 @@ both idles had to be re-authored to suit the new mass:
 What each unit moves is otherwise in its builder's docstring.
 
 Everything that flies or floats does change silhouette texels, but read that
-carefully before crediting it as animation: fighter and bomber build the SAME
-model for both poses (verified against `build_model`), and differ only by
-`atlas.BOB_PX` — pose B is pose A translated four atlas pixels up, which is
-one whole rung-1 texel of altitude and nothing else. They score the way a
-translated shape scores: every boundary texel of the sprite moves, which is
-why their counts dwarf a land unit's moving one assembly.
+carefully before crediting it as animation: the two jets score the way a
+translated shape scores, `atlas.BOB_PX` moving every boundary texel of the
+sprite, which is why their counts dwarf a land unit's moving one assembly —
+whether anything of the MODEL moved besides is a separate question, and until
+2026-09-01 the answer for fighter and bomber was no (BEFORE above): both built
+the SAME model for both poses (`build_model` verified it byte for byte), pose
+B nothing but pose A translated four atlas pixels up. S2 (AFTER) gives each a
+named beat, read the way the copters' rotor is: opaque coverage IoU between
+the two poses with `BOB_PX` taken back out, over every livery. The fighter's
+twin nozzles relight and the plume runs a texel further (0.991 IoU, both
+clips); the bomber's tail takes a highlight, retoned in place rather than
+moved (1.000 IoU — no silhouette texel changes hands at all on the idle beat,
+only tone). Both floors sit comfortably inside the copters' own 0.85. The gain
+barely shows in the rung-1 fleet total (ALL, above: 760 -> 759 changed, 310 ->
+310 silhouette, the fighter's plume the only one of the two the resample
+survives at this scale) because the two were already scoring near the top of
+the sheet on the bob alone; it is real on the unit's own row all the same —
+see `tests/test_clips.py`'s
+`test_the_bob_lifts_the_airframe_and_a_named_delta_besides`.
+
+The bomber's own idle beat does NOT flicker its nacelles — that reading was
+tried and cost two previously-passing cells on the legibility ratchet (both
+this hull's own fog reading over plains, its thinnest ground), at every
+placement the four mouths were tried at, occluded or not, moved or retoned.
+`MOVE_B` lights all four instead, gated on `moving(pose)`: the nose's own
+deeper dip already moves enough of the silhouette there that the same four
+retones cost the ratchet nothing on that frame. Read `units/air.py`'s
+`beat(pose)` branches before touching either aircraft again — the airframes
+run within a fraction of a ramp step of the bar on most grounds
+(`tests/fixtures/legibility_baseline.csv`), and a texel-sized addition
+anywhere on the idle beat is enough to fail it.
 
 The four hulls used to score that way too — the BEFORE rows above are the bob
 on its own, with a fleet that rose and fell in unison and nothing on any ship
@@ -167,7 +195,31 @@ block per family, so a stride can be read against the idle it replaced. A uid
 outside `units.MOVES` prints MOVES? no and simply repeats its ambient row: the
 fallback draws the ambient pose, so there is nothing of its own to record yet.
 
-(No family has landed; this section is empty on purpose.)
+FIGHTER / BOMBER is 2026-09-01 (S2), this section's first entry — move clips
+landed earlier for the land families, the copters and the sub without this
+instrument being kept current for them, and this pass does not attempt to
+back-fill it. Numbers on the red row, `MOVE_A` vs `MOVE_B`; `before` is the
+one held nose-down dip both frames shared before S2 (so the pair differed by
+`BOB_PX` alone, the same dead-column shape the ambient pair used to score):
+
+              rung 1 (16x24)               rung 2 (32x48)
+  unit    opaq  chng silh shim   |   opaq  chng silh shim
+  fighter   63    57   30  0.90  |    248   239  114  1.10   before
+            63    56   30  0.87  |    248   240  115  1.09   after
+  bomber   102    89   38  1.34  |    379   345  152  1.27   before
+           102    74   31  1.39  |    379   284  126  1.25   after
+
+`MOVE_B` differs from `MOVE_A` by the same beat the ambient pair carries, plus
+the fighter's plume run one texel further than `MOVE_A`'s held burn and the
+bomber's four nacelle mouths flaring, retoned in place, and its nose dipping a
+further board texel over `MOVE_A`'s trim — nothing lights or ticks on
+`MOVE_A` at all, `beat(pose)` gating the nacelles and the tail tick the same
+way it gates the fighter's canopy glint and elevons. The bomber's silhouette
+count DROPS on `after` (38 -> 31): the deeper nose dip folds part of the
+fuselage back into a shape `MOVE_A` already painted at rung 1, which is a
+sampling artefact of the dip's own size and not a smaller
+delta — the un-decimated reading is `test_clips.py`'s IoU, 0.991 (fighter) and
+0.902 (bomber), both clear of the copters' 0.85 bar.
 
 Run: .venv/bin/python tests/measure_motion.py [--clip {ambient,move}] [unit ...]
 """
