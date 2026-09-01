@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animation Frames Plan</title>
+<style>
+	:root {
+		--ink: #23201a; --ink-2: #5a544a; --cream: #faf7f0; --card: #ffffff;
+		--line: #e3ddd0; --accent: #b3541e; --accent-soft: #fdf0e6;
+		--good: #2e6e46; --warn: #8a6d1a; --lock: #6b3fa0; --lock-soft: #f3ecfb;
+		--code-bg: #f1ede4;
+	}
+	* { box-sizing: border-box; }
+	body {
+		margin: 0; background: var(--cream); color: var(--ink);
+		font: 15px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	}
+	.wrap { max-width: 980px; margin: 0 auto; padding: 32px 24px 80px; }
+	header h1 { font-size: 30px; margin: 0 0 4px; letter-spacing: -0.01em; }
+	header .sub { color: var(--ink-2); margin: 0 0 10px; }
+	.meta { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 0; }
+	.chip {
+		font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+		background: var(--accent-soft); color: var(--accent); border: 1px solid #ecc9ab;
+	}
+	.chip.draft { background: #fdf6dc; color: var(--warn); border-color: #e8d48a; }
+	h2 { font-size: 21px; margin: 44px 0 10px; padding-top: 18px; border-top: 2px solid var(--line); }
+	h3 { font-size: 16px; margin: 22px 0 6px; }
+	p { margin: 8px 0; }
+	code {
+		font: 12.5px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+		background: var(--code-bg); padding: 1px 5px; border-radius: 4px; white-space: nowrap;
+	}
+	table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13.5px; background: var(--card); }
+	th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+	th { background: #f4f0e6; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); }
+	.scroll { overflow-x: auto; }
+	.slice {
+		background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+		padding: 18px 20px 14px; margin: 18px 0;
+	}
+	.slice h3 { margin-top: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+	.tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+	.tag.art { background: var(--accent-soft); color: var(--accent); }
+	.tag.code { background: #e7f0ea; color: var(--good); }
+	.tag.size { background: #eee9df; color: var(--ink-2); }
+	.tag.shipped { background: #dcefe2; color: var(--good); }
+	.lock-box {
+		background: var(--lock-soft); border: 1px solid #ddc9f2; border-radius: 10px;
+		padding: 14px 18px; margin: 14px 0;
+	}
+	.lock-box h3 { color: var(--lock); margin-top: 4px; }
+	ul { margin: 6px 0 10px; padding-left: 22px; }
+	li { margin: 4px 0; }
+	.small { font-size: 13px; color: var(--ink-2); }
+	.gates { border-top: 1px dashed var(--line); margin-top: 12px; padding-top: 8px; font-size: 13px; color: var(--ink-2); }
+	.gates strong { color: var(--ink); }
+	.dead { color: #a33; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+	<h1>Animation Frames Plan</h1>
+	<p class="sub">Frames to add, frames to change, and the runtime animation work between them — across the board sprites, the two cut-ins and the ambient terrain.</p>
+	<div class="meta">
+		<span class="chip draft">Approved — in delivery</span>
+		<span class="chip">2026-09-01</span>
+		<span class="chip">9 slices, S1–S9</span>
+	</div>
+</header>
+
+<h2>0 · Where animation stands today</h2>
+<p>Four clips exist and every one is exactly <strong>two frames</strong>. The grid is fixed: 18 unit columns × 6 faction rows of 64×96 cells; a new clip is always a new <em>sheet pair</em>, never new rows or columns (<code>BattleView._last_seen_owner</code> reads atlas <em>y</em> as the faction row).</p>
+
+<div class="scroll"><table>
+	<tr><th>Clip</th><th>Sheets</th><th>Cadence</th><th>Clock / consumer</th></tr>
+	<tr><td>ambient</td><td><code>units_atlas.png</code> / <code>_b.png</code></td><td>500 ms</td><td><code>BoardBeat.frame</code> (wall clock) → <code>UnitSprite._sheet_path</code></td></tr>
+	<tr><td>ambient_figures</td><td><code>units_atlas_figures.png</code> / <code>_b.png</code></td><td>500 ms</td><td><code>BoardBeat.frame_at</code> on the director's <code>t</code> → both cut-ins</td></tr>
+	<tr><td>move</td><td><code>units_atlas_move.png</code> / <code>_b.png</code></td><td>160 ms (107 Quick)</td><td>lifetime of <code>BattleAnimator.animate_path</code>'s tween; left-facing, mirrored right</td></tr>
+	<tr><td>sea</td><td><code>autotiles/sea.png</code> / <code>sea_b.png</code></td><td>900 ms</td><td><code>SeaBeat</code>, one <code>TileSetAtlasSource</code> pointer</td></tr>
+</table></div>
+
+<h3>What each unit's frames actually do (ambient A→B / move A→B)</h3>
+<div class="scroll"><table>
+	<tr><th>Unit</th><th>Ambient A→B</th><th>Move A→B</th></tr>
+	<tr><td>infantry</td><td>upper body sways one diagonal over planted boots</td><td>forward lean + hip rise, legs alternate lead at toe-off</td></tr>
+	<tr><td>mech</td><td>launcher shoulder settles −2</td><td>lean held, legs alone scissor</td></tr>
+	<tr><td>recon</td><td>pintle MG + whip antenna tick</td><td>whip trails; nose dip vs cabin rise</td></tr>
+	<tr><td>tank / md_tank / anti_air / apc</td><td>weapon laid up +2..4; tread stripe walks a half period</td><td>nose dip vs rear rise / whole-hull roll; tread phase flips</td></tr>
+	<tr><td>artillery</td><td>howitzer recoil stroke −4 through the pedestal</td><td>nose dip vs hull roll, no recoil</td></tr>
+	<tr><td>rockets / missiles</td><td>rack / rounds run +2 up the rails</td><td>tail lift (shadow margin) vs hull roll</td></tr>
+	<tr><td class="dead">fighter</td><td class="dead">NOTHING — 4 px bob only, model A == B</td><td class="dead">NOTHING — bob only, MOVE_A == MOVE_B</td></tr>
+	<tr><td class="dead">bomber</td><td class="dead">NOTHING — bob only, model A == B</td><td class="dead">NOTHING — bob only, MOVE_A == MOVE_B</td></tr>
+	<tr><td>b_copter / t_copter</td><td>rotor tick 14° + bob</td><td>rake held; delta = rotor tick + bob</td></tr>
+	<tr><td>battleship / cruiser / sub / lander</td><td>battery / mount / periscope / visor +2, + bob</td><td>trim held; one off-beat assembly (aft battery, mast head, attack scope, ramp lip) + bow wave</td></tr>
+</table></div>
+
+<h3>The three defects in the current frames</h3>
+<ul>
+	<li><strong>Fighter and bomber are dead columns.</strong> Both build byte-identical voxel models for A/B and MOVE_A/MOVE_B; their whole animation is the composition-side 4 px bob (<code>atlas.BOB_PX</code>). Recorded in <code>tests/measure_motion.py</code>; the silhouette gate never catches it because translation moves every boundary texel.</li>
+	<li><strong>The cast shadow reads as a detached black bar.</strong> A solid ellipse centred on column 34 (air 36) while the flip axis is 31.5. Infantry/mech body ends at y=84 at 4 px wide, y=85 is empty, then a 23 px near-black lozenge spans y=86–90. Tank's ellipse is 41 px at its widest under a hull whose last rows are far narrower.</li>
+	<li><strong>KO'd cut-in figures read as blobs.</strong> There is no wreck art anywhere: a casualty is the idle figure under a flat <code>WRECK_TINT</code> (0.4) multiply + lift/spin/fade. The multiply collapses the interior toward the contour band that already covers 6–17% of every figure.</li>
+</ul>
+<p>And one standing debt: <strong>the board legibility regression</strong> — the ruler reads 94.8% of clear cells failing at board resolution (16.0% on the pre-animation art), cause named in <code>docs/sprite_legibility.md</code>: the contour is not thick enough to survive nearest 4:1 sampling. The design record says answering it is the generator's. That is S8.</p>
+
+<div class="lock-box">
+	<h3>Locked — nothing below may move any of these</h3>
+	<ul>
+		<li><code>VOLLEY_POSE = 0.633</code>, <code>CUT_IN_POSE = 1.05</code>, <code>KO_POSE = 1.22</code>, the aim-stretch ceiling (<code>AIM_RATE_CEILING = 1.5</code>, rate read once), the 2.90 s worst-exchange budget — all pinned by <code>test_combat_beats.gd</code>. New art changes <em>which texture is drawn</em>, never <em>when</em>.</li>
+		<li><code>anim.json</code> is pinned, never read at runtime; <code>test_anim_manifest.gd</code> is its one consumer.</li>
+		<li>The cast shadow stays <strong>solid</strong> (measured; checkerboard retired) and the ambient pair stays <strong>off-centre</strong> — that asymmetry is what forbids a mirrored park and it is asserted from both sides (<code>test_shadows.py</code>, <code>test_move_frames.gd</code>). S3 reshapes the ellipse; it does not centre it.</li>
+		<li>The figure sheets <strong>only ever remove pixels</strong> from the board sheets (<code>test_figure_sheet.gd</code>). New poses are new clips beside the pair, not edits of it.</li>
+		<li>Effects stay procedural — "no explosion sheet" is fence D2 in <code>cutscene_fx.gd</code>. A unit <em>pose</em> (S4/S5) is unit art, not an effect sheet; the fence stands.</li>
+		<li>Instant is a still board and a skip lands on the final pose; the capture pin (<code>BoardBeat.frozen</code>) holds frame A. Every new animation obeys both.</li>
+		<li>Cadences may share no tick: any new period must not divide or multiply 500 / 160 / 900 at any tier.</li>
+		<li>Board-side dust under moving vehicles was <strong>measured and refused</strong> (<code>generators/sprites/docs/move_dust.md</code>) — do not re-propose it as sprite art.</li>
+	</ul>
+</div>
+
+<h2>1 · The slices</h2>
+<p>Ordered for value against effort. S1 and S7 are pure game code; S2–S5 and S8 are generator art; S6 is the one structural change. Each is independently shippable.</p>
+
+<div class="slice">
+	<h3>S1 — Wire the dead style scalars <span class="tag code">CODE</span> <span class="tag size">S</span> <span class="tag shipped">shipped</span></h3>
+	<p>All eight <code>data/battle_anim/*.tres</code> already author <code>dust</code> (0.0–0.7) and <code>arrive_scale</code> (0.7–1.2), but <code>CombatCutscene._style_pose</code> hardcodes <code>arrive_scale = 1.0; dust = 0.0</code> — a leftover from before the styles carried them. Delete the two literals and the cut-in gains, with zero new art:</p>
+	<ul>
+		<li>Scuff puffs under arriving land units (<code>_draw_scuff</code> is fully built and currently dead).</li>
+		<li>Hulls roll in as one piece: <code>_on_foot()</code> keys off <code>dust &gt; 0.2</code>, so tank/md_tank (0.5), artillery (0.7) and rocket carriers (0.4) stop trudging like infantry.</li>
+		<li>Per-weapon arrival depth: the bomber sweeps in from 1.2× out, small arms closes to 0.7×.</li>
+	</ul>
+	<p><strong>One wrinkle:</strong> recon (small_arms, dust 0.15) and anti_air (autocannon, dust 0.2) sit at or under the foot threshold, so both would still march. Same precedent as the artillery split (#622): give recon a <code>pintle.tres</code> split off small_arms with <code>dust 0.3</code>, and nudge autocannon to 0.25 — presentation keys only, no stat moves.</p>
+	<p>Fold in the four unfiled cut-in follow-ups while the file is open: (a) a kill's knock-back runs ~47 ms not 80 — <code>CombatBeats._lost</code> reports 0 for a dying side, needs a seam field; (b) <code>muzzle_points()</code> composes only <code>_altitude</code>, not roll/aim/lunge/brace — flash detaches up to 6 px; (c) anchor the flash on the drawn barrel mouth, not a fixed corner offset (reads oddest on the elevated howitzer); (d) the third casualty-cap step stays a playtest lever — hold.</p>
+	<div class="gates"><strong>Gates:</strong> <code>test_combat_beats.gd</code> untouched (timing does not move); <code>test_battle_styles.gd</code> unarmed mirror updated if autocannon/pintle change; cut-in smoke frames move — eyeball all 17.</div>
+</div>
+
+<div class="slice">
+	<h3>S2 — Author fighter + bomber frame B <span class="tag art">ART</span> <span class="tag size">M</span></h3>
+	<p>The two dead columns get real deltas in <code>generators/sprites/spritegen/units/air.py</code> (today neither has a <code>beat(pose)</code> branch at all):</p>
+	<ul>
+		<li><strong>fighter B:</strong> afterburner nozzle glow extends/brightens 2–3 texels, canopy glint slides one texel, elevons tick up. <strong>MOVE_B:</strong> burner plume lengthened a further texel over MOVE_A.</li>
+		<li><strong>bomber B:</strong> nacelle exhaust flicker on the alternating engine pair, tail surfaces tick. <strong>MOVE_B:</strong> all nacelles lit + one texel of extra nose-down over MOVE_A's trim.</li>
+	</ul>
+	<p>Author within the gates: ≥3 silhouette texels at rung 1 per livery, shimmer ≤5, mass drift ≤8%, shadow unmoved, and the "bob lifts the whole aircraft and nothing else" check must keep passing — the model delta has to be separable from the 4 px lift the way the copters' rotor tick is. Delete the stale note in <code>tests/measure_motion.py</code> and record the new numbers.</p>
+	<div class="gates"><strong>Gates:</strong> <code>make sprites-test</code> (AmbientFrames, MoveFrames), snapshot gate (<code>make tiles</code> in the same commit), <code>test_ambient_frames.gd</code>'s every-column-differs pin now genuinely covers cols 9–10; legibility ratchet re-run.</div>
+</div>
+
+<div class="slice">
+	<h3>S3 — Fit the cast shadow to the footprint <span class="tag art">ART</span> <span class="tag size">M</span></h3>
+	<p>Reshape <code>cell._shadow_ellipse</code> so the shadow reads as contact, not a detached bar — keeping it solid and keeping the ambient pair's deliberate off-centre throw:</p>
+	<ul>
+		<li><strong>Close the vertical gap:</strong> for foot units the ellipse's top row must touch the body's contact row (today body ends y=84, shadow starts y=86).</li>
+		<li><strong>Width from the footprint:</strong> derive the ellipse's width from the body's actual width over the ground rows per unit, instead of one formula that puts a 23 px lozenge under 4 px legs. Vehicles keep near-current widths; infantry/mech shrink hardest.</li>
+		<li><strong>Air stays as is</strong> — the 12-row gap is the altitude cue.</li>
+	</ul>
+	<p><strong>Coupled constants:</strong> <code>anim.json cell.ground_px</code> is <em>measured</em> off the widest shadow row; if that row moves, <code>UnitSprite.CELL_GROUND_PX</code> (7) must move with it — <code>test_anim_manifest.gd</code> pins them together and the cut-ins centre their contact ellipse on it. Watch the rockets carrier's +0.37 px mirror margin against the 0.2 floor.</p>
+	<div class="gates"><strong>Gates:</strong> <code>test_shadows.py</code> (OneSun, CastShadow across rungs and parities, move lateral ≤0.5), <code>test_figure_sheet.gd</code> (tile shadow left behind in both frames, ground-line pin), snapshot gate, smoke frames.</div>
+</div>
+
+<div class="slice">
+	<h3>S8 — Answer the legibility regression <span class="tag art">ART</span> <span class="tag size">XL — its own programme</span></h3>
+	<p>Scheduled here (after S2/S3, before the new-pose slices) so the art re-baseline happens once. The board draws 64 px cells at 16 px with nearest filtering; the round-10 contour is mostly unsampled at that ratio, so 94.8% of clear board cells fail while the cut-in reads fine (21.6%). The fix is in the generator, and round 11 already candidate-measured the shape of it: a <strong>logical-pixel contour — 4 px lit side / 2 px ground side</strong> — thick enough that at 4:1 every sampling phase keeps at least one contour texel. Plus a value pass: 71% of failures are hue-carried (value-blind), so the interior ramp needs more value separation against the grounds, not new hues.</p>
+	<ul>
+		<li>Work in <code>spritegen/aa.py</code> (contour pass) and <code>palette.py</code> outline modes; iterate against <code>make legibility-check</code>'s frame axis and the worst-20 gallery.</li>
+		<li>Re-bake <code>make legibility-baseline</code> deliberately at the end; <code>make legibility-ratchet</code> is the reviewer of record, not Claude Design.</li>
+		<li>Interaction to hold: thickening contours worsens the WRECK/interior ratio the KO work (S4) cares about — land S8 first so S4 is authored on the final ramp.</li>
+	</ul>
+	<div class="gates"><strong>Gates:</strong> legibility ratchet (the point of the slice), sprites-test full suite, snapshot gate, smoke sweep — expect nearly every frame to move; budget an eyeball pass.</div>
+</div>
+
+<div class="slice">
+	<h3>S4 — A KO pose: new clip <code>figures_ko</code> <span class="tag art">ART</span> <span class="tag size">L</span></h3>
+	<p><strong>Frames to add:</strong> one authored KO frame per unit (single-frame clip — the dead don't loop), emitted as a figures-only sheet <code>units_atlas_figures_ko.png</code> (composed with <code>shadow=False</code>; the board never draws it, so no board-sheet sibling). Art direction per family, all "dead by value, never hue", interior floored two ramp steps above S0 ink:</p>
+	<ul>
+		<li><strong>foot (infantry, mech):</strong> crumpled prone silhouette at ~⅓ height, weapon dropped alongside.</li>
+		<li><strong>vehicles (tracked + wheeled):</strong> burnt-out hull — weapon askew, a thrown track / flattened tyre, hatches open; contour intact.</li>
+		<li><strong>sea:</strong> hull settled by the stern, superstructure darkened, waterline high.</li>
+		<li><strong>air:</strong> optional in v1 — surplus air casualties may keep the transform-topple via the fallback contract (the move clip's <code>fallback: "ambient"</code> idiom, one manifest key).</li>
+	</ul>
+	<p><strong>Generator:</strong> <code>Pose.KO</code>, a <code>CLIP_POSES</code>/<code>_FALLBACK</code> entry, one line in <code>anim._clips()</code> and one <code>_units(...)</code> row in <code>pipeline.SHEETS</code> — the manifest derives <code>order</code> from sheet count, so a 1-frame clip needs no schema change. <strong>Game:</strong> <code>CutsceneSide._figures</code> grows the KO cut; <code>_draw_figure</code>'s topple branch swaps to it partway through the fall (spin end) and keeps the lift/fade; <code>WRECK_TINT</code> then softens to a light scorch or retires. Board death stays a fade (S7 adds its blast).</p>
+	<div class="gates"><strong>Gates:</strong> new pins — KO sheet same grid, per-column silhouette floor, interior value floor; <code>test_anim_manifest.(py|gd)</code> literals grow the clip; determinism test; snapshot gate. The subtract-only rule applies to the idle pair, not this authored sheet — state that in the new test's header.</div>
+</div>
+
+<div class="slice">
+	<h3>S5 — A fire pose: new clip <code>figures_fire</code> <span class="tag art">ART</span> <span class="tag size">L–XL</span></h3>
+	<p>Today "firing" is the idle cell translated (<code>aim_offset</code>) and sheared (<code>aim_tilt</code>). A real fire frame during the fire window is the single biggest read upgrade the cut-in can get. <strong>Frames to add</strong> — one fire frame per armed unit; a <em>pair</em> for the two <code>sustained</code> styles so the stream reads as a blaze:</p>
+	<div class="scroll"><table>
+		<tr><th>Unit</th><th>Fire frame</th></tr>
+		<tr><td>infantry</td><td>rifle shouldered to the cheek, muzzle on the fire line <em>(pair: alternating rifle jitter)</em></td></tr>
+		<tr><td>mech</td><td>kneeling brace, tube level on the shoulder</td></tr>
+		<tr><td>recon</td><td>pintle depressed on target, gunner braced <em>(pair)</em></td></tr>
+		<tr><td>tank / md_tank</td><td>barrel at full recoil back through the mantlet, hull squats one texel</td></tr>
+		<tr><td>anti_air</td><td>barrels level, runs staggered <em>(pair: runs alternate)</em></td></tr>
+		<tr><td>artillery</td><td>tube at max recoil, trail dug in, carriage rocked back</td></tr>
+		<tr><td>rockets / missiles</td><td>rack at launch elevation, rounds part-run</td></tr>
+		<tr><td>fighter</td><td>nose gun blaze, one texel of nose dip <em>(pair)</em></td></tr>
+		<tr><td>bomber</td><td><strong>bay doors open</strong> — the natural bomb-run frame</td></tr>
+		<tr><td>b_copter</td><td>nose down two texels, chin gun on the line <em>(pair)</em></td></tr>
+		<tr><td>battleship</td><td>batteries trained out, gunhouses recoiled</td></tr>
+		<tr><td>cruiser</td><td>forward mount blazing <em>(pair)</em></td></tr>
+		<tr><td>sub</td><td>bow caps open, attack scope up, down-by-the-head trim (reuse the move trim)</td></tr>
+		<tr><td>apc / t_copter / lander</td><td>none — unarmed; fallback to idle via the same manifest contract as S4</td></tr>
+	</table></div>
+	<p><strong>Game:</strong> <code>_figure_now()</code> selects the fire cut while the recoil-ramp→volley window is open, idle otherwise; the procedural aim lift/pitch stays for the wind-up. Beats do not move — only texture selection — so every locked pose constant survives untouched. Author it <em>after</em> S8 so the fire art is drawn on the final contour/ramp.</p>
+	<div class="gates"><strong>Gates:</strong> as S4, plus the 17 cut-in smoke frames (several photograph the fire window — <code>VOLLEY_POSE</code>/<code>CUT_IN_POSE</code> frames will change subject deliberately); sustained-pair cadence reads on the director's clock, not the wall clock.</div>
+</div>
+
+<div class="slice">
+	<h3>S6 — N-frame plumbing, then a real gait and tread crawl <span class="tag code">CODE</span> <span class="tag art">ART</span> <span class="tag size">L</span></h3>
+	<p>The only structural slice. The 2-frame assumption lives in one modulo (<code>BoardBeat.frame_at</code>'s <code>% 2</code>) plus ternaries and literals downstream. Generalise first, then spend it:</p>
+	<ul>
+		<li><strong>Plumbing:</strong> <code>frame_at(period_ms, elapsed_ms, frames := 2)</code>; <code>UnitSprite</code>'s four sheet constants become per-clip arrays; <code>generators</code> side: <code>Pose</code> gains members, <code>beat()</code> becomes a frame <em>index</em> (restate the "frame-ticking branch reads the beat, not the pose" contract in index form), <code>_tread_phase</code> takes the index. <code>anim.json</code> needs no schema change — <code>order</code> derives from sheet count. Update the literal pins (<code>test_anim_manifest</code> both sides, <code>LegibilityArt</code>'s frame axis).</li>
+		<li><strong>Move clip 2→4 for foot units:</strong> contact-L / passing / contact-R / passing — a two-frame gait is a shuffle; four is a walk. 160 ms cadence unchanged (full cycle 640 ms).</li>
+		<li><strong>Tread crawl:</strong> the 8-voxel track stripe steps quarter-phases across the four move frames instead of the current half-period flip.</li>
+		<li><strong>Rotor:</strong> optionally a 4-tick disc on the same index (14° → 4 positions) — visible, cheap once the index exists.</li>
+	</ul>
+	<p>Ambient stays two frames — at 500 ms the A/B breath reads fine and doubling every board sheet is cost without a complaint behind it.</p>
+	<div class="gates"><strong>Gates:</strong> every pinning suite named in §2 of the research grows; two new 1152×576 sheets; cadence-disjointness tests at every tier; smoke frames move.</div>
+</div>
+
+<div class="slice">
+	<h3>S7 — The board moments that snap today <span class="tag code">CODE</span> <span class="tag size">M, parallel-safe</span></h3>
+	<p>All game-side, all procedural in the established dumb-drawer idiom, no generator involvement — can run alongside any art slice:</p>
+	<ul>
+		<li><strong>Build spawn:</strong> a new unit pops in fully-formed in one frame (<code>_present_build</code>). Add a short non-blocking rise+fade-in on <code>UnitSprite</code>; Instant skips.</li>
+		<li><strong>Board death:</strong> a blast drawer as <code>MuzzleFlash</code>'s sibling (same <code>CapturePips</code> idiom, posed by the animator, tinted from the style the snapshot named), and give cargo lost with a transport the same fade — today <code>sync_sprites</code> <code>queue_free</code>s them with none.</li>
+		<li><strong>Flag flip:</strong> capture is an instant recolour (<code>repaint_property</code>). A brief flip flash on <code>CapturePips</code>' pennant, honouring the fog-deferred path.</li>
+		<li><strong>Board damage callout:</strong> the map path shows no number at all — a <code>BoardMark.count</code> rise on the defender, only when the cut-in was gated out.</li>
+		<li><strong>HP label + acted scrim:</strong> both snap; a short label tween and a fade parameter on the scrim shader.</li>
+	</ul>
+	<p>Plus the two approved capture-backdrop notes if not folded into S1: dither the five horizon-glow band seams, and make tuft count scale with row area (clustered, seeded) instead of 13-per-row.</p>
+	<div class="gates"><strong>Gates:</strong> Instant = no-op everywhere; capture pin; smoke frames move on build/capture scenarios.</div>
+</div>
+
+<div class="slice">
+	<h3>S9 — Ambient terrain beyond the sea <span class="tag art">ART</span> <span class="tag code">CODE</span> <span class="tag size">M, optional</span></h3>
+	<p>The sea idiom (glint slide between two frames, base untouched) extends to the other water families:</p>
+	<ul>
+		<li><strong>Rivers:</strong> a <code>rivers_b.png</code> with the flow glints slid one board texel; cadence ~700 ms (shares no tick with 500/160/900).</li>
+		<li><strong>Shoals:</strong> foam-edge shimmer, ~1150 ms.</li>
+		<li><strong>Plumbing:</strong> <code>TerrainAutotiles.sheet_path</code>'s sea special-case becomes a per-family frame table (<code>SEA_B_PATH</code> retires); <code>SeaBeat.attach</code> generalises to <code>(source, family, period_ms)</code> or grows a sibling per family.</li>
+		<li><strong>Woods canopy shimmer</strong> only if the water families read well — it risks noise on the terrain most units stand against.</li>
+	</ul>
+	<div class="gates"><strong>Gates:</strong> the sea-frames suite pattern cloned per family (only glint pixels move, frame 0 is the sheet every static surface reads), cadence disjointness, miniature/ruler deliberately stay on frame 0.</div>
+</div>
+
+<h2>2 · Order and sizing</h2>
+<div class="scroll"><table>
+	<tr><th>#</th><th>Slice</th><th>Kind</th><th>Size</th><th>Why this position</th></tr>
+	<tr><td>1</td><td>S1 · wire dust / arrive_scale + cut-in follow-ups</td><td>code</td><td>S</td><td>data already authored; biggest win per line</td></tr>
+	<tr><td>2</td><td>S2 · fighter + bomber frame B</td><td>art</td><td>M</td><td>closes the dead columns before the re-baseline</td></tr>
+	<tr><td>3</td><td>S3 · footprint-fitted shadow</td><td>art</td><td>M</td><td>worst visual defect on every land unit</td></tr>
+	<tr><td>4</td><td>S8 · legibility answer (contour + value)</td><td>art</td><td>XL</td><td>after S2/S3 so the baseline re-bakes once; before S4/S5 so new poses are drawn on the final ramp</td></tr>
+	<tr><td>5</td><td>S4 · KO pose</td><td>art+code</td><td>L</td><td>kills the blob read</td></tr>
+	<tr><td>6</td><td>S5 · fire pose</td><td>art+code</td><td>L–XL</td><td>the cut-in's biggest upgrade; needs S8's ramp</td></tr>
+	<tr><td>7</td><td>S6 · N-frame plumbing + gait/tread</td><td>code+art</td><td>L</td><td>structural; do once, after the single-frame clips proved the manifest path</td></tr>
+	<tr><td>—</td><td>S7 · board moments</td><td>code</td><td>M</td><td>parallel-safe at any point (game-side only)</td></tr>
+	<tr><td>—</td><td>S9 · river/shoal ambience</td><td>art+code</td><td>M</td><td>optional; any time after S1</td></tr>
+</table></div>
+
+<p class="small">Every art slice ships as: generator change + <code>make tiles</code> in the same commit (snapshot gate) + gates named on the slice + a smoke-frame eyeball pass. Worktree runs need <code>make import</code> after the sheets change and <code>make generators-venv</code> once per machine. The <code>--install</code> destination is always explicit — no default, deliberately.</p>
+
+</div>
+</body>
+</html>

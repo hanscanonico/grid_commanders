@@ -32,6 +32,9 @@ const STYLE_IDS: Array[StringName] = [
 	&"rocket",
 	&"bomb",
 	&"torpedo",
+	&"pintle",
+	&"bazooka",
+	&"convoy",
 	&"unarmed",
 ]
 
@@ -259,10 +262,11 @@ func test_the_impact_pose_splits_the_signatures_the_way_it_claims() -> void:
 
 
 ## Every signature that puts something on screen has it on screen at the volley
-## pose. The silent one is skipped rather than held to it: nothing leaves an
-## unarmed barrel at any moment of any sheet, and the roster's three transports
-## can never be the attacker in the first place — holding a window nothing is
-## ever drawn in would pin the pose against a frame that does not exist.
+## pose. The silent ones are skipped rather than held to it: nothing leaves an
+## `unarmed` or `convoy` barrel at any moment of any sheet, and the roster's
+## three transports can never be the attacker in the first place — holding a
+## window nothing is ever drawn in would pin the pose against a frame that does
+## not exist.
 func test_every_signature_still_has_a_round_in_the_air_at_the_volley_pose() -> void:
 	for id in STYLE_IDS:
 		var style := _style(id)

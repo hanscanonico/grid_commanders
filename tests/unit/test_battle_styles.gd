@@ -90,6 +90,38 @@ func test_every_style_declares_the_look_scalars_in_range() -> void:
 		assert_between(style.impact_debris, 0, 5, "%s impact_debris" % id)
 
 
+## Which side of the foot threshold a land unit's chassis sits on is data, and it
+## decides whether the cut-in marches that half in figure by figure or rolls it in
+## as one piece: `CutsceneSide._on_foot` reads the scuff its style kicks. So the
+## two have to agree — men march, hulls roll — and the arrival is the unit's own
+## primary whatever weapon the rules pick, which is what makes this checkable here
+## with no cut-in staged. Air and sea are excluded: flying and floating halves
+## never reach the threshold at all.
+func test_only_a_foot_unit_arrives_under_the_foot_threshold() -> void:
+	var walked := 0
+	for type in units.all():
+		if type.domain != UnitType.LAND:
+			continue
+		walked += 1
+		var on_foot: bool = type.move_class in [TerrainType.FOOT, TerrainType.BOOT]
+		var style := styles.by_id(type.battle_style)
+		assert_eq(
+			style.dust <= CutsceneSide.FOOT_DUST,
+			on_foot,
+			(
+				"%s (%s) arrives on '%s' at dust %s, and %s"
+				% [
+					type.id,
+					type.move_class,
+					type.battle_style,
+					style.dust,
+					"a foot unit marches" if on_foot else "a hull rolls in"
+				]
+			)
+		)
+	assert_gt(walked, 0, "no land units loaded, so this would pass vacuously")
+
+
 ## The built fallback and `unarmed.tres` are one answer, which is the whole of
 ## BattleStyleDB's contract: a style it cannot honour stages as the silent one,
 ## and a silent one that differed from the file would make the fallback its own
@@ -178,7 +210,7 @@ const MATCHUPS: Array[Array] = [
 	[&"tank", &"tank", &"cannon"],
 	[&"md_tank", &"infantry", &"small_arms"],
 	[&"md_tank", &"md_tank", &"cannon"],
-	[&"mech", &"tank", &"rocket"],
+	[&"mech", &"tank", &"bazooka"],
 	[&"mech", &"infantry", &"small_arms"],
 	[&"rockets", &"infantry", &"rocket"],
 	[&"rockets", &"tank", &"rocket"],

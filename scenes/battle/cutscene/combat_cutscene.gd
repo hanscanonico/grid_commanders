@@ -54,6 +54,10 @@ var _result: CombatSnapshot.CombatResult
 var _styles: BattleStyleDB
 var _atk_style: BattleStyle
 var _def_style: BattleStyle
+## And the signature each chassis arrives on, which is its own primary whatever
+## it turned out to fire.
+var _atk_arrival: BattleStyle
+var _def_arrival: BattleStyle
 
 
 func _ready() -> void:
@@ -109,6 +113,8 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 	_result = result
 	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
 	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
+	_atk_arrival = _chassis_style(attacker.type)
+	_def_arrival = _chassis_style(defender.type)
 	_play.accent = accent_of(attacker.team)
 	var atk_terrain := _terrain_at(attacker.cell)
 	var def_terrain := _terrain_at(defender.cell)
@@ -223,8 +229,9 @@ func _apply() -> void:
 	_atk.flash = maxf(0.0, 1.0 - atk_hit / 0.3) if atk_hit > 0.0 else 0.0
 	_atk.hp_shown = _tick(_result.attacker_hp_before, _result.attacker_hp_after, atk_hit)
 	_atk.casualty_p = _play.window(_beats.atk_casualty)
+	_atk.casualty_lost = _beats.atk_lost
 	_atk.squad_alpha = 1.0 - atk_gone
-	_style_pose(_atk, _atk_style)
+	_style_pose(_atk, _atk_style, _atk_arrival)
 	_atk.queue_redraw()
 
 	_def.clock = _play.t
@@ -235,23 +242,34 @@ func _apply() -> void:
 	_def.flash = maxf(0.0, 1.0 - def_hit / 0.3) if def_hit > 0.0 else 0.0
 	_def.hp_shown = _tick(_result.defender_hp_before, _result.defender_hp_after, def_hit)
 	_def.casualty_p = _play.window(_beats.def_casualty)
+	_def.casualty_lost = _beats.def_lost
 	_def.squad_alpha = 1.0 - def_gone
-	_style_pose(_def, _def_style)
+	_style_pose(_def, _def_style, _def_arrival)
 	_def.queue_redraw()
 
 	_frame_fx(present)
 	_sound()
 
 
-## The look numbers a half draws its arrive, its wind-up and its scuff with —
-## the style's own, copied on beside the beat progress above so both halves are
-## posed from one place. `arrive_scale` and `dust` are literals until the styles
-## carry them: a uniform roll-in distance and no scuff is exactly today's frame.
-static func _style_pose(side: CutsceneSide, style: BattleStyle) -> void:
+## The look numbers a half draws its arrive, its wind-up and its scuff with,
+## copied on beside the beat progress above so both halves are posed from one
+## place. The wind-up is the fired weapon's — unarmed lifts nothing, which is
+## the whole of a side that never answered — while the roll-in and the scuff
+## are the chassis'.
+static func _style_pose(side: CutsceneSide, style: BattleStyle, arrival: BattleStyle) -> void:
 	side.aim_lift = style.aim_lift
 	side.aim_pitch = style.aim_pitch
-	side.arrive_scale = 1.0
-	side.dust = 0.0
+	side.arrive_scale = arrival.arrive_scale
+	side.dust = arrival.dust
+
+
+## The signature a chassis arrives on: its own primary, whatever the rules
+## selected to shoot with. Arriving describes the unit rather than the weapon —
+## a tank rolls in as a tank against infantry, shelled by artillery it never
+## answers, or with its cannon dry — so this is the one read of it, and
+## everything about the shot itself stays with the resolved slot's style.
+func _chassis_style(type: UnitType) -> BattleStyle:
+	return _styles.by_id(type.battle_style)
 
 
 ## The two halves slide in from their own edges, and the whole band pushes in

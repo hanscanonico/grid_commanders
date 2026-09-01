@@ -103,6 +103,14 @@ var def_impact := Vector2.ZERO
 ## four-figure topple is still in the air 430 ms after the counter's muzzle
 ## lights, which reads as the wrong side dying.
 var def_casualty := Vector2.ZERO
+## How many figures `def_casualty`'s tail was sized for — zero for a dying
+## side, which keeps its whole squad standing for the blast rather than
+## toppling first. A seam field rather than private: CutsceneSide's own
+## knock-back re-derived this from squad counts and happened to match, the
+## director applying the same death rule to the squad it posts — two rules
+## agreeing rather than one answer, which is what drifts the moment either
+## side's notion of "died" moves. No frame moved when it became this field.
+var def_lost := 0
 var def_death := Vector2.ZERO
 ## And the counter's mirror of all of it, off the defender's own signature.
 var ctr_ready := Vector2.ZERO
@@ -111,6 +119,7 @@ var def_fire := 0.0
 var def_travel := Vector2.ZERO
 var atk_impact := Vector2.ZERO
 var atk_casualty := Vector2.ZERO
+var atk_lost := 0
 var atk_death := Vector2.ZERO
 var wipe_out := Vector2.ZERO
 var total := 0.0
@@ -143,10 +152,10 @@ static func plan(
 	beats.atk_fire = beats.atk_ready.y
 	beats.atk_travel = Vector2(beats.atk_fire, beats.atk_fire + TRAVEL * atk_style.travel_scale)
 	beats.def_impact = _impact_window(beats.atk_travel)
-	beats.def_casualty = casualty_window(
-		beats.def_impact,
-		_lost(result.defender_hp_before, result.defender_hp_after, result.defender_died)
+	beats.def_lost = _lost(
+		result.defender_hp_before, result.defender_hp_after, result.defender_died
 	)
+	beats.def_casualty = casualty_window(beats.def_impact, beats.def_lost)
 	var settled := maxf(beats.def_impact.y, beats.def_casualty.y)
 	if result.defender_died:
 		beats.def_death = Vector2(settled - DEATH_LEAD, settled - DEATH_LEAD + DEATH)
@@ -157,10 +166,10 @@ static func plan(
 		beats.def_fire = beats.ctr_ready.y
 		beats.def_travel = Vector2(beats.def_fire, beats.def_fire + TRAVEL * def_style.travel_scale)
 		beats.atk_impact = _impact_window(beats.def_travel)
-		beats.atk_casualty = casualty_window(
-			beats.atk_impact,
-			_lost(result.attacker_hp_before, result.attacker_hp_after, result.attacker_died)
+		beats.atk_lost = _lost(
+			result.attacker_hp_before, result.attacker_hp_after, result.attacker_died
 		)
+		beats.atk_casualty = casualty_window(beats.atk_impact, beats.atk_lost)
 		settled = maxf(beats.atk_impact.y, beats.atk_casualty.y)
 		if result.attacker_died:
 			beats.atk_death = Vector2(settled - DEATH_LEAD, settled - DEATH_LEAD + DEATH)

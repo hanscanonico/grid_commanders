@@ -297,7 +297,7 @@ def _mech_legs(m: Model, swing: int | None = None) -> None:
 def mech(pose: Pose = Pose.A) -> Model:
     """Rocket trooper: planted wide stance, heavy pauldrons over a bulky
     torso, and a fat launch tube climbing forward over the left shoulder —
-    taller, wider and squarer than the rifleman's stride (rocket).
+    taller, wider and squarer than the rifleman's stride (bazooka).
 
     Pose B leans the loaded tube in a whole board texel: the left pauldron
     and everything it carries ride `dz = -2`, measured at 7 changed

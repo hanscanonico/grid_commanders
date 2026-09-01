@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="BattleStyle" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/battle/cutscene/battle_style.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bazooka"
+projectile = &"rocket"
+label = &"MISSILE"
+shots_per_figure = 1
+sfx = &"rocket"
+travel_scale = 1.25
+arc = 55.0
+tint = Color(1, 0.72, 0.42, 1)
+muzzle = 9.0
+aim_seconds = 0.24
+aim_lift = 4.0
+aim_pitch = -0.05
+sustained = false
+recoil = 0.75
+impact_radius = 31.0
+fire_stagger = 0.055
+arrive_scale = 0.9
+dust = 0.15
+impact_debris = 5

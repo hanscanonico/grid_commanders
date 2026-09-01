@@ -137,6 +137,25 @@ forms named in the root index are in `docs/design_record.md`.
   the frame exists for. Four look scalars ship with it — `fire_stagger`, `arrive_scale`, `dust`,
   `impact_debris` (capped at 5) — and **`small_arms` and `autocannon` are told apart by cadence, not
   by wind-up length**; widening their 0.06/0.09 to compensate is the rejected answer.
+  **Since S1 (2026-09-01, animation-frames) `_style_pose` copies `arrive_scale` and `dust` from
+  the style** — the literals are gone — and `_on_foot()` keys off `dust > FOOT_DUST`. One rule
+  governs which style that is: **a chassis arrives as itself.** The arrival scalars are always the
+  unit's own primary (`CombatCutscene._chassis_style`, the one read); everything about the *shot* —
+  projectile, aim scalars, tint, muzzle, cadence, chip label — stays with the slot the rules
+  resolved. Otherwise a hull's arrival changes with its target, since a tank shelled by artillery
+  resolves no slot at all and a tank firing on infantry resolves its `small_arms` secondary, and
+  both trudged in on foot. Three splits ride with it, presentation keys only on the artillery
+  split's precedent, and none of the three changes a name-plate chip: **`pintle`** off `small_arms`
+  at dust 0.3 for Recon (label still `MG`), **`bazooka`** off `rocket` at 0.15 for Mech's shoulder
+  tube, so a foot squad marches (label still `MISSILE`; Rockets and Missiles keep `rocket` at 0.4),
+  and **`convoy`** off `unarmed` at 0.35 for the APC, so the one land hull with no weapon still
+  rolls — the silent fallback itself is untouched, `BattleStyleDB.unarmed()` and `unarmed.tres`
+  being one answer. Autocannon's 0.25 nudge is the fourth. `test_battle_styles.gd` is the gate:
+  every land unit sits under `FOOT_DUST` exactly when it walks.
+  Two more S1 seams: **how many figures a casualty window was sized for is
+  CombatBeats' answer** (`def_lost`/`atk_lost`, copied onto `CutsceneSide.casualty_lost`), never
+  re-derived from squad counts; and `muzzle_points()` composes the full standing pose — the
+  wind-up's shear at the mouth's height included — so the flash rides the drawn barrel.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips

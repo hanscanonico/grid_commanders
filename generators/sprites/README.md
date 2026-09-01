@@ -33,8 +33,10 @@ Rows follow `SideIdentity._ROW_FOR_KEY`: 0 neutral, 1 meridian (red),
 2 aurora (blue), 3 iron, 4 verdant, 5 gold — every row's ramp is the exact
 `CommanderVisuals.FactionTheme` (color / dark / light) from the game's code,
 neutral's slate theme included. Weapon silhouettes follow each unit's
-`battle_style` (small arms, rocket, cannon, autocannon, bomb, torpedo,
-unarmed). Property terrains (city, base, hq, airport, port) are tinted per
+`battle_style` family (small arms, rocket, cannon, autocannon, bomb,
+torpedo, unarmed); an id split off one of those for the cut-in alone —
+recon's `pintle`, mech's `bazooka`, the APC's `convoy` — draws its parent's
+silhouette. Property terrains (city, base, hq, airport, port) are tinted per
 row; every other terrain repeats one tile down its column.
 
 The five property columns are **transparent overlays**: the building, its
