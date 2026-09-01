@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -17,7 +17,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the magazine base — the only base this raid will ever have."
+text = "Capture the magazine base — the only base this raid will ever have."
 cell = Vector2i(7, 4)
 
 [sub_resource type="Resource" id="Failure_ration"]
@@ -27,7 +27,7 @@ max_losses = 2
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Take the northern relay before she signs it over."
+text = "Capture the northern relay before she signs it over."
 cell = Vector2i(10, 2)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -77,9 +77,33 @@ effects = Array[Resource]([SubResource("Effect_relay_signed_over")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Cond_failed"]
+script = ExtResource("8")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_holt"]
 script = ExtResource("4")
-text = "Vance's ration held, and our factories stayed as cold as the ground."
+speaker = &"gideon_holt"
+text = "Sol's here on the Concord's contract. They lend gunners, never a flag. Lose three and the loan's called in."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "As promised, your raid was rationed down to nothing before it reached the magazine."
+
+[sub_resource type="Resource" id="Line_defeat_failed"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Third loss on the wall, which was the whole powder ration, so that's the raid over."
+requires = SubResource("Cond_failed")
+
+[sub_resource type="Resource" id="Line_defeat_broken"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Sol's gunners are off the board and the magazine's still hers. Somebody's going to want those people back. I'll tell them where to look."
+unless = SubResource("Cond_failed")
 
 [resource]
 script = ExtResource("1")
@@ -103,6 +127,6 @@ failures = Array[Resource]([SubResource("Failure_ration")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_ration_is_revised")])
 par_day = 4
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_failed"), SubResource("Line_defeat_broken")])

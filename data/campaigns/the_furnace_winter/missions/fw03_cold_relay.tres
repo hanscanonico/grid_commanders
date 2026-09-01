@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,12 +11,12 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the relay base. In this whiteout it is the only ground that builds."
+text = "Capture the relay base. In this whiteout it is the only ground that builds."
 cell = Vector2i(7, 4)
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Find the northern relay in the whiteout and take it too."
+text = "Capture the northern relay in the whiteout too."
 cell = Vector2i(10, 2)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -76,9 +76,20 @@ effects = Array[Resource]([SubResource("Effect_checkpoint")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_holt"]
 script = ExtResource("4")
-text = "Vance's garrison held the relay, and the road stayed closed to us."
+speaker = &"gideon_holt"
+text = "I can't ration what I can't see, Calder. Build cheap, build plenty. Find that relay before her pen does."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "The relay stays on my ledger, where your application for passage has been refused."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The column went into the whiteout and the relay's still hers. I've a road on the map with nothing moving on it."
 
 [resource]
 script = ExtResource("1")
@@ -101,6 +112,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_a_checkpoint_countersigned")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ward"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ward"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=48 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=51 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -22,12 +22,12 @@ cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Retake depot 1 of the fuel road."
+text = "Recapture depot 1 of the fuel road."
 cell = Vector2i(5, 3)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Retake depot 2 of the fuel road."
+text = "Recapture depot 2 of the fuel road."
 cell = Vector2i(15, 3)
 
 [sub_resource type="Resource" id="Failure_1"]
@@ -192,9 +192,28 @@ effects = Array[Resource]([SubResource("Effect_two_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Cond_failed"]
+script = ExtResource("15")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("5")
-text = "The coalyard stayed shut, and Ferrow was paid for every man we lost."
+speaker = &"dane_ferrow"
+text = "The coalyard's still mine, Rook. I counted the gap in your column. Vale's got the bill."
+
+[sub_resource type="Resource" id="Line_defeat_failed"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Six off the column however they went, which at Ferrow's per-head rate means we just paid him ourselves."
+requires = SubResource("Cond_failed")
+
+[sub_resource type="Resource" id="Line_defeat_broken"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "The spur stays shut. I'd started a tally on the wall for the coalyard. It's still a wall."
+unless = SubResource("Cond_failed")
 
 [resource]
 script = ExtResource("1")
@@ -219,4 +238,4 @@ events = Array[Resource]([SubResource("Event_invoice_submitted"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_short"), SubResource("Line_5"), SubResource("Line_5_invoiced"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_failed"), SubResource("Line_defeat_broken")])

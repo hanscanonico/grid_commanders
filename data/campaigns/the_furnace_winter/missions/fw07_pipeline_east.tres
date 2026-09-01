@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -17,12 +17,12 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Retake depot 1 of the fuel road."
+text = "Recapture depot 1 of the fuel road."
 cell = Vector2i(5, 3)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Retake depot 2 of the fuel road."
+text = "Recapture depot 2 of the fuel road."
 cell = Vector2i(13, 3)
 
 [sub_resource type="Resource" id="Objective_2"]
@@ -140,9 +140,15 @@ effects = Array[Resource]([SubResource("Effect_two_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("6")
-text = "The road stayed closed, and the eastern fields stayed dark for another season."
+speaker = &"iona_vance"
+text = "Both depots closed and both still mine, at less than it cost you to try for them."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Tally on the wall still reads nought. Not a drum off the eastern road. Not this season."
 
 [resource]
 script = ExtResource("1")
@@ -167,4 +173,4 @@ events = Array[Resource]([SubResource("Event_re_staffed"), SubResource("Event_th
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

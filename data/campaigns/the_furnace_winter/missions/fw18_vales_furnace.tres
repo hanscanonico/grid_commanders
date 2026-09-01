@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=50 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=61 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take Vale's headquarters on the furnace floor."
+text = "Capture Vale's headquarters on the furnace floor."
 cell = Vector2i(19, 11)
 
 [sub_resource type="Resource" id="Bonus_seven_of_nine"]
@@ -208,9 +208,76 @@ effects = Array[Resource]([SubResource("Effect_doorstep_sortie")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Cond_full"]
+script = ExtResource("12")
+flag = &"run:full"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_par"]
+script = ExtResource("12")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_losses"]
+script = ExtResource("12")
+flag = &"run:losses"
+at_least = 0
+at_most = 3
+
+[sub_resource type="Resource" id="Cond_best"]
+script = ExtResource("12")
+flag = &"run:best"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_first"]
+script = ExtResource("12")
+flag = &"run:first"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_full"]
 script = ExtResource("5")
-text = "The furnace kept running for Vale, and the coldest winter anyone remembers went on."
+speaker = &"konrad_vale"
+text = "Nine properties and the floor. You have costed this room better than I did."
+requires = SubResource("Cond_full")
+
+[sub_resource type="Resource" id="Line_par"]
+script = ExtResource("5")
+speaker = &"alina_ward"
+text = "Six days. The coldest winter anyone remembers ended in under a week."
+requires = SubResource("Cond_par")
+
+[sub_resource type="Resource" id="Line_losses"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Three names or fewer on the wall for the furnace, which is a better winter than most I've signed for."
+requires = SubResource("Cond_losses")
+
+[sub_resource type="Resource" id="Line_best"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Better than last time through this room, so the old figure comes off the wall tonight."
+requires = SubResource("Cond_best")
+unless = SubResource("Cond_first")
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "The furnace is still mine. The toll stands. This winter goes on as I signed for it."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("5")
+speaker = &"alina_ward"
+text = "The furnace room's still his, so every valve between here and Milltown stays where he set it."
+
+[sub_resource type="Resource" id="Line_defeat_road"]
+script = ExtResource("5")
+speaker = &"alina_ward"
+text = "The whole road open behind us and we still couldn't hold the floor."
+requires = SubResource("Cond_road_open")
 
 [resource]
 script = ExtResource("1")
@@ -236,5 +303,5 @@ par_day = 6
 carry_in = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_7"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_9"), SubResource("Line_8"), SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_9"), SubResource("Line_8"), SubResource("Line_5"), SubResource("Line_full"), SubResource("Line_6"), SubResource("Line_par"), SubResource("Line_losses"), SubResource("Line_best")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff"), SubResource("Line_defeat_road")])

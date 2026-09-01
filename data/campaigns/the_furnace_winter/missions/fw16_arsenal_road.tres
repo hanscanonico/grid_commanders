@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -20,7 +20,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take Ferrow's headquarters."
+text = "Capture Ferrow's headquarters."
 cell = Vector2i(17, 10)
 
 [sub_resource type="Resource" id="Bonus_the_four_towns"]
@@ -125,9 +125,28 @@ effects = Array[Resource]([SubResource("Effect_riders_change_employer")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Cond_failed"]
+script = ExtResource("12")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("6")
-text = "The arsenal stayed his hunting ground, and we paid for it."
+speaker = &"dane_ferrow"
+text = "Arsenal Road stays my hunting ground, Wren, with the rich pickings I promised."
+
+[sub_resource type="Resource" id="Line_defeat_failed"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Six off the line on Arsenal Road. His first invoice of the winter just landed on my desk. I have to countersign it."
+requires = SubResource("Cond_failed")
+
+[sub_resource type="Resource" id="Line_defeat_broken"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Arsenal's still his. Every raider on the road still gets paid, so I'll not be billing him for the ride home after all."
+unless = SubResource("Cond_failed")
 
 [resource]
 script = ExtResource("1")
@@ -156,4 +175,4 @@ carry_out = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_failed"), SubResource("Line_defeat_broken")])

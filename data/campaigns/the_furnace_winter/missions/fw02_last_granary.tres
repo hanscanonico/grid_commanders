@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -15,12 +15,12 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the granary base. It is the last food Milltown has this winter."
+text = "Capture the granary base. It is the last food Milltown has this winter."
 cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Take the northern relay too — eyes on the whole valley."
+text = "Capture the northern relay too — eyes on the whole valley."
 cell = Vector2i(9, 2)
 
 [sub_resource type="Resource" id="Bonus_torch"]
@@ -153,9 +153,15 @@ effects = Array[Resource]([SubResource("Effect_granary_saved_by_hunt")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("4")
-text = "The base burned rather than change hands, and Milltown starves through the freeze."
+speaker = &"dane_ferrow"
+text = "Your column's off the road, quartermaster, so whatever's left of the granary goes on Vale's bill."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Milltown eats off the wagons now. I'll be signing for grain all winter. There isn't that much grain."
 
 [resource]
 script = ExtResource("1")
@@ -180,4 +186,4 @@ events = Array[Resource]([SubResource("Event_the_match_never_struck"), SubResour
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_late"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
