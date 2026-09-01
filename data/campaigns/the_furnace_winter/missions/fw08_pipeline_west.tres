@@ -158,12 +158,12 @@ text = "Depot one's already chalked on the wall, Voss. Hold it three days. I'd r
 [sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Same design, same answer. Depot one is back on my books. The western road closes with it."
+text = "Same design, same answer. Your column is gone from the western road, so depot one goes back on my books."
 
 [sub_resource type="Resource" id="Line_defeat_staff"]
 script = ExtResource("6")
 speaker = &"gideon_holt"
-text = "We had depot one at dawn and lost it by dark. I'd chalked it up already. Now I'm rubbing it out."
+text = "Depot one was chalked on the wall at dawn. There's nobody left on the road to hold it, so I'm rubbing it out."
 
 [resource]
 script = ExtResource("1")
