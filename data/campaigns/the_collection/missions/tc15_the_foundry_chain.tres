@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -12,20 +12,21 @@
 [ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="14"]
 
 [sub_resource type="Resource" id="Objective_take_the_first_foundry_depot"]
 script = ExtResource("2")
-text = "Take the west depot on the road."
+text = "Capture the west depot on the road."
 cell = Vector2i(6, 5)
 
 [sub_resource type="Resource" id="Objective_take_the_second_foundry_depot"]
 script = ExtResource("2")
-text = "Take the depot a square north of the road."
+text = "Capture the depot a square north of the road."
 cell = Vector2i(10, 4)
 
 [sub_resource type="Resource" id="Objective_take_the_third_foundry_depot"]
 script = ExtResource("2")
-text = "Take the east depot at the end of the chain."
+text = "Capture the east depot at the end of the chain."
 cell = Vector2i(14, 5)
 
 [sub_resource type="Resource" id="Failure_the_column_bunched"]
@@ -114,9 +115,28 @@ effects = Array[Resource]([SubResource("Effect_hammerfall_charge"), SubResource(
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("14")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "One depot held, and it was enough to keep the whole chain running against us."
+speaker = &"radek_morn"
+text = "The line is still running. It replaced everything you broke, the same afternoon, every afternoon. Bring more."
+
+[sub_resource type="Resource" id="Line_defeat_2_failure"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "More than nine. The column bunched up and Hammerfall found it. Morn never spent a unit of production on us."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_2_tactical"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Reed's column got spread thin enough to be safe from Hammerfall and thin enough to lose to the line."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -141,4 +161,4 @@ events = Array[Resource]([SubResource("Event_the_line_replaces_it"), SubResource
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2_failure"), SubResource("Line_defeat_2_tactical")])

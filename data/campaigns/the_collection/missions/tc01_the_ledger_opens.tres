@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
@@ -101,9 +101,15 @@ effects = Array[Resource]([SubResource("Effect_bounty_banked"), SubResource("Eff
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The depot changed hands, and the forged ledger gained its first entry."
+speaker = &"dane_ferrow"
+text = "One customs depot, taken. First entry posted. I dated it myself."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The depot's his, so the first line of the forged book reads true without him having to forge it."
 
 [resource]
 script = ExtResource("1")
@@ -128,4 +134,4 @@ events = Array[Resource]([SubResource("Event_ferrow_collects"), SubResource("Eve
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

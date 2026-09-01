@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -117,9 +117,15 @@ effects = Array[Resource]([SubResource("Effect_bought_tank")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The squeeze held, and the last town fell with the HQ behind it."
+speaker = &"konrad_vale"
+text = "The siege was budgeted to twelve days. It closed inside seven. The difference is profit."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Thorne's men never got hurt enough to matter. Vale bought the squeeze on credit. He collected before day seven."
 
 [resource]
 script = ExtResource("1")
@@ -144,4 +150,4 @@ events = Array[Resource]([SubResource("Event_relief_column"), SubResource("Event
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

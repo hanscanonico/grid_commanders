@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -16,7 +16,7 @@
 
 [sub_resource type="Resource" id="Objective_take_the_blockade_town_vale_is_fundi"]
 script = ExtResource("2")
-text = "Take the blockade town Vale is funding from."
+text = "Capture the blockade town Vale is funding from."
 cell = Vector2i(9, 3)
 
 [sub_resource type="Resource" id="Bonus_keep_our_own_town_four_days"]
@@ -125,9 +125,15 @@ effects = Array[Resource]([SubResource("Effect_vale_interest"), SubResource("Eff
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The blockade held, and Vale's occupation kept drawing interest on ground we never touched."
+speaker = &"konrad_vale"
+text = "The blockade stood. The interest kept accruing. Your army was the sum I drew it against."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "He never had to spend a coin of his own, because the blockade paid for the men who broke us at three percent a day."
 
 [resource]
 script = ExtResource("1")
@@ -152,4 +158,4 @@ events = Array[Resource]([SubResource("Event_another_line_item"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

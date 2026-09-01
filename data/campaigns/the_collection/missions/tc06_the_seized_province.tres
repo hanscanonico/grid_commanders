@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -112,9 +112,40 @@ effects = Array[Resource]([SubResource("Effect_the_claim_stands")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("7")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("7")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_4_par"]
 script = ExtResource("5")
-text = "The province split down the middle, and the ledger recorded it as a clean seizure."
+speaker = &"dane_ferrow"
+text = "Seven days. The claim never got as far as the paperwork."
+requires = SubResource("Run_par")
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("5")
+speaker = &"dane_ferrow"
+text = "Province seized. Entry posted for the whole of it, towns, relay, roads. That's the page I came for."
+
+[sub_resource type="Resource" id="Line_defeat_2_failure"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "More than eight in one province. That's his fee paid in full. The seizure's only the receipt."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_2_tactical"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Voss held four corners until nobody was left to stand in them. Now the claim's got a province under it. Written down, like he said."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -138,5 +169,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_hold_the_central_relay")]
 events = Array[Resource]([SubResource("Event_the_claim_stands")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_1c"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_par"), SubResource("Line_5")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2_failure"), SubResource("Line_defeat_2_tactical")])

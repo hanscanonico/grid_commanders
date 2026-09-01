@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -118,9 +118,15 @@ effects = Array[Resource]([SubResource("Effect_bounty_banked"), SubResource("Eff
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The towns fell one by one, and the ledger's forged debt started looking real."
+speaker = &"dane_ferrow"
+text = "Four towns, four entries. Posted the lot this morning. The keys were the easy part."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Four towns named. Four towns his. The audit just stopped being paper."
 
 [resource]
 script = ExtResource("1")
@@ -145,4 +151,4 @@ events = Array[Resource]([SubResource("Event_the_collectors"), SubResource("Even
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

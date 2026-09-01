@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -14,12 +14,12 @@
 
 [sub_resource type="Resource" id="Objective_take_the_counting_house_that_funds_t"]
 script = ExtResource("2")
-text = "Take the counting house that funds the occupation."
+text = "Capture the counting house that funds the occupation."
 cell = Vector2i(16, 8)
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]
 script = ExtResource("2")
-text = "Take the northern town his garrison holds on our side of the field."
+text = "Capture the northern town his garrison holds on our side of the field."
 cell = Vector2i(5, 2)
 
 [sub_resource type="Resource" id="Bonus_destroy_the_paymaster"]
@@ -113,9 +113,27 @@ effects = Array[Resource]([SubResource("Effect_moved_the_money")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("6")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_4_par"]
 script = ExtResource("4")
-text = "The counting house held, and the squeeze that started in the border towns became permanent."
+speaker = &"konrad_vale"
+text = "Eight days. The ledgers left an hour before you did. I timed it."
+requires = SubResource("Run_par")
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"konrad_vale"
+text = "The counting house is open. Interest was drawn on the whole occupation this morning. Your army was the collateral."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The house that pays the squeeze is still paying it, Rowan's ground having held better than a treasury right up until it didn't."
 
 [resource]
 script = ExtResource("1")
@@ -139,5 +157,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_fo
 events = Array[Resource]([SubResource("Event_the_books"), SubResource("Event_the_ledgers_move")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_par"), SubResource("Line_5")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])
