@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -84,9 +84,15 @@ effects = Array[Resource]([SubResource("Effect_burn_the_south_city"), SubResourc
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "One city too many burned, and the allied line felt it within the week."
+speaker = &"dane_ferrow"
+text = "Three cities, quartermaster. I only needed one of them lit; the rest burned for free. The Dominion's paying either way."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The district's burning and the front eats tomorrow off what's left of it. Three cities fed the whole line. I'm counting what feeds it now and not liking the total."
 
 [resource]
 script = ExtResource("1")
@@ -111,4 +117,4 @@ events = Array[Resource]([SubResource("Event_ferrow_burns_one")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_0"), SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

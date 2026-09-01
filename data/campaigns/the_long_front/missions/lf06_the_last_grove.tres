@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -17,7 +17,7 @@ day = 6
 
 [sub_resource type="Resource" id="Bonus_shrine_city"]
 script = ExtResource("3")
-text = "Reach the elder shrine before the retreat."
+text = "Capture the elder shrine before the retreat."
 cell = Vector2i(13, 3)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -105,9 +105,39 @@ effects = Array[Resource]([SubResource("Effect_shrine_saved"), SubResource("Effe
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_routed"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("9")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The grove fell with the shrine still standing in it, and standing was not enough."
+speaker = &"viktor_draeg"
+text = "The grove is mine and the shrine with it. Whoever is inside can walk out past my tanks or stay. I'm not here for a building."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "The wardens broke at the tree line. Wood isn't a wall. They knew it before I did."
+requires = SubResource("Run_routed")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "The line came apart with the keepers still in the shrine. I'd mapped the route out. Nobody got to walk it."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "Six days, on the day. The wood's his from tomorrow. We held it every hour we said we would."
+requires = SubResource("Run_par")
 
 [resource]
 script = ExtResource("1")
@@ -131,5 +161,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_shrine_city")])
 events = Array[Resource]([SubResource("Event_the_keepers_are_out")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6"), SubResource("Line_8")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_9"), SubResource("Line_6"), SubResource("Line_8")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

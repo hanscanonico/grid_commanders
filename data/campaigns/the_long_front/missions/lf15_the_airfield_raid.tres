@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -18,7 +18,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Objective_take_the_airfield"]
 script = ExtResource("2")
-text = "Take the airfield before it fields anything."
+text = "Capture the airfield before it fields anything."
 cell = Vector2i(12, 3)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -78,9 +78,15 @@ effects = Array[Resource]([SubResource("Effect_the_strip_is_live")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The airfield stayed Ferrow's, and the advance started paying for it in aircraft it never saw coming."
+speaker = &"dane_ferrow"
+text = "Strip's live and the raiders fly from tomorrow. The highlands pay by the day for that. Your fastest approach was still a day slow, Ash."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The airfield's still his. From tomorrow the raiding comes in over the passes instead of through them. Everything we move in the highlands moves at night now."
 
 [resource]
 script = ExtResource("1")
@@ -106,4 +112,4 @@ events = Array[Resource]([SubResource("Event_the_strip_is_live")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

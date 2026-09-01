@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_take_the_works"]
 script = ExtResource("2")
-text = "Take Vale's forward works."
+text = "Capture Vale's forward works."
 cell = Vector2i(16, 7)
 
 [sub_resource type="Resource" id="District_held"]
@@ -118,9 +118,15 @@ effects = Array[Resource]([SubResource("Effect_the_ammunition")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_ward")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "Vale's works held the passes, and the highlands stayed exactly what they have always been: Iron ground."
+speaker = &"konrad_vale"
+text = "The works were costed for a season. You spent three days against them; the estimate did not move. The passes stay closed."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Vale's works still sit on the only road through the passes. We're back at the foot of them. First time across our own border; it lasted three days."
 
 [resource]
 script = ExtResource("1")
@@ -145,4 +151,4 @@ events = Array[Resource]([SubResource("Event_bring_the_guns_forward"), SubResour
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_0"), SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

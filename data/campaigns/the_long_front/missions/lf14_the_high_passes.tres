@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -83,9 +83,15 @@ effects = Array[Resource]([SubResource("Effect_the_second_column")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "Vance held enough of the highland cities to bleed the advance dry, and the passes stayed contested."
+speaker = &"iona_vance"
+text = "Seven cities. You never held five of them at once, so the road stayed open the whole time he needed it. That's the books closed for the season."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Her column shifted faster than we did. The highland cities are feeding her road tonight, not ours. Marr's swapped a bad coast for a worse ridge."
 
 [resource]
 script = ExtResource("1")
@@ -110,4 +116,4 @@ events = Array[Resource]([SubResource("Event_the_second_column")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_0"), SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])
