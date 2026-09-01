@@ -123,7 +123,7 @@ text = "The relay reported on schedule and you never got close enough to hear it
 [sub_resource type="Resource" id="Line_defeat_staff"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "The relay's still broadcasting. Somewhere east of here a column got the orders it was waiting for. Your window closed on the fourth day."
+text = "Your column's gone short of the relay. It's still broadcasting. Somewhere east of here a column got the orders it was waiting for."
 
 [resource]
 script = ExtResource("1")

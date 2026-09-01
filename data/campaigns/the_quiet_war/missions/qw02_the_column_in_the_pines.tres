@@ -79,7 +79,7 @@ text = "You walked past my column twice in those pines. It watched you go by. It
 [sub_resource type="Resource" id="Line_defeat_staff"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Signals went quiet a fourth night. My screen had nothing to add. The pine city keeps his colours."
+text = "Signals went quiet a fourth night. So did your column. The pine city keeps his colours."
 
 [resource]
 script = ExtResource("1")

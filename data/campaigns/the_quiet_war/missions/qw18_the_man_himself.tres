@@ -183,7 +183,7 @@ requires = SubResource("Run_at_par")
 [sub_resource type="Resource" id="Line_6c"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Nine days. No losses to speak of, and the file closes on schedule. Orlov never managed that."
+text = "Nothing left to earn on the last page. The file closes on schedule. Orlov never managed that."
 requires = SubResource("Run_full_stars")
 
 [sub_resource type="Resource" id="Line_7b"]
