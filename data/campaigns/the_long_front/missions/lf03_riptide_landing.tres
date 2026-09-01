@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -100,6 +100,10 @@ effects = Array[Resource]([SubResource("Effect_watch_saved")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "The coast road broke before the watch got out, and behind them there was only the sea."
+
 [resource]
 script = ExtResource("1")
 id = &"lf03_riptide_landing"
@@ -123,4 +127,4 @@ events = Array[Resource]([SubResource("Event_the_watch_is_inland")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
-defeat = "The coast road broke before the watch got out, and behind them there was only the sea."
+defeat = Array[Resource]([SubResource("Line_defeat")])

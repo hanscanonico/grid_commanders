@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -106,6 +106,10 @@ effects = Array[Resource]([SubResource("Effect_she_closes_the_middle")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The gate held, and Vance's claim held with it — one gatehouse short of the whole city."
+
 [resource]
 script = ExtResource("1")
 id = &"hc15_the_regents_gate"
@@ -129,4 +133,4 @@ events = Array[Resource]([SubResource("Event_four_more_entries"), SubResource("E
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The gate held, and Vance's claim held with it — one gatehouse short of the whole city."
+defeat = Array[Resource]([SubResource("Line_defeat")])

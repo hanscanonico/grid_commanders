@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -75,6 +75,10 @@ effects = Array[Resource]([SubResource("Effect_vance_pulls_her_flank")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The crossroads stayed contested, and the shortest road to the capital stayed closed to us."
+
 [resource]
 script = ExtResource("1")
 id = &"hc09_the_crossroads"
@@ -100,4 +104,4 @@ events = Array[Resource]([SubResource("Event_the_exception_ends")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_2b"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The crossroads stayed contested, and the shortest road to the capital stayed closed to us."
+defeat = Array[Resource]([SubResource("Line_defeat")])

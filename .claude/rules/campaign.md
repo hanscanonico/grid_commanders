@@ -161,10 +161,12 @@ root index are in `docs/design_record.md`.
   `docs/campaign_authoring.md`'s, the author's side of all of it. The story is
   dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
   **commander id** ("" = narration) because the roster already owns a general's name and colour
-  and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
-  sentence. `MissionSpeech` is the one drawer of a spoken line, because four surfaces say them —
-  the hub's briefing, `CampaignDebriefPanel` (the briefing's mirror, which plays the victory
-  dialogue or the defeat line on the way back from a battle before the hub), since CD3
+  and a name typed into 108 files is 108 places to drift; a defeat is `defeat`, dialogue exactly
+  like the victory — the foe's line first and unconditional, the war's own staff voice second,
+  which may read the ledger — narrated when no speaker is set, and `content_error` refuses a
+  mission with none. `MissionSpeech` is the one drawer of a spoken line, because four surfaces say
+  them — the hub's briefing, `CampaignDebriefPanel` (the briefing's mirror, which plays the victory
+  or the defeat dialogue on the way back from a battle before the hub), since CD3
   `MissionSpeechCard` over the board, and since CD6 `CampaignInterludePanel` between two blocks, so
   a general sounds the same mid-battle as between missions. **How that dialogue *reads* is
   measured rather than argued**: `make prose` (`tools/run_prose_check.gd` over `tools/prose/`)

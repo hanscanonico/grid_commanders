@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -134,6 +134,10 @@ effects = Array[Resource]([SubResource("Effect_second_base_again")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The gate held, and the foundry kept its richer defender through another winter."
+
 [resource]
 script = ExtResource("1")
 id = &"fw13_foundry_gate"
@@ -160,4 +164,4 @@ carry_out = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ward"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_ward_road"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The gate held, and the foundry kept its richer defender through another winter."
+defeat = Array[Resource]([SubResource("Line_defeat")])

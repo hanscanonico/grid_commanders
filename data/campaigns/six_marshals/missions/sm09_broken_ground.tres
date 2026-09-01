@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -148,6 +148,10 @@ effects = Array[Resource]([SubResource("Effect_relief")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "Orlov's patience paid off — a wounded flank finally stood in the open."
+
 [resource]
 script = ExtResource("1")
 id = &"sm09_broken_ground"
@@ -171,4 +175,4 @@ events = Array[Resource]([SubResource("Event_the_scent"), SubResource("Event_i_k
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Orlov's patience paid off — a wounded flank finally stood in the open."
+defeat = Array[Resource]([SubResource("Line_defeat")])

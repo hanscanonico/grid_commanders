@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -97,6 +97,10 @@ effects = Array[Resource]([SubResource("Effect_morn_bloodied")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "Morn's column crossed and dug in, and the spring test just became a permanent fixture."
+
 [resource]
 script = ExtResource("1")
 id = &"hc01_border_skirmish"
@@ -120,4 +124,4 @@ events = Array[Resource]([SubResource("Event_the_rest_of_the_column"), SubResour
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Morn's column crossed and dug in, and the spring test just became a permanent fixture."
+defeat = Array[Resource]([SubResource("Line_defeat")])

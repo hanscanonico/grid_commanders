@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -103,6 +103,10 @@ effects = Array[Resource]([SubResource("Effect_draeg_column_broken")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("6")
+text = "Draeg's army broke, and the alliance broke with it before the depot road was ever decided."
+
 [resource]
 script = ExtResource("1")
 id = &"hc08_shared_supply"
@@ -128,4 +132,4 @@ events = Array[Resource]([SubResource("Event_the_road_is_shared"), SubResource("
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Draeg's army broke, and the alliance broke with it before the depot road was ever decided."
+defeat = Array[Resource]([SubResource("Line_defeat")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -113,6 +113,10 @@ effects = Array[Resource]([SubResource("Effect_moved_the_money")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The counting house held, and the squeeze that started in the border towns became permanent."
+
 [resource]
 script = ExtResource("1")
 id = &"tc12_the_counting_house"
@@ -136,4 +140,4 @@ events = Array[Resource]([SubResource("Event_the_books"), SubResource("Event_the
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The counting house held, and the squeeze that started in the border towns became permanent."
+defeat = Array[Resource]([SubResource("Line_defeat")])

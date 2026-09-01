@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -135,6 +135,10 @@ effects = Array[Resource]([SubResource("Effect_kestrel_held")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("6")
+text = "Vale held the pass himself, and the Freeze goes on exactly as he designed it."
+
 [resource]
 script = ExtResource("1")
 id = &"fw06_first_thaw"
@@ -158,4 +162,4 @@ events = Array[Resource]([SubResource("Event_vale_withdraws_from_kestrel"), SubR
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_dug_in"), SubResource("Line_5"), SubResource("Line_5_on_schedule"), SubResource("Line_6")])
-defeat = "Vale held the pass himself, and the Freeze goes on exactly as he designed it."
+defeat = Array[Resource]([SubResource("Line_defeat")])

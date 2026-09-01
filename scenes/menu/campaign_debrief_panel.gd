@@ -4,8 +4,8 @@ extends Control
 ##
 ## The briefing's mirror, and it exists because a campaign that only speaks
 ## *before* a fight has no way to land what the fight cost or changed: the
-## victory dialogue and the defeat line were authored per mission and had
-## nowhere to be read. It plays on the way back from the battle, before the hub,
+## victory and defeat dialogue were authored per mission and had nowhere to be
+## read. It plays on the way back from the battle, before the hub,
 ## so the story sits between the missions rather than only in front of them.
 ##
 ## Presentation only. It decides no outcome — `MissionRuntime` did that and
@@ -41,7 +41,7 @@ func _ready() -> void:
 ## or "" at the end of a campaign or after a loss — the one forward-looking
 ## thing a debrief can say, and the reason to press on.
 ##
-## `ledger` is the war as it now reads, for the victory lines that are only said
+## `ledger` is the war as it now reads, for the debrief lines that are only said
 ## on one kind of run, and `recorded` is what this mission wrote to it in its own
 ## beats' words — the debrief being the one screen that can say what changed.
 ## Both are handed over rather than read off `CampaignSession`, which the caller
@@ -69,18 +69,12 @@ func begin(
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()
-	# A loss has one narrator's sentence rather than dialogue: the generals who
-	# would have spoken are the ones it went badly for. The condition that ended
-	# it leads, in its own words, where a long reason can wrap instead of running
-	# off the canvas.
-	if won:
-		for line: MissionLine in MissionLine.spoken(mission.victory, ledger):
-			_body.add_child(MissionSpeech.render(line, _commanders))
-	else:
-		if outcome.reason != "":
-			_body.add_child(MissionSpeech.paragraph(outcome.reason, true))
-		if mission.defeat != "":
-			_body.add_child(MissionSpeech.paragraph(mission.defeat))
+	# On a loss the condition that ended it leads, in its own words, where a long
+	# reason can wrap instead of running off the canvas; the dialogue follows.
+	if not won and outcome.reason != "":
+		_body.add_child(MissionSpeech.paragraph(outcome.reason, true))
+	for line: MissionLine in MissionLine.spoken(mission.victory if won else mission.defeat, ledger):
+		_body.add_child(MissionSpeech.render(line, _commanders))
 	for note: String in recorded:
 		_body.add_child(MissionSpeech.paragraph("RECORDED   %s" % note, true))
 	_unlocked.text = "NEXT   %s" % next_title.to_upper() if next_title != "" else ""

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -97,6 +97,10 @@ effects = Array[Resource]([SubResource("Effect_the_last_of_the_purse")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "Orlov's outpost held, and the keep stayed exactly as far away as it has been for eleven weeks."
+
 [resource]
 script = ExtResource("1")
 id = &"lf17_the_shadow_of_the_keep"
@@ -120,4 +124,4 @@ events = Array[Resource]([SubResource("Event_everything_left_to_spare")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Orlov's outpost held, and the keep stayed exactly as far away as it has been for eleven weeks."
+defeat = Array[Resource]([SubResource("Line_defeat")])

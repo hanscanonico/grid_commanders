@@ -4,9 +4,9 @@ extends RefCounted
 ##
 ## Walks what `CampaignDB.load_default()` already loads — no directory scan, no
 ## second list of missions to drift out of date — so the corpus is exactly the
-## dialogue the game plays: each mission's briefing, its victory debrief, its one
-## narrator's defeat sentence and every scripted beat's lines, plus each
-## interlude page between two blocks.
+## dialogue the game plays: each mission's briefing, its victory and defeat
+## debriefs and every scripted beat's lines, plus each interlude page between two
+## blocks.
 ##
 ## **Every authored variant is gathered, not the route's.** `MissionLine.spoken`
 ## filters by the ledger for a player; a measurement of the writing wants the
@@ -78,8 +78,7 @@ static func _gather_mission(
 ) -> void:
 	_gather_slot(lines, campaign_id, mission.id, "briefing", mission.briefing)
 	_gather_slot(lines, campaign_id, mission.id, "victory", mission.victory)
-	if mission.defeat.strip_edges() != "":
-		lines.append(ProseLine.narration(campaign_id, mission.id, "defeat", mission.defeat))
+	_gather_slot(lines, campaign_id, mission.id, "defeat", mission.defeat)
 	for event: MissionEvent in mission.events:
 		if event == null:
 			continue

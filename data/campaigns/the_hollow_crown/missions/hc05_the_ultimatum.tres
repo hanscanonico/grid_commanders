@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -79,6 +79,10 @@ effects = Array[Resource]([SubResource("Effect_the_deadline")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The ultimatum stood, and the crossing answers to Morn now."
+
 [resource]
 script = ExtResource("1")
 id = &"hc05_the_ultimatum"
@@ -103,4 +107,4 @@ events = Array[Resource]([SubResource("Event_the_terms_expire")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The ultimatum stood, and the crossing answers to Morn now."
+defeat = Array[Resource]([SubResource("Line_defeat")])

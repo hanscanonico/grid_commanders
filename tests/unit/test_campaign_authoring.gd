@@ -280,6 +280,7 @@ func _authored() -> MissionDefinition:
 	mission.commanders = {1: &"tomas_reed"}
 	mission.briefing.append(_line("Move on the relay at dawn."))
 	mission.victory.append(_line("And it held."))
+	mission.defeat.append(_line("And it fell."))
 	mission.par_day = 4
 	mission.failures.append(_deadline(6))
 	return mission

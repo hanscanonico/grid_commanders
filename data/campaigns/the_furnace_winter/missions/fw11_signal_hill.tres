@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=49 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=50 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -193,6 +193,10 @@ effects = Array[Resource]([SubResource("Effect_three_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "Signal Hill stayed dark, and Ferrow's raiders kept their bounty and their ground."
+
 [resource]
 script = ExtResource("1")
 id = &"fw11_signal_hill"
@@ -216,4 +220,4 @@ events = Array[Resource]([SubResource("Event_two_more_riders"), SubResource("Eve
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Signal Hill stayed dark, and Ferrow's raiders kept their bounty and their ground."
+defeat = Array[Resource]([SubResource("Line_defeat")])

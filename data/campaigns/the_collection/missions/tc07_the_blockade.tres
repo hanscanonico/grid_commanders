@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -125,6 +125,10 @@ effects = Array[Resource]([SubResource("Effect_vale_interest"), SubResource("Eff
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The blockade held, and Vale's occupation kept drawing interest on ground we never touched."
+
 [resource]
 script = ExtResource("1")
 id = &"tc07_the_blockade"
@@ -148,4 +152,4 @@ events = Array[Resource]([SubResource("Event_another_line_item"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The blockade held, and Vale's occupation kept drawing interest on ground we never touched."
+defeat = Array[Resource]([SubResource("Line_defeat")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -108,6 +108,10 @@ effects = Array[Resource]([SubResource("Effect_signed_for_personally")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("6")
+text = "The stacks held for Vale, and the furnace's doorstep stayed his."
+
 [resource]
 script = ExtResource("1")
 id = &"fw17_the_stacks"
@@ -134,4 +138,4 @@ carry_out = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_2"), SubResource("Line_8"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The stacks held for Vale, and the furnace's doorstep stayed his."
+defeat = Array[Resource]([SubResource("Line_defeat")])

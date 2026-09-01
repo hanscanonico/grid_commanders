@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -83,6 +83,10 @@ effects = Array[Resource]([SubResource("Effect_bring_the_line_forward")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "Orlov's camp held, and the first order that said advance was filed unsent."
+
 [resource]
 script = ExtResource("1")
 id = &"lf12_the_forward_camp"
@@ -106,4 +110,4 @@ events = Array[Resource]([SubResource("Event_the_line_moves")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Orlov's camp held, and the first order that said advance was filed unsent."
+defeat = Array[Resource]([SubResource("Line_defeat")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -78,6 +78,10 @@ effects = Array[Resource]([SubResource("Effect_charge_the_hammer"), SubResource(
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The advance bunched at the relay, and Hammerfall found exactly the target it wanted."
+
 [resource]
 script = ExtResource("1")
 id = &"sm16_the_wide_field"
@@ -101,4 +105,4 @@ events = Array[Resource]([SubResource("Event_the_charge_is_ready")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The advance bunched at the relay, and Hammerfall found exactly the target it wanted."
+defeat = Array[Resource]([SubResource("Line_defeat")])

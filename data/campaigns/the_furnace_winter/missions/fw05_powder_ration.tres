@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -77,6 +77,10 @@ effects = Array[Resource]([SubResource("Effect_relay_signed_over")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "Vance's ration held, and our factories stayed as cold as the ground."
+
 [resource]
 script = ExtResource("1")
 id = &"fw05_powder_ration"
@@ -101,4 +105,4 @@ events = Array[Resource]([SubResource("Event_the_ration_is_revised")])
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Vance's ration held, and our factories stayed as cold as the ground."
+defeat = Array[Resource]([SubResource("Line_defeat")])

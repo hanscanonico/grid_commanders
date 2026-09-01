@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -142,6 +142,10 @@ effects = Array[Resource]([SubResource("Effect_depot_dividend")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "We sat on the bank too long, and by the time we pushed, her army had grown into the job."
+
 [resource]
 script = ExtResource("1")
 id = &"sm12_the_narrow_crossing"
@@ -165,4 +169,4 @@ events = Array[Resource]([SubResource("Event_she_counts_the_days"), SubResource(
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "We sat on the bank too long, and by the time we pushed, her army had grown into the job."
+defeat = Array[Resource]([SubResource("Line_defeat")])
