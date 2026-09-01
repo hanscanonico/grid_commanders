@@ -39,7 +39,8 @@ The index, by owning file in `.claude/rules/` (plan names drop their `-plan.html
   four-players, four-player-maps (a seat may stay empty), asymmetric-board (Bulwark, not fair on
   purpose).
 - **presentation.md** — game-speed (GS1–GS3, the pacing-free lock over `core/`), faction-identity,
-  tile-info-panel + `.lavish/hud/SPEC.md`, battle-animations, capture-animation, range-preview,
+  tile-info-panel + `.lavish/hud/SPEC.md`, battle-animations, animation-frames (the S1–S9 frame
+  slices), capture-animation, range-preview,
   menu-revamp (`UiTheme`/`UiKit`), ux-recovery (U-01–U-26), mobile-builds (MB1–MB9), the field
   overlays, the zoom ladder and the animation milestone's nine slices, the next-ready-unit key
   (`N`), and standing terrain being interactive while the ground plane carries ambient variety.

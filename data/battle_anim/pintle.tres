@@ -4,22 +4,22 @@
 
 [resource]
 script = ExtResource("1")
-id = &"autocannon"
-projectile = &"flak"
-label = &"AUTOCANNON"
-shots_per_figure = 2
-sfx = &"flak"
-travel_scale = 0.95
-arc = 10.0
-tint = Color(1, 0.88, 0.55, 1)
-muzzle = 12.0
-aim_seconds = 0.09
-aim_lift = 1.5
+id = &"pintle"
+projectile = &"tracer"
+label = &"PINTLE"
+shots_per_figure = 3
+sfx = &"shot"
+travel_scale = 0.85
+arc = 0.0
+tint = Color(1, 0.94, 0.62, 1)
+muzzle = 9.0
+aim_seconds = 0.06
+aim_lift = 0.0
 aim_pitch = 0.0
 sustained = true
-recoil = 0.50
+recoil = 0.40
 impact_radius = 0.0
-fire_stagger = 0.03
-arrive_scale = 1.0
-dust = 0.25
+fire_stagger = 0.045
+arrive_scale = 0.7
+dust = 0.3
 impact_debris = 0

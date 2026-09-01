@@ -197,6 +197,12 @@ var aim_p := 0.0
 ## 0 -> 1 over the casualty beat, which the sheet sizes off how many figures this
 ## side lost: the surplus figures are knocked back, then rise, spin and fall away.
 var casualty_p := 0.0
+## How many figures `casualty_p`'s own window was sized for — CombatBeats' own
+## count, written here rather than re-derived from `squad_was`/`squad_now`,
+## which carry the "kept whole for the blast" rule for a dying side and would
+## silently drift from the window's real tail the moment the two rules parted
+## ways (see CombatBeats.def_lost).
+var casualty_lost := 0
 ## The style's own look numbers, copied on by the director rather than looked up:
 ## how much scuff this half kicks, how far its weapon lifts (+) or settles (-)
 ## and tips (nose-toward-the-seam positive) over the wind-up, and how far out it
@@ -295,13 +301,21 @@ static func figures_for(displayed_hp: int) -> int:
 ## Every standing figure's barrel, in this control's coordinates, innermost last
 ## — the muzzle flashes go on all of them and the volley leaves from the last,
 ## which is the figure nearest the enemy. Derived from the same layout numbers
-## the squad is drawn with rather than hand-tuned twice.
+## the squad is drawn with rather than hand-tuned twice: `_pose_offset` is the
+## whole of a standing figure's pose (roll-in, wind-up, recoil, brace), and the
+## wind-up's shear is composed at the mouth's own height exactly as
+## `_draw_tipped` displaces that row, so the flash rides the barrel where it is
+## drawn — which reads oddest without it on a weapon whose barrel visibly
+## elevates, like the howitzer's.
 func muzzle_points() -> PackedVector2Array:
 	var points := PackedVector2Array()
 	var arena := _arena()
+	var on_foot := _on_foot()
+	var lean := sin(aim_tilt(aim_p, aim_pitch))
 	for slot in squad_now:
-		var at := _figure_point(arena, slot) + Vector2(_inward(22.0), -34.0)
-		points.append(at + Vector2(0.0, _altitude(slot, 0.0)))
+		var barrel := _figure_point(arena, slot) + Vector2(_inward(22.0 + lean * 34.0), -34.0)
+		var roll := arrive_offset(arrive_p, arrive_scale, unit.type.domain, slot, clock, on_foot)
+		points.append(barrel + _pose_offset(roll, slot, 0.0, true))
 	return points
 
 
@@ -524,18 +538,16 @@ func _pose_offset(roll: Vector2, slot: int, fall: float, standing: bool) -> Vect
 
 ## Whether this half marches in rather than rolling in, off the scuff its style
 ## kicks — a style id read here would be a second opinion on what a weapon is.
-## `dust` is written 0.0 until the styles carry it, so every land half marches
-## for now: a pixel and a half of bob on the roll-in and nothing else.
 func _on_foot() -> bool:
 	return dust <= FOOT_DUST and not _flying and not _floating
 
 
 ## What share of a casualty's own run is the knock-back. KNOCK_SECONDS is stated
-## against the window CombatBeats really sized — asked of it rather than
-## re-derived — so the jerk keeps its length whatever the clock is running at.
+## against the window CombatBeats really sized — asked of it via `casualty_lost`
+## rather than re-derived from squad counts — so the jerk keeps its length
+## whatever the clock is running at.
 func _knock_share() -> float:
-	var lost := squad_was - squad_now
-	var window := CombatBeats.casualty_window(Vector2(0.0, CombatBeats.IMPACT), lost)
+	var window := CombatBeats.casualty_window(Vector2(0.0, CombatBeats.IMPACT), casualty_lost)
 	var span := window.y - window.x
 	if span <= 0.0:
 		return 0.0
@@ -545,8 +557,7 @@ func _knock_share() -> float:
 ## The scuff a squad kicks off the ground line as it rolls into its slot, and
 ## again as its own recoil thrusts: three flat puffs outward of the outermost
 ## figure, sized by how much dirt this style throws. Nothing at all for a hull
-## over water or a wing over nothing — and nothing yet for anything, `dust` being
-## written 0.0 until the styles carry it.
+## over water or a wing over nothing.
 func _draw_scuff(arena: Rect2) -> void:
 	if dust <= 0.0 or _flying or _floating:
 		return

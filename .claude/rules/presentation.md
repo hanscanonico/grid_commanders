@@ -137,6 +137,14 @@ forms named in the root index are in `docs/design_record.md`.
   the frame exists for. Four look scalars ship with it — `fire_stagger`, `arrive_scale`, `dust`,
   `impact_debris` (capped at 5) — and **`small_arms` and `autocannon` are told apart by cadence, not
   by wind-up length**; widening their 0.06/0.09 to compensate is the rejected answer.
+  **`pintle` is an eighth signature (2026-09-01, animation-frames S1)** — split off `small_arms`
+  for Recon so the wired scalars read as a vehicle, the artillery split's precedent: since S1
+  `_style_pose` copies `arrive_scale` and `dust` from the style (the literals are gone),
+  `_on_foot()` keys off `dust > FOOT_DUST`, and the pintle split plus autocannon's 0.25 nudge are
+  presentation keys only. Two more S1 seams: **how many figures a casualty window was sized for is
+  CombatBeats' answer** (`def_lost`/`atk_lost`, copied onto `CutsceneSide.casualty_lost`), never
+  re-derived from squad counts; and `muzzle_points()` composes the full standing pose — the
+  wind-up's shear at the mouth's height included — so the flash rides the drawn barrel.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
