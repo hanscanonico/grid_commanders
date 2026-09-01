@@ -178,7 +178,7 @@ const MATCHUPS: Array[Array] = [
 	[&"tank", &"tank", &"cannon"],
 	[&"md_tank", &"infantry", &"small_arms"],
 	[&"md_tank", &"md_tank", &"cannon"],
-	[&"mech", &"tank", &"rocket"],
+	[&"mech", &"tank", &"bazooka"],
 	[&"mech", &"infantry", &"small_arms"],
 	[&"rockets", &"infantry", &"rocket"],
 	[&"rockets", &"tank", &"rocket"],

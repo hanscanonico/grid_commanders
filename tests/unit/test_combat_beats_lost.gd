@@ -8,14 +8,13 @@ extends GutTest
 ## test_combat_beats.gd, which the animation-frames plan pins as untouched —
 ## its timing asserts do not move here, only a new field is read.
 ##
-## Why it exists: CutsceneSide's own knock-back used to re-derive "how many
-## figures were lost" from squad counts (`squad_was - squad_now`) rather than
-## reading CombatBeats' own answer, and the two silently parted ways for a
-## dying side — its squad is kept whole for the blast (CutsceneSide._squads),
-## which makes the local re-derivation report 0 for the wrong reason. The fix
-## is this seam field; def_lost/atk_lost is the one place "how many lost"
-## is decided, and the plan follow-up it closes is a measured one: a kill's
-## knock-back ran ~47 ms of its intended 80.
+## Why it exists: CutsceneSide's own knock-back re-derived "how many figures
+## were lost" from squad counts (`squad_was - squad_now`) rather than reading
+## CombatBeats' own answer. The two agree today — CombatCutscene._squads applies
+## the same "a dying side keeps its squad whole for the blast" rule the window
+## was sized under, so both said 0 for a kill — but they agree by coincidence of
+## two rules matching, not by construction. def_lost/atk_lost makes it one
+## answer, so no frame was moved and none can drift.
 
 var styles: BattleStyleDB
 

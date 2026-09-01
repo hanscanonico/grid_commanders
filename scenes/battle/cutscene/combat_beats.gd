@@ -106,10 +106,10 @@ var def_casualty := Vector2.ZERO
 ## How many figures `def_casualty`'s tail was sized for — zero for a dying
 ## side, which keeps its whole squad standing for the blast rather than
 ## toppling first. A seam field rather than private: CutsceneSide's own
-## knock-back used to re-derive this from squad counts, which is the kind of
-## second opinion that drifts the moment the two sides' notion of "died" part
-## ways — the measured symptom was a kill's knock-back landing at ~47 ms of
-## its intended 80.
+## knock-back re-derived this from squad counts and happened to match, the
+## director applying the same death rule to the squad it posts — two rules
+## agreeing rather than one answer, which is what drifts the moment either
+## side's notion of "died" moves. No frame moved when it became this field.
 var def_lost := 0
 var def_death := Vector2.ZERO
 ## And the counter's mirror of all of it, off the defender's own signature.

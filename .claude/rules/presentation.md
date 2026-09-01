@@ -141,7 +141,15 @@ forms named in the root index are in `docs/design_record.md`.
   for Recon so the wired scalars read as a vehicle, the artillery split's precedent: since S1
   `_style_pose` copies `arrive_scale` and `dust` from the style (the literals are gone),
   `_on_foot()` keys off `dust > FOOT_DUST`, and the pintle split plus autocannon's 0.25 nudge are
-  presentation keys only. Two more S1 seams: **how many figures a casualty window was sized for is
+  presentation keys only. **`bazooka` is a ninth on the same terms** — Mech's shoulder tube split
+  off `rocket` at dust 0.15, so a foot squad marches whatever it is shooting at, where sharing the
+  battery's 0.4 rolled it in as a hull against armour and marched it against infantry; Rockets and
+  Missiles keep `rocket` at 0.4. And **a side that never answered arrives on its own primary's
+  scalars**, not on the empty counter slot's unarmed fallback: `CombatCutscene._arrival_style` is
+  that one read (`arrive_scale` and `dust` only — the wind-up stays the fired weapon's, so unarmed
+  still lifts nothing), because `for_weapon` describes a *weapon* and every kill, indirect shot and
+  unanswered exchange leaves the defender without one, which trudged a shelled tank in on foot.
+  Two more S1 seams: **how many figures a casualty window was sized for is
   CombatBeats' answer** (`def_lost`/`atk_lost`, copied onto `CutsceneSide.casualty_lost`), never
   re-derived from squad counts; and `muzzle_points()` composes the full standing pose — the
   wind-up's shear at the mouth's height included — so the flash rides the drawn barrel.

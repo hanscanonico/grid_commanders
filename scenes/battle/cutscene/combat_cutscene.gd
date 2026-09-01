@@ -54,6 +54,10 @@ var _result: CombatSnapshot.CombatResult
 var _styles: BattleStyleDB
 var _atk_style: BattleStyle
 var _def_style: BattleStyle
+## And the signature each chassis arrives on, which is the fired one for a side
+## that shot and its own primary for a side that never answered.
+var _atk_arrival: BattleStyle
+var _def_arrival: BattleStyle
 
 
 func _ready() -> void:
@@ -109,6 +113,8 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 	_result = result
 	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
 	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
+	_atk_arrival = _arrival_style(attacker.type, result.attacker_weapon_slot)
+	_def_arrival = _arrival_style(defender.type, result.counter_weapon_slot)
 	_play.accent = accent_of(attacker.team)
 	var atk_terrain := _terrain_at(attacker.cell)
 	var def_terrain := _terrain_at(defender.cell)
@@ -225,7 +231,7 @@ func _apply() -> void:
 	_atk.casualty_p = _play.window(_beats.atk_casualty)
 	_atk.casualty_lost = _beats.atk_lost
 	_atk.squad_alpha = 1.0 - atk_gone
-	_style_pose(_atk, _atk_style)
+	_style_pose(_atk, _atk_style, _atk_arrival)
 	_atk.queue_redraw()
 
 	_def.clock = _play.t
@@ -238,21 +244,33 @@ func _apply() -> void:
 	_def.casualty_p = _play.window(_beats.def_casualty)
 	_def.casualty_lost = _beats.def_lost
 	_def.squad_alpha = 1.0 - def_gone
-	_style_pose(_def, _def_style)
+	_style_pose(_def, _def_style, _def_arrival)
 	_def.queue_redraw()
 
 	_frame_fx(present)
 	_sound()
 
 
-## The look numbers a half draws its arrive, its wind-up and its scuff with —
-## the style's own, copied on beside the beat progress above so both halves are
-## posed from one place.
-static func _style_pose(side: CutsceneSide, style: BattleStyle) -> void:
+## The look numbers a half draws its arrive, its wind-up and its scuff with,
+## copied on beside the beat progress above so both halves are posed from one
+## place. The wind-up is the fired weapon's — unarmed lifts nothing, which is
+## the whole of a side that never answered — while the roll-in and the scuff
+## are the chassis'.
+static func _style_pose(side: CutsceneSide, style: BattleStyle, arrival: BattleStyle) -> void:
 	side.aim_lift = style.aim_lift
 	side.aim_pitch = style.aim_pitch
-	side.arrive_scale = style.arrive_scale
-	side.dust = style.dust
+	side.arrive_scale = arrival.arrive_scale
+	side.dust = arrival.dust
+
+
+## The signature a chassis arrives on. A side that fired arrives on that weapon;
+## a side with no slot — every unanswered shot, every kill, every indirect — is
+## carrying its primary whether or not it got to use it, and a tank shelled by
+## artillery must still roll in as a tank rather than trudge in unarmed.
+func _arrival_style(type: UnitType, slot: StringName) -> BattleStyle:
+	if slot == DamageChart.PRIMARY or slot == DamageChart.SECONDARY:
+		return _styles.for_weapon(type, slot)
+	return _styles.by_id(type.battle_style)
 
 
 ## The two halves slide in from their own edges, and the whole band pushes in
