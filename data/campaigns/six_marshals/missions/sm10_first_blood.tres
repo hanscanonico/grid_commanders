@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -85,6 +85,10 @@ effects = Array[Resource]([SubResource("Effect_compounded_funds"), SubResource("
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The fight dragged on, and every extra day was a day that belonged to her."
+
 [resource]
 script = ExtResource("1")
 id = &"sm10_first_blood"
@@ -108,4 +112,4 @@ events = Array[Resource]([SubResource("Event_three_percent_five_times")])
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The fight dragged on, and every extra day was a day that belonged to her."
+defeat = Array[Resource]([SubResource("Line_defeat")])

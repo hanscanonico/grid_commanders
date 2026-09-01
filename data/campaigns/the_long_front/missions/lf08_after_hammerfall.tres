@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
@@ -131,6 +131,10 @@ effects = Array[Resource]([SubResource("Effect_averyn_held")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "Morn's garrison dug in before Holt reached the ruins, and Averyn stayed his."
+
 [resource]
 script = ExtResource("1")
 id = &"lf08_after_hammerfall"
@@ -154,4 +158,4 @@ events = Array[Resource]([SubResource("Event_morn_bills_the_ground"), SubResourc
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
-defeat = "Morn's garrison dug in before Holt reached the ruins, and Averyn stayed his."
+defeat = Array[Resource]([SubResource("Line_defeat")])

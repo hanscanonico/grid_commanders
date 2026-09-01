@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -115,6 +115,10 @@ effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
 lines = Array[Resource]([])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "The safehouse burned its files before Thorne's column got the gate open, and the network stayed a rumour."
+
 [resource]
 script = ExtResource("1")
 id = &"qw06_the_forward_safehouse"
@@ -138,4 +142,4 @@ events = Array[Resource]([SubResource("Event_the_handler_runs"), SubResource("Ev
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The safehouse burned its files before Thorne's column got the gate open, and the network stayed a rumour."
+defeat = Array[Resource]([SubResource("Line_defeat")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -77,6 +77,10 @@ effects = Array[Resource]([SubResource("Effect_the_hammer_is_banked")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_stand_clear")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "The outpost held, and whatever Orlov built behind it stays exactly as hidden as it has always been."
+
 [resource]
 script = ExtResource("1")
 id = &"qw17_the_last_outpost"
@@ -100,4 +104,4 @@ events = Array[Resource]([SubResource("Event_morn_banks_the_hammer")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The outpost held, and whatever Orlov built behind it stays exactly as hidden as it has always been."
+defeat = Array[Resource]([SubResource("Line_defeat")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -127,6 +127,10 @@ effects = Array[Resource]([SubResource("Effect_both_passes_paid")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The post held, and the tally kept climbing in the raiders' favour."
+
 [resource]
 script = ExtResource("1")
 id = &"tc05_the_tally_post"
@@ -150,4 +154,4 @@ events = Array[Resource]([SubResource("Event_the_courier"), SubResource("Event_b
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_satchel"), SubResource("Line_4_courier_clear"), SubResource("Line_5")])
-defeat = "The post held, and the tally kept climbing in the raiders' favour."
+defeat = Array[Resource]([SubResource("Line_defeat")])

@@ -27,8 +27,8 @@ lander to an island) reads as unreachable until the coastal act teaches the
 check `TerrainType.services` and transports. A difficulty tier that does not
 ship. A story line whose speaker is not on the commander roster, or a seat cast
 as a commander who is not. A briefing with nothing to say when it is won. A
-briefing, debrief or interlude with no unconditional line — a page that can
-render empty. A deadline
+mission with nothing to say when it is lost. A briefing, debrief or interlude
+with no unconditional line — a page that can render empty. A deadline
 filed in `objectives` or `bonus_objectives` rather than in `failures`, and a
 `par_day` falling past the mission's own deadline, or before the day a hold
 objective says the mission cannot be won. A launch that does not build.
@@ -78,7 +78,19 @@ mission owns a board under `maps/campaign/<campaign>/`.
 
 A mission states its own match as `MatchRequest`'s field list (board, seats,
 sides, commanders, fog, tier), what wins it, what loses it, what it says, and
-what happens while it is fought.
+what happens while it is fought. What it says is three pages of `MissionLine`s —
+`briefing`, `victory` and `defeat` — each a list of speaker plus text, the
+speaker a commander id or "" for narration.
+
+**What is said on a loss.** A defeat is dialogue exactly like a victory, drawn by
+the same `MissionSpeech` under the reason the mission ended. The foe's line comes
+first and carries no condition — it is the words every player hears. The war's
+own staff voice comes second, and it may carry `requires` / `unless`: the debrief
+is read against the ledger after `CampaignSession.record`, so a loss can sound
+different on a different route. Two or three lines, never a fourth — a player who
+has just lost is not reading a page. `content_error` refuses a mission with no
+defeat line at all; the 108 shipped ones were migrated from the old narrator
+sentence and read as narration until each war's own pass gives them speakers.
 
 ## The vocabulary
 

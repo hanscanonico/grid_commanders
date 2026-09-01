@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -89,6 +89,10 @@ effects = Array[Resource]([SubResource("Effect_orlov_takes_the_west"), SubResour
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("6")
+text = "One front gave way, and Morn's bet on our alliance's seams paid off."
+
 [resource]
 script = ExtResource("1")
 id = &"hc11_two_fronts"
@@ -114,4 +118,4 @@ events = Array[Resource]([SubResource("Event_both_passes_at_once")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "One front gave way, and Morn's bet on our alliance's seams paid off."
+defeat = Array[Resource]([SubResource("Line_defeat")])

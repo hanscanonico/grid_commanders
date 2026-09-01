@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=20 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -71,6 +71,10 @@ effects = Array[Resource]([SubResource("Effect_name_the_column")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_signals")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "The column melted back into the pines with the city still in its pocket."
+
 [resource]
 script = ExtResource("1")
 id = &"qw02_the_column_in_the_pines"
@@ -94,4 +98,4 @@ events = Array[Resource]([SubResource("Event_signals_go_quiet")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The column melted back into the pines with the city still in its pocket."
+defeat = Array[Resource]([SubResource("Line_defeat")])

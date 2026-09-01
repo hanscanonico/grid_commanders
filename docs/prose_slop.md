@@ -27,8 +27,10 @@ blacklist) is kept only so the day somebody does paste one in, it is caught.
 
 ## What is scored
 
-Every `MissionLine` the game speaks: each mission's `briefing` and `victory` dialogue, its one
-narrator `defeat` sentence, every scripted event's lines, and every `CampaignInterlude` page.
+Every `MissionLine` the game speaks: each mission's `briefing`, `victory` and `defeat` dialogue,
+every scripted event's lines, and every `CampaignInterlude` page. The `defeat` slot is now lines
+with speakers like its siblings; its 108 lines are still the migrated narrator sentences, so the
+numbers below stand until the per-war content passes give them voices.
 **Every authored variant**, not one route's — a line gated behind a ledger condition is writing
 too. Narration ("" speaker) is scored as a voice of its own rather than skipped: it is 12% of
 the corpus and the one nobody thinks to characterise.

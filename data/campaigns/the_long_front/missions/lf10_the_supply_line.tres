@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -84,6 +84,10 @@ effects = Array[Resource]([SubResource("Effect_burn_the_south_city"), SubResourc
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "One city too many burned, and the allied line felt it within the week."
+
 [resource]
 script = ExtResource("1")
 id = &"lf10_the_supply_line"
@@ -107,4 +111,4 @@ events = Array[Resource]([SubResource("Event_ferrow_burns_one")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_0"), SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "One city too many burned, and the allied line felt it within the week."
+defeat = Array[Resource]([SubResource("Line_defeat")])

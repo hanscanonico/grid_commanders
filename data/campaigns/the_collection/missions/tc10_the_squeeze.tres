@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -117,6 +117,10 @@ effects = Array[Resource]([SubResource("Effect_bought_tank")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The squeeze held, and the last town fell with the HQ behind it."
+
 [resource]
 script = ExtResource("1")
 id = &"tc10_the_squeeze"
@@ -140,4 +144,4 @@ events = Array[Resource]([SubResource("Event_relief_column"), SubResource("Event
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The squeeze held, and the last town fell with the HQ behind it."
+defeat = Array[Resource]([SubResource("Line_defeat")])

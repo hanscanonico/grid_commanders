@@ -81,14 +81,14 @@ extends Resource
 @export_range(0, Unit.MAX_HP) var carry_floor_hp := 0
 
 @export_group("Story")
-## What is said before the battle and after it is won, as lines with speakers —
-## a campaign is a conversation between the generals fighting it. A line with no
-## speaker is narration.
+## What is said before the battle, after it is won and after it is lost, as
+## lines with speakers — a campaign is a conversation between the generals
+## fighting it. A line with no speaker is narration. A defeat is dialogue exactly
+## like a victory: the foe's line first, unconditional, then the war's own staff
+## voice, which may read the ledger — narrated when no speaker is set.
 @export var briefing: Array[MissionLine] = []
 @export var victory: Array[MissionLine] = []
-## One narrator's sentence on a loss. Not dialogue: a defeat is the only beat
-## nobody in the fiction is present to comment on.
-@export_multiline var defeat: String = ""
+@export var defeat: Array[MissionLine] = []
 
 
 ## The launch this mission is, stated once. `BattleSetup` reads this exactly as
@@ -119,7 +119,7 @@ func event(event_id: StringName) -> MissionEvent:
 ## Every fact this mission reads the war for: the condition it opens on, the
 ## conditions on its variant story lines, and the `Flag` triggers on its beats.
 ## Its beats' lines carry none — `story_error` refuses them there — so the story
-## half is the briefing and the victory dialogue.
+## half is the briefing, the victory and the defeat dialogue.
 ##
 ## Gathered rather than judged here, because whether the campaign ever writes a
 ## name is the one question a mission cannot ask about itself.
@@ -127,7 +127,7 @@ func read_flags() -> Array[StringName]:
 	var read: Array[StringName] = []
 	if unlock_requires != null:
 		read.append(unlock_requires.flag)
-	for line: MissionLine in briefing + victory:
+	for line: MissionLine in briefing + victory + defeat:
 		if line == null:
 			continue
 		for condition: FlagCondition in line.conditions():
@@ -425,6 +425,8 @@ func content_error(commander_db: CommanderDB) -> String:
 		return "mission '%s' scripts nothing" % id
 	if not briefing.is_empty() and victory.is_empty():
 		return "mission '%s' has a briefing but nothing to say when it is won" % id
+	if defeat.is_empty():
+		return "mission '%s' has nothing to say when it is lost" % id
 	for team: int in commanders:
 		var commander_id: StringName = commanders[team]
 		if not commander_db.has(commander_id):
@@ -474,19 +476,18 @@ func difficulty_error(difficulty_db: DifficultyDB) -> String:
 ## re-issues the beat and has to speak the same words, so a beat the war decides
 ## is a beat with a `Flag` trigger.
 ##
-## The briefing and the debrief are asked one at a time rather than concatenated:
-## they are two pages, and a single call over both would let an all-gated debrief
-## pass on the strength of the briefing's unconditional line.
+## The briefing and the two debriefs are asked one at a time rather than
+## concatenated: they are three pages, and a single call over them would let an
+## all-gated debrief pass on the strength of the briefing's unconditional line.
 func story_error(commander_db: CommanderDB) -> String:
-	var error := MissionLine.list_error(briefing, commander_db, true)
-	if error == "":
-		error = MissionLine.list_error(victory, commander_db, true)
-	if error != "":
-		return "mission '%s': %s" % [id, error]
+	for page: Array[MissionLine] in [briefing, victory, defeat]:
+		var page_error := MissionLine.list_error(page, commander_db, true)
+		if page_error != "":
+			return "mission '%s': %s" % [id, page_error]
 	for event: MissionEvent in events:
 		if event == null:
 			return "mission '%s' holds an empty event slot" % id
-		error = MissionLine.list_error(event.lines, commander_db, false)
+		var error := MissionLine.list_error(event.lines, commander_db, false)
 		if error != "":
 			return "mission '%s': event '%s': %s" % [id, event.id, error]
 	return ""

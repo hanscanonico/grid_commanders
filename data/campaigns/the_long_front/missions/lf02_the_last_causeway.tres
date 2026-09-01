@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -94,6 +94,10 @@ effects = Array[Resource]([SubResource("Effect_the_moment")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "The causeway fell before the column cleared, and the river stopped being a defence at all."
+
 [resource]
 script = ExtResource("1")
 id = &"lf02_the_last_causeway"
@@ -119,4 +123,4 @@ carry_in = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3a"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The causeway fell before the column cleared, and the river stopped being a defence at all."
+defeat = Array[Resource]([SubResource("Line_defeat")])

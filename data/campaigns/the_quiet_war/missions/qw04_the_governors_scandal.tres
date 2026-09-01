@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="2"]
@@ -112,6 +112,10 @@ effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_ledger")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The papers were signed, and the city became Iron ground the same way Selwich did — without anyone firing a shot."
+
 [resource]
 script = ExtResource("1")
 id = &"qw04_the_governors_scandal"
@@ -135,4 +139,4 @@ events = Array[Resource]([SubResource("Event_the_governors_courage"), SubResourc
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_4b")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
-defeat = "The papers were signed, and the city became Iron ground the same way Selwich did — without anyone firing a shot."
+defeat = Array[Resource]([SubResource("Line_defeat")])

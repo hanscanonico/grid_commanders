@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -98,6 +98,10 @@ effects = Array[Resource]([SubResource("Effect_crossroads_output")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "Vale's expensive army caught up with us, and our towns could not pay for the answer."
+
 [resource]
 script = ExtResource("1")
 id = &"sm05_the_open_ledger"
@@ -121,4 +125,4 @@ events = Array[Resource]([SubResource("Event_interest_accrues"), SubResource("Ev
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Vale's expensive army caught up with us, and our towns could not pay for the answer."
+defeat = Array[Resource]([SubResource("Line_defeat")])

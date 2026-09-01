@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -114,6 +114,10 @@ effects = Array[Resource]([SubResource("Effect_towns_saved")])
 once = true
 lines = Array[Resource]([])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "One town changed hands again before the other two were secure, and the argument goes on."
+
 [resource]
 script = ExtResource("1")
 id = &"qw11_the_raid_points"
@@ -138,4 +142,4 @@ events = Array[Resource]([SubResource("Event_ferrow_comes_back"), SubResource("E
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "One town changed hands again before the other two were secure, and the argument goes on."
+defeat = Array[Resource]([SubResource("Line_defeat")])

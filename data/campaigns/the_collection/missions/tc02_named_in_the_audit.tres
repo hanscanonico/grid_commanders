@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -118,6 +118,10 @@ effects = Array[Resource]([SubResource("Effect_bounty_banked"), SubResource("Eff
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("4")
+text = "The towns fell one by one, and the ledger's forged debt started looking real."
+
 [resource]
 script = ExtResource("1")
 id = &"tc02_named_in_the_audit"
@@ -141,4 +145,4 @@ events = Array[Resource]([SubResource("Event_the_collectors"), SubResource("Even
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The towns fell one by one, and the ledger's forged debt started looking real."
+defeat = Array[Resource]([SubResource("Line_defeat")])

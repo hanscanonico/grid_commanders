@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -127,6 +127,10 @@ effects = Array[Resource]([SubResource("Effect_three_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The ashen road stayed shut, and the column sent to open it is gone."
+
 [resource]
 script = ExtResource("1")
 id = &"fw10_ashen_crossing"
@@ -150,4 +154,4 @@ events = Array[Resource]([SubResource("Event_the_far_depots_books"), SubResource
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ward"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The ashen road stayed shut, and the column sent to open it is gone."
+defeat = Array[Resource]([SubResource("Line_defeat")])

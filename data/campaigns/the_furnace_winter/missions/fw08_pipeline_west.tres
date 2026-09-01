@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -150,6 +150,10 @@ effects = Array[Resource]([SubResource("Effect_two_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("6")
+text = "Depot 1 changed hands back, and the western road closed over our heads."
+
 [resource]
 script = ExtResource("1")
 id = &"fw08_pipeline_west"
@@ -173,4 +177,4 @@ events = Array[Resource]([SubResource("Event_the_recovery_column"), SubResource(
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Depot 1 changed hands back, and the western road closed over our heads."
+defeat = Array[Resource]([SubResource("Line_defeat")])

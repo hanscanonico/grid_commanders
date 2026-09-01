@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=57 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=58 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -243,6 +243,10 @@ effects = Array[Resource]([SubResource("Effect_the_pass_guns")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_reed")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "The keep held, and the alliance that took eleven weeks to build broke against the one wall it could not move."
+
 [resource]
 script = ExtResource("1")
 id = &"lf18_the_keep_at_draeg_hold"
@@ -266,4 +270,4 @@ events = Array[Resource]([SubResource("Event_the_allies_arrive"), SubResource("E
 par_day = 9
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
-defeat = "The keep held, and the alliance that took eleven weeks to build broke against the one wall it could not move."
+defeat = Array[Resource]([SubResource("Line_defeat")])

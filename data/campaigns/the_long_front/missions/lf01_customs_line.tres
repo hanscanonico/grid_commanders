@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -106,6 +106,10 @@ effects = Array[Resource]([SubResource("Effect_column_saved")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("3")
+text = "The column was still on the road when the line broke. Draeg's armour did not stop to count what it drove over."
+
 [resource]
 script = ExtResource("1")
 id = &"lf01_customs_line"
@@ -130,4 +134,4 @@ par_day = 6
 carry_out = true
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6"), SubResource("Line_8")])
-defeat = "The column was still on the road when the line broke. Draeg's armour did not stop to count what it drove over."
+defeat = Array[Resource]([SubResource("Line_defeat")])

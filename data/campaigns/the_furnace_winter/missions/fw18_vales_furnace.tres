@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=49 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=50 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -208,6 +208,10 @@ effects = Array[Resource]([SubResource("Effect_doorstep_sortie")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The furnace kept running for Vale, and the coldest winter anyone remembers went on."
+
 [resource]
 script = ExtResource("1")
 id = &"fw18_vales_furnace"
@@ -233,4 +237,4 @@ carry_in = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_7"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_9"), SubResource("Line_8"), SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The furnace kept running for Vale, and the coldest winter anyone remembers went on."
+defeat = Array[Resource]([SubResource("Line_defeat")])

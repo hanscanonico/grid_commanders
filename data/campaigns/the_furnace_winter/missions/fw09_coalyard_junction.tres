@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=47 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=48 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -192,6 +192,10 @@ effects = Array[Resource]([SubResource("Effect_two_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The coalyard stayed shut, and Ferrow was paid for every man we lost."
+
 [resource]
 script = ExtResource("1")
 id = &"fw09_coalyard_junction"
@@ -215,4 +219,4 @@ events = Array[Resource]([SubResource("Event_invoice_submitted"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_short"), SubResource("Line_5"), SubResource("Line_5_invoiced"), SubResource("Line_6")])
-defeat = "The coalyard stayed shut, and Ferrow was paid for every man we lost."
+defeat = Array[Resource]([SubResource("Line_defeat")])

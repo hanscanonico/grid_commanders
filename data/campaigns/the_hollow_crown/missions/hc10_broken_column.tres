@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -117,6 +117,10 @@ effects = Array[Resource]([SubResource("Effect_second_company")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2"), SubResource("Event_line_3")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("6")
+text = "Draeg's column broke on the ridge road, and the alliance lost its first marshal."
+
 [resource]
 script = ExtResource("1")
 id = &"hc10_broken_column"
@@ -143,4 +147,4 @@ events = Array[Resource]([SubResource("Event_the_thin_column_marches"), SubResou
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Draeg's column broke on the ridge road, and the alliance lost its first marshal."
+defeat = Array[Resource]([SubResource("Line_defeat")])

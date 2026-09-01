@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -104,6 +104,10 @@ effects = Array[Resource]([SubResource("Effect_the_whole_purse_leaves")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
+[sub_resource type="Resource" id="Line_defeat"]
+script = ExtResource("5")
+text = "The outer wall held, and the last garrison stayed exactly what its name promised."
+
 [resource]
 script = ExtResource("1")
 id = &"hc14_last_garrison"
@@ -129,4 +133,4 @@ events = Array[Resource]([SubResource("Event_he_takes_the_receipts"), SubResourc
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The outer wall held, and the last garrison stayed exactly what its name promised."
+defeat = Array[Resource]([SubResource("Line_defeat")])
