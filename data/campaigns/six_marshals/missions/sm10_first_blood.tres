@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -10,10 +10,11 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_take_the_forward_depot_before_vance_"]
 script = ExtResource("2")
-text = "Take the forward depot before Vance digs in."
+text = "Capture the forward depot before Vance digs in."
 cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -85,9 +86,33 @@ effects = Array[Resource]([SubResource("Effect_compounded_funds"), SubResource("
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Orlov_has_a_trophy"]
+script = ExtResource("12")
+flag = &"orlov_trophy"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_orlov_trophy"]
 script = ExtResource("4")
-text = "The fight dragged on, and every extra day was a day that belonged to her."
+speaker = &"cass_orlov"
+text = "Vance. I have one of theirs. It says the recon breaks first."
+requires = SubResource("Orlov_has_a_trophy")
+
+[sub_resource type="Resource" id="Line_orlov_no_trophy"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "Vance. Three weeks and nothing of theirs limped. Make them slow instead."
+unless = SubResource("Orlov_has_a_trophy")
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "You took your time at the depot. Three percent a day. I'd have waited for every one of them."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Colt said go now. We went in three tidy waves instead. By the third one she'd already added us up."
 
 [resource]
 script = ExtResource("1")
@@ -110,6 +135,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_three_percent_five_times")])
 par_day = 4
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_orlov_trophy"), SubResource("Line_orlov_no_trophy"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

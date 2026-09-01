@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -100,9 +100,28 @@ effects = Array[Resource]([SubResource("Effect_the_carried_charge")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "Two columns met at the crossroads to join up, and that was the last thing they did together."
+speaker = &"radek_morn"
+text = "Two of your columns met at a crossroads. To join up, I expect. It's the last thing they did together."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Four lost, on a board that won't let you bunch. Reed said nobody does it on his watch. Somebody did."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Six towns and no two within reach of each other, so we'd hold them one at a time and he'd take them the same way."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -127,4 +146,4 @@ events = Array[Resource]([SubResource("Event_the_charge_is_ready_again"), SubRes
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

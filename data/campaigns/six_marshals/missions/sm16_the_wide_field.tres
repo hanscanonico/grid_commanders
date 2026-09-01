@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -8,10 +8,11 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_take_the_relay_before_morn_s_hammerf"]
 script = ExtResource("2")
-text = "Take the relay before Morn's Hammerfall comes online."
+text = "Capture the relay before Morn's Hammerfall comes online."
 cell = Vector2i(9, 2)
 
 [sub_resource type="Resource" id="Failure_keep_it_loose"]
@@ -78,9 +79,46 @@ effects = Array[Resource]([SubResource("Effect_charge_the_hammer"), SubResource(
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("10")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Draegs_column_intact"]
+script = ExtResource("10")
+flag = &"draeg_column_intact"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_draeg_whole"]
 script = ExtResource("4")
-text = "The advance bunched at the relay, and Hammerfall found exactly the target it wanted."
+speaker = &"viktor_draeg"
+text = "Morn. My column came off the border whole. It's yours if you can pay for it."
+requires = SubResource("Draegs_column_intact")
+
+[sub_resource type="Resource" id="Line_draeg_held"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "Morn. They held me in a gap for a week. Don't stand in one."
+unless = SubResource("Draegs_column_intact")
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "Three of you stood together. Once. That's all the field ever needed to show me."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "A dozen gone under one charge, on nineteen squares of open field, because we'd walked at the relay in a bunch anyway."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We spread out the way the plan said, which on nineteen squares of open field turns out to mean nineteen small targets he's free to hit one at a time."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -103,6 +141,6 @@ failures = Array[Resource]([SubResource("Failure_keep_it_loose")])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_charge_is_ready")])
 par_day = 6
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_draeg_whole"), SubResource("Line_draeg_held"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

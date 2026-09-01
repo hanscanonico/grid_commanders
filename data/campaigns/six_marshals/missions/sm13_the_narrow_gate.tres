@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -12,10 +12,11 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="14"]
 
 [sub_resource type="Resource" id="Objective_take_the_depot_before_draeg_s_column"]
 script = ExtResource("2")
-text = "Take the depot before Draeg's column breaks through the gate."
+text = "Capture the depot before Draeg's column breaks through the gate."
 cell = Vector2i(7, 4)
 
 [sub_resource type="Resource" id="Bonus_break_the_spear"]
@@ -104,9 +105,33 @@ effects = Array[Resource]([SubResource("Effect_through_the_gate"), SubResource("
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Vance_dug_in"]
+script = ExtResource("14")
+flag = &"vance_dug_in"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_vance_dug_in"]
 script = ExtResource("4")
-text = "The column found room to spread out, and armour in the open is armour that wins."
+speaker = &"iona_vance"
+text = "Draeg. I had five days at the depot and every one of them paid. Take whatever days they'll give you."
+requires = SubResource("Vance_dug_in")
+
+[sub_resource type="Resource" id="Line_vance_hurried"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "Draeg. They took the depot before I'd had five days at it. Don't plan on being given time."
+unless = SubResource("Vance_dug_in")
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "Six days at the gate, then on the seventh my column came through it in formation, the way an honest army's supposed to."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Voss said the middle of the gap. We stood a bit to one side. That's all a column needs."
 
 [resource]
 script = ExtResource("1")
@@ -129,6 +154,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_break_the_spear")])
 events = Array[Resource]([SubResource("Event_the_spear_breaks"), SubResource("Event_the_column_is_through")])
 par_day = 6
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_vance_dug_in"), SubResource("Line_vance_hurried"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

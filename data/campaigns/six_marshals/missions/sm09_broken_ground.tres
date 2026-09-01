@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=47 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -148,9 +148,45 @@ effects = Array[Resource]([SubResource("Effect_relief")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("10")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("10")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_orlov_par"]
 script = ExtResource("4")
-text = "Orlov's patience paid off — a wounded flank finally stood in the open."
+speaker = &"cass_orlov"
+text = "Seven days. Nothing of yours limped in all that time. I've hunted quieter woods, but not many."
+requires = SubResource("Run_par")
+
+[sub_resource type="Resource" id="Line_vance_next"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "A week in the hills, Orlov. Nothing limped. Waiting's only worth it when every day of it costs them something."
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "Six of yours in the hills. I counted them going in. I've counted them not coming out."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Six lost before the relief got here. He'd counted every one. The hills were his a day early."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We'd stood watch in the open while he stood watch in the dark, so his side of that trade was always going to be cheaper."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -174,5 +210,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_scent"), SubResource("Event_i_keep_what_i_catch"), SubResource("Event_the_relief_track")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_orlov_par"), SubResource("Line_vance_next")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -142,9 +142,32 @@ effects = Array[Resource]([SubResource("Effect_depot_dividend")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("9")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_vance_par"]
 script = ExtResource("4")
-text = "We sat on the bank too long, and by the time we pushed, her army had grown into the job."
+speaker = &"iona_vance"
+text = "Six days. You crossed before the days were worth anything to me. I'd barely started adding."
+requires = SubResource("Run_par")
+
+[sub_resource type="Resource" id="Line_draeg_next"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "Four days and a bridge. Noted. My column doesn't cross one at a time."
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "Four days on the bank and then a bridge one unit wide, so I've had longer to think than you have to cross."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Ash said no loitering on either side of that line. We loitered. On both sides."
 
 [resource]
 script = ExtResource("1")
@@ -168,5 +191,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_she_counts_the_days"), SubResource("Event_the_push"), SubResource("Event_the_depot_still_pays")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_vance_par"), SubResource("Line_draeg_next")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])
