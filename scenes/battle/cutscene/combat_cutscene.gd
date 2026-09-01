@@ -54,8 +54,8 @@ var _result: CombatSnapshot.CombatResult
 var _styles: BattleStyleDB
 var _atk_style: BattleStyle
 var _def_style: BattleStyle
-## And the signature each chassis arrives on, which is the fired one for a side
-## that shot and its own primary for a side that never answered.
+## And the signature each chassis arrives on, which is its own primary whatever
+## it turned out to fire.
 var _atk_arrival: BattleStyle
 var _def_arrival: BattleStyle
 
@@ -113,8 +113,8 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 	_result = result
 	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
 	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
-	_atk_arrival = _arrival_style(attacker.type, result.attacker_weapon_slot)
-	_def_arrival = _arrival_style(defender.type, result.counter_weapon_slot)
+	_atk_arrival = _chassis_style(attacker.type)
+	_def_arrival = _chassis_style(defender.type)
 	_play.accent = accent_of(attacker.team)
 	var atk_terrain := _terrain_at(attacker.cell)
 	var def_terrain := _terrain_at(defender.cell)
@@ -263,13 +263,12 @@ static func _style_pose(side: CutsceneSide, style: BattleStyle, arrival: BattleS
 	side.dust = arrival.dust
 
 
-## The signature a chassis arrives on. A side that fired arrives on that weapon;
-## a side with no slot — every unanswered shot, every kill, every indirect — is
-## carrying its primary whether or not it got to use it, and a tank shelled by
-## artillery must still roll in as a tank rather than trudge in unarmed.
-func _arrival_style(type: UnitType, slot: StringName) -> BattleStyle:
-	if slot == DamageChart.PRIMARY or slot == DamageChart.SECONDARY:
-		return _styles.for_weapon(type, slot)
+## The signature a chassis arrives on: its own primary, whatever the rules
+## selected to shoot with. Arriving describes the unit rather than the weapon —
+## a tank rolls in as a tank against infantry, shelled by artillery it never
+## answers, or with its cannon dry — so this is the one read of it, and
+## everything about the shot itself stays with the resolved slot's style.
+func _chassis_style(type: UnitType) -> BattleStyle:
 	return _styles.by_id(type.battle_style)
 
 

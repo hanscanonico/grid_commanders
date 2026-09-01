@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"bazooka"
 projectile = &"rocket"
-label = &"BAZOOKA"
+label = &"MISSILE"
 shots_per_figure = 1
 sfx = &"rocket"
 travel_scale = 1.25

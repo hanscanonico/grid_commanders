@@ -71,6 +71,11 @@ const KNOCK_PX := 4.0
 const KNOCK_SECONDS := 0.08
 ## The shove a standing figure takes as its half is hit, decaying with the flash.
 const BRACE_PX := 2.0
+## Where a figure's barrel mouth sits above and inward of its feet. `MUZZLE_UP`
+## is also the height the wind-up's shear is evaluated at, so the flash tracks
+## the row `_draw_tipped` really displaced rather than a second guess at it.
+const MUZZLE_IN := 22.0
+const MUZZLE_UP := 34.0
 ## The roll-in: how far outward of its firing slot a squad starts, how far past
 ## the slot it dips as it halts, and the share of the run that settle happens
 ## over. The dip is what makes the halt read as weight rather than as a stop.
@@ -313,7 +318,8 @@ func muzzle_points() -> PackedVector2Array:
 	var on_foot := _on_foot()
 	var lean := sin(aim_tilt(aim_p, aim_pitch))
 	for slot in squad_now:
-		var barrel := _figure_point(arena, slot) + Vector2(_inward(22.0 + lean * 34.0), -34.0)
+		var reach := _inward(MUZZLE_IN + lean * MUZZLE_UP)
+		var barrel := _figure_point(arena, slot) + Vector2(reach, -MUZZLE_UP)
 		var roll := arrive_offset(arrive_p, arrive_scale, unit.type.domain, slot, clock, on_foot)
 		points.append(barrel + _pose_offset(roll, slot, 0.0, true))
 	return points

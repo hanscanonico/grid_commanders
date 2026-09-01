@@ -4,22 +4,22 @@
 
 [resource]
 script = ExtResource("1")
-id = &"pintle"
-projectile = &"tracer"
-label = &"MG"
-shots_per_figure = 3
+id = &"convoy"
+projectile = &"none"
+label = &""
+shots_per_figure = 1
 sfx = &"shot"
-travel_scale = 0.85
+travel_scale = 1.0
 arc = 0.0
-tint = Color(1, 0.94, 0.62, 1)
-muzzle = 9.0
-aim_seconds = 0.06
+tint = Color(1, 1, 1, 1)
+muzzle = 0.0
+aim_seconds = 0.0
 aim_lift = 0.0
 aim_pitch = 0.0
-sustained = true
-recoil = 0.40
+sustained = false
+recoil = 0.00
 impact_radius = 0.0
-fire_stagger = 0.045
-arrive_scale = 0.7
-dust = 0.3
+fire_stagger = 0.0
+arrive_scale = 1.0
+dust = 0.35
 impact_debris = 0

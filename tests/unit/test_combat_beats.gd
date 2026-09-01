@@ -34,6 +34,7 @@ const STYLE_IDS: Array[StringName] = [
 	&"torpedo",
 	&"pintle",
 	&"bazooka",
+	&"convoy",
 	&"unarmed",
 ]
 
