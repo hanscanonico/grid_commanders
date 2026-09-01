@@ -18,7 +18,8 @@ def _burner_reach(pose: Pose) -> int:
     byte-identical cells — `MOVE_A`'s held burn is model space, not
     something the player sees. What the board gets is the two nozzles
     lighting one visible course together: rest none, `Pose.B` lit,
-    `MOVE_A` none, `MOVE_B` lit, 7 px per cell. `beat` alone decides
+    `MOVE_A` none, `MOVE_B` lit, 11 px per cell in every livery — 7 newly
+    opaque and 4 the softening pass takes around them. `beat` alone decides
     whether there is a plume, and `MOVE_B` shows it a course further out
     than `MOVE_A` does.
     """
