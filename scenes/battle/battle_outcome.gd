@@ -142,7 +142,7 @@ func enter_victory() -> void:
 	CampaignSession.record(_battle.game)
 	Music.stop()  # the theme fades out under the fanfare
 	Sfx.play(&"fanfare")
-	victory_screen.announce(_result_text(), _day_text(), _action_word())
+	victory_screen.announce(_result_text(), _day_text(), _action_word(), _menu_word())
 	victory_screen.offer_replay(_has_recording())
 	_bind_victory_commander()
 	victory_screen.show()
@@ -163,13 +163,36 @@ func enter_victory() -> void:
 ## What pressing the action button does, which is what the word on it has to
 ## name: a playback has no match to play again, so it restarts the recording; a
 ## campaign mission is retried through the session, never rematched as the
-## skirmish its finished board looks like; everything else plays itself again.
+## skirmish its finished board looks like — and one already won is replayed, since
+## "Retry" over "Mission complete!" says it was not; everything else plays itself
+## again.
 func _action_word() -> String:
 	if _battle.replay_path != "":
 		return "Restart"
-	if CampaignSession.active():
-		return "Retry"
-	return "Rematch"
+	if not CampaignSession.active():
+		return "Rematch"
+	var outcome := CampaignSession.outcome
+	if outcome != null and outcome.status == MissionRuntime.Status.SUCCESS:
+		return "Replay"
+	return "Retry"
+
+
+## Where the menu button leads, which is what the word on it has to name. The
+## exit is the same one everywhere — `BattleExit.to_main_menu` — but a finished
+## mission's main menu plays the debrief and then the hub, so "Main Menu" over it
+## read as quitting the war: after a win the next thing is the next mission, after
+## a loss it is the generals' account of what went wrong. Keyed to the verdict,
+## never the winner, because a tactical victory can still fail a mission.
+func _menu_word() -> String:
+	var outcome := CampaignSession.outcome
+	if outcome == null:
+		return "Main Menu"
+	match outcome.status:
+		MissionRuntime.Status.SUCCESS:
+			return "Continue"
+		MissionRuntime.Status.FAILURE:
+			return "Debrief"
+	return "Main Menu"
 
 
 ## Whether there is a recording to offer. Whether one was *written* is the
