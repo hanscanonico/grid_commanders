@@ -8,14 +8,19 @@ from .pose import Pose, beat, moving
 
 
 def _burner_reach(pose: Pose) -> int:
-    """How many texels of lit plume trail the fighter's two nozzles.
+    """How many courses of lit plume the fighter's two nozzles carry.
 
-    Cold at rest (0: the mouths stay `bore`). The off-beat relights both to
-    `flame` and runs the plume a texel further whenever the jet is also under
-    way, so the four poses read as one afterburner spooling up: 2 on the idle
-    beat, 1 held on `MOVE_A`, 2 again on `MOVE_B` — one texel further than
-    `MOVE_A`, `beat` alone deciding the length exactly as it decides whether
-    the mouths are lit at all.
+    Cold at rest (0: the mouths stay `bore`), 2 on the off-beat, 1 held
+    between beats while the jet is under way.
+
+    Only the SECOND course paints. The first sits at the nozzle mouths
+    (y -1), occluded in every livery, so reach 0 and reach 1 render
+    byte-identical cells — `MOVE_A`'s held burn is model space, not
+    something the player sees. What the board gets is the two nozzles
+    lighting one visible course together: rest none, `Pose.B` lit,
+    `MOVE_A` none, `MOVE_B` lit, 7 px per cell. `beat` alone decides
+    whether there is a plume, and `MOVE_B` shows it a course further out
+    than `MOVE_A` does.
     """
     if beat(pose):
         return 2

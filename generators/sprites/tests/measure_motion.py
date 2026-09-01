@@ -136,10 +136,11 @@ the SAME model for both poses (`build_model` verified it byte for byte), pose
 B nothing but pose A translated four atlas pixels up. S2 (AFTER) gives each a
 named beat, read the way the copters' rotor is: opaque coverage IoU between
 the two poses with `BOB_PX` taken back out, over every livery. The fighter's
-twin nozzles relight and the plume runs a texel further (0.991 IoU, both
-clips); the bomber's tail takes a highlight, retoned in place rather than
-moved (1.000 IoU — no silhouette texel changes hands at all on the idle beat,
-only tone). Both floors sit comfortably inside the copters' own 0.85. The gain
+twin nozzles light a course of plume beyond their mouths (0.991 IoU, both
+clips — the mouth course itself is occluded in every livery, so the visible
+plume is the one course past it and nothing at rest); the bomber's tail takes
+a highlight, retoned in place rather than moved (1.000 IoU — no silhouette
+texel changes hands at all on the idle beat, only tone). Both floors sit comfortably inside the copters' own 0.85. The gain
 barely shows in the rung-1 fleet total (ALL, above: 760 -> 759 changed, 310 ->
 310 silhouette, the fighter's plume the only one of the two the resample
 survives at this scale) because the two were already scoring near the top of
@@ -210,7 +211,9 @@ one held nose-down dip both frames shared before S2 (so the pair differed by
            102    74   31  1.39  |    379   284  126  1.25   after
 
 `MOVE_B` differs from `MOVE_A` by the same beat the ambient pair carries, plus
-the fighter's plume run one texel further than `MOVE_A`'s held burn and the
+the fighter's plume run one course further than `MOVE_A`'s held burn — which
+reaches only the occluded mouth course, so the visible plume is `MOVE_A` cold
+and `MOVE_B` lit, exactly as the ambient pair reads — and the
 bomber's four nacelle mouths flaring, retoned in place, and its nose dipping a
 further board texel over `MOVE_A`'s trim — nothing lights or ticks on
 `MOVE_A` at all, `beat(pose)` gating the nacelles and the tail tick the same

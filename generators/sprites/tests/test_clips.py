@@ -80,8 +80,11 @@ class AmbientFrames(unittest.TestCase):
         (a dz of two voxels, or a `(dx +1, dy -1)` diagonal); the two foot
         figures by leaning the whole upper body; the copters by turning
         their rotors; the four hulls by the `BOB_PX` hop plus an assembly of
-        their own riding it; fighter and bomber by the hop alone, which is
-        one texel of altitude exactly.
+        their own riding it; fighter and bomber by that same hop — one texel
+        of altitude exactly — plus the beat their own columns now carry (the
+        burner plume, the tail and canopy retones), which
+        `test_the_bob_lifts_the_airframe_and_a_named_delta_besides` is what
+        actually holds them to.
         """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
@@ -180,7 +183,18 @@ class AmbientFrames(unittest.TestCase):
         copters' question — opaque coverage must still mostly agree once
         the bob is subtracted back out. What the beat may never do is reach
         the hover line down, where the cast shadow lives: pose B's cell is
-        byte-identical to pose A's from `ground` down, in every livery."""
+        byte-identical to pose A's from `ground` down, in every livery.
+
+        Neither of those two readings can tell a retone from nothing: the
+        model differs on a pure material swap whether or not the swapped
+        voxel has a face the ramp ever paints, and IoU is over opaque
+        coverage, so it scores an all-tone beat 1.000 — which is exactly
+        what the bomber's idle beat is. So ask the composed cell outright:
+        settled back down by `BOB_PX`, pose B must stop being byte-identical
+        to pose A in at least one livery (measured 2026-09-01: fighter 29-31
+        px in all six, bomber 6 px in five — `iron`'s ramp puts the tail's
+        highlight on the tone it already had). A beat that paints nothing
+        anywhere fails here and passes everything else."""
         # One board texel and not a pixel less: the board draws the 64x96
         # cell at 0.25 scale, so a bob under 4px moves no visible pixel at
         # all — it only changes which source pixel the resample keeps, which
@@ -194,6 +208,7 @@ class AmbientFrames(unittest.TestCase):
                 shared = sum(1 for v, mat in a_model.items() if b_model.get(v) == mat)
                 self.assertGreater(shared / len(a_model), 0.9)
             ground = atlas.cell_placement(uid, Pose.A).ground
+            lit = 0
             for fac in FACTIONS:
                 a = pose_cell(uid, fac)
                 b = pose_cell(uid, fac, Pose.B)
@@ -204,6 +219,9 @@ class AmbientFrames(unittest.TestCase):
                     )
                 nb = pose_cell(uid, fac, shadow=False)
                 bb = pose_cell(uid, fac, Pose.B, shadow=False)
+                settled = Image.new("RGBA", bb.size)
+                settled.paste(bb, (0, atlas.BOB_PX))
+                lit += settled.tobytes() != nb.tobytes()
                 pa, pb = nb.load(), bb.load()
                 w, h = nb.size
                 a_set = {
@@ -219,6 +237,8 @@ class AmbientFrames(unittest.TestCase):
                     self.assertGreaterEqual(
                         len(a_set & b_set) / len(a_set | b_set), self.MIN_AIR_DELTA_IOU
                     )
+            with self.subTest(unit=uid, reading="beat"):
+                self.assertGreater(lit, 0)
 
     def test_every_hull_moves_a_part_and_not_only_its_altitude(self):
         """The bob is a fleet rising in unison; the beat is a ship working.
