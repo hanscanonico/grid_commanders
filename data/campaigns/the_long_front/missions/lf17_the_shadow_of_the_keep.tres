@@ -111,7 +111,7 @@ text = "Everything the Dominion had left to spare is still standing on this hill
 [sub_resource type="Resource" id="Line_defeat_2"]
 script = ExtResource("3")
 speaker = &"tomas_reed"
-text = "More than nine units gone before the outpost fell. That's nothing left to arrive with. I said late was better than short a flank."
+text = "More than nine units gone and the outpost still standing. That's nothing left to arrive with. I said late was better than short a flank."
 requires = SubResource("Run_failure")
 
 [sub_resource type="Resource" id="Line_defeat_3"]

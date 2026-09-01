@@ -316,7 +316,7 @@ requires = SubResource("Run_full")
 [sub_resource type="Resource" id="Line_12"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Second time up this hill. The report reads better than the last one did. I'll keep the first one anyway, for comparison."
+text = "Up this hill again. The report reads better than the last one did. I'll keep the first one anyway, for comparison."
 requires = SubResource("Run_best")
 unless = SubResource("Run_first")
 

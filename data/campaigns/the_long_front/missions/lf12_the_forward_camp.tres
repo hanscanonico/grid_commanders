@@ -103,7 +103,7 @@ text = "Orlov's camp is still standing and the order that said advance goes back
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Seven days. The line moved on every one of them. Put that in the report before anyone asks what it cost."
+text = "Inside the week. The line moved every day of it. Put that in the report before anyone asks what it cost."
 requires = SubResource("Run_par")
 
 [resource]

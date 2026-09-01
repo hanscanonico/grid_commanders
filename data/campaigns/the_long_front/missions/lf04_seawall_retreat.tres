@@ -113,7 +113,7 @@ text = "The seawall's down and the harbour's still full of boats. They can stay 
 [sub_resource type="Resource" id="Line_defeat_2"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "Your line broke a day short of the last boat. Ask the quay what a day's worth. I already know."
+text = "Your line broke short of the last boat. Ask the quay what a day's worth. I already know."
 requires = SubResource("Run_routed")
 
 [sub_resource type="Resource" id="Line_defeat_3"]

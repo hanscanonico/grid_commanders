@@ -115,7 +115,7 @@ at_most = 3
 [sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "Four units and a river. Neither cost my column an hour. The customs road is mine."
+text = "Four units and a border post. Neither cost my column an hour. The customs road is mine."
 
 [sub_resource type="Resource" id="Line_defeat_2"]
 script = ExtResource("3")

@@ -121,12 +121,12 @@ lines = Array[Resource]([SubResource("Event_line_ward")])
 [sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
 speaker = &"konrad_vale"
-text = "The works were costed for a season. You spent three days against them; the estimate did not move. The passes stay closed."
+text = "The works were costed for a season. You spent what you had against them; the estimate did not move. The passes stay closed."
 
 [sub_resource type="Resource" id="Line_defeat_2"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Vale's works still sit on the only road through the passes. We're back at the foot of them. First time across our own border; it lasted three days."
+text = "Vale's works still sit on the only road through the passes. First time across our own border. We're back at the foot of it tonight."
 
 [resource]
 script = ExtResource("1")
