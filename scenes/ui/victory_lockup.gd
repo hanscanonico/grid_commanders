@@ -81,7 +81,7 @@ func _build() -> void:
 	rematch_button = _action(rows, UiTheme.ButtonVariant.PRIMARY, "")
 	watch_button = _action(rows, UiTheme.ButtonVariant.SECONDARY, "Watch Replay")
 	watch_button.hide()
-	menu_button = _action(rows, UiTheme.ButtonVariant.SECONDARY, "Main Menu")
+	menu_button = _action(rows, UiTheme.ButtonVariant.SECONDARY, "")
 
 
 func _action(rows: VBoxContainer, variant: UiTheme.ButtonVariant, text: String) -> Button:
