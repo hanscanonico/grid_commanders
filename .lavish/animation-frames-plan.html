@@ -162,7 +162,7 @@
 </div>
 
 <div class="slice">
-	<h3>S8 — Answer the legibility regression <span class="tag art">ART</span> <span class="tag size">XL — its own programme</span></h3>
+	<h3>S8 — Answer the legibility regression <span class="tag art">ART</span> <span class="tag size">XL — its own programme</span> <span class="tag shipped">shipped</span></h3>
 	<p>Scheduled here (after S2/S3, before the new-pose slices) so the art re-baseline happens once. The board draws 64 px cells at 16 px with nearest filtering; the round-10 contour is mostly unsampled at that ratio, so 94.8% of clear board cells fail while the cut-in reads fine (21.6%). The fix is in the generator, and round 11 already candidate-measured the shape of it: a <strong>logical-pixel contour — 4 px lit side / 2 px ground side</strong> — thick enough that at 4:1 every sampling phase keeps at least one contour texel. Plus a value pass: 71% of failures are hue-carried (value-blind), so the interior ramp needs more value separation against the grounds, not new hues.</p>
 	<ul>
 		<li>Work in <code>spritegen/aa.py</code> (contour pass) and <code>palette.py</code> outline modes; iterate against <code>make legibility-check</code>'s frame axis and the worst-20 gallery.</li>

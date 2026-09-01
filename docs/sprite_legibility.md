@@ -262,6 +262,118 @@ concrete worst case.
 The baseline digest was rewritten again (`make legibility-baseline`), so the 60 gains are the line
 the next change is held to.
 
+## Re-read 2026-09-01, after S8 answered the board-scale regression
+
+The 2026-08-25 regression above is answered. Read the whole way through this page as **the previous
+art's** until here; this section supersedes every headline number above it. Same control this page
+has always used, run on this tree before the change: **clear 31,625 failing (86.1%) and 6,968 (80.6%)
+fogged**, against 4,082 (50.4%) the round-10 band once bought and 1,276 (15.8%) the 1px G-buffer
+outline it replaced — three re-reads of unrelated shipped work (S2's air retones, S3's shadow refit,
+the mountain peak and the wash) had drifted the board's own headline to 87.1% clear / 79.1% fogged on
+`idle_a` alone, against the 2026-08-25 section's 94.8% / 79.9%, and neither move was a finding for
+this page to answer. **After: clear 18,247 failing (49.7%) and 2,921 (33.8%) fogged** — 17,690 of the
+45,360 rows moved, every one of them recovering. Hue-carried failures fall with everything else,
+72.9% → 69.5% of what remains, so the residual is still mostly value-blind rather than newly
+illegible.
+
+| view | clear cells | failing (before → after) | fogged failing (before → after) |
+| --- | --- | --- | --- |
+| board | 34,560 | 88.2% → **52.5%** | — |
+| cutin | 2,160 | 52.2% → **4.3%** | — |
+
+| frame | clear cells | failing (before → after) | fogged failing (before → after) |
+| --- | --- | --- | --- |
+| board `idle_a` | 8,640 | 87.1% → **47.7%** | 79.1% → **28.4%** |
+| board `idle_b` | 8,640 | (unread) → 51.4% | (unread) → 32.2% |
+| board `walk_a` | 8,640 | (unread) → 55.5% | (unread) → 34.4% |
+| board `walk_b` | 8,640 | (unread) → 55.6% | (unread) → 40.3% |
+| cutin `idle_a` | 1,080 | (unread) → **5.2%** | — |
+| cutin `idle_b` | 1,080 | (unread) → **3.3%** | — |
+
+(`idle_a`'s before is the only frame this page's own control read on the previous section's tree;
+the other five are read once, after, since the frame axis moved with the same commit.) **The cut-in
+reading did not get worse — it improved by an order of magnitude**, the same mechanism that answers
+the board paying it forward: the figure sheets are the board sheets minus the tile's cast shadow
+(`test_figure_sheet.gd`), so a thicker, value-clearing contour on the board is the same contour at
+1:1.
+
+| faction row | failing (clear, bare board) |
+| --- | --- |
+| iron | **35.7%** |
+| gold | 52.5% |
+| meridian | 51.1% |
+| aurora | 50.9% |
+| neutral | 53.9% |
+| verdant | 54.1% |
+
+Iron stays the strongest row — it was already answering the board-scale question the other five
+now share, having worn `OUTLINE_HEAVY` since round 11 — and the other five converge on one number
+within five points of each other, where round 11 had meridian and gold at 7% sunward-dark and iron
+and neutral at 63%. That convergence is the mechanism, not a coincidence: see below.
+
+### The mechanism
+
+Two changes, both in `spritegen/voxel.py`, scoped to units and the massif — never to a property,
+which a board reads AGAINST an army and not as one (`is_unit`, `top_slot == S_RIM`, below).
+
+1. **`_thicken_contour`.** The round-10 band is back, in shape only: `CONTOUR_DEPTH` states 4 px on
+   the lit edges and 2 on the ground-facing ones, same split round 10 measured through this same
+   harness. It is not round 10's implementation — that band grew outward as well as in, spending a
+   `_HALO` this codebase's `_bounds` margin no longer reserves, and the round-11 G-buffer outline it
+   grew from is a different mechanism entirely (per-pixel, off `edge_mask`, not a band walk from a
+   silhouette scan). S8's version claims **entirely inward**, off the plane behind each already-
+   decided 1px line, so the alpha never moves and every geometry-only reading — silhouette IoU, mass
+   drift, the S3 shadow footprint — answers exactly as it did with a 1px line. Four things stop a
+   claim: the model's own alpha boundary, a pixel already carrying another line (`MID_CONTOUR`), a
+   fixed accent or a gunmetal fitting's own lit face (the identifying feature the round-10 band gave
+   up reach for), and a pixel already boundary-adjacent on its OWN account — a part thinner than
+   `CONTOUR_DEPTH` (a rotor blade, a rack rail) is left at its 1px line rather than having one edge's
+   walk read clean through to the far side's.
+2. **`_selective_outline`'s fallback, made unconditional for units.** S8 measured that no row's
+   ordinary lift clears the board's own ground band from the sunward silhouette — not `OUTLINE_HEAVY`
+   alone, every row, including a chromatic row's own S3 token (`clears_the_ground`, the mechanism
+   `generators/sprites/docs/outlines.md` names). Round 11's `OUTLINE_LIGHT` paid that in colour
+   alone, which the cut-in's 1:1 reading could afford and the board's 4:1 one could not; S8 gives
+   every row heavy's old answer —
+   fall to the ground-facing contour where the lift cannot clear — and retires `OUTLINE_RIM`'s climb
+   on the board specifically, because a climbed rung is still a colour bet and the ruler measured
+   aurora and verdant reading WORSE through it (82-86% failing) than through the plain fallback
+   (48-52%, matching the other four rows). Off the board — a property, which stops at
+   `BUILDING_TOP_SLOT` rather than the rim a unit keeps — nothing changed: `OUTLINE_LIGHT` and
+   `OUTLINE_RIM` keep round 11's own answer there, because applying the fallback to properties too
+   cost 15 of 20 faction-pair ownership readings
+   (`PropertyPalette.test_two_owners_are_tellable_apart_at_the_boards_own_scale`) for a class the
+   sweep never scores as a figure.
+
+One knock-on, in `spritegen/aa.py`: the thicker band lengthens same-toned runs along a silhouette, so
+a staircase corner's softened write can now strand a NEIGHBOUR pixel that used to match it — measured
+on `rockets`' thin rack, an isolated pixel `IndexedPalette.test_no_isolated_pixel_outside_the_dither`
+would have caught had it shipped. `_safe` filters exactly those writes out, off the same original
+pixels every other write is computed from (`test_aa.NeverStrands`).
+
+### What resists
+
+**Mountain rock and property masonry, plus the grey and blue liveries that key off them.** The worst
+20 cells are eleven mountain-phase composites (cruiser, fighter, mech, recon, lander) and nine on
+HQ, base or port — the pairing round 10's own finding 5 named and left for "the next round": a dark
+unit's contour is reliably near-black now, but a dark ROCK or a dark WALL is near-black too, and no
+contour thickness separates two things that are already the same value. Per unit the worst are
+`missiles` (86.5%), `cruiser` (79.4%), `lander` (73.4%), `b_copter` (72.5%) and `fighter` (71.0%) —
+grey airframes and grey-blue hulls, the roster's own palest rows sitting closest to the rock and
+masonry they are read against. Per terrain, `hq` (74.3%) and `base` (72.6%) hold nearly every
+building-side survivor, `mountain` 49-53% across its three phases. This is a VALUE question about the
+ground, which S8's own locked scope leaves to the ground: **nothing here was tuned in response**, and
+moving a property's or the massif's own value to answer it is the follow-up this page names rather
+than slides in.
+
+The S3 accepted ratchet exception — `board:idle_b:mech:iron:ready:port:fog`, 1.11 → 0.77 against the
+fog bar of 1.0 — is resolved rather than carried forward: re-measured at 1.25, it clears the bar
+outright. The baseline this page's `make legibility-baseline` rewrote holds it as an ordinary PASS,
+so the exception this page has recorded since S3 is retired.
+
+Full sweep, `make legibility-check`; the digest, `make legibility-baseline`; the ratchet holds this
+page's own numbers trivially (0 regressed, run against the digest this re-read wrote).
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in

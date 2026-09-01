@@ -170,6 +170,17 @@ EDGE_THRESHOLD = 2
 # line at all — which is the other half of what selective outlining means.
 SEL_OUT_LIFT = 1
 
+# How many pixels deep the silhouette's own line reaches once `_thicken_contour`
+# has run, per edge — the boundary pixel counted as the first. Four on the lit
+# pair, two on the ground-facing one: round 10 measured this exact split as
+# the thinnest band that survives the board's 4:1 nearest downsample at every
+# sampling phase (docs/sprite_legibility.md, "Weigh the contour in logical
+# pixels, not in pixels"). S8 revives the shape on the G-buffer pipeline that
+# replaced it, entirely INWARD this time — the alpha never moves, so a
+# silhouette, a mass-drift or a shadow-footprint reading answers exactly as it
+# did with a 1px line.
+CONTOUR_DEPTH: dict[tuple[int, int], int] = {UP: 4, LEFT: 4, DOWN: 2, RIGHT: 2}
+
 
 def _bounds(model: Model, k: int = 1) -> tuple[Anchors, int, int, int, int]:
     """Screen anchors per voxel plus the crop the sprite needs (2px margin, so
@@ -373,6 +384,11 @@ def render_indexed_gbuffer(
 
     dplane = Plane(w, h, depth)
     nplane = Plane(w, h, normal)
+    # `top_slot` already tells a unit from a property (S_RIM keeps the rim
+    # step; `BUILDING_TOP_SLOT` does not), so it is the one signal S8's two
+    # board-scale passes below gate on too: a building is read AGAINST an
+    # army, never as one, and the ruler never scores it as a figure.
+    is_unit = top_slot == S_RIM
     keep: bytearray | None = None
     if outline:
         keep = _selective_outline(
@@ -385,7 +401,10 @@ def render_indexed_gbuffer(
             dplane,
             nplane,
             faction.outline,
+            is_unit,
         )
+        if is_unit:
+            _thicken_contour(img, mids, ramps, keep)
     _despeckle(img, mids, keep)
     # The outline and the despeckle move colour, never geometry: every pixel
     # they touch already belonged to a face, and keeps that face's depth and
@@ -477,6 +496,7 @@ def _selective_outline(
     depth: Plane,
     normal: Plane,
     grade: int = OUTLINE_LIGHT,
+    is_unit: bool = True,
 ) -> bytearray:
     """1px outlines read off the G-buffer, dark away from the sun and light into it.
 
@@ -501,12 +521,30 @@ def _selective_outline(
       outlining, and it is also why iron — capped at S3 — quietly draws no lit
       line rather than a bright one it has no business wearing.
 
-    The row's `grade` asks one more question of that last case where the break
-    is the SILHOUETTE — the line drawn against the tile rather than against
-    more of the model. `OUTLINE_HEAVY` takes the line back to the contour where
-    the lift cannot clear the ground's value band; `OUTLINE_RIM` sends it the
-    other way, up to the rim, for the two rows whose own hue is a ground's and
-    who therefore have neither value nor colour left at the ordinary lift.
+    One more question is asked of that last case where the break is the
+    SILHOUETTE — the line drawn against the tile rather than against more of
+    the model (S8): does the lift actually clear the ground's own value band?
+    No row's ordinary lift does — not even a chromatic row's own S3 token
+    (`clears_the_ground`, docs/outlines.md) — so `is_unit` falls back to the
+    ground-facing contour where it cannot, the way `OUTLINE_HEAVY` always did;
+    round 11's `OUTLINE_LIGHT` paid that in colour alone instead, which the
+    cut-in's 1:1 reading could afford and the board's 4:1 one cannot.
+    `is_unit` is false for the other thing that renders through this same
+    path and is never the figure the board reads a unit against — a property,
+    stopped at `BUILDING_TOP_SLOT` rather than the rim a unit keeps — so a
+    roof keeps round 11's answer, paid for in colour alone; a building-owner
+    reading fell 15 of 20 pairs under its own bar the one time this tried
+    applying to properties too. Off the board, `OUTLINE_RIM`'s two rows still
+    get first refusal: their own hue-sharing pixels climb to the first rung
+    that clears instead of falling, at most the rim, the band above the
+    terrain ceiling units own by contract — that is what keeps a property's
+    rim flash. On the board the climb is switched off rather than asked to
+    answer a bar it was never measured against: it clears `clears_the_ground`
+    by construction, which is a full-resolution reading, and the board's own
+    ruler still failed 82-86% of aurora's and verdant's clear cells through
+    it — worse than the two rows the rim grade exists to spare, because a
+    climbed rung stays a colour bet the ruler is value-only about. A unit's
+    two rim rows fall exactly like every other row instead.
 
     Convex creases (`convex_edges`) get the same lift where a lit face meets
     another face over a ridge, so a chamfered turret or a raised deck carries a
@@ -547,24 +585,34 @@ def _selective_outline(
             kind = _outline_kind(x, y, edges, convex, depth, normal)
             if kind is None:
                 continue
-            if kind == _LINE_LIT_GROUND and grade == OUTLINE_RIM:
-                # The rim grade, and the only place it applies: the same
-                # sunward silhouette pixel, on a row whose own colour a ground
-                # already owns. A lit line inside the ground's band is normally
-                # paid for in COLOUR; here there is none to pay with, so the
-                # line climbs to the first rung that clears the band instead —
-                # at most the rim, which is the band above the terrain ceiling
-                # that units own by contract. Where nothing on the way up
-                # clears (a fitting under its own accent ceiling, a grey with
-                # no hue to tie with), the line is the light grade's, unmoved.
+            if kind == _LINE_LIT_GROUND:
+                # A sunward pixel of the SILHOUETTE, where the line answers to
+                # the tile rather than to more of the model — every grade
+                # meets the same question here (S8, the board-scale ruler):
+                # read at 4:1 the bar is VALUE, never hue, and no row's
+                # ordinary lift clears the ground's own band from this slot —
+                # not even a chromatic row's own S3 token (`GroundContrast`,
+                # docs/outlines.md). Round 11's light grade paid that in
+                # colour alone, which the cut-in could afford and the board
+                # cannot, so every row now takes the ground-facing contour
+                # where the lift cannot clear, exactly as the heavy grade
+                # always did. `OUTLINE_RIM`'s two rows get first refusal: on
+                # their own hue-sharing pixels the line climbs to the first
+                # rung that clears instead of falling — at most the rim, the
+                # band above the terrain ceiling units own by contract.
                 slot = lit_slots[i]
                 ramp = ramps[i]
-                if not clears_the_ground(luminance(ramp[slot])) and (
-                    shares_a_ground_hue(ramp[slot])
+                cleared = clears_the_ground(luminance(ramp[slot]))
+                if (
+                    not cleared
+                    and grade == OUTLINE_RIM
+                    and not is_unit
+                    and shares_a_ground_hue(ramp[slot])
                 ):
                     for up in range(slot + 1, reach_slots[i] + 1):
                         if clears_the_ground(luminance(ramp[up])):
                             slot = up
+                            cleared = True
                             # The lifted line is the silhouette's line, so it
                             # is exempt from the despeckle for the same reason
                             # the dark one is: down a stair edge it runs
@@ -572,20 +620,10 @@ def _selective_outline(
                             # plane is how an outline dots out.
                             silhouette[i] = 1
                             break
-            elif kind == _LINE_LIT_GROUND and grade == OUTLINE_HEAVY:
-                # The heavy grade, and the only place it applies: a sunward
-                # pixel of the SILHOUETTE, where the line answers to the tile
-                # rather than to the model. It stays light as long as the lift
-                # clears the ground's own value band — a rim slot does, which
-                # is what keeps the flash these two rows key off. Where it
-                # cannot clear, a lit line and the grass under it are one
-                # surface, so the ground-facing contour is drawn instead.
-                if clears_the_ground(luminance(ramps[i][lit_slots[i]])):
-                    slot = lit_slots[i]
-                else:
+                if not cleared and (grade == OUTLINE_HEAVY or is_unit):
                     silhouette[i] = 1
                     slot = S_CONTOUR
-            elif kind in (_LINE_LIT, _LINE_LIT_GROUND):
+            elif kind == _LINE_LIT:
                 slot = lit_slots[i]
             elif kind == _LINE_DARK:
                 # The silhouette is S0's absolutely, whatever material meets
@@ -614,6 +652,92 @@ def _selective_outline(
         px[x, y] = (c[0], c[1], c[2], 255)
         mids[i] = MID_CONTOUR
     return silhouette
+
+
+def _thicken_contour(
+    img: Image.Image, mids: bytearray, ramps: list[Ramp | None], keep: bytearray
+) -> None:
+    """Grow the silhouette's 1px line into a band `CONTOUR_DEPTH` deep, off
+    the plane BEHIND each edge — never outward, so the alpha never moves.
+
+    `_selective_outline` already decided what every boundary pixel IS: dark,
+    lit, or the rim. This pass does not re-decide any of that, it only
+    repeats it — each claimed interior pixel takes the boundary pixel's own
+    colour and material id, walking straight in from every silhouette edge a
+    solid pixel has (any side whose neighbour is background; a self-overlap
+    seam has none, so it is untouched). The first source to reach a pixel
+    owns it, in one fixed scan order, so two edges meeting at a corner do not
+    fight over the pixels between them and two runs of the generator agree.
+    Reads are all off the pixels `_selective_outline` left, so a pixel two
+    edges could claim never sees the OTHER edge's write mid-walk.
+
+    Four things stop a walk rather than being claimed. Two are features: a
+    pixel already carrying another line (`MID_CONTOUR` — a self-overlap seam
+    or `_interior_contour`'s own work), and a fixed accent or a gunmetal
+    fitting's own lit face (`MID_ACCENT`, or `MID_GUNMETAL` at its ramp's
+    `S_TOP`/`S_RIM`) — the identifying feature the round-10 band gave up
+    reach for (docs/outlines.md) and this one does not reach past either. The
+    third is geometry: a pixel that is itself boundary-adjacent — one of ITS
+    OWN four neighbours is background — is another edge's own line, not the
+    plane behind this one, so the walk stops there too. Without it a part
+    thinner than `CONTOUR_DEPTH` (a rotor blade, a parapet, a barrel) has one
+    edge's walk reach clean through to the far side and overwrite that side's
+    own, correctly-decided colour with this edge's. The fourth is a claim
+    already staked by an EARLIER walk in this same pass: a later walk stops
+    rather than reads through a pixel it cannot own, which is what stops it
+    stranding whatever sat beyond that pixel on ITS own walk — the isolated
+    pixels and the collapsed building-owner separation both regressions
+    measured before this line was added.
+
+    `keep` grows with every claim, so `_despeckle` leaves the band alone the
+    way it already leaves the 1px line alone.
+    """
+    px = img.load()
+    w, h = img.size
+    opaque = bytearray(
+        1 if px[x, y][3] == 255 else 0 for y in range(h) for x in range(w)
+    )
+
+    def solid(x: int, y: int) -> bool:
+        return 0 <= x < w and 0 <= y < h and opaque[y * w + x]
+
+    def on_a_boundary(x: int, y: int) -> bool:
+        return not all(solid(x + s[0], y + s[1]) for s in CONTOUR_DEPTH)
+
+    Claim = tuple[tuple[int, int, int, int], int]
+    claims: dict[tuple[int, int], Claim] = {}
+
+    def blocked(x: int, y: int) -> bool:
+        if not solid(x, y) or on_a_boundary(x, y) or (x, y) in claims:
+            return True
+        i = y * w + x
+        if mids[i] in (MID_CONTOUR, MID_ACCENT):
+            return True
+        if mids[i] == MID_GUNMETAL:
+            ramp = ramps[i]
+            return ramp is not None and px[x, y][:3] in (ramp[S_TOP], ramp[S_RIM])
+        return False
+
+    for y in range(h):
+        for x in range(w):
+            if not opaque[y * w + x]:
+                continue
+            colour = px[x, y]
+            mid = mids[y * w + x]
+            for step, depth in CONTOUR_DEPTH.items():
+                if solid(x + step[0], y + step[1]):
+                    continue  # not a silhouette edge in this direction
+                for k in range(1, depth):
+                    ix, iy = x - step[0] * k, y - step[1] * k
+                    if blocked(ix, iy):
+                        break
+                    claims.setdefault((ix, iy), (colour, mid))
+
+    for (ix, iy), (colour, mid) in claims.items():
+        idx = iy * w + ix
+        px[ix, iy] = colour
+        mids[idx] = mid
+        keep[idx] = 1
 
 
 _INTERIOR_STEP = 36.0  # under ~2 ramp slots of value

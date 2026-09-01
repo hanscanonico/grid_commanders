@@ -139,6 +139,17 @@ def soften_staircase(
     Pure: the input is never touched, and every write is computed off the
     ORIGINAL pixels, so two corners that see each other cannot cascade and
     the result does not depend on scan order.
+
+    One write may still strand a THIRD pixel that never qualified as a
+    corner itself: since S8's contour band (`voxel._thicken_contour`) a
+    boundary pixel more often matches a same-toned neighbour one step further
+    in than a differently-toned one right beside it, and softening that
+    neighbour toward the interior can be the boundary pixel's only match
+    going away — read as newly isolated
+    (`IndexedPalette.test_no_isolated_pixel_outside_the_dither`, measured on
+    `rockets`' thin rack). `_safe` drops exactly the writes that do that,
+    off the same original pixels every other write is computed from, so this
+    stays pure and order-free too.
     """
     img = rgba.convert("RGBA")
     w, h = img.size
@@ -163,9 +174,41 @@ def soften_staircase(
 
     out = img.copy()
     px = out.load()
-    for x, y, colour in writes:
+    for x, y, colour in _safe(src, at, writes):
         px[x, y] = colour
     return out
+
+
+def _safe(
+    src, at, writes: list[tuple[int, int, tuple[int, int, int, int]]]
+) -> list[tuple[int, int, tuple[int, int, int, int]]]:
+    """`writes`, minus any that would strand a NEIGHBOUR of the corner it
+    softens — a pixel that matched the corner's ORIGINAL colour and has no
+    other orthogonal match to fall back on.
+
+    Read entirely off `src`, the untouched render: a neighbour also due to be
+    written answers for itself in its own pass through this same check, so
+    nothing here depends on which order `writes` is walked in.
+    """
+    rewritten = {(x, y) for x, y, _ in writes}
+    safe: list[tuple[int, int, tuple[int, int, int, int]]] = []
+    for x, y, colour in writes:
+        edge = src[x, y][:3]
+        stranded = False
+        for dx, dy in _ORTHO:
+            nx, ny = x + dx, y + dy
+            if (nx, ny) in rewritten or not at(nx, ny) or src[nx, ny][:3] != edge:
+                continue
+            if not any(
+                at(nx + ddx, ny + ddy) and src[nx + ddx, ny + ddy][:3] == edge
+                for ddx, ddy in _ORTHO
+                if (nx + ddx, ny + ddy) != (x, y)
+            ):
+                stranded = True
+                break
+        if not stranded:
+            safe.append((x, y, colour))
+    return safe
 
 
 def _slot_index(ramps: tuple[Ramp, ...]) -> _SlotIndex:

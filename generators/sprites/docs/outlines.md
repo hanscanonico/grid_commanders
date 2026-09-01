@@ -292,3 +292,39 @@ b_copter's own boundary there goes 10.2% to 0.87% on shoal (Iron) and
 `GroundContrast.test_the_b_copters_blades_stay_off_the_body_under_them`
 therefore guards the 1px lattice at 25% — a floor under the rotor, not a
 reading of the livery.
+
+## S8: the board answer, on top of this file's own mechanism (2026-09-01)
+
+Everything above describes what shipped after round 11's rewrite — a 1px
+line, selectively lit — and the game's own legibility sweep read it at
+94.8% of clear board cells failing (`docs/sprite_legibility.md`'s
+2026-08-25 section): a 1px line is three-quarters unsampled at the board's
+4:1 nearest downsample, whichever phase the sample lands on. S8 answers
+that without reverting this file's rewrite: `voxel._thicken_contour` grows
+the already-classified 1px line into a band `CONTOUR_DEPTH` pixels deep (4
+lit, 2 ground-facing, round 10's own shape) entirely INWARD, so nothing
+here about the alpha, the self-overlap precedence or the interior contour
+moves — a unit's own material structure is unchanged, only more of its
+plane behind each edge now carries the edge's own colour. Scoped to units
+and the massif (`is_unit`, `top_slot == S_RIM`): a property stops at
+`BUILDING_TOP_SLOT` and never thickens, since the board never scores a
+roof as a figure and thickening one cost 15 of 20 building-owner pairwise
+readings for nothing.
+
+The other half is a value question this file's own numbers already
+answered without knowing it: `clears_the_ground` on the sunward
+silhouette's ordinary lift is false for every row's S3, S4 and even the
+climbed rim rung most of the time — the 71% "sunward silhouette drawn
+dark" reading above quoted for the light and rim grades was a FULL-
+RESOLUTION reading, and the board's own reading of the same lift is worse
+than the two rows the heavy grade already answers for. So on a unit
+(never off it) every grade now takes the heavy grade's fallback — the
+ground-facing contour where the lift cannot clear — and `OUTLINE_RIM`'s
+climb is retired on the board specifically: aurora and verdant read 82-86%
+failing through it and 48-52% through the plain fallback, the same range
+every other row now sits in. `OUTLINE_LIGHT` and `OUTLINE_RIM` keep every
+number this file records for a PROPERTY unchanged; only a unit's own
+sunward silhouette moved.
+
+The full re-read, with the mountain-and-masonry residual this did not
+answer, is `docs/sprite_legibility.md`'s own 2026-09-01 section.

@@ -122,7 +122,15 @@ class ShortRuns(unittest.TestCase):
         self.assertEqual(changed(img, aa.soften_staircase(img, (RAMP,))), [])
 
     def test_min_run_is_the_knob_that_decides_it(self):
-        img = staircase(2, 1)
+        # A 1px `staircase(2, 1)` corner's own run is one pixel deep with
+        # nothing beside it, so softening it would strand that one pixel —
+        # `_safe` refuses exactly that (its own suite covers it below), which
+        # is correct art and not what this test is asking. Two courses deep
+        # gives the run a neighbour of its own, so the knob's effect —
+        # untouched at the default, touched once it is lowered — still shows
+        # without tripping the safety net.
+        img = thick_edge_staircase(2, 1, 2)
+        self.assertEqual(changed(img, aa.soften_staircase(img, (RAMP,))), [])
         self.assertTrue(changed(img, aa.soften_staircase(img, (RAMP,), min_run=2)))
 
     def test_a_riser_taller_than_a_step_is_the_shapes_own_corner(self):
@@ -181,6 +189,30 @@ class ReachesOnlyThroughTheLine(unittest.TestCase):
                         ),
                         f"{uid} {fac.key} {(x, y)}: softened past {edge} and {bodies}",
                     )
+
+
+class NeverStrands(unittest.TestCase):
+    """A write may not strand a THIRD pixel that was never a corner itself.
+
+    Since S8's board-scale contour band a boundary pixel more often matches a
+    same-toned neighbour one step further in than a differently-toned one
+    right beside it, so softening that neighbour can be the boundary pixel's
+    only match going away — read as newly isolated
+    (`test_livery.IndexedPalette.test_no_isolated_pixel_outside_the_dither`,
+    the real-sprite gate this gave up nothing against: it still reads zero
+    over the whole roster, measured on `rockets`' thin rack, where a stray
+    pixel this shape produced is exactly what shipped before `_safe`
+    existed). `staircase(2, 1)` is the minimal synthetic case: its corner's
+    own run is one pixel deep with no neighbour of its own, so lowering
+    `min_run` to reach it would strand that one pixel, and `_safe` refuses
+    the write outright — the one case
+    `ShortRuns.test_min_run_is_the_knob_that_decides_it` moved off rather
+    than asserting empty.
+    """
+
+    def test_a_write_that_would_strand_its_only_match_is_refused(self):
+        img = staircase(2, 1)
+        self.assertEqual(changed(img, aa.soften_staircase(img, (RAMP,), min_run=2)), [])
 
 
 class NeverOutside(unittest.TestCase):
