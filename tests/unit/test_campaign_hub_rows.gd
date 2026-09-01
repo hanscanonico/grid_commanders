@@ -46,6 +46,39 @@ func test_an_ally_is_never_the_face_the_row_is_set_against() -> void:
 	assert_false(line.contains("VS"), "a seat standing with the player is no antagonist")
 
 
+## The briefing's own side of the picture: the general the player commands as,
+## and whoever the mission seats beside them. Read by the same side grouping the
+## antagonist is, so the two cards can never name the same seat.
+func _four_seat_mission() -> MissionDefinition:
+	var mission := _mission()
+	mission.ai_teams = [2, 3]
+	mission.commanders = {1: &"mara_voss", 2: &"radek_morn", 3: &"iona_vance"}
+	mission.sides = {1: 0, 2: 1, 3: 0}
+	return mission
+
+
+func test_the_protagonist_is_the_players_seat() -> void:
+	var you := CampaignHubPanel.protagonist(_four_seat_mission(), _commanders)
+	assert_eq(you.id, &"mara_voss", "the commander seated on player_team")
+
+
+func test_the_allies_are_the_seats_standing_with_the_player() -> void:
+	var allies := CampaignHubPanel.allies(_four_seat_mission(), _commanders)
+	assert_eq(allies.size(), 1, "one seat shares the player's side")
+	assert_eq(allies[0].id, &"iona_vance", "the seat on the player's side")
+	var line := CampaignHubPanel.row_detail(_four_seat_mission(), _commanders, null)
+	assert_string_contains(line, "VS RADEK MORN", "and the foe stays the seat against them")
+
+
+func test_a_two_seat_mission_has_no_allies() -> void:
+	assert_true(
+		CampaignHubPanel.allies(_mission(), _commanders).is_empty(), "nobody stands with you"
+	)
+	var grouped := _mission()
+	grouped.sides = {1: 0, 2: 1}
+	assert_true(CampaignHubPanel.allies(grouped, _commanders).is_empty(), "grouped or not")
+
+
 ## Three blocks of two, so the route can stand in the first, the middle or past
 ## the end and the answer differs at each.
 func _war() -> CampaignDefinition:
