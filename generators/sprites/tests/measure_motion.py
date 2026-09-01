@@ -157,7 +157,8 @@ deeper dip already moves enough of the silhouette there that the same four
 retones cost the ratchet nothing on that frame. Read `units/air.py`'s
 `beat(pose)` branches before touching either aircraft again — the airframes
 run within a fraction of a ramp step of the bar on most grounds
-(`tests/fixtures/legibility_baseline.csv`), and a texel-sized addition
+(`make legibility-ratchet`, whose baseline is the repo root's
+`tests/fixtures/legibility_baseline.csv`), and a texel-sized addition
 anywhere on the idle beat is enough to fail it.
 
 The four hulls used to score that way too — the BEFORE rows above are the bob

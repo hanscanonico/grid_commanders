@@ -76,7 +76,8 @@ def fighter(pose: Pose = Pose.A) -> Model:
         # silhouette texel the way `_shift` would. That restraint is the
         # legibility ratchet's, not a taste: fighter's contour already runs
         # within a fraction of a ramp step of the bar on most grounds
-        # (`tests/fixtures/legibility_baseline.csv`), and even a texel-sized
+        # (`make legibility-ratchet`, whose baseline is the repo root's
+        # `tests/fixtures/legibility_baseline.csv`), and even a texel-sized
         # notch or bump at the boundary — a slid glint, a lifted tip —
         # measurably dropped dozens of previously-passing cells under it.
         m.set(4, 12, 5, "glass_dk")
