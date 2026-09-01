@@ -21,6 +21,13 @@ extends SceneTree
 ## on the seat it is playing is a clock authored against a stopwatch nobody
 ## measured.
 ##
+## **On a fog board the floor is not a floor.** The planner sees through the
+## whiteout, so the player's seat is played twice there: `win%` with the whole
+## board in view, comparable across every committed table, and `fog win%` with
+## that one seat held to the fog a human sees (`AIController.honour_fog`, set
+## nowhere but here). A fog mission the sighted seat wins and the blind seat
+## never does is flagged — that is the shape a human calls impossible.
+##
 ## Usage (headless; see `make campaign-difficulty`):
 ##   Godot --headless --path . -s res://tools/run_campaign_difficulty.gd -- [flags]
 ##     --campaign=six_marshals   one war rather than all six (repeatable slug)
@@ -46,6 +53,8 @@ const CSV_COLUMNS: Array[String] = [
 	"losses",
 	"undecided",
 	"win_pct",
+	"fog_wins",
+	"fog_win_pct",
 	"median_win_day",
 	"deadline",
 	"par_day",
@@ -125,15 +134,53 @@ func _parse_args() -> bool:
 
 
 ## One mission over the whole seed range, folded into the row the table prints.
+## A fog mission is played twice: once with the player's seat seeing the whole
+## board, which is the `win%` every committed table reads, and once with that
+## seat held to the fog a human sees, which is `fog win%`. A fog-off mission
+## carries -1 in both fog fields, printed as `—`.
 func _measure(campaign: CampaignDefinition, mission: MissionDefinition) -> Dictionary:
+	var opening := _opening(mission)
+	var sighted := _sample_verdicts(campaign, mission, false)
+	if sighted.is_empty():
+		return {}
+	var blind := {"wins": -1, "win_pct": -1.0}
+	if mission.fog_enabled:
+		blind = _sample_verdicts(campaign, mission, true)
+		if blind.is_empty():
+			return {}
+	return {
+		"campaign": String(campaign.id),
+		"mission": String(mission.id),
+		"tier": String(mission.difficulty),
+		"seeds": _sample.seeds,
+		"wins": sighted["wins"],
+		"losses": sighted["losses"],
+		"undecided": sighted["undecided"],
+		"win_pct": sighted["win_pct"],
+		"fog_wins": blind["wins"],
+		"fog_win_pct": blind["win_pct"],
+		"median_win_day": sighted["median_win_day"],
+		"deadline": _deadline_of(mission),
+		"par_day": mission.par_day,
+		"opening_odds": float(opening["odds"]),
+		"opening_income": float(opening["income"]),
+		"top_reason": sighted["top_reason"],
+	}
+
+
+## The seed loop: every seed in the sample played to a verdict and tallied.
+## Empty when a seed would not build, which `_measure` reports as the mission's
+## failure rather than a number.
+func _sample_verdicts(
+	campaign: CampaignDefinition, mission: MissionDefinition, blind: bool
+) -> Dictionary:
 	var wins := 0
 	var losses := 0
 	var undecided := 0
 	var win_days: Array[int] = []
 	var reasons: Dictionary[String, int] = {}
-	var opening := _opening(mission)
 	for i in _sample.seeds:
-		var play := _play(campaign, mission, _sample.seed_offset + i + 1)
+		var play := _play(campaign, mission, _sample.seed_offset + i + 1, blind)
 		if play.is_empty():
 			return {}
 		match String(play["status"]):
@@ -148,19 +195,11 @@ func _measure(campaign: CampaignDefinition, mission: MissionDefinition) -> Dicti
 				undecided += 1
 				reasons["(still running)"] = reasons.get("(still running)", 0) + 1
 	return {
-		"campaign": String(campaign.id),
-		"mission": String(mission.id),
-		"tier": String(mission.difficulty),
-		"seeds": _sample.seeds,
 		"wins": wins,
 		"losses": losses,
 		"undecided": undecided,
 		"win_pct": 100.0 * float(wins) / float(_sample.seeds),
 		"median_win_day": _upper_middle(win_days),
-		"deadline": _deadline_of(mission),
-		"par_day": mission.par_day,
-		"opening_odds": float(opening["odds"]),
-		"opening_income": float(opening["income"]),
 		"top_reason": _top(reasons),
 	}
 
@@ -206,10 +245,16 @@ func _opening(mission: MissionDefinition) -> Dictionary:
 ## baseline, and every boundary firing the beats due before the verdict.
 ##
 ## The player's seat is the planner's too, which is the whole caveat on this
-## file. A refused command is a soak failure rather than a difficulty one, so it
-## is reported loudly and the match is abandoned — `test_campaign_soak.gd` is
-## where that bar is held.
-func _play(campaign: CampaignDefinition, mission: MissionDefinition, seed_val: int) -> Dictionary:
+## file; `blind` holds that one seat to the mission's fog, the way a human is
+## (`AIController.honour_fog`), while the enemy seats keep the sight the live
+## game gives them. A refused command is a soak failure rather than a difficulty
+## one, so it is reported loudly and the match is abandoned —
+## `test_campaign_soak.gd` is where that bar is held. A blind seat walking into a
+## unit it cannot see is not a refusal: the move rules and the ambush take fog as
+## an input, exactly as they do for a player.
+func _play(
+	campaign: CampaignDefinition, mission: MissionDefinition, seed_val: int, blind: bool
+) -> Dictionary:
 	var built := BattleSetup.build(mission.to_request(), _terrain_db, _unit_db, _commander_db)
 	if built == null:
 		return {}
@@ -222,6 +267,8 @@ func _play(campaign: CampaignDefinition, mission: MissionDefinition, seed_val: i
 	var planners: Dictionary[int, AIController] = {}
 	for team in game.teams:
 		planners[team] = AIController.new(_unit_db, built.difficulty.profile())
+	if blind:
+		planners[mission.player_team].honour_fog = true
 	var ceiling := BalanceMatchEngine.command_ceiling(_sample.days_cap, game.teams.size())
 	var commands := 0
 	while _session.outcome == null and game.winner == 0 and game.day <= _sample.days_cap:
@@ -300,14 +347,17 @@ func _top(reasons: Dictionary[String, int]) -> String:
 
 
 func _print_row(row: Dictionary) -> void:
+	var fog_pct := float(row["fog_win_pct"])
+	var fog := "   —" if fog_pct < 0.0 else "%3.0f%%" % fog_pct
 	print(
 		(
-			"%-18s %-32s %-7s win %3.0f%%  day %2d  deadline %2d  odds %4.2f  income %4.2f  %s"
+			"%-18s %-32s %-7s win %3.0f%%  fog %s  day %2d  deadline %2d  odds %4.2f  income %4.2f  %s"
 			% [
 				row["campaign"],
 				row["mission"],
 				row["tier"],
 				row["win_pct"],
+				fog,
 				row["median_win_day"],
 				row["deadline"],
 				row["opening_odds"],
@@ -344,7 +394,7 @@ func _report(rows: Array[Dictionary]) -> void:
 	print("%s: %d never won by the planner" % [TOOL, summary["never_won"]])
 	print(
 		(
-			"%s: %d flagged (never won, or a deadline at or under the median win)"
+			"%s: %d flagged (never won, a clock at or under the median win, or a blind seat never winning)"
 			% [TOOL, flagged.size()]
 		)
 	)
@@ -352,11 +402,16 @@ func _report(rows: Array[Dictionary]) -> void:
 		_print_row(row)
 
 
-## What the table asks a human to look at: a mission the planner never won, or a
-## clock it cannot beat even when it wins. The second is the sharper of the two,
-## because it is a claim about the authored number rather than about the planner.
+## What the table asks a human to look at: a mission the planner never won, a
+## clock it cannot beat even when it wins, or a fog mission the sighted seat wins
+## at least half the time and the blind seat never does — `fw03_cold_relay`'s
+## shape, which read 100% while a human found it impossible. The clock is the
+## sharpest of the three, because it is a claim about the authored number rather
+## than about the planner.
 func _is_flagged(row: Dictionary) -> bool:
 	if int(row["wins"]) == 0:
+		return true
+	if int(row["fog_wins"]) == 0 and float(row["win_pct"]) >= 50.0:
 		return true
 	var deadline := int(row["deadline"])
 	return deadline > 0 and deadline <= int(row["median_win_day"])

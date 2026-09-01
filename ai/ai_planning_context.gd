@@ -53,6 +53,10 @@ var enemy_goals: Dictionary[Unit, AdvanceGoal] = {}
 ## command deep and nothing about a claim survives the board moving, which is
 ## what keeps AI Economy D3's rejected claims registry rejected.
 var capture_claims: Dictionary[Unit, Vector2i] = {}
+## Hold this planner to the fog its team is shown, the way a human at that seat
+## is. Off by default and never set by the game — `AIController.honour_fog`
+## says why — so the shipped planner still sees the whole board.
+var honour_fog: bool = false
 
 var _unit_db: UnitDB
 var _threat_map: ThreatMap = null
@@ -93,7 +97,7 @@ func begin(p_state: GameState) -> void:
 	for unit in friendly_units:
 		if not unit.acted and unit.carrier == null:
 			ready_units.append(unit)
-	visible_enemies = _scan_visible_enemies(state, team)
+	visible_enemies = _scan_visible_enemies(state, team, honour_fog)
 	owned_properties = state.properties_of(team)
 	unit_types = _unit_db.all()
 	enemy_roster = []
@@ -179,12 +183,19 @@ func threat_map_built() -> bool:
 ## from it too. Vision owns that exception; visibility is never re-derived here,
 ## and neither is hostility — an ally is not an enemy, so it is never fired on,
 ## never feared in the threat map and never pathed around as a blocker.
-static func _scan_visible_enemies(p_state: GameState, p_team: int) -> Array[Unit]:
+## `honour_fog` is the offline instrument's opt-in: the seat then sees only what
+## `Vision` shows its side, asked once for the whole scan.
+static func _scan_visible_enemies(p_state: GameState, p_team: int, honour_fog: bool) -> Array[Unit]:
 	var enemies: Array[Unit] = []
+	var seen: Dictionary[Vector2i, bool] = {}
+	if honour_fog:
+		seen = Vision.visible_cells_if_fogged(p_state, p_team)
 	for unit in p_state.units:
 		if p_state.allied(unit.team, p_team) or unit.carrier != null:
 			continue
 		if Vision.is_hidden_from(p_state, p_team, unit):
+			continue
+		if honour_fog and not Vision.can_see_unit(p_state, p_team, unit, seen):
 			continue
 		enemies.append(unit)
 	return enemies

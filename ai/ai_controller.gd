@@ -14,6 +14,13 @@ var unit_db: UnitDB
 ## Every number the planners weigh. Never null: an omitted profile falls back to
 ## the shipped default.
 var profile: AIProfile
+## Hold this planner to the fog its team is shown, the way a human at that seat
+## is. The difficulty-modes lock and rules/ai.md's "the AI sees everything"
+## stand: nothing in the game sets this, so the shipped planner is byte-identical
+## at the default (the determinism golden is the proof). It exists for one
+## caller, `tools/run_campaign_difficulty.gd`, which seats the planner on the
+## player's side of a fog mission and wants that seat measured blind.
+var honour_fog: bool = false
 
 var _context: AIPlanningContext
 var _unit_actions: AIUnitActionPlanner
@@ -34,6 +41,7 @@ func plan_next_command(state: GameState) -> Command:
 	var power := _plan_power(state, CommanderType.Timing.BEFORE_ACTIONS)
 	if power != null:
 		return power
+	_context.honour_fog = honour_fog
 	_context.begin(state)
 	var unit_action := _unit_actions.plan_next(_context)
 	if unit_action != null:
