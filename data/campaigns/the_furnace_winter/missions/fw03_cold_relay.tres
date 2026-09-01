@@ -37,7 +37,7 @@ text = "Supply office still has that relay down as unassigned, Calder. Nobody's 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "She has more men than us and the blizzard blinds us both. So we build cheap, we build a lot, and we reach the relay before her signature does."
+text = "She has more ground than us and the blizzard blinds us both. So we build cheap, we build a lot, and we reach the relay before her signature does."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
