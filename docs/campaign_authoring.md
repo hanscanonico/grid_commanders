@@ -24,10 +24,11 @@ more than that board could ever give. Ground an objective names that no unit the
 player can field — dealt on the board, or built by a property the player owns —
 could reach over the terrain alone, so a target reachable only by transport (a
 lander to an island) reads as unreachable until the coastal act teaches the
-check `TerrainType.services` and transports. A difficulty tier that does not ship. A story
-line whose speaker is not on the commander roster, or a seat cast as a commander
-who is not. A briefing with nothing to say when it is won. A briefing, debrief or
-interlude with no unconditional line — a page that can render empty. A deadline
+check `TerrainType.services` and transports. A difficulty tier that does not
+ship. A story line whose speaker is not on the commander roster, or a seat cast
+as a commander who is not. A briefing with nothing to say when it is won. A
+briefing, debrief or interlude with no unconditional line — a page that can
+render empty. A deadline
 filed in `objectives` or `bonus_objectives` rather than in `failures`, and a
 `par_day` falling past the mission's own deadline, or before the day a hold
 objective says the mission cannot be won. A launch that does not build.
