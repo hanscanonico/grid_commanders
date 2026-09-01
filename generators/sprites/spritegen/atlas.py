@@ -33,6 +33,7 @@ from .voxel import (
     AIR_BOTTOM,
     GROUND_BOTTOM,
     compose_cell,
+    footprint_width,
     place_in_cell,
     render_indexed,
     sprite_origin,
@@ -82,23 +83,28 @@ CELL_H = 96
 BOB_PX = 4
 _BOBBING = frozenset({"air", "sea"})
 
-# Pose A's crop, per unit id, as (minx, miny, width, height): the placement
-# reference every other pose is pinned to. Poses differ in extent — t_copter's
-# pose B was 4px wider than its A when the rotor swept 45 degrees, and is a
-# pixel taller than it now that the rotor ticks instead — so centring each
-# pose's OWN bounding box slid the whole helicopter 2px sideways every beat
-# and pumped its cast shadow by 9% (159px to 173px) with it. Cached because
-# the sheet composes each unit 20 times (5 rows x 2 poses x 2 shadow
-# variants) and this costs a model build, not a render: `sprite_origin` and
-# `sprite_size` read the crop off the voxels.
-_POSE_A_BOX: dict[str, tuple[int, int, int, int]] = {}
+# Pose A's crop, per unit id, as (minx, miny, width, height, footprint width):
+# the placement reference every other pose is pinned to. Poses differ in
+# extent — t_copter's pose B was 4px wider than its A when the rotor swept 45
+# degrees, and is a pixel taller than it now that the rotor ticks instead —
+# so centring each pose's OWN bounding box slid the whole helicopter 2px
+# sideways every beat and pumped its cast shadow by 9% (159px to 173px) with
+# it. Cached because the sheet composes each unit 20 times (5 rows x 2 poses
+# x 2 shadow variants) and this costs a model build, not a render:
+# `sprite_origin`, `sprite_size` and `footprint_width` all read the crop off
+# the voxels.
+_POSE_A_BOX: dict[str, tuple[int, int, int, int, int]] = {}
 
 
-def _pose_a_box(uid: str) -> tuple[int, int, int, int]:
+def _pose_a_box(uid: str) -> tuple[int, int, int, int, int]:
     box = _POSE_A_BOX.get(uid)
     if box is None:
         model = build_model(uid, Pose.A)
-        box = _POSE_A_BOX[uid] = (*sprite_origin(model), *sprite_size(model))
+        box = _POSE_A_BOX[uid] = (
+            *sprite_origin(model),
+            *sprite_size(model),
+            footprint_width(model),
+        )
     return box
 
 
@@ -114,22 +120,39 @@ class Placement(NamedTuple):
     `footprint_w` and `ground` are pose-invariant by construction — the width
     every cast shadow is sized from and the surface row it sits on — so the
     origin is the only one of the three a beat may move.
+
+    `silhouette_w` is `footprint_w`'s pre-S3 value, the whole pose-A crop —
+    still what the ellipse's DEPTH (`ry`) is read off. Feeding the narrower
+    footprint into both axes shrank a land ellipse's area, not just its
+    width, and cost tank/recon/md_tank/anti_air 27-38% of it: the legibility
+    ratchet regressed 429 previously-passing cells. Depth was never this
+    slice's question, so it keeps answering off the measurement it always
+    has.
     """
 
     origin: tuple[int, int]
     footprint_w: int
+    silhouette_w: int
     ground: int
 
 
 def cell_placement(uid: str, pose: Pose) -> Placement:
     kind = UNITS[uid][1]
-    minx_a, miny_a, w_a, h_a = _pose_a_box(uid)
+    minx_a, miny_a, w_a, h_a, fw_a = _pose_a_box(uid)
     ground = CELL_H - (AIR_BOTTOM if kind == "air" else GROUND_BOTTOM)
     bob = BOB_PX if units.beat(pose) and kind in _BOBBING else 0
+    # Only a land unit's shadow WIDTH is sized off the base plane rather than
+    # the whole silhouette — air and sea keep the sprite's own width, an
+    # aircraft having no ground contact to measure and a hull's displacement
+    # being already close to its full beam.
+    footprint = fw_a if kind == "land" else w_a
     # Pose A's own placement — centred on the cell, anchored to the ground row
     # — with every other pose hung off that same origin.
     return Placement(
-        ((CELL_W - w_a) // 2 - minx_a, ground - h_a - miny_a - bob), w_a, ground
+        ((CELL_W - w_a) // 2 - minx_a, ground - h_a - miny_a - bob),
+        footprint,
+        w_a,
+        ground,
     )
 
 
@@ -153,6 +176,7 @@ def unit_cell(
         cell=(CELL_W, CELL_H),
         origin=(place.origin[0] + minx, place.origin[1] + miny),
         footprint_w=place.footprint_w,
+        silhouette_w=place.silhouette_w,
         ground=place.ground,
         wake=uid in WAKE,
         shadow=shadow,

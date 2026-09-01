@@ -34,6 +34,7 @@ def compose_cell(
     shadow: bool = True,
     origin: tuple[int, int] | None = None,
     footprint_w: int | None = None,
+    silhouette_w: int | None = None,
     ground: int | None = None,
     centred_shadow: bool = False,
     under_way: bool = False,
@@ -69,18 +70,23 @@ def compose_cell(
     waterline foam is why that matters: it is placed against the composed
     cell's own spans, so a shadow that was never drawn would move the foam.
 
-    The last three arguments are what lets a SECOND pose of the same unit be
+    The last four arguments are what lets a SECOND pose of the same unit be
     the same unit moving rather than a second composition. `origin` places the
     sprite's top-left corner outright, so a caller can pin two crops by their
     model origin (`sprite_origin`) instead of centring each one's own box.
-    `footprint_w` is the width every shadow radius is taken from — the unit's
-    footprint on the ground, which a raised rotor or a swung barrel does not
-    change. `ground` is the SURFACE the unit is over, which is not the row it
-    rides at once it bobs: the shadow, the displacement ellipse, the running
-    wake and the waterline foam all stay here, so a ship that rises a board
-    texel rides a swell instead of dragging the sea up with it. All three
-    default to the single-pose behaviour: centred crop, the sprite's own
-    width, and the surface right under the unit.
+    `footprint_w` is the WIDTH a land ellipse's radius is taken from — the
+    unit's footprint on the ground, which a raised rotor or a swung barrel
+    does not change. `silhouette_w` sizes that ellipse's DEPTH instead, off
+    the whole crop rather than the footprint: depth read narrower shrank a
+    vehicle's shadow AREA along with its width and cost the board's
+    legibility ratchet 429 previously-passing cells, so it keeps reading the
+    wider measurement `footprint_w` answered with before this cast shadow was
+    fit to the footprint. `ground` is the SURFACE the unit is over, which is
+    not the row it rides at once it bobs: the shadow, the displacement
+    ellipse, the running wake and the waterline foam all stay here, so a ship
+    that rises a board texel rides a swell instead of dragging the sea up
+    with it. All four default to the single-pose behaviour: centred crop, the
+    sprite's own width twice over, and the surface right under the unit.
 
     `centred_shadow` drops the shadow's HORIZONTAL offset (the full vertical
     drop stays) and straddles the ellipse across the cell's mirror axis, so
@@ -111,6 +117,7 @@ def compose_cell(
     if ground is None:
         ground = bottom
     fw = w if footprint_w is None else footprint_w
+    sw = w if silhouette_w is None else silhouette_w
 
     cast: list[tuple[int, int]] = []
     sx, sy = SHADOW_OFFSET
@@ -142,13 +149,37 @@ def compose_cell(
             mirrored=centred_shadow,
         )
     elif kind == "land":
-        rx = max(4, int(fw * 0.34))
+        # `old_rx` is the pre-S3 shipped radius — the width and, via `ry`,
+        # the depth `silhouette_w` (the whole crop) answered with 0.34, the
+        # coefficient this file always shipped. The footprint fix answers
+        # WIDTH from `footprint_w` instead, at a higher 0.41 (every land
+        # footprint is narrower than the crop 0.34 was tuned against — a
+        # turret or a barrel held wide of the hull — so 0.34 read a
+        # footprint-accurate tank a 15% narrower shadow and cost the board
+        # legibility ratchet 380 previously-passing cells, mostly the
+        # tank's own), but never past `old_rx`: a footprint answer that
+        # widened a shadow the board had already been measured against
+        # once turned a marginal occlusion reading over (`apc` pose B's
+        # ellipse offset fell under its 1.0px floor) rather than help, so
+        # the ceiling is the shipped geometry, not a second guess at it.
+        # Within that ceiling this is still every unit's own measurement:
+        # infantry and mech shrink hardest (-17%/-26%), and every one of
+        # the eight vehicles lands exactly on its old width.
+        old_rx = max(4, int(sw * 0.34))
+        rx = min(old_rx, max(4, int(fw * 0.41)))
+        # A radius under 3 opens a blank row between the sprite's own
+        # contact row and the ellipse's, which only a foot unit's narrow
+        # stance was ever thin enough to hit: the sprite's lowest opaque row
+        # sits fixed relative to `ground` (the 2px sprite crop margin plus
+        # one), so a foot unit's shadow now starts on the row directly
+        # under it and a vehicle's, already wider, is unmoved.
+        ry = max(3, old_rx // 4)
         cast = _shadow_ellipse(
             out,
             cell_w // 2 + dx + sx,
             ground - 1 + sy,
             rx,
-            max(2, rx // 4),
+            ry,
             mirrored=centred_shadow,
         )
     place_in_cell(out, sprite, x0, y0)
