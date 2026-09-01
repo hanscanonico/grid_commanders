@@ -27,6 +27,42 @@ from spritegen.voxel import CAST, FOAM
 from pixel_helpers import RUNG_1_CELL, pose_cell, rung1_texels, units_sheet
 
 
+def air_beat_readings(uid: str, rest: Pose, off: Pose) -> tuple[int, float]:
+    """One airframe's beat with the bob taken back out, for either clip.
+
+    The hop moves every boundary pixel of an aircraft, so anything read
+    across it is mostly the hop. Settle the off-beat back down by `BOB_PX`
+    and ask two questions of what is left, over every livery: in how many
+    of them the composed cell (shadow off) stops being byte-identical to
+    the rest pose's — a beat that paints nothing anywhere scores 0 — and
+    the worst opaque-coverage IoU, the copters' rotor reading, which says
+    what did move is a named assembly rather than a second aircraft.
+
+    Both clips get this. `beat(pose)` gates the bob, the plume, the glint
+    and the nacelles alike, so `MOVE_B` carries the same lift and the same
+    tick as `Pose.B` and the same subtraction reads it.
+    """
+    lit = 0
+    worst = 1.0
+    for fac in FACTIONS:
+        a = pose_cell(uid, fac, rest, shadow=False)
+        b = pose_cell(uid, fac, off, shadow=False)
+        settled = Image.new("RGBA", b.size)
+        settled.paste(b, (0, atlas.BOB_PX))
+        lit += settled.tobytes() != a.tobytes()
+        pa, pb = a.load(), b.load()
+        w, h = a.size
+        a_set = {(x, y) for y in range(h) for x in range(w) if pa[x, y][3] > 200}
+        b_set = {
+            (x, y + atlas.BOB_PX)
+            for y in range(h)
+            for x in range(w)
+            if pb[x, y][3] > 200
+        }
+        worst = min(worst, len(a_set & b_set) / len(a_set | b_set))
+    return lit, worst
+
+
 class AmbientFrames(unittest.TestCase):
     """Frame B is the same army breathing, never a different army."""
 
@@ -80,8 +116,11 @@ class AmbientFrames(unittest.TestCase):
         (a dz of two voxels, or a `(dx +1, dy -1)` diagonal); the two foot
         figures by leaning the whole upper body; the copters by turning
         their rotors; the four hulls by the `BOB_PX` hop plus an assembly of
-        their own riding it; fighter and bomber by the hop alone, which is
-        one texel of altitude exactly.
+        their own riding it; fighter and bomber by that same hop — one texel
+        of altitude exactly — plus the beat their own columns now carry (the
+        burner plume, the tail and canopy retones), which
+        `test_the_bob_lifts_the_airframe_and_a_named_delta_besides` is what
+        actually holds them to.
         """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
@@ -154,34 +193,71 @@ class AmbientFrames(unittest.TestCase):
                 self.assertEqual(a.origin[0], b.origin[0])
                 self.assertEqual(a.origin[1] - b.origin[1], bob)
 
-    def test_the_bob_lifts_the_whole_aircraft_and_nothing_else(self):
+    # The rest-to-beat delta, read the way the copters' rotor tick is
+    # (`test_the_copters_turn_one_rotor_rather_than_swapping_its_blades`):
+    # opaque coverage IoU between the two poses once `BOB_PX` is taken back
+    # out. Measured 2026-09-01 at 0.991 (fighter, both clips) and 1.000
+    # (bomber ambient) / 0.902 (bomber move) across every livery — the
+    # burner plume and the nacelle exhaust are a handful of voxels against a
+    # fuselage that otherwise does not move, so the floor sits under the
+    # copters' own 0.85 with headroom rather than at it. `MoveFrames` takes
+    # the same number against the move pair, which is where the 0.902 is.
+    MIN_AIR_DELTA_IOU = 0.80
+
+    def test_the_bob_lifts_the_airframe_and_a_named_delta_besides(self):
         """The placement above is a plan; this is the composed cell.
 
-        `fighter` and `bomber` draw the same voxels in both poses — the beat
-        IS the bob for them — so frame B has to be frame A moved up exactly
-        `BOB_PX` and nothing else: identical pixels from the hover line down,
-        which is where the cast shadow lives. A bob that moved a fraction of
-        a board texel, or that carried the shadow with it, fails here."""
+        `fighter` and `bomber` used to draw the same voxels in both poses —
+        the beat WAS the bob for them, and nothing else — which is the two
+        dead columns `tests/measure_motion.py` used to record. Each now
+        lights a named assembly on the off-beat (the fighter's afterburner
+        plume; the bomber's nacelle exhaust, but only under way, `MOVE_B`
+        alone) and retones another in place (the canopy glint, the
+        tailplane's tick — see `units/air.py`'s `beat(pose)` branches for
+        why those two are colour changes rather than moved voxels), so this
+        asks the model the hulls' question — it must differ, and still
+        share nearly every voxel with pose A — and the composed cell the
+        copters' question — opaque coverage must still mostly agree once
+        the bob is subtracted back out. What the beat may never do is reach
+        the hover line down, where the cast shadow lives: pose B's cell is
+        byte-identical to pose A's from `ground` down, in every livery.
+
+        Neither of those two readings can tell a retone from nothing: the
+        model differs on a pure material swap whether or not the swapped
+        voxel has a face the ramp ever paints, and IoU is over opaque
+        coverage, so it scores an all-tone beat 1.000 — which is exactly
+        what the bomber's idle beat is. So ask the composed cell outright:
+        settled back down by `BOB_PX`, pose B must stop being byte-identical
+        to pose A in at least one livery (measured 2026-09-01: fighter 29-31
+        px in all six, bomber 6 px in five — `iron`'s ramp puts the tail's
+        highlight on the tone it already had). A beat that paints nothing
+        anywhere fails here and passes everything else."""
         # One board texel and not a pixel less: the board draws the 64x96
         # cell at 0.25 scale, so a bob under 4px moves no visible pixel at
         # all — it only changes which source pixel the resample keeps, which
         # is the flicker the 1px bob shipped as a hover.
         self.assertEqual(atlas.BOB_PX, 4)
         for uid in ("fighter", "bomber"):
-            self.assertEqual(build_model(uid, Pose.A).vox, build_model(uid, Pose.B).vox)
+            a_model = build_model(uid, Pose.A).vox
+            b_model = build_model(uid, Pose.B).vox
+            with self.subTest(unit=uid, reading="model"):
+                self.assertNotEqual(a_model, b_model)
+                shared = sum(1 for v, mat in a_model.items() if b_model.get(v) == mat)
+                self.assertGreater(shared / len(a_model), 0.9)
             ground = atlas.cell_placement(uid, Pose.A).ground
             for fac in FACTIONS:
                 a = pose_cell(uid, fac)
                 b = pose_cell(uid, fac, Pose.B)
-                with self.subTest(unit=uid, faction=fac.key):
-                    self.assertEqual(
-                        b.crop((0, 0, atlas.CELL_W, ground - atlas.BOB_PX)).tobytes(),
-                        a.crop((0, atlas.BOB_PX, atlas.CELL_W, ground)).tobytes(),
-                    )
+                with self.subTest(unit=uid, faction=fac.key, reading="shadow"):
                     self.assertEqual(
                         b.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
                         a.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
                     )
+            lit, worst = air_beat_readings(uid, Pose.A, Pose.B)
+            with self.subTest(unit=uid, reading="beat"):
+                self.assertGreater(lit, 0)
+            with self.subTest(unit=uid, reading="iou"):
+                self.assertGreaterEqual(worst, self.MIN_AIR_DELTA_IOU)
 
     def test_every_hull_moves_a_part_and_not_only_its_altitude(self):
         """The bob is a fleet rising in unison; the beat is a ship working.
@@ -388,6 +464,37 @@ class MoveFrames(unittest.TestCase):
                         (cells[Pose.MOVE_A], cells[Pose.MOVE_B]),
                         (cells[Pose.A], cells[Pose.B]),
                     )
+
+    MIN_AIR_DELTA_IOU = AmbientFrames.MIN_AIR_DELTA_IOU
+
+    def test_the_move_beat_lifts_the_airframe_and_a_named_delta_besides(self):
+        """`AmbientFrames`' airframe reading, asked of the move pair.
+
+        `MOVE_B` bobs for the same reason `Pose.B` does — `beat(pose)` gates
+        the hop — so the move clip could go dead exactly the way the ambient
+        one had: the pair differs, the rung-1 floor clears, and all of it is
+        the four-pixel lift. The test above only asks the two frames not to
+        be byte-equal, which the hop alone satisfies, so it cannot tell an
+        authored gait from a hovering one.
+
+        Bob subtracted, per unit: the composed cell must stop being
+        byte-identical in at least one livery, and opaque coverage must
+        still mostly agree. Measured 2026-09-01: 6 liveries of 6 for both
+        airframes, worst IoU 0.991 (fighter) and 0.902 (bomber, whose
+        `MOVE_B` carries a further whole texel of nose-down).
+
+        Only the two jets. The copters have
+        `test_the_flying_copters_are_not_the_hovering_copters` and a turning
+        rotor of their own; the ships bob but do not fly, and their beat is
+        `test_a_moving_hull_adds_a_bow_wave_and_moves_nothing_else`."""
+        for uid in ("fighter", "bomber"):
+            if uid not in MOVES:
+                self.skipTest(f"{uid} has no authored move poses")
+            lit, worst = air_beat_readings(uid, Pose.MOVE_A, Pose.MOVE_B)
+            with self.subTest(unit=uid, reading="beat"):
+                self.assertGreater(lit, 0)
+            with self.subTest(unit=uid, reading="iou"):
+                self.assertGreaterEqual(worst, self.MIN_AIR_DELTA_IOU)
 
     def test_every_moving_unit_crosses_a_whole_board_texel(self):
         """The gait at the size the board draws it: how many rung-1 texels

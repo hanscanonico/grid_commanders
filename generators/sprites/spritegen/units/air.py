@@ -7,6 +7,29 @@ from .parts import _BLADE_A, _BLADE_B, _rotor, _shift
 from .pose import Pose, beat, moving
 
 
+def _burner_reach(pose: Pose) -> int:
+    """How many courses of lit plume the fighter's two nozzles carry.
+
+    Cold at rest (0: the mouths stay `bore`), 2 on the off-beat, 1 held
+    between beats while the jet is under way.
+
+    Only the SECOND course paints. The first sits at the nozzle mouths
+    (y -1), occluded in every livery, so reach 0 and reach 1 render
+    byte-identical cells — `MOVE_A`'s held burn is model space, not
+    something the player sees. What the board gets is the two nozzles
+    lighting one visible course together: rest none, `Pose.B` lit,
+    `MOVE_A` none, `MOVE_B` lit, 11 px per cell in every livery — 7 newly
+    opaque and 4 the softening pass takes around them. `beat` alone decides
+    whether there is a plume, and `MOVE_B` shows it a course further out
+    than `MOVE_A` does.
+    """
+    if beat(pose):
+        return 2
+    if moving(pose):
+        return 1
+    return 0
+
+
 def fighter(pose: Pose = Pose.A) -> Model:
     """Swept-wing air-superiority jet (autocannon)."""
     m = Model()
@@ -40,6 +63,28 @@ def fighter(pose: Pose = Pose.A) -> Model:
     m.box(4, 5, 0, 0, 3, 4, "gunmetal_dk")
     m.set(4, -1, 3, "bore")
     m.set(5, -1, 3, "bore")
+    reach = _burner_reach(pose)
+    for x in (4, 5):
+        for i in range(reach):
+            m.set(x, -1 - i, 3, "flame")
+    if beat(pose):
+        # Off-beat, ticking with the frame rather than the clip like the
+        # copters' rotor: a canopy glint and an elevon highlight, both
+        # RETONED rather than moved. The glint is the bubble's own middle
+        # course darkening a shade, the elevons the tailplane's outboard
+        # tips catching the light — a voxel that already paints stays put
+        # and only changes what it paints, so neither opens or closes a
+        # silhouette texel the way `_shift` would. That restraint is the
+        # legibility ratchet's, not a taste: fighter's contour already runs
+        # within a fraction of a ramp step of the bar on most grounds
+        # (`make legibility-ratchet`, whose baseline is the repo root's
+        # `tests/fixtures/legibility_baseline.csv`), and even a texel-sized
+        # notch or bump at the boundary — a slid glint, a lifted tip —
+        # measurably dropped dozens of previously-passing cells under it.
+        m.set(4, 12, 5, "glass_dk")
+        m.set(5, 12, 5, "glass_dk")
+        m.set(2, 1, 3, "hull_dk")
+        m.set(7, 1, 3, "hull_dk")
     if moving(pose):
         # Under way the jet holds one board texel of nose-down (dz = -2): the
         # fuselage ahead of the cockpit and the radome drop, while the wings,
@@ -52,6 +97,13 @@ def fighter(pose: Pose = Pose.A) -> Model:
         _shift(m, (4, 5, 14, 19, 3, 5), dz=-2)
         m.box(4, 5, 13, 13, 2, 2, "hull")
     return m
+
+
+# The four nacelles, x and forward offset, in wing order outer-to-inner and
+# mirrored: the outer pair sits one step back, following the wing rake (see
+# `bomber`). Shared with the off-beat exhaust so the two never disagree about
+# where a pod is.
+_NACELLES: tuple[tuple[int, int], ...] = ((-3, 0), (-1, 1), (12, 1), (14, 0))
 
 
 def bomber(pose: Pose = Pose.A) -> Model:
@@ -76,7 +128,7 @@ def bomber(pose: Pose = Pose.A) -> Model:
         m.set(7 + i, wy, 4, edge)
     # four engine pods slung under the wings, mirrored about the fuselage
     # centre; the outer pair sits one step back, following the wing rake
-    for x, fwd in ((-3, 0), (-1, 1), (12, 1), (14, 0)):
+    for x, fwd in _NACELLES:
         m.box(x, x, 9 + fwd, 12 + fwd, 3, 3, "gunmetal")
         m.set(x, 13 + fwd, 3, "bore")
     # bomb-bay doors line on the belly sides
@@ -87,6 +139,25 @@ def bomber(pose: Pose = Pose.A) -> Model:
     m.box(5, 6, 2, 2, 5, 6, "body_dk")
     # tail turret hint
     m.box(5, 6, 0, 0, 3, 3, "gunmetal_dk")
+    if beat(pose):
+        # Off-beat, retoned like `fighter`'s canopy glint and for the same
+        # reason (see its `beat(pose)` branch): the tail's two outboard
+        # tips take a highlight in place, never opening or closing a
+        # silhouette texel on an airframe the legibility ratchet already
+        # holds to its tightest margin — measured 2026-09-01, every one of
+        # the four engine mouths flaring to `flame` on the IDLE beat cost
+        # two previously-passing cells (both the airframe's own fog reading
+        # on plains, the thinnest ground this hull has), and no placement
+        # of the fleck answered for it. `MOVE_B` alone lights the mouths —
+        # gated on `moving`, so a parked idle stays cold and only a bank at
+        # full power, one further beat under way, shows it — because the
+        # nose's own deeper dip is already moving enough of the silhouette
+        # that the same four retones cost nothing there.
+        m.set(2, 1, 4, "hull_dk")
+        m.set(9, 1, 4, "hull_dk")
+        if moving(pose):
+            for x, fwd in _NACELLES:
+                m.set(x, 13 + fwd, 3, "flame")
     if moving(pose):
         # Same held nose-down as the fighter: the forward fuselage, the flight
         # deck and the nose cap drop a board texel, the wings, pods and tail
@@ -94,6 +165,13 @@ def bomber(pose: Pose = Pose.A) -> Model:
         # so the break behind the flight deck stays closed.
         _shift(m, (4, 7, 14, 20, 3, 5), dz=-2)
         m.box(4, 7, 13, 13, 2, 2, "hull")
+        if beat(pose):
+            # MOVE_B dips a further texel over MOVE_A's held trim: the same
+            # section, carried down another whole board texel from where the
+            # first dip already left it, with its own seam closing the new
+            # step behind the flight deck.
+            _shift(m, (4, 7, 14, 20, 1, 3), dz=-2)
+            m.box(4, 7, 13, 13, 0, 1, "hull")
     return m
 
 
