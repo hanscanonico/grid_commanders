@@ -47,10 +47,16 @@ logical-pixel checker that reads as a chequered flag, a dithered fringe that
 reads as debris.
 
 Spreading those sixteen pixels into a cloud that reads as a cloud is what the
-cell has no room for. The contact ellipse is `int(footprint_w * 0.34)` wide
-from the cell centre, and the widest hulls leave almost nothing behind it:
+cell has no room for. The contact ellipse is
+`min(int(silhouette_w * 0.34), int(footprint_w * 0.41))` wide from the cell
+centre, and the widest hulls leave almost nothing behind it:
 
-| unit | footprint | ellipse right tip | columns to the cell edge |
+*Amended 2026-09-01: S3 fitted the ellipse to the footprint, so the radius is
+now that pair rather than the single `0.34` term this was written against.
+Every vehicle below is capped at its old radius, so the readings stand; the
+column is the whole crop, which is what `silhouette_w` is now called.*
+
+| unit | silhouette | ellipse right tip | columns to the cell edge |
 | --- | --- | --- | --- |
 | md_tank | 63 | 55 | 9 |
 | tank | 59 | 54 | 10 |

@@ -219,6 +219,12 @@ def footprint_width(model: Model, k: int = 1) -> int:
     drop shadow of the whole silhouette (`compose_cell`'s shadow policy), so
     it is sized off the base plane the projection actually puts on the
     ground, read the same way `_bounds` reads any voxel's screen span.
+
+    It is the INK's extent and nothing else, so the two measures are 3k apart
+    in basis before either model is consulted: this returns `span + 4k`,
+    while `sprite_size`'s width adds `_bounds`' 2px crop margin on each side
+    for `span + 7k`. `compose_cell` compares the two inside one expression,
+    so whoever retunes either coefficient is tuning against that offset too.
     """
     z0 = min(z for _, _, z in model.vox)
     diag = [x - y for x, y, z in model.vox if z == z0]

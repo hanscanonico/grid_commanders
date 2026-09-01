@@ -21,7 +21,7 @@ from spritegen.terrain import (
     WATER,
     WATER_DARK,
 )
-from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, MOVE_POSES, UNITS, Pose
+from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, MOVE_POSES, UNITS, Pose, foot
 from spritegen import cell as cell_mod
 from spritegen import voxel
 
@@ -265,6 +265,99 @@ class OneSun(unittest.TestCase):
         for name, draw in self._drawers():
             with self.subTest(tile=name):
                 self.assertGreater(self._airborne(draw, mirrored), 0)
+
+
+class FootprintContact(unittest.TestCase):
+    """A land unit's ellipse is CONTACT, and it never outgrew the shadow the
+    board was already measured against.
+
+    Two halves of one statement. The shadow is fitted to the footprint the
+    unit plants on the ground (`voxel.footprint_width`) rather than to its
+    whole crop, so it must TOUCH the unit: a foot unit's 4px stance used to
+    carry a 23px lozenge two rows clear of its boots, which reads as a unit
+    hovering. And fitting it may only ever take width away — a land ellipse
+    the board had already been measured against is a shape the legibility
+    ratchet and the mirrored move frame's occlusion floor both hold, so the
+    pre-S3 radius is the ceiling.
+
+    The sheet cannot catch either on its own: a change that reopened the gap
+    or lifted the ceiling regenerates matching art and passes the snapshot
+    gate, both sides of it coming from this same code.
+
+    Read on the composed cells rather than on the formula: the shadow by
+    DIFFERENCE against the same cell composed with `shadow=False`, which is
+    the only reading that tells a cast pixel from a dark pixel of the unit
+    itself.
+    """
+
+    # The pre-S3 radius: 0.34 of the whole pose-A crop, the coefficient this
+    # file shipped before the shadow was fitted to the footprint.
+    SILHOUETTE_COEFFICIENT = 0.34
+    # The roster's own answer to which units walk rather than roll.
+    FOOT = frozenset(
+        uid for uid, (build, _) in UNITS.items() if build.__module__ == foot.__name__
+    )
+
+    def _cast_and_body(self, uid: str):
+        """(shadow pixels, the unit's own pixels) of one composed cell."""
+        fac = FACTIONS[1]
+        lit = pose_cell(uid, fac).convert("RGBA").load()
+        bare = pose_cell(uid, fac, shadow=False).convert("RGBA").load()
+        cast, body = set(), set()
+        for y in range(atlas.CELL_H):
+            for x in range(atlas.CELL_W):
+                if lit[x, y] != bare[x, y]:
+                    cast.add((x, y))
+                elif bare[x, y][3] > 200:
+                    body.add((x, y))
+        return cast, body
+
+    def _kind(self, kind: str):
+        return [uid for uid in ATLAS_ORDER if UNITS[uid][1] == kind]
+
+    def _gap(self, uid: str) -> int:
+        """Blank rows between the unit's lowest pixel and its shadow's
+        highest. Zero or less is contact; the shapes overlap."""
+        cast, body = self._cast_and_body(uid)
+        self.assertTrue(cast, f"{uid} casts no shadow at all")
+        self.assertTrue(body, f"{uid} composed no sprite")
+        return min(y for _, y in cast) - max(y for _, y in body) - 1
+
+    def test_every_foot_unit_stands_on_its_own_shadow(self):
+        for uid in sorted(self.FOOT):
+            with self.subTest(unit=uid):
+                self.assertLessEqual(self._gap(uid), 0)
+
+    def test_the_reading_sees_the_gap_an_aircraft_keeps(self):
+        # worth asserting only if it catches a detached shadow, and the sheet
+        # holds one on purpose: an aircraft's drop IS the altitude cue, so
+        # the same reading has to come back with rows of daylight in it.
+        for uid in self._kind("air"):
+            with self.subTest(unit=uid):
+                self.assertGreater(self._gap(uid), 1)
+
+    def _ceiling(self, uid: str) -> int:
+        silhouette_w = atlas.cell_placement(uid, Pose.A).silhouette_w
+        return max(4, int(silhouette_w * self.SILHOUETTE_COEFFICIENT))
+
+    def _half_width(self, uid: str) -> int:
+        cast, _ = self._cast_and_body(uid)
+        self.assertTrue(cast, f"{uid} casts no shadow at all")
+        cx = atlas.CELL_W // 2 + cell_mod.SHADOW_OFFSET[0]
+        return max(abs(x - cx) for x, _ in cast)
+
+    def test_no_land_ellipse_is_wider_than_the_shadow_it_replaced(self):
+        for uid in self._kind("land"):
+            with self.subTest(unit=uid):
+                self.assertLessEqual(self._half_width(uid), self._ceiling(uid))
+
+    def test_a_foot_unit_is_narrower_than_that_ceiling_rather_than_at_it(self):
+        # the cap is only half the fit: if every unit simply converged on the
+        # ceiling, the footprint would be measuring nothing. The two units
+        # whose stance is nothing like their crop have to come in under it.
+        for uid in sorted(self.FOOT):
+            with self.subTest(unit=uid):
+                self.assertLess(self._half_width(uid), self._ceiling(uid))
 
 
 class CastShadow(unittest.TestCase):
