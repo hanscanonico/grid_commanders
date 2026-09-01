@@ -43,6 +43,37 @@ are read before the first command:
 `income`.** A mission that opens level (`1.00 / 1.00`) and is still lost is far
 more likely to be reading (1) or (2), and none of those was edited here.
 
+### Fog seat
+
+Reading (2) has a sharper edge on a fog board: **the planner sees through the
+whiteout.** A human plays `fw03_cold_relay` blind and lost it on day 6 to a
+destroyed army on a row this table reads at 100% (#624). Thirteen missions
+ship with `fog_enabled` — `fw03`, `fw17` and `qw02`–`qw12` — and on each of
+them the instrument now plays the player's seat twice:
+
+- **`win%`** — the seat sees the whole board, as it always has. This is the
+  number every committed table below reads, so the tables still compare.
+- **`fog win%`** — the same seeds with that one seat held to the fog a human
+  sees: the planner acts only on enemies `Vision` shows its side, so what it
+  cannot see it neither shoots, fears in its threat map nor walks toward. The
+  enemy seats keep the sight the live game gives them. `—` on a fog-off
+  mission, where the two seats would be the same seat.
+
+The switch is `AIController.honour_fog`, off by default and set nowhere but
+`tools/run_campaign_difficulty.gd`, so the shipped opponent is untouched — the
+"AI sees everything" rule in `.claude/rules/ai.md` and the difficulty lock stand,
+and `make verify`'s determinism golden is the proof.
+
+A fog mission the sighted seat wins at least half the time and the blind seat
+never wins is **flagged** beside the never-won rows: that is the `fw03` shape,
+a board that reads fair here and plays as impossible. Read a `fog win%` that
+sits well under `win%` as the cost of the whiteout on that board — sight is
+what the mission is about, and the human's answer is the recon and the
+property vision the planner is not using well either.
+
+The table below predates the column. A later full sweep adds it wholesale;
+nothing here was re-run for it.
+
 ## The pass this document paid for
 
 Baseline: 56 of 108 missions never won across nine seeds, mean `win%` 38.1.
