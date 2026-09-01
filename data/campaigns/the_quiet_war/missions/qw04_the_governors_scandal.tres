@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="2"]
@@ -112,9 +112,15 @@ effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_ledger")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("4")
-text = "The papers were signed, and the city became Iron ground the same way Selwich did — without anyone firing a shot."
+speaker = &"cass_orlov"
+text = "The governor's men stood in the fog all day. You walked past them twice. He signed at nightfall with a steady hand."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Your column never reached city hall. The papers went through and the city is Iron ground the way Selwich is, with nobody firing a shot."
 
 [resource]
 script = ExtResource("1")
@@ -139,4 +145,4 @@ events = Array[Resource]([SubResource("Event_the_governors_courage"), SubResourc
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_4b")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

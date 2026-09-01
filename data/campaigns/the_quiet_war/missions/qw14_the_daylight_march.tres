@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -34,7 +34,7 @@ text = "I was ordered here to make Orlov's war mine. I have little taste for a w
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "Then don't fight it that way. Fight me honestly, and we'll both know exactly where we stand by nightfall."
+text = "Then don't fight it that way. Fight me honestly, and we'll both know where we stand by nightfall."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -58,7 +58,7 @@ points = 3500
 [sub_resource type="Resource" id="Event_line_daylight"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "You're taking them in the open, exactly as you said you would. Then so will I. Everything I have, where you can see it, and no order I wouldn't sign."
+text = "You're taking them in the open, just as you said you would. Then so will I. Everything I have, where you can see it, and no order I wouldn't sign."
 
 [sub_resource type="Resource" id="Event_draeg_answers_in_daylight"]
 script = ExtResource("5")
@@ -134,9 +134,20 @@ effects = Array[Resource]([SubResource("Effect_towns_saved")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "One city too many changed hands, and the march stalled short of the statement it was meant to make."
+speaker = &"viktor_draeg"
+text = "You came at me honestly and it wasn't enough. I'll say that plainly in my report. I'll say it to Orlov's face as well."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Your army broke on the march. Draeg took the cities honestly, one at a time. The statement was meant to be ours."
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Rumour's confirmed from the map office. Draeg's spearhead is on the road, in daylight, with nothing forged behind it. That's a first for this file."
 
 [resource]
 script = ExtResource("1")
@@ -159,6 +170,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_draeg_answers_in_daylight"), SubResource("Event_the_vanguard_breaks"), SubResource("Event_the_division_is_spent"), SubResource("Event_the_march_stands")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_take_millhollow"]
 script = ExtResource("2")
-text = "Take Millhollow before the cache moves."
+text = "Capture Millhollow before the cache moves."
 cell = Vector2i(9, 2)
 
 [sub_resource type="Resource" id="Bonus_break_the_convoy"]
@@ -33,7 +33,7 @@ text = "Morn's forward supply cache moves at the end of the week, Quill. Six day
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "Small force, small window — give me the odds and I'll tell you if I like them."
+text = "Small force, small window. Give me the odds and I will tell you if I like them."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -43,7 +43,7 @@ text = "Better than even, worse than comfortable. That's as precise as I can mak
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "Good enough odds to move on. Let's not give the clock a vote."
+text = "Good enough odds to move on. Let us not give the clock a vote."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -53,7 +53,7 @@ text = "Millhollow falls with a day of the week to spare. He got his crates onto
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "I don't linger on a win like this one. A raid that stands still becomes a target."
+text = "I do not linger on a win like this one, since a raid that stands still becomes a target."
 
 [sub_resource type="Resource" id="Trigger_day_2"]
 script = ExtResource("7")
@@ -100,7 +100,7 @@ note = "A raid column of Orlov's is off the board for good."
 [sub_resource type="Resource" id="Event_line_empty_barn"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "The barn's empty and so is his column. Those were even odds, and I'll take them again."
+text = "The barn is empty and so is his column. Those were even odds, and I will take them again."
 
 [sub_resource type="Resource" id="Event_the_convoy_breaks"]
 script = ExtResource("6")
@@ -110,9 +110,20 @@ effects = Array[Resource]([SubResource("Effect_columns_broken")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_empty_barn")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("4")
-text = "The convoy pulled out on the seventh morning with everything it came for, and Millhollow stayed an empty town on a map."
+speaker = &"radek_morn"
+text = "Six days in the trees and you never found the barn. My crates left on my schedule, by a road you never saw."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Your raid ran out before the week did. The convoy pulled out on the seventh morning with everything it came for. Millhollow's an empty town on a map."
+
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("4")
+speaker = &"sera_lark"
+text = "You're the Concord's, on contract, so you'd know better than me. They don't hold a border. They hold the odds."
 
 [resource]
 script = ExtResource("1")
@@ -135,6 +146,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_break_the_convoy")])
 events = Array[Resource]([SubResource("Event_the_cache_loads"), SubResource("Event_the_convoy_breaks")])
 par_day = 4
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

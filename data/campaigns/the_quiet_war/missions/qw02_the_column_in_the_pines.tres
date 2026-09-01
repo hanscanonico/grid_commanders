@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -10,7 +10,7 @@
 
 [sub_resource type="Resource" id="Objective_retake_the_pine_city"]
 script = ExtResource("2")
-text = "Find the column and retake the pine city."
+text = "Recapture the pine city."
 cell = Vector2i(7, 3)
 
 [sub_resource type="Resource" id="Objective_destroy_pine_column"]
@@ -71,9 +71,15 @@ effects = Array[Resource]([SubResource("Effect_name_the_column")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_signals")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "The column melted back into the pines with the city still in its pocket."
+speaker = &"cass_orlov"
+text = "You walked past my column twice in those pines. It watched you go by. It kept the city."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Signals went quiet a fourth night. My screen had nothing to add. The pine city keeps his colours."
 
 [resource]
 script = ExtResource("1")
@@ -98,4 +104,4 @@ events = Array[Resource]([SubResource("Event_signals_go_quiet")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

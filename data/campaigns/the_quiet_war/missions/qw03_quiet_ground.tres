@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -17,7 +17,7 @@ terrain_id = &"city"
 
 [sub_resource type="Resource" id="Objective_sit_on_the_southern_town"]
 script = ExtResource("4")
-text = "Sit on the southern town for two days once the permit lands."
+text = "Hold the southern town for two days."
 cell = Vector2i(9, 5)
 days = 2
 
@@ -92,9 +92,15 @@ effects = Array[Resource]([SubResource("Effect_towns_saved")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "One town too many went through on paper, and the frontier is less Meridian's than the map says."
+speaker = &"konrad_vale"
+text = "You never saw the column that took the southern town. It needed no fight, only a permit that cleared before you arrived."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Your column broke splitting three ways. The permits cleared on schedule. The frontier is less ours than the map says."
 
 [resource]
 script = ExtResource("1")
@@ -119,4 +125,4 @@ events = Array[Resource]([SubResource("Event_the_permit_clears"), SubResource("E
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
