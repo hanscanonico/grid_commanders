@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -7,10 +7,11 @@
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the relay where the three provinces meet."
+text = "Capture the relay where the three provinces meet."
 cell = Vector2i(9, 8)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -75,9 +76,33 @@ effects = Array[Resource]([SubResource("Effect_vance_pulls_her_flank")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("5")
-text = "The crossroads stayed contested, and the shortest road to the capital stayed closed to us."
+speaker = &"radek_morn"
+text = "The crossroads stays contested, Thorne. Vance and I can keep an exception going for a long time. Longer than you can keep an army."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Thorne's headquarters fell at the crossroads. Morn and Vance cooperating, on the record. I didn't expect to write that."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Aurora's column is gone where the three provinces meet, so Morn and Vance still hold the shortest road between them."
+unless = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_ally"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "The shortest road to the capital was ours. We didn't take it. Now it's theirs."
 
 [resource]
 script = ExtResource("1")
@@ -104,4 +129,4 @@ events = Array[Resource]([SubResource("Event_the_exception_ends")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_2b"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout"), SubResource("Line_defeat_ally")])

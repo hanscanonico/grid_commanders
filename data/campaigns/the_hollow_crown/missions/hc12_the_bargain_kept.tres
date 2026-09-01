@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -9,10 +9,11 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="11"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the relay at the ridge's last crossing."
+text = "Capture the relay at the ridge's last crossing."
 cell = Vector2i(10, 6)
 
 [sub_resource type="Resource" id="Objective_1"]
@@ -114,9 +115,50 @@ effects = Array[Resource]([SubResource("Effect_the_outriders_change_banner"), Su
 once = true
 lines = Array[Resource]([SubResource("Event_line_2"), SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("11")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("11")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("6")
-text = "The last crossing fell, and the bargain broke with it — the road to the capital stays shut."
+speaker = &"cassian_rook"
+text = "Morn and Ferrow at the last crossing, noted. Also noted: Draeg's said together four times this season. This is where it gets tested."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "The last crossing's mine, Flux. Your marshal's word ends at the ridge."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("6")
+speaker = &"cassian_rook"
+text = "Headquarters fell at the last crossing. The road to the capital stays shut. Logged."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("6")
+speaker = &"cassian_rook"
+text = "Flux's army is gone from the ridge. Draeg's still standing at the crossing. Nobody's standing with him."
+unless = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_ally"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "I said we reach the capital together. We didn't."
+
+[sub_resource type="Resource" id="Line_victory_par"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "Six days for the last crossing. I've crossed this ridge with a full army behind me. It was never that quick."
+requires = SubResource("Run_par")
 
 [resource]
 script = ExtResource("1")
@@ -141,6 +183,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_last_crossing"), SubResource("Event_the_outriders_remember")])
 par_day = 6
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_rook"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_victory_par")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout"), SubResource("Line_defeat_ally")])

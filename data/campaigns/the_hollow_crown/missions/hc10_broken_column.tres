@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -22,7 +22,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the eastern relay the broken column was walking to."
+text = "Capture the eastern relay."
 cell = Vector2i(11, 4)
 
 [sub_resource type="Resource" id="Objective_1"]
@@ -117,9 +117,38 @@ effects = Array[Resource]([SubResource("Effect_second_company")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2"), SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("7")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("6")
-text = "Draeg's column broke on the ridge road, and the alliance lost its first marshal."
+speaker = &"cassian_rook"
+text = "Orlov's numbers and Ferrow's bounty, on the record, both pointed at the same relay. Draeg's column arrived thin. I've counted it twice."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("6")
+speaker = &"cass_orlov"
+text = "The ridge road is mine, Voss. Draeg's column was thin before you got here. It's thinner now."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("6")
+speaker = &"cassian_rook"
+text = "Voss's headquarters fell on the ridge road while the column we were meant to keep standing watched it go."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("6")
+speaker = &"cassian_rook"
+text = "Meridian's army is gone from the eastern approach. Logged. Draeg's column won't outlast it by much."
+unless = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_ally"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "I said I couldn't take this one alone. I was right. I couldn't take it with you either."
 
 [resource]
 script = ExtResource("1")
@@ -145,6 +174,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_thin_column_marches"), SubResource("Event_meridian_takes_the_ridge")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_rook"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout"), SubResource("Line_defeat_ally")])

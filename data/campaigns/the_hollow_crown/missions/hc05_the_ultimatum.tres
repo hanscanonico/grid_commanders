@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -19,7 +19,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Answer the ultimatum: take Morn's command post on the crossing."
+text = "Capture Morn's command post on the crossing."
 cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -50,7 +50,7 @@ text = "Ultimatum answered. His headquarters fell first."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"radek_morn"
-text = "Withdrawn. Quieter than I arrived — something else needs my attention now."
+text = "Withdrawn. Quieter than I arrived. Something else needs my attention now."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("8")
@@ -79,9 +79,33 @@ effects = Array[Resource]([SubResource("Effect_the_deadline")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("6")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("5")
-text = "The ultimatum stood, and the crossing answers to Morn now."
+speaker = &"cassian_rook"
+text = "For the record, he sent that ultimatum to every border office at once. Ours answered. The others are still drafting a reply."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "The crossing answers to me now, Marr. That's what an ultimatum is for."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Morn has the headquarters and the crossing, so the ultimatum's been answered after all, just not by us."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Marr's column is gone from the crossing. The terms stand. Nobody's left to argue them."
+unless = SubResource("Run_hq_taken")
 
 [resource]
 script = ExtResource("1")
@@ -105,6 +129,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_terms_expire")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_rook"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout")])

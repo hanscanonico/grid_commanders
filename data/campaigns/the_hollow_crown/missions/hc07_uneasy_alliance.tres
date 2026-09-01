@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -9,10 +9,11 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="11"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the ridge relay before Draeg's army does it for you."
+text = "Capture the ridge relay."
 cell = Vector2i(10, 4)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -73,9 +74,38 @@ effects = Array[Resource]([SubResource("Effect_the_left_flank")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("11")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("5")
-text = "The rivals took the ridge, and the alliance's first test ended before it proved anything."
+speaker = &"cassian_rook"
+text = "Noted for the record: Orlov and Morn on the far side of the ridge, Draeg on ours. I've filed it as an alliance. Nobody's signed it."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "The ridge relay is mine, Colt. Draeg picked a shoulder to stand at. He picked wrong."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Headquarters fell on the marches. First action of the alliance, first entry on its page. It's a loss."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Colt's column is gone off the ridge. The alliance has one army in it now. His."
+unless = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_ally"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "One winter, one ally. That's what I asked for. It didn't last the spring."
 
 [resource]
 script = ExtResource("1")
@@ -100,6 +130,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_flank_is_offered")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_rook"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout"), SubResource("Line_defeat_ally")])

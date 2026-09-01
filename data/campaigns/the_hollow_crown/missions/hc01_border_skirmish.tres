@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,10 +11,11 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="14"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Push Morn's column back and take the crossing post."
+text = "Capture the crossing post."
 cell = Vector2i(15, 2)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -97,9 +98,28 @@ effects = Array[Resource]([SubResource("Effect_morn_bloodied")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("14")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("5")
-text = "Morn's column crossed and dug in, and the spring test just became a permanent fixture."
+speaker = &"radek_morn"
+text = "The crossing's mine now, Rook. I'm digging in on it. Next spring there's nothing left to test."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Headquarters taken on the north crossing, logged along with the border it stood on."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "The column's gone. Nothing on the north crossing left to write up. Just the date."
+unless = SubResource("Run_hq_taken")
 
 [resource]
 script = ExtResource("1")
@@ -124,4 +144,4 @@ events = Array[Resource]([SubResource("Event_the_rest_of_the_column"), SubResour
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout")])

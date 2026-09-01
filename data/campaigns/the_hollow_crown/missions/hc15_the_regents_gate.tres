@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the gatehouse. No gate, no regent."
+text = "Capture the gatehouse."
 cell = Vector2i(23, 5)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -73,7 +73,7 @@ condition = SubResource("Condition_ledger_seized")
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "You closed three of my entries at the watchtower, Wren. I've opened four more behind you."
+text = "You closed three of my entries at the watchtower, Wren, so I've opened four more behind you."
 
 [sub_resource type="Resource" id="Event_four_more_entries"]
 script = ExtResource("7")
@@ -106,9 +106,33 @@ effects = Array[Resource]([SubResource("Effect_she_closes_the_middle")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("6")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("5")
-text = "The gate held, and Vance's claim held with it — one gatehouse short of the whole city."
+speaker = &"cassian_rook"
+text = "Noted for the record: Vance styled herself regent in a letter to three border offices. Two of them filed it. We didn't."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "The gate holds, Wren. Regent, then, until somebody audits it."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Wren's headquarters fell short of the gatehouse, which I've logged one entry below her regency."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "The Concord's column is gone from the gatehouse road. Her claim stands. One gate proves it."
+unless = SubResource("Run_hq_taken")
 
 [resource]
 script = ExtResource("1")
@@ -131,6 +155,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_1")])
 events = Array[Resource]([SubResource("Event_four_more_entries"), SubResource("Event_audit_it_then")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_rook"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout")])
