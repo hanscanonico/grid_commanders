@@ -96,7 +96,7 @@ requires = SubResource("Run_hq_taken")
 [sub_resource type="Resource" id="Line_defeat_rout"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Aurora's column is gone where the three provinces meet, so Morn and Vance still hold the shortest road between them."
+text = "Verdant's column is gone where the three provinces meet, so Morn and Vance still hold the shortest road between them."
 unless = SubResource("Run_hq_taken")
 
 [sub_resource type="Resource" id="Line_defeat_ally"]

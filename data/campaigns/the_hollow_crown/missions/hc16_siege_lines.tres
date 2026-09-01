@@ -135,7 +135,7 @@ requires = SubResource("Run_failure")
 [sub_resource type="Resource" id="Line_defeat_rout"]
 script = ExtResource("6")
 speaker = &"cassian_rook"
-text = "Ward's army is gone from the siege works. The relay was ours for less than the two days it needed."
+text = "The relay was ours for less than the two days it needed. I've logged the siege works as Orlov's."
 unless = SubResource("Run_failure")
 
 [sub_resource type="Resource" id="Line_defeat_ally"]

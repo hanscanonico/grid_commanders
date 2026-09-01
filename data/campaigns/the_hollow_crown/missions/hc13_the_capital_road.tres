@@ -148,7 +148,7 @@ requires = SubResource("Run_hq_taken")
 [sub_resource type="Resource" id="Line_defeat_rout"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Verdant's column is gone off the capital road. Draeg's companies went with it. For the record, he sent them."
+text = "Aurora's column is gone off the capital road. Draeg's companies went with it. For the record, he sent them."
 unless = SubResource("Run_hq_taken")
 
 [resource]
