@@ -82,6 +82,26 @@ func _with_a_beat(campaign: CampaignDefinition, id: StringName = &"the_gate_open
 	return event
 
 
+## `_campaign` with a deadline on it the board below is past, so `decide` loses it.
+func _doomed_campaign() -> CampaignDefinition:
+	var campaign := _campaign()
+	var deadline := DayDeadlineObjective.new()
+	deadline.last_day = 2
+	campaign.missions[0].failures.append(deadline)
+	return campaign
+
+
+## The mission lost, the way the live seam loses it: a mid-mission save on disk,
+## a board past the deadline, the verdict taken and recorded.
+func _lose(state: GameState) -> void:
+	assert_true(CampaignSession.save_battle({"version": 8, "day": 3}))
+	assert_false(CampaignProfile.load_battle(PROBE).is_empty(), "the attempt is on disk")
+	state.day = 3
+	assert_true(CampaignSession.decide(state))
+	assert_eq(CampaignSession.outcome.status, MissionRuntime.Status.FAILURE)
+	CampaignSession.record(state)
+
+
 ## One beat fired the way the live seam fires it: the command applies to the
 ## board and the session records what it did to the mission.
 func _fire(state: GameState, event: MissionEvent) -> MissionEventCommand:
@@ -249,6 +269,47 @@ func test_a_won_mission_is_written_to_the_profile() -> void:
 	assert_true(CampaignSession.decide(state))
 	CampaignSession.record(state)
 	assert_not_null(CampaignProfile.load_progress(PROBE))
+
+
+## A lost mission drops the board it was being kept with. The profile stays —
+## the war is not forgotten — but the attempt is not on it, so the hub offers a
+## fresh start rather than a resume of a board already lost.
+func test_a_lost_mission_clears_the_profile_of_its_board() -> void:
+	_begin(_doomed_campaign())
+	_lose(_state())
+	assert_true(CampaignProfile.load_battle(PROBE).is_empty(), "the lost board is dropped")
+	var progress := CampaignProfile.load_progress(PROBE)
+	assert_not_null(progress, "the profile itself stands")
+	assert_eq(progress.active_mission, &"", "and names no mission in progress")
+	assert_false(progress.is_cleared(&"probe_one"), "a loss clears nothing")
+
+
+## The tally follows the board: a retry after a loss opens owing nothing, so a
+## loss limit is spent only against the attempt being played.
+func test_a_retry_after_a_loss_opens_with_no_losses() -> void:
+	var campaign := _doomed_campaign()
+	_begin(campaign)
+	var state := _state()
+	CampaignSession.open_board(state)
+	state.remove_unit(state.units_of(1)[0])
+	_lose(state)
+	assert_eq(CampaignSession.tally.losses(), 1, "the lost attempt did cost a unit")
+	assert_true(CampaignProfile.load_in_progress(PROBE).tally.is_empty(), "nothing to resume")
+	CampaignSession.clear()
+	_begin(campaign)
+	assert_eq(CampaignSession.tally.losses(), 0)
+	assert_true(CampaignSession.tally.is_empty())
+
+
+## A resumed board is the tally's baseline, not its first command: the losses it
+## owes are kept, and the first command's casualties are counted exactly once.
+func test_a_resumed_board_baselines_before_the_first_command() -> void:
+	_begin(_campaign(), MissionProgress.from_dict({"losses": 2}))
+	var state := _state()
+	CampaignSession.open_board(state)
+	state.remove_unit(state.units_of(1)[0])
+	assert_true(CampaignSession.decide(state))
+	assert_eq(CampaignSession.tally.losses(), 3, "the two owed, plus the one this command cost")
 
 
 ## A mission won through the override banks nothing at all. Recording it would
