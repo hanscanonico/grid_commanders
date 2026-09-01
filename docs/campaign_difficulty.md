@@ -240,8 +240,9 @@ most common reason it ended, `(still running)` meaning the `--days` horizon was
 reached rather than the mission lost. Since `MissionRuntime` started telling a
 captured headquarters from a rout, that column reads "Your headquarters fell."
 for the former; the 2026-09-01 table below predates the split and folds both
-into "Your army was destroyed.", and no number moved with it. A run also writes `missions.csv` and
-`summary.json` under `reports/campaign_difficulty/` (gitignored).
+into "Your army was destroyed.", and no number moved with it. A run also writes
+`missions.csv` and `summary.json` under `reports/campaign_difficulty/`
+(gitignored).
 
 ## The measurement, 2026-09-01
 

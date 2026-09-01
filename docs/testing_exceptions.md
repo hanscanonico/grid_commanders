@@ -32,6 +32,7 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 | `CommanderPicks` (`scenes/common/`) | `test_commander_picks.gd` | the one rule that a general commands a single army, stated Node-free and database-free so the picker, the menu adapter and `--co=` all inherit it rather than each restating it |
 | `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
 | `CampaignSession` | `tests/unit/test_campaign_session.gd` | the autoload is up for the whole headless run and reachable without a scene; its lifecycle — armed by `begin`, silent for every skirmish, emptied whole by `clear` — is what the suite pins |
+| `CampaignSession.record`'s run facts | `tests/unit/test_campaign_run_facts.gd` | the same autoload, one seam: the nine `run:` facts it writes onto the profile after a win or a loss, dropped by `begin` and `clear` and never stored by the codec |
 
 ## Pure answers over an input or a state
 
