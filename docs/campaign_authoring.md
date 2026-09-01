@@ -20,7 +20,11 @@ in none.
 naming a seat the board does not deal, or giving one seat to both sides. A
 mission that can be neither won nor lost by objective, an empty objective slot,
 or an objective naming ground or a unit the board does not have — or asking for
-more than that board could ever give. A difficulty tier that does not ship. A story
+more than that board could ever give. Ground an objective names that no unit the
+player can field — dealt on the board, or built by a property the player owns —
+could reach over the terrain alone, so a target reachable only by transport (a
+lander to an island) reads as unreachable until the coastal act teaches the
+check `TerrainType.services` and transports. A difficulty tier that does not ship. A story
 line whose speaker is not on the commander roster, or a seat cast as a commander
 who is not. A briefing with nothing to say when it is won. A briefing, debrief or
 interlude with no unconditional line — a page that can render empty. A deadline
@@ -60,7 +64,7 @@ minimum no unit could ever be refit to.
 Each question is a `core/` authority the tool and `tests/unit/test_campaign_content.gd`
 both ask rather than a rule spelled twice — `MissionDefinition.definition_error`,
 `board_error`, `content_error`, `difficulty_error` and `story_error`,
-`MissionEffect.board_error`, and `CampaignDefinition`'s `ledger_error`,
+`MissionBoardReach.error`, `MissionEffect.board_error`, and `CampaignDefinition`'s `ledger_error`,
 `carry_error`, `route_error`, `constant_fact_error`, `block_error` and
 `speech_error`. Add a check by adding one of those, not by adding a branch to the
 tool.

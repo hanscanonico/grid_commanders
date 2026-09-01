@@ -118,6 +118,10 @@ func _check_mission(
 	if error != "":
 		_fail("%s: %s" % [where, error])
 		return
+	# The ground exists; now whether anything the player fields can get there.
+	var reach := MissionBoardReach.error(mission, map, unit_db)
+	if reach != "":
+		_fail("%s: %s" % [where, reach])
 	var tier := mission.difficulty_error(difficulty_db)
 	if tier != "":
 		_fail("%s: %s" % [where, tier])
