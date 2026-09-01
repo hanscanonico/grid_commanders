@@ -48,6 +48,14 @@ tiles`: read the new sweep first, then commit the digest with the art it describ
 `make verify` for the sweep's own reason — it renders the whole matrix and takes about 24 minutes on
 a loaded machine — so it is a step before an art merge, not a per-commit gate.
 
+**One baseline cell fails on purpose, since 2026-09-01.** The animation-frames plan's S3 fitted the
+land cast shadow to the footprint it stands on, and mech's narrower ellipse takes
+`board:idle_b:mech:iron:ready:port:fog` from 1.11 to **0.77** against the one-step fog bar — the one
+verdict of 231 that moved the wrong way, measured exhaustively and accepted rather than answered by
+widening the shadow back. The digest was deliberately not rewritten for it: the milestone's S8
+re-reads this page and re-baselines with it. Until then `make legibility-ratchet` reports that cell
+and nothing else, so a second name in its output is a real regression.
+
 ## Re-read 2026-08-19, over the terrain variants
 
 The ruler now reads a ground on every tile its family can draw and reports the worst (see *What is

@@ -107,6 +107,16 @@ by out-valuing the sea, which is a contest a boat awash cannot win. Nothing a
 unit emits is semi-transparent — every shadow and every fleck of foam is opaque,
 because partial alpha is a blurred halo at cut-in scale.
 
+**A land unit's ellipse is CONTACT**, so its width is read off the footprint
+the model plants on the ground (`voxel.footprint_width`, the lowest-z plane)
+rather than off the whole crop a barrel or a raised rifle widens, and it
+touches the unit's own lowest row instead of hanging two rows under it. Only
+the WIDTH is the footprint's — the ellipse's depth still reads the crop,
+narrowing both axes having taken area off a vehicle rather than fitting it —
+and the fit may only ever take width away, the pre-fit radius being a ceiling
+every vehicle still lands on. `tests/test_shadows.py::FootprintContact` holds
+both halves, and asserts the rows of daylight an aircraft keeps on purpose.
+
 ### The shadow is drawn for every rung
 
 The board offers whole zoom rungs 1 to 5 and draws the 64px cell onto a 16px

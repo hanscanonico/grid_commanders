@@ -14,12 +14,12 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `overlay.png` | 0.1 KiB | 1.0 KiB | 1 | 0 | 0% | yes |
 | `terrain_atlas.png` | 81.0 KiB | 1344.0 KiB | 84 | 45 | 54% | yes |
-| `units_atlas.png` | 80.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_b.png` | 82.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas.png` | 80.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_b.png` | 82.2 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures.png` | 77.7 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures_b.png` | 79.0 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move.png` | 81.4 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move_b.png` | 85.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move.png` | 81.5 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move_b.png` | 86.0 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `autotiles/bridges.png` | 1.5 KiB | 35.6 KiB | 2 | 0 | 0% | yes |
 | `autotiles/coast.png` | 5.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 | `autotiles/mountain.png` | 3.6 KiB | 53.1 KiB | 3 | 0 | 0% | yes |
@@ -31,7 +31,7 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | `autotiles/shoals.png` | 5.4 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
 | `autotiles/woods.png` | 16.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 
-**Totals: 619.6 KiB of PNG, 18,614.7 KiB of decoded RGBA, over 18 sheets — every one of which the
+**Totals: 619.9 KiB of PNG, 18,614.7 KiB of decoded RGBA, over 18 sheets — every one of which the
 battle scene loads.** The instrument reads that last column off the game rather than off a list:
 it scans `scenes/` for `res://assets/tiles/*.png`, and finds `scenes/battle/unit_sprite.gd` naming
 the six unit sheets, `scenes/battle/terrain_autotiles.gd` the ten autotile sheets,
