@@ -5,10 +5,12 @@ authored design that renders byte-identically on every run. Units face +y
 (screen lower-left), the facing the game's atlas has always used. Column
 order and ids mirror data/units/*.tres in grid_commanders.
 
-Weapon silhouettes follow each unit's battle_style: small_arms carry rifles
-or a pintle MG, rocket units carry tubes and pods, cannon units carry a
+Weapon silhouettes follow each unit's battle_style family: small_arms carry
+rifles or a pintle MG, rocket units carry tubes and pods, cannon units carry a
 single big gun, autocannon units carry thin multi-barrels, and the unarmed
-transports carry none.
+transports carry none. An id split off one of those for the cut-in alone —
+recon's pintle, mech's bazooka, the APC's convoy — draws its parent's
+silhouette.
 
 Every builder takes a `Pose`. A pose is a CLIP and a FRAME: the ambient clip's
 two keys are `A`/`B`, the move clip's are `MOVE_A`/`MOVE_B`. Pose A is the

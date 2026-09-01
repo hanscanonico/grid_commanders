@@ -75,7 +75,7 @@ def recon(pose: Pose = Pose.A) -> Model:
     m.box(3, 6, 9, 9, 4, 5, "glass")
     m.box(7, 7, 4, 7, 4, 4, "glass_dk")
     m.box(2, 7, 3, 3, 4, 4, "hull_dk")  # rear cabin plate
-    # pintle MG on a rear roof ring mount (small_arms)
+    # pintle MG on a rear roof ring mount (pintle)
     m.box(4, 5, 4, 5, 6, 6, "gunmetal_dk")
     m.box(4, 4, 5, 5, 7, 7, "gunmetal_dk")
     m.box(4, 4, 6, 9, 7, 7, "gunmetal")

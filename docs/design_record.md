@@ -1244,9 +1244,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   `BattleCutsceneScenario` were recomputed against the new sheet rather than left: `CUT_IN_POSE`
   0.95 → **1.05**, `KO_POSE` 1.15 → **1.22**, `VOLLEY_POSE` 0.46 → **0.615**. Two things about them
   are worth recording. One clock cannot sit inside six impact windows once a per-weapon wind-up has
-  pulled the firing times 0.18 s apart, so `CUT_IN_POSE` picks the four styles that draw a burst and
-  the two whose `impact_radius` is 0 — `small_arms` and `autocannon`, whose hit is a spark stitch —
-  have settled past theirs. And `VOLLEY_POSE` is a tight fit by construction: the last barrel to
+  pulled the firing times 0.18 s apart, so `CUT_IN_POSE` picks the styles that draw a burst and the
+  ones whose `impact_radius` is 0 — `small_arms`, its `pintle` split and `autocannon`, whose hit is
+  a spark stitch — have settled past theirs. And `VOLLEY_POSE` is a tight fit by construction: the last barrel to
   light is the rocket's at 0.58, the first round to arrive is small arms' at 0.6465, the cannon's
   flash goes out at 0.62, and a sustained weapon strobes at 18 Hz. **A style with `aim_seconds` past
   ~0.275 fires after that frame and photographs an empty sky**, so the howitzer split off the cannon
@@ -1270,7 +1270,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   **Four look scalars ride with it** — `fire_stagger`, `arrive_scale`, `dust`, `impact_debris`
   (capped at 5) — and `CutsceneFx` spends the first and the last: a rank's barrels light one after
   another rather than as a block, and a hit throws chips on the kill blast's own arithmetic at a
-  fraction of its reach, **suppressed entirely while the blast is up**. `small_arms` and
+  fraction of its reach, **suppressed entirely while the blast is up**. The middle two are spent in
+  `CutsceneSide` since the animation-frames plan's S1 — the arrival, the scuff and the three style
+  splits that ride with them are that entry's, in `.claude/rules/presentation.md`. `small_arms` and
   `autocannon` are separated by **cadence, not wind-up**: 45 ms between barrels against 30, their
   0.06/0.09 wind-ups being below the perceptual floor and widening them the rejected answer. The
   stagger is derived in the overlay off the style and the volley's own progress rather than copied
