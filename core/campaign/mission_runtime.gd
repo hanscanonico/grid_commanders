@@ -25,6 +25,9 @@ extends RefCounted
 ## card half unticked.
 
 enum Status { RUNNING, SUCCESS, FAILURE }
+## Which way a mission was lost. `Status` alone reads a rout and a captured
+## headquarters the same, and a defeat line wants to say which.
+enum Cause { NONE, ROUTED, HQ_TAKEN, FAILURE, SCRIPTED }
 
 
 ## One star, named — so the debrief can say what it was for and what was missed.
@@ -52,6 +55,11 @@ class Outcome:
 	var awards: Array[MissionRuntime.Award] = []
 	## The day the mission ended on, for the debrief's scoreboard. 0 unless won.
 	var day: int = 0
+	## How it was lost. NONE while running and on every win.
+	var cause: MissionRuntime.Cause = MissionRuntime.Cause.NONE
+	## Which failure condition fired, 1-based into the mission's `failures`; 0
+	## for every other ending.
+	var failure_index: int = 0
 
 	func _init(
 		p_status: MissionRuntime.Status = MissionRuntime.Status.RUNNING,
@@ -104,15 +112,14 @@ func evaluate(
 	state: GameState, progress: MissionProgress, ended: EndMissionEffect = null
 ) -> Outcome:
 	var team := _mission.player_team
-	if state.winner != 0 and not state.allied(state.winner, team):
-		return Outcome.new(Status.FAILURE, "Your army was destroyed.")
-	if state.is_eliminated(team):
-		return Outcome.new(Status.FAILURE, "Your army was destroyed.")
+	var beaten := state.winner != 0 and not state.allied(state.winner, team)
+	if beaten or state.is_eliminated(team):
+		return _beaten(state, team)
 	for failure: MissionObjective in _live(_mission.failures, progress):
 		if failure.is_met(state, team, progress):
-			return Outcome.new(Status.FAILURE, failure.text)
+			return _lost(failure.text, Cause.FAILURE, _mission.failures.find(failure) + 1)
 	if ended != null and not ended.success:
-		return Outcome.new(Status.FAILURE, ended.reason)
+		return _lost(ended.reason, Cause.SCRIPTED)
 	if state.winner != 0 and state.allied(state.winner, team):
 		return _won("The enemy army was broken.", state, progress)
 	if ended != null and ended.success:
@@ -120,6 +127,24 @@ func evaluate(
 	if _objectives_met(state, progress):
 		return _won(_mission_summary(), state, progress)
 	return Outcome.new()
+
+
+## Beaten on the board, told two ways by who holds the home square: a capture
+## hands the headquarters to its captor before the seat falls, and a rout leaves
+## a fallen army's ground neutral.
+func _beaten(state: GameState, team: int) -> Outcome:
+	if state.home_hq.has(team):
+		var holder := state.owner_at(state.home_hq[team])
+		if holder != team and holder != MapData.NEUTRAL:
+			return _lost("Your headquarters fell.", Cause.HQ_TAKEN)
+	return _lost("Your army was destroyed.", Cause.ROUTED)
+
+
+func _lost(reason: String, cause: Cause, failure_index: int = 0) -> Outcome:
+	var outcome := Outcome.new(Status.FAILURE, reason)
+	outcome.cause = cause
+	outcome.failure_index = failure_index
+	return outcome
 
 
 ## A mission won, with its stars named and counted.

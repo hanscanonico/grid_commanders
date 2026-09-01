@@ -237,7 +237,10 @@ make campaign-difficulty CAMPAIGN="--mission=fw06_first_thaw --seeds=9 --days=30
 `win%` is over `--seeds` matches; `day` is the median day of the ones it won;
 `deadline` is the mission's `DayDeadline` failure or `—`; the last column is the
 most common reason it ended, `(still running)` meaning the `--days` horizon was
-reached rather than the mission lost. A run also writes `missions.csv` and
+reached rather than the mission lost. Since `MissionRuntime` started telling a
+captured headquarters from a rout, that column reads "Your headquarters fell."
+for the former; the 2026-09-01 table below predates the split and folds both
+into "Your army was destroyed.", and no number moved with it. A run also writes `missions.csv` and
 `summary.json` under `reports/campaign_difficulty/` (gitignored).
 
 ## The measurement, 2026-09-01
