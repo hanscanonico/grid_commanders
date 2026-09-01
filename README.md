@@ -179,6 +179,7 @@ make smoke MODES="menu_campaigns"     # the war picker, every campaign on a fres
 make smoke MODES="menu_campaign_hub"  # one war's mission list, first mission open and the rest locked
 make smoke MODES="menu_campaign_brief"    # that hub with the open mission's briefing up
 make smoke MODES="menu_campaign_debrief"  # the page a won mission comes back through
+make smoke MODES="menu_campaign_defeat"   # that page after a loss: the reason, and Retry leading
 make smoke MODES="menu_campaign_interlude" # the page between two blocks of a war
 make smoke MODES="menu_campaign_deep"      # that hub deep into a war: the one frame its list is scrolled
 make smoke MODES="menu_commander_select"   # the page Start opens: faction tabs, the roster grid, the seat chips

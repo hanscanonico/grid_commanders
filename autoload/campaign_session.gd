@@ -36,6 +36,10 @@ var _committed := false
 ## handed to `evaluate` instead of short-circuiting it — a scripted victory on the
 ## turn a deadline expired is still a mission lost.
 var _ending: EndMissionEffect
+## The mission's record as it stood before the last run was recorded — a copy,
+## since `complete` improves the record in place — or null on a mission never
+## cleared. The debrief reads it to say what the clear was worth.
+var _previous_record: CampaignState.MissionRecord
 
 
 ## Stage a mission and return the launch it is, for `MatchConfig.stage`.
@@ -60,6 +64,7 @@ func begin(
 	_runtime = MissionRuntime.new(p_mission)
 	_ending = null
 	_committed = false
+	_previous_record = null
 	if progress != null:
 		progress.active_mission = p_mission.id
 		progress.run = {}
@@ -202,7 +207,7 @@ func decide(game: GameState) -> bool:
 func record(game: GameState) -> void:
 	if outcome == null or progress == null or campaign == null or mission == null:
 		return
-	var previous := _record_before()
+	_previous_record = _record_before()
 	if outcome.status == MissionRuntime.Status.SUCCESS:
 		_committed = progress.complete(campaign, mission.id, outcome.stars, game.day, tally)
 		if _committed:
@@ -212,7 +217,7 @@ func record(game: GameState) -> void:
 			progress.roster = carried
 	else:
 		progress.active_mission = &""
-	progress.run = _run_facts(game.day, previous)
+	progress.run = _run_facts(game.day, _previous_record)
 	CampaignProfile.save_progress(progress)
 
 
@@ -223,6 +228,13 @@ func _record_before() -> CampaignState.MissionRecord:
 	if record == null:
 		return null
 	return CampaignState.MissionRecord.new(record.stars, record.best_day)
+
+
+## The record the last recorded run was measured against, or null on a first
+## clear. A copy: the debrief reads it after `complete` has already improved the
+## record on the profile, and the delta between the two is what it prints.
+func previous_record() -> CampaignState.MissionRecord:
+	return _previous_record
 
 
 ## What this run says about itself (`CampaignState.RUN_FACTS`), for the victory
@@ -305,3 +317,4 @@ func clear() -> void:
 	_runtime = null
 	_ending = null
 	_committed = false
+	_previous_record = null

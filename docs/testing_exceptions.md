@@ -33,6 +33,7 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 | `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
 | `CampaignSession` | `tests/unit/test_campaign_session.gd` | the autoload is up for the whole headless run and reachable without a scene; its lifecycle — armed by `begin`, silent for every skirmish, emptied whole by `clear` — is what the suite pins |
 | `CampaignSession.record`'s run facts | `tests/unit/test_campaign_run_facts.gd` | the same autoload, one seam: the nine `run:` facts it writes onto the profile after a win or a loss, dropped by `begin` and `clear` and never stored by the codec |
+| `CampaignSession.previous_record`, `CampaignDebriefPanel.worth_line` / `standing_line` | `tests/unit/test_campaign_debrief_report.gd` | the same autoload's copy of a mission's record before the run that beat it, and the two static, pure lines the debrief prints off it — pinned without building the page |
 
 ## Pure answers over an input or a state
 
