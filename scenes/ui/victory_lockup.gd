@@ -95,11 +95,16 @@ func _action(rows: VBoxContainer, variant: UiTheme.ButtonVariant, text: String) 
 
 
 ## The result, as BattleOutcome worded it. `rematch_text` because a playback has
-## no match to play again and the button has to name what pressing it does.
-func announce(title: String, sub: String, rematch_text: String) -> void:
+## no match to play again and the button has to name what pressing it does;
+## `menu_text` because the same exit leads a finished mission to its debrief, and
+## "Main Menu" over that reads as quitting.
+func announce(
+	title: String, sub: String, rematch_text: String, menu_text: String = "Main Menu"
+) -> void:
 	_title.text = title
 	_sub.text = sub
 	rematch_button.text = rematch_text
+	menu_button.text = menu_text
 
 
 ## The verdict the card is currently saying, so a capture scenario can read the
