@@ -219,8 +219,12 @@ periscope, the lander walks its bow visor UP its hinge posts (a dip cancels
 the bob at the bow and pins the outline where pose A left it, 18 -> 17).
 `AmbientFrames.test_every_unit_moves_a_whole_board_texel` holds the floor at
 three changed silhouette texels at rung 1 for every unit of every livery —
-fighter and bomber, whose pose B is their pose A translated by `atlas.BOB_PX`,
-clear it by moving every boundary texel they own — and
+fighter and bomber clear it on the `atlas.BOB_PX` bob alone, which moves every
+boundary texel they own, and carry a named beat besides: the fighter lights a
+course of burner plume past its nozzles, and both retone rather than move
+(its canopy glint and elevon tips, the bomber's tail tips), because the
+legibility ratchet fails a silhouette texel added anywhere on either idle beat
+(`units/air.py`'s `beat(pose)` branches) — and
 `test_no_unit_shimmers_more_than_it_moves` caps the other half of the ratio, so
 the floor can never be bought by repainting an interior under an outline that
 holds still. The picture behind those numbers is
@@ -302,9 +306,15 @@ All 18 units author the clip (`units.MOVES`), by family:
 - **Air** (`fighter`, `bomber`, `b_copter`, `t_copter`) — a held nose-down
   attitude, one texel of `dz` on the forward fuselage about a wing root or a
   rotor mast that stays, which is what says heading on a sheet that may not
-  translate. The frame-to-frame change is the `atlas.BOB_PX` bob, and on the two
-  helicopters the rotor blades a notch further round, both of which tick with the
-  FRAME rather than the clip (`beat(pose)`).
+  translate. The frame-to-frame change is the `atlas.BOB_PX` bob, the two
+  helicopters' rotor blades a notch further round, the fighter's nozzles lit a
+  course beyond the burn `MOVE_A` holds (which reaches only the occluded mouth
+  course, so the visible plume is `MOVE_B`'s alone), and the bomber's four
+  nacelle mouths flaring with its nose dipped a further texel over `MOVE_A`'s
+  trim — all of which tick with the FRAME rather than the clip (`beat(pose)`).
+  The bomber's mouths are gated on `moving` besides: the same flare on the idle
+  beat costs the legibility ratchet two baseline cells, which `units/air.py`'s
+  `beat(pose)` branches and `tests/measure_motion.py` record.
 - **Sea** (`battleship`, `cruiser`, `lander`) — a held bow-up TRIM, the forward
   hull a texel up over a waterline course that never moves (the foam is placed
   against the composed cell's lowest spans), plus one working assembly on the
