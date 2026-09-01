@@ -404,6 +404,39 @@ gated — which is the shape trap 1's check is written to allow.
 | `qw_draeg_bloodied` | qw14 | qw18, interlude 2 |
 | `qw_draeg_wall` | qw18 | — (the debrief's note) |
 
+## The run's own facts
+
+A victory or defeat line can also read what the run that just ended says about
+itself. `CampaignSession.record` writes nine facts onto the profile under a
+reserved `run:` prefix — on a loss too — and a line reads them through the same
+`requires` / `unless` a variant line already carries. They are never saved and
+the next mission's `begin` drops them; nothing under `core/rules/` or `ai/`
+reads one, so a run fact chooses words and never moves a number (campaign-depth
+D5).
+
+| Fact | What it holds | When it is 1 |
+|---|---|---|
+| `run:stars` | the stars this run earned; 0 on a loss | one star was earned |
+| `run:full` | whether every star the mission offers was earned | stars equal the mission's most |
+| `run:par` | whether it was won inside `par_day` | won on or before par (0 with no par, and on a loss) |
+| `run:day` | the day the mission ended on, won or lost | it ended on day 1 |
+| `run:losses` | units the player's side lost, as the tally counts them | exactly one was lost |
+| `run:best` | whether this run beat the mission's record | a replay raised the stars or lowered the best day |
+| `run:first` | whether the ledger took this run's facts | the mission's first clear |
+| `run:cause` | how it was lost, as `MissionRuntime.Cause`: 0 not lost, 1 routed, 2 headquarters taken, 3 a failure condition, 4 a scripted ending | the army was routed |
+| `run:failure` | which failure condition fired, 1-based into `failures`; 0 otherwise | the first one listed |
+
+Two rules. **Only a `victory` or `defeat` line may read one.** `run_fact_error`,
+asked inside `ledger_error`, refuses a run fact on an `unlock_requires`, a beat's
+`Flag` trigger, a briefing line or an interlude, where it would read zero
+forever and say nothing. And **a first clear is `run:first` 1 and `run:best`
+0**: a record can only be beaten once there is one, so "a new best" is a
+replay's line and "first clear" the first run's, never both at once.
+
+A run fact holds a value, so a band reads it like any other: `run:day` with
+`at_most: 3` is "finished by day three", `run:cause` at `2` to `2` is "your
+headquarters fell", `run:losses` at `0` to `0` is "without losing a unit".
+
 ## Adding a mission
 
 1. **Draw the board** under `maps/campaign/<campaign>/`. Every seat the mission

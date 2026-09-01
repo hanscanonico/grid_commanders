@@ -180,6 +180,9 @@ func carry_error() -> String:
 ## rather than a road not travelled. So it catches a name no mission writes at all,
 ## and deliberately not a name written somewhere the player never went.
 func ledger_error() -> String:
+	var misplaced := run_fact_error()
+	if misplaced != "":
+		return misplaced
 	var written := _written_flags()
 	for entry: MissionDefinition in missions:
 		if entry == null:
@@ -208,7 +211,58 @@ func _written_flags() -> Dictionary[StringName, bool]:
 	return written
 
 
+## Why a run's own fact could never be read where this campaign reads it, or "".
+## `CampaignState.RUN_FACTS` are written when a mission ends and dropped when the
+## next begins, so only the lines said right after the fight — a mission's
+## `victory` and `defeat` — can read one. Anywhere else it reads zero forever
+## and says nothing: the gate a mission opens on, a beat's trigger, a briefing
+## line, an interlude. `ledger_error`'s silence, with a different name on it.
+func run_fact_error() -> String:
+	for entry: MissionDefinition in missions:
+		if entry == null:
+			continue
+		var read: Array[StringName] = _line_flags(entry.briefing)
+		if entry.unlock_requires != null:
+			read.append(entry.unlock_requires.flag)
+		for event: MissionEvent in entry.events:
+			if event != null:
+				read.append_array(event.read_flags())
+		var error := _run_read_error("mission '%s'" % entry.id, read)
+		if error != "":
+			return error
+	for page: CampaignInterlude in interludes:
+		if page == null:
+			continue
+		var where := "the interlude after block %d" % page.after_block
+		var error := _run_read_error(where, page.read_flags())
+		if error != "":
+			return error
+	return ""
+
+
+func _run_read_error(where: String, read: Array[StringName]) -> String:
+	for flag: StringName in read:
+		if CampaignState.is_run_fact(flag):
+			return (
+				"campaign '%s': %s reads '%s', which only a victory or defeat line can"
+				% [id, where, flag]
+			)
+	return ""
+
+
+static func _line_flags(lines: Array[MissionLine]) -> Array[StringName]:
+	var read: Array[StringName] = []
+	for line: MissionLine in lines:
+		if line == null:
+			continue
+		for condition: FlagCondition in line.conditions():
+			read.append(condition.flag)
+	return read
+
+
 func _read_error(where: String, flag: StringName, written: Dictionary[StringName, bool]) -> String:
+	if CampaignState.is_run_fact(flag):
+		return ""
 	var about := CampaignState.derived_mission(flag)
 	if about != &"":
 		if mission(about) == null:

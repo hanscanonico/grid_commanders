@@ -27,6 +27,22 @@ extends RefCounted
 ## after a cleared mission in the same words it asks after an authored fact.
 const CLEARED := "cleared:"
 const STARS := "stars:"
+## What the run that just ended recorded about itself — its stars, its day, how
+## it was lost — read by a victory or defeat line through the same `flag` the
+## ledger is read through. `CampaignSession.record` is the one writer, and they
+## are never saved: the next `begin` drops them.
+const RUN := "run:"
+const RUN_FACTS: Array[StringName] = [
+	&"run:stars",
+	&"run:full",
+	&"run:par",
+	&"run:day",
+	&"run:losses",
+	&"run:best",
+	&"run:first",
+	&"run:cause",
+	&"run:failure",
+]
 
 var campaign_id: StringName = &""
 ## Mission ids the player may start, in no particular order. Only ever added to:
@@ -57,6 +73,10 @@ var flags: Dictionary[StringName, int] = {}
 ## slots. Empty outside a chain, which is almost everywhere, and emptied by a
 ## mission that carries nothing out.
 var roster: Array[CarriedUnit] = []
+## The run's own facts (`RUN_FACTS`), transient: written when a mission is
+## recorded, empty between missions, and never on disk — a debrief reads them
+## and nothing under `core/rules/` or `ai/` does.
+var run: Dictionary[StringName, int] = {}
 
 
 ## The best a mission has ever been finished with. Best, not last: a replay that
@@ -107,6 +127,8 @@ func total_stars() -> int:
 ## than from a stored copy, so the two kinds of fact cannot disagree.
 func flag(name: StringName) -> int:
 	var key := String(name)
+	if is_run_fact(name):
+		return run.get(name, 0)
 	if key.begins_with(CLEARED):
 		return 1 if is_cleared(StringName(key.trim_prefix(CLEARED))) else 0
 	if key.begins_with(STARS):
@@ -118,24 +140,35 @@ func flag(name: StringName) -> int:
 ## what keeps a stored ledger to authored facts alone.
 static func is_derived(name: StringName) -> bool:
 	var key := String(name)
-	return key.begins_with(CLEARED) or key.begins_with(STARS)
+	return key.begins_with(CLEARED) or key.begins_with(STARS) or is_run_fact(name)
 
 
-## The mission a derived name is about, and &"" for a fact a beat writes. The one
-## place that split is spelled, so the ledger and the campaign's content gate
-## cannot disagree about which mission a name names.
+## Does this name claim to be one of the run's own facts? By prefix, so a
+## misspelt one is still kept off the ledger; `flag_name_error` says whether a
+## run records it.
+static func is_run_fact(name: StringName) -> bool:
+	return String(name).begins_with(RUN)
+
+
+## The mission a derived name is about, and &"" for a fact a beat writes or a run
+## records. The one place that split is spelled, so the ledger and the campaign's
+## content gate cannot disagree about which mission a name names.
 static func derived_mission(name: StringName) -> StringName:
 	var key := String(name)
-	return StringName(key.substr(key.find(":") + 1)) if is_derived(name) else &""
+	if not is_derived(name) or is_run_fact(name):
+		return &""
+	return StringName(key.substr(key.find(":") + 1))
 
 
 ## Why `name` could not name a fact, or "". An identifier, so a flag reads in a
 ## profile exactly as an event id does — or one of the derived names, which is a
-## prefix and the mission it is about.
+## prefix and the mission it is about, or one of the facts a run records.
 static func flag_name_error(name: StringName) -> String:
 	var key := String(name)
 	if key == "":
 		return "a flag with no name"
+	if is_run_fact(name):
+		return "" if RUN_FACTS.has(name) else "'%s' is not a fact a run records" % key
 	if is_derived(name):
 		var mission := String(derived_mission(name))
 		return "" if mission.is_valid_ascii_identifier() else "'%s' names no mission" % key

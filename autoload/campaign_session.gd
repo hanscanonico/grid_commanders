@@ -62,6 +62,7 @@ func begin(
 	_committed = false
 	if progress != null:
 		progress.active_mission = p_mission.id
+		progress.run = {}
 	return p_mission.to_request()
 
 
@@ -193,9 +194,15 @@ func decide(game: GameState) -> bool:
 ## player has already played past. Which is why the finished **board** is handed
 ## over rather than only its day: what survived is on it, and asking the board is
 ## the only way to know.
+##
+## The run's own facts are written last, against the record as it stood before
+## this run — `complete` improves that record in place, so "a new best" has to
+## be read before it is. They go on the profile object and never to disk:
+## `CampaignSaveCodec.encode` names what it stores.
 func record(game: GameState) -> void:
 	if outcome == null or progress == null or campaign == null or mission == null:
 		return
+	var previous := _record_before()
 	if outcome.status == MissionRuntime.Status.SUCCESS:
 		_committed = progress.complete(campaign, mission.id, outcome.stars, game.day, tally)
 		if _committed:
@@ -205,7 +212,42 @@ func record(game: GameState) -> void:
 			progress.roster = carried
 	else:
 		progress.active_mission = &""
+	progress.run = _run_facts(game.day, previous)
 	CampaignProfile.save_progress(progress)
+
+
+## A copy of the mission's record before this run touches it, or null on a
+## mission never cleared.
+func _record_before() -> CampaignState.MissionRecord:
+	var record: CampaignState.MissionRecord = progress.records.get(mission.id)
+	if record == null:
+		return null
+	return CampaignState.MissionRecord.new(record.stars, record.best_day)
+
+
+## What this run says about itself (`CampaignState.RUN_FACTS`), for the victory
+## or defeat line that reads it. Written on a loss too, since the cause is what a
+## defeat line asks after; the win-only facts then read zero. A first clear is
+## `run:first` and not `run:best` — there was no record to beat.
+func _run_facts(day: int, previous: CampaignState.MissionRecord) -> Dictionary[StringName, int]:
+	var won := outcome.status == MissionRuntime.Status.SUCCESS
+	var inside_par := won and mission.par_day > 0 and day <= mission.par_day
+	var best := (
+		won
+		and previous != null
+		and (outcome.stars > previous.stars or (previous.best_day > 0 and day < previous.best_day))
+	)
+	return {
+		&"run:stars": outcome.stars,
+		&"run:full": 1 if won and outcome.stars == max_stars() else 0,
+		&"run:par": 1 if inside_par else 0,
+		&"run:day": day,
+		&"run:losses": tally.losses(),
+		&"run:best": 1 if best else 0,
+		&"run:first": 1 if _committed else 0,
+		&"run:cause": int(outcome.cause),
+		&"run:failure": outcome.failure_index,
+	}
 
 
 ## What this mission wrote to the war, in the words its own beats put on it — the
@@ -250,8 +292,11 @@ func save_battle(battle: Dictionary) -> bool:
 ## every field this session owns, the verdict and the runtime included: a later
 ## skirmish must not inherit a mission nobody is playing, neither its objectives
 ## through `decide` nor its result on the victory screen — the same reason
-## `MatchConfig.take()` clears.
+## `MatchConfig.take()` clears. The run's facts go with it: the debrief has read
+## them by now, and the profile the menu keeps must not carry a run nobody is in.
 func clear() -> void:
+	if progress != null:
+		progress.run = {}
 	campaign = null
 	mission = null
 	progress = null
