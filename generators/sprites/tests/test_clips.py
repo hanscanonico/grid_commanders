@@ -489,7 +489,7 @@ class MoveFrames(unittest.TestCase):
         `test_a_moving_hull_adds_a_bow_wave_and_moves_nothing_else`."""
         for uid in ("fighter", "bomber"):
             if uid not in MOVES:
-                continue
+                self.skipTest(f"{uid} has no authored move poses")
             lit, worst = air_beat_readings(uid, Pose.MOVE_A, Pose.MOVE_B)
             with self.subTest(unit=uid, reading="beat"):
                 self.assertGreater(lit, 0)
