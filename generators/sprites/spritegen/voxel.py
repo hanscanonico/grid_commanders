@@ -207,6 +207,30 @@ def sprite_size(model: Model, k: int = 1) -> tuple[int, int]:
     return w, h
 
 
+def footprint_width(model: Model, k: int = 1) -> int:
+    """The screen width of what the model actually rests ON, not its whole
+    silhouette: the voxels at its lowest z, the one layer every builder plants
+    on the ground (a tread, a tire, a boot — see `units/parts.py`'s `_track`
+    and `_tire`).
+
+    `sprite_size`'s width is the model's full extent, which a raised rifle or
+    a swung barrel widens well past the footprint it stands on — that is what
+    put a lozenge under 4px legs. A land unit's cast shadow is CONTACT, not a
+    drop shadow of the whole silhouette (`compose_cell`'s shadow policy), so
+    it is sized off the base plane the projection actually puts on the
+    ground, read the same way `_bounds` reads any voxel's screen span.
+
+    It is the INK's extent and nothing else, so the two measures are 3k apart
+    in basis before either model is consulted: this returns `span + 4k`,
+    while `sprite_size`'s width adds `_bounds`' 2px crop margin on each side
+    for `span + 7k`. `compose_cell` compares the two inside one expression,
+    so whoever retunes either coefficient is tuning against that offset too.
+    """
+    z0 = min(z for _, _, z in model.vox)
+    diag = [x - y for x, y, z in model.vox if z == z0]
+    return (max(diag) - min(diag)) * 2 * k + 4 * k
+
+
 @dataclass
 class IndexedSprite:
     """A rendered sprite plus the material id behind every pixel.
