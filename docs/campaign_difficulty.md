@@ -278,11 +278,29 @@ document. Each is a mission for the human pass this file has been asking for.
   `(still running)`: on the thaw board the planner neither wins nor loses inside
   the 24-day horizon.
 
+### Hand-changes since this sweep
+
+The table below is the sweep as it was run; a row edited afterwards is named
+here with its own re-measurement, so nothing in it is stale.
+
+- **`fw03_cold_relay`, odds 0.67 → 1.00** (win% unchanged at 100%, median day 3,
+  in both nine-seed samples: `--seeds=9` and `--seed-offset=9`). A human lost this
+  mission on day 6 to a destroyed army on the row this table reads at 100% — the
+  clearest case yet of what the caveats above say: both seats are planner-driven
+  and **the planner sees through the whiteout**, while `fw03` is a fog board a
+  human plays blind. Two edits, both on the map. Vance's base at (11,7) became a
+  city, so she owns an HQ and two cities and no base — which is what the briefing
+  already claimed ("it is the only ground that builds") — and her mech came off
+  her opening line. Her army is now the two infantry and the recon she opens with
+  plus the day-4 checkpoint, while the player's purse starts buying the turn the
+  relay is taken. The `income` column still reads 0.67 and now overstates her: a
+  property she cannot spend at counts the same as one she can.
+
 | war | mission | tier | win% | median day | deadline | odds | income | most common ending |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | furnace winter | `fw01_dry_taps` | easy | 89% | 4 | — | 0.81 | 0.67 | Your army was destroyed. |
 | furnace winter | `fw02_last_granary` | easy | 44% | 24 | — | 0.67 | 0.67 | Your army was destroyed. |
-| furnace winter | `fw03_cold_relay` | normal | 100% | 3 | — | 0.67 | 0.67 | — |
+| furnace winter | `fw03_cold_relay` | normal | 100% | 3 | — | 1.00 | 0.67 | — |
 | furnace winter | `fw04_ice_road` | normal | 0% | — | — | 0.69 | 0.67 | The fuel sledge went under the ice. |
 | furnace winter | `fw05_powder_ration` | normal | 0% | — | — | 0.67 | 0.67 | Your army was destroyed. |
 | furnace winter | `fw06_first_thaw` | normal | 0% | — | — | 0.56 | 0.33 | Your army was destroyed. |
