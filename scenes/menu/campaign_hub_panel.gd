@@ -74,6 +74,7 @@ var _brief_view: VBoxContainer
 var _brief_title: Label
 var _brief_where: Label
 var _brief_picture: HBoxContainer
+var _brief_you: HBoxContainer
 var _brief_body: VBoxContainer
 var _brief_terms: VBoxContainer
 var _deploy_button: Button
@@ -227,21 +228,31 @@ func _build_board() -> Control:
 	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(scrim)
 
-	# The face is pinned to the shot's own corner rather than stacked above it: in
-	# the flow it sat in the middle of the board it is standing on.
+	# The faces are pinned to the shot's own corners rather than stacked above it:
+	# in the flow they sat in the middle of the board they are standing on. Who
+	# you are reads from the left, who you face from the right.
+	_brief_you = _shot_corner(layer, "margin_left", BoxContainer.ALIGNMENT_BEGIN)
+	_brief_picture = _shot_corner(layer, "margin_right", BoxContainer.ALIGNMENT_END)
+	return layer
+
+
+func _shot_corner(
+	layer: Control, side: String, alignment: BoxContainer.AlignmentMode
+) -> HBoxContainer:
 	var corner := MarginContainer.new()
 	corner.set_anchors_preset(Control.PRESET_FULL_RECT)
 	corner.offset_bottom = -_BOARD_FOOT
-	corner.add_theme_constant_override("margin_right", UiTheme.PAGE_MARGIN)
+	corner.add_theme_constant_override(side, UiTheme.PAGE_MARGIN)
 	corner.add_theme_constant_override("margin_top", UiTheme.PAGE_MARGIN)
 	corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(corner)
 
-	_brief_picture = HBoxContainer.new()
-	_brief_picture.alignment = BoxContainer.ALIGNMENT_END
-	_brief_picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	corner.add_child(_brief_picture)
-	return layer
+	var strip := HBoxContainer.new()
+	strip.alignment = alignment
+	strip.add_theme_constant_override("separation", UiTheme.GAP)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	corner.add_child(strip)
+	return strip
 
 
 func _build_list(parent: VBoxContainer) -> void:
@@ -463,9 +474,10 @@ static func _locked_ink() -> Color:
 ## open row shows the hollow stars still on offer, locked and not-taken dim to
 ## their words. Children of a disabled button, so every child ignores the mouse.
 ##
-## Only an open row carries its second line and its fog chip: what the fight is
-## and where it is are the mission's own facts to give away, and a road nobody
-## has reached must not leak them.
+## Only an open row carries its second line and its fog and tier chips: what the
+## fight is and where it is are the mission's own facts to give away, and a road
+## nobody has reached must not leak them. The tier chip is worn only off the
+## default tier, so the ordinary row stays as quiet as it was.
 func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	var face := ListRow.face(_ROW_INSET)
 	var cleared := open and _progress.is_cleared(mission.id)
@@ -486,6 +498,8 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 		return face
 	if mission.fog_enabled:
 		face.add_child(ListRow.cell("FOG", UiTheme.AMMO))
+	if mission.difficulty != Difficulty.DEFAULT_ID:
+		face.add_child(ListRow.cell(String(mission.difficulty).to_upper(), UiTheme.AMMO))
 	var most := MissionRuntime.new(mission).max_stars()
 	face.add_child(_star_cell(_progress.stars_for(mission.id) if cleared else 0, most))
 	return face
@@ -617,17 +631,25 @@ func _fill_terms(mission: MissionDefinition) -> void:
 		_brief_terms.add_child(_body_line(term, true))
 
 
-## The briefing's picture: where the fight is, behind everything, and against whom,
-## in the one card over it. The face is the first enemy seat's commander, resolved
-## by the authorities every other surface uses.
+## The briefing's picture: where the fight is, behind everything, and who is in
+## it, in the cards over it — the player's own general and whoever stands with
+## them on the left, the first enemy seat's commander on the right, every face
+## resolved by the authorities every other surface uses. The player's general
+## changes from one mission to the next, and nothing else on the page said so.
 func _fill_picture(mission: MissionDefinition) -> void:
-	for child in _brief_picture.get_children():
-		_brief_picture.remove_child(child)
-		child.queue_free()
+	for strip: HBoxContainer in [_brief_you, _brief_picture]:
+		for child in strip.get_children():
+			strip.remove_child(child)
+			child.queue_free()
 	_fill_board(MapData.load_from_file(mission.map_path, _terrain))
+	var you := protagonist(mission, _commanders)
+	if you != null:
+		_brief_you.add_child(_card(you, "YOU"))
+	for ally in allies(mission, _commanders):
+		_brief_you.add_child(_card(ally, "WITH"))
 	var foe := _antagonist(mission, _commanders)
 	if foe != null:
-		_brief_picture.add_child(_foe_card(foe))
+		_brief_picture.add_child(_card(foe, "VS"))
 
 
 ## Bakes the mission's board to the layer behind the briefing. The whole board is
@@ -645,18 +667,34 @@ func _fill_board(map: MapData) -> void:
 	_board_art.texture = MapThumbnail.bake(map, UiTheme.menu_identity(map.player_count()), tile)
 
 
+## The commander the player commands as: the one seated on `player_team`.
+##
+## Static and argument-taking so it can be read without the page, like `row_detail`.
+static func protagonist(mission: MissionDefinition, commanders: CommanderDB) -> CommanderType:
+	return commanders.by_id(mission.commanders.get(mission.player_team, &""))
+
+
+## The computer seats standing with the player, in seat order — `_antagonist`'s
+## inverse, read by the same side grouping. Empty when the mission groups no
+## sides, because a free-for-all has nobody on the player's side.
+static func allies(mission: MissionDefinition, commanders: CommanderDB) -> Array[CommanderType]:
+	var standing: Array[CommanderType] = []
+	for team: int in mission.ai_teams:
+		if not _stands_with_player(mission, team):
+			continue
+		var commander := commanders.by_id(mission.commanders.get(team, &""))
+		if commander != null:
+			standing.append(commander)
+	return standing
+
+
 ## The first hostile seat's commander. Hostility is read by side, the way every
 ## objective reads it: an empty grouping is a free-for-all where every computer
 ## seat is a foe, and a seat standing with the player is an ally, never the face
 ## the briefing is set against.
 static func _antagonist(mission: MissionDefinition, commanders: CommanderDB) -> CommanderType:
 	for team: int in mission.ai_teams:
-		var allied: bool = (
-			mission.sides.has(team)
-			and mission.sides.has(mission.player_team)
-			and mission.sides[team] == mission.sides[mission.player_team]
-		)
-		if allied:
+		if _stands_with_player(mission, team):
 			continue
 		var commander := commanders.by_id(mission.commanders.get(team, &""))
 		if commander != null:
@@ -664,14 +702,24 @@ static func _antagonist(mission: MissionDefinition, commanders: CommanderDB) -> 
 	return null
 
 
-func _foe_card(commander: CommanderType) -> Control:
+static func _stands_with_player(mission: MissionDefinition, team: int) -> bool:
+	return (
+		mission.sides.has(team)
+		and mission.sides.has(mission.player_team)
+		and mission.sides[team] == mission.sides[mission.player_team]
+	)
+
+
+## A general's face over the shot, captioned with their part in it — YOU, WITH
+## or VS — in the page's own word-gap-name shape.
+func _card(commander: CommanderType, part: String) -> Control:
 	var card := VBoxContainer.new()
 	card.add_theme_constant_override("separation", 2)
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var bust := MissionSpeech.bust_of(commander, _BUST)
 	bust.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.add_child(bust)
-	card.add_child(UiKit.page_note("VS %s" % commander.display_name.to_upper()))
+	card.add_child(UiKit.page_note("%s   %s" % [part, commander.display_name.to_upper()]))
 	return card
 
 
