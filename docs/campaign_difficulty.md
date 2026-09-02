@@ -314,10 +314,12 @@ with `odds` / `income` where they changed:
   **0.56 → 0.89**, #639, one `[units]` row each. Both stay 0% on both samples,
   which the bar allows: the fault the bar names was the opening, and the
   opening is level. `fw06`'s income 0.33 is still the lowest in the table.
-- `fw03_cold_relay` odds 0.67 → 1.00, #624 — Vance's base at (11,7) became a
-  city and her mech came off her line, so her `income` 0.67 overstates her (a
-  property she cannot spend at counts the same as one she can). 100% → 100%
-  sighted, and **0% blind on both samples**, below.
+- `fw03_cold_relay` odds 0.67 → 1.00, #624 — the one hand-change the
+  superseded table already carried in its row, so the two tables read 1.00
+  alike. Vance's base at (11,7) became a city and her mech came off her line,
+  so her `income` 0.67 overstates her (a property she cannot spend at counts
+  the same as one she can). 100% → 100% sighted, and **0% blind on both
+  samples**, below.
 
 Endings moved on two rows without a number moving: `hc02_river_line` and
 `qw03_quiet_ground` now read "Your headquarters fell." — the `MissionRuntime`
