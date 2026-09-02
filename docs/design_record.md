@@ -965,8 +965,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   the original brief — so at CD5 exactly one consecutive pair shared a player commander (`lf01` →
   `lf02`, both Mara Voss), and that was the one chain authored. The furnace war's third act now
   chains `fw12` → `fw18` under a rotating cast — the column is the act's veteran army rather than
-  one general's — so `tests/unit/test_campaign_carry_authoring.gd` pins nine chained missions and
-  99 boards carrying no slot and no carry flag.
+  one general's — so `tests/unit/test_campaign_carry_authoring.gd` pins each war's chained missions
+  by name (the Long Front's retreat and last act, and the last act of every other war — 39 in all)
+  and the 69 boards carrying no slot and no carry flag.
   **D6's short-roster fallback is the rule rather than the edge**, which is what makes the milestone
   safe: `CampaignRoster.deploy` only ever writes `hp` and `tag` onto units `GameState.create` has
   already built — it creates nothing, removes nothing, moves nothing and changes no type — so the
