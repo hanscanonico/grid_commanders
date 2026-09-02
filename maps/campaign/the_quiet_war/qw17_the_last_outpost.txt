@@ -1,19 +1,20 @@
 # The Quiet War 17 — "The Last Outpost". Radek Morn holds the ground
 # between the alliance and whatever Orlov calls a headquarters. Mara
 # Voss, borrowed from another front for this one fight, clears it before
-# the daylight campaign runs out of road.
+# the daylight campaign runs out of road — the outpost sits inside a
+# horseshoe of mountains whose only mouth opens west.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
 ....................
-.Q====...B....C.....
-..=....MMC.MMM......
-..=...C...FF........
-FF========....MM....
-....F.....C.....MM..
-........=======...MM
-...........====..B..
-............C.....Q.
-....................
+.Q==.....B....C.....
+...=.....C..MM.F....
+...=..C.FF..........
+...=..........MMMMMM
+...=======C=.......M
+...........=.......M
+.....F.....===...B.M
+..F.........C.....QM
+..............MMMMMM
 [owners]
 1 1 1
 1 9 1
