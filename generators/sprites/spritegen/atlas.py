@@ -141,7 +141,13 @@ def cell_placement(uid: str, pose: Pose) -> Placement:
     kind = UNITS[uid][1]
     minx_a, miny_a, w_a, h_a, fw_a = _pose_a_box(uid)
     ground = CELL_H - (AIR_BOTTOM if kind == "air" else GROUND_BOTTOM)
-    bob = BOB_PX if units.beat(pose) and kind in _BOBBING else 0
+    # `beat` is asked of the RESOLVED pose, not the raw one: a fallback cell
+    # (a unit outside `MOVES`/`KOS`/`FIRES` drawing another clip's key) has
+    # to bob exactly as that key does, and `units.beat` has never heard of
+    # the fire clip's own `FIRE_B` to answer that on its own.
+    bob = (
+        BOB_PX if units.beat(units.resolved_pose(uid, pose)) and kind in _BOBBING else 0
+    )
     # Only a land unit's shadow WIDTH is sized off the base plane rather than
     # the whole silhouette — air and sea keep the sprite's own width, an
     # aircraft having no ground contact to measure and a hull's displacement

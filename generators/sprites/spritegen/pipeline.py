@@ -24,6 +24,11 @@ Outputs (under --out, default ./out):
                           like the figure pair — the board never draws it, so
                           there is no board-sheet sibling — for the cut-ins'
                           death beat (the ko clip)
+  units_atlas_figures_fire.png / units_atlas_figures_fire_b.png
+                          one AUTHORED muzzle-lit frame per ARMED unit,
+                          shadowless like the figure pair and a second key
+                          for the two sustained weapon families — for the
+                          cut-ins' fire beat (the fire clip)
   units_atlas_move.png / units_atlas_move_b.png
                           the same grid again, under way — one facing (the
                           art's own, screen-left); the consumer mirrors it
@@ -102,6 +107,7 @@ def _autotiles(name: str, build: Callable[[], Image.Image]) -> Output:
 
 _AMBIENT_A, _AMBIENT_B = anim.AMBIENT_SHEETS
 _FIGURES_A, _FIGURES_B = anim.FIGURE_SHEETS
+_FIRE_A, _FIRE_B = anim.FIRE_SHEETS
 _MOVE_A, _MOVE_B = anim.MOVE_SHEETS
 
 # Every sheet a full run writes, in the order it writes them. The sheet names
@@ -113,6 +119,8 @@ SHEETS: tuple[Output, ...] = (
     _units(_FIGURES_A, shadow=False),
     _units(_FIGURES_B, Pose.B, shadow=False),
     _units(anim.KO_SHEET, Pose.KO, shadow=False),
+    _units(_FIRE_A, Pose.FIRE_A, shadow=False),
+    _units(_FIRE_B, Pose.FIRE_B, shadow=False),
     _units(_MOVE_A, Pose.MOVE_A),
     _units(_MOVE_B, Pose.MOVE_B),
     Output("terrain_atlas.png", _terrain_sheet, TILES_DIR),

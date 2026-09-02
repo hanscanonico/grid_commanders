@@ -78,9 +78,11 @@ from .parts import _BLADE_B as _BLADE_B
 from .parts import _rotor as _rotor
 from .parts import _shift as _shift
 from .parts import _track as _track
-from .pose import _FALLBACK, KOS, MOVES, Pose, moving
+from .pose import _FALLBACK, FIRES, KOS, MOVES, Pose, fires, moving
 from .pose import AMBIENT_POSES as AMBIENT_POSES
 from .pose import CLIP_POSES as CLIP_POSES
+from .pose import FIRE_PAIRS as FIRE_PAIRS
+from .pose import FIRE_POSES as FIRE_POSES
 from .pose import MOVE_POSES as MOVE_POSES
 from .pose import beat as beat
 from .sea import battleship, cruiser, lander, sub
@@ -114,6 +116,28 @@ UNITS: dict[str, tuple] = {
 WAKE: frozenset[str] = frozenset({"sub"})
 
 
+def resolved_pose(uid: str, pose: Pose) -> Pose:
+    """The pose a unit actually answers to a clip's request with: itself, or
+    the fallback clip's own key when `uid` has not opted into the clip
+    `pose` belongs to.
+
+    The one seam `build_model` reaches a builder through, and also the one
+    `atlas.cell_placement` reads before asking `units.beat` whether this
+    frame bobs — a fallback cell has to bob exactly as its FALLBACK pose
+    does (an unarmed air unit's `FIRE_B` cell is pixel-identical to its `B`
+    cell, bob included), which asking `beat` of the un-resolved `FIRE_B`
+    cannot answer, `beat` never having heard of the fire clip.
+    """
+    pose = Pose(pose)
+    if moving(pose) and uid not in MOVES:
+        return _FALLBACK[pose]
+    if pose is Pose.KO and uid not in KOS:
+        return _FALLBACK[pose]
+    if fires(pose) and uid not in FIRES:
+        return _FALLBACK[pose]
+    return pose
+
+
 def build_model(uid: str, pose: Pose = Pose.A) -> Model:
     """The one seam a pose reaches a builder through.
 
@@ -123,17 +147,13 @@ def build_model(uid: str, pose: Pose = Pose.A) -> Model:
     the beat.
 
     Across clips there IS such a list. A move pose only reaches the builder
-    for a uid in `MOVES`, and a KO pose only for a uid in `KOS`; anything
-    else is served its ambient counterpart, so both sheets are a valid clip
-    before a single stride or a single wreck is authored and a family lands
-    one unit at a time.
+    for a uid in `MOVES`, a KO pose only for a uid in `KOS`, and a fire pose
+    only for a uid in `FIRES`; anything else is served its ambient
+    counterpart (`resolved_pose`), so every sheet is a valid clip before a
+    single stride, a single wreck or a single muzzle is authored and a
+    family lands one unit at a time.
     """
-    pose = Pose(pose)
-    if moving(pose) and uid not in MOVES:
-        pose = _FALLBACK[pose]
-    elif pose is Pose.KO and uid not in KOS:
-        pose = _FALLBACK[pose]
-    return UNITS[uid][0](pose)
+    return UNITS[uid][0](resolved_pose(uid, pose))
 
 
 # atlas_col -> unit id (contiguous 0..17), the order the sheet is assembled in

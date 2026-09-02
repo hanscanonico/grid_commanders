@@ -236,6 +236,12 @@ var arrive_p := 1.0
 ## which is most of what tells a howitzer from a rifle before a single pixel of
 ## projectile exists (CombatBeats).
 var aim_p := 0.0
+## 0 -> 1 over the fire window CombatBeats.fire_window composes (the recoil
+## ramp through the volley's own travel) — open exactly while this half's
+## muzzle should read as lit, zero for a side that never fires. Only
+## `_figure_now` reads it; the procedural aim lift/pitch above still carries
+## the wind-up regardless.
+var fire_p := 0.0
 ## 0 -> 1 over the casualty beat, which the sheet sizes off how many figures this
 ## side lost: the surplus figures are knocked back, then rise, spin and fall away.
 var casualty_p := 0.0
@@ -274,6 +280,13 @@ var clock := 0.0
 ## shutter fired. The KO slot is asked directly, off `fall` alone
 ## (`_draw_figure`), since a wreck holds no pose of its own to pick between.
 var _figures: Array[AtlasTexture] = []
+## The fire clip's own pair, cut at bind like `_figures`. Bound for every
+## unit, armed or not: the generator's own fallback (`units.pose._FALLBACK`)
+## already fills an unarmed column with its idle key, so this needs no
+## domain gate the way the KO slot's flying carve-out does — an unarmed
+## side's `fire_p` window simply never opens (CombatBeats never sizes a
+## recoil ramp for a style that does not fire).
+var _fire_figures: Array[AtlasTexture] = []
 var _ridge_tint := Color.SLATE_GRAY
 ## Cached off the unit's domain at bind time — asked once per cut-in rather than
 ## once per figure per frame.
@@ -314,6 +327,10 @@ func bind(
 	_figures = [
 		UnitSprite.figure_texture_for(p_unit.type, p_unit_row, 0),
 		UnitSprite.figure_texture_for(p_unit.type, p_unit_row, 1),
+	]
+	_fire_figures = [
+		UnitSprite.fire_figure_texture_for(p_unit.type, p_unit_row, 0),
+		UnitSprite.fire_figure_texture_for(p_unit.type, p_unit_row, 1),
 	]
 	# Air ships no authored frame in v1 (plan's own fallback contract): this
 	# slot stays null for it, which is what keeps `_draw_figure` on the
@@ -762,9 +779,17 @@ func _draw_tipped(art: AtlasTexture, box: Rect2, tilt: float, tint: Color) -> vo
 		)
 
 
-## Which pose of the idle clip the squad is standing in, off this cut-in's own
-## clock at the board's ambient cadence.
+## Which pose the squad is standing in, off this cut-in's own clock at the
+## board's ambient cadence: the fire cut while `fire_p`'s window is open —
+## strictly inside it, so a posed still at either endpoint reads as idle
+## rather than betting on a boundary — idle otherwise. Beats do not move for
+## this: only which texture is drawn does, so every locked pose constant
+## (the recoil ramp, the volley window) survives untouched. The sustained
+## pair's alternation reads on this same director's clock, never the wall
+## one — `CutscenePlates.figure_now` is the one seam either pair uses.
 func _figure_now() -> AtlasTexture:
+	if fire_p > 0.0 and fire_p < 1.0:
+		return CutscenePlates.figure_now(_fire_figures, clock)
 	return CutscenePlates.figure_now(_figures, clock)
 
 

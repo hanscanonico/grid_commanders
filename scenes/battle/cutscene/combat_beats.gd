@@ -193,6 +193,19 @@ static func recoil_window(ready: Vector2) -> Vector2:
 	return Vector2(ready.y - maxf(RECOIL_SHARE * (ready.y - ready.x), RECOIL_FLOOR), ready.y)
 
 
+## The window a side's fire pose replaces its idle one: open as the recoil
+## ramp starts pulling the weapon back and closed once the round has arrived,
+## composed from the two windows this sheet already sized rather than a new
+## one of its own — S5's whole beat-side seam, since the pose constants stay
+## untouched and only which texture is drawn moves. `recoil` ends exactly
+## where `travel` starts (`atk_fire`/`def_fire`), so the union is the two
+## Vector2s' own endpoints; `recoil == ZERO` is the side that never fired.
+static func fire_window(recoil: Vector2, travel: Vector2) -> Vector2:
+	if recoil == Vector2.ZERO:
+		return Vector2.ZERO
+	return Vector2(recoil.x, travel.y)
+
+
 ## The window surplus figures topple over, sized by how many this side lost.
 static func casualty_window(impact: Vector2, lost: int) -> Vector2:
 	if impact.y <= impact.x:

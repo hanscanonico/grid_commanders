@@ -72,6 +72,16 @@ const UNITS_ATLAS_FIGURES_B_PATH := "res://assets/tiles/units_atlas_figures_b.pn
 ## grid, and `CutsceneSide` never asks for it there (its own domain check is
 ## the fallback the manifest's `ko` clip names).
 const UNITS_ATLAS_FIGURES_KO_PATH := "res://assets/tiles/units_atlas_figures_ko.png"
+## The fire clip's pair: an authored muzzle-lit frame per ARMED unit,
+## shadowless like the figure pair — the board never draws it, so there is
+## no board-sheet sibling — for the combat cut-in's fire window
+## (`CutsceneSide._figure_now`). A unit outside the generator's `FIRES` draws
+## its own rest key in both slots (`units.pose._FALLBACK`, the fire clip's
+## own fallback contract), and the second sheet is a real second key only
+## for the sustained weapon families (`units.pose.FIRE_PAIRS`) — everything
+## else armed carries the same cell in both, byte for byte.
+const UNITS_ATLAS_FIGURES_FIRE_PATH := "res://assets/tiles/units_atlas_figures_fire.png"
+const UNITS_ATLAS_FIGURES_FIRE_B_PATH := "res://assets/tiles/units_atlas_figures_fire_b.png"
 ## The acted grey-out is a screen-space dither scrim, not desaturate-and-dim:
 ## with the generated liveries a desaturated unit collapsed into the iron and
 ## neutral rows — three meanings, one appearance (sprite review round 3). The
@@ -238,6 +248,17 @@ static func figure_texture_for(type: UnitType, row: int, frame: int = 0) -> Atla
 ## `CutsceneSide.bind`, which asks it only for a unit that is not flying.
 static func ko_figure_texture_for(type: UnitType, row: int) -> AtlasTexture:
 	return _region_of(load(UNITS_ATLAS_FIGURES_KO_PATH), type, row)
+
+
+## A unit's authored fire frame — the same shape as `figure_texture_for`, one
+## sheet per pair key. `frame` defaults to the pair's first sheet, the way
+## `figure_texture_for`'s does; a caller reading the second sustained key
+## passes 1. Every column resolves (the generator's own fallback keeps an
+## unarmed unit's rest key there), so this never fails to return a texture —
+## whether the cut-in's fire window is open is `CutsceneSide`'s own question.
+static func fire_figure_texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
+	var path := UNITS_ATLAS_FIGURES_FIRE_B_PATH if frame == 1 else UNITS_ATLAS_FIGURES_FIRE_PATH
+	return _region_of(load(path), type, row)
 
 
 static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTexture:

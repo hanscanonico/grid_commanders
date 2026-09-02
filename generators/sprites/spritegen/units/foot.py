@@ -90,7 +90,7 @@ def infantry(pose: Pose = Pose.A) -> Model:
     silhouette to the right and tipped a voxel down, the opposite corner from
     the mech's tube.
 
-    KO: see `_infantry_ko`.
+    KO: see `_infantry_ko`. FIRE: see the branch below.
 
     Everything here is sized for the board, where the 64px cell is sampled
     4:1 and the man is worth some 8x12 logical pixels. The 2026-08-23 reading
@@ -246,6 +246,20 @@ def infantry(pose: Pose = Pose.A) -> Model:
         # rifle-only one-voxel settle, half a texel and inside the shape),
         # 12 now; rung 2 goes 8 -> 45 (`tests/measure_motion.py`).
         _shift(m, (1, 11, 2, 8, 6, 16), dx=1, dy=-1)
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Shouldered to the cheek: the whole rifle line and the wrist that
+        # carries it climb a whole board texel, landing the receiver by the
+        # jaw instead of the chest — the muzzle rides with it, which is what
+        # "on the fire line" means. FIRE_B kicks the line one further
+        # diagonal step back, the jitter a sustained stream reads as between
+        # two held keys — infantry is one of `pose.FIRE_PAIRS`, so this is
+        # the whole of its second frame.
+        _shift(m, (6, 11, 3, 8, 9, 11), dz=2)
+        mx, my = 11, 3
+        if pose is Pose.FIRE_B:
+            _shift(m, (6, 11, 3, 8, 11, 13), dx=-1, dy=1)
+            mx, my = 10, 4
+        m.set(mx, my, 12, "flame")  # muzzle, lit
     if moving(pose):
         # The gait is two things at once, and both are one board texel.
         #
@@ -349,7 +363,7 @@ def mech(pose: Pose = Pose.A) -> Model:
     torso, and a fat launch tube climbing forward over the left shoulder —
     taller, wider and squarer than the rifleman's stride (bazooka).
 
-    KO: see `_mech_ko`.
+    KO: see `_mech_ko`. FIRE: see the branch below.
 
     Pose B leans the loaded tube in a whole board texel: the left pauldron
     and everything it carries ride `dz = -2`, measured at 7 changed
@@ -403,6 +417,16 @@ def mech(pose: Pose = Pose.A) -> Model:
         # against 7 now, 15 -> 29 at rung 2 (`tests/measure_motion.py`).
         _shift(m, (0, 0, 3, 6, 7, 8), dz=-2)  # left pauldron
         _shift(m, (0, 1, 2, 9, 9, 16), dz=-2)  # launcher, arm, pauldron top
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Kneeling brace: everything the belt carries — torso, backpack,
+        # pauldrons, helmet and the launch tube — settles a board texel onto
+        # a crouch, the tube left at pose A's own resting angle (level on
+        # the shoulder) rather than pose B's raised aim, since the round is
+        # already away. Mech's primary is single-shot, so FIRE_B draws this
+        # same key — `pose.FIRE_PAIRS` is the sustained families' alone.
+        _shift(m, (0, 8, 2, 9, 5, 16), dz=-2)
+        m.set(0, 9, 14, "flame")
+        m.set(1, 9, 14, "flame")
     if moving(pose):
         # The rifleman's held forward `(dx -1, dy +1)` lean — the attitude of
         # a man walking, the same on both frames, because a lean that

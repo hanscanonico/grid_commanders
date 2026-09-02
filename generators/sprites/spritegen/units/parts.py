@@ -45,10 +45,20 @@ def _tread_phase(pose: Pose) -> int:
     the one thing a held attitude cannot, which is separation between the
     PARKED frame and the frame under way at the same point in the beat: a
     rolling column's near frame is never the parked column's near frame.
+
+    KO and FIRE both stand at pose A's own phase: a wreck does not walk, and
+    neither does a hull recoiling from a shot fired at a halt — `artillery`'s
+    own docstring says the same of the move clip's gun.
     """
-    return {Pose.A: 0, Pose.B: 1, Pose.MOVE_A: 1, Pose.MOVE_B: 0, Pose.KO: 0}[
-        Pose(pose)
-    ]
+    return {
+        Pose.A: 0,
+        Pose.B: 1,
+        Pose.MOVE_A: 1,
+        Pose.MOVE_B: 0,
+        Pose.KO: 0,
+        Pose.FIRE_A: 0,
+        Pose.FIRE_B: 0,
+    }[Pose(pose)]
 
 
 # One rotor blade, hub-relative and tip last. The disc is this blade and its

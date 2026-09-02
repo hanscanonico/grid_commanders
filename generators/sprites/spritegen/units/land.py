@@ -5,6 +5,15 @@ pose B lays a gun up with, shifted down and off-axis instead — a hatch or a
 pane of glass sprung open, and a length of track or a tyre thrown. The hull
 mass stays put, so the contour reads as the same vehicle wrecked rather than
 as rubble; `voxel.wreck_tone` is what makes it read as burnt.
+
+Every ARMED one (every unit but the transport, `apc`) also authors a fire
+pose: the same weapon assembly taken to its fired extreme — full recoil, a
+rack at launch elevation, a battery run pulled back through its trunnion —
+never dead-toned, since these are live units mid-shot rather than casualties.
+`units.pose.FIRE_PAIRS` names the twin autocannon (`anti_air`) and the recon
+car's pintle, the two land units whose primary style is sustained; both draw
+a second key so the alternation reads as a stream, and everything else draws
+the same model into both.
 """
 
 from __future__ import annotations
@@ -16,6 +25,8 @@ from .pose import Pose, moving
 
 def recon(pose: Pose = Pose.A) -> Model:
     """Scout car: four wheels, sloped hood, roof MG, whip antenna.
+
+    FIRE: see the branch below.
 
     Pose B traverses the pintle MG and the whip antenna one `(dx +1, dy -1)`
     step each — one whole board texel across the screen, the gunner sweeping
@@ -98,6 +109,19 @@ def recon(pose: Pose = Pose.A) -> Model:
         # both staying inside the hull's own x/y extents
         _shift(m, (4, 5, 4, 10, 6, 7), dx=1, dy=-1)
         _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Pintle depressed on target: the mount, barrel and muzzle tip down
+        # a board texel off the roof instead of sweeping across it, the
+        # gunner braced behind it. FIRE_B traverses one further diagonal
+        # step, the same sweep pose B idles with, so the pair reads as the
+        # gun tracking through its own stream — recon is one of
+        # `pose.FIRE_PAIRS`.
+        _shift(m, (4, 5, 4, 10, 6, 7), dz=-2)
+        mx, my = 4, 10
+        if pose is Pose.FIRE_B:
+            _shift(m, (4, 5, 4, 10, 4, 5), dx=1, dy=-1)
+            mx, my = 5, 9
+        m.set(mx, my, 5, "flame")
     if moving(pose):
         # the whip trails one board texel BACKWARD on both frames —
         # `(dx +1, dy -1)` is the reverse of the models' forward step
@@ -133,6 +157,8 @@ def recon(pose: Pose = Pose.A) -> Model:
 def tank(pose: Pose = Pose.A) -> Model:
     """MBT: deep-chested — tall running gear, a turret raised on a full ring,
     hull-hugging long gun (cannon).
+
+    FIRE: see the branch below.
 
     Pose B lays the gun up: mantlet, barrel, evacuator and muzzle brake all
     take `dz = +4` together, and the mantlet grows down to the deck so the
@@ -211,6 +237,17 @@ def tank(pose: Pose = Pose.A) -> Model:
         # rebuilt down to the deck as the mount that holds it there
         _shift(m, (4, 7, 10, 20, 6, 7), dz=4)
         m.box(4, 7, 10, 10, 6, 9, "hull_dk")
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Full recoil back through the mantlet: the whole gun — mantlet,
+        # barrel, evacuator and muzzle brake — slides down its own axis
+        # into the turret instead of laying up, and a fresh mantlet plug
+        # closes the mount it recoiled through, the mirror of pose B's own
+        # rebuild the other way. The hull squats a half texel on its
+        # suspension under the shot, the whole model settling with it —
+        # cannon is not a sustained style, so FIRE_B draws this same key.
+        _shift(m, (4, 7, 10, 20, 6, 7), dy=-4)
+        m.box(4, 7, 10, 10, 6, 7, "hull_dk")  # mantlet plug, closing the mount
+        _roll(m, -1)
     if pose is Pose.MOVE_A:
         # nose up: hull front, glacis and the leading track run, gun excluded,
         # with the run's contact courses painted back onto the ground
@@ -233,6 +270,8 @@ def tank(pose: Pose = Pose.A) -> Model:
 def md_tank(pose: Pose = Pose.A) -> Model:
     """Heavy tank: wider, taller, skirted tracks, long heavy gun (cannon).
     The tallest thing the land roster puts on a tile.
+
+    FIRE: see the branch below.
 
     Pose B lays the heavy gun up one board texel, as the MBT does: the wide
     mantlet, the sleeved barrel and the muzzle brake take `dz = +2` off a
@@ -301,6 +340,15 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     m.box(5, 7, 21, 21, 10, 10, "bore")
     if pose is Pose.B:
         _shift(m, (4, 8, 12, 21, 7, 11), dz=2)
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Full recoil, the MBT's own reading scaled to the heavier gun: the
+        # wide mantlet, the sleeved barrel and the muzzle brake slide back
+        # through the mount instead of laying up, a fresh mantlet plug
+        # closing it. The hull squats a half texel with the rest of the
+        # model — cannon is not sustained, so FIRE_B draws this same key.
+        _shift(m, (4, 8, 12, 21, 7, 11), dy=-4)
+        m.box(4, 8, 12, 12, 7, 11, "hull_dk")  # mantlet plug, closing the mount
+        _roll(m, -1)
     if pose is Pose.MOVE_A:
         # nose up: stepped glacis, front hull and the leading track run
         _shift(m, (0, 12, 13, 16, 0, 6), dz=2)
@@ -325,6 +373,8 @@ def md_tank(pose: Pose = Pose.A) -> Model:
 def anti_air(pose: Pose = Pose.A) -> Model:
     """Tracked flak: twin long barrels raked past 60 degrees over the battery
     box — the howitzer's climb, paired and thin — plus a search radar.
+
+    FIRE: see the branch below.
 
     Pose B walks both barrel runs up one board texel (`dz = +2`) on a cradle
     that grows the two voxels with them, so the battery tracks a target and
@@ -392,6 +442,17 @@ def anti_air(pose: Pose = Pose.A) -> Model:
         for x in (3, 7):
             _shift(m, (x, x, 9, 14, 8, 18), dz=2)
             m.box(x, x, 8, 8, 8, 9, "gunmetal_dk")
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Barrels level, runs staggered: one run at a time pulls back a
+        # board texel through its own trunnion, the raked climb left at
+        # pose A's travelling angle rather than pose B's elevated track —
+        # "level" is the rest angle, not a flattened barrel. FIRE_B swaps
+        # which run is recoiling, so the paired battery alternates its fire
+        # the way a real twin autocannon does — anti_air is one of
+        # `pose.FIRE_PAIRS`.
+        hot = 7 if pose is Pose.FIRE_B else 3
+        _shift(m, (hot, hot, 9, 14, 8, 18), dy=-2)
+        m.set(hot, 12, 18, "flame")
     if pose is Pose.MOVE_A:
         # nose up, under the battery: the box stops at the hull's top course
         _shift(m, (0, 10, 9, 12, 0, 3), dz=2)
@@ -426,6 +487,8 @@ def artillery(pose: Pose = Pose.A) -> Model:
     (`Silhouette`). Three z per y draws a 5:2 slope the sheet has nothing else
     at, and the spike leaves the hull line for open sky — 0.764 now, and the
     unit is a foot taller into the cell's headroom for it.
+
+    FIRE: see the branch below.
 
     Pose B is the recoil stroke: the sleeved barrel, the flared brake and the
     bore ride `dz = -4` down into the pit while the TRUNNION PEDESTAL stays
@@ -494,6 +557,15 @@ def artillery(pose: Pose = Pose.A) -> Model:
         # ones, over the 5.0 shimmer bar. The full stroke clears the spike's
         # own width off the top of the sky.
         _shift(m, (3, 7, 6, 12, 8, 27), dz=-4)
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Max recoil: the barrel rides twice the idle beat's own recoil
+        # stroke down through its trunnion pedestal, and the whole carriage
+        # rocks back onto its dug-in spade — the tracked family's own
+        # whole-model `_roll`, borrowed here for a hull under fire rather
+        # than one under way. Howitzer is not sustained, so FIRE_B draws
+        # this same key.
+        _shift(m, (3, 7, 6, 12, 8, 27), dz=-8)
+        _roll(m, -1)
     if pose is Pose.MOVE_A:
         # nose up, clear of the casemate wall and the pit inside it
         _shift(m, (0, 10, 10, 13, 0, 4), dz=2)
@@ -518,6 +590,8 @@ def artillery(pose: Pose = Pose.A) -> Model:
 def rockets(pose: Pose = Pose.A) -> Model:
     """Wheeled MLRS: long eight-wheel carrier, low cab, one wide flat rack
     pitched up over the tail — a tilted plane, never a turret.
+
+    FIRE: see the branch below.
 
     Pose B pitches the rack: the whole tube slab rides `dz = +2` on a launch
     frame that grows the same two voxels, one board texel of elevation on the
@@ -592,6 +666,17 @@ def rockets(pose: Pose = Pose.A) -> Model:
             y0 = 11 - 2 * k
             _shift(m, (1, 8, y0, y0 + 1, 4 + 2 * k, 5 + 2 * k), dz=2)
         m.box(2, 7, 1, 2, 14, 15, "hull_dk")
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Launch elevation: the whole slab pitches up a SECOND board texel
+        # past the idle beat's own raised angle, the launch-frame wall grown
+        # to match, and the high row's tube mouths lit — rounds part-run.
+        # Rocket is not sustained, so FIRE_B draws this same key.
+        for k in range(6):
+            y0 = 11 - 2 * k
+            _shift(m, (1, 8, y0, y0 + 1, 4 + 2 * k, 5 + 2 * k), dz=4)
+        m.box(2, 7, 1, 2, 14, 19, "hull_dk")
+        for x in (2, 4, 6):
+            m.set(x, 1, 19, "flame")
     if pose is Pose.MOVE_A:
         # tail up: the bed and the three rear axles, under the slab. The front
         # axle holds the ground here, and it is the front that carries the
@@ -763,6 +848,8 @@ def missiles(pose: Pose = Pose.A) -> Model:
     """Wheeled SAM battery: two big rounds erected near-vertical over the
     tail — thin steep spikes with daylight between — plus a radar dish.
 
+    FIRE: see the branch below.
+
     Pose B runs both rounds one board texel up the rail (`dz = +2`), seeker
     tips and all, so the two spikes — the identity — are what moves: 10
     changed silhouette texels at rung 1, 35 at rung 2. The cab
@@ -832,6 +919,17 @@ def missiles(pose: Pose = Pose.A) -> Model:
         for x0 in (2, 6):
             _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=2)
             m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Launch elevation: both rounds run a SECOND board texel up the rail
+        # past the idle beat's own raised position, the pedestal repainted
+        # to match, and the seeker tips lit — rounds part-run. Rocket is not
+        # sustained, so FIRE_B draws this same key.
+        m.box(2, 7, 1, 4, 4, 5, "hull_dk")
+        for x0 in (2, 6):
+            _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=4)
+            m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
+            m.set(x0, 9, 20, "flame")
+            m.set(x0 + 1, 9, 20, "flame")
     if pose is Pose.MOVE_A:
         # nose up: front axle, cab and bumper, below the seated rounds; the
         # front tyres are painted back onto the ground under it

@@ -59,6 +59,18 @@ FIGURE_SHEETS: tuple[str, ...] = (
 # subtraction. `test_ko_pose.py`'s header says so for the pin that would
 # otherwise assume every figure sheet is derived the same way.
 KO_SHEET = "units_atlas_figures_ko.png"
+# The fire clip's pair: an authored muzzle-lit frame per armed unit, composed
+# the same shadowless way — no board-sheet sibling, since the board never
+# draws a figure sheet either — and AUTHORED like the KO sheet, not the
+# ambient pair's subtraction. Two sheets rather than KO's one because the two
+# sustained weapon families need a second key for the stream to read as a
+# blaze; every other armed unit draws the same model into both, which is the
+# schema's existing single-frame-in-a-pair idiom (`units.pose.FIRE_PAIRS`)
+# rather than a second clip shape.
+FIRE_SHEETS: tuple[str, ...] = (
+    "units_atlas_figures_fire.png",
+    "units_atlas_figures_fire_b.png",
+)
 # Milliseconds per ambient frame. One cadence for the whole clip because the
 # sheets encode one: frame B is the entire army a beat later, so a rotor and a
 # swell cannot run at different rates without a third sheet. Half a second is
@@ -146,6 +158,16 @@ def _clips() -> dict[str, dict]:
         # is 0: a hold never advances, so the cadence the other clips are
         # timed against says nothing about this one.
         "ko": _clip((KO_SHEET,), 0, mode="hold", fallback="ambient"),
+        # Two sheets, looped at the ambient beat — the cadence-disjointness
+        # lock (no new period may divide or multiply 500/160/900) is what
+        # every OTHER new clip has to clear; reusing 500 outright is the
+        # exemption the ninth animation slice already established for a
+        # director-clock pair (`BoardBeat.frame_at` on `CutscenePlayback`'s
+        # own `t`, never the wall clock — the cut-in idles on it exactly the
+        # way `ambient_figures` does). `fallback` is "ambient" rather than
+        # "ambient_figures" for the same reason `ko`'s is: both name the rest
+        # POSE a unit outside the clip's own set draws, not a sheet family.
+        "fire": _clip(FIRE_SHEETS, AMBIENT_MS, fallback="ambient"),
         "sea": _clip(SEA_SHEETS, SEA_MS),
         "move": _clip(
             MOVE_SHEETS,

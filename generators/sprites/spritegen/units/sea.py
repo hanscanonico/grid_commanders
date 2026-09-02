@@ -4,6 +4,12 @@ Every one authors a KO pose: settled by the stern — the freeboard that end
 carries is gone and whatever stood on it settles into the gap, the waterline
 course itself untouched, the same invariant the move clip's trim already
 holds — plus a mast or a hatch lost. `voxel.wreck_tone` is what darkens it.
+
+Every ARMED one (every hull but the transport, `lander`) also authors a fire
+pose, live rather than dead-toned: batteries trained and recoiled, a forward
+mount blazing, bow caps open. `cruiser`'s autocannon is the one sea style in
+`units.pose.FIRE_PAIRS`, so it alone draws a second key; `battleship` and
+`sub` draw the same model into both.
 """
 
 from __future__ import annotations
@@ -16,6 +22,8 @@ from .pose import Pose, beat, moving
 def battleship(pose: Pose = Pose.A) -> Model:
     """Dreadnought: the fleet's LONG one — a hull with a clear margin over
     every other keel, turrets fore and aft, midships bridge mast (cannon).
+
+    FIRE: see the branch below.
 
     Pose B lays BOTH main batteries up one board texel (`dz = +2`): 33 changed
     silhouette texels at rung 1 against the bob's own 30, and the gun runs are
@@ -77,6 +85,16 @@ def battleship(pose: Pose = Pose.A) -> Model:
             m.set(x, 18, 5, "hull_dk")
             _shift(m, (x, x, 0, 2, 4, 4), dz=2)
             m.set(x, 3, 5, "body_dk")
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Batteries trained out: both turrets slew their guns one board
+        # texel to the same broadside — the safe traverse direction the
+        # under-way beat's own aft training already uses, since this hull
+        # has no margin the other way (`place_in_cell` refuses `dx = +1`
+        # here) — and the barrels recoil back through their gunhouses
+        # rather than laying up. Cannon is not sustained, so FIRE_B draws
+        # this same key.
+        _shift(m, (3, 4, 19, 23, 4, 4), dx=-1, dy=-2)
+        _shift(m, (3, 4, 0, 2, 4, 4), dx=-1, dy=2)
     if moving(pose):
         # Under way the dreadnought carries a held BOW-UP trim, both frames:
         # everything forward of the bridge above the waterline — foredeck,
@@ -119,6 +137,8 @@ def battleship(pose: Pose = Pose.A) -> Model:
 def cruiser(pose: Pose = Pose.A) -> Model:
     """Escort cruiser: the fleet's TOWER — one tall blocky superstructure
     amidships on a beamy mid-length hull, flat helipad aft (autocannon).
+
+    FIRE: see the branch below.
 
     Pose B elevates the forward autocannon one board texel (`dz = +2`), the
     one assembly on the ship that is not a slab: 24 changed silhouette texels
@@ -169,6 +189,18 @@ def cruiser(pose: Pose = Pose.A) -> Model:
         # muzzles included, on a mount that grows the same two voxels
         _shift(m, (3, 4, 14, 16, 3, 4), dz=2)
         m.box(3, 4, 13, 13, 4, 5, "hull_dk")
+    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        # Forward mount blazing: the twin autocannon barrels recoil a board
+        # texel back through their pedestal, muzzles included. FIRE_B kicks
+        # them one further texel back, the jitter a sustained stream reads
+        # as between two held keys — cruiser is one of `pose.FIRE_PAIRS`.
+        _shift(m, (3, 4, 14, 16, 3, 4), dy=-2)
+        my = 14
+        if pose is Pose.FIRE_B:
+            _shift(m, (3, 4, 12, 14, 3, 4), dy=-2)
+            my = 12
+        m.set(3, my, 4, "flame")
+        m.set(4, my, 4, "flame")
     if moving(pose):
         # The escort's held BOW-UP trim: hull, deck, bow flash and the forward
         # autocannon forward of the tower all ride one board texel up while
@@ -212,6 +244,12 @@ def sub(pose: Pose = Pose.A) -> Model:
     down: the bow's freeboard course goes under, the after casing stands a
     board texel out of the water, the sail's forward end comes down with the
     bow, and the attack scope is the off-beat.
+
+    FIRE reuses this trim rather than authoring its own: down-by-the-head is
+    already "a boat about to put a fish in the water", so both fire keys take
+    the `moving(pose)` branch below whole, hold the attack scope up every
+    frame instead of on the off-beat alone, and add one thing the move clip
+    has no reason to draw — the bow tube caps, open.
 
     The masts alone were the first attempt at this and they are not enough at
     board scale. Pose A against MOVE_A measured 3 changed / 1 silhouette texel
@@ -279,7 +317,7 @@ def sub(pose: Pose = Pose.A) -> Model:
         # working
         _shift(m, (3, 3, 11, 11, 7, 8), dz=2)
         m.box(3, 3, 11, 11, 7, 8, "steel")
-    if moving(pose):
+    if moving(pose) or pose in (Pose.FIRE_A, Pose.FIRE_B):
         # Search mast up TWO board texels and standing in its own shaft, not
         # the one texel pose B rides: at rung 1 a mast is at most a texel wide
         # whatever it is made of, so its length is the only thing the board
@@ -311,13 +349,21 @@ def sub(pose: Pose = Pose.A) -> Model:
         for y in range(14, 20):
             for x in (2, 3, 4, 5):
                 m.unset(x, y, 1)
-        if beat(pose):
+        if beat(pose) or pose in (Pose.FIRE_A, Pose.FIRE_B):
             # The delta is the short ATTACK scope coming up beside the search
             # one — the search mast is already up in both frames, so what the
             # board sees moving is the second mast and not the first. It came
             # down with the sail, so it goes up from where the trim left it.
+            # FIRE holds it up on both keys rather than alternating it — a
+            # boat that has opened its bow caps keeps its scope up.
             _shift(m, (4, 4, 13, 13, 5, 5), dz=2)
             m.set(4, 13, 5, "steel")
+        if pose in (Pose.FIRE_A, Pose.FIRE_B):
+            # Bow caps open: the tapered bow tip's own deck row goes dark, two
+            # tube doors on the waterline the trim above already bared.
+            # Torpedo is not sustained, so FIRE_B draws this same key.
+            m.set(3, 20, 0, "bore")
+            m.set(4, 20, 0, "bore")
     if pose is Pose.KO:
         # the sail settles half a texel into the saddle it stands on — the
         # one silhouette move this hull can make without reading as

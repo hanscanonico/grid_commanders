@@ -10,9 +10,14 @@ class Pose(IntEnum):
 
     A is the parked/rest key and B the idle beat; MOVE_A and MOVE_B are the
     same machine under way, one stride apart. KO is the casualty clip's one
-    frame — a single key, never a pair, because the dead don't loop. The
-    values of A and B are frozen at 0 and 1 because the sheets and the
-    manifest's frame order are written against them.
+    frame — a single key, never a pair, because the dead don't loop.
+    FIRE_A/FIRE_B are the cut-in's muzzle-lit pose: a pair, like the ambient
+    clip, because the two SUSTAINED weapon families (`FIRE_PAIRS`) need a
+    second key for the stream to read as a blaze rather than a held aim — a
+    single-shot weapon draws the same model into both, which is FIRE's own
+    fallback and not the unauthored-unit one (`_FALLBACK` still handles
+    that). The values of A and B are frozen at 0 and 1 because the sheets
+    and the manifest's frame order are written against them.
     """
 
     A = 0
@@ -20,6 +25,8 @@ class Pose(IntEnum):
     MOVE_A = 2
     MOVE_B = 3
     KO = 4
+    FIRE_A = 5
+    FIRE_B = 6
 
 
 # The clips, as frame order. `CLIP_POSES` is keyed by the clip names
@@ -28,29 +35,43 @@ class Pose(IntEnum):
 AMBIENT_POSES: tuple[Pose, ...] = (Pose.A, Pose.B)
 MOVE_POSES: tuple[Pose, ...] = (Pose.MOVE_A, Pose.MOVE_B)
 KO_POSES: tuple[Pose, ...] = (Pose.KO,)
+FIRE_POSES: tuple[Pose, ...] = (Pose.FIRE_A, Pose.FIRE_B)
 CLIP_POSES: dict[str, tuple[Pose, ...]] = {
     "ambient": AMBIENT_POSES,
     "move": MOVE_POSES,
     "ko": KO_POSES,
+    "fire": FIRE_POSES,
 }
 
-# The ambient pose each move pose falls back to when a unit has not authored
-# the move clip: same frame index, other clip. KO falls back to A — the rest
-# key a unit that has not authored a wreck still stands in — which is what
-# keeps the KO sheet a valid 18-column grid the day only the foot family has
-# a casualty pose. Nothing draws that fallback column: air, the one domain
-# that ships no KO art in v1, keeps the ambient clip's own topple instead
-# (`CutsceneSide`'s fallback, gated on domain rather than on this one).
+# The ambient pose each move or fire pose falls back to when a unit has not
+# authored that clip: same frame index, other clip. KO falls back to A — the
+# rest key a unit that has not authored a wreck still stands in — which is
+# what keeps the KO sheet a valid 18-column grid the day only the foot family
+# has a casualty pose. Nothing draws that fallback column: air, the one
+# domain that ships no KO art in v1, keeps the ambient clip's own topple
+# instead (`CutsceneSide`'s fallback, gated on domain rather than on this
+# one). FIRE_A/FIRE_B fall back the same way MOVE_A/MOVE_B do, which is what
+# an unarmed unit's fire clip draws — its own idle beat, so a side that never
+# fires never needs a runtime "is this unit armed" question of its own
+# (`CutsceneSide` asks the window instead, and an unarmed unit's window never
+# opens).
 _FALLBACK: dict[Pose, Pose] = {
     Pose.MOVE_A: Pose.A,
     Pose.MOVE_B: Pose.B,
     Pose.KO: Pose.A,
+    Pose.FIRE_A: Pose.A,
+    Pose.FIRE_B: Pose.B,
 }
 
 
 def moving(pose: Pose) -> bool:
     """True for the move clip's frames."""
     return Pose(pose) in MOVE_POSES
+
+
+def fires(pose: Pose) -> bool:
+    """True for the fire clip's frames."""
+    return Pose(pose) in FIRE_POSES
 
 
 def beat(pose: Pose) -> bool:
@@ -109,5 +130,49 @@ KOS: frozenset[str] = frozenset(
         "cruiser",
         "sub",
         "lander",
+    }
+)
+
+# The uids that author a fire pose — every unit that carries a weapon.
+# `apc`, `t_copter` and `lander` are absent on purpose: unarmed, so their
+# fire clip is the idle clip under another name (`_FALLBACK`), the same
+# contract `KOS` leaves air out under. This is generator-side data, kept here
+# rather than read off `data/units/*.tres`, the way `MOVES` and `KOS` already
+# are: the art pipeline builds without the game's own data.
+FIRES: frozenset[str] = frozenset(
+    {
+        "infantry",
+        "mech",
+        "recon",
+        "tank",
+        "md_tank",
+        "anti_air",
+        "artillery",
+        "rockets",
+        "missiles",
+        "fighter",
+        "bomber",
+        "b_copter",
+        "battleship",
+        "cruiser",
+        "sub",
+    }
+)
+
+# The subset of `FIRES` whose primary weapon is SUSTAINED — small_arms,
+# pintle and autocannon, `BattleStyle.sustained` in the game's own data,
+# mirrored here for the same reason `FIRES` mirrors `battle_style` at all —
+# and so the only units a second fire key is authored for. Everything else in
+# `FIRES` draws the same model into FIRE_B that it draws into FIRE_A (a
+# single shot has one key, not a cycle); everything outside `FIRES` falls
+# back to the idle pair instead.
+FIRE_PAIRS: frozenset[str] = frozenset(
+    {
+        "infantry",
+        "recon",
+        "anti_air",
+        "fighter",
+        "b_copter",
+        "cruiser",
     }
 )

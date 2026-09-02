@@ -384,6 +384,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
 | `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the tile's cast shadow subtracted, for the cut-ins (see below) |
 | `units_atlas_figures_ko.png` | one AUTHORED casualty frame per unit — a crumpled figure, a burnt-out hull, a hull settled by the stern — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; air carries no frame in v1 and draws its own rest key instead (`units.KOS`), which the cut-in never asks for |
+| `units_atlas_figures_fire.png`, `units_atlas_figures_fire_b.png` | one AUTHORED muzzle-lit frame per ARMED unit — a barrel at full recoil, a rack at launch elevation, bay doors open — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; a unit outside `units.FIRES` draws its own rest key instead (`units.pose._FALLBACK`), which the cut-in never asks for since its fire window never opens for an unarmed side. The second sheet is a real second key only for the sustained weapon families (`units.pose.FIRE_PAIRS`) — everything else draws the same model into both, so the pair reads as a held muzzle flash rather than a cycle |
 | `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
 | `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
 | `terrain_atlas.png` | 896x384 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
@@ -417,15 +418,16 @@ one more place the number drifts. It is written deterministically like
 everything else here: sorted keys, two-space indent, trailing newline. See
 `spritegen/anim.py`.
 
-`clips.move` and `clips.ko` are the clips with keys past the common four, and
-they are additive: `version` stays **1**, because their ABSENCE is the reading
-a version-1 consumer already makes. `facing` (`"left"`) and `flip_x_for`
-(`["right"]`) are `move`'s alone — the screen direction the art is drawn facing
-and the direction the consumer mirrors it for; a clip with no `facing` —
-`ambient`, `ambient_figures`, `sea`, `ko` — must never be mirrored. `fallback`
-(`"ambient"`) is shared by the two clips a unit may be left out of, and
-`docs/move_clip.md` owns what it means: the install's absence for `move`, and a
-unit's own for both, which is why an unauthored `ko` column must not be drawn.
+`clips.move`, `clips.ko` and `clips.fire` are the clips with keys past the
+common four, and they are additive: `version` stays **1**, because their
+ABSENCE is the reading a version-1 consumer already makes. `facing`
+(`"left"`) and `flip_x_for` (`["right"]`) are `move`'s alone — the screen
+direction the art is drawn facing and the direction the consumer mirrors it
+for; a clip with no `facing` — `ambient`, `ambient_figures`, `sea`, `ko`,
+`fire` — must never be mirrored. `fallback` (`"ambient"`) is shared by the
+three clips a unit may be left out of, and `docs/move_clip.md` owns what it
+means: the install's absence for `move`, and a unit's own for the other two,
+which is why an unauthored `ko` or `fire` column must not be drawn.
 
 The move cadence is `anim.MOVE_MS` = **160 ms**, and it is chosen against the
 game's tween rather than against the art: the board moves a unit one cell in
