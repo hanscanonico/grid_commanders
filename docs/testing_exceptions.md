@@ -82,7 +82,10 @@ dozen baselines for nothing, and that is a check no captured frame makes.
 reads (`row_text`) and how many lines of premise a card has room for (`premise_lines`) are static,
 pure answers over a campaign and its progress, so `test_campaign_hub_rows.gd`,
 `test_campaign_card_copy.gd`, `test_campaign_db.gd` and `test_campaign_route.gd` call them and build
-no page.
+no page. `CampaignRouteMap` is the same shape over the hub's rows: which state every node on the
+route is in (`plot`) and what the standing at its right says (`standing`) are static reads of a
+campaign and its `CampaignState`, so `test_campaign_route_map.gd` calls them and draws nothing —
+which is also where the map is held to `offered_count` rather than the authored list.
 
 `EditorBoard`, `EditorPalette` and `EditorSidebar` join them on exactly those terms
 (COM-263). Which cell a press lands on, where a board too big for its frame is scrolled to,

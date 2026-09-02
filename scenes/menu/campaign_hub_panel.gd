@@ -28,6 +28,11 @@ extends Control
 ## carries. Both are handed over already settled — the notes by
 ## `CampaignDefinition.ledger_notes`, the army by `CampaignState.roster` — and a
 ## war that has recorded nothing and carries nobody draws no strip at all.
+##
+## Over the rows sits the route itself, `CampaignRouteMap`: the acts, a node per
+## mission in the state the profile gives it, the branches and the standing. It
+## is a picture of the list rather than a second list — a node pressed focuses
+## its row, a row focused lights its node, and only a row deploys.
 
 signal deployed(mission_id: StringName)
 signal cancelled
@@ -69,6 +74,7 @@ var _board: Control
 var _board_art: TextureRect
 var _list_view: VBoxContainer
 var _list_scroll: ScrollContainer
+var _route: CampaignRouteMap
 var _rows: VBoxContainer
 var _brief_view: VBoxContainer
 var _brief_title: Label
@@ -115,9 +121,17 @@ func begin(campaign: CampaignDefinition, progress: CampaignState) -> void:
 		% [progress.records.size(), progress.offered_count(campaign), progress.total_stars()]
 	)
 	_fill_war()
+	_route.show_war(campaign, progress, war_theme(campaign, _commanders))
 	_fill()
 	_show_list()
 	show()
+
+
+## Holds the route's open node still, or lets it breathe. A posed capture holds
+## it, for the reason the menu's own scenery is held: a still frame must not
+## depend on when it was taken.
+func set_moving(moving: bool) -> void:
+	_route.set_moving(moving)
 
 
 func chrome() -> Dictionary[String, Control]:
@@ -256,6 +270,12 @@ func _shot_corner(
 
 
 func _build_list(parent: VBoxContainer) -> void:
+	_route = CampaignRouteMap.new()
+	_route.custom_minimum_size.x = _ROW_WIDTH
+	_route.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_route.mission_pressed.connect(_focus_mission)
+	parent.add_child(_route)
+
 	_list_scroll = UiKit.vscroll()
 	# Without it the list stays where it was while the keyboard walks off the page,
 	# so from mission eleven on Enter deploys a mission nobody can see.
@@ -432,6 +452,7 @@ func _fill() -> void:
 		button.add_child(_row_face(index, mission, open))
 		var slot := _ids.size()
 		button.pressed.connect(func() -> void: _open_briefing(slot))
+		button.focus_entered.connect(_route.highlight.bind(mission.id))
 		_rows.add_child(button)
 		_row_buttons.append(button)
 		_ids.append(mission.id)
@@ -702,6 +723,29 @@ static func _antagonist(mission: MissionDefinition, commanders: CommanderDB) -> 
 	return null
 
 
+## The colour the war's route is drawn in: the faction of the first hostile seat
+## of the war's opening mission, resolved by `SideIdentity` — the one authority
+## for what a side wears — over that mission's own picks. Neutral for a war whose
+## first mission seats nobody against the player.
+##
+## Static and argument-taking like `protagonist`, so it reads without the page.
+static func war_theme(
+	campaign: CampaignDefinition, commanders: CommanderDB
+) -> CommanderVisuals.FactionTheme:
+	var neutral := CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
+	if campaign.missions.is_empty() or campaign.missions[0] == null:
+		return neutral
+	var mission: MissionDefinition = campaign.missions[0]
+	var picks := {}
+	for team: int in mission.commanders:
+		picks[team] = commanders.by_id(mission.commanders[team])
+	var identity := SideIdentity.resolve(picks)
+	for team: int in mission.ai_teams:
+		if not _stands_with_player(mission, team):
+			return identity.theme(team)
+	return neutral
+
+
 static func _stands_with_player(mission: MissionDefinition, team: int) -> bool:
 	return (
 		mission.sides.has(team)
@@ -763,6 +807,15 @@ func _focus_first_open() -> void:
 func _focus_row(button: Button) -> void:
 	button.grab_focus()
 	_list_scroll.ensure_control_visible.call_deferred(button)
+
+
+## A node pressed on the route: the matching row takes focus, and nothing more —
+## a row the list does not offer (collapsed under its block, or locked) is left
+## where it is, the way a press on its own disabled button would be.
+func _focus_mission(mission_id: StringName) -> void:
+	var slot := _ids.find(mission_id)
+	if slot >= 0 and not _row_buttons[slot].disabled:
+		_focus_row(_row_buttons[slot])
 
 
 func _deploy() -> void:
