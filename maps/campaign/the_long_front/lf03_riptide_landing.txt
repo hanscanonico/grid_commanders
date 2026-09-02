@@ -5,11 +5,11 @@
 # The sea is real: open water north and east, a bay cutting in under the
 # headland, a beach of shoals on its inner edge where the second tide lands,
 # and an Iron battleship on station whose guns reach the coast road's eastern
-# two thirds and nothing west of the city.
+# end below the enemy HQ and nothing west of the city.
 # Symbols: . plains  F woods  M mountain  = road  S sea  _ shoal  * reef
 #          C city  Q HQ
 [terrain]
-MMF.FF.MMSSSSSSSSS
+MMF.FF.MMMSSSSSSSS
 F.Q==...F...MSSS*S
 ...=....F...MSSSSS
 M..=..C......_.SSS
