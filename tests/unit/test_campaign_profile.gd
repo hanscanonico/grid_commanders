@@ -9,6 +9,9 @@ extends GutTest
 ## the suite can never touch a real profile.
 
 const PROBE := &"__probe_campaign"
+## The profile version the mission tally arrived in; the codec names the two
+## later sections' versions and not this one, which a profile of version 1 lacks.
+const TALLY_VERSION := 2
 
 var campaign: CampaignDefinition
 
@@ -98,15 +101,54 @@ func test_a_profile_the_codec_refuses_is_absent_to_every_reader() -> void:
 	var path := CampaignProfile.path_for(PROBE)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
 	data["records"] = "not a set of records"
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_string(JSON.stringify(data))
-	file.close()
+	_write(data)
 	assert_null(CampaignProfile.load_progress(PROBE))
 	assert_push_error_count(1, "said once, by the reader that reports")
 	assert_eq(CampaignProfile.load_battle(PROBE), {}, "and there is no board to pick up")
 	var in_progress := CampaignProfile.load_in_progress(PROBE)
 	assert_eq(in_progress.battle, {})
 	assert_true(in_progress.tally.is_empty())
+
+
+## A profile every older format wrote still resumes: the sections it never had
+## load empty, and the board it embeds is the board it embeds. Each older profile
+## is the current one with its later sections stripped, since that is what its
+## own writer produced and what `validate` holds it to.
+func test_a_profile_from_every_older_version_still_resumes() -> void:
+	var battle := {"version": 8, "day": 3}
+	for version: int in range(1, CampaignSaveCodec.VERSION):
+		CampaignProfile.erase(PROBE)
+		var state := CampaignState.begin(campaign)
+		state.active_mission = &"one"
+		var data := CampaignSaveCodec.encode(
+			state, battle, MissionProgress.from_dict({"losses": 1})
+		)
+		data["version"] = version
+		if version < TALLY_VERSION:
+			data.erase("mission_progress")
+		if version < CampaignSaveCodec.LEDGER_VERSION:
+			data.erase("flags")
+		if version < CampaignSaveCodec.ROSTER_VERSION:
+			data.erase("roster")
+		_write(data)
+		var back := CampaignProfile.load_progress(PROBE)
+		assert_not_null(back, "a version %d profile still loads" % version)
+		assert_eq(back.active_mission, &"one", "version %d names its mission" % version)
+		var in_progress := CampaignProfile.load_in_progress(PROBE)
+		assert_eq(int(in_progress.battle.get("version", 0)), 8, "version %d's board" % version)
+		assert_eq(int(in_progress.battle.get("day", 0)), 3, "version %d's board" % version)
+		assert_eq(
+			in_progress.tally.losses(),
+			1 if version >= TALLY_VERSION else 0,
+			"version %d owes exactly the losses it could have written" % version
+		)
+
+
+## The profile as `data`, written straight to the slot the readers open.
+func _write(data: Dictionary) -> void:
+	var file := FileAccess.open(CampaignProfile.path_for(PROBE), FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
 
 
 # --- the developer override (`--unlock-missions`) ----------------------------
