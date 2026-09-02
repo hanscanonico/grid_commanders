@@ -105,7 +105,8 @@ the same boundaries and did not move: 12.2% of the boundary ties in both value
 and colour, the same figure to the same decimal as before this pass. The
 clumps are a value variation inside a hue that exemption already names.
 (The exemption itself is gone as of 2026-08-24: verdant answers the grass with
-`OUTLINE_RIM` now and ties on 0.39% of its boundary — docs/outlines.md.)
+its outline rather than with an exemption — `OUTLINE_RIM`'s climb then, the
+board-scale contour every unit row falls to since S8 — docs/outlines.md.)
 
 ## Round two: seamless, indexed, on-ramp — 2026-08-23
 

@@ -261,9 +261,12 @@ class RowSeparation(unittest.TestCase):
         about the rows changed; the outline got thicker on all five.
 
         Round 11 gave it back by spending a pixel instead of a band (see
-        docs/outlines.md): the closest pair is 45.2 now, against 34.6 under
-        the band. The bar is still the faction-pixel bar above, which is the
-        floor this diluted figure may never sink below.
+        docs/outlines.md): 45.2, against 34.6 under the band. S8 spends S0
+        again wherever a sunward lift cannot clear the board's ground band,
+        and the dilution comes back with it — the closest pair is 33.0 now
+        (neutral against gold), still over the bar. The bar is still the
+        faction-pixel bar above, which is the floor this diluted figure may
+        never sink below.
         """
         means = {f.key: self._cell_mean(f.key) for f in FACTIONS}
         keys = list(means)
@@ -359,37 +362,33 @@ class IndexedPalette(unittest.TestCase):
                         self.assertEqual(naked, [])
 
     # How much of the sunward silhouette may still be drawn dark, per outline
-    # grade. The light grade is the number the sel-out rewrite bought and is
-    # unmoved (7.07%); the heavy grade is neutral's and Iron's, where a lit
-    # line that lands in the ground's own value band gives way to the contour
-    # — 63.2% of it does, and the 37% that stays light is the rim flash those
-    # two rows key off (`GroundContrast`, docs/outlines.md). The rim grade
-    # spends the band UPWARD instead, so it is held to the light grade's
-    # figure: 6.72% of aurora's and verdant's sunward silhouette is dark,
-    # against meridian's 7.19%.
+    # grade. Round 11 held the light and rim grades to 0.10 and the heavy
+    # grade — neutral's and Iron's, where a lit line inside the ground's
+    # value band gives way to the contour — to 0.70. S8 asks the same
+    # `clears_the_ground` question of every unit row's sunward silhouette
+    # (no row's ordinary lift clears the board's own bar, `voxel.
+    # _selective_outline`), so the three grades converge on one number: all
+    # three re-measured 2026-09-01 at 67.7-68.0%, the same reading heavy
+    # alone used to carry.
     MAX_SUNWARD_DARK = {
-        palette.OUTLINE_LIGHT: 0.10,
-        OUTLINE_RIM: 0.10,
-        OUTLINE_HEAVY: 0.70,
+        palette.OUTLINE_LIGHT: 0.69,
+        OUTLINE_RIM: 0.69,
+        OUTLINE_HEAVY: 0.69,
     }
 
     def test_the_sunward_edge_is_lit_rather_than_outlined(self):
-        """Selective outlining: the sun side of the silhouette LIGHTENS.
+        """Selective outlining: the sun side of the silhouette LIGHTENS —
+        off the board.
 
         A pixel whose only break is up or left steps up its own ramp instead
-        of going black, so the two sides the light comes from read as an edge
-        without spending the plane behind them. Measured over both poses of
-        all 18 units, 7.19% of meridian's are still S0 against 100% under the
-        band — and the remainder is not slack: it is the far side of a
-        self-overlap (a hull passing behind a turret is a dark line wherever
-        it lies) and the handful the despeckle settles.
-
-        Both other grades are the same rule with one more question asked of it
-        (`palette.clears_the_ground`), so they are measured on the same
-        reading rather than exempted from it: neutral and Iron light the
-        sunward edge wherever the lift clears the ground's band and take the
-        contour where it cannot, and aurora and verdant climb to the rim
-        instead — which spends no more of the edge on S0 than meridian does.
+        of going black, unless nothing on that row's own ramp clears the
+        ground it stands against: S8 measured that none does, for any of the
+        eighteen units in any of the six rows (`clears_the_ground`,
+        docs/outlines.md), so a unit's sunward silhouette falls back to the
+        ground-facing contour there exactly as the heavy grade's already did,
+        and the rim grade's own climb — asked only off the board, where a
+        property still wears it — buys a unit nothing this reading can see
+        either. `MAX_SUNWARD_DARK`'s header carries the measurement.
         """
         for grade in (palette.OUTLINE_LIGHT, OUTLINE_RIM, OUTLINE_HEAVY):
             with self.subTest(grade=grade):
@@ -425,34 +424,37 @@ class IndexedPalette(unittest.TestCase):
         return dark, total
 
     # What S0 may cost, per outline grade: (worst single sprite, whole grade).
-    # The light grade is round 11's bill — 24.22% on meridian's b_copter frame
-    # B and 14.22% over its row. The heavy grade pays for its ground contour
-    # out of the same budget and lands at 30.76% (neutral's b_copter frame B)
-    # and 17.35%, both well under the band's 53.1% and 34.5%. The rim grade
-    # buys its ground contrast UPWARD and so is held to the light grade's
-    # budget: 24.67% (aurora's b_copter frame B; verdant's is 24.37%) and
-    # 14.28%. The copters'
-    # frame B stays the worst sprite through the 2026-08-24 rotor tick, and
-    # moved a fifth of a point when it landed.
+    # Round 11's bill was three budgets — the light and rim grades at 24-25%
+    # worst / 14-15% over the row, the heavy grade (paying for its ground
+    # contour out of the same budget) at 30.76% / 17.35% — all of it well
+    # under round 10's band, 53.1% worst / 34.5% over the row. S8's board-scale
+    # fallback (`voxel._selective_outline`) puts every grade on the heavy
+    # grade's own bill now: re-measured 2026-09-01, all three land at 50.43%
+    # worst (b_copter's frame B, still the worst sprite) and 32.7-33.0% over
+    # the row. That is still short of round 10's band on both counts — the
+    # G-buffer outline is one pixel wide everywhere the fallback does not
+    # fire, which round 10's band never was — and is measured here so a
+    # future pass cannot quietly grow past it either.
     MAX_CONTOUR = {
-        palette.OUTLINE_LIGHT: (0.28, 0.15),
-        OUTLINE_RIM: (0.28, 0.15),
-        OUTLINE_HEAVY: (0.32, 0.20),
+        palette.OUTLINE_LIGHT: (0.52, 0.34),
+        OUTLINE_RIM: (0.52, 0.34),
+        OUTLINE_HEAVY: (0.52, 0.34),
     }
 
     def test_the_outline_costs_a_pixel_and_not_a_band(self):
-        """The line is one pixel: what it does not take is the picture.
+        """The line is one pixel wide everywhere the S8 fallback does not
+        fire: what neither takes is the whole picture.
 
         `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
         and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
-        1px lattice and so nearly all boundary). The G-buffer outline spends
-        14.22% and 24.22% on the row wearing the light grade, 14.28% and
-        24.67% on the two wearing the rim grade, and 17.35% and 30.76% on the
-        two that wear the heavy one. That difference is the faction livery,
-        the fittings and the plane structure the band was eating, and it is
-        measured here so a future pass cannot quietly grow a band back —
-        including through the two ground-aware grades, which is why every
-        grade is budgeted rather than exempted.
+        1px lattice and so nearly all boundary). Round 11's G-buffer outline
+        spent 14-17% and 24-31%; S8 asks one more question of every grade's
+        sunward silhouette (does the lift clear the board's own ground band)
+        and none does, so every grade now falls back to the ground-facing
+        contour there the way the heavy grade always did, and the three
+        budgets below converge. Still short of the band's own two numbers on
+        both counts, and measured here so a future pass cannot quietly grow
+        past them.
         """
         for grade in (palette.OUTLINE_LIGHT, OUTLINE_RIM, OUTLINE_HEAVY):
             worst = 0.0

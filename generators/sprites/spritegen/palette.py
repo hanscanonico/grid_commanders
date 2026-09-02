@@ -30,6 +30,12 @@ RGB = tuple[int, int, int]
 # neither half of the argument holds — and it spends the rim rather than the
 # contour: a green army on grass has no value left below, and the band above
 # the terrain ceiling is the units' by contract (`GROUND_HUES`).
+#
+# Since S8 the three grades are a PROPERTY's answer alone: read at the board's
+# 4:1, no row's lift clears the ground band, so a unit takes the heavy grade's
+# fallback whatever grade it wears and the rim climb is off there
+# (`voxel._selective_outline`). They are kept apart because a property still
+# reads differently through each, not because a unit does.
 OUTLINE_LIGHT, OUTLINE_HEAVY, OUTLINE_RIM = 0, 1, 2
 
 

@@ -197,18 +197,26 @@ class GroundContrast(unittest.TestCase):
                 with self.subTest(ground=name, faction=fac.key):
                     self.assertLessEqual(both / total, self.MAX_WEAK_LIGHT)
 
+    # The floor the 1px rotor lattice is held to, dissolved / touching per
+    # (faction, pose). Round 11 measured 2 to 8 of 35 blade pixels over both
+    # ambient frames of all five rows, and the heavy grade already raised its
+    # own two — a floor of 0.25 held all six anyway. S8's board-scale
+    # contour makes every row fall to the same ground-facing S0 the heavy
+    # grade always did, so the floor now has to hold all six at heavy's own
+    # number: re-measured 2026-09-01, the ambient frames sit at 0.256-0.326
+    # (11-14 of 43-44 touching pixels, every row) and the move frames at
+    # exactly 0.5 — 2 of only 4 touching pixels, a sample too small for the
+    # ratio to mean what it does on the ambient frames' 43-44.
+    MAX_BLADE_DISSOLVE = 0.55
+
     def test_the_b_copters_blades_stay_off_the_body_under_them(self):
         """The rotor is the unit's tell and it is drawn one pixel wide.
 
         A blade pixel whose four neighbours all sit within `WEAK` of it has
         dissolved into whatever it crosses — the fuselage, the collar, the
-        sky. Measured over both frames of all five rows: 2 to 8 of the 35
-        blade pixels that touch another drawn pixel. The heavy grade raises
-        that on its own two rows (neutral and Iron go 3/6 to 7/8) because a
-        blade tip and the body edge under it can both be S0 now, which this
-        reading cannot tell from a merge — the blades' separation from the
-        GROUND is held by the row test above. So this is a floor under the
-        1px lattice rather than a reading of the livery.
+        sky. The blades' separation from the GROUND is held by the row test
+        above; this is a floor under the 1px lattice rather than a reading
+        of the livery (`MAX_BLADE_DISSOLVE`'s header has the measurement).
         """
         for fac in FACTIONS:
             for pose in Pose:
@@ -239,7 +247,7 @@ class GroundContrast(unittest.TestCase):
                     touching += 1
                     dissolved += max(steps) < self.WEAK
                 with self.subTest(faction=fac.key, pose=pose.name):
-                    self.assertLessEqual(dissolved / touching, 0.25)
+                    self.assertLessEqual(dissolved / touching, self.MAX_BLADE_DISSOLVE)
 
     def _blade_pixels(self, model) -> set:
         """The screen pixels of the main rotor's blades — the `rotor` voxels
@@ -269,16 +277,19 @@ class BoardScaleEdge(unittest.TestCase):
     S0. It also cost 34.5% of every unit's pixels, which is the interior the
     sel-out rewrite got back (see docs/outlines.md).
 
-    A 1px outline cannot win that same reading and does not try: 19-27% of the
-    board's boundary lands on S0 now. What the reading becomes is the claim
-    selective outlining actually makes — the edge is a VALUE BREAK, dark away
-    from the sun and light into it, and the board sees the break either way.
-    Measured as the share of board-sampled boundary pixels whose value is
-    outside the sprite's own interquartile band: 75.1-78.9% at the four
-    phases, against 81.4-87.0% for the band it replaces. That is the
-    legibility round 10 bought, carried by two tones instead of one, and the
-    terrain ceiling is what makes the light half of it safe: no tile may reach
-    the band this sheet's lit planes live in.
+    A 1px outline cannot win that same reading and does not try: round 11's
+    line alone put 19-27% of the board's boundary on S0. S8 grew that line
+    back into an inward band on the units, which buys most of the reading
+    back without the band's whole area — 57-65% at the four phases, measured
+    2026-09-01 (see docs/outlines.md). What the gate below reads, in either
+    round, is the claim selective outlining actually makes — the edge is a
+    VALUE BREAK, dark away from the sun and light into it, and the board sees
+    the break either way. Measured as the share of board-sampled boundary
+    pixels whose value is outside the sprite's own interquartile band:
+    76.4-79.4% at the four phases, against 81.4-87.0% for the band it
+    replaces. That is the legibility round 10 bought, carried by two tones
+    instead of one, and the terrain ceiling is what makes the light half of it
+    safe: no tile may reach the band this sheet's lit planes live in.
     """
 
     MIN_BOARD_BREAK = 0.70

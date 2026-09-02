@@ -9,6 +9,12 @@ patch passes holding the art together against it (`_settle_rims`,
 It is now one pass over the depth and normal planes: `gbuffer.edge_mask` and
 `gbuffer.convex_edges`, read per pixel, drawing lines one pixel wide.
 
+**Read every "now" below as round 11's**, the state this page was written in.
+Since S8 (2026-09-01) that classified line is grown back into an inward band
+on a unit and on the massif, and the sunward grades collapse into one answer
+there; the last section of this page is the current reading, and a property is
+the one thing still drawn exactly as described here.
+
 ## What the band was for, and what it cost
 
 The band was round 10's answer to a real defect. The game draws the 64px cell
@@ -292,3 +298,66 @@ b_copter's own boundary there goes 10.2% to 0.87% on shoal (Iron) and
 `GroundContrast.test_the_b_copters_blades_stay_off_the_body_under_them`
 therefore guards the 1px lattice at 25% — a floor under the rotor, not a
 reading of the livery.
+
+## S8: the board answer, on top of this file's own mechanism (2026-09-01)
+
+Everything above describes what shipped after round 11's rewrite — a 1px
+line, selectively lit — and the game's own legibility sweep read it at
+94.8% of clear board cells failing (`docs/sprite_legibility.md`'s
+2026-08-25 section): a 1px line is three-quarters unsampled at the board's
+4:1 nearest downsample, whichever phase the sample lands on. S8 answers
+that without reverting this file's rewrite: `voxel._thicken_contour` grows
+the already-classified 1px line into a band `CONTOUR_DEPTH` pixels deep (4
+lit, 2 ground-facing, round 10's own shape) entirely INWARD, so nothing
+here about the alpha, the self-overlap precedence or the interior contour
+moves — a unit's own material structure is unchanged, only more of its
+plane behind each edge now carries the edge's own colour. Scoped to units
+and the massif (`is_unit`, `top_slot == S_RIM`): a property stops at
+`BUILDING_TOP_SLOT` and never thickens, since the board never scores a
+roof as a figure and thickening one cost 15 of 20 building-owner pairwise
+readings for nothing.
+
+The other half is a value question this file's own numbers already
+answered without knowing it: `clears_the_ground` on the sunward
+silhouette's ordinary lift is false for every row's S3, S4 and even the
+climbed rim rung most of the time — the 71% "sunward silhouette drawn
+dark" reading above quoted for the light and rim grades was a FULL-
+RESOLUTION reading, and the board's own reading of the same lift is worse
+than the two rows the heavy grade already answers for. So on a unit
+(never off it) every grade now takes the heavy grade's fallback — the
+ground-facing contour where the lift cannot clear — and `OUTLINE_RIM`'s
+climb is retired on the board specifically: aurora and verdant read 82-86%
+failing through it and 48-52% through the plain fallback, the same range
+every other row now sits in. `OUTLINE_LIGHT` and `OUTLINE_RIM` keep every
+number this file records for a PROPERTY unchanged; only a unit's own
+sunward silhouette moved.
+
+**So the three grades draw one and the same unit now** — `OUTLINE_LIGHT`,
+`OUTLINE_HEAVY` and `OUTLINE_RIM` differ only on a property, and all three
+are kept rather than collapsed because that is where they still tell rows
+apart. A grade is a property's answer; do not read one as a unit's.
+
+Which moves the table at the top of this page. Re-measured 2026-09-01 over
+both poses of all 18 units, the same reading, now identical per grade
+(`test_livery.MAX_SUNWARD_DARK` / `MAX_CONTOUR` carry the pins):
+
+| reading | band | 1px + sel-out | + S8 band |
+| --- | --- | --- | --- |
+| S0 share of a unit's own pixels | 34.5% | 13.9% | **32.7-33.0%** |
+| S0 share on the worst sprite (b_copter, pose B) | 53.1% | 25.6% | **50.43%** |
+| sunward-only boundary pixels drawn dark | 100% | 7.1% | **67.7-68.0%** |
+| iron vs neutral row distance (gate: 60) | 63.7 | 64.6 | **63.9** |
+| iron vs neutral as composed (gate: 30) | 36.1 | 45.2 | **37.8** |
+
+The interior is bought back thinner than it was, and the composed rows are
+diluted with it again: the closest composed pair is neutral vs gold at
+**33.0** (34.6 under the band, 45.2 under round 11), still over its bar of
+30, while the faction-pixel reading `RowSeparation` actually gates on barely
+moves — an army's own pixels are not what the band spends. That is the price
+of a line the board can sample, paid where round 10 paid it and stated here
+rather than left to be rediscovered. What is not paid at all is the alpha:
+the band is inward only, so every geometry reading this file's tests take is
+untouched.
+
+The full re-read, with the mountain-and-masonry residual this did not
+answer, is `docs/sprite_legibility.md`'s own 2026-09-01 section.

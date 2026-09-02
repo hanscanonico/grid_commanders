@@ -65,11 +65,12 @@ contour band doubled with it, to 8 source pixels on the lit edges, so it ate
 the same share of the sprite it always did. Every rule the art is authored
 under is stated in logical pixels, and 128 buys none of them.
 
-(`CONTOUR_WEIGHT` is gone: units are outlined 1px per pixel off the G-buffer
-now, and the edge is carried by a dark/light contrast pair rather than by a
-band the board can resolve. See `generators/sprites/docs/outlines.md`. The finding above is
+(`CONTOUR_WEIGHT` is gone: the outline is classified per pixel off the G-buffer
+now, and since S8 a unit's line is grown back inward to the same logical-pixel
+depth the band had (`voxel.CONTOUR_DEPTH`, 4 lit / 2 ground-facing). See
+`generators/sprites/docs/outlines.md`. The finding above is
 unaffected — it is about logical resolution, not about the outline — but the
-worked example no longer describes the code.)
+worked example names a constant the code no longer has.)
 
 **The default view of a 128 sheet is a downsample of it.** At `s = 4` the 64px
 cell lands one source texel on one screen pixel exactly — the shipped art is

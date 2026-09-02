@@ -83,6 +83,37 @@ def changed(before: Image.Image, after: Image.Image) -> list[tuple[int, int]]:
     ]
 
 
+def newly_alone(before: Image.Image, after: Image.Image) -> list[tuple[int, int]]:
+    """Pixels the pass LEFT ALONE that lost their last orthogonal match to it.
+
+    A softened corner is a lone pixel on purpose (that is what a mid-tone in
+    the crook is), so the ones it wrote are not asked; every other pixel that
+    had a same-coloured neighbour before must still have one after.
+    """
+    w, h = before.size
+    src, out = before.load(), after.load()
+    written = set(changed(before, after))
+
+    def matches(px, x: int, y: int, colour) -> bool:
+        return any(
+            0 <= x + dx < w
+            and 0 <= y + dy < h
+            and px[x + dx, y + dy][3] == 255
+            and px[x + dx, y + dy][:3] == colour
+            for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0))
+        )
+
+    return [
+        (x, y)
+        for y in range(h)
+        for x in range(w)
+        if (x, y) not in written
+        and src[x, y][3] == 255
+        and matches(src, x, y, src[x, y][:3])
+        and not matches(out, x, y, src[x, y][:3])
+    ]
+
+
 class InnerCorners(unittest.TestCase):
     """Exactly the corners in the crook of a long step, and nothing else."""
 
@@ -122,7 +153,15 @@ class ShortRuns(unittest.TestCase):
         self.assertEqual(changed(img, aa.soften_staircase(img, (RAMP,))), [])
 
     def test_min_run_is_the_knob_that_decides_it(self):
-        img = staircase(2, 1)
+        # A 1px `staircase(2, 1)` corner's own run is one pixel deep with
+        # nothing beside it, so softening it would strand that one pixel —
+        # `_safe` refuses exactly that (its own suite covers it below), which
+        # is correct art and not what this test is asking. Two courses deep
+        # gives the run a neighbour of its own, so the knob's effect —
+        # untouched at the default, touched once it is lowered — still shows
+        # without tripping the safety net.
+        img = thick_edge_staircase(2, 1, 2)
+        self.assertEqual(changed(img, aa.soften_staircase(img, (RAMP,))), [])
         self.assertTrue(changed(img, aa.soften_staircase(img, (RAMP,), min_run=2)))
 
     def test_a_riser_taller_than_a_step_is_the_shapes_own_corner(self):
@@ -181,6 +220,60 @@ class ReachesOnlyThroughTheLine(unittest.TestCase):
                         ),
                         f"{uid} {fac.key} {(x, y)}: softened past {edge} and {bodies}",
                     )
+
+
+class NeverStrands(unittest.TestCase):
+    """A write may not strand a THIRD pixel that was never a corner itself.
+
+    Since S8's board-scale contour band a boundary pixel more often matches a
+    same-toned neighbour one step further in than a differently-toned one
+    right beside it, so softening that neighbour can be the boundary pixel's
+    only match going away — read as newly isolated
+    (`test_livery.IndexedPalette.test_no_isolated_pixel_outside_the_dither`,
+    the real-sprite gate this gave up nothing against: it still reads zero
+    over the whole roster, measured on `rockets`' thin rack, where a stray
+    pixel this shape produced is exactly what shipped before `_safe`
+    existed). `staircase(2, 1)` is the minimal synthetic case: its corner's
+    own run is one pixel deep with no neighbour of its own, so lowering
+    `min_run` to reach it would strand that one pixel, and `_safe` refuses
+    the write outright — the one case
+    `ShortRuns.test_min_run_is_the_knob_that_decides_it` moved off rather
+    than asserting empty.
+
+    Two corners flanking ONE such pixel is the harder half, and the reason
+    the refusal has to settle rather than answer once: neither corner is the
+    pixel's last match while the other is still standing, so a check that
+    reads the write set one pass deep clears both and strands it anyway.
+    `staircase(2, 2)` is that shape and the sweep below is its generalisation
+    — no synthetic staircase, at any run, rise or `min_run`, may leave a
+    pixel it did not itself write alone.
+    """
+
+    def test_a_write_that_would_strand_its_only_match_is_refused(self):
+        img = staircase(2, 1)
+        self.assertEqual(changed(img, aa.soften_staircase(img, (RAMP,), min_run=2)), [])
+
+    def test_two_corners_may_not_both_lean_on_the_pixel_between_them(self):
+        # `staircase(2, 2)` at `min_run=2` is the flanking case: each step's
+        # crook sits diagonally off the next, and the edge pixel between two
+        # crooks is matched only by those two. Refusing a write is itself a
+        # change of who still carries that colour, so the check has to settle
+        # rather than answer once — read one pass deep, each corner sees the
+        # OTHER corner as the pixel between them falling back on, both are
+        # written, and the pixel between them is left alone with nobody.
+        img = staircase(2, 2)
+        out = aa.soften_staircase(img, (RAMP,), min_run=2)
+        self.assertTrue(changed(img, out), "the case needs corners to soften")
+        self.assertEqual(newly_alone(img, out), [])
+
+    def test_no_synthetic_staircase_leaves_a_pixel_alone(self):
+        for run in range(1, 6):
+            for rise in range(1, 4):
+                for min_run in (1, 2, 3):
+                    img = staircase(run, rise)
+                    out = aa.soften_staircase(img, (RAMP,), min_run=min_run)
+                    with self.subTest(run=run, rise=rise, min_run=min_run):
+                        self.assertEqual(newly_alone(img, out), [])
 
 
 class NeverOutside(unittest.TestCase):
