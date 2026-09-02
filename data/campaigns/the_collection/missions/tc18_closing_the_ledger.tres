@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=46 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=57 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -17,18 +17,18 @@
 
 [sub_resource type="Resource" id="Objective_take_and_hold_the_foundry"]
 script = ExtResource("5")
-text = "Take the foundry that opened this war, and still hold it two days later."
+text = "Hold the foundry that opened this war for 2 days."
 cell = Vector2i(10, 6)
 days = 2
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]
 script = ExtResource("2")
-text = "Take the west town on our side of the mountain wall."
+text = "Capture the west town on our side of the mountain wall."
 cell = Vector2i(7, 2)
 
 [sub_resource type="Resource" id="Bonus_take_the_southern_town_for_a_bonus"]
 script = ExtResource("2")
-text = "Take the east town behind his wall, in his own back country."
+text = "Capture the east town behind his wall, in his own back country."
 cell = Vector2i(13, 10)
 
 [sub_resource type="Resource" id="Books_in_hand"]
@@ -176,9 +176,76 @@ effects = Array[Resource]([SubResource("Effect_the_guard_stands_down")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_full"]
+script = ExtResource("6")
+flag = &"run:full"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("6")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Run_few_losses"]
+script = ExtResource("6")
+flag = &"run:losses"
+at_least = 0
+at_most = 3
+
+[sub_resource type="Resource" id="Run_best"]
+script = ExtResource("6")
+flag = &"run:best"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Run_first"]
+script = ExtResource("6")
+flag = &"run:first"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_6_par"]
 script = ExtResource("4")
-text = "The foundry held, and the forged debt just became a real one — ours."
+speaker = &"dane_ferrow"
+text = "Ten days. I bill by the day; you've cost me the invoice."
+requires = SubResource("Run_par")
+
+[sub_resource type="Resource" id="Line_9_losses"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Three columns crossed the wall. Three columns are standing on his floor. Nothing owed on our side."
+requires = SubResource("Run_few_losses")
+
+[sub_resource type="Resource" id="Line_9_full"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Both towns, the foundry, two days holding it. Every line item paid. I'd frame the receipt."
+requires = SubResource("Run_full")
+
+[sub_resource type="Resource" id="Line_9_best"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Better figures than the last time you closed this ledger, so I've written the new ones in under the old."
+requires = SubResource("Run_best")
+unless = SubResource("Run_first")
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Entry posted. The foundry, the floor, the whole war on one page. Your name's at the bottom of it."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We came to close his ledger. He closed ours. The forged debt's real now, with our names on the bill."
+
+[sub_resource type="Resource" id="Line_defeat_3_books"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "We had it in his own hand and still lost the floor."
+requires = SubResource("Books_in_hand")
 
 [resource]
 script = ExtResource("1")
@@ -202,5 +269,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_fo
 events = Array[Resource]([SubResource("Event_paid_for_by_you"), SubResource("Event_the_foundry_answers"), SubResource("Event_read_it_out")])
 par_day = 10
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_6"), SubResource("Line_6_par"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9_losses"), SubResource("Line_9_full"), SubResource("Line_9_best"), SubResource("Line_5")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3_books")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -120,9 +120,28 @@ effects = Array[Resource]([SubResource("Effect_witnesses_alive")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("13")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The garrison held its ground, and the towns that knew the truth went silent."
+speaker = &"cass_orlov"
+text = "She stopped talking. They all do. I only had to wait."
+
+[sub_resource type="Resource" id="Line_defeat_2_failure"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The escort's gone. Her notes were the only copy of what those towns knew. He'll have the wagon by morning."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_2_tactical"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Calder's column is gone with the towns still his. Whatever the auditor wrote down, nobody's left to walk it to a witness."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -147,4 +166,4 @@ events = Array[Resource]([SubResource("Event_what_you_left_behind"), SubResource
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_4_unsigned"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2_failure"), SubResource("Line_defeat_2_tactical")])

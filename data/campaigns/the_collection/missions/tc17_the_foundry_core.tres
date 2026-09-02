@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -118,9 +118,28 @@ effects = Array[Resource]([SubResource("Effect_banked_column")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The line held too tight in one place, and Hammerfall found exactly what it needed."
+speaker = &"radek_morn"
+text = "I didn't manoeuvre. I arrived. The core's mine, whatever day it is."
+
+[sub_resource type="Resource" id="Line_defeat_2_failure"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "More than nine. All in one place. Hammerfall found the shoulder-to-shoulder bit I said we'd never do."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_2_tactical"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "I said I'd held worse ground on less. I hadn't. This was the ground and that was the less."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -145,4 +164,4 @@ events = Array[Resource]([SubResource("Event_the_last_wave"), SubResource("Event
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2_failure"), SubResource("Line_defeat_2_tactical")])

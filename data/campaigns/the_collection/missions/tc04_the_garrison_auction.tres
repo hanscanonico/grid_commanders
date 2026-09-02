@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -114,9 +114,15 @@ effects = Array[Resource]([SubResource("Effect_province_held")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The books closed with the towns still contested, and the ledger called it Ferrow's."
+speaker = &"dane_ferrow"
+text = "Bidding closed early. Nobody left on your side of the room to raise a hand. Entry posted, five towns."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "He didn't outbid us. He waited for the room to empty. Then he took the lot at the reserve."
 
 [resource]
 script = ExtResource("1")
@@ -141,4 +147,4 @@ events = Array[Resource]([SubResource("Event_last_bidders"), SubResource("Event_
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

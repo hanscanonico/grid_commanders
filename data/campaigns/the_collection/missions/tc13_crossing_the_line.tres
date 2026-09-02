@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -17,7 +17,7 @@
 
 [sub_resource type="Resource" id="Objective_take_the_border_foundry_and_open_the"]
 script = ExtResource("2")
-text = "Take the border foundry and open the province."
+text = "Capture the border foundry and open the province."
 cell = Vector2i(7, 5)
 
 [sub_resource type="Resource" id="Failure_the_crossing_was_not_clean"]
@@ -114,9 +114,28 @@ effects = Array[Resource]([SubResource("Effect_ferrows_own")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The border held, and the repossession stalled before it started."
+speaker = &"dane_ferrow"
+text = "My ground, my price. Entry posted for the crossing, priced by the wreck. You paid it in full."
+
+[sub_resource type="Resource" id="Line_defeat_2_failure"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "More than eight in the notch. On his books that's a clean crossing. Every wreck went on his side of the page."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_2_tactical"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Ferrow stood in the notch himself. First thing repossessed in the whole Repossession turned out to be Ash's column."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -141,4 +160,4 @@ events = Array[Resource]([SubResource("Event_the_border_levy"), SubResource("Eve
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2_failure"), SubResource("Line_defeat_2_tactical")])
