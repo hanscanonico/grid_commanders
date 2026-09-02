@@ -305,7 +305,7 @@ static func _draw_horizon_glow(
 		var tint := Color(SKY_LOW, GLOW_ALPHA * fade * fade)
 		var top := horizon + band_h * float(i)
 		for s in GLOW_SEAM_SEGMENTS:
-			var jitter := (_scatter(i, s) - 0.5) * 2.0 * GLOW_SEAM_JITTER_PX
+			var jitter := (_scatter(i + SCATTER_STRIDE * 6, s) - 0.5) * 2.0 * GLOW_SEAM_JITTER_PX
 			canvas.draw_rect(Rect2(seg_w * s, top + jitter, seg_w + 1.0, band_h), tint)
 
 

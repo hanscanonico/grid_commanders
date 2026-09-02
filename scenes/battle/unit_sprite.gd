@@ -234,6 +234,10 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	# rather than letting them shrink with the art. Their offsets are authored in
 	# the same units and need the same treatment, or a badge creeps toward centre.
 	hp_label.scale = Vector2.ONE / SPRITE_SCALE
+	# The whole pose, not two thirds of it: a punch leaves the pivot on the
+	# number's middle and the position paying for it, so a badge stood up again
+	# from a pivot it no longer carries would sit that same ratio off.
+	hp_label.pivot_offset = Vector2.ZERO
 	hp_label.position = HP_LABEL_OFFSET / SPRITE_SCALE
 	fuel_label.scale = Vector2.ONE / SPRITE_SCALE
 	fuel_label.position = FUEL_LABEL_OFFSET / SPRITE_SCALE

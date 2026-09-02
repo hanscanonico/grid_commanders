@@ -452,13 +452,16 @@ func drop_cargo_of(carrier: Unit, fade_seconds: float) -> void:
 ##
 ## A rider was drawn hidden for as long as it rode, so a fade left on it where
 ## it lies is a tween nobody can watch: it is stood on the transport's own last
-## cell and un-hidden to go down with it. The viewer has to be able to see that
-## cell — the fog rule the death blast asks of a kill it draws — and a rider
-## lost out of sight goes without a fade, the way every freed sprite used to.
+## cell and un-hidden to go down with it. What the viewer may see of the
+## transport is what decides that — `can_see_unit`, the fog rule the death blast
+## asks of a kill it draws, rather than the cell alone, because un-hiding is an
+## override and a doctrine that hides a hull hides what was riding in it. A
+## rider lost out of sight goes without a fade, the way every freed sprite used
+## to.
 func _parting_fade(unit: Unit, sprite: UnitSprite, fade_seconds: float) -> float:
 	if fade_seconds <= 0.0 or unit.carrier == null:
 		return fade_seconds
-	if not perspective.can_see_cell(unit.carrier.cell):
+	if not perspective.can_see_unit(unit.carrier):
 		return 0.0
 	sprite.pose_at(unit.carrier.cell)
 	return fade_seconds

@@ -15,10 +15,12 @@ extends Node2D
 ## cut-in plays it prints its own callout, so the two are never both up.
 
 const TILE := BattleView.TILE
-## Where the number starts, and how far it lifts as `rise` runs 0 -> 1 —
-## PowerMarks' own two constants, read the same way.
-const ORIGIN := Vector2(TILE * 0.5, -6.0)
-const LIFT := 10.0
+## Where the number starts, how far it lifts as `rise` runs 0 -> 1, and the
+## baseline its digits sit on — read off PowerMarks rather than copied from it,
+## so a mark and a hit can never drift into two placements over one tile.
+const ORIGIN := PowerMarks.ORIGIN
+const LIFT := PowerMarks.LIFT
+const BASELINE := PowerMarks.BASELINE
 const OUTLINE := 2
 
 ## 0 at rest, 1 when the number has finished lifting. Tweened by
@@ -57,7 +59,7 @@ func _draw() -> void:
 	BoardMark.count(
 		self,
 		font,
-		Vector2(_cell * TILE) + ORIGIN + lift + Vector2(-width * 0.5, 0.0),
+		Vector2(_cell * TILE) + ORIGIN + lift + Vector2(-width * 0.5, BASELINE),
 		text,
 		OUTLINE
 	)
