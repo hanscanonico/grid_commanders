@@ -29,9 +29,10 @@ Outputs (under --out, default ./out):
                           shadowless like the figure pair and a second key
                           for the three sustained weapon families — for the
                           cut-ins' fire beat (the fire clip)
-  units_atlas_move.png / units_atlas_move_b.png
-                          the same grid again, under way — one facing (the
-                          art's own, screen-left); the consumer mirrors it
+  units_atlas_move.png / _b / _c / _d
+                          the same grid again, under way — four frames since
+                          S6, one facing (the art's own, screen-left); the
+                          consumer mirrors it
   terrain_atlas.png       896x384 RGBA — drop-in for assets/tiles/terrain_atlas.png
                           (the five property columns are transparent overlays)
   overlay.png / ui/cursor.png / icon/icon.png
@@ -108,7 +109,7 @@ def _autotiles(name: str, build: Callable[[], Image.Image]) -> Output:
 _AMBIENT_A, _AMBIENT_B = anim.AMBIENT_SHEETS
 _FIGURES_A, _FIGURES_B = anim.FIGURE_SHEETS
 _FIRE_A, _FIRE_B = anim.FIRE_SHEETS
-_MOVE_A, _MOVE_B = anim.MOVE_SHEETS
+_MOVE_A, _MOVE_B, _MOVE_C, _MOVE_D = anim.MOVE_SHEETS
 
 # Every sheet a full run writes, in the order it writes them. The sheet names
 # come from `anim`, so the manifest's clips and the files on disk cannot
@@ -123,6 +124,8 @@ SHEETS: tuple[Output, ...] = (
     _units(_FIRE_B, Pose.FIRE_B, shadow=False),
     _units(_MOVE_A, Pose.MOVE_A),
     _units(_MOVE_B, Pose.MOVE_B),
+    _units(_MOVE_C, Pose.MOVE_C),
+    _units(_MOVE_D, Pose.MOVE_D),
     Output("terrain_atlas.png", _terrain_sheet, TILES_DIR),
     _autotiles("roads", partial(autotile.variant_sheet, autotile.road_tile)),
     _autotiles("rivers", partial(autotile.variant_sheet, autotile.river_tile)),

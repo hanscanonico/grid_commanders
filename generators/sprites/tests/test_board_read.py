@@ -371,6 +371,63 @@ class BoardScaleEdge(unittest.TestCase):
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
                         self.assertEqual(lone, set())
 
+    # The same question one layer up, where a stepped limb can come off the
+    # figure without ever stranding a texel. A leg is a boot, a shin and a
+    # knee plate authored at their own offsets and nothing above pins them
+    # together: `foot._mech_legs` stepped its whole shin as one block, so
+    # S6's first `gather=2` passing frame put the boot two voxels along both
+    # axes from its own knee and left 18 voxels of leg touching the trooper
+    # at a CORNER only. Every composed-cell gate passed it — `Silhouette`
+    # reads identity, the mass drift is nil when the mass merely moves, and
+    # the lone-texel rule above is satisfied by a limb that is a solid blob
+    # of its own. So ask the models directly, in every board pose.
+    FOOT_UNITS = ("infantry", "mech")
+
+    @staticmethod
+    def _body_component(vox: dict[tuple[int, int, int], str]) -> set:
+        """The largest FACE-connected run of voxels — the figure itself.
+
+        Faces and not corners on purpose: a diagonal-only join is exactly
+        what the renderer draws as a limb hanging clear of its owner.
+        """
+        seen: set[tuple[int, int, int]] = set()
+        best: set[tuple[int, int, int]] = set()
+        for start in vox:
+            if start in seen:
+                continue
+            stack, group = [start], {start}
+            seen.add(start)
+            while stack:
+                x, y, z = stack.pop()
+                for nb in (
+                    (x + 1, y, z),
+                    (x - 1, y, z),
+                    (x, y + 1, z),
+                    (x, y - 1, z),
+                    (x, y, z + 1),
+                    (x, y, z - 1),
+                ):
+                    if nb in vox and nb not in seen:
+                        seen.add(nb)
+                        group.add(nb)
+                        stack.append(nb)
+            if len(group) > len(best):
+                best = group
+        return best
+
+    def test_no_foot_figure_walks_out_of_its_own_legs(self):
+        """Every boot the two foot figures stand on is joined to the body
+        over it face to face, in every board pose."""
+        for uid in self.FOOT_UNITS:
+            for pose in BOARD_POSES:
+                model = build_model(uid, pose)
+                body = self._body_component(model.vox)
+                loose = sorted(
+                    v for v, mat in model.vox.items() if mat == "tire" and v not in body
+                )
+                with self.subTest(unit=uid, pose=pose.name):
+                    self.assertEqual(loose, [], "a boot came off the figure")
+
     def test_the_board_lands_on_the_edge_at_every_phase(self):
         for phase in range(self.SCALE):
             breaks = boundary = 0

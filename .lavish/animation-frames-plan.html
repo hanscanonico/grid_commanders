@@ -212,7 +212,7 @@
 </div>
 
 <div class="slice">
-	<h3>S6 — N-frame plumbing, then a real gait and tread crawl <span class="tag code">CODE</span> <span class="tag art">ART</span> <span class="tag size">L</span></h3>
+	<h3>S6 — N-frame plumbing, then a real gait and tread crawl <span class="tag code">CODE</span> <span class="tag art">ART</span> <span class="tag size">L</span> <span class="tag shipped">shipped</span></h3>
 	<p>The only structural slice. The 2-frame assumption lives in one modulo (<code>BoardBeat.frame_at</code>'s <code>% 2</code>) plus ternaries and literals downstream. Generalise first, then spend it:</p>
 	<ul>
 		<li><strong>Plumbing:</strong> <code>frame_at(period_ms, elapsed_ms, frames := 2)</code>; <code>UnitSprite</code>'s four sheet constants become per-clip arrays; <code>generators</code> side: <code>Pose</code> gains members, <code>beat()</code> becomes a frame <em>index</em> (restate the "frame-ticking branch reads the beat, not the pose" contract in index form), <code>_tread_phase</code> takes the index. <code>anim.json</code> needs no schema change — <code>order</code> derives from sheet count. Update the literal pins (<code>test_anim_manifest</code> both sides, <code>LegibilityArt</code>'s frame axis).</li>

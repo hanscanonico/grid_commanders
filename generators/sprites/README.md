@@ -244,17 +244,19 @@ move clip untouched. And
 the floor can never be bought by repainting an interior under an outline that
 holds still. The picture behind those numbers is
 `tests/preview_motion.py OUTDIR`, which writes a contact sheet of every unit's
-two poses at both rungs plus one GIF per unit at the manifest's cadence, all
+frames at both rungs — the ambient pair, or the move clip's four — plus one
+GIF per unit at the manifest's cadence, all
 composited over the terrain the unit stands on; it takes its output directory
 on argv, so it adds nothing to `out/` and the snapshot gate never sees it.
 
 Both instruments take a `--clip` (default `ambient`) and read the clip's frames
 from `units.CLIP_POSES`, so a clip that gains a frame is measured without this
-file being edited: `measure_motion.py` offers every two-frame clip there
-(`{ambient,fire,move}` today). `preview_motion.py` also needs the clip's sheet
-tuple and its cadence (`*_MS`) in its own `CLIP_SHEETS`, which names the
-ambient and move pairs — `{ambient,move}` — so drawing the fire pair is one
-table entry away.
+file being edited: `measure_motion.py` offers every clip there with two frames
+or more (`{ambient,fire,move}` today) and prints one block per adjacent step,
+which is one block for a pair and four for the move clip's cycle.
+`preview_motion.py` also needs the clip's sheet tuple and its cadence (`*_MS`)
+in its own `CLIP_SHEETS`, which names the ambient pair and the move clip's four
+— `{ambient,move}` — so drawing the fire pair is one table entry away.
 `measure_motion.py` adds a `MOVES?` column on the move clip — a "no" row is a
 unit rendering its ambient counterpart, and says nothing about a stride.
 `preview_motion.py` draws the move clip FLIPPED as well by default, each unit's
@@ -289,8 +291,10 @@ floor. `MoveFrames.MIN_SILHOUETTE_TEXELS` is **6** at rung 1, double the idle's
 texels is the quietest of those anyone can see, where a gait is the whole
 running gear and a board that cannot see six texels of it move is watching a
 unit slide. `MAX_SHIMMER` (5.0) and `MAX_MASS_DRIFT` (0.08) carry over from
-`AmbientFrames` unchanged, the drift measured against pose A for both move
-frames so a stride may not grow the unit either.
+`AmbientFrames` unchanged, the drift measured against pose A for every one of
+the four move frames so a stride may not grow the unit either — and the shimmer
+ceiling reads the NOISIEST of the clip's four adjacent steps while the
+silhouette floor reads its quietest, so neither hides behind a calm frame.
 
 **The sheet may never translate the hull.** The game's `animate_path` tweens the
 sprite one cell per 0.06 s x `anim_scale`; that tween IS the travel. A frame
@@ -301,10 +305,16 @@ placement pins all four poses to pose A's crop.
 All 18 units author the clip (`units.MOVES`), by family:
 
 - **Tracked** (`tank`, `md_tank`, `anti_air`, `artillery`, `apc`) — the tread's
-  link stripe walks a half period (`_track`'s eight-voxel stripe, so the step is
-  one whole texel along the run) under a hull jolted one texel of ride height on
-  the off-beat (`_roll`). The MBT pitches its NOSE that texel instead: rolled
-  whole, its rung-1 silhouette matched `md_tank`'s frame A better than its own
+  link stripe walks a QUARTER period per frame (`_track`'s eight-voxel stripe
+  advanced by two, one whole texel along the run), so the clip's four frames
+  visit all four quarter-positions once a cycle — `_tread_phase` holds MOVE_A
+  and MOVE_B at the two quarters the shipped art already stood at and gives
+  MOVE_C and MOVE_D the two between them, which is a visit rather than a lap
+  (its docstring has the arithmetic). Underneath, a hull jolted one texel of
+  ride height on the off-beat (`_roll`, `beat(pose) % 2`, so the chassis
+  attitude is the two-key one it always was). The MBT pitches its NOSE that
+  texel instead: rolled whole, its rung-1 silhouette matched `md_tank`'s
+  frame A better than its own
   (0.799 against 0.761) and the unit stopped reading as itself. Weapons stay at
   pose A's travel-lock throughout — a vehicle on the move does not lay its gun,
   recoil its howitzer or track a target.
@@ -316,20 +326,32 @@ All 18 units author the clip (`units.MOVES`), by family:
   the tail.
 - **Foot** (`infantry`, `mech`) — a HELD forward `(dx -1, dy +1)` lean (an
   alternating one would be a man rocking on the spot at 160 ms), a hip line that
-  alternates a texel of rise, and the legs taking it in turns to be at toe-off.
-  The rifleman's pair swaps through the hip centre (`_stride`); the trooper's
-  stand side by side with nothing to swap, so his gait alternates a lift
-  (`_mech_legs`). Toe-off alone measured 6 texels on the rifleman and 5 on the
-  mech — the bob is what carries both clear.
+  alternates a texel of rise every other frame, and the only two families with a
+  real four-key gait. The rifleman's legs swap through the hip centre
+  (`_stride`), and since S6 his LEAD swaps at frame index 1 and back at 3, so
+  the cycle reads contact-L / passing / contact-R / passing rather than the same
+  contact twice. The trooper's stand side by side in x alone, where a swap is a
+  no-op, so his is a SCISSOR — both boots a texel along the run in opposite
+  directions — on MOVE_A/MOVE_B (`_mech_legs(swing=…)`, the shipped two-key
+  shuffle, untouched), with S6's two frames spent on the passing steps between
+  them: both legs gathered back together, one texel then two (`gather=1`, then
+  `2`, two magnitudes so the pair reads as two distinct steps). A LIFT was tried
+  there first and is worth five silhouette texels, under the clip's floor of
+  six. Toe-off alone measured 6 texels on the rifleman and 5 on the mech — the
+  bob is what carries both clear.
 - **Air** (`fighter`, `bomber`, `b_copter`, `t_copter`) — a held nose-down
   attitude, one texel of `dz` on the forward fuselage about a wing root or a
   rotor mast that stays, which is what says heading on a sheet that may not
   translate. The frame-to-frame change is the `atlas.BOB_PX` bob, the two
-  helicopters' rotor blades a notch further round, the fighter's nozzles lit a
-  course beyond the burn `MOVE_A` holds (which reaches only the occluded mouth
-  course, so the visible plume is `MOVE_B`'s alone), and the bomber's four
-  nacelle mouths flaring with its nose dipped a further texel over `MOVE_A`'s
-  trim — all of which tick with the FRAME rather than the clip (`beat(pose)`).
+  helicopters' rotor blades a notch further round — a real four-position disc
+  under way since S6 (`parts.BLADES` keyed straight off `beat(pose)`, the
+  ambient pair still reading only its first two ticks) — the fighter's nozzles
+  lit a course beyond the burn `MOVE_A` holds (which reaches only the occluded
+  mouth course, so the visible plume is the odd frames' alone), and the bomber's
+  four nacelle mouths flaring with its nose dipped a further texel over
+  `MOVE_A`'s trim — all of which tick with the FRAME rather than the clip
+  (`beat(pose)`; the two jets have nothing new to say on the extra pair and read
+  `beat(pose) % 2`, so `MOVE_C`/`MOVE_D` repeat `MOVE_A`/`MOVE_B`).
   The bomber's mouths are gated on `moving` besides: the same flare on the idle
   beat costs the legibility ratchet two baseline cells, which `units/air.py`'s
   `beat(pose)` branches and `tests/measure_motion.py` record.
@@ -389,7 +411,8 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `units_atlas_figures_ko.png` | one AUTHORED casualty frame per unit — a crumpled figure, a burnt-out hull, a hull settled by the stern — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; air carries no frame in v1 and draws its own rest key instead (`units.KOS`), which the cut-in never asks for |
 | `units_atlas_figures_fire.png`, `units_atlas_figures_fire_b.png` | one AUTHORED muzzle-lit frame per ARMED unit — a barrel at full recoil, a rack at launch elevation, bay doors open — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; a unit outside `units.FIRES` draws its own rest key instead (`units.pose._FALLBACK`), which the cut-in DOES ask for — an attacker's fire window opens whatever it carries — and gets a column byte-identical to its idle pair, bob included, which is what makes the fallback need no domain gate. The second sheet is a real second key only for the sustained weapon families (`units.pose.FIRE_PAIRS`) — everything else draws the same model into both, so the pair reads as a held muzzle flash rather than a cycle |
 | `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
-| `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
+| `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). Every pose pins to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (`units.pose._FALLBACK`: MOVE_A -> A, MOVE_B -> B, MOVE_C -> A, MOVE_D -> B), which keeps the whole clip valid whatever is authored |
+| `units_atlas_move_c.png`, `units_atlas_move_d.png` | the move clip's third and fourth frames (`units.Pose.MOVE_C`, `units.Pose.MOVE_D`), on the same contract as the pair above — the four sheets are one 640 ms cycle at `BoardBeat`'s 160 ms per frame, played in sheet order and listed in that order by `anim.json`. What a family says on them is per family (`tests/test_clips.py GaitPhases`): the two foot figures author a real third and fourth key, the five tracked hulls and the two copters hold their two-key attitude and step the tread stripe or the rotor disc a further quarter, and every other family repeats MOVE_A and MOVE_B on them byte for byte |
 | `terrain_atlas.png` | 896x384 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
 | `units/<id>_<team>.png` | 108 cells, the atlas's own art exported cell by cell for review — **cut out of the units sheet the run already built** (`atlas.cell_box`), so a cell is the atlas's cell by construction rather than by a second render agreeing with it. Installed nowhere: the game loads the sheet |
 | `iso_buildings/<id>_<team>.png` | 30 property-building cells, review output the same way |

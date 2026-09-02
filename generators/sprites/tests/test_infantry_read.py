@@ -30,18 +30,21 @@ from spritegen.palette import (
     material_slot,
     ramp_for,
 )
-from spritegen.units import Pose, build_model
+from spritegen.units import AMBIENT_POSES, MOVE_POSES, Pose, build_model
 from spritegen.voxel import render_indexed
 
 SCALE = 4
 PHASES = [(dx, dy) for dy in range(SCALE) for dx in range(SCALE)]
-# Every pose that stands: the ambient pair and the two strides. Pose.KO is
+# Every pose that stands: the ambient pair and the whole gait, DERIVED rather
+# than listed, so a clip that grows a key is read here the day it lands — the
+# same reason `test_board_read.py` builds `BOARD_POSES` this way. A hand-typed
+# tuple is how S6's two new stride keys nearly shipped unread. Pose.KO is
 # deliberately absent — the man is down, 20 rendered rows against this pose's
 # 37, and none of the standing read below (the stride's leg gap, the rifle
 # held across the chest, the shoulder line a head sits inside) is a claim a
 # crumpled figure can answer; `test_ko_pose.py` holds the KO frame to its own
 # bar.
-STANDING_POSES = (Pose.A, Pose.B, Pose.MOVE_A, Pose.MOVE_B)
+STANDING_POSES = AMBIENT_POSES + MOVE_POSES
 
 
 def _sprite(pose: Pose = Pose.A, faction=None):

@@ -316,19 +316,66 @@ forms named in the root index are in `docs/design_record.md`.
   `refresh()`. **The mirror is the CLIP'S and ends with it**, because the ambient pair's cast shadow
   is not cell-centred and a unit left mirrored at rest drops its shadow to the other side of itself.
   An unauthored unit needs no fallback code; `tests/unit/test_move_frames.gd` pins all of it.
+  **The move clip grew from two frames to four (animation-frames S6, 2026-09-02)**, the plan's one
+  structural slice: **`BoardBeat.frame_at`/`frame` took a defaulted `frames := 2` parameter**, so
+  every ambient/sea call site reads unchanged, and **`UnitSprite._sheet_path(frame)` indexes a
+  per-clip array** (`UNITS_ATLAS_SHEETS`, two entries; `UNITS_ATLAS_MOVE_SHEETS`, four —
+  `units_atlas_move_c.png` / `_d.png` the new pair) rather than a ternary, with `_frame_count()`
+  sized off whichever array is playing. The gait cadence (`MOVE_MS` 160) is unchanged, so the full
+  cycle is 640 ms; `Instant` and the capture pin still land on frame A by construction, since both
+  route through `BoardBeat.frozen`/`Settings.speed.instant` before the frame count is ever asked.
+  On the generator side `units.pose.beat(pose)` changed shape with it: it answers a POSITION in the
+  pose's own clip (0/1 ambient, 0-3 move) rather than a boolean, so a rotor disc can key a four-tick
+  table off it directly (`parts.BLADES`) and a builder that only ever had one delta to repeat asks
+  `beat(pose) % 2` for the old two-key alternation. **MOVE_A and MOVE_B stay the shipped art, pixel
+  for pixel, in every family** — the legibility ratchet already holds a verdict on both, and moving
+  either costs already-passing cells for no claim this slice makes about them — so every new thing a
+  family has to say lives on MOVE_C and MOVE_D alone. Three readings, all pinned by
+  `generators/sprites/tests/test_clips.py GaitPhases`: the **foot pair** (`infantry`, `mech`) earns a
+  genuine four-key gait, but the two builders spend the constraint differently — `infantry`'s
+  `beat(pose)` swaps the lead leg at index 1 and back at index 3 (`far` on the two middle frames,
+  `near` on the two outer ones), so its own cycle already reads contact-L / passing / contact-R /
+  passing across all four keys, while `mech`'s scissor has no passing key at all until S6
+  (MOVE_A/MOVE_B are its shipped instant swap, `swing=1` then `swing=6`), so MOVE_C and MOVE_D are
+  two PASSING steps back to back — `_mech_legs(m, gather=1)` then `gather=2`, two magnitudes rather
+  than one repeated, since the pair sits between two already-fixed contacts and has to read as two
+  distinct steps entirely on its own; the negative sign (gathered forward) was measured and dropped,
+  reading closer to the rifleman's own silhouette than to the trooper's
+  (`generators/sprites/tests/test_board_read.py Silhouette`). The **five tracked hulls** (`tank`, `md_tank`, `anti_air`,
+  `artillery`, `apc`) keep their two-key chassis attitude (`beat(pose) % 2`) and gain a genuine
+  quarter-phase tread step instead — `parts._track`'s link stripe steps `2 * phase` rather than
+  `4 * phase`, with `_tread_phase` holding MOVE_A/MOVE_B at the exact two quarters they always stood
+  at and handing MOVE_C/MOVE_D the two quarters between them, so the move clip's four visit all four
+  quarter-positions of the run's own period once a cycle. Visiting all four is the claim, not a
+  one-way lap: the two pinned quarters (2 and 0) sit a half-period apart, which rules out both
+  monotone 4-cycles, so the sequence is 2, 0, 1, 3 and its single unambiguous `+1` step is what
+  carries direction — a later slice free to move MOVE_A/MOVE_B could buy the lap. The **two
+  copters** (`b_copter`,
+  `t_copter`) read a real four-tick rotor off the same `beat(pose)` index, `parts.BLADES` grown from
+  two ticks to four by the construction `_BLADE_B` already used from `_BLADE_A` — with ONE
+  exception that must survive any later tick: `_BLADE_D` advances only the outer four points and
+  HOLDS index 2 at `_BLADE_C`'s value, because `_rotor` turns that delta 90 degrees onto the
+  clipped arm (`t_copter`'s tandem, `arm[:-2]`) where the naive fifth point opens a three-voxel gap
+  and strands a rung-1 texel (`parts.py` states the measurement); every other family
+  — wheeled (`recon`, `rockets`, `missiles`), the two fixed-wing jets and the four sea hulls —
+  interpolates its existing two-frame motion across the extra pair (`GaitPhases.REUSED`), MOVE_C and
+  MOVE_D byte-identical to MOVE_A and MOVE_B. `b_copter`'s S5-deferred fire-window rotor freeze is
+  untouched: `beat`'s table answers FIRE_A and FIRE_B both 0, so the contour budget that deferred it
+  (52.48% against the 52% bar) never re-opens.
   **The ninth slice is the cut-ins' idle beat** — `UnitSprite.figure_texture_for` grew a
   **defaulted** `frame` and stays the one way to ask for a figure, and
   **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the arithmetic, read off the director's own `t`
   rather than the wall clock**, so a posed still and a skip both land on a fixed pose. The board's
   two stills stay `frame`'s and do not reach in.
-  **Since 2026-08-29 the legibility ruler reads all six STANDING unit sheets** (the two authored
-  cut-in clips, S4's KO sheet and S5's fire pair, are deliberately out — the ruler asks how a
-  standing figure separates from its ground, and neither a wreck nor a machine at full recoil is
-  standing at rest):
-  a `frame` axis names a clip and a beat (`idle_a`/`idle_b`/`walk_a`/`walk_b`), the view says which
+  **Since 2026-08-29 the legibility ruler reads every STANDING unit sheet** — six then, eight since
+  S6 grew the move clip (the two authored cut-in clips, S4's KO sheet and S5's fire pair, are
+  deliberately out — the ruler asks how a standing figure separates from its ground, and neither a
+  wreck nor a machine at full recoil is standing at rest):
+  a `frame` axis names a clip and a beat (`idle_a`/`idle_b` and the gait's `walk_a`–`walk_d`), the
+  view says which
   file draws it — the board's
   own cells, the cut-in's shadow-subtracted pair — and every report row and `--dump` key carries it
-  (`LegibilityArt.BOARD_SHEETS` / `CUTIN_SHEETS`, `docs/sprite_legibility.md`'s 2026-08-29
+  (`LegibilityArt.BOARD_SHEETS` / `CUTIN_SHEETS`, `docs/sprite_legibility.md`'s 2026-09-02
   re-read). The sea's swell frames stay out, a *time* frame still being another axis.
 - **The next-ready-unit key** (no plan artifact; the long form is `docs/design_record.md` § The zoom
   ladder and the animation milestone, where the index carried it) — `N` walks the cursor to the next

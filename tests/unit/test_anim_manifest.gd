@@ -63,8 +63,16 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 	)
 	assert_eq(
 		_clip_sheets("move"),
-		[UnitSprite.UNITS_ATLAS_MOVE_PATH, UnitSprite.UNITS_ATLAS_MOVE_B_PATH],
-		"the move pair"
+		[
+			UnitSprite.UNITS_ATLAS_MOVE_PATH,
+			UnitSprite.UNITS_ATLAS_MOVE_B_PATH,
+			UnitSprite.UNITS_ATLAS_MOVE_C_PATH,
+			UnitSprite.UNITS_ATLAS_MOVE_D_PATH
+		],
+		"the move clip's four frames (S6)"
+	)
+	assert_eq(
+		_clip_order("move"), [0, 1, 2, 3], "order derives from the sheet count, not a literal"
 	)
 	assert_eq(
 		_clip_sheets("sea"),
@@ -150,6 +158,13 @@ func _clip_sheets(clip: String) -> Array:
 	for sheet: String in manifest["clips"][clip]["sheets"]:
 		paths.append(TILES_DIR + sheet)
 	return paths
+
+
+func _clip_order(clip: String) -> Array:
+	var order: Array = []
+	for frame in manifest["clips"][clip]["order"]:
+		order.append(int(frame))
+	return order
 
 
 func _family_key(family: int) -> String:

@@ -17,18 +17,22 @@ is the `fallback` field saying so in the file rather than in a comment.
 | field | value |
 | --- | --- |
 | name | `move` |
-| `sheets` | `units_atlas_move.png`, `units_atlas_move_b.png` |
-| `order` | `[0, 1]` |
+| `sheets` | `units_atlas_move.png`, `units_atlas_move_b.png`, `units_atlas_move_c.png`, `units_atlas_move_d.png` |
+| `order` | `[0, 1, 2, 3]` |
 | `mode` | `loop` |
 | `ms_per_frame` | `160` |
 | `facing` | `"left"` |
 | `flip_x_for` | `["right"]` |
 | `fallback` | `"ambient"` |
 
-Two frames, one facing, no figures variant — the cut-ins draw a unit standing
-in front of a camera, not walking — and no per-direction sheets, ever. Four
-directions would be four times the sheet for art whose only handedness is which
-way it is flipped.
+Four frames since S6 (2026-09-02) and two before it, one facing, no figures
+variant — the cut-ins draw a unit standing in front of a camera, not walking —
+and no per-direction sheets, ever. Four directions would be four times the
+sheet for art whose only handedness is which way it is flipped. The schema did
+not change to carry the extra pair: `order` and `sheets` simply list four, and
+a consumer sizes the clip off that count rather than off a literal (the game's
+own `UnitSprite.UNITS_ATLAS_MOVE_SHEETS` and `BoardBeat.frame_at`'s `frames`
+argument). One frame is still 160 ms, so the whole cycle is 640 ms.
 
 **Why 160 ms.** The travel is the game's tween, and the tween moves one cell in
 `GameSpeed.BASE_MOVE_STEP_SECONDS` (0.06) times the tier's `anim_scale`:
@@ -62,9 +66,11 @@ manifest from before the move batch reads as `ambient`.
 *A unit's.* Every clip past `ambient` is a per-unit opt-in, and the columns of a
 unit that has not opted in carry the fallback clip's own frame, so the sheet is
 a valid 18-column grid from the day it ships. A unit with no authored move pose
-renders its ambient counterpart (MOVE_A → A, MOVE_B → B), so the move sheets
-were initially identical to the ambient pair and the opt-in (`units.MOVES`)
-grows one family at a time.
+renders its ambient counterpart, per FRAME rather than per clip (MOVE_A and
+MOVE_C → A, MOVE_B and MOVE_D → B, so an unauthored column plays A/B/A/B and
+keeps the beat its idle pair rides), so the move sheets were initially
+identical to the ambient pair and the opt-in (`units.MOVES`) grows one family
+at a time.
 
 The two readings agree wherever the fallback frame is a legal thing to draw in
 the clip's own place, which is the whole of `move`: a unit that does not walk is
@@ -101,10 +107,10 @@ and nothing else — same `cell.w` 64, `cell.h` 96, `cell.ground_px` **7**,
 `AtlasTexture` points at; the region, the scale, the `ART_OFFSET` and the
 ground line are pose-invariant.
 
-All four poses pin to pose A's crop (`atlas._pose_a_box`), `footprint_w` and
+Every pose pins to pose A's crop (`atlas._pose_a_box`), `footprint_w` and
 `ground` do not move with the pose, and `bob = BOB_PX` applies to air and sea
-on any beat frame (B and MOVE_B) exactly as it does today. Land never bobs via
-placement.
+on any off-beat frame (B, MOVE_B and MOVE_D — `pose.off_beat`) exactly as it
+does today. Land never bobs via placement.
 
 **The sheet never translates the hull.** A move frame may not shift the unit
 horizontally in-cell: the game's tween is the travel, and a sheet that also
@@ -179,7 +185,7 @@ The wave rides the displacement patch, so a mirrored ship carries it the same
 5 px the patch moves — the handedness above, not a new one. It stays at the
 mirrored hull's bow, which is where a bow wave belongs.
 
-The wave is the same on both move frames. Ticking it with the beat is not
+The wave is the same on all four move frames. Ticking it with the beat is not
 buildable here: at `voxel.BOW_REACH` the crest already covers every row of
 every hull's patch — nine rows at the widest — so carrying it further aft on
 the off-beat repaints nothing. The hulls carry the beat where they already
@@ -262,8 +268,7 @@ and the sim — no file under `core/` or `ai/` sees any of this.
 ## 6. What the generator must respect
 
 - **Same grid.** 1152x480, the same 18 columns and 5 rows in the same order.
-  The move sheets are a third and fourth frame of the same atlas, not a new
-  atlas.
+  The move sheets are further frames of the same atlas, not a new atlas.
 - **Same ground line.** `cell.ground_px` is measured off the art
   (`anim.measure_ground_px`) and every pose must measure the same 7, which is
   what the shared pose-A crop and the pose-invariant `ground` buy.

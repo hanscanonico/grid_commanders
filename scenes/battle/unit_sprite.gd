@@ -45,19 +45,36 @@ const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## cells on an idle key pose. Every column differs, so every sprite processes;
 ## tests/unit/test_ambient_frames.gd pins that against the shipped art.
 const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
+## The ambient clip's sheets in frame order — what `_sheet_path` indexes when
+## the sprite is parked. Ambient stays two frames (S6): at 500 ms the A/B
+## breath reads fine and doubling every board sheet is cost with no complaint
+## behind it.
+const UNITS_ATLAS_SHEETS: Array[String] = [UNITS_ATLAS_PATH, UNITS_ATLAS_B_PATH]
 ## The walk cycle: the same grid again, one gait pose per frame, played only
-## while BattleAnimator is tweening a unit along its path. A unit the generator
-## has authored no gait for carries its ambient cell in both move sheets, so
+## while BattleAnimator is tweening a unit along its path. Four frames since
+## S6 (2026-09-02) — contact / passing / contact / passing for a foot unit, a
+## quarter-phase tread crawl for a tracked one, the existing two-frame motion
+## held across the extra pair for everything else — at the same 160 ms
+## cadence, so the full gait cycle is 640 ms. A unit the generator has
+## authored no gait for carries its ambient cell in all four move sheets, so
 ## nothing here ever asks which units are authored — the clip is valid for the
 ## whole roster from the day it ships. The art faces screen-left and a rightward
-## step mirrors it: the generator draws this pair's land and air cells over a
+## step mirrors it: the generator draws this clip's land and air cells over a
 ## cell-centred cast shadow, so the mirror leaves the shadow where it was. The
 ## *ambient* pair's is not centred (34-36 px of 64, measured off the shipped
 ## sheets), so the mirror is the clip's and ends with it — see `moving`.
-## tests/unit/test_move_frames.gd pins the grid, the pairing, the cadence, the two
+## tests/unit/test_move_frames.gd pins the grid, the pairing, the cadence, the
 ## stills and the flip policy.
 const UNITS_ATLAS_MOVE_PATH := "res://assets/tiles/units_atlas_move.png"
 const UNITS_ATLAS_MOVE_B_PATH := "res://assets/tiles/units_atlas_move_b.png"
+const UNITS_ATLAS_MOVE_C_PATH := "res://assets/tiles/units_atlas_move_c.png"
+const UNITS_ATLAS_MOVE_D_PATH := "res://assets/tiles/units_atlas_move_d.png"
+## The move clip's sheets in frame order — `_sheet_path`'s other array, and the
+## one whose length grew from two to four. `order` in `anim.json` is derived
+## from this same count on the generator side, so the two cannot disagree.
+const UNITS_ATLAS_MOVE_SHEETS: Array[String] = [
+	UNITS_ATLAS_MOVE_PATH, UNITS_ATLAS_MOVE_B_PATH, UNITS_ATLAS_MOVE_C_PATH, UNITS_ATLAS_MOVE_D_PATH
+]
 ## The same army with the tile's cast shadow subtracted, for a surface that
 ## draws the art at 1:1 over ground and a shadow of its own — see
 ## `figure_texture_for`.
@@ -151,7 +168,7 @@ var moving: bool = false:
 		moving = value
 		if not moving:
 			flip_h = false
-		_frame = BoardBeat.frame(_period_ms())
+		_frame = BoardBeat.frame(_period_ms(), Time.get_ticks_msec(), _frame_count())
 		_repoint_sheet()
 
 ## Which frame of the current clip this sprite shows. Instance state so a
@@ -272,7 +289,7 @@ static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTextu
 
 
 func _process(_delta: float) -> void:
-	var frame := BoardBeat.frame(_period_ms())
+	var frame := BoardBeat.frame(_period_ms(), Time.get_ticks_msec(), _frame_count())
 	if frame == _frame:
 		return
 	_frame = frame
@@ -300,15 +317,22 @@ func face_step(delta: Vector2i) -> void:
 
 ## The one answer to which sheet this sprite draws from, so that a repaint
 ## mid-walk — a defection's atlas_row, a fog flip — cannot snap a striding unit
-## back to its parked pose.
+## back to its parked pose. Indexes the clip's own array (`UNITS_ATLAS_SHEETS`
+## parked, `UNITS_ATLAS_MOVE_SHEETS` moving) rather than a ternary, which is
+## what let the move clip grow to four frames with no branch added here.
 func _sheet_path(frame: int) -> String:
-	if moving:
-		return UNITS_ATLAS_MOVE_B_PATH if frame == 1 else UNITS_ATLAS_MOVE_PATH
-	return UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH
+	return UNITS_ATLAS_MOVE_SHEETS[frame] if moving else UNITS_ATLAS_SHEETS[frame]
 
 
 func _period_ms() -> int:
 	return BoardBeat.move_ms() if moving else BoardBeat.AMBIENT_MS
+
+
+## How many frames the current clip carries — the array `_sheet_path` reads,
+## sized rather than hardcoded, so the beat and the sheet lookup can never
+## disagree about the clip's own length.
+func _frame_count() -> int:
+	return UNITS_ATLAS_MOVE_SHEETS.size() if moving else UNITS_ATLAS_SHEETS.size()
 
 
 func _repoint_sheet() -> void:

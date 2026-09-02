@@ -8,12 +8,20 @@ draws its idle key there instead, the same as `apc` and `lander`.
 `units.pose.FIRE_PAIRS` names the two autocannon airframes (`fighter`,
 `b_copter`), whose second key strobes the blaze; `bomber`'s bomb run is not
 sustained, so it draws the same model into both.
+
+The two jets have nothing new to say between the move clip's second and
+fourth frames (S6, 2026-09-02): their `beat(pose)`-gated retones read
+`beat(pose) % 2` instead, so MOVE_C interpolates MOVE_A's own held trim
+again and MOVE_D interpolates MOVE_B's. The two copters do, on the same
+frame index: `beat(pose)` now answers 0-3 across the move clip, so a copter
+under way turns its rotor through all four ticks of `parts.BLADES` — the
+ambient pair still only ever reads the first two.
 """
 
 from __future__ import annotations
 
 from ..voxel import Model
-from .parts import _BLADE_A, _BLADE_B, _rotor, _shift
+from .parts import BLADES, _rotor, _shift
 from .pose import Pose, beat, fires, moving
 
 
@@ -21,7 +29,11 @@ def _burner_reach(pose: Pose) -> int:
     """How many courses of lit plume the fighter's two nozzles carry.
 
     Cold at rest (0: the mouths stay `bore`), 2 on the off-beat, 1 held
-    between beats while the jet is under way.
+    between beats while the jet is under way. Since S6 the off-beat is
+    `beat(pose) % 2` rather than a name, so the move clip's own extra pair
+    plays the same reach the first two did — `MOVE_C` cold-held like
+    `MOVE_A`, `MOVE_D` lit like `MOVE_B` — a jet with nothing new to say
+    about its burner between the four move frames.
 
     Only the SECOND course paints. The first sits at the nozzle mouths
     (y -1), occluded in every livery, so reach 0 and reach 1 render
@@ -29,11 +41,9 @@ def _burner_reach(pose: Pose) -> int:
     something the player sees. What the board gets is the two nozzles
     lighting one visible course together: rest none, `Pose.B` lit,
     `MOVE_A` none, `MOVE_B` lit, 11 px per cell in every livery — 7 newly
-    opaque and 4 the softening pass takes around them. `beat` alone decides
-    whether there is a plume, and `MOVE_B` shows it a course further out
-    than `MOVE_A` does.
+    opaque and 4 the softening pass takes around them.
     """
-    if beat(pose):
+    if beat(pose) % 2:
         return 2
     if moving(pose):
         return 1
@@ -78,7 +88,7 @@ def fighter(pose: Pose = Pose.A) -> Model:
     for x in (4, 5):
         for i in range(reach):
             m.set(x, -1 - i, 3, "flame")
-    if beat(pose):
+    if beat(pose) % 2:
         # Off-beat, ticking with the frame rather than the clip like the
         # copters' rotor: a canopy glint and an elevon highlight, both
         # RETONED rather than moved. The glint is the bubble's own middle
@@ -168,7 +178,7 @@ def bomber(pose: Pose = Pose.A) -> Model:
     m.box(5, 6, 2, 2, 5, 6, "body_dk")
     # tail turret hint
     m.box(5, 6, 0, 0, 3, 3, "gunmetal_dk")
-    if beat(pose):
+    if beat(pose) % 2:
         # Off-beat, retoned like `fighter`'s canopy glint and for the same
         # reason (see its `beat(pose)` branch): the tail's two outboard
         # tips take a highlight in place, never opening or closing a
@@ -194,8 +204,9 @@ def bomber(pose: Pose = Pose.A) -> Model:
         # so the break behind the flight deck stays closed.
         _shift(m, (4, 7, 14, 20, 3, 5), dz=-2)
         m.box(4, 7, 13, 13, 2, 2, "hull")
-        if beat(pose):
-            # MOVE_B dips a further texel over MOVE_A's held trim: the same
+        if beat(pose) % 2:
+            # MOVE_B (and MOVE_D, S6's interpolated repeat) dips a further
+            # texel over MOVE_A/MOVE_C's held trim: the same
             # section, carried down another whole board texel from where the
             # first dip already left it, with its own seam closing the new
             # step behind the flight deck.
@@ -231,6 +242,12 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     than swapping its shape. Nothing else may differ. The blades are two
     voxels wide across the sweep at the tips, which is what makes the disc
     sample as an arc rather than as speckle — see `_BLADE_A`.
+
+    The move clip reads a real four-tick disc off the same table (S6,
+    2026-09-02, `parts.BLADES`), since `beat(pose)` now answers 0-3 for the
+    move clip's own four frames rather than 0/1: a copter under way turns its
+    rotor a full lap of the tick every gait cycle instead of flipping between
+    the two the parked machine idles on.
     """
     m = Model()
     # fuselage in hull livery, rounded nose
@@ -265,17 +282,18 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # same four blades a notch; the tail rotor is vertical and stays)
     m.box(4, 4, 10, 10, 7, 8, "hull_dk")
     # The rotor ticks with the FRAME, not the clip: a moving helicopter's
-    # blades are at the off-beat position on MOVE_B exactly as on B. The FIRE
-    # pair is the one clip whose disc holds still, and it is a measured
-    # constraint rather than a reading: this airframe is the contour ratchet's
-    # worst sprite, and the fire pose alone already spends 51.95% of aurora's
-    # own pixels on the line against `test_livery`'s 52% bar — ticking the
-    # blades there measures 52.48%, and on FIRE_A instead 52.58%. A disc that
-    # turns through the window costs a re-measured budget, so it waits for the
-    # slice that takes one: S6 generalises the beat into a frame index and
-    # offers the rotor a four-tick disc on it, which is where this is revisited
-    # with the outline bill reopened rather than squeezed under.
-    _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
+    # blades are at the tick `beat(pose)` names, so the move clip's four
+    # frames turn the disc through all of `BLADES` (S6) while the ambient
+    # pair still only ever reads its own two. The FIRE pair is the one clip
+    # whose disc holds still, and it is a measured constraint rather than a
+    # reading: this airframe is the contour ratchet's worst sprite, and the
+    # fire pose alone already spends 51.95% of aurora's own pixels on the
+    # line against `test_livery`'s 52% bar — ticking the blades there
+    # measures 52.48%, and on FIRE_A instead 52.58%. `beat`'s table answers
+    # FIRE_A and FIRE_B both 0, the freeze's mechanism now that the lookup is
+    # a table rather than a name — the four-tick disc does not change that
+    # arithmetic, so the freeze stands and the budget is not revisited here.
+    _rotor(m, 4, 10, 9, BLADES[beat(pose)])
     if fires(pose):
         # Nose down two texels, chin gun on the line: the nose and canopy
         # rake down twice the move clip's own dip, and the chin gun tracks
@@ -293,8 +311,12 @@ def b_copter(pose: Pose = Pose.A) -> Model:
         # says heading on a sheet that may never translate the hull. The
         # airframe RAKES about the mast, which stays where it is: the disc is
         # the part the eye tracks and tilting it would read as a second
-        # animation, so every shift below is capped under z9 and the four
-        # blades of both move frames are the ambient frames' voxel for voxel.
+        # animation, so every shift below is SELECTED from under z9 and the
+        # main disc comes out of a move frame voxel for voxel with the
+        # ambient pose of the same beat. What it does between the four
+        # frames is TURN — `BLADES[beat(pose)]` above, MOVE_C and MOVE_D on
+        # ticks neither ambient pose draws — and the rake never reaches it.
+        # The TAIL rotor is not that disc and does ride the boom up.
         #
         # Ahead of the mast the nose, the tandem canopy and the chin gun drop
         # one board texel (dz = -2). Behind it the boom comes UP, and it comes
@@ -325,7 +347,8 @@ def t_copter(pose: Pose = Pose.A) -> Model:
     """Tandem-rotor transport helicopter — unarmed.
 
     Both discs are clipped along y so they do not meet over the hold, and
-    both take pose B's tick together, as on b_copter.
+    both take the FRAME's own tick together, as on b_copter — the ambient
+    pair's two positions and, since S6, the move clip's four.
     """
     m = Model()
     # boxy hold in hull livery, rounded top edges so it stops reading as a
@@ -352,8 +375,9 @@ def t_copter(pose: Pose = Pose.A) -> Model:
     m.box(4, 5, 13, 13, 7, 8, "hull_dk")
     # Both discs turn the same blade the same way, so the tandem reads as one
     # machine's two rotors advancing and not as a counter-rotating pair.
-    # Frame, not clip — see `b_copter`.
-    blade = _BLADE_B if beat(pose) else _BLADE_A
+    # Frame, not clip, and read off the same four-tick table since S6 — see
+    # `b_copter`.
+    blade = BLADES[beat(pose)]
     _rotor(m, 4, 4, 9, blade, clipped=True)
     _rotor(m, 5, 13, 9, blade, clipped=True)
     if moving(pose):

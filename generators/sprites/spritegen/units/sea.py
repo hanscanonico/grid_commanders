@@ -10,6 +10,13 @@ pose, live rather than dead-toned: batteries trained and recoiled, a forward
 mount blazing, bow caps open. `cruiser`'s autocannon is the one sea style in
 `units.pose.FIRE_PAIRS`, so it alone draws a second key; `battleship` and
 `sub` draw the same model into both.
+
+None of the four has a new thing to say between the move clip's second and
+fourth frames (S6, 2026-09-02): every `if beat(pose):` below reads
+`if beat(pose) % 2:` instead, so MOVE_C plays MOVE_A's own trim again and
+MOVE_D plays MOVE_B's — the fleet's held bow-up trim across all four,
+whichever assembly idles on the off-beat lit twice a cycle rather than once.
+No hull is tracked, so none of them gets `land.py`'s tread crawl either.
 """
 
 from __future__ import annotations
@@ -107,7 +114,7 @@ def battleship(pose: Pose = Pose.A) -> Model:
         _shift(m, (2, 5, 16, 26, 1, 5), dz=2)
         m.box(2, 5, 16, 23, 1, 2, "hull")
         m.box(3, 4, 24, 26, 1, 2, "hull")
-        if beat(pose):
+        if beat(pose) % 2:
             # The frame-to-frame delta is the AFT battery training one board
             # texel across the stern — deliberately not the fore battery the
             # idle lays up, so the two clips read apart at a glance. The
@@ -211,7 +218,7 @@ def cruiser(pose: Pose = Pose.A) -> Model:
         m.box(1, 6, 11, 15, 1, 2, "hull")
         m.box(2, 5, 16, 17, 1, 2, "hull")
         m.box(3, 4, 18, 18, 1, 2, "hull")
-        if beat(pose):
+        if beat(pose) % 2:
             # The delta is the mast HEAD alone, run one board texel up its own
             # lattice: the tower itself holds still, which is the cruiser's
             # recorded rule — a tower that swayed would be the ship rolling.
@@ -349,7 +356,7 @@ def sub(pose: Pose = Pose.A) -> Model:
         for y in range(14, 20):
             for x in (2, 3, 4, 5):
                 m.unset(x, y, 1)
-        if beat(pose) or fires(pose):
+        if beat(pose) % 2 or fires(pose):
             # The delta is the short ATTACK scope coming up beside the search
             # one — the search mast is already up in both frames, so what the
             # board sees moving is the second mast and not the first. It came
@@ -438,7 +445,7 @@ def lander(pose: Pose = Pose.A) -> Model:
         _shift(m, (0, 8, 7, 10, 1, 5), dz=2)
         m.box(0, 8, 7, 9, 1, 2, "hull")
         m.box(1, 7, 10, 10, 1, 2, "hull")
-        if beat(pose):
+        if beat(pose) % 2:
             # The delta is the ramp LIP alone lifting off its ribs — the
             # visor cracked, not opened — with the ramp face grown behind it
             # so nothing floats.

@@ -24,7 +24,14 @@ from spritegen.units import (
 from spritegen import voxel
 from spritegen.voxel import CAST, FOAM
 
-from pixel_helpers import RUNG_1_CELL, pose_cell, rung1_texels, units_sheet
+from pixel_helpers import (
+    RUNG_1_CELL,
+    pose_cell,
+    rung1_steps,
+    rung1_texels,
+    rung1_worst_shimmer,
+    units_sheet,
+)
 
 
 def air_beat_readings(uid: str, rest: Pose, off: Pose) -> tuple[int, float]:
@@ -138,13 +145,16 @@ class AmbientFrames(unittest.TestCase):
         change tone, per texel of silhouette that actually moves, under
         `MAX_SHIMMER` at rung 1. The two numbers together say the change the
         board sees is mostly the shape going somewhere.
+
+        The floor above reads the clip's quietest step and this reads its
+        NOISIEST (`rung1_worst_shimmer`): a ceiling that a clip could satisfy
+        on one step out of four would not be a ceiling.
         """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
-                    changed, silhouette = self._texels(uid, fac)
-                    interior = changed - silhouette
-                    self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
+                    shimmer = rung1_worst_shimmer(uid, fac, AMBIENT_POSES)
+                    self.assertLess(shimmer, self.MAX_SHIMMER)
 
     def _texels(self, uid: str, fac: Faction) -> tuple[int, int]:
         return rung1_texels(uid, fac, AMBIENT_POSES)
@@ -433,14 +443,16 @@ class MoveFrames(unittest.TestCase):
     numbers, carried over unchanged and for the same reasons: a frame that
     repaints its interior instead of moving its outline reads as boiling,
     and a unit that walks is still the same mass of metal. The drift is
-    measured against pose A for BOTH move frames, so a gait may not grow the
-    unit across the clip either.
+    measured against pose A for EVERY one of the four move frames, so a gait
+    may not grow the unit across the clip either; the silhouette floor reads
+    the clip's quietest adjacent step and the shimmer ceiling its noisiest,
+    so neither hides behind a calm frame.
 
     Everything that reads pixels is scoped to `units.MOVES`, the opt-in set
     of units with an authored gait. The rest render their ambient
-    counterpart (`MOVE_A -> A`, `MOVE_B -> B`), which the fallback test
-    checks byte-for-byte; while `MOVES` is empty the scoped tests skip
-    loudly rather than pass vacuously.
+    counterpart per frame (`MOVE_A`/`MOVE_C -> A`, `MOVE_B`/`MOVE_D -> B`),
+    which the fallback test checks byte-for-byte; while `MOVES` is empty the
+    scoped tests skip loudly rather than pass vacuously.
     """
 
     MIN_SILHOUETTE_TEXELS = 6
@@ -514,10 +526,13 @@ class MoveFrames(unittest.TestCase):
 
     def test_every_moving_unit_crosses_a_whole_board_texel(self):
         """The gait at the size the board draws it: how many rung-1 texels
-        the two move frames disagree about being PAINTED, for every livery.
-        Under this floor the stride re-tones the inside of a shape that
-        holds still, which is the sliding-sprite failure the ambient gate
-        was written for, doubled because a gait moves more than an idle."""
+        the clip's QUIETEST adjacent step disagrees about being PAINTED, for
+        every livery. Under this floor the stride re-tones the inside of a
+        shape that holds still, which is the sliding-sprite failure the
+        ambient gate was written for, doubled because a gait moves more than
+        an idle. The quietest of the four steps is what stands for the clip
+        because a frame that goes nowhere is the failure however far the
+        other three travel."""
         for uid in self._movers():
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
@@ -594,13 +609,56 @@ class MoveFrames(unittest.TestCase):
         """The other half of the ratio, as in `AmbientFrames`: interior
         texels that only change tone, per texel of silhouette that actually
         moves. Together the two say the change the board sees is mostly the
-        shape going somewhere."""
+        shape going somewhere.
+
+        Asked of every step the gait takes, A-B through D-A, and gated on the
+        worst: a four-frame clip has four chances to boil and a bar that read
+        one of them would be a bar on the frames that happened to be quiet."""
         for uid in self._movers():
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
-                    changed, silhouette = rung1_texels(uid, fac, MOVE_POSES)
-                    interior = changed - silhouette
-                    self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
+                    shimmer = rung1_worst_shimmer(uid, fac, MOVE_POSES)
+                    self.assertLess(shimmer, self.MAX_SHIMMER)
+
+    def test_the_shimmer_bar_reads_past_the_step_the_floor_reads(self):
+        """The two gates above reduce the same four readings opposite ways,
+        and folding both out of ONE step is how a four-frame gait hides its
+        worst frames behind its calmest.
+
+        `rung1_texels` hands back the quietest step and did hand back that
+        step's changed count with it, which the ceiling then divided — so
+        with `MOVE_POSES` grown to four the bar was being applied to one of
+        the clip's four steps, chosen by a measure it has nothing to do with.
+        The mech is the roster's own case: its quietest step shimmers at
+        0.67 and its noisiest at 1.17. So pin the relation — the bar is never
+        under the floor step's own reading, and on the shipped roster it is
+        somewhere strictly over it, which a ceiling folded out of the floor
+        could not be.
+        """
+        strictly_over = []
+        for uid in self._movers():
+            for fac in FACTIONS:
+                quiet_changed, quiet_silhouette = rung1_texels(uid, fac, MOVE_POSES)
+                at_the_floor = (quiet_changed - quiet_silhouette) / max(
+                    quiet_silhouette, 1
+                )
+                worst = rung1_worst_shimmer(uid, fac, MOVE_POSES)
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertGreaterEqual(worst, at_the_floor)
+                if worst > at_the_floor:
+                    strictly_over.append((uid, fac.key))
+        self.assertTrue(strictly_over, "no gait's shimmer bar read past its floor step")
+
+    def test_the_clip_is_read_around_the_cycle(self):
+        """Four poses are four adjacent steps, A-B through D-A, not three:
+        the clip loops, so the frame the player sees after MOVE_D is MOVE_A
+        and that swap is as much a step as the three inside the sheet order.
+        The ambient pair is one step read both ways, which is why every
+        two-pose caller reads the same numbers it always did."""
+        for uid in self._movers():
+            with self.subTest(unit=uid):
+                self.assertEqual(len(rung1_steps(uid, FACTIONS[0], MOVE_POSES)), 4)
+        self.assertEqual(len(rung1_steps("infantry", FACTIONS[0], AMBIENT_POSES)), 2)
 
     def test_the_gait_keeps_the_units_mass(self):
         for uid in self._movers():
@@ -615,13 +673,13 @@ class MoveFrames(unittest.TestCase):
         """The game's tween is the travel; the sheet shows gait only.
 
         A move frame that translated the hull in-sheet would travel twice —
-        once by the tween and once by the art — so all four poses hang off
+        once by the tween and once by the art — so every pose hangs off
         pose A's crop: `MOVE_A` places exactly where `A` does and `MOVE_B`
-        where `B` does (the air/sea bob included, since `beat` is true for
-        both off-beats), and the footprint the shadow is sized from and the
-        ground row it sits on are one number for the whole unit. Asked of
-        all eighteen units, `MOVES` or not, because it is placement and
-        costs no render."""
+        where `B` does (the air/sea bob included, since `off_beat` answers
+        MOVE_B and MOVE_D the way it answers B), and the footprint the shadow
+        is sized from and the ground row it sits on are one number for the
+        whole unit. Asked of all eighteen units, `MOVES` or not, because it
+        is placement and costs no render."""
         for uid in ATLAS_ORDER:
             a = atlas.cell_placement(uid, Pose.A)
             with self.subTest(unit=uid):
@@ -832,30 +890,36 @@ class MoveFrames(unittest.TestCase):
                             {(x, y) for x, y in wave if x > midline}, set(), "abaft"
                         )
                 with self.subTest(unit=uid, faction=fac.key):
-                    self.assertEqual(
-                        rows[Pose.MOVE_A],
-                        rows[Pose.MOVE_B],
-                        "the wave heaved with the hull",
-                    )
+                    for pose in MOVE_POSES[1:]:
+                        self.assertEqual(
+                            rows[MOVE_POSES[0]],
+                            rows[pose],
+                            "the wave heaved with the hull",
+                        )
 
     def test_a_unit_without_a_gait_renders_its_ambient_frame(self):
         """The fallback is what makes the move sheets valid from day one:
         every unit outside `MOVES` draws its ambient counterpart, byte for
         byte, so the clip can be adopted one family at a time without the
-        sheet ever going blank or stale."""
+        sheet ever going blank or stale. Since S6 that is A/B/A/B, not just
+        A/B — the move clip's own extra pair interpolates the same way an
+        unauthored unit's whole clip does."""
         for uid in ATLAS_ORDER:
             if uid in MOVES:
                 continue
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
-                    self.assertEqual(
-                        pose_cell(uid, fac, Pose.MOVE_A).tobytes(),
-                        pose_cell(uid, fac, Pose.A).tobytes(),
-                    )
-                    self.assertEqual(
-                        pose_cell(uid, fac, Pose.MOVE_B).tobytes(),
-                        pose_cell(uid, fac, Pose.B).tobytes(),
-                    )
+                    for move, ambient in (
+                        (Pose.MOVE_A, Pose.A),
+                        (Pose.MOVE_B, Pose.B),
+                        (Pose.MOVE_C, Pose.A),
+                        (Pose.MOVE_D, Pose.B),
+                    ):
+                        self.assertEqual(
+                            pose_cell(uid, fac, move).tobytes(),
+                            pose_cell(uid, fac, ambient).tobytes(),
+                            f"{move.name} did not fall back to {ambient.name}",
+                        )
 
     def test_a_moving_unit_still_reads_as_its_own_unit(self):
         """As for frame B: among every unit's frame A, the one a move frame
@@ -896,35 +960,52 @@ class MoveFrames(unittest.TestCase):
         whole figure a board texel and every landmark travels at once, which
         at 160 ms reads as a hop in place rather than as a stride. So the
         trooper's torso, backpack, helmet, pauldrons and the launcher with
-        its amber warhead tip are placed identically on both move frames,
-        knee plates included, and only the boots and shins scissor.
+        its amber warhead tip are placed identically on all FOUR move frames
+        (S6, 2026-09-02 — MOVE_A/MOVE_B are the shipped two-frame scissor,
+        untouched, and MOVE_C/MOVE_D add the pair a genuine passing step
+        each side of it), knee plates included, and only the boots and shins
+        scissor.
 
         Pinned twice, because the two say different things. In the model,
         every voxel from the knee plate up (`z >= 3`) is the same material
-        in the same place on both frames, while the legs under it are not.
-        In the composed cell — where the ramps, the softening and the
+        in the same place in every frame, while the legs under it are not —
+        asked of every PAIR, not just consecutive ones, since the two
+        passing keys (`_mech_legs(m, gather=1)` then `gather=2`) are two
+        magnitudes and not one repeated: no two of the four leg readings may
+        agree. In the composed cell — where the ramps, the softening and the
         sampler have had their say — no pixel above the figure's own midline
-        differs, the launcher and its tip being up there, while the half
-        under it does.
+        differs across the four, the launcher and its tip being up there,
+        while the half under it differs between every pair.
         """
-        a, b = (build_model("mech", pose) for pose in MOVE_POSES)
-        self.assertTrue(a.vox)
-        self.assertNotEqual(a.vox, b.vox)
+        models = [build_model("mech", pose) for pose in MOVE_POSES]
+        self.assertTrue(models[0].vox)
         # z 3 is the knee plate, the lowest thing the beat may not touch;
         # the amber warhead tip rides at the top of the same span, z 16.
-        self.assertEqual(
-            {v: m for v, m in a.vox.items() if v[2] >= 3},
-            {v: m for v, m in b.vox.items() if v[2] >= 3},
-        )
+        upper = [
+            {v: mat for v, mat in model.vox.items() if v[2] >= 3} for model in models
+        ]
+        for other in upper[1:]:
+            self.assertEqual(upper[0], other)
+        legs = [
+            {v: mat for v, mat in model.vox.items() if v[2] < 3} for model in models
+        ]
+        for i in range(len(legs)):
+            for j in range(i + 1, len(legs)):
+                with self.subTest(steps=(i, j)):
+                    self.assertNotEqual(legs[i], legs[j])
         for fac in FACTIONS:
             cells = [pose_cell("mech", fac, pose) for pose in MOVE_POSES]
             rows = [y for _, y in self._body(cells[0])]
             waist = (min(rows) + max(rows) + 1) // 2
-            upper = [c.crop((0, 0, c.width, waist)).tobytes() for c in cells]
-            lower = [c.crop((0, waist, c.width, c.height)).tobytes() for c in cells]
+            uppers = [c.crop((0, 0, c.width, waist)).tobytes() for c in cells]
+            lowers = [c.crop((0, waist, c.width, c.height)).tobytes() for c in cells]
             with self.subTest(faction=fac.key):
-                self.assertEqual(upper[0], upper[1])
-                self.assertNotEqual(lower[0], lower[1])
+                for other in uppers[1:]:
+                    self.assertEqual(uppers[0], other)
+                for i in range(len(lowers)):
+                    for j in range(i + 1, len(lowers)):
+                        with self.subTest(steps=(i, j)):
+                            self.assertNotEqual(lowers[i], lowers[j])
 
     def _mass(self, cell: Image.Image) -> int:
         px = cell.convert("RGBA").load()
@@ -966,6 +1047,126 @@ class MoveFrames(unittest.TestCase):
         cell = pose_cell(uid, faction_by_key("neutral"), pose).convert("RGBA")
         px = cell.resize((32, 32), Image.NEAREST).load()
         return {(x, y) for y in range(32) for x in range(32) if px[x, y][3] > 200}
+
+
+class GaitPhases(unittest.TestCase):
+    """S6's own gate (2026-09-02): which families the move clip's third and
+    fourth frames repeat verbatim from the first two, and which grow
+    something new on them — the plan's own "state your choice per family"
+    line, made a pinned fact rather than a claim in a report."""
+
+    # The families with nothing new to say between the walk's two halves —
+    # no tread to crawl, no rotor to turn, no lead leg to swap — so MOVE_C and
+    # MOVE_D interpolate the existing two-frame motion by repeating it,
+    # byte-identical composed cells and all.
+    REUSED: frozenset[str] = frozenset(
+        {
+            "recon",
+            "rockets",
+            "missiles",
+            "fighter",
+            "bomber",
+            "battleship",
+            "cruiser",
+            "sub",
+            "lander",
+        }
+    )
+
+    def test_reused_families_repeat_their_first_two_frames_verbatim(self):
+        for uid in self.REUSED:
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertEqual(
+                        pose_cell(uid, fac, Pose.MOVE_C).tobytes(),
+                        pose_cell(uid, fac, Pose.MOVE_A).tobytes(),
+                        "MOVE_C did not repeat MOVE_A",
+                    )
+                    self.assertEqual(
+                        pose_cell(uid, fac, Pose.MOVE_D).tobytes(),
+                        pose_cell(uid, fac, Pose.MOVE_B).tobytes(),
+                        "MOVE_D did not repeat MOVE_B",
+                    )
+
+    def test_the_other_families_grow_a_genuine_third_and_fourth_frame(self):
+        """The foot pair (a real gait), the five tracked hulls (the tread
+        crawl) and the two copters (the rotor's third and fourth tick) all
+        earn something MOVE_A/MOVE_B alone did not say — the complement of
+        `REUSED` within `MOVES`."""
+        grown = set(MOVES) - self.REUSED
+        self.assertTrue(grown)
+        for uid in grown:
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertNotEqual(
+                        pose_cell(uid, fac, Pose.MOVE_C).tobytes(),
+                        pose_cell(uid, fac, Pose.MOVE_A).tobytes(),
+                        "MOVE_C is a silent repeat of MOVE_A",
+                    )
+                    self.assertNotEqual(
+                        pose_cell(uid, fac, Pose.MOVE_D).tobytes(),
+                        pose_cell(uid, fac, Pose.MOVE_B).tobytes(),
+                        "MOVE_D is a silent repeat of MOVE_B",
+                    )
+
+    # Every tracked unit's link stripe, at rung 1: the four move frames must
+    # visit four DIFFERENT quarter-positions, not the old two-frame flip
+    # played twice — the tread crawl's own claim, asked of the voxels a
+    # `_track` block paints as `track_lt` rather than of the whole cell, so a
+    # body reading that also differs (there is none here — the tracked
+    # family's own chassis attitude repeats, `REUSED`'s sibling claim above)
+    # could never be mistaken for tread motion.
+    TRACKED: tuple[str, ...] = ("tank", "md_tank", "anti_air", "artillery", "apc")
+
+    def test_every_tracked_hull_crawls_its_tread_through_four_positions(self):
+        for uid in self.TRACKED:
+            builder = UNITS[uid][0]
+            stripes = [
+                frozenset(
+                    v for v, mat in builder(pose).vox.items() if mat == "track_lt"
+                )
+                for pose in MOVE_POSES
+            ]
+            with self.subTest(unit=uid):
+                for i in range(len(stripes)):
+                    for j in range(i + 1, len(stripes)):
+                        self.assertNotEqual(
+                            stripes[i],
+                            stripes[j],
+                            f"{MOVE_POSES[i].name} and {MOVE_POSES[j].name} share a "
+                            "tread phase",
+                        )
+
+    # Both copters read the rotor disc through the move clip's own frame
+    # index (S6): four blade shapes, one per frame, where the ambient pair
+    # only ever turns two of them.
+    def test_the_copters_turn_their_rotor_through_all_four_ticks(self):
+        for uid in ("b_copter", "t_copter"):
+            builder = UNITS[uid][0]
+            discs = [
+                frozenset(v for v, mat in builder(pose).vox.items() if mat == "rotor")
+                for pose in MOVE_POSES
+            ]
+            with self.subTest(unit=uid):
+                for i in range(len(discs)):
+                    for j in range(i + 1, len(discs)):
+                        self.assertNotEqual(
+                            discs[i],
+                            discs[j],
+                            f"{MOVE_POSES[i].name} and {MOVE_POSES[j].name} share a "
+                            "rotor tick",
+                        )
+
+    # The rifleman's own four-key gait: contact-L / passing / contact-R /
+    # passing, no two consecutive frames sharing a model — the true walk the
+    # plan asks foot units for, read at the same voxel level the mech's own
+    # pinned test reads its scissor.
+    def test_the_rifleman_strides_through_four_distinct_positions(self):
+        builder = UNITS["infantry"][0]
+        models = [builder(pose).vox for pose in MOVE_POSES]
+        for i in range(len(models)):
+            with self.subTest(step=i):
+                self.assertNotEqual(models[i], models[(i + 1) % len(models)])
 
 
 if __name__ == "__main__":

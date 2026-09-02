@@ -14,13 +14,25 @@ never dead-toned, since these are live units mid-shot rather than casualties.
 car's pintle, the two land units whose primary style is sustained; both draw
 a second key so the alternation reads as a stream, and everything else draws
 the same model into both.
+
+Every builder's `if pose is Pose.MOVE_A:` / `if pose is Pose.MOVE_B:` reads
+(S6, 2026-09-02) became `moving(pose) and beat(pose) % 2 == 0` /
+`... == 1`, so MOVE_C plays MOVE_A's own chassis attitude again and MOVE_D
+plays MOVE_B's — every measurement below, taken against the original pair,
+still describes those two frames byte for byte. What the extra pair adds is
+the tread: `_track`'s link stripe is keyed off `_tread_phase(pose)`, which
+stands the four move frames at a quarter of its own period each rather than
+flipping between two halves of it, so the stripe visits all four
+quarter-positions of the run every 640 ms gait cycle while the hull's rock or
+roll repeats twice across it. Not a one-way lap — `_tread_phase` says why the
+two pinned frames rule that out and which step carries the direction.
 """
 
 from __future__ import annotations
 
 from ..voxel import Model
 from .parts import _gear_down, _roll, _shift, _tire, _track, _tread_phase
-from .pose import Pose, fires, moving
+from .pose import Pose, beat, fires, moving
 
 
 def recon(pose: Pose = Pose.A) -> Model:
@@ -133,7 +145,7 @@ def recon(pose: Pose = Pose.A) -> Model:
         # the whip trails one board texel BACKWARD on both frames —
         # `(dx +1, dy -1)` is the reverse of the models' forward step
         _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # The lifted box stops at z=6 so it takes the chassis and nothing
         # else: the only voxel above it inside the nose's x/y is the MG's
         # muzzle at (4, 10, 7), which overhangs the front axle from a barrel
@@ -144,7 +156,7 @@ def recon(pose: Pose = Pose.A) -> Model:
         # springs about the contact patch rather than lifting off it
         for x in (0, 8):
             _gear_down(m, x, x + 1, 10, 12, "tire")
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         # the cabin runs up its springs over a level chassis, pintle and all
         # — the box reaches y=10 to take the muzzle with the barrel — and the
         # two courses it came off are painted back in dark, so the body rides
@@ -255,13 +267,13 @@ def tank(pose: Pose = Pose.A) -> Model:
         _shift(m, (4, 7, 10, 20, 6, 7), dy=-4)
         m.box(4, 7, 10, 10, 6, 7, "hull_dk")  # mantlet plug, closing the mount
         _roll(m, -2)
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # nose up: hull front, glacis and the leading track run, gun excluded,
         # with the run's contact courses painted back onto the ground
         _shift(m, (0, 11, 10, 14, 0, 5), dz=2)
         for x0 in (0, 9):
             _gear_down(m, x0, x0 + 2, 10, 13)
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         # and the other end, clear of the turret ring at y=4
         _shift(m, (0, 11, 0, 3, 0, 5), dz=2)
     if pose is Pose.KO:
@@ -356,13 +368,13 @@ def md_tank(pose: Pose = Pose.A) -> Model:
         _shift(m, (4, 8, 12, 21, 7, 11), dy=-4)
         m.box(4, 8, 12, 12, 7, 11, "hull_dk")  # mantlet plug, closing the mount
         _roll(m, -2)
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # nose up: stepped glacis, front hull and the leading track run
         _shift(m, (0, 12, 13, 16, 0, 6), dz=2)
         # ...and the lifted length of the run is stood back on the ground
         for x0 in (0, 10):
             _gear_down(m, x0, x0 + 2, 13, 15)
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         _roll(m, 2)
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 10):
@@ -460,13 +472,13 @@ def anti_air(pose: Pose = Pose.A) -> Model:
         hot = 7 if pose is Pose.FIRE_B else 3
         _shift(m, (hot, hot, 9, 14, 8, 18), dy=-2)
         m.set(hot, 12, 18, "flame")
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # nose up, under the battery: the box stops at the hull's top course
         _shift(m, (0, 10, 9, 12, 0, 3), dz=2)
         # ...over a track run that stays on the ground under it
         for x0 in (0, 8):
             _gear_down(m, x0, x0 + 2, 9, 11)
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         _roll(m, 2)
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 8):
@@ -573,13 +585,13 @@ def artillery(pose: Pose = Pose.A) -> Model:
         # this same key.
         _shift(m, (3, 7, 6, 12, 8, 27), dz=-8)
         _roll(m, -1)
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # nose up, clear of the casemate wall and the pit inside it
         _shift(m, (0, 10, 10, 13, 0, 4), dz=2)
         # ...over a track run that stays on the ground under it
         for x0 in (0, 8):
             _gear_down(m, x0, x0 + 2, 10, 12)
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         _roll(m, 2)
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 8):
@@ -684,13 +696,13 @@ def rockets(pose: Pose = Pose.A) -> Model:
         m.box(2, 7, 1, 2, 14, 19, "hull_dk")
         for x in (2, 4, 6):
             m.set(x, 1, 19, "flame")
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # tail up: the bed and the three rear axles, under the slab. The front
         # axle holds the ground here, and it is the front that carries the
         # sprite's lowest row, so this frame already stands on its contact
         # patch and the tightest shadow margin on the sheet is left alone.
         _shift(m, (0, 9, 0, 11, 0, 3), dz=2)
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         _roll(m, 2)
         # the roll takes all eight wheels up with the bed; the FRONT pair
         # comes back down, which is the axle the sprite's lowest row is drawn
@@ -829,14 +841,14 @@ def apc(pose: Pose = Pose.A) -> Model:
         # replaces moved a corner of a slab; this moves the tallest mass the
         # unit owns.
         _shift(m, (1, 7, 10, 17, 2, 12), dz=-2)
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # nose up: the whole raised cab module from its rear bulkhead forward,
         # the track run under it included; the open bay and the ramp hold
         _shift(m, (0, 8, 10, 17, 0, 12), dz=2)
         # ...over the length of run the lift took up with it
         for x0 in (0, 6):
             _gear_down(m, x0, x0 + 2, 10, 15)
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         _roll(m, 2)
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 6):
@@ -944,13 +956,13 @@ def missiles(pose: Pose = Pose.A) -> Model:
             m.box(x0, x0 + 1, 3, 4, 5, 8, "hull_dk")
             m.set(x0, 9, 20, "flame")
             m.set(x0 + 1, 9, 20, "flame")
-    if pose is Pose.MOVE_A:
+    if moving(pose) and beat(pose) % 2 == 0:
         # nose up: front axle, cab and bumper, below the seated rounds; the
         # front tyres are painted back onto the ground under it
         _shift(m, (0, 9, 8, 12, 0, 5), dz=2)
         for x in (0, 8):
             _gear_down(m, x, x + 1, 8, 10, "tire")
-    if pose is Pose.MOVE_B:
+    if moving(pose) and beat(pose) % 2 == 1:
         _roll(m, 2)
         # the front axle comes back down under the jolt, as in MOVE_A
         for x in (0, 8):

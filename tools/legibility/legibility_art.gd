@@ -47,22 +47,26 @@ const ATLAS_VARIANT := "atlas"
 const VARIANT_PROBE_SPAN := 24
 
 ## A frame names a clip and a beat, never a file: the board beats an idle clip
-## and, while a unit walks its path, a gait clip, and each is two poses
-## (UnitSprite._sheet_path). Which file a frame is drawn from is the view's —
-## the board draws its own cells, shadow and all, and the cut-in draws the pair
-## with that shadow subtracted, which is a surface rather than a third clip
-## (UnitSprite.figure_texture_for).
+## (two poses) and, while a unit walks its path, a gait clip — four poses since
+## S6, 2026-09-02 (UnitSprite._sheet_path). Which file a frame is drawn from is
+## the view's — the board draws its own cells, shadow and all, and the cut-in
+## draws the pair with that shadow subtracted, which is a surface rather than a
+## third clip (UnitSprite.figure_texture_for).
 const FRAME_IDLE_A := "idle_a"
 const FRAME_IDLE_B := "idle_b"
 const FRAME_WALK_A := "walk_a"
 const FRAME_WALK_B := "walk_b"
-## Frame -> the sheet the board draws it from. All four, in the order the beat
+const FRAME_WALK_C := "walk_c"
+const FRAME_WALK_D := "walk_d"
+## Frame -> the sheet the board draws it from. All six, in the order the beat
 ## plays them.
 const BOARD_SHEETS: Dictionary[String, String] = {
 	FRAME_IDLE_A: UnitSprite.UNITS_ATLAS_PATH,
 	FRAME_IDLE_B: UnitSprite.UNITS_ATLAS_B_PATH,
 	FRAME_WALK_A: UnitSprite.UNITS_ATLAS_MOVE_PATH,
 	FRAME_WALK_B: UnitSprite.UNITS_ATLAS_MOVE_B_PATH,
+	FRAME_WALK_C: UnitSprite.UNITS_ATLAS_MOVE_C_PATH,
+	FRAME_WALK_D: UnitSprite.UNITS_ATLAS_MOVE_D_PATH,
 }
 ## Frame -> the sheet the cut-in draws it from. The idle clip only: a cut-in
 ## poses a unit rather than walking it, so there is no gait sheet without the
@@ -76,8 +80,9 @@ const CUTIN_SHEETS: Dictionary[String, String] = {
 }
 
 ## The units atlas at the board's idle frame A — the sheet the ramp step is
-## measured off and the one a `--units=` run replaces. The other five reach the
-## harness through `frame_sheet`.
+## measured off and the one a `--units=` run replaces. The other seven the
+## sweep reads (five more board sheets, two cut-in) reach the harness through
+## `frame_sheet`.
 var units: Image
 ## Where `units` was read from — the shipped path, or the file a `--units=` run
 ## put in its place. The ramp step is measured off that sheet, so a report has

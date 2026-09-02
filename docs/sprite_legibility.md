@@ -616,6 +616,75 @@ against this one's 15.8%) and did not ship it, for this reason. Whether even the
 much for the cut-in is a human call on the frames, not something this sweep can answer — it reads
 figure against ground, and more ink always wins that reading.
 
+## Re-read 2026-09-02, after S6 grew the move clip to four frames
+
+The frame axis gained two rows: `walk_c` / `walk_d`
+(`units_atlas_move_c.png` / `_move_d.png`), the gait's third and fourth key since the
+animation-frames plan's S6. **`walk_a` and `walk_b` reproduce their own previous reading to the
+digit** — 55.5% / 55.6% clear failing, 34.4% / 40.3% fogged, the exact numbers the 2026-09-01
+section above tabulates — which is the art's own claim checked rather than assumed: S6 states that
+neither sheet moved a pixel (every family's MOVE_A/MOVE_B stays the shipped art, the new gait and
+tread content living on MOVE_C/MOVE_D alone), and the ruler agrees to four significant figures.
+
+| frame | clear cells | failing | % | fogged cells | fogged failing | % |
+| --- | --- | --- | --- | --- | --- | --- |
+| board `idle_a` | 8,640 | 4,121 | 47.7% | 2,160 | 613 | 28.4% |
+| board `idle_b` | 8,640 | 4,443 | 51.4% | 2,160 | 696 | 32.2% |
+| board `walk_a` | 8,640 | 4,791 | 55.5% | 2,160 | 742 | 34.4% |
+| board `walk_b` | 8,640 | 4,800 | 55.6% | 2,160 | 870 | 40.3% |
+| board `walk_c` | 8,640 | 4,390 | **50.8%** | 2,160 | 679 | **31.4%** |
+| board `walk_d` | 8,640 | 4,739 | **54.8%** | 2,160 | 826 | **38.2%** |
+| cutin `idle_a` | 1,080 | 56 | 5.2% | — | — | — |
+| cutin `idle_b` | 1,080 | 36 | 3.3% | — | — | — |
+
+Board and cut-in are separate views on separate sheets and each row is one of them, as in the
+2026-09-01 table above: the four rows that section also read — `idle_a`, `idle_b`, `walk_a`,
+`walk_b` — reproduce its figures to the digit, `walk_c` and `walk_d` are first reads, and the
+cut-in carries no fogged reading because fog is a board overlay. The whole-run lines below are the
+two views added together.
+
+Whole run: clear 54,000 cells, 27,376 failing (50.7%), 18,880 hue-carried (69.0%); fogged 12,960
+cells, 4,426 failing (34.2%), 887 hue-carried (20.0%) — both a shade OVER the S8 section's own
+board-plus-cut-in figures of 49.7% clear and 33.8% fogged, and the board-only halves move the same
+way, 52.5% → 52.6%. All three readings rise, and none of the three by more than a point.
+
+That rise is the frame axis, not the contour. The two runs are not a like-for-like control: S8 read
+four board frames and this one reads six, and the two it adds are GAIT keys, every one of which
+reads harder than either idle frame — the walk rows run 50.8-55.6% clear against the idle pair's
+47.7% and 51.4%, so averaging six of them lands above an average of four. Within the gait itself the
+new pair is the easy half: `walk_c` and `walk_d` land a little easier than `walk_a`/`walk_b` rather
+than a little harder. Nothing was tuned to buy that; it is the two new gait keys'
+own geometry (the tracked family's quarter-phase tread step and the two copters' further rotor
+tick move less of a unit's silhouette per frame than the parked-to-walking beat does) read through
+the same contour S8 shipped.
+
+**The ratchet is clean by construction, not by exception.** Every builder in the diff moved MOVE_C
+and MOVE_D only — `parts._tread_phase` holds MOVE_A/MOVE_B at the exact quarter-positions they
+always stood at, `foot.mech`'s scissor keeps its shipped `swing=1`/`swing=6` pair unmoved, and the
+two jets' and four hulls' MOVE_C/MOVE_D interpolate rather than author — so `make legibility-ratchet`
+against the pre-S6 baseline read **0 regressed, 0 recovered**, and the only diff was `walk_c`'s and
+`walk_d`'s combined 21,600 cells (their clear-plus-fogged totals above, 8,640 + 2,160 each), named
+"not in the baseline" rather than judged, exactly as the plan's S8 precedent states. The baseline
+was re-baked once after, `tests/fixtures/legibility_baseline.csv` now 66,960 rows, and
+`make legibility-ratchet` reads clean against it (0 regressed / 0 recovered / 0 added / 0 missing).
+`docs/images/legibility_worst20.png` was redrawn with the re-bake; sixteen of its twenty are now
+`walk_b`/`walk_d` pairs on `cruiser` and `fighter` against mountain and the other four are `walk_a`
+`mech` under fog, the same pale-airframe-and-hull and fogged-transport classes every previous
+worst-twenty has read — `walk_d` inheriting `walk_b`'s own worst cells rather than opening new ones,
+and no `walk_c` cell placing at all.
+
+**One `walk_d` correction since, same day.** Review found the rocket trooper's `gather=2` passing
+step had moved its whole shin as one block, leaving each boot two voxels along both axes from its
+own knee plate — a leg touching the figure at a corner and nothing else, which no gate then read
+(`foot._mech_legs`, now bridged by a joint voxel; `generators/sprites/tests/test_board_read.py`
+`BoardScaleEdge.test_no_foot_figure_walks_out_of_its_own_legs` is where a boot that comes off the
+figure fails from here on). `units_atlas_move_d.png` is the only sheet it moved, and only the mech
+column's six cells of it, and every table above still stands: the ratchet reads **0 regressed /
+0 recovered / 0 added / 0 missing** against the re-baked baseline, so no cell changed verdict and
+no frame's percentage moved. The mech's own gait readings are unchanged too — the
+`MOVE_C`-to-`MOVE_D` step measures the same 13 changed / 6 silhouette rung-1 texels it did
+before the bridge.
+
 ## What the grounds are
 
 Each terrain is measured as the art the board draws for it when its four neighbours are the same

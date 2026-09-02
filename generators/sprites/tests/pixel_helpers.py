@@ -125,16 +125,9 @@ def terrain_sheet() -> Image.Image:
 RUNG_1_CELL = (16, 24)
 
 
-def rung1_texels(
-    uid: str, fac: Faction, poses: tuple[Pose, ...] = AMBIENT_POSES
-) -> tuple[int, int]:
-    """Rung-1 texels a clip's two poses disagree on, and how many of those
-    disagreements are the silhouette rather than the tone."""
-    w, h = RUNG_1_CELL
-    pa, pb = (
-        pose_cell(uid, fac, pose).resize(RUNG_1_CELL, Image.NEAREST).load()
-        for pose in poses
-    )
+def _rung1_delta(pa, pb, w: int, h: int) -> tuple[int, int]:
+    """Rung-1 texels two already-loaded frames disagree on, and how many of
+    those disagreements are the silhouette rather than the tone."""
     changed = silhouette = 0
     for y in range(h):
         for x in range(w):
@@ -144,3 +137,57 @@ def rung1_texels(
                 if (ca[3] > 128) != (cb[3] > 128):
                     silhouette += 1
     return changed, silhouette
+
+
+def rung1_steps(
+    uid: str, fac: Faction, poses: tuple[Pose, ...] = AMBIENT_POSES
+) -> list[tuple[int, int]]:
+    """Every adjacent step of a clip, read AROUND the cycle: the rung-1 texels
+    the two frames of that step disagree on, and how many of those
+    disagreements are the silhouette rather than the tone.
+
+    A two-pose clip (the ambient pair) is one step read both ways, so both
+    readings are the same pair. A four-pose clip is four steps — A-B, B-C,
+    C-D, D-A. Each of the clip gates reduces this list its own way: a FLOOR
+    on how far the shape travels wants the quietest step, a CEILING on how
+    much the interior boils wants the noisiest, and answering both off one
+    step would let a gait hide its worst frames behind its calmest one.
+    """
+    w, h = RUNG_1_CELL
+    cells = [
+        pose_cell(uid, fac, pose).resize(RUNG_1_CELL, Image.NEAREST).load()
+        for pose in poses
+    ]
+    return [
+        _rung1_delta(cells[i], cells[(i + 1) % len(cells)], w, h)
+        for i in range(len(cells))
+    ]
+
+
+def rung1_texels(
+    uid: str, fac: Faction, poses: tuple[Pose, ...] = AMBIENT_POSES
+) -> tuple[int, int]:
+    """The clip's QUIETEST step — the fewest silhouette texels any adjacent
+    pair moves, and what that same step changed in all.
+
+    This is the reduction a travel floor wants, and it is what every caller
+    that predates the move clip's growth to four (S6) already got: the
+    quietest step of a symmetric pair is the pair. Interior shimmer is not
+    asked here — see `rung1_worst_shimmer`.
+    """
+    return min(rung1_steps(uid, fac, poses), key=lambda step: step[1])
+
+
+def rung1_worst_shimmer(
+    uid: str, fac: Faction, poses: tuple[Pose, ...] = AMBIENT_POSES
+) -> float:
+    """The clip's NOISIEST step, as interior texels that only change tone per
+    texel of silhouette that actually moves.
+
+    Read over every adjacent step, because a boiling interior on one frame of
+    a gait is the failure whatever the other three do.
+    """
+    return max(
+        (changed - silhouette) / max(silhouette, 1)
+        for changed, silhouette in rung1_steps(uid, fac, poses)
+    )

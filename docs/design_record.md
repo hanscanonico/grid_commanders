@@ -1491,10 +1491,14 @@ and which is given one back here. Reproduced otherwise verbatim.
   `test_move_frames.gd` carries that measurement, so if the generator ever centres the ambient
   shadow the rule can be revisited out loud.
   **An unauthored unit needs no fallback code**: the generator bakes each unauthored
-  column's ambient cell into both move sheets, so the clip is valid for the whole roster and nothing
-  here asks which families are authored — `tests/unit/test_move_frames.gd` pins that pairing (both
-  move frames equal to their ambient counterparts, or both different), the shared grid, the cadence,
-  the two stills and the flip policy against the shipped art. **All 85 smoke frames are
+  column's ambient cell into every move sheet, so the clip is valid for the whole roster and nothing
+  here asks which families are authored. The clip is FOUR sheets since S6 (2026-09-02) and the
+  fallback is per FRAME rather than per clip — `units.pose._FALLBACK` sends MOVE_A and MOVE_C to
+  A, MOVE_B and MOVE_D to B, so an unauthored column keeps the beat its idle pair rides —
+  and `tests/unit/test_move_frames.gd`'s
+  `test_every_column_is_authored_in_every_move_frame_or_in_none` pins that all-or-nothing rule
+  across all four frames, alongside the shared grid, the cadence, the two stills and the flip
+  policy against the shipped art. **All 85 smoke frames are
   byte-identical**, and structurally so: a capture pins Instant, so it never runs a tween.
   **The milestone's ninth slice is the cut-ins' idle beat**, `units_atlas_figures_b.png` — the last
   of the install's four unread sheets, so nothing the generator ships is now drawn by nothing.

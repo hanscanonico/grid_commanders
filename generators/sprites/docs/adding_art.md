@@ -15,7 +15,14 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    machine shares the roster's scale and light. Branch on the pose with a
    membership helper, never on `pose is Pose.A`: `moving(pose)` for the gait,
    `fires(pose)` for the muzzle, and `beat(pose)` for whatever ticks with the
-   frame inside the ambient and move clips. `beat` deliberately excludes
+   frame inside the ambient and move clips. `beat` is an INDEX, not a flag —
+   0/1 across the ambient pair, 0-3 across the move clip's four — so write
+   `beat(pose) % 2` for the usual builder, which authors one off-beat delta
+   and plays its two keys twice across the four move frames, and plain
+   `beat(pose)` only where the model genuinely has four things to say (a rotor
+   phase, the rifleman's stride). `if beat(pose):` is the trap: it is truthy on
+   MOVE_C as well, so a two-key builder written that way draws its off-beat on
+   three frames of four. `beat` deliberately excludes
    `FIRE_B` — a fire branch written behind it makes a single-shot unit a pair —
    and the fire pair's own altitude is `off_beat`'s, asked by the placement
    rather than by a builder.
@@ -23,11 +30,17 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    and the id to `ATLAS_ORDER` in `spritegen/units/__init__.py`. The column
    index is the position in `ATLAS_ORDER`, and it is the number the game reads.
 3. **Decide about the move clip.** A unit in `MOVES`
-   (`spritegen/units/pose.py`) draws its own stride for `Pose.MOVE_A` /
-   `Pose.MOVE_B`; a unit left out of it renders its ambient poses onto the move
-   sheets instead. Author the ambient pair first and add the id to `MOVES` when
-   the stride exists. `CLIP_POSES` in the same file is the clip-to-frame table
-   `anim.json` publishes — it changes only when a whole new clip does.
+   (`spritegen/units/pose.py`) draws its own stride for all four move poses,
+   `Pose.MOVE_A` through `Pose.MOVE_D`; a unit left out of it renders its
+   ambient poses onto the move sheets instead, per frame rather than per clip
+   (`pose._FALLBACK`: MOVE_A and MOVE_C → A, MOVE_B and MOVE_D → B). Author
+   the ambient pair first and add the id to `MOVES` when the stride exists.
+   The four frames need not be four keys — most families author two and let
+   `beat(pose) % 2` play them twice — but MOVE_C and MOVE_D must either say
+   something new or repeat MOVE_A and MOVE_B byte for byte, which
+   `tests/test_clips.py GaitPhases` pins per family. `CLIP_POSES` in the same
+   file is the clip-to-frame table `anim.json` publishes — it changes only when
+   a whole new clip does.
 4. **Author the KO frame.** Same shape, same file, one opt-in table over:
    a unit in `KOS` draws its own wreck for `Pose.KO`, and a unit left out
    renders its rest key there instead. Unlike `MOVES` this is not optional for
@@ -70,7 +83,7 @@ Gates a new unit meets, and what each wants:
 | `tests/test_value_bands.py` | 3% of the unit above L200 on every row, 55% of it changing colour when the row does, and no row out-lighting the chromatic band |
 | `tests/test_board_read.py` | a silhouette no other unit shares, at board zoom and zoomed out |
 | `tests/test_cell_geometry.py`, `tests/test_raised_armour.py` | the model is anchored to the cell's bottom edge and spends the 64x96 headroom on mass, not on fine detail |
-| `tests/test_clips.py` | frame B reads as motion at the furthest rung, and so does the move pair |
+| `tests/test_clips.py` | frame B reads as motion at the furthest rung, and so does every adjacent step of the move clip's four — the quietest step still crosses a whole board texel and the noisiest does not boil the interior. `GaitPhases` also wants each uid in `MOVES` to settle the third and fourth frames one way or the other: author something new on MOVE_C/MOVE_D, or repeat MOVE_A/MOVE_B byte for byte AND join `GaitPhases.REUSED` — a silent repeat off that list fails by name |
 | `tests/test_ko_pose.py` | a land or sea unit is in `KOS` and its `Pose.KO` is an authored model rather than its rest key, floored above the sheet's own ink and narrower in tone than the unit it was |
 | `tests/test_fire_pose.py` | an armed unit is in `FIRES` and authors a `fires(pose)` branch, a `FIRE_PAIRS` member's two keys differ and nobody else's do, an unarmed column is byte-identical to the idle pair, every pose draws as ONE connected sprite, and the fire frame changes enough pixels to be seen |
 | `tests/check_snapshots.py` | every generated PNG has an installed twin — the failure you get for skipping `make tiles` |

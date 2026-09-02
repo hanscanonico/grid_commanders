@@ -186,9 +186,9 @@ func _variants_of(terrain_id: StringName, view: String) -> Array[String]:
 	return names
 
 
-## Which sheets a view draws from, frame by frame: the board's four poses, the
-## cut-in's two. LegibilityArt owns the mapping; a view only says which of its
-## two tables it reads.
+## Which sheets a view draws from, frame by frame: the board's six poses (the
+## ambient pair and the move clip's four), the cut-in's two. LegibilityArt owns
+## the mapping; a view only says which of its two tables it reads.
 static func _sheets_of(view: String) -> Dictionary[String, String]:
 	return LegibilityArt.CUTIN_SHEETS if view == CUTIN_VIEW else LegibilityArt.BOARD_SHEETS
 

@@ -12,12 +12,17 @@ def _track(
     """One tread block with link texture on its visible faces and road wheels.
 
     The link stripe has a period of EIGHT voxels along the run — four voxels
-    riding the top face, four on the bottom — and `phase` advances it by four,
-    which is one whole board texel of travel in the direction the tread runs.
-    The period-2 checker this replaces was exactly Nyquist at the board's 4:1
-    sample: pose B inverted every link and the tread flickered in place with
-    no direction at all. A stripe four voxels long survives the sample and its
-    half-period step reads as the track walking.
+    riding the top face, four on the bottom — and `phase` advances it by TWO,
+    a quarter of that period and one whole board texel of travel in the
+    direction the tread runs (S6, 2026-09-02 — a quarter-step is what lets the
+    four-frame move clip carry the stripe all the way round its own period
+    once per gait cycle instead of flipping between two halves of it; the
+    ambient pair still only ever asks for phase 0 or 2, so its two frames are
+    unchanged pixel for pixel). The period-2 checker this replaces was exactly
+    Nyquist at the board's 4:1 sample: pose B inverted every link and the
+    tread flickered in place with no direction at all. A stripe four voxels
+    long survives the sample and a quarter-period step reads as the track
+    walking.
 
     The road wheels no longer take the phase. A hub is bolted to the hull, so
     translating it along the run was the one thing on the model that said the
@@ -28,23 +33,40 @@ def _track(
     # the same stripe wrapping the front (+y) face, mirrored because the run
     # turns the corner there
     for y in range(y0, y1 + 1):
-        m.set(x1, y, z1 if (y - y0 + 4 * phase) % 8 < 4 else 0, "track_lt")
+        m.set(x1, y, z1 if (y - y0 + 2 * phase) % 8 < 4 else 0, "track_lt")
     for x in range(x0, x1 + 1):
-        m.set(x, y1, z1 if (x1 - x + 4 * phase) % 8 < 4 else 0, "track_lt")
+        m.set(x, y1, z1 if (x1 - x + 2 * phase) % 8 < 4 else 0, "track_lt")
     # road wheel hubs peeking out of the lower run
     for y in range(y0 + 1, y1, 3):
         m.set(x1, y, 0, "hub")
 
 
 def _tread_phase(pose: Pose) -> int:
-    """Which half period `_track`'s link stripe stands at, per pose.
+    """Which quarter period `_track`'s link stripe stands at, per pose.
 
-    The stripe alternates with the frame — a beat is half a period of travel —
-    but the two clips start it on opposite feet: `MOVE_A` takes the phase pose
-    B stands at and `MOVE_B` the phase pose A does. That costs nothing and buys
-    the one thing a held attitude cannot, which is separation between the
-    PARKED frame and the frame under way at the same point in the beat: a
-    rolling column's near frame is never the parked column's near frame.
+    The ambient pair keeps the half-period flip it always had — `A` at 0,
+    `B` at 2 (`2 * phase` puts that at the same four-voxel shift `4 * 1`
+    always drew, so the shipped ambient sheets are unchanged) — and `MOVE_A`
+    and `MOVE_B` keep the exact two quarters they always stood at too (2 and
+    0), for the same reason: both were shipped art before S6 touched
+    anything, and the legibility ratchet reads every one of their cells.
+    Moving either would cost real, already-passing rows for no claim this
+    slice makes about them. What is new is `MOVE_C` and `MOVE_D`, which take
+    the two quarters `MOVE_A`/`MOVE_B` leave unused (1 and 3) — so the four
+    move frames between them VISIT ALL FOUR quarter-positions of the run
+    once a cycle rather than flipping between two halves of it.
+
+    Visit, not march: in frame order the quarters read 2, 0, 1, 3, whose
+    steps are +2, +1, +2, -1. A monotone lap is not available — the two
+    frames the ratchet pins stand at quarters 2 and 0, and both monotone
+    4-cycles through all four quarters (2, 1, 0, 3 and 2, 3, 0, 1) put a
+    quarter between them, so preserving MOVE_A/MOVE_B byte for byte and
+    walking the stripe one way round are mutually exclusive. Of the two
+    orders left this is the one whose only unambiguous step points forward:
+    a half-period shift of a 4-on/4-off stripe is its own inverse and says
+    nothing about direction, which leaves the single +1 to carry it and the
+    single -1 to close the loop. A slice free to move all four frames could
+    have the lap instead.
 
     KO and FIRE both stand at pose A's own phase: a wreck does not walk, and
     neither does a hull recoiling from a shot fired at a halt — `artillery`'s
@@ -52,9 +74,11 @@ def _tread_phase(pose: Pose) -> int:
     """
     return {
         Pose.A: 0,
-        Pose.B: 1,
-        Pose.MOVE_A: 1,
+        Pose.B: 2,
+        Pose.MOVE_A: 2,
         Pose.MOVE_B: 0,
+        Pose.MOVE_C: 1,
+        Pose.MOVE_D: 3,
         Pose.KO: 0,
         Pose.FIRE_A: 0,
         Pose.FIRE_B: 0,
@@ -106,6 +130,28 @@ Blade = tuple[tuple[int, int], ...]
 
 _BLADE_A: Blade = ((1, 0), (2, 0), (3, 0), (4, -1), (4, 0), (5, -1), (5, 0))
 _BLADE_B: Blade = ((1, 0), (2, 0), (3, 1), (4, 0), (4, 1), (5, 0), (5, 1))
+# Two further ticks, S6 (2026-09-02): the move clip's own four-frame index
+# gives the disc somewhere to turn between the ambient pair's two. `_BLADE_C`
+# keeps taking the SAME step `_BLADE_B` took from `_BLADE_A` — the two voxels
+# nearest the hub hold (their lever arm is under a voxel, same as every
+# earlier tick) and the outer five ride the run another `dy +1` each.
+# `_BLADE_D` does NOT continue that construction on every point: applied to
+# all five it draws a genuine tick — the composed cell reads fine — but
+# `_rotor`'s CLIPPED arm (t_copter's tandem, `arm[:-2]`) rotates that same
+# delta into a 90-degree turn, and turned, index 2's own `dy +1` opens a
+# three-voxel gap along x to the hub-side voxels ahead of it: a stranded
+# rung-1 texel on the clipped disc and, on the unclipped one, a sweep wide
+# enough to read as `t_copter`'s own rather than `b_copter`'s
+# (`tests/test_board_read.py BoardScaleEdge`, `test_clips.py MoveFrames`).
+# Holding index 2 at `_BLADE_C`'s own value and advancing only the outer
+# four keeps the gap the one `_BLADE_C` already opens (untouched, and
+# already shipping clean) rather than widening it.
+_BLADE_C: Blade = ((1, 0), (2, 0), (3, 2), (4, 1), (4, 2), (5, 1), (5, 2))
+_BLADE_D: Blade = ((1, 0), (2, 0), (3, 2), (4, 2), (4, 3), (5, 2), (5, 3))
+# The disc's four ticks, in the frame order `units.beat` returns: ambient
+# reads index 0/1 off it (identical to the old `_BLADE_A`/`_BLADE_B` pick),
+# the move clip's four frames read all of it.
+BLADES: tuple[Blade, Blade, Blade, Blade] = (_BLADE_A, _BLADE_B, _BLADE_C, _BLADE_D)
 
 
 def _quarters(blade: Blade) -> tuple[Blade, ...]:
