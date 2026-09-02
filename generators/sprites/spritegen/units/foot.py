@@ -293,7 +293,7 @@ def infantry(pose: Pose = Pose.A) -> Model:
         # A two-frame gait shuffles; four is a walk (S6, 2026-09-02). The
         # LEAD is what makes it one: `beat(pose)` names a position round the
         # cycle (0-3) rather than a beat, and the man's lead leg swaps at
-        # index 1 and swaps BACK at index 2 — `"far"` on the two middle
+        # index 1 and swaps BACK at index 3 — `"far"` on the two middle
         # frames, `"near"` on the two outer ones — which reads
         # contact-L / passing / contact-R / passing rather than the old
         # contact-L / passing / contact-L / passing a plain `% 2` on lead

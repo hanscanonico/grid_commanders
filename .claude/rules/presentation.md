@@ -333,13 +333,14 @@ forms named in the root index are in `docs/design_record.md`.
   family has to say lives on MOVE_C and MOVE_D alone. Three readings, all pinned by
   `generators/sprites/tests/test_clips.py GaitPhases`: the **foot pair** (`infantry`, `mech`) earns a
   genuine four-key gait, but the two builders spend the constraint differently — `infantry`'s
-  `beat(pose)` swaps the lead leg at frame 2 and back at frame 3, so its own cycle already reads
-  contact-L / passing / contact-R / passing across all four keys, while `mech`'s scissor has no
-  passing key at all until S6 (MOVE_A/MOVE_B are its shipped instant swap, `swing=1` then `swing=6`),
-  so MOVE_C and MOVE_D are two PASSING steps back to back — `_mech_legs(m, gather=1)` then `gather=2`,
-  two magnitudes rather than one repeated, since the pair sits between two already-fixed contacts and
-  has to read as two distinct steps entirely on its own; the negative sign (gathered forward) was
-  measured and dropped, reading closer to the rifleman's own silhouette than to the trooper's
+  `beat(pose)` swaps the lead leg at index 1 and back at index 3 (`far` on the two middle frames,
+  `near` on the two outer ones), so its own cycle already reads contact-L / passing / contact-R /
+  passing across all four keys, while `mech`'s scissor has no passing key at all until S6
+  (MOVE_A/MOVE_B are its shipped instant swap, `swing=1` then `swing=6`), so MOVE_C and MOVE_D are
+  two PASSING steps back to back — `_mech_legs(m, gather=1)` then `gather=2`, two magnitudes rather
+  than one repeated, since the pair sits between two already-fixed contacts and has to read as two
+  distinct steps entirely on its own; the negative sign (gathered forward) was measured and dropped,
+  reading closer to the rifleman's own silhouette than to the trooper's
   (`generators/sprites/tests/test_board_read.py Silhouette`). The **five tracked hulls** (`tank`, `md_tank`, `anti_air`,
   `artillery`, `apc`) keep their two-key chassis attitude (`beat(pose) % 2`) and gain a genuine
   quarter-phase tread step instead — `parts._track`'s link stripe steps `2 * phase` rather than
