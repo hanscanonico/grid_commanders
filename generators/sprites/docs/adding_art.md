@@ -98,7 +98,8 @@ touching a ramp.
 ## The loop
 
 ```sh
-# draw one sprite big while editing the model — writes out/preview_only.png
+# draw one sprite big while editing the model — writes preview_only.png
+# into the gitignored out/ directory
 "$py" sprite_generator.py --only tank --team verdant --zoom 8
 
 # whole run into ./out, without installing anything
