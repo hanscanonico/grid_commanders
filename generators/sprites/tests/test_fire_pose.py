@@ -169,6 +169,43 @@ class PairVsSingle(unittest.TestCase):
                 )
 
 
+class ReconSweep(unittest.TestCase):
+    """recon is the one pair whose second key sweeps a weapon that is
+    standing INSIDE the body.
+
+    Depressed on target its pintle sits in the cabin band, so a traverse
+    taken there carries the roof, the team stripe and the windshield with it
+    and leaves a texel-deep trench along the roofline. Neither the silhouette
+    floor above nor the contour ratchet can see that: the outline is
+    identical and the hole is interior. So the two questions are asked of the
+    models here — the sweep may empty a cell only where the GUN was, and the
+    cabin's own roof stands in both frames.
+    """
+
+    GUN = frozenset({"gunmetal", "gunmetal_dk", "bore", "flame"})
+    CABIN_X = range(2, 8)
+    CABIN_Y = range(3, 10)
+    ROOF_Z = 4
+
+    def test_the_sweep_empties_no_cell_the_machine_was_standing_in(self):
+        a = build_model("recon", Pose.FIRE_A).vox
+        b = build_model("recon", Pose.FIRE_B).vox
+        for cell, material in sorted(a.items()):
+            if cell in b:
+                continue
+            with self.subTest(cell=cell):
+                self.assertIn(material, self.GUN)
+
+    def test_the_cabin_roof_stands_in_both_fire_frames(self):
+        for pose in (Pose.FIRE_A, Pose.FIRE_B):
+            vox = build_model("recon", pose).vox
+            for x in self.CABIN_X:
+                for y in self.CABIN_Y:
+                    column = [z for (vx, vy, z) in vox if (vx, vy) == (x, y)]
+                    with self.subTest(pose=pose.name, column=(x, y)):
+                        self.assertGreaterEqual(max(column), self.ROOF_Z)
+
+
 class Bob(unittest.TestCase):
     """The air/sea bob ticks with the FRAME, not with the clip.
 

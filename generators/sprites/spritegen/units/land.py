@@ -116,11 +116,18 @@ def recon(pose: Pose = Pose.A) -> Model:
         # step, the same sweep pose B idles with, so the pair reads as the
         # gun tracking through its own stream — recon is one of
         # `pose.FIRE_PAIRS`.
-        _shift(m, (4, 5, 4, 10, 6, 7), dz=-2)
+        #
+        # The sweep is taken BEFORE the depression, at z6-7, where the pintle
+        # is the only thing standing. Depressed, the gun sits inside the
+        # cabin band, and a slab swept there carries the roof, the team
+        # stripe and the windshield with it — a texel-deep trench along the
+        # roofline that no silhouette gate can see, the outline being
+        # unchanged. The gun lands on the same cells either way.
         mx, my = 4, 10
         if pose is Pose.FIRE_B:
-            _shift(m, (4, 5, 4, 10, 4, 5), dx=1, dy=-1)
+            _shift(m, (4, 5, 4, 10, 6, 7), dx=1, dy=-1)
             mx, my = 5, 9
+        _shift(m, (4, 6, 3, 10, 6, 7), dz=-2)
         m.set(mx, my, 5, "flame")
     if moving(pose):
         # the whip trails one board texel BACKWARD on both frames —
