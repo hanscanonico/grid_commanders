@@ -20,7 +20,7 @@ at_most = 0
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
 text = "Capture Morn's command post on the crossing."
-cell = Vector2i(19, 2)
+cell = Vector2i(19, 5)
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
@@ -59,7 +59,7 @@ day = 4
 [sub_resource type="Resource" id="Spawn_the_deadline_1"]
 script = ExtResource("10")
 unit_type = ExtResource("11")
-cell = Vector2i(18, 2)
+cell = Vector2i(18, 5)
 
 [sub_resource type="Resource" id="Effect_the_deadline"]
 script = ExtResource("9")

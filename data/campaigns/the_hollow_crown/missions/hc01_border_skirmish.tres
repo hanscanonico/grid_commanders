@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -10,13 +10,14 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
-[ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="15"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="14"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Capture the crossing post."
-cell = Vector2i(15, 2)
+text = "Hold the crossing until day 7."
+day = 7
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
@@ -36,7 +37,7 @@ text = "Noted for the record. Officially the Directorate still stands. Nobody at
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "One road, two towns, woods on both sides. He's a shade better than us on every square, so take the ones he isn't standing on yet."
+text = "One road, two towns, and a wooded lane north of it. He's a shade better than us on every square, so take the ones he isn't standing on yet, and keep them a week."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -52,15 +53,20 @@ text = "It does. Enjoy the quiet, Rook. It won't last the year."
 script = ExtResource("10")
 day = 4
 
-[sub_resource type="Resource" id="Spawn_the_road_behind"]
+[sub_resource type="Resource" id="Spawn_the_road_behind_1"]
 script = ExtResource("12")
 unit_type = ExtResource("13")
 cell = Vector2i(14, 2)
 
+[sub_resource type="Resource" id="Spawn_the_road_behind_2"]
+script = ExtResource("12")
+unit_type = ExtResource("15")
+cell = Vector2i(14, 4)
+
 [sub_resource type="Resource" id="Effect_the_road_behind"]
 script = ExtResource("11")
 team = 2
-units = Array[Resource]([SubResource("Spawn_the_road_behind")])
+units = Array[Resource]([SubResource("Spawn_the_road_behind_1"), SubResource("Spawn_the_road_behind_2")])
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
