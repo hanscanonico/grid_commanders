@@ -1127,7 +1127,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   answer and a second opinion on it in `scenes/` is exactly the drift D2 forbids. Subtracted rather
   than composed-without, because the waterline foam is placed against the composed cell's own spans.
   So D2 still holds of the figures: they *are* the board art, blown up. `tests/unit/test_figure_sheet.gd`
-  is the pin — the figure sheet may only ever remove a pixel, and every unit must lose one. When it
+  is the pin — the idle figure sheet may only ever remove a pixel, and every unit must lose one.
+  (That subtract-only rule is this PAIR's alone; S4's KO sheet is authored art merely composed the
+  same shadowless way — see `.claude/rules/presentation.md`.) When it
   shipped, the legibility ruler was deliberately not re-run, no board pixel having moved; all
   seventeen combat cut-in frames and all four capture ones re-baselined and every board and menu
   frame was untouched.

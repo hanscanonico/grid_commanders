@@ -1,4 +1,4 @@
-# Sheet census — 2026-09-01
+# Sheet census — 2026-09-02
 
 What the art installed under `assets/tiles/` costs, and how much of it is the same cell twice.
 A reading of one run of `make sheet-census`
@@ -14,15 +14,16 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `overlay.png` | 0.1 KiB | 1.0 KiB | 1 | 0 | 0% | yes |
 | `terrain_atlas.png` | 81.0 KiB | 1344.0 KiB | 84 | 45 | 54% | yes |
-| `units_atlas.png` | 80.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_b.png` | 82.2 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_figures.png` | 77.7 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_figures_b.png` | 79.0 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move.png` | 81.5 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move_b.png` | 86.0 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas.png` | 79.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_b.png` | 80.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_figures.png` | 76.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_figures_b.png` | 77.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_figures_ko.png` | 87.2 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move.png` | 83.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move_b.png` | 86.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `autotiles/bridges.png` | 1.5 KiB | 35.6 KiB | 2 | 0 | 0% | yes |
 | `autotiles/coast.png` | 5.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
-| `autotiles/mountain.png` | 3.6 KiB | 53.1 KiB | 3 | 0 | 0% | yes |
+| `autotiles/mountain.png` | 3.7 KiB | 53.1 KiB | 3 | 0 | 0% | yes |
 | `autotiles/plains.png` | 4.6 KiB | 140.8 KiB | 8 | 0 | 0% | yes |
 | `autotiles/rivers.png` | 6.1 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 | `autotiles/roads.png` | 5.0 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
@@ -31,10 +32,10 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | `autotiles/shoals.png` | 5.4 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
 | `autotiles/woods.png` | 16.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 
-**Totals: 619.9 KiB of PNG, 18,614.7 KiB of decoded RGBA, over 18 sheets — every one of which the
+**Totals: 704.7 KiB of PNG, 21,206.7 KiB of decoded RGBA, over 19 sheets — every one of which the
 battle scene loads.** The instrument reads that last column off the game rather than off a list:
 it scans `scenes/` for `res://assets/tiles/*.png`, and finds `scenes/battle/unit_sprite.gd` naming
-the six unit sheets, `scenes/battle/terrain_autotiles.gd` the ten autotile sheets,
+the seven unit sheets, `scenes/battle/terrain_autotiles.gd` the ten autotile sheets,
 `scenes/battle/battle_view.gd` (and `scenes/menu/map_thumbnail.gd`) the terrain atlas, and
 `scenes/battle/battle_overlays.gd` the overlay. How each sheet is cut comes from the contract
 shipped beside the art, `assets/tiles/anim.json`: it names the unit sheets and their 64×96 cell,
@@ -67,11 +68,18 @@ fourteen columns are six copies of row 0:
 ## The reading
 
 The duplication is real and it is small. The terrain atlas is 54% redundant — 45 of its 84 cells,
-720 KiB of decoded RGBA — but the terrain atlas is only 1.3 MiB of an 18.2 MiB runtime set, and
+720 KiB of decoded RGBA — but the terrain atlas is only 1.3 MiB of a 20.7 MiB runtime set, and
 the five property columns that genuinely differ per faction are why the six-row shape exists at
-all. The cost that dominates is the six 1152×576 unit sheets: **15.2 MiB, 84% of the decoded
-total, with no duplicate cell between them.** Squeezing every repeated cell out of every sheet
-would return 752 KiB, about 4% of what the game holds — so the case for a relayout is a tidiness
+all. The cost that dominates is the seven 1152×576 unit sheets: **17.7 MiB, 86% of the decoded
+total**, and since the KO sheet shipped they also hold the set's only duplication *between*
+sheets — 24 of `units_atlas_figures_ko.png`'s 108 cells, the four air columns (9–12) on all six
+rows, 576 KiB decoded, byte-identical to the same cells of `units_atlas_figures.png`. That is
+deliberate and it is what a valid grid costs: air authors no wreck in v1, so `units.build_model`
+fills those columns with its rest key rather than leaving holes in an 18-column sheet, and nothing
+draws them — `CutsceneSide.bind` leaves the KO cut null for a flying unit. The table above cannot
+see it, because `dup` counts only cells repeated inside **one** sheet, which is why the KO row
+reads 0. Squeezing every repeated cell out of every sheet would return 752 KiB within sheets plus
+those 576 across them, about 6% of what the game holds — so the case for a relayout is a tidiness
 case, not a memory one, and it is paid for in `BattleView`'s region maths, which reads a terrain's
 cell as (column, faction row). Two small oddities the instrument turned up and this page does not
 explain: `autotiles/roads.png` cell 10 and `autotiles/shoals.png` cell 4 are byte-identical to
@@ -85,7 +93,7 @@ cell 0 of their own sheets — two connection variants the art draws the same, n
    ("faction row only if the terrain is a property"), a matching change in `build_terrain_atlas`,
    and a re-render of every shipped sheet.
 2. **Keep the six-row contract.** One rule — cell = (terrain column, faction row) — with no
-   special case anywhere, for 720 KiB of an 18.2 MiB set. A terrain that later wants faction
+   special case anywhere, for 720 KiB of a 20.7 MiB set. A terrain that later wants faction
    colour (a fortified woods, a paved road) already has a row waiting, and a sixth army would add
    its row here without a second layout to teach.
 

@@ -46,7 +46,9 @@ def _tread_phase(pose: Pose) -> int:
     PARKED frame and the frame under way at the same point in the beat: a
     rolling column's near frame is never the parked column's near frame.
     """
-    return {Pose.A: 0, Pose.B: 1, Pose.MOVE_A: 1, Pose.MOVE_B: 0}[Pose(pose)]
+    return {Pose.A: 0, Pose.B: 1, Pose.MOVE_A: 1, Pose.MOVE_B: 0, Pose.KO: 0}[
+        Pose(pose)
+    ]
 
 
 # One rotor blade, hub-relative and tip last. The disc is this blade and its

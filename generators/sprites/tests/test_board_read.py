@@ -32,10 +32,17 @@ from spritegen.terrain import (
     WATER_DARK,
     WATER_LIGHT,
 )
-from spritegen.units import ATLAS_ORDER, Pose, build_model
+from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, MOVE_POSES, build_model
 from spritegen.voxel import render_indexed
 
 from pixel_helpers import RUNG_1_CELL, pose_cell
+
+# What survives the board is the ambient pair and the two strides — the four
+# poses a board cell is ever composed from. Pose.KO is deliberately absent:
+# it has no board-sheet sibling (composed shadow=False only, for the cut-in
+# alone) and none of these readings is a claim about how it reads there;
+# `test_ko_pose.py` holds it to its own bar instead.
+BOARD_POSES = AMBIENT_POSES + MOVE_POSES
 
 
 class GroundContrast(unittest.TestCase):
@@ -171,7 +178,7 @@ class GroundContrast(unittest.TestCase):
                     continue
                 weak = total = 0
                 for uid in ATLAS_ORDER:
-                    for pose in Pose:
+                    for pose in BOARD_POSES:
                         w_, _, t_ = self._boundary(uid, fac, pose, ground, n)
                         weak += w_
                         total += t_
@@ -190,7 +197,7 @@ class GroundContrast(unittest.TestCase):
                     continue
                 both = total = 0
                 for uid in ATLAS_ORDER:
-                    for pose in Pose:
+                    for pose in BOARD_POSES:
                         _, b_, t_ = self._boundary(uid, fac, pose, ground, n)
                         both += b_
                         total += t_
@@ -219,7 +226,7 @@ class GroundContrast(unittest.TestCase):
         of the livery (`MAX_BLADE_DISSOLVE`'s header has the measurement).
         """
         for fac in FACTIONS:
-            for pose in Pose:
+            for pose in BOARD_POSES:
                 model = build_model("b_copter", pose)
                 sprite = render_indexed(model, fac)
                 px = sprite.image.load()
@@ -341,7 +348,7 @@ class BoardScaleEdge(unittest.TestCase):
         the cast shadow, so a tip is never rescued by the ground."""
         for uid in self.LONE_TEXEL_UNITS:
             for fac in FACTIONS:
-                for pose in Pose:
+                for pose in BOARD_POSES:
                     px = (
                         pose_cell(uid, fac, pose, shadow=False)
                         .resize(RUNG_1_CELL, Image.NEAREST)

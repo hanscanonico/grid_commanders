@@ -19,10 +19,13 @@ only ever a game constant; the manifest is now their source, and the comment
 over each carries the reasoning.
 
 The schema grows by ADDING, never by rewriting: `move` is the one clip carrying
-`facing`, `flip_x_for` and `fallback`, and `VERSION` stays 1 because the absence
-of those keys is the reading a version-1 consumer already makes — never mirror,
-no fallback. `docs/move_clip.md` is the contract the game implements against;
-the README's outputs table names the sheets.
+`facing` and `flip_x_for`, `fallback` is the shared key of the clips a unit may
+be left out of (`move` and `ko`), and `VERSION` stays 1 because the absence of
+those keys is the reading a version-1 consumer already makes — never mirror, no
+fallback. `mode` grew a VALUE rather than appearing: every clip has always
+carried it, `loop` on all of them until `ko` shipped a single held frame.
+`docs/move_clip.md` is the contract the game implements against; the README's
+outputs table names the sheets.
 
 The JSON is deterministic like the rest of the pipeline: sorted keys, two-space
 indent, trailing newline, so two runs are byte-identical.
@@ -50,6 +53,12 @@ FIGURE_SHEETS: tuple[str, ...] = (
     "units_atlas_figures.png",
     "units_atlas_figures_b.png",
 )
+# The casualty clip's one sheet: an authored KO frame per unit, composed the
+# same shadowless way the figure pair is (the board never draws it, so there
+# is no board-sheet sibling) — but it is AUTHORED art, not the figure pair's
+# subtraction. `test_ko_pose.py`'s header says so for the pin that would
+# otherwise assume every figure sheet is derived the same way.
+KO_SHEET = "units_atlas_figures_ko.png"
 # Milliseconds per ambient frame. One cadence for the whole clip because the
 # sheets encode one: frame B is the entire army a beat later, so a rotor and a
 # swell cannot run at different rates without a third sheet. Half a second is
@@ -131,6 +140,12 @@ def _clips() -> dict[str, dict]:
     return {
         "ambient": _clip(AMBIENT_SHEETS, AMBIENT_MS),
         "ambient_figures": _clip(FIGURE_SHEETS, AMBIENT_MS),
+        # One frame, held rather than looped — the dead don't loop — and a
+        # unit outside `units.KOS` draws its rest key here (see `_FALLBACK`),
+        # so the sheet is a valid grid before every family has a wreck. `ms`
+        # is 0: a hold never advances, so the cadence the other clips are
+        # timed against says nothing about this one.
+        "ko": _clip((KO_SHEET,), 0, mode="hold", fallback="ambient"),
         "sea": _clip(SEA_SHEETS, SEA_MS),
         "move": _clip(
             MOVE_SHEETS,

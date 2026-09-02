@@ -27,7 +27,7 @@ from typing import NamedTuple
 from PIL import Image
 
 from . import aa, terrain, units
-from .palette import FACTIONS, Faction
+from .palette import FACTIONS, RAMPS, Faction
 from .units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from .voxel import (
     AIR_BOTTOM,
@@ -38,6 +38,7 @@ from .voxel import (
     render_indexed,
     sprite_origin,
     sprite_size,
+    wreck_tone,
 )
 
 # The units atlas's cell: one tile wide, half a tile taller than that. A
@@ -170,6 +171,15 @@ def unit_cell(
     # the shadow is not the unit's silhouette and has no staircase of its own
     # to answer for.
     sprite = aa.soften_sprite(render_indexed(model, fac).image, model, fac)
+    if pose is Pose.KO and uid in units.KOS:
+        # Dead by value, never by hue: the burn is the LAST word on the art,
+        # after the contour and the softening pass both ran, so the line and
+        # the interior burn down together rather than the line staying lit.
+        # `uid in units.KOS` is what keeps a fallback column — a unit with no
+        # KO pose, drawing its rest key — byte-identical to pose A: the same
+        # "unauthored means untouched" reading `MOVES`' fallback already
+        # gives the move sheets.
+        wreck_tone(sprite, RAMPS[fac.key])
     return compose_cell(
         sprite,
         kind,

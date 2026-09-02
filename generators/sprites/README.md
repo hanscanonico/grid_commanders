@@ -383,6 +383,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `units_atlas.png` | 1152x576 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
 | `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
 | `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the tile's cast shadow subtracted, for the cut-ins (see below) |
+| `units_atlas_figures_ko.png` | one AUTHORED casualty frame per unit — a crumpled figure, a burnt-out hull, a hull settled by the stern — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; air carries no frame in v1 and draws its own rest key instead (`units.KOS`), which the cut-in never asks for |
 | `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
 | `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
 | `terrain_atlas.png` | 896x384 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
@@ -402,8 +403,11 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 game to read instead of retype: the cell's size, its ground line and its
 overflow, the clips (which sheets, in what order, at what cadence — the
 army's ambient beat on the board, the same beat on the cut-ins' shadowless
-`ambient_figures` pair because they are the same motion, the sea's own, and
-the `move` clip's), the units atlas's column and row order, and how many
+`ambient_figures` pair because they are the same motion, the sea's own, the
+`move` clip's, and the `ko` clip's — one held frame, `mode: "hold"`, and a
+`fallback: "ambient"` key naming what a consumer with no authored frame
+plays instead, the move clip's own idiom restated), the units atlas's column
+and row order, and how many
 phase variants each terrain family ships. Every field is derived from the live tables in `spritegen/` —
 `atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
 phase tables — and `ground_px` is **measured** off a rendered cell (a composed
@@ -413,17 +417,20 @@ one more place the number drifts. It is written deterministically like
 everything else here: sorted keys, two-space indent, trailing newline. See
 `spritegen/anim.py`.
 
-`clips.move` is the one clip with keys of its own, and they are additive:
-`version` stays **1**, because their ABSENCE is the reading a version-1
-consumer already makes. `facing` (`"left"`) is the screen direction the art is
-drawn facing and `flip_x_for` (`["right"]`) is the direction the consumer
-mirrors it for; a clip with no `facing` — `ambient`, `ambient_figures`, `sea` —
-must never be mirrored. `fallback` (`"ambient"`) names the clip to play when
-the move sheets are not in the install, so a checkout from before these sheets
-existed degrades to the idle instead of drawing nothing. The cadence is
-`anim.MOVE_MS` = **160 ms**, and it is chosen against the game's tween rather
-than against the art: the board moves a unit one cell in 0.06 s x `anim_scale`
-— 0.18 s per cell at the normal tier, 0.12 s at quick — so 160 ms is about one
+`clips.move` and `clips.ko` are the clips with keys past the common four, and
+they are additive: `version` stays **1**, because their ABSENCE is the reading
+a version-1 consumer already makes. `facing` (`"left"`) and `flip_x_for`
+(`["right"]`) are `move`'s alone — the screen direction the art is drawn facing
+and the direction the consumer mirrors it for; a clip with no `facing` —
+`ambient`, `ambient_figures`, `sea`, `ko` — must never be mirrored. `fallback`
+(`"ambient"`) is shared by the two clips a unit may be left out of, and
+`docs/move_clip.md` owns what it means: the install's absence for `move`, and a
+unit's own for both, which is why an unauthored `ko` column must not be drawn.
+
+The move cadence is `anim.MOVE_MS` = **160 ms**, and it is chosen against the
+game's tween rather than against the art: the board moves a unit one cell in
+0.06 s x `anim_scale` — 0.18 s per cell at the normal tier, 0.12 s at quick —
+so 160 ms is about one
 stride per cell crossed. It is also deliberately neither a divisor nor a
 multiple of 500 (`AMBIENT_MS`) or 900 (`SEA_MS`), so a walking unit, a parked
 one and the water never turn over on the same tick and the board never blinks

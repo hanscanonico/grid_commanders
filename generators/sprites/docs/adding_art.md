@@ -23,7 +23,14 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    sheets instead. Author the ambient pair first and add the id to `MOVES` when
    the stride exists. `CLIP_POSES` in the same file is the clip-to-frame table
    `anim.json` publishes — it changes only when a whole new clip does.
-4. **Give the game the unit.** Add `data/units/<id>.tres` with `atlas_col` set
+4. **Author the KO frame.** Same shape, same file, one opt-in table over:
+   a unit in `KOS` draws its own wreck for `Pose.KO`, and a unit left out
+   renders its rest key there instead. Unlike `MOVES` this is not optional for
+   a land or sea unit — `tests/test_ko_pose.py` fails a non-air id missing from
+   `KOS`, and fails an id in `KOS` whose builder grew no `Pose.KO` branch, so
+   the two land together. Air authors none in v1 and keeps the cut-in's
+   transform-topple.
+5. **Give the game the unit.** Add `data/units/<id>.tres` with `atlas_col` set
    to the new column and `battle_style` (and `secondary_battle_style`) naming a
    `data/battle_anim/*.tres` weapon signature; `tests/unit/test_battle_styles.gd`
    fails on a style that does not exist. The generator draws the weapon
@@ -31,7 +38,7 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    unit also needs its row and its columns in `data/damage_chart.tres` —
    `tests/unit/test_damage_chart.gd` fails a gun that can hit nothing and a
    unit nothing can hit.
-5. **Install and gate.** `make tiles`, then `make sprites-test`,
+6. **Install and gate.** `make tiles`, then `make sprites-test`,
    `make sprites-snapshot` and `make verify`.
 
 Gates a new unit meets, and what each wants:
@@ -45,6 +52,7 @@ Gates a new unit meets, and what each wants:
 | `tests/test_board_read.py` | a silhouette no other unit shares, at board zoom and zoomed out |
 | `tests/test_cell_geometry.py`, `tests/test_raised_armour.py` | the model is anchored to the cell's bottom edge and spends the 64x96 headroom on mass, not on fine detail |
 | `tests/test_clips.py` | frame B reads as motion at the furthest rung, and so does the move pair |
+| `tests/test_ko_pose.py` | a land or sea unit is in `KOS` and its `Pose.KO` is an authored model rather than its rest key, floored above the sheet's own ink and narrower in tone than the unit it was |
 | `tests/check_snapshots.py` | every generated PNG has an installed twin — the failure you get for skipping `make tiles` |
 
 ## Add a terrain tile
@@ -90,7 +98,8 @@ touching a ramp.
 ## The loop
 
 ```sh
-# draw one sprite big while editing the model — writes out/preview_only.png
+# draw one sprite big while editing the model — writes preview_only.png
+# into the gitignored out/ directory
 "$py" sprite_generator.py --only tank --team verdant --zoom 8
 
 # whole run into ./out, without installing anything

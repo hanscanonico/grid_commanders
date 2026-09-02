@@ -9,9 +9,10 @@ extends GutTest
 ## in the draw path and give an install a silent way to change behaviour. What the
 ## manifest is worth is drift detection, and this suite is the one place it is
 ## consumed: regenerate the art with a different cell, cadence or column and the
-## gate says so by name. Every sheet it names is now drawn by something: the four
-## clips are the board's ambient beat, the cut-ins' idle, the walk cycle and the
-## sea's swell.
+## gate says so by name. Every sheet it names is now drawn by something: the five
+## clips are the board's ambient beat, the cut-ins' idle, the walk cycle, the
+## sea's swell, and ko — the authored casualty frame the cut-in's death beat
+## swaps to as a figure topples.
 
 const MANIFEST_PATH := "res://assets/tiles/anim.json"
 const TILES_DIR := "res://assets/tiles/"
@@ -66,6 +67,19 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SEA, 1)
 		],
 		"the sea pair"
+	)
+	assert_eq(_clip_sheets("ko"), [UnitSprite.UNITS_ATLAS_FIGURES_KO_PATH], "the ko sheet")
+
+
+## The dead don't loop: one frame, held rather than cycled, and a fallback
+## key naming the clip a consumer with no authored frame plays instead —
+## the manifest's own restatement of the move clip's `fallback` idiom.
+func test_the_ko_clip_is_a_single_held_frame() -> void:
+	var clip: Dictionary = manifest["clips"]["ko"]
+	assert_eq(clip["sheets"].size(), 1, "the dead don't loop")
+	assert_eq(clip["mode"], "hold", "a KO frame is held, never cycled")
+	assert_eq(
+		clip["fallback"], "ambient", "air keeps the transform-topple until it authors its own frame"
 	)
 
 

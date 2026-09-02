@@ -78,7 +78,7 @@ from .parts import _BLADE_B as _BLADE_B
 from .parts import _rotor as _rotor
 from .parts import _shift as _shift
 from .parts import _track as _track
-from .pose import _FALLBACK, MOVES, Pose, moving
+from .pose import _FALLBACK, KOS, MOVES, Pose, moving
 from .pose import AMBIENT_POSES as AMBIENT_POSES
 from .pose import CLIP_POSES as CLIP_POSES
 from .pose import MOVE_POSES as MOVE_POSES
@@ -123,12 +123,15 @@ def build_model(uid: str, pose: Pose = Pose.A) -> Model:
     the beat.
 
     Across clips there IS such a list. A move pose only reaches the builder
-    for a uid in `MOVES`; anything else is served its ambient counterpart, so
-    the move sheets are a valid clip before a single stride is authored and a
-    family lands one unit at a time.
+    for a uid in `MOVES`, and a KO pose only for a uid in `KOS`; anything
+    else is served its ambient counterpart, so both sheets are a valid clip
+    before a single stride or a single wreck is authored and a family lands
+    one unit at a time.
     """
     pose = Pose(pose)
     if moving(pose) and uid not in MOVES:
+        pose = _FALLBACK[pose]
+    elif pose is Pose.KO and uid not in KOS:
         pose = _FALLBACK[pose]
     return UNITS[uid][0](pose)
 

@@ -61,6 +61,7 @@ from .palette import (
     SLOTS,
     Faction,
     Ramp,
+    _at_luminance,
     clears_the_ground,
     darken,
     h01,
@@ -425,6 +426,87 @@ def render_indexed(
     """`render_indexed_gbuffer` without the geometry planes."""
     g = render_indexed_gbuffer(model, faction, outline, k, top_slot)
     return IndexedSprite(g.rgba, bytearray(g.material.values))
+
+
+# The KO sheet's own pass: dead by VALUE, never by hue. A wreck's material
+# still comes off its own faction ramp — no grey swapped in anywhere — so
+# this RE-KEYS every pixel's own luminance into a narrow, dark band instead of
+# swapping in a new tone, one pixel at a time through the same `_at_luminance`
+# the ramps are built with. `wreck_tone` says how it holds a hue.
+#
+# The band's own floor, in rungs of the ramp's own step above its S0 ink:
+# `docs/sprite_legibility.md`'s "two ramp steps above S0 ink". `wreck_tone`
+# says why the band is stretched into rather than clamped at.
+WRECK_FLOOR_RUNGS = 2
+# The band's own ceiling: a ramp's own S4 (S_TOP), the ordinary lit plane —
+# never the rim, the flash a WRECK may not still carry — so the brightest
+# surviving highlight on a burnt hull reads no louder than an ordinary lit
+# face does on a parked one.
+WRECK_CEILING_SLOT = S_TOP
+
+
+def ramp_floor(ramp: Ramp) -> float:
+    """A ramp's own S0 plus `WRECK_FLOOR_RUNGS` of its own average step —
+    derived off the ramp itself rather than a second, hand-typed number, so a
+    ramp that is re-authored floors the burn-down against its own new steps."""
+    step = (luminance(ramp[S_RIM]) - luminance(ramp[S_CONTOUR])) / (SLOTS - 1)
+    return luminance(ramp[S_CONTOUR]) + WRECK_FLOOR_RUNGS * step
+
+
+def wreck_tone(img: Image.Image, ramp: Ramp) -> None:
+    """Burn a rendered sprite down to its KO tone, in place.
+
+    Every opaque pixel's luminance is re-keyed off the SPRITE'S OWN darkest
+    and brightest pixel — a contrast stretch, not a fixed-domain remap, so a
+    unit whose whole ramp is already dark (Iron) burns down exactly as far as
+    one that runs bright (Gold) — into `[ramp_floor(ramp),
+    luminance(ramp[WRECK_CEILING_SLOT])]`. Landing a pixel on its own key is
+    `_at_luminance`'s job, the same one the ramps themselves are built with,
+    so a red army's wreck reads red, floored above the sheet's own contour ink
+    and ceilinged under its own lit plane, never its rim. `ramp` is the model's
+    own faction ramp, the dominant, identity-bearing material on every unit and
+    so the one this is measured against.
+
+    Hue survives that re-key on every pixel, but not by one mechanism: 5686 of
+    the KO sheet's 82314 opaque pixels are saturated enough that a plain scale
+    would carry their brightest channel past 255 (peak 302, aurora's
+    (26, 72, 211)), and those are scaled only as far as 255 and washed the rest
+    of the way toward white — which moves every channel by one FACTOR of its
+    distance to 255 and so holds the hue exactly, at the cost of some
+    saturation (worst 0.089 measured).
+
+    Clamping that overshoot instead — what this did until 2026-09-02 — moved
+    the hue on 42 tones and left those pixels UNDER their target, which is how
+    a lit red plane could end up darker than a shaded one on 30 of the 84
+    authored cells. That is the same collapse a flat multiply was rejected for
+    at the start: the ratio `CutsceneSide.WRECK_TINT` fades a toppling figure
+    toward, with this floor CLAMPED on rather than stretched into, put a ramp's
+    own body plane (S1-S3, 56-148L on meridian) under the floor, so nearly
+    every interior pixel clamped to one shared value and the wreck read as a
+    flat silhouette rather than a shaded one. Every pixel now lands on its own
+    target to within the half a level 8-bit rounding costs, so the order the
+    sprite was shaded in survives the burn everywhere its own steps are wider
+    than that — burnt dark and narrow, still legible.
+    """
+    floor = ramp_floor(ramp)
+    ceiling = luminance(ramp[WRECK_CEILING_SLOT])
+    px = img.load()
+    w, h = img.size
+    lums = [
+        luminance(px[x, y][:3]) for y in range(h) for x in range(w) if px[x, y][3] != 0
+    ]
+    if not lums:
+        return
+    lo, hi = min(lums), max(lums)
+    domain = max(1.0, hi - lo)
+    span = max(1.0, ceiling - floor)
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            target = floor + ((luminance((r, g, b)) - lo) / domain) * span
+            px[x, y] = (*_at_luminance((r, g, b), target), 255)
 
 
 # Where a property's ramps stop. See `render_indexed_gbuffer`.
