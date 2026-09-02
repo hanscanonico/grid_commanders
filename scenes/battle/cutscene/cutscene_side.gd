@@ -62,6 +62,17 @@ const SLOTS: Array[Vector2] = [
 ]
 ## How far apart, in fall progress, consecutive figures start toppling.
 const TOPPLE_STAGGER := 0.13
+## Where in a figure's OWN fall — not the beat, not the clock, the `fall`
+## progress `_draw_squad` already threads through `_draw_figure` — the
+## standing idle art gives way to the authored KO frame. Chosen off the same
+## curve the fall already answers to: by 0.5 the knock-back is spent and
+## `lift`'s own ramp has carried the figure back down through roughly zero
+## (peaking at -13px at 0.3, landing at +46px by 1.0), so the figure is
+## about back at the ground it is about to lie on — the moment a standing
+## sprite tipping over stops being the honest reading and a body already
+## down is. `spin` and `lift` keep running past it unmoved: only which
+## texture is drawn changes here, never a beat's own timing.
+const TOPPLE_KO_AT := 0.5
 ## The knock-back a figure takes before it tips: how far outward it is thrown and
 ## how long that jerk lasts. The length is in **seconds of the casualty beat**,
 ## asked of the window CombatBeats sized rather than counted in frames, so a
@@ -125,13 +136,24 @@ const HOVER_PHASE := 1.1
 ## The unlit pip. The banded fill beside it is UiTheme.hp_color's, never a copy —
 ## see _draw_pips.
 const HP_EMPTY := Color(1.0, 1.0, 1.0, 0.12)
-## What a knocked-out figure burns down to on its way off the field: a multiply
-## over its own art, so a wreck is dead by value and never by hue — a darkened
-## faction tone reads as a healthy rear rank in shadow. Its luma is that
-## burn-down's floor, and the floor is measured: two ramp steps (0.1543 each,
-## docs/sprite_legibility.md) above the figure sheet's own S0 ink at 0.086. Under
-## it the interior stops reading as a shape inside the outline and the figure
-## reads as a hole, which 0.205 — what this was, 0.77 of a step — did.
+## What a knocked-out figure still drawn from the idle sheet burns down to on
+## its way over: a multiply over its own art, so it stays dead by value and
+## never by hue — a darkened faction tone reads as a healthy rear rank in
+## shadow. Its luma is that burn-down's floor, and the floor is measured: two
+## ramp steps (0.1543 each, docs/sprite_legibility.md) above the figure
+## sheet's own S0 ink at 0.086. Under it the interior stops reading as a
+## shape inside the outline and the figure reads as a hole, which 0.205 —
+## what this was, 0.77 of a step — did.
+##
+## Retired past `TOPPLE_KO_AT` (S4): once `_draw_figure` is drawing the
+## AUTHORED KO frame instead, that frame already carries its own burn-down —
+## `wreck_tone` in the generator, floored the same two ramp steps above the
+## KO sheet's own S0 ink — and multiplying this over it a second time would
+## cross back under that floor (0.4 of a pixel already sitting at the floor
+## is 0.4 of it). So this still governs the pre-swap standing-to-toppling
+## read, and it governs air's whole fall — the one domain with no authored
+## frame to swap to (`_figures`' third slot stays null there) — and nothing
+## past the swap.
 const WRECK_TINT := Color(0.4, 0.4, 0.4)
 ## The wash the vignette darkens the arena's edges with, a step per band.
 const VIGNETTE := Color(0.05, 0.06, 0.10)
@@ -230,9 +252,12 @@ var plate_p := 0.0
 ## still is still a pure function of `_t`.
 var clock := 0.0
 
-## The idle clip, frame A then frame B, both cut at bind. Which one is drawn is
-## the *director's* clock's answer (`_figure_now`), never the board's wall beat:
-## the board's would make a posed still depend on when the shutter fired.
+## The idle clip's frame A then frame B, both cut at bind, and the KO frame
+## third — null for a flying unit, which carries none in v1. Which idle frame
+## is drawn is the *director's* clock's answer (`_figure_now`), never the
+## board's wall beat: the board's would make a posed still depend on when the
+## shutter fired. The KO slot is asked directly, off `fall` alone
+## (`_draw_figure`), since a wreck holds no pose of its own to pick between.
 var _figures: Array[AtlasTexture] = []
 var _ridge_tint := Color.SLATE_GRAY
 ## Cached off the unit's domain at bind time — asked once per cut-in rather than
@@ -269,13 +294,20 @@ func bind(
 	owner_row = p_owner_row
 	accent = p_accent
 	mirror = p_mirror
+	_flying = p_unit.type.domain == UnitType.AIR
+	_floating = p_unit.type.domain == UnitType.SEA
 	_figures = [
 		UnitSprite.figure_texture_for(p_unit.type, p_unit_row, 0),
 		UnitSprite.figure_texture_for(p_unit.type, p_unit_row, 1),
 	]
+	# Air ships no authored frame in v1 (plan's own fallback contract): this
+	# slot stays null for it, which is what keeps `_draw_figure` on the
+	# transform-topple there instead of asking `_flying` a second time.
+	var ko_art: AtlasTexture = null
+	if not _flying:
+		ko_art = UnitSprite.ko_figure_texture_for(p_unit.type, p_unit_row)
+	_figures.append(ko_art)
 	_ridge_tint = CutsceneScenery.ground_tint(ground.atlas_col, _ground_row())
-	_flying = p_unit.type.domain == UnitType.AIR
-	_floating = p_unit.type.domain == UnitType.SEA
 
 
 ## The atlas row this side's figures are really drawn from, read back off the
@@ -624,7 +656,10 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## `fall` above zero knocks it out: kicked up and back, tipping over, burning
 ## down to a dark silhouette as it goes. The tip is deliberately shallow — these
 ## are the board's own three-quarter-view sprites, and spinning one right over
-## reads as a rendering glitch rather than a casualty (plan R3).
+## reads as a rendering glitch rather than a casualty (plan R3). Past
+## `TOPPLE_KO_AT` the art itself swaps to the unit's authored KO frame, for
+## whichever domain carries one — `spin`, `lift` and the fade all keep
+## running unmoved, so only the texture changes, never a beat.
 ##
 ## `jerk` above zero is the knock-back that precedes the fall: the round has
 ## landed on this figure and it is thrown outward and lit before it goes over.
@@ -643,12 +678,17 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool, jerk: float) -> vo
 	var tip := aim_tilt(aim_p, aim_pitch)
 	var alpha := squad_alpha
 	var tint := Color(1.0, 1.0, 1.0)
+	# Past the swap the art is the authored KO frame, already burnt down by
+	# the generator — WRECK_TINT is retired there (see its own comment) and
+	# only the alpha fade below still touches it.
+	var ko := fall >= TOPPLE_KO_AT and _figures[2] != null
 	if fall > 0.0:
 		tip = 0.0
 		lift = CutsceneFx.ramp(fall, [0.0, 0.3, 1.0], [0.0, -13.0, 46.0])
 		spin = CutsceneFx.ramp(fall, [0.0, 1.0], [0.0, _inward(-0.55)])
 		alpha *= CutsceneFx.ramp(fall, [0.0, 0.55, 1.0], [1.0, 1.0, 0.0])
-		tint = tint.lerp(WRECK_TINT, CutsceneFx.ramp(fall, [0.0, 0.35, 1.0], [0.0, 0.85, 1.0]))
+		if not ko:
+			tint = tint.lerp(WRECK_TINT, CutsceneFx.ramp(fall, [0.0, 0.35, 1.0], [0.0, 0.85, 1.0]))
 	elif hittable:
 		tint = tint.lerp(Color(3.4, 3.4, 3.4), flash)
 	else:
@@ -656,7 +696,7 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool, jerk: float) -> vo
 	var at := feet + Vector2(_inward(-fall * 10.0 - KNOCK_PX * jerk), lift)
 	draw_set_transform_matrix(Transform2D(spin, flip, 0.0, at))
 	var shadow := Color(CutscenePalette.FIGURE_SHADOW, 0.4 * alpha)
-	var art := _figure_now()
+	var art := _figures[2] if ko else _figure_now()
 	_draw_tipped(art, Rect2(box.position + Vector2(2.0, 3.0), box.size), tip, shadow)
 	tint.a = alpha
 	_draw_tipped(art, box, tip, tint)

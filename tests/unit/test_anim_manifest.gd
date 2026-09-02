@@ -67,6 +67,19 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 		],
 		"the sea pair"
 	)
+	assert_eq(_clip_sheets("ko"), [UnitSprite.UNITS_ATLAS_FIGURES_KO_PATH], "the ko sheet")
+
+
+## The dead don't loop: one frame, held rather than cycled, and a fallback
+## key naming the clip a consumer with no authored frame plays instead —
+## the manifest's own restatement of the move clip's `fallback` idiom.
+func test_the_ko_clip_is_a_single_held_frame() -> void:
+	var clip: Dictionary = manifest["clips"]["ko"]
+	assert_eq(clip["sheets"].size(), 1, "the dead don't loop")
+	assert_eq(clip["mode"], "hold", "a KO frame is held, never cycled")
+	assert_eq(
+		clip["fallback"], "ambient", "air keeps the transform-topple until it authors its own frame"
+	)
 
 
 func test_every_sheet_the_manifest_names_is_installed() -> void:

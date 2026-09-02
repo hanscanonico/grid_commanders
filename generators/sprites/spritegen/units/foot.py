@@ -56,12 +56,38 @@ def _stride(m: Model, lead: str, rise: int = 0) -> None:
     m.vox.update(legs)
 
 
+def _infantry_ko() -> Model:
+    """The rifleman down: a crumpled silhouette at roughly a third of the
+    standing model's height (z tops out at 2 against pose A's 16), head
+    toward the low end of y and boots trailing off the high end, a splay of
+    daylight left open between the legs the way the stride keeps one. The
+    rifle is dropped clear of the body rather than pinned under it — a hand
+    still gripping it would read as a man resting, not a casualty — and the
+    helmet has come off, face turned up in the one skin patch on him.
+    """
+    m = Model()
+    m.box(1, 8, 3, 9, 0, 1, "hull_dk")  # the far side, in shadow
+    m.box(2, 7, 4, 8, 1, 2, "hull")  # the lit half of him, catching the sky
+    m.box(1, 3, 8, 10, 0, 1, "hull_dk")  # legs trailing off, splayed apart
+    m.box(6, 8, 8, 10, 0, 1, "hull_dk")
+    m.box(4, 6, 2, 3, 1, 2, "skin")  # face turned to the sky
+    m.box(3, 6, 1, 2, 0, 1, "hull_dk")  # helmet, knocked clear of the head
+    # rifle, dropped alongside, well off the body it was carried against
+    m.set(9, 4, 0, "gunmetal_dk")
+    m.set(10, 3, 0, "gunmetal")
+    m.set(11, 2, 0, "bore")
+    m.set(8, 5, 0, "gunmetal_dk")
+    return m
+
+
 def infantry(pose: Pose = Pose.A) -> Model:
     """Rifleman: a full stride under a fatigue torso, a lit shoulder line, a
     helmeted head notched well inside that line, and a short dark rifle held
     at low ready across the chest — two hands on it, muzzle breaking the
     silhouette to the right and tipped a voxel down, the opposite corner from
     the mech's tube.
+
+    KO: see `_infantry_ko`.
 
     Everything here is sized for the board, where the 64px cell is sampled
     4:1 and the man is worth some 8x12 logical pixels. The 2026-08-23 reading
@@ -138,6 +164,8 @@ def infantry(pose: Pose = Pose.A) -> Model:
     board texel, and the two legs taking it in turns to be at toe-off
     (`_stride` and the `moving(pose)` branch below).
     """
+    if pose is Pose.KO:
+        return _infantry_ko()
     m = Model()
     # belt line bridging the stride
     m.box(2, 6, 2, 6, 6, 6, "hull_dk")
@@ -294,10 +322,30 @@ def _mech_legs(m: Model, swing: int | None = None) -> None:
         m.box(x0, x0 + 1, 4, 6, 3, 3, "hull_dk")  # knee plate
 
 
+def _mech_ko() -> Model:
+    """The trooper down: bulkier and squarer than the rifleman's own wreck,
+    at the same third-height floor. One pauldron is still strapped on; the
+    other went with the launch tube, dropped clear of the shoulder that
+    carried it, warhead tip still live in the amber it fires with.
+    """
+    m = Model()
+    m.box(0, 8, 3, 8, 0, 1, "hull_dk")  # bulk, low and in shadow
+    m.box(1, 7, 4, 7, 1, 3, "hull")  # the armoured back, catching the light
+    m.box(1, 2, 5, 6, 3, 4, "body")  # one pauldron, still strapped on
+    m.box(2, 4, 1, 2, 1, 2, "skin")  # visor, face down
+    m.box(1, 5, 0, 1, 0, 1, "hull_dk")  # helmet, torn loose
+    # the launch tube, dropped clear of the shoulder it rode
+    m.box(6, 8, 0, 2, 0, 1, "gunmetal")
+    m.set(8, 1, 1, "amber")  # warhead tip, still live
+    return m
+
+
 def mech(pose: Pose = Pose.A) -> Model:
     """Rocket trooper: planted wide stance, heavy pauldrons over a bulky
     torso, and a fat launch tube climbing forward over the left shoulder —
     taller, wider and squarer than the rifleman's stride (bazooka).
+
+    KO: see `_mech_ko`.
 
     Pose B leans the loaded tube in a whole board texel: the left pauldron
     and everything it carries ride `dz = -2`, measured at 7 changed
@@ -309,6 +357,8 @@ def mech(pose: Pose = Pose.A) -> Model:
     scissor a board texel each along the run, so the warhead tip is a fixed
     landmark and what moves is a stride (`_mech_legs` and the `moving(pose)`
     branch below)."""
+    if pose is Pose.KO:
+        return _mech_ko()
     m = Model()
     # The legs are drawn last, off whatever hip line this pose ends up with
     # (`_mech_legs`); the belt band bridging the stance sits on top of them.

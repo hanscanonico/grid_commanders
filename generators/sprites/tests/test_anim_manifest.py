@@ -160,6 +160,20 @@ class Clip(unittest.TestCase):
                 set(anim.MOVE_SHEETS).isdisjoint(sheets),
                 f"the move clip shares a sheet with {sheets}",
             )
+        self.assertNotIn(anim.KO_SHEET, anim.FIGURE_SHEETS)
+
+    def test_the_ko_clip_plays_its_one_sheet_held_with_a_fallback(self):
+        """The dead don't loop: one sheet, order derived from its own count
+        (S4's whole point — a 1-frame clip needs no schema change), a mode
+        that says so, and the move clip's own `fallback` idiom restated for
+        the one domain with no authored frame yet."""
+        clip = anim.MANIFEST["clips"]["ko"]
+        self.assertEqual(clip["sheets"], [anim.KO_SHEET])
+        self.assertEqual(clip["order"], [0])
+        self.assertEqual(clip["mode"], "hold")
+        self.assertEqual(clip["fallback"], "ambient")
+        self.assertNotIn("facing", clip)
+        self.assertNotIn("flip_x_for", clip)
 
 
 class MoveFallback(unittest.TestCase):

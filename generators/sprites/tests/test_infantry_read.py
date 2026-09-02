@@ -35,6 +35,12 @@ from spritegen.voxel import render_indexed
 
 SCALE = 4
 PHASES = [(dx, dy) for dy in range(SCALE) for dx in range(SCALE)]
+# Every pose that stands: the ambient pair and the two strides. Pose.KO is
+# deliberately absent — the man is down, at a third of this height, and none
+# of the standing read below (the stride's leg gap, the rifle held across
+# the chest, the shoulder line a head sits inside) is a claim a crumpled
+# figure can answer; `test_ko_pose.py` holds the KO frame to its own bar.
+STANDING_POSES = (Pose.A, Pose.B, Pose.MOVE_A, Pose.MOVE_B)
 
 
 def _sprite(pose: Pose = Pose.A, faction=None):
@@ -76,7 +82,7 @@ class InfantryMass(unittest.TestCase):
     MIN_HEIGHT = 34
 
     def test_the_rifleman_carries_a_land_unit_s_mass(self):
-        for pose in Pose:
+        for pose in STANDING_POSES:
             with self.subTest(pose=pose):
                 sprite = _sprite(pose)
                 solid = _solid(sprite)
@@ -132,7 +138,7 @@ class InfantryRifle(unittest.TestCase):
 
     def test_the_rifle_is_a_contiguous_bar_at_every_board_offset(self):
         gun = set(ramp_for("gunmetal", FACTIONS[1]))
-        for pose in Pose:
+        for pose in STANDING_POSES:
             for dx, dy in PHASES:
                 rows = _sampled(_sprite(pose), dx, dy)
                 upper = rows[: int(len(rows) * self.BOOT_BAND)]
@@ -144,7 +150,7 @@ class InfantryRifle(unittest.TestCase):
         # `steel` is the gunmetal ramp's top slot. A bright bar on this sprite
         # was refuted in the 2026-08-15 A/B panel: it became the widest and
         # lightest thing on the man and out-shouted the faction colour.
-        for pose in Pose:
+        for pose in STANDING_POSES:
             with self.subTest(pose=pose):
                 self.assertNotIn(
                     "steel", set(build_model("infantry", pose).vox.values())
@@ -204,7 +210,7 @@ class InfantryNeck(unittest.TestCase):
         return layers
 
     def test_the_head_sits_inside_the_shoulder_line_over_a_dark_neck(self):
-        for pose in Pose:
+        for pose in STANDING_POSES:
             layers = self._layers(pose)
             # The neck is the layer over the lit shoulder line. Pose B settles
             # the firing arm a voxel, so the widest LIVERY layer under that
@@ -312,7 +318,7 @@ class InfantryGrip(unittest.TestCase):
         return groups
 
     def test_two_hands_grip_the_bar_at_two_separate_places(self):
-        for pose in Pose:
+        for pose in STANDING_POSES:
             lo, hi, hands = self._grips(pose)
             with self.subTest(pose=pose):
                 self.assertTrue(hands, "no skin under the weapon at all")
@@ -328,7 +334,7 @@ class InfantryGrip(unittest.TestCase):
         """A gun level with the head is a gun nobody is holding: every voxel
         of the weapon sits at or under the lit shoulder line. The draft this
         replaces stood its rear sight a voxel above that line."""
-        for pose in Pose:
+        for pose in STANDING_POSES:
             vox = build_model("infantry", pose).vox
             weapon = [
                 z

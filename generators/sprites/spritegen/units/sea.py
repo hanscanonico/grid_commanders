@@ -1,4 +1,10 @@
-"""The four hulls: battleship, cruiser, submarine and lander."""
+"""The four hulls: battleship, cruiser, submarine and lander.
+
+Every one authors a KO pose: settled by the stern — the freeboard that end
+carries is gone and whatever stood on it settles into the gap, the waterline
+course itself untouched, the same invariant the move clip's trim already
+holds — plus a mast or a hatch lost. `voxel.wreck_tone` is what darkens it.
+"""
 
 from __future__ import annotations
 
@@ -99,6 +105,14 @@ def battleship(pose: Pose = Pose.A) -> Model:
             # clip anyway.
             _shift(m, (3, 4, 0, 5, 4, 4), dx=-1, dy=1)
             m.box(2, 3, 6, 6, 3, 3, "hull")
+    if pose is Pose.KO:
+        # settled by the stern: the freeboard is gone at the aft end, and the
+        # deck, aft turret and funnel above it settle into the gap it left —
+        # the waterline course itself stays fixed, the same rule the move
+        # clip holds, so the sea does not appear to move under it
+        m.clear(2, 5, 0, 9, 1, 1)
+        _shift(m, (2, 5, 0, 9, 2, 8), dz=-1)
+        m.clear(3, 3, 12, 12, 6, 7)  # the mast, gone
     return m
 
 
@@ -171,6 +185,13 @@ def cruiser(pose: Pose = Pose.A) -> Model:
             # recorded rule — a tower that swayed would be the ship rolling.
             _shift(m, (3, 3, 8, 8, 11, 11), dz=2)
             m.box(3, 3, 8, 8, 11, 12, "steel")
+    if pose is Pose.KO:
+        # settled by the stern, same rule as the battleship's: the freeboard
+        # under the helipad is gone and the deck it carried settles into the
+        # gap, the waterline course untouched
+        m.clear(1, 6, 0, 6, 1, 1)
+        _shift(m, (1, 6, 0, 6, 2, 2), dz=-1)
+        m.clear(3, 3, 8, 8, 9, 10)  # the mast, gone
     return m
 
 
@@ -297,6 +318,13 @@ def sub(pose: Pose = Pose.A) -> Model:
             # down with the sail, so it goes up from where the trim left it.
             _shift(m, (4, 4, 13, 13, 5, 5), dz=2)
             m.set(4, 13, 5, "steel")
+    if pose is Pose.KO:
+        # the sail settles half a texel into the saddle it stands on — the
+        # one silhouette move this hull can make without reading as
+        # surfaced or diving — and both deck hatches spring open
+        _shift(m, (3, 4, 9, 13, 2, 6), dz=-1)
+        m.unset(4, 4, 1)
+        m.unset(3, 16, 1)
     return m
 
 
@@ -370,4 +398,11 @@ def lander(pose: Pose = Pose.A) -> Model:
             # so nothing floats.
             _shift(m, (3, 5, 10, 10, 7, 7), dz=2)
             m.box(3, 5, 10, 10, 7, 7, "hull")
+    if pose is Pose.KO:
+        # settled by the stern, same rule as the two warships': the aft
+        # freeboard under the cargo house is gone and the house settles into
+        # the gap it left, the waterline course untouched
+        m.clear(0, 8, 0, 4, 1, 1)
+        _shift(m, (1, 7, 1, 4, 2, 5), dz=-1)
+        m.clear(6, 6, 1, 1, 6, 7)  # the exhaust stack, gone
     return m

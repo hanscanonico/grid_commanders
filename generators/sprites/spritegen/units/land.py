@@ -1,4 +1,11 @@
-"""The eight land vehicles, from the scout car to the missile launcher."""
+"""The eight land vehicles, from the scout car to the missile launcher.
+
+Every one authors a KO pose: a burnt-out hull, weapon askew — the same box
+pose B lays a gun up with, shifted down and off-axis instead — a hatch or a
+pane of glass sprung open, and a length of track or a tyre thrown. The hull
+mass stays put, so the contour reads as the same vehicle wrecked rather than
+as rubble; `voxel.wreck_tone` is what makes it read as burnt.
+"""
 
 from __future__ import annotations
 
@@ -113,6 +120,13 @@ def recon(pose: Pose = Pose.A) -> Model:
         # a texel high instead of floating a texel over its own bed
         _shift(m, (2, 7, 3, 10, 4, 7), dz=2)
         m.box(2, 7, 3, 9, 4, 5, "hull_dk")
+    if pose is Pose.KO:
+        # the pintle mount takes the pose B box, and goes the other way: down
+        # off the roof rather than up, the gunner's traverse having ended
+        _shift(m, (4, 5, 4, 10, 6, 7), dx=3, dy=1, dz=-1)
+        m.unset(4, 9, 5)  # windshield, shot through
+        # the near front tyre blown off its hub
+        m.clear(0, 1, 2, 4, 0, 1)
     return m
 
 
@@ -206,6 +220,13 @@ def tank(pose: Pose = Pose.A) -> Model:
     if pose is Pose.MOVE_B:
         # and the other end, clear of the turret ring at y=4
         _shift(m, (0, 11, 0, 3, 0, 5), dz=2)
+    if pose is Pose.KO:
+        # the barrel line the player names this tank by is what goes: the
+        # gun and mantlet take pose B's own box, down and off-axis instead
+        # of laid up, so the turret front is left an empty, askew mount
+        _shift(m, (4, 7, 10, 20, 6, 7), dx=3, dz=-1)
+        m.unset(6, 8, 8)  # the loader hatch, sprung open
+        m.clear(0, 2, 5, 8, 0, 2)  # a length of the near track, thrown
     return m
 
 
@@ -291,6 +312,13 @@ def md_tank(pose: Pose = Pose.A) -> Model:
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 10):
             _gear_down(m, x0, x0 + 2, 12, 15)
+    if pose is Pose.KO:
+        # the heavy gun takes pose B's own box down and sideways instead of
+        # up: the longest barrel on the roster is the loudest wreck cue
+        _shift(m, (4, 8, 12, 21, 7, 11), dx=3, dz=-1)
+        m.unset(6, 7, 12)  # the hatch, sprung open
+        m.unset(7, 7, 12)
+        m.clear(0, 2, 6, 9, 0, 3)  # a length of the near track, thrown
     return m
 
 
@@ -375,6 +403,15 @@ def anti_air(pose: Pose = Pose.A) -> Model:
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 8):
             _gear_down(m, x0, x0 + 2, 8, 11)
+    if pose is Pose.KO:
+        # both barrel runs take pose B's own box, down instead of up, and
+        # each falls a different way — the paired, raked lines are the
+        # identity, so a battery this dead has them askew rather than parallel
+        for x, dx in ((3, -2), (7, 2)):
+            _shift(m, (x, x, 9, 14, 8, 18), dx=dx, dz=-2)
+        m.unset(4, 4, 6)  # the roof panel, stove in
+        m.unset(6, 5, 6)
+        m.clear(0, 2, 4, 7, 0, 1)  # a length of the near track, thrown
     return m
 
 
@@ -468,6 +505,13 @@ def artillery(pose: Pose = Pose.A) -> Model:
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 8):
             _gear_down(m, x0, x0 + 2, 9, 12)
+    if pose is Pose.KO:
+        # the spike takes pose B's own box, well past the recoil's own -4:
+        # toppled sideways out of its pit rather than slid down through it,
+        # the trunnion pedestal left standing empty behind it
+        _shift(m, (3, 7, 6, 12, 8, 27), dx=3, dy=-1, dz=-12)
+        m.unset(1, 5, 7)  # a wall cap, knocked off the casemate
+        m.clear(0, 2, 5, 8, 0, 2)  # a length of the near track, thrown
     return m
 
 
@@ -561,6 +605,13 @@ def rockets(pose: Pose = Pose.A) -> Model:
         # from and the one the truck is already standing on in MOVE_A
         for x in (0, 8):
             _gear_down(m, x, x + 1, 13, 15, "tire")
+    if pose is Pose.KO:
+        # the whole pitched slab — every row and the frame wall under it —
+        # comes down and off-axis in one move, the loudest mass on the roster
+        # collapsed rather than elevated
+        _shift(m, (1, 8, 1, 11, 4, 15), dx=1, dy=-1, dz=-3)
+        m.unset(4, 16, 4)  # cab glass, shattered
+        m.clear(0, 1, 1, 3, 0, 1)  # a tyre blown off its hub
     return m
 
 
@@ -698,6 +749,13 @@ def apc(pose: Pose = Pose.A) -> Model:
         # the leading end of both runs comes back down under the jolt
         for x0 in (0, 6):
             _gear_down(m, x0, x0 + 2, 12, 15)
+    if pose is Pose.KO:
+        # unarmed, so the identity to break is the raised cab: pose B's own
+        # box, dropped past its dip and off-axis, caving the step between it
+        # and the bay wall shut instead of shallowing it
+        _shift(m, (1, 7, 10, 17, 2, 12), dx=1, dy=1, dz=-3)
+        m.unset(4, 12, 12)  # the periscope, sheared off
+        m.clear(0, 2, 6, 9, 0, 1)  # a length of the near track, thrown
     return m
 
 
@@ -785,4 +843,12 @@ def missiles(pose: Pose = Pose.A) -> Model:
         # the front axle comes back down under the jolt, as in MOVE_A
         for x in (0, 8):
             _gear_down(m, x, x + 1, 8, 10, "tire")
+    if pose is Pose.KO:
+        # each round takes pose B's own box, down and toppled outward rather
+        # than up the rail — the two spikes are the identity, so a battery
+        # this dead has them fallen apart instead of standing together
+        for x0, dx in ((2, -2), (6, 2)):
+            _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dx=dx, dz=-1)
+        m.unset(4, 11, 4)  # the windshield, shattered
+        m.clear(0, 1, 1, 3, 0, 1)  # a tyre blown off its hub
     return m

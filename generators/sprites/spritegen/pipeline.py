@@ -19,6 +19,11 @@ Outputs (under --out, default ./out):
                           the same two frames with the tile's cast shadow left
                           off, for the cut-ins, which draw at 1:1 on their own
                           ground and idle on the ambient_figures clip
+  units_atlas_figures_ko.png
+                          one AUTHORED casualty frame per unit, shadowless
+                          like the figure pair — the board never draws it, so
+                          there is no board-sheet sibling — for the cut-ins'
+                          death beat (the ko clip)
   units_atlas_move.png / units_atlas_move_b.png
                           the same grid again, under way — one facing (the
                           art's own, screen-left); the consumer mirrors it
@@ -107,6 +112,7 @@ SHEETS: tuple[Output, ...] = (
     _units(_AMBIENT_B, Pose.B),
     _units(_FIGURES_A, shadow=False),
     _units(_FIGURES_B, Pose.B, shadow=False),
+    _units(anim.KO_SHEET, Pose.KO, shadow=False),
     _units(_MOVE_A, Pose.MOVE_A),
     _units(_MOVE_B, Pose.MOVE_B),
     Output("terrain_atlas.png", _terrain_sheet, TILES_DIR),

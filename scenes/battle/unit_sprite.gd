@@ -65,6 +65,13 @@ const UNITS_ATLAS_FIGURES_PATH := "res://assets/tiles/units_atlas_figures.png"
 ## The figures a beat later: the ambient pair's frame B with the same shadow
 ## subtracted, so the cut-ins idle on the beat the board does.
 const UNITS_ATLAS_FIGURES_B_PATH := "res://assets/tiles/units_atlas_figures_b.png"
+## One AUTHORED casualty frame per unit, shadowless like the figure pair — the
+## board never draws it, so there is no board-sheet sibling, and it is a
+## still: the dead don't loop. Air carries no frame here in v1; the generator
+## fills its column with the unit's own rest key so the sheet stays a valid
+## grid, and `CutsceneSide` never asks for it there (its own domain check is
+## the fallback the manifest's `ko` clip names).
+const UNITS_ATLAS_FIGURES_KO_PATH := "res://assets/tiles/units_atlas_figures_ko.png"
 ## The acted grey-out is a screen-space dither scrim, not desaturate-and-dim:
 ## with the generated liveries a desaturated unit collapsed into the iron and
 ## neutral rows — three meanings, one appearance (sprite review round 3). The
@@ -221,6 +228,16 @@ static func tile_texture_for(type: UnitType, row: int) -> AtlasTexture:
 static func figure_texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
 	var path := UNITS_ATLAS_FIGURES_B_PATH if frame == 1 else UNITS_ATLAS_FIGURES_PATH
 	return _region_of(load(path), type, row)
+
+
+## A unit's authored KO frame — the same shape as `figure_texture_for`, one
+## sheet and no frame argument, since the clip holds a single pose. Every
+## column of the sheet resolves (the generator's own fallback keeps an
+## unauthored unit's rest key there), so this never fails to return a
+## texture; whether a caller may SHOW it is the caller's own question — see
+## `CutsceneSide.bind`, which asks it only for a unit that is not flying.
+static func ko_figure_texture_for(type: UnitType, row: int) -> AtlasTexture:
+	return _region_of(load(UNITS_ATLAS_FIGURES_KO_PATH), type, row)
 
 
 static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTexture:
