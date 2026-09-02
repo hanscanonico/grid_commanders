@@ -300,6 +300,49 @@ class Bob(unittest.TestCase):
                     self.assertEqual(rest.origin[1] - off_beat.origin[1], lift)
 
 
+class ReadDelta(unittest.TestCase):
+    """An authored fire frame has to be VISIBLE, which is a different question
+    from being authored.
+
+    `AuthoredMembership` asks only that the voxels differ and `Silhouette` is a
+    floor rather than a delta, so a frame built where this projection cannot
+    show it passes both. That is measured history, not a worry: the bomber's
+    first bay was 40 voxels hung under the wing root, and the wing occludes the
+    fuselage's whole lower-right flank at every depth — it moved 17 pixels of a
+    thousand, changed no silhouette texel, and shipped green through the suite,
+    the snapshot gate and `make verify`.
+
+    So the bar is CHANGED PIXELS against pose A's own cell, taken as the worst
+    livery, and it is deliberately not a silhouette-delta bar: `cruiser`'s
+    barrels recoil inside the hull's own outline and its read is the lit
+    muzzle, so a silhouette rule would fail correct art. Measured 2026-09-02,
+    the roster's floors are bomber 49, fighter 67, cruiser 89, recon 115,
+    anti_air 162, battleship 209, infantry 309, b_copter 344, sub 369, then
+    523 and up to md_tank's 1557. `MIN_CHANGED` sits under the smallest of
+    those and far over the occluded bay's 17, so a frame nobody can see fails
+    by name rather than by a hand measurement in review.
+    """
+
+    MIN_CHANGED = 40
+
+    def test_every_authored_fire_frame_changes_enough_to_be_seen(self):
+        for uid in ATLAS_ORDER:
+            if uid not in FIRES:
+                continue
+            for fac in FACTIONS:
+                rest = pose_cell(uid, fac, Pose.A, shadow=False).convert("RGBA")
+                fired = pose_cell(uid, fac, Pose.FIRE_A, shadow=False).convert("RGBA")
+                rest_px, fired_px = rest.load(), fired.load()
+                changed = sum(
+                    1
+                    for y in range(rest.height)
+                    for x in range(rest.width)
+                    if rest_px[x, y] != fired_px[x, y]
+                )
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertGreaterEqual(changed, self.MIN_CHANGED)
+
+
 class Silhouette(unittest.TestCase):
     """Per-column silhouette floor, measured off the shipped models the way
     `test_ko_pose.Silhouette` measures the wreck's: a fire pose may lose or

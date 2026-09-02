@@ -7,7 +7,7 @@ the gait the tween never had — and it is the contract both sides implement
 against.
 
 Status: **shipped on both sides.** `move` is in `anim.json` beside `ambient`,
-`ambient_figures`, `sea` and `ko`, and the game plays it for exactly the length
+`ambient_figures`, `sea`, `ko` and `fire`, and the game plays it for exactly the length
 of `BattleAnimator.animate_path`'s tween. A reader that finds no `move` key is
 reading a manifest from before that batch and falls back to `ambient` — which
 is the `fallback` field saying so in the file rather than in a comment.
@@ -77,6 +77,16 @@ rather than its cells, which for the cut-in is `CutsceneSide.bind` leaving the
 KO cut null for a flying unit and keeping the transform-topple. Which units are
 authored is not in the manifest, so a consumer that cannot tell must draw
 nothing from a `ko` column rather than trust the cell it finds there.
+
+`fire` is the THIRD reading and it is ko's inverse: there the fallback frame IS
+a legal thing to draw, so an unauthored column is drawn exactly as it stands.
+The clip's fallback is taken PER FRAME rather than per sheet — FIRE_A → A and
+FIRE_B → B — so an unarmed unit's fire pair is its own idle pair, bob and all,
+byte for byte. That is what lets the cut-in bind the fire cut for every unit
+and open the window on it without ever asking whether this one carries a gun:
+an unarmed attacker's window opens onto the same texture the idle beat was
+already drawing. A consumer may treat a `fire` column as always safe; it is a
+`ko` column it may not.
 
 ## 2. Region maths — identical to ambient
 

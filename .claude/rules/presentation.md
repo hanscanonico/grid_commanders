@@ -98,10 +98,17 @@ forms named in the root index are in `docs/design_record.md`.
   `assets/tiles/units_atlas_figures.png` and its frame-B sibling the sheets it cuts from, the pixels
   **subtracted by the generator** and never by a redraw or a colour-keyed shader in `scenes/`;
   `tests/unit/test_figure_sheet.gd` is the pin. **That subtract-only rule is the idle PAIR's alone**
-  (animation-frames S4): `units_atlas_figures_ko.png` is *authored* wreck art merely composed the
-  same shadowless way, so `UnitSprite.ko_figure_texture_for` is its own accessor — but
-  `UnitSprite._region_of` stays the one path to any of the three sheets, and only `CutsceneSide`
-  decides whether a KO cell may be shown (never for a flying unit, which authors none in v1).
+  (animation-frames S4/S5): `units_atlas_figures_ko.png` and the `units_atlas_figures_fire.png`
+  pair are *authored* art merely composed the same shadowless way, so `ko_figure_texture_for` and
+  `fire_figure_texture_for` are their own accessors — but `UnitSprite._region_of` stays the one
+  path to any of the five figure sheets, and `CutsceneSide` decides whether an authored cell may
+  be shown. **The two authored clips gate opposite ways, and that is the fallback contract, not a
+  quirk**: the KO cut is nulled for a flying unit (air authors no wreck in v1, so its columns
+  carry a STANDING pose that must never be drawn as a casualty), while the fire pair is bound for
+  every unit including the unarmed — the fire fallback is taken PER FRAME (FIRE_A → A,
+  FIRE_B → B), so `apc`/`t_copter`/`lander` carry their own idle pair byte for byte, bob included,
+  and an attacker's fire window may open on any unit without asking whether it carries a gun.
+  `generators/sprites/docs/move_clip.md` owns the manifest side of that split.
   **`UnitSprite.CELL_GROUND_PX` (7) is the cell's ground line, and it is not the cell's bottom
   edge** — it is where a cut-in centres its own contact
   ellipse. **The board's cast shadow and the buildings' drop shadow are both SOLID**, measured
@@ -314,8 +321,10 @@ forms named in the root index are in `docs/design_record.md`.
   **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the arithmetic, read off the director's own `t`
   rather than the wall clock**, so a posed still and a skip both land on a fixed pose. The board's
   two stills stay `frame`'s and do not reach in.
-  **Since 2026-08-29 the legibility ruler reads all six STANDING unit sheets** (S4's KO sheet is the
-  seventh and deliberately out — the ruler asks how a standing figure separates from its ground):
+  **Since 2026-08-29 the legibility ruler reads all six STANDING unit sheets** (the two authored
+  cut-in clips, S4's KO sheet and S5's fire pair, are deliberately out — the ruler asks how a
+  standing figure separates from its ground, and neither a wreck nor a machine at full recoil is
+  standing at rest):
   a `frame` axis names a clip and a beat (`idle_a`/`idle_b`/`walk_a`/`walk_b`), the view says which
   file draws it — the board's
   own cells, the cut-in's shadow-subtracted pair — and every report row and `--dump` key carries it
