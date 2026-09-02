@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=49 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=54 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -12,6 +12,7 @@
 [ext_resource type="Resource" path="res://data/units/infantry.tres" id="10"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="11"]
 [ext_resource type="Resource" path="res://data/units/mech.tres" id="12"]
+[ext_resource type="Resource" path="res://data/units/battleship.tres" id="13"]
 
 [sub_resource type="Resource" id="Objective_hold_the_narrows"]
 script = ExtResource("2")
@@ -85,27 +86,32 @@ condition = SubResource("Shrine_saved")
 [sub_resource type="Resource" id="Spawn_picket_foot"]
 script = ExtResource("9")
 unit_type = ExtResource("10")
-cell = Vector2i(3, 2)
+cell = Vector2i(3, 3)
 
 [sub_resource type="Resource" id="Spawn_picket_scout"]
 script = ExtResource("9")
 unit_type = ExtResource("11")
-cell = Vector2i(5, 2)
+cell = Vector2i(5, 3)
 
 [sub_resource type="Resource" id="Spawn_meridian_company"]
 script = ExtResource("9")
 unit_type = ExtResource("12")
-cell = Vector2i(4, 3)
+cell = Vector2i(4, 4)
 
 [sub_resource type="Resource" id="Spawn_aurora_company"]
 script = ExtResource("9")
 unit_type = ExtResource("10")
-cell = Vector2i(5, 3)
+cell = Vector2i(5, 4)
 
 [sub_resource type="Resource" id="Spawn_league_company"]
 script = ExtResource("9")
 unit_type = ExtResource("12")
-cell = Vector2i(2, 4)
+cell = Vector2i(2, 5)
+
+[sub_resource type="Resource" id="Spawn_last_hull"]
+script = ExtResource("9")
+unit_type = ExtResource("13")
+cell = Vector2i(4, 0)
 
 [sub_resource type="Resource" id="Effect_the_line_forms"]
 script = ExtResource("8")
@@ -126,6 +132,11 @@ units = Array[Resource]([SubResource("Spawn_aurora_company")])
 script = ExtResource("8")
 team = 1
 units = Array[Resource]([SubResource("Spawn_league_company")])
+
+[sub_resource type="Resource" id="Effect_last_hull"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_last_hull")])
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("3")
@@ -151,6 +162,11 @@ text = "My coast watch made it inland, so Aurora knows who's still standing and 
 script = ExtResource("3")
 speaker = &"ines_calder"
 text = "The shrine's keepers came out of the wood alive. The wardens who carried them are standing on your flank. The League pays that kind of debt in the field."
+
+[sub_resource type="Resource" id="Event_line_last_hull"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Coast watch's lists named every hull still afloat at Tidewatch, and one of them was a battleship. She got out on the night tide. She's standing off your north bank now, Voss, with nine shells and nothing between her and that road."
 
 [sub_resource type="Resource" id="Event_the_line_forms"]
 script = ExtResource("5")
@@ -183,6 +199,14 @@ triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_s
 effects = Array[Resource]([SubResource("Effect_league")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_league")])
+
+[sub_resource type="Resource" id="Event_the_hull_that_got_out"]
+script = ExtResource("5")
+id = &"the_hull_that_got_out"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_watch_saved")])
+effects = Array[Resource]([SubResource("Effect_last_hull")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_last_hull")])
 
 [sub_resource type="Resource" id="Run_routed"]
 script = ExtResource("4")
@@ -225,7 +249,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_narrows")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
-events = Array[Resource]([SubResource("Event_the_line_forms"), SubResource("Event_meridian_stands"), SubResource("Event_aurora_stands"), SubResource("Event_the_league_stands")])
+events = Array[Resource]([SubResource("Event_the_line_forms"), SubResource("Event_meridian_stands"), SubResource("Event_aurora_stands"), SubResource("Event_the_hull_that_got_out"), SubResource("Event_the_league_stands")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
