@@ -1,44 +1,48 @@
-# The Long Front 14 — "The High Passes". Iona Vance commits a second
-# heavy column to keep the highland cities out of allied hands.
-# Halden Marr's mixed force has to hold ground in terrain that favours
-# nobody's domain over another's.
+# The Long Front 14 — "The High Passes": three east-west passes stacked behind two mountain walls, each wall pierced by a single one-cell gap.
+# Iona Vance's second heavy column has to keep the seven highland cities out of
+# allied hands. Halden Marr's mixed force starts in the northern pass; the walls
+# carry only foot and boot, so armour zig-zags through the western gap into the
+# middle pass and the eastern gap into the southern one, while infantry climbs
+# straight over. The cities sit two to a pass, and Vance builds at both ends of
+# the column — a base in the north-east corner and one beside her headquarters
+# in the south.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-MMMM............MMMMMMMM
-M..Q====....C...MMMM....
-....=....MMM....MMMM....
-....=...C...MMMM....B...
-FF.B=======...C.........
-....F.....C....MMM....MM
-...C....======....MM....
-...........====.B.......
-.................Q......
-MMMM............MMMMC...
-....F......C......F.....
-MMMM................MMMM
+MM..C.M.......M.....MM..
+.Q........C........C....
+.B......F...........B...
+MMMMMM.MMMMMMMMMMMMMMMMM
+MMMMMM.MMMMMMMMMMMMMMMMM
+...F.....C....C.........
+.............F....F.....
+MMMMMMMMMMMMMMMMM.MMMMMM
+MMMMMMMMMMMMMMMMM.MMMMMM
+.....C.......C..........
+..........F.......B.Q...
+MM.....M.......MM.....MM
 [owners]
-1 3 1
-2 17 8
-2 16 7
-1 3 4
-1 3 6
-2 20 3
+1 1 1
+2 20 10
+2 18 10
+1 1 2
+1 4 0
+2 20 2
 [units]
-1 i 4 2
-1 i 5 3
-1 m 6 2
-1 r 4 1
-1 t 5 4
-1 t 6 4
-1 a 4 4
-1 T 3 5
-1 g 4 6
-2 i 15 6
-2 i 14 7
-2 r 18 5
+1 i 3 2
+1 i 4 1
+1 m 3 0
+1 r 5 1
+1 t 4 2
+1 t 6 1
+1 a 5 2
+1 T 2 2
+1 g 2 0
+2 i 15 5
+2 i 12 6
+2 r 20 5
 2 t 14 6
-2 t 13 7
+2 t 13 5
 2 T 16 6
-2 a 14 5
-2 R 19 8
-2 i 19 3
+2 a 17 5
+2 R 15 10
+2 i 19 2
