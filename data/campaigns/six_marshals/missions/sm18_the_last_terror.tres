@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=86 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=87 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -393,6 +393,11 @@ speaker = &"alina_ward"
 text = "The heartland line broke before day nine. Five marshals answered. The sixth got the fight he came for."
 unless = SubResource("Run_failure")
 
+[sub_resource type="Resource" id="Line_veterans"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "The crews in those passes are the ones that held the gate and the wide field. Whatever they've got left is what we've got."
+
 [resource]
 script = ExtResource("1")
 id = &"sm18_the_last_terror"
@@ -414,6 +419,8 @@ failures = Array[Resource]([SubResource("Failure_nothing_worth_the_charge")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus")])
 events = Array[Resource]([SubResource("Event_ferrow_sold_it_on"), SubResource("Event_the_crossroads_outlives_him"), SubResource("Event_orlov_keeps_what_he_catches"), SubResource("Event_vance_still_compounding"), SubResource("Event_draegs_column_keeps_its_word"), SubResource("Event_morn_never_spent_it"), SubResource("Event_the_charge_is_ready"), SubResource("Event_the_directorate_recalls_him")])
 par_day = 9
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+carry_in = true
+carry_floor_hp = 50
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_veterans"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_morn_losses"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_6"), SubResource("Line_ward_par"), SubResource("Line_holt_full"), SubResource("Line_holt_best")])
 defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])
