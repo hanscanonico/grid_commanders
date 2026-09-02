@@ -203,6 +203,12 @@ retrofit at least one round.
   so is `CaptureCell` on the enemy's home headquarters — see trap 4 below.
 - **`DayReached` cannot be right on a mission that can finish before it.** Key the
   beat to the board instead.
+- **The sea is the player's, never the enemy's.** A port opens on the player's
+  side of the board and out of the enemy's reach, because the planner never
+  ferries (naval plan R1) but does buy hulls: an Iron port is a money sink or a
+  free fleet, and either reads as a broken mission. An enemy landing is
+  `SpawnUnits` onto shoal cells; an enemy hull is pre-placed in `[units]`; a
+  player transport is a real lander or t-copter the player drives.
 - **Adding `terrain_id` to an `OwnProperties` almost always has to move the
   count with it.** The same edit made four missions correctly winnable rather
   than won-at-deploy, and made one mandatory mission unclearable.
