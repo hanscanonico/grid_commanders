@@ -388,6 +388,9 @@ def render_indexed_gbuffer(
     # step; `BUILDING_TOP_SLOT` does not), so it is the one signal S8's two
     # board-scale passes below gate on too: a building is read AGAINST an
     # army, never as one, and the ruler never scores it as a figure.
+    # It is a FIGURE test rather than a unit test, and the massif is the third
+    # thing that passes it: `terrain/mountain.py` renders at the default
+    # `top_slot`, so the peak takes the band and the fallback as a unit does.
     is_unit = top_slot == S_RIM
     keep: bytearray | None = None
     if outline:

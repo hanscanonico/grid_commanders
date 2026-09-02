@@ -272,7 +272,12 @@ outline it replaced — three re-reads of unrelated shipped work (S2's air reton
 the mountain peak and the wash) had drifted the board's own headline to 87.1% clear / 79.1% fogged on
 `idle_a` alone, against the 2026-08-25 section's 94.8% / 79.9%, and neither move was a finding for
 this page to answer. **After: clear 18,247 failing (49.7%) and 2,921 (33.8%) fogged** — 17,690 of the
-45,360 rows moved, every one of them recovering. Hue-carried failures fall with everything else,
+45,360 rows moved against the digest that was committed before this change, **17,672 FAIL → PASS and
+18 PASS → FAIL**, a net −17,654. The eighteen are named under *What resists* rather than absorbed by
+the re-bake. (That digest was baked one tree back, so its own totals — 31,811 clear and 7,011 fogged
+failing — sit a little above the control re-run here; the moved-row count is the artifact's, the
+headline percentages are the control's, and the two are not the same measurement.)
+Hue-carried failures fall with everything else,
 72.9% → 69.5% of what remains, so the residual is still mostly value-blind rather than newly
 illegible.
 
@@ -349,7 +354,13 @@ One knock-on, in `spritegen/aa.py`: the thicker band lengthens same-toned runs a
 a staircase corner's softened write can now strand a NEIGHBOUR pixel that used to match it — measured
 on `rockets`' thin rack, an isolated pixel `IndexedPalette.test_no_isolated_pixel_outside_the_dither`
 would have caught had it shipped. `_safe` filters exactly those writes out, off the same original
-pixels every other write is computed from (`test_aa.NeverStrands`).
+pixels every other write is computed from (`test_aa.NeverStrands`). Refusing a write is itself a
+change of who still carries that colour, so the filter is a **fixed point** rather than one pass —
+two corners flanking one shared pixel each read the other as its fallback and both ship otherwise,
+which `staircase(2, 2)` pins and the suite's run/rise/`min_run` sweep generalises. It moves no pixel
+of the shipped art: at `MIN_RUN = 3` the one-pass and settled answers agree on every unit pose,
+livery and property (0 of 216 unit renders and 0 of 30 building renders differ), so nothing was
+re-baked for it.
 
 ### What resists
 
@@ -365,6 +376,25 @@ building-side survivor, `mountain` 49-53% across its three phases. This is a VAL
 ground, which S8's own locked scope leaves to the ground: **nothing here was tuned in response**, and
 moving a property's or the massif's own value to answer it is the follow-up this page names rather
 than slides in.
+
+**The eighteen cells that went the other way.** They are 0.10% of the sweep against 17,672 recoveries,
+and none is a new class — every one is a dark or mid hull already inside the residual above, tipped
+just under the bar by a contour that now reads as one more dark mass against a dark ground. By
+family:
+
+| cells | what they are |
+| --- | --- |
+| 9 | `tank` on `aurora` and `gold`, `idle_b` — `acted` on sea, shoal and woods (`idle_b/tank/aurora/acted/shoal/none`), plus `aurora` `ready` on base under the move wash |
+| 3 | `t_copter` on `iron`, `idle_a`, `acted`, under the move wash — hq, mountain, woods |
+| 2 | `md_tank` on `gold` and `meridian`, `walk_b`, `acted` on airport in fog |
+| 2 | `sub` on `verdant`, cut-in `idle_a`, on sea and port |
+| 1 | `fighter` neutral, `idle_b`, `acted` on airport under the move wash |
+| 1 | `rockets` on `iron`, `walk_b`, `ready` on woods under the attack wash |
+
+Sixteen of the eighteen are the `acted` dim, an overlay, or both, which is the same renderer ruling
+the 2026-08-30 re-read logged: the dim and the wash are what the cell is read *through*, and neither
+is per-terrain art. The other two are the cut-in `sub` on `verdant` — the value question this section
+already names, at 1:1. Nothing here was tuned in response.
 
 The S3 accepted ratchet exception — `board:idle_b:mech:iron:ready:port:fog`, 1.11 → 0.77 against the
 fog bar of 1.0 — is resolved rather than carried forward: re-measured at 1.25, it clears the bar

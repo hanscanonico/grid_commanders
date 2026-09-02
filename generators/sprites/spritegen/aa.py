@@ -148,8 +148,8 @@ def soften_staircase(
     going away — read as newly isolated
     (`IndexedPalette.test_no_isolated_pixel_outside_the_dither`, measured on
     `rockets`' thin rack). `_safe` drops exactly the writes that do that,
-    off the same original pixels every other write is computed from, so this
-    stays pure and order-free too.
+    off the same original pixels every other write is computed from, and it
+    settles to a fixed point so a refusal cannot strand anyone either.
     """
     img = rgba.convert("RGBA")
     w, h = img.size
@@ -186,29 +186,48 @@ def _safe(
     softens — a pixel that matched the corner's ORIGINAL colour and has no
     other orthogonal match to fall back on.
 
-    Read entirely off `src`, the untouched render: a neighbour also due to be
-    written answers for itself in its own pass through this same check, so
-    nothing here depends on which order `writes` is walked in.
+    A pixel still in `kept` is about to lose its tone, so it can be neither
+    the neighbour under threat nor the fallback that saves one — and a
+    refusal puts a pixel back on both counts. That makes the answer a FIXED
+    POINT rather than one pass: refuse, re-read, repeat until a whole pass
+    refuses nothing. Read one pass deep instead, two corners flanking a
+    shared pixel each see the other as its fallback and both ship, which is
+    the case `test_aa.NeverStrands` pins. `kept` only shrinks and the walk is
+    always `writes` order, so this terminates and is deterministic; at worst
+    it settles on writing nothing, which strands nobody.
     """
-    rewritten = {(x, y) for x, y, _ in writes}
-    safe: list[tuple[int, int, tuple[int, int, int, int]]] = []
-    for x, y, colour in writes:
-        edge = src[x, y][:3]
-        stranded = False
-        for dx, dy in _ORTHO:
-            nx, ny = x + dx, y + dy
-            if (nx, ny) in rewritten or not at(nx, ny) or src[nx, ny][:3] != edge:
-                continue
-            if not any(
-                at(nx + ddx, ny + ddy) and src[nx + ddx, ny + ddy][:3] == edge
-                for ddx, ddy in _ORTHO
-                if (nx + ddx, ny + ddy) != (x, y)
-            ):
-                stranded = True
-                break
-        if not stranded:
-            safe.append((x, y, colour))
-    return safe
+    kept = {(x, y) for x, y, _ in writes}
+    refusing = True
+    while refusing:
+        refusing = False
+        for x, y, _ in writes:
+            if (x, y) in kept and _strands(src, at, kept, x, y):
+                kept.discard((x, y))
+                refusing = True
+    return [(x, y, colour) for x, y, colour in writes if (x, y) in kept]
+
+
+def _strands(src, at, kept: set[tuple[int, int]], x: int, y: int) -> bool:
+    """Would writing (x, y) leave a neighbour that shares its original colour
+    with no orthogonal match left standing?
+
+    A pixel in `kept` is about to be written, so it no longer answers for that
+    colour — neither as the neighbour under threat nor as the fallback that
+    saves one.
+    """
+    edge = src[x, y][:3]
+    for dx, dy in _ORTHO:
+        nx, ny = x + dx, y + dy
+        if (nx, ny) in kept or not at(nx, ny) or src[nx, ny][:3] != edge:
+            continue
+        if not any(
+            (nx + ddx, ny + ddy) not in kept
+            and at(nx + ddx, ny + ddy)
+            and src[nx + ddx, ny + ddy][:3] == edge
+            for ddx, ddy in _ORTHO
+        ):
+            return True
+    return False
 
 
 def _slot_index(ramps: tuple[Ramp, ...]) -> _SlotIndex:

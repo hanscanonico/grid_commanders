@@ -83,6 +83,37 @@ def changed(before: Image.Image, after: Image.Image) -> list[tuple[int, int]]:
     ]
 
 
+def newly_alone(before: Image.Image, after: Image.Image) -> list[tuple[int, int]]:
+    """Pixels the pass LEFT ALONE that lost their last orthogonal match to it.
+
+    A softened corner is a lone pixel on purpose (that is what a mid-tone in
+    the crook is), so the ones it wrote are not asked; every other pixel that
+    had a same-coloured neighbour before must still have one after.
+    """
+    w, h = before.size
+    src, out = before.load(), after.load()
+    written = set(changed(before, after))
+
+    def matches(px, x: int, y: int, colour) -> bool:
+        return any(
+            0 <= x + dx < w
+            and 0 <= y + dy < h
+            and px[x + dx, y + dy][3] == 255
+            and px[x + dx, y + dy][:3] == colour
+            for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0))
+        )
+
+    return [
+        (x, y)
+        for y in range(h)
+        for x in range(w)
+        if (x, y) not in written
+        and src[x, y][3] == 255
+        and matches(src, x, y, src[x, y][:3])
+        and not matches(out, x, y, src[x, y][:3])
+    ]
+
+
 class InnerCorners(unittest.TestCase):
     """Exactly the corners in the crook of a long step, and nothing else."""
 
@@ -208,11 +239,41 @@ class NeverStrands(unittest.TestCase):
     the write outright — the one case
     `ShortRuns.test_min_run_is_the_knob_that_decides_it` moved off rather
     than asserting empty.
+
+    Two corners flanking ONE such pixel is the harder half, and the reason
+    the refusal has to settle rather than answer once: neither corner is the
+    pixel's last match while the other is still standing, so a check that
+    reads the write set one pass deep clears both and strands it anyway.
+    `staircase(2, 2)` is that shape and the sweep below is its generalisation
+    — no synthetic staircase, at any run, rise or `min_run`, may leave a
+    pixel it did not itself write alone.
     """
 
     def test_a_write_that_would_strand_its_only_match_is_refused(self):
         img = staircase(2, 1)
         self.assertEqual(changed(img, aa.soften_staircase(img, (RAMP,), min_run=2)), [])
+
+    def test_two_corners_may_not_both_lean_on_the_pixel_between_them(self):
+        # `staircase(2, 2)` at `min_run=2` is the flanking case: each step's
+        # crook sits diagonally off the next, and the edge pixel between two
+        # crooks is matched only by those two. Refusing a write is itself a
+        # change of who still carries that colour, so the check has to settle
+        # rather than answer once — read one pass deep, each corner sees the
+        # OTHER corner as the pixel between them falling back on, both are
+        # written, and the pixel between them is left alone with nobody.
+        img = staircase(2, 2)
+        out = aa.soften_staircase(img, (RAMP,), min_run=2)
+        self.assertTrue(changed(img, out), "the case needs corners to soften")
+        self.assertEqual(newly_alone(img, out), [])
+
+    def test_no_synthetic_staircase_leaves_a_pixel_alone(self):
+        for run in range(1, 6):
+            for rise in range(1, 4):
+                for min_run in (1, 2, 3):
+                    img = staircase(run, rise)
+                    out = aa.soften_staircase(img, (RAMP,), min_run=min_run)
+                    with self.subTest(run=run, rise=rise, min_run=min_run):
+                        self.assertEqual(newly_alone(img, out), [])
 
 
 class NeverOutside(unittest.TestCase):
