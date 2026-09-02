@@ -58,12 +58,12 @@ day = 5
 [sub_resource type="Resource" id="Spawn_second_column_heavy"]
 script = ExtResource("7")
 unit_type = ExtResource("8")
-cell = Vector2i(15, 7)
+cell = Vector2i(15, 9)
 
 [sub_resource type="Resource" id="Spawn_second_column_escort"]
 script = ExtResource("7")
 unit_type = ExtResource("9")
-cell = Vector2i(17, 7)
+cell = Vector2i(17, 9)
 
 [sub_resource type="Resource" id="Effect_the_second_column"]
 script = ExtResource("6")

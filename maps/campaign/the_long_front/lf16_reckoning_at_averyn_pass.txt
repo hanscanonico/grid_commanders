@@ -1,45 +1,47 @@
-# The Long Front 16 — "Reckoning at Averyn Pass". Radek Morn holds the
-# garrison that shields the pass named for the town his Hammerfall
-# levelled. Tomas Reed has waited three weeks for this fight and does not
-# intend to lose it.
+# The Long Front 16 — "Reckoning at Averyn Pass": one north-south mountain wall with a single three-cell gap, the road through it, and Morn's garrison dug in behind.
+# Radek Morn holds the pass named for the town his Hammerfall levelled. Tomas
+# Reed's army starts on the western side of the wall with two woods for cover
+# in front of the gap. The garrison's base sits just behind the wall's northern
+# shoulder, under a ledge where the battery that ranged Averyn stands, and the
+# road runs on past it to Morn's headquarters in the south-east.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-MMM..............MMMMMMM
-M..Q====......CMMMMM....
-....=......MMM..MMMM....
-....=...C......B....B...
-FF.B=======.....MMMM....
-....F......C....MMMM....
-........======........MM
-...........====...Q.....
-MMM.......C......MMM....
-....F........F.....C....
-MMM..................MMM
+MM.......C.MM....M....MM
+...Q.......MMMMM.C......
+...........MMMM.........
+........C..MM..B........
+...B.....F.....=........
+....===============.....
+.........F........=.....
+...........MM.....Q.....
+..C........MM.C.........
+.......F...MM.......C...
+MM.........MM.....M...MM
 [owners]
 1 3 1
 2 15 3
 2 18 7
 1 8 3
 1 3 4
-2 20 3
+2 17 1
 [units]
-# team symbol x y [tag] — the battery behind the pass is the one Morn ranged
+# team symbol x y [tag] — the battery on the ledge is the one Morn ranged
 # Averyn with, and the mission names it once it is seen.
-1 i 4 2
 1 i 5 3
-1 m 6 2
-1 r 4 1
-1 t 5 4
-1 t 6 4
-1 a 4 4
-1 T 3 5
+1 i 6 4
+1 m 5 2
+1 r 5 5
+1 t 6 5
+1 t 7 4
+1 a 4 6
+1 T 4 4
 1 g 3 6
-2 i 14 3
-2 i 14 5
-2 r 15 5
-2 t 16 3
-2 t 13 5
-2 T 12 5
-2 g 15 6 hammer_battery
-2 T 17 3
-2 a 14 6
+2 i 13 4
+2 i 13 6
+2 r 16 4
+2 t 14 5
+2 t 17 6
+2 T 13 5
+2 T 16 8
+2 g 15 2 hammer_battery
+2 a 17 3
