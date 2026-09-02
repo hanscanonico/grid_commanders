@@ -71,8 +71,7 @@ sits well under `win%` as the cost of the whiteout on that board — sight is
 what the mission is about, and the human's answer is the recon and the
 property vision the planner is not using well either.
 
-The table below predates the column. A later full sweep adds it wholesale;
-nothing here was re-run for it.
+The 2026-09-02 table below is the first with the column.
 
 ## The pass this document paid for
 
@@ -83,7 +82,7 @@ After the edits below: 50 never won, mean 42.5, and no mission got worse.
 every mission ground of its own — the allowlist in
 `core/campaign/campaign_boards.gd` is empty — and grew the late-act boards of
 four wars, so several boards named below are no longer the ground that ships.
-The reasoning survives; the numbers are the 2026-09-01 table.
+The reasoning survives; the numbers are the 2026-09-02 table.
 
 ### Deadlines (COM-248)
 
@@ -190,46 +189,48 @@ begin. Three edits, all content:
   opening in The Quiet War, and the fault this document's own bar names.
 
 0% → **56%** over nine seeds (50% over eighteen), median win day 6, and the
-2026-09-01 table below reads the same 56% on the same median day.
+2026-09-02 table below reads the same 56% on the same median day.
 
 ## What is still hard, and why it was left alone
 
-Forty-seven missions are still never won by the planner, two fewer than the
-forty-nine this record stood at. They are not a to-do list — they are the three
-limits above, and two findings the rework did not move:
+Forty-four missions are still never won by the planner (forty-five on the
+second sample), three fewer than the forty-seven this record stood at. They
+are not a to-do list — they are the three limits above, and two findings
+neither the rework nor the redraws moved:
 
 - **The strongest commanders are cast as the enemy.** Of the missions never won,
-  Iona Vance is the enemy in 11 of the 21 she plays, Radek Morn in 11 of 18 and
-  Konrad Vale in 9 of 16 — three of the standing high names in
+  Iona Vance is the enemy in 10 of the 21 she plays, Radek Morn in 10 of 18 and
+  Konrad Vale in 8 of 16 — three of the standing high names in
   `docs/commander_balance.md` (78.6%, 90.0% and 62.5%, all WARN), against Dane
   Ferrow's 6 of 29 and Cass Orlov's 5 of 20, whose own standing rates are 41.4%
   and 44.7%. That is the commander matrix showing through the campaign, and its
   fix is a commander retune, not a mission edit: retuning a doctrine here would
   move both committed balance reports.
-- **Level boards are lost too.** `sm10`, `sm16`, `tc03`, `tc15`, `hc01`, `hc05`
-  and `hc15` open at `1.00 / 1.00` and are never won, and `tc03` and `tc15` lose
+- **Level boards are lost too.** `tc03`, `tc15`, `hc05` and `hc15` open at
+  `1.00 / 1.00` and are never won on either sample — `sm10` and `sm16` join them
+  on the first and read 11% and 33% on the second — and `tc03` and `tc15` lose
   to a loss limit rather than to a destroyed army. On a level board the only
   things left are the seat, the commander pairing, the limit and the planner, so
   these are the discriminator working: nothing about them says the content is
-  wrong, and nothing about them was changed. `hc18` left this list by opening at
-  0.89 on its new board rather than by being won.
+  wrong, and nothing about them was changed. `hc01` left this list by being won
+  on the corridor #649 drew it; `hc18` by opening at 0.89 on its new board.
 
 The line between the two is not sharp, and the missions on it are still left
 alone rather than edited on a hunch: `sm13_the_narrow_gate` (0.62 / 1.00),
-`fw11_signal_hill` (0.76 / 0.40) and `qw13_the_open_field` (0.74 / 1.00) all sit
-above the odds bar the 2026-08-17 pass used and below parity, and none of them is
-obviously either fault.
+`fw11_signal_hill` (0.76 / 0.40) and `qw13_the_open_field` (0.74 / 1.00, one win
+in nine on one sample) all sit above the odds bar the 2026-08-17 pass used and
+below parity, and none of them is obviously either fault.
 
-The follow-up the table asks for is a **human** pass over the seven level-board
-missions above and over The Furnace Winter as a whole (12 of its 18 missions are
-still never won, at odds 0.56–1.60 — four fewer than in August, and the war that
-is still furthest from being read by this instrument), because that is exactly
-where a planner-run estimate is least trustworthy.
+The follow-up the table asks for is a **human** pass over the level-board
+missions above and over The Furnace Winter as a whole (11 of its 18 missions are
+never won on the first sample and 13 on the second, at odds 0.62–1.60 — the war
+still furthest from being read by this instrument), because that is exactly where
+a planner-run estimate is least trustworthy.
 
 ## Reading a row
 
 ```
-make campaign-difficulty                                   # all six wars, 9 seeds is ~5 min
+make campaign-difficulty CAMPAIGN="--seeds=9"    # all six wars, ~10 min
 make campaign-difficulty CAMPAIGN="--campaign=the_long_front --seeds=3"
 make campaign-difficulty CAMPAIGN="--mission=fw06_first_thaw --seeds=9 --days=30"
 ```
@@ -239,205 +240,225 @@ make campaign-difficulty CAMPAIGN="--mission=fw06_first_thaw --seeds=9 --days=30
 most common reason it ended, `(still running)` meaning the `--days` horizon was
 reached rather than the mission lost. Since `MissionRuntime` started telling a
 captured headquarters from a rout, that column reads "Your headquarters fell."
-for the former; the 2026-09-01 table below predates the split and folds both
-into "Your army was destroyed.", and no number moved with it. A run also writes
+for the former — `hc02` and `qw03` in the table below — and no number moved
+with it. A run also writes
 `missions.csv` and `summary.json` under `reports/campaign_difficulty/`
 (gitignored).
 
-## The measurement, 2026-09-01
+## The measurement, 2026-09-02
 
-108 missions, 9 seeds each, 24-day horizon — the seed count and the horizon of
-the 2026-08-17 sweep it supersedes, so the two tables compare. A later sweep
-supersedes this one wholesale rather than editing it.
+108 missions, 9 seeds each, 24-day horizon, measured at `f9c4dd58` — the seed
+count and the horizon of every table before it, so the columns compare, plus
+the `fog win%` column the instrument gained in #632. It supersedes the
+2026-09-01 table wholesale; a later sweep supersedes this one the same way.
 
-This is the first full re-measurement since the rework that gave every mission
-its own ground (#603–#620): the allowlist in `core/campaign/campaign_boards.gd`
-is empty, the late-act boards of four wars grew and gained production, and air
-wings fly on `lf15`, `lf17`, `lf18` and `qw18`. **A row that moved is not
-evidence about that rework alone.** The planner, the rules and a doctrine moved
-between the two dates as well — a unit may now merge into a twin that has
-already acted (#548), which is a new option on every loss-limit mission, and
-Sable Wren was retuned (#547). `fw03_cold_relay` is that caveat with a name on
-it: same ground, same roster, same objective, 0% to 100%.
+Where the record stands: **44 of 108 never won** against the forty-seven the
+superseded table read, mean `win%` **45.0** against 43.1. A second independent
+nine-seed sample of the same build (`--seed-offset=9`) reads 45 never won and
+mean 45.7. No mission's clock is at or under its own median win day, so the
+instrument's 46 flagged rows are the 44 never won plus the two fog rows below.
 
-Where the record stands: **47 of 108 never won** against the forty-nine it stood
-at, mean `win%` **43.1** against the 43.0 the superseded table read — a mean the
-noise below swallows whole. No mission's clock is at or under its own median win
-day, so the instrument's 47 flagged rows are exactly the 47 never won.
+### Nine seeds is still a band
 
-### Nine seeds is a wider band than the table looks
+Ten missions move by a third or more between the two samples, and the seven
+the 2026-09-01 sweep named are seven of them: `sm07` 11/44, `sm16` 0/33, `tc02`
+78/33, `tc18` 33/89, `hc03` 11/56, `lf05` 100/56, `lf06` 89/33 — joined by
+`hc04` 78/44, `lf13` 44/89 and `qw14` 67/100, three of the boards redrawn since,
+read at the same width as the boards that were not. Two rows crossed zero on
+one sample with nothing edited: `sm10` 0/11 and `sm16` 0/33, both level boards
+the previous record listed as never won. So the reading stands: one middling
+row is a band of roughly ±30 points, the never-won count ±2, and only a 0% or a
+100% that repeats is a fact about the mission.
 
-A second, independent nine-seed sample of the same build (`--seed-offset=9`)
-reads 45 never won and mean 43.9, and seven missions move by a third or more
-between the two samples: `sm07` 11/44, `sm16` 0/33, `tc02` 78/33, `tc18` 33/89,
-`hc03` 11/56, `lf05` 100/56, `lf06` 89/33. So read one middling row as a band of
-roughly ±30 points, the never-won count as ±2, and only a 0% or a 100% that
-repeats as a fact about the mission. Every hand-change below repeats in the
-second sample, which is why these four are the ones named.
+### What moved since 2026-09-01
 
-### What changed hands since 2026-08-17
+Twenty-four boards were redrawn or edited between the two sweeps (#624, #639,
+#647–#653), and every row that changed hands is one of them — nothing else in
+the table moved past the band above. Before → after, first sample / second,
+with `odds` / `income` where they changed:
 
-- `fw02_last_granary` **0 → 44%** (33% in the second sample), on the ground #604
-  gave it. Its opening is unchanged at 0.67 / 0.67, so whatever moved it is the
-  ground or the drift above — not the opening arithmetic.
-- `fw03_cold_relay` **0 → 100%** (100%) with nothing about the mission changed
-  but its dialogue.
-- `lf13_the_foothill_road` **0 → 56%** (33%), its opening up on both counts:
-  0.85 / 1.00 → 0.95 / **1.33**, the one board in the sweep whose property share
-  moved *above* parity rather than up to it.
-- `qw15_the_engineering_works` **67 → 0%** (0%) — the only win this record lost.
+- `hc01_border_skirmish` **0 → 100% / 100%** (median day 7), #649. The Act I
+  corridor is new ground and the objective is a hold to day 7 rather than a
+  capture at (15,2) — the one mission this sweep took off the never-won list
+  on both samples, and off the level-board list above with it.
+- `hc04_watchtower` **11 → 78% / 44%**, #649, its ending moving from `(still
+  running)` to a destroyed army: the redrawn corridor lets the fight finish.
+  `hc05` 0 → 0 / 0 and `hc06` 33 → 33 / 33 on the same pass.
+- `lf04_seawall_retreat` **11 → 100% / 100%** (median day 5), #648, odds 0.58 →
+  1.04 and income 1.00 → 2.00: the port at (6,1) is a second player property and
+  the lander counts as player value, and the harbour is a refuge the planner's
+  last unit sits in at the verdict. `lf03_riptide_landing` beside it stays 0%
+  with the same ending on the beach road, its odds 0.61 → 0.39 because the
+  enemy battleship is 28,000 of army value the fraction now counts.
+- `lf07_the_narrows` 0 → 0% / 0% at odds 0.47, #653. The instrument opens a
+  fresh session, so it measures the route where the coast watch was lost;
+  #653's own measurement of the saved route — a player battleship in the sea
+  arm on day 2 — read 100% on both samples, the first time a ledger fact moves
+  a row.
+- `lf15_the_airfield_raid` **100 → 56% / 67%**, #650, median win day 4 → 20 and
+  the rest `(still running)`: the plateau is climbed through one road cell and
+  the planner is slow on it. The largest fall in the table, and not a 0%.
+  `lf17` and `lf18` stay 0% on both samples with the endings the previous
+  record named.
+- `lf13_the_foothill_road` 56 → 44% / 89%, `lf14_the_high_passes` 0 → 0 / 0
+  with its ending now `(still running)` rather than a destroyed army (the city
+  race lost, not a rout), and `lf16` 0 → 0 / 0, #651.
+- `qw13_the_open_field` 0 → **11% / 0%**, `qw14_the_daylight_march` 89 →
+  67 / 100, `qw16` 0 → 0 / 0 and `qw17` 0 → 0 / 0, #647. Odds and income
+  unchanged on all four.
+- `fw09`–`fw12`, #652: `fw09` 22 → 22 / 11, `fw10` 11 → 11 / 0, `fw11` 0 → 0 / 0,
+  `fw12_last_mile` 0 → **11% / 0%** (median day 23). The two that read one win
+  in nine sit at the instrument's floor; #652's 27-seed extension read 3/27 on
+  both.
+- `fw06_first_thaw` odds **0.56 → 1.00** and `tc08_silencing_the_witness`
+  **0.56 → 0.89**, #639, one `[units]` row each. Both stay 0% on both samples,
+  which the bar allows: the fault the bar names was the opening, and the
+  opening is level. `fw06`'s income 0.33 is still the lowest in the table.
+- `fw03_cold_relay` odds 0.67 → 1.00, #624 — Vance's base at (11,7) became a
+  city and her mech came off her line, so her `income` 0.67 overstates her (a
+  property she cannot spend at counts the same as one she can). 100% → 100%
+  sighted, and **0% blind on both samples**, below.
 
-Openings that moved without changing hands: `tc14_draegs_line` 3.00 → 1.45 (the
-board #614 rescaled), `lf14` 0.70 / 0.50 → 0.88 / 1.00, `lf17` 0.94 / 0.67 →
-1.19 / 1.00, `lf18` 0.80 / 0.67 → 0.89 / 1.00, `lf15` income 0.50 → 1.00, `qw16`
-income 2.00 → 1.50, `hc16` income 1.00 → 0.75, `hc18` odds 1.00 → 0.89, `hc13`
-odds 1.00 → 0.93.
+Endings moved on two rows without a number moving: `hc02_river_line` and
+`qw03_quiet_ground` now read "Your headquarters fell." — the `MissionRuntime`
+split the previous table predates.
 
-### Review triggers this sweep recorded
+### Review triggers
 
-Recorded, not acted on: no `.tres`, board or balance number was touched for this
-document. Each is a mission for the human pass this file has been asking for.
+Recorded, not acted on: no `.tres`, board or balance number was touched for
+this document.
 
-- **`qw15_the_engineering_works`, 67 → 0%.** It opens *ahead* on army value
-  (1.19 → 1.29) and behind on property (1.00 → 0.75), so it is not the odds bar
-  this document uses — it is the one mission that stopped being won at all.
-- **`hc13_the_capital_road`, 100 → 11%** at odds 1.00 → 0.93, with `hc17` beside
-  it at 100 → 89% and a median win running from day 14 to 17. The Hollow Crown's
-  Act III ramp is doing what it was authored to do; whether it went too far on
-  `hc13` is a human call, not this instrument's.
-- **`lf17_the_shadow_of_the_keep` is 0% at odds 1.19**, and now ends on its loss
-  limit ("more than nine units lost") rather than on a destroyed army. That limit
-  was raised 6 → 9 by the pass above and is deciding the mission again on the
-  bigger board, with a merge reading as a loss more often than it used to (#548).
-- **`fw08_pipeline_west` is 0% at 1.60 / 1.00**, and its most common ending is
-  `(still running)`: on the thaw board the planner neither wins nor loses inside
-  the 24-day horizon.
+Resolved: `hc01_border_skirmish`, 0% on level ground, by #649 as above. The
+four the 2026-09-01 sweep named all stand: `qw15_the_engineering_works` 0% /
+0% at 1.29 / 0.75, `hc13_the_capital_road` 11% / 11% with a median win on day
+24, `lf17_the_shadow_of_the_keep` 0% / 0% on its nine-unit loss limit, and
+`fw08_pipeline_west` 0% / 0% — `(still running)` on the first sample and a
+destroyed army on the second, so the horizon is not all of it.
 
-### Hand-changes since this sweep
+New:
 
-The table below is the sweep as it was run; a row edited afterwards is named
-here with its own re-measurement, so nothing in it is stale.
+- **`fw03_cold_relay` is 100% sighted and 0% blind on both samples** — the
+  shape the column was built for (#632), now on the record with its number.
+  The human loss #624 answered was on this row; the board reads level (1.00)
+  and the blind seat still never wins the day-3 race.
+- **`qw09_ambush_ground` is 100% sighted and 0% blind** on the first sample and
+  100% / 44% on the second — the flag fires on one sample, and the second says
+  the whiteout costs the row about half its wins.
+- No mission the previous table read as won went to 0% on both samples.
 
-- **`fw03_cold_relay`, odds 0.67 → 1.00** (win% unchanged at 100%, median day 3,
-  in both nine-seed samples: `--seeds=9` and `--seed-offset=9`). A human lost this
-  mission on day 6 to a destroyed army on the row this table reads at 100% — the
-  clearest case yet of what the caveats above say: both seats are planner-driven
-  and **the planner sees through the whiteout**, while `fw03` is a fog board a
-  human plays blind. Two edits, both on the map. Vance's base at (11,7) became a
-  city, so she owns an HQ and two cities and no base — which is what the briefing
-  already claimed ("it is the only ground that builds") — and her mech came off
-  her opening line. Her army is now the two infantry and the recon she opens with
-  plus the day-4 checkpoint, while the player's purse starts buying the turn the
-  relay is taken. The `income` column still reads 0.67 and now overstates her: a
-  property she cannot spend at counts the same as one she can.
+The other eleven fog rows are not this shape: `qw02` and `qw11` are 100% on
+both seats, `qw03` and `qw05` are won blind at least as often as sighted (67% /
+78% blind against 44% / 33% on `qw03`), and the seven at 0% on both seats —
+`fw17`, `qw04`, `qw06`–`qw08`, `qw10`, `qw12` — are lost with the whole board in
+view, so the whiteout is not what decides them.
 
-| war | mission | tier | win% | median day | deadline | odds | income | most common ending |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| furnace winter | `fw01_dry_taps` | easy | 89% | 4 | — | 0.81 | 0.67 | Your army was destroyed. |
-| furnace winter | `fw02_last_granary` | easy | 44% | 24 | — | 0.67 | 0.67 | Your army was destroyed. |
-| furnace winter | `fw03_cold_relay` | normal | 100% | 3 | — | 1.00 | 0.67 | — |
-| furnace winter | `fw04_ice_road` | normal | 0% | — | — | 0.69 | 0.67 | The fuel sledge went under the ice. |
-| furnace winter | `fw05_powder_ration` | normal | 0% | — | — | 0.67 | 0.67 | Your army was destroyed. |
-| furnace winter | `fw06_first_thaw` | normal | 0% | — | — | 0.56 | 0.33 | Your army was destroyed. |
-| furnace winter | `fw07_pipeline_east` | normal | 0% | — | — | 1.60 | 0.50 | Your army was destroyed. |
-| furnace winter | `fw08_pipeline_west` | normal | 0% | — | — | 1.60 | 1.00 | (still running) |
-| furnace winter | `fw09_coalyard_junction` | normal | 22% | 13 | — | 1.14 | 0.50 | More than five of our units left the column, however they went. |
-| furnace winter | `fw10_ashen_crossing` | hard | 11% | 14 | — | 0.94 | 0.40 | Your army was destroyed. |
-| furnace winter | `fw11_signal_hill` | hard | 0% | — | — | 0.76 | 0.40 | Your army was destroyed. |
-| furnace winter | `fw12_last_mile` | hard | 0% | — | — | 0.94 | 0.40 | Your army was destroyed. |
-| furnace winter | `fw13_foundry_gate` | hard | 0% | — | — | 0.71 | 0.75 | Your army was destroyed. |
-| furnace winter | `fw14_slag_row` | hard | 33% | 7 | — | 0.71 | 0.75 | More than five of our units left the column, however they went. |
-| furnace winter | `fw15_smelter_yard` | hard | 0% | — | — | 0.62 | 1.00 | More than six of ours lost, to any cause. The yard crews can replace machines, not columns. |
-| furnace winter | `fw16_arsenal_road` | hard | 0% | — | — | 0.71 | 0.75 | More than five of our units left the line, however they went. |
-| furnace winter | `fw17_the_stacks` | hard | 0% | — | — | 0.71 | 0.75 | Your army was destroyed. |
-| furnace winter | `fw18_vales_furnace` | hard | 0% | — | — | 0.71 | 0.75 | Your army was destroyed. |
-| six marshals | `sm01_border_toll` | normal | 100% | 3 | — | 1.08 | 1.00 | — |
-| six marshals | `sm02_ambush_pass` | normal | 100% | 4 | — | 1.00 | 1.00 | — |
-| six marshals | `sm03_the_long_watch` | normal | 89% | 6 | — | 0.67 | 1.00 | Ferrow was paid by the kill — more than three of ours lost, to any cause. |
-| six marshals | `sm04_the_foundry_gate` | normal | 100% | 4 | — | 0.86 | 1.00 | — |
-| six marshals | `sm05_the_open_ledger` | normal | 100% | 7 | — | 1.00 | 1.00 | — |
-| six marshals | `sm06_the_toll_bridge` | normal | 100% | 8 | 12 | 1.00 | 1.00 | — |
-| six marshals | `sm07_the_watchtower` | normal | 11% | 8 | — | 1.00 | 1.00 | Orlov hunted what limped — more than eleven of ours lost, to any cause. |
-| six marshals | `sm08_close_quarters` | normal | 100% | 7 | — | 1.00 | 1.00 | — |
-| six marshals | `sm09_broken_ground` | normal | 100% | 7 | — | 1.00 | 1.00 | — |
-| six marshals | `sm10_first_blood` | hard | 0% | — | — | 1.00 | 1.00 | Your army was destroyed. |
-| six marshals | `sm11_the_running_tally` | hard | 100% | 6 | — | 1.00 | 1.00 | — |
-| six marshals | `sm12_the_narrow_crossing` | hard | 100% | 4 | — | 1.00 | 1.00 | — |
-| six marshals | `sm13_the_narrow_gate` | hard | 0% | — | — | 0.62 | 1.00 | Your army was destroyed. |
-| six marshals | `sm14_the_treeline` | hard | 89% | 4 | — | 0.58 | 1.00 | Your army was destroyed. |
-| six marshals | `sm15_the_last_span` | hard | 100% | 7 | 11 | 0.61 | 1.00 | — |
-| six marshals | `sm16_the_wide_field` | hard | 0% | — | — | 1.00 | 1.00 | Hammerfall took whatever stood together — more than eleven of ours lost, to any cause. |
-| six marshals | `sm17_scattered_ground` | hard | 100% | 6 | — | 1.00 | 1.00 | — |
-| six marshals | `sm18_the_last_terror` | hard | 100% | 9 | — | 1.00 | 1.00 | — |
-| collection | `tc01_the_ledger_opens` | normal | 100% | 5 | — | 1.00 | 1.00 | — |
-| collection | `tc02_named_in_the_audit` | normal | 78% | 14 | — | 1.00 | 1.00 | Your army was destroyed. |
-| collection | `tc03_the_supply_chain` | normal | 0% | — | — | 1.00 | 1.00 | More than eight of ours were lost holding the road. |
-| collection | `tc04_the_garrison_auction` | normal | 67% | 17 | — | 1.00 | 1.00 | Your army was destroyed. |
-| collection | `tc05_the_tally_post` | normal | 100% | 4 | — | 1.00 | 1.00 | — |
-| collection | `tc06_the_seized_province` | normal | 56% | 8 | — | 1.00 | 1.00 | More than eight units lost, counting any merged into another. |
-| collection | `tc07_the_blockade` | normal | 0% | — | — | 0.69 | 0.75 | Your army was destroyed. |
-| collection | `tc08_silencing_the_witness` | normal | 0% | — | — | 0.56 | 0.60 | The auditor's escort was destroyed. |
-| collection | `tc09_the_listening_posts` | normal | 0% | — | — | 0.60 | 0.50 | Your army was destroyed. |
-| collection | `tc10_the_squeeze` | normal | 100% | 7 | 11 | 0.41 | 0.40 | — |
-| collection | `tc11_the_comeback` | hard | 0% | — | — | 0.69 | 0.33 | Your army was destroyed. |
-| collection | `tc12_the_counting_house` | hard | 0% | — | — | 0.63 | 0.75 | Your army was destroyed. |
-| collection | `tc13_crossing_the_line` | hard | 11% | 5 | — | 1.00 | 1.00 | More than eight units lost — the crossing was anything but clean. |
-| collection | `tc14_draegs_line` | hard | 100% | 6 | — | 1.45 | 1.00 | — |
-| collection | `tc15_the_foundry_chain` | hard | 0% | — | — | 1.00 | 1.00 | More than nine units lost — the column stopped being spread. |
-| collection | `tc16_out_producing_the_foundry` | hard | 89% | 7 | — | 1.00 | 1.00 | Your army was destroyed. |
-| collection | `tc17_the_foundry_core` | hard | 89% | 8 | — | 1.00 | 1.00 | Your army was destroyed. |
-| collection | `tc18_closing_the_ledger` | hard | 33% | 14 | — | 1.00 | 1.00 | Your army was destroyed. |
-| hollow crown | `hc01_border_skirmish` | easy | 0% | — | — | 1.00 | 1.00 | Your army was destroyed. |
-| hollow crown | `hc02_river_line` | easy | 33% | 18 | — | 1.00 | 1.00 | Your army was destroyed. |
-| hollow crown | `hc03_the_garrison` | normal | 11% | 13 | — | 1.00 | 1.00 | Your army was destroyed. |
-| hollow crown | `hc04_watchtower` | normal | 11% | 22 | — | 1.00 | 1.00 | (still running) |
-| hollow crown | `hc05_the_ultimatum` | normal | 0% | — | — | 1.00 | 1.00 | Your army was destroyed. |
-| hollow crown | `hc06_the_crack` | normal | 33% | 23 | — | 1.00 | 1.00 | (still running) |
-| hollow crown | `hc07_uneasy_alliance` | normal | 100% | 5 | — | 1.00 | 1.00 | — |
-| hollow crown | `hc08_shared_supply` | normal | 100% | 6 | — | 1.00 | 1.00 | — |
-| hollow crown | `hc09_the_crossroads` | normal | 100% | 6 | — | 1.00 | 1.00 | — |
-| hollow crown | `hc10_broken_column` | hard | 100% | 5 | — | 1.00 | 1.00 | — |
-| hollow crown | `hc11_two_fronts` | hard | 100% | 3 | — | 1.00 | 1.00 | — |
-| hollow crown | `hc12_the_bargain_kept` | hard | 100% | 6 | — | 1.00 | 1.00 | — |
-| hollow crown | `hc13_the_capital_road` | hard | 11% | 24 | — | 0.93 | 1.00 | Your army was destroyed. |
-| hollow crown | `hc14_last_garrison` | hard | 89% | 12 | — | 1.00 | 1.00 | (still running) |
-| hollow crown | `hc15_the_regents_gate` | hard | 0% | — | — | 1.00 | 1.00 | Your army was destroyed. |
-| hollow crown | `hc16_siege_lines` | hard | 100% | 4 | — | 1.00 | 0.75 | — |
-| hollow crown | `hc17_the_high_seat` | hard | 89% | 17 | — | 1.00 | 1.00 | (still running) |
-| hollow crown | `hc18_the_hollow_crown` | hard | 0% | — | — | 0.89 | 1.00 | Your army was destroyed. |
-| long front | `lf01_customs_line` | easy | 0% | — | — | 0.71 | 1.00 | The refugee column was lost on the customs road. |
-| long front | `lf02_the_last_causeway` | easy | 100% | 6 | — | 0.43 | 1.00 | — |
-| long front | `lf03_riptide_landing` | easy | 0% | — | — | 0.61 | 1.00 | The coast watch was caught on the beach road. |
-| long front | `lf04_seawall_retreat` | easy | 11% | 5 | — | 0.58 | 1.00 | Your army was destroyed. |
-| long front | `lf05_greenwood_ambuscade` | easy | 100% | 6 | — | 0.55 | 1.00 | — |
-| long front | `lf06_the_last_grove` | easy | 89% | 6 | — | 0.55 | 1.00 | Your army was destroyed. |
-| long front | `lf07_the_narrows` | normal | 0% | — | — | 0.47 | 2.00 | Your army was destroyed. |
-| long front | `lf08_after_hammerfall` | normal | 0% | — | — | 0.79 | 1.00 | Your army was destroyed. |
-| long front | `lf09_the_bridge_at_carrow` | normal | 0% | — | — | 0.79 | 0.50 | Your army was destroyed. |
-| long front | `lf10_the_supply_line` | normal | 0% | — | — | 0.57 | 1.00 | Your army was destroyed. |
-| long front | `lf11_iron_hill` | normal | 0% | — | — | 0.57 | 1.00 | Your army was destroyed. |
-| long front | `lf12_the_forward_camp` | normal | 22% | 9 | — | 0.85 | 0.50 | Your army was destroyed. |
-| long front | `lf13_the_foothill_road` | hard | 56% | 20 | — | 0.95 | 1.33 | (still running) |
-| long front | `lf14_the_high_passes` | hard | 0% | — | — | 0.88 | 1.00 | Your army was destroyed. |
-| long front | `lf15_the_airfield_raid` | hard | 100% | 4 | — | 1.05 | 1.00 | — |
-| long front | `lf16_reckoning_at_averyn_pass` | hard | 0% | — | — | 0.80 | 1.00 | Your army was destroyed. |
-| long front | `lf17_the_shadow_of_the_keep` | hard | 0% | — | — | 1.19 | 1.00 | More than nine units lost, from any cause — nothing left to arrive with. |
-| long front | `lf18_the_keep_at_draeg_hold` | hard | 0% | — | — | 0.89 | 1.00 | Your army was destroyed. |
-| quiet war | `qw01_the_flipped_town` | easy | 100% | 3 | — | 0.62 | 0.50 | — |
-| quiet war | `qw02_the_column_in_the_pines` | easy | 100% | 4 | — | 1.60 | 0.50 | — |
-| quiet war | `qw03_quiet_ground` | easy | 44% | 12 | — | 1.60 | 1.00 | Your army was destroyed. |
-| quiet war | `qw04_the_governors_scandal` | normal | 0% | — | — | 0.62 | 0.50 | Your army was destroyed. |
-| quiet war | `qw05_the_watch_at_thornfield` | normal | 56% | 6 | — | 1.00 | 2.00 | More than 3 of ours lost in the wood line, to any cause. |
-| quiet war | `qw06_the_forward_safehouse` | easy | 0% | — | — | 0.69 | 1.00 | Your army was destroyed. |
-| quiet war | `qw07_the_cache_at_millhollow` | normal | 0% | — | — | 0.67 | 0.50 | Your army was destroyed. |
-| quiet war | `qw08_the_waystation` | normal | 0% | — | — | 0.83 | 0.50 | Your army was destroyed. |
-| quiet war | `qw09_ambush_ground` | normal | 100% | 5 | — | 1.60 | 1.00 | — |
-| quiet war | `qw10_the_relay_tower` | normal | 0% | — | — | 0.67 | 0.50 | Your army was destroyed. |
-| quiet war | `qw11_the_raid_points` | normal | 100% | 4 | — | 1.60 | 1.00 | — |
-| quiet war | `qw12_the_network_node` | hard | 0% | — | — | 0.62 | 0.50 | Your army was destroyed. |
-| quiet war | `qw13_the_open_field` | hard | 0% | — | — | 0.74 | 1.00 | Your army was destroyed. |
-| quiet war | `qw14_the_daylight_march` | hard | 89% | 10 | — | 1.06 | 1.00 | (still running) |
-| quiet war | `qw15_the_engineering_works` | hard | 0% | — | — | 1.29 | 0.75 | Your army was destroyed. |
-| quiet war | `qw16_holding_the_line_in_the_open` | hard | 0% | — | — | 0.73 | 1.50 | Your army was destroyed. |
-| quiet war | `qw17_the_last_outpost` | hard | 0% | — | — | 0.94 | 1.00 | Your army was destroyed. |
-| quiet war | `qw18_the_man_himself` | hard | 100% | 6 | — | 0.87 | 0.67 | — |
+| war | mission | tier | win% | fog win% | median day | deadline | odds | income | most common ending |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| furnace winter | `fw01_dry_taps` | easy | 89% | — | 4 | — | 0.81 | 0.67 | Your army was destroyed. |
+| furnace winter | `fw02_last_granary` | easy | 44% | — | 24 | — | 0.67 | 0.67 | Your army was destroyed. |
+| furnace winter | `fw03_cold_relay` | normal | 100% | 0% | 3 | — | 1.00 | 0.67 | — |
+| furnace winter | `fw04_ice_road` | normal | 0% | — | — | — | 0.69 | 0.67 | The fuel sledge went under the ice. |
+| furnace winter | `fw05_powder_ration` | normal | 0% | — | — | — | 0.67 | 0.67 | Your army was destroyed. |
+| furnace winter | `fw06_first_thaw` | normal | 0% | — | — | — | 1.00 | 0.33 | Your army was destroyed. |
+| furnace winter | `fw07_pipeline_east` | normal | 0% | — | — | — | 1.60 | 0.50 | Your army was destroyed. |
+| furnace winter | `fw08_pipeline_west` | normal | 0% | — | — | — | 1.60 | 1.00 | (still running) |
+| furnace winter | `fw09_coalyard_junction` | normal | 22% | — | 14 | — | 1.14 | 0.50 | More than five of our units left the column, however they went. |
+| furnace winter | `fw10_ashen_crossing` | hard | 11% | — | 14 | — | 0.94 | 0.40 | Your army was destroyed. |
+| furnace winter | `fw11_signal_hill` | hard | 0% | — | — | — | 0.76 | 0.40 | Your army was destroyed. |
+| furnace winter | `fw12_last_mile` | hard | 11% | — | 23 | — | 0.94 | 0.40 | Your army was destroyed. |
+| furnace winter | `fw13_foundry_gate` | hard | 0% | — | — | — | 0.71 | 0.75 | Your army was destroyed. |
+| furnace winter | `fw14_slag_row` | hard | 33% | — | 7 | — | 0.71 | 0.75 | More than five of our units left the column, however they went. |
+| furnace winter | `fw15_smelter_yard` | hard | 0% | — | — | — | 0.62 | 1.00 | More than six of ours lost, to any cause. The yard crews can replace machines, not columns. |
+| furnace winter | `fw16_arsenal_road` | hard | 0% | — | — | — | 0.71 | 0.75 | More than five of our units left the line, however they went. |
+| furnace winter | `fw17_the_stacks` | hard | 0% | 0% | — | — | 0.71 | 0.75 | Your army was destroyed. |
+| furnace winter | `fw18_vales_furnace` | hard | 0% | — | — | — | 0.71 | 0.75 | Your army was destroyed. |
+| six marshals | `sm01_border_toll` | normal | 100% | — | 3 | — | 1.08 | 1.00 | — |
+| six marshals | `sm02_ambush_pass` | normal | 100% | — | 4 | — | 1.00 | 1.00 | — |
+| six marshals | `sm03_the_long_watch` | normal | 89% | — | 6 | — | 0.67 | 1.00 | Ferrow was paid by the kill — more than three of ours lost, to any cause. |
+| six marshals | `sm04_the_foundry_gate` | normal | 100% | — | 4 | — | 0.86 | 1.00 | — |
+| six marshals | `sm05_the_open_ledger` | normal | 100% | — | 7 | — | 1.00 | 1.00 | — |
+| six marshals | `sm06_the_toll_bridge` | normal | 100% | — | 8 | 12 | 1.00 | 1.00 | — |
+| six marshals | `sm07_the_watchtower` | normal | 11% | — | 8 | — | 1.00 | 1.00 | Orlov hunted what limped — more than eleven of ours lost, to any cause. |
+| six marshals | `sm08_close_quarters` | normal | 100% | — | 7 | — | 1.00 | 1.00 | — |
+| six marshals | `sm09_broken_ground` | normal | 100% | — | 7 | — | 1.00 | 1.00 | — |
+| six marshals | `sm10_first_blood` | hard | 0% | — | — | — | 1.00 | 1.00 | Your army was destroyed. |
+| six marshals | `sm11_the_running_tally` | hard | 100% | — | 6 | — | 1.00 | 1.00 | — |
+| six marshals | `sm12_the_narrow_crossing` | hard | 100% | — | 4 | — | 1.00 | 1.00 | — |
+| six marshals | `sm13_the_narrow_gate` | hard | 0% | — | — | — | 0.62 | 1.00 | Your army was destroyed. |
+| six marshals | `sm14_the_treeline` | hard | 89% | — | 4 | — | 0.58 | 1.00 | Your army was destroyed. |
+| six marshals | `sm15_the_last_span` | hard | 100% | — | 7 | 11 | 0.61 | 1.00 | — |
+| six marshals | `sm16_the_wide_field` | hard | 0% | — | — | — | 1.00 | 1.00 | Hammerfall took whatever stood together — more than eleven of ours lost, to any cause. |
+| six marshals | `sm17_scattered_ground` | hard | 100% | — | 6 | — | 1.00 | 1.00 | — |
+| six marshals | `sm18_the_last_terror` | hard | 100% | — | 9 | — | 1.00 | 1.00 | — |
+| collection | `tc01_the_ledger_opens` | normal | 100% | — | 5 | — | 1.00 | 1.00 | — |
+| collection | `tc02_named_in_the_audit` | normal | 78% | — | 14 | — | 1.00 | 1.00 | Your army was destroyed. |
+| collection | `tc03_the_supply_chain` | normal | 0% | — | — | — | 1.00 | 1.00 | More than eight of ours were lost holding the road. |
+| collection | `tc04_the_garrison_auction` | normal | 67% | — | 17 | — | 1.00 | 1.00 | Your army was destroyed. |
+| collection | `tc05_the_tally_post` | normal | 100% | — | 4 | — | 1.00 | 1.00 | — |
+| collection | `tc06_the_seized_province` | normal | 56% | — | 8 | — | 1.00 | 1.00 | More than eight units lost, counting any merged into another. |
+| collection | `tc07_the_blockade` | normal | 0% | — | — | — | 0.69 | 0.75 | Your army was destroyed. |
+| collection | `tc08_silencing_the_witness` | normal | 0% | — | — | — | 0.89 | 0.60 | The auditor's escort was destroyed. |
+| collection | `tc09_the_listening_posts` | normal | 0% | — | — | — | 0.60 | 0.50 | Your army was destroyed. |
+| collection | `tc10_the_squeeze` | normal | 100% | — | 7 | 11 | 0.41 | 0.40 | — |
+| collection | `tc11_the_comeback` | hard | 0% | — | — | — | 0.69 | 0.33 | Your army was destroyed. |
+| collection | `tc12_the_counting_house` | hard | 0% | — | — | — | 0.63 | 0.75 | Your army was destroyed. |
+| collection | `tc13_crossing_the_line` | hard | 11% | — | 5 | — | 1.00 | 1.00 | More than eight units lost — the crossing was anything but clean. |
+| collection | `tc14_draegs_line` | hard | 100% | — | 6 | — | 1.45 | 1.00 | — |
+| collection | `tc15_the_foundry_chain` | hard | 0% | — | — | — | 1.00 | 1.00 | More than nine units lost — the column stopped being spread. |
+| collection | `tc16_out_producing_the_foundry` | hard | 89% | — | 7 | — | 1.00 | 1.00 | Your army was destroyed. |
+| collection | `tc17_the_foundry_core` | hard | 89% | — | 8 | — | 1.00 | 1.00 | Your army was destroyed. |
+| collection | `tc18_closing_the_ledger` | hard | 33% | — | 14 | — | 1.00 | 1.00 | Your army was destroyed. |
+| hollow crown | `hc01_border_skirmish` | easy | 100% | — | 7 | — | 1.00 | 1.00 | — |
+| hollow crown | `hc02_river_line` | easy | 33% | — | 18 | — | 1.00 | 1.00 | Your headquarters fell. |
+| hollow crown | `hc03_the_garrison` | normal | 11% | — | 13 | — | 1.00 | 1.00 | Your army was destroyed. |
+| hollow crown | `hc04_watchtower` | normal | 78% | — | 19 | — | 1.00 | 1.00 | Your army was destroyed. |
+| hollow crown | `hc05_the_ultimatum` | normal | 0% | — | — | — | 1.00 | 1.00 | Your army was destroyed. |
+| hollow crown | `hc06_the_crack` | normal | 33% | — | 21 | — | 1.00 | 1.00 | (still running) |
+| hollow crown | `hc07_uneasy_alliance` | normal | 100% | — | 5 | — | 1.00 | 1.00 | — |
+| hollow crown | `hc08_shared_supply` | normal | 100% | — | 6 | — | 1.00 | 1.00 | — |
+| hollow crown | `hc09_the_crossroads` | normal | 100% | — | 6 | — | 1.00 | 1.00 | — |
+| hollow crown | `hc10_broken_column` | hard | 100% | — | 5 | — | 1.00 | 1.00 | — |
+| hollow crown | `hc11_two_fronts` | hard | 100% | — | 3 | — | 1.00 | 1.00 | — |
+| hollow crown | `hc12_the_bargain_kept` | hard | 100% | — | 6 | — | 1.00 | 1.00 | — |
+| hollow crown | `hc13_the_capital_road` | hard | 11% | — | 24 | — | 0.93 | 1.00 | Your army was destroyed. |
+| hollow crown | `hc14_last_garrison` | hard | 89% | — | 12 | — | 1.00 | 1.00 | (still running) |
+| hollow crown | `hc15_the_regents_gate` | hard | 0% | — | — | — | 1.00 | 1.00 | Your army was destroyed. |
+| hollow crown | `hc16_siege_lines` | hard | 100% | — | 4 | — | 1.00 | 0.75 | — |
+| hollow crown | `hc17_the_high_seat` | hard | 89% | — | 17 | — | 1.00 | 1.00 | (still running) |
+| hollow crown | `hc18_the_hollow_crown` | hard | 0% | — | — | — | 0.89 | 1.00 | Your army was destroyed. |
+| long front | `lf01_customs_line` | easy | 0% | — | — | — | 0.71 | 1.00 | The refugee column was lost on the customs road. |
+| long front | `lf02_the_last_causeway` | easy | 100% | — | 6 | — | 0.43 | 1.00 | — |
+| long front | `lf03_riptide_landing` | easy | 0% | — | — | — | 0.39 | 1.00 | The coast watch was caught on the beach road. |
+| long front | `lf04_seawall_retreat` | easy | 100% | — | 5 | — | 1.04 | 2.00 | — |
+| long front | `lf05_greenwood_ambuscade` | easy | 100% | — | 6 | — | 0.55 | 1.00 | — |
+| long front | `lf06_the_last_grove` | easy | 89% | — | 6 | — | 0.55 | 1.00 | Your army was destroyed. |
+| long front | `lf07_the_narrows` | normal | 0% | — | — | — | 0.47 | 2.00 | Your army was destroyed. |
+| long front | `lf08_after_hammerfall` | normal | 0% | — | — | — | 0.79 | 1.00 | Your army was destroyed. |
+| long front | `lf09_the_bridge_at_carrow` | normal | 0% | — | — | — | 0.79 | 0.50 | Your army was destroyed. |
+| long front | `lf10_the_supply_line` | normal | 0% | — | — | — | 0.57 | 1.00 | Your army was destroyed. |
+| long front | `lf11_iron_hill` | normal | 0% | — | — | — | 0.57 | 1.00 | Your army was destroyed. |
+| long front | `lf12_the_forward_camp` | normal | 22% | — | 9 | — | 0.85 | 0.50 | Your army was destroyed. |
+| long front | `lf13_the_foothill_road` | hard | 44% | — | 13 | — | 0.95 | 1.33 | (still running) |
+| long front | `lf14_the_high_passes` | hard | 0% | — | — | — | 0.88 | 1.00 | (still running) |
+| long front | `lf15_the_airfield_raid` | hard | 56% | — | 20 | — | 1.05 | 1.00 | (still running) |
+| long front | `lf16_reckoning_at_averyn_pass` | hard | 0% | — | — | — | 0.80 | 1.00 | Your army was destroyed. |
+| long front | `lf17_the_shadow_of_the_keep` | hard | 0% | — | — | — | 1.19 | 1.00 | More than nine units lost, from any cause — nothing left to arrive with. |
+| long front | `lf18_the_keep_at_draeg_hold` | hard | 0% | — | — | — | 0.89 | 1.00 | Your army was destroyed. |
+| quiet war | `qw01_the_flipped_town` | easy | 100% | — | 3 | — | 0.62 | 0.50 | — |
+| quiet war | `qw02_the_column_in_the_pines` | easy | 100% | 100% | 4 | — | 1.60 | 0.50 | — |
+| quiet war | `qw03_quiet_ground` | easy | 44% | 67% | 12 | — | 1.60 | 1.00 | Your headquarters fell. |
+| quiet war | `qw04_the_governors_scandal` | normal | 0% | 0% | — | — | 0.62 | 0.50 | Your army was destroyed. |
+| quiet war | `qw05_the_watch_at_thornfield` | normal | 56% | 56% | 6 | — | 1.00 | 2.00 | More than 3 of ours lost in the wood line, to any cause. |
+| quiet war | `qw06_the_forward_safehouse` | easy | 0% | 0% | — | — | 0.69 | 1.00 | Your army was destroyed. |
+| quiet war | `qw07_the_cache_at_millhollow` | normal | 0% | 0% | — | — | 0.67 | 0.50 | Your army was destroyed. |
+| quiet war | `qw08_the_waystation` | normal | 0% | 0% | — | — | 0.83 | 0.50 | Your army was destroyed. |
+| quiet war | `qw09_ambush_ground` | normal | 100% | 0% | 5 | — | 1.60 | 1.00 | — |
+| quiet war | `qw10_the_relay_tower` | normal | 0% | 0% | — | — | 0.67 | 0.50 | Your army was destroyed. |
+| quiet war | `qw11_the_raid_points` | normal | 100% | 100% | 4 | — | 1.60 | 1.00 | — |
+| quiet war | `qw12_the_network_node` | hard | 0% | 0% | — | — | 0.62 | 0.50 | Your army was destroyed. |
+| quiet war | `qw13_the_open_field` | hard | 11% | — | 10 | — | 0.74 | 1.00 | Your army was destroyed. |
+| quiet war | `qw14_the_daylight_march` | hard | 67% | — | 16 | — | 1.06 | 1.00 | (still running) |
+| quiet war | `qw15_the_engineering_works` | hard | 0% | — | — | — | 1.29 | 0.75 | Your army was destroyed. |
+| quiet war | `qw16_holding_the_line_in_the_open` | hard | 0% | — | — | — | 0.73 | 1.50 | Your army was destroyed. |
+| quiet war | `qw17_the_last_outpost` | hard | 0% | — | — | — | 0.94 | 1.00 | Your army was destroyed. |
+| quiet war | `qw18_the_man_himself` | hard | 100% | — | 6 | — | 0.87 | 0.67 | — |
