@@ -13,7 +13,8 @@ recon's pintle, mech's bazooka, the APC's convoy — draws its parent's
 silhouette.
 
 Every builder takes a `Pose`. A pose is a CLIP and a FRAME: the ambient clip's
-two keys are `A`/`B`, the move clip's are `MOVE_A`/`MOVE_B`. Pose A is the
+two keys are `A`/`B`, the move clip's are `MOVE_A` through `MOVE_D` (S6,
+2026-09-02 — grown from a shuffling pair to a walked four). Pose A is the
 model as it has always been authored; pose B is one hand-placed idle key pose
 of the same machine — a gun laid up, a howitzer recoiled, a rack pitched, a
 nose dipped, a tread walked. The poses are keys, not in-betweens: they never
@@ -35,22 +36,30 @@ is the running gear and the chassis's reaction to it, with the weapons left at
 travel-lock — pose A's gun, not pose B's laid-up or recoiled one, because a
 vehicle on the move does not lay its gun.
 
-BOTH move frames carry an ATTITUDE, and that is the clip's first rule. A move
+EVERY move frame carries an ATTITUDE, and that is the clip's first rule. A move
 frame that reused the parked model would put a rolling column pixel for pixel
 alongside a stopped one on half of every beat, which is what the land family
 shipped when the clip landed: MOVE_A was byte-identical to pose A. So the land
-vehicles stand ONE END of the chassis a whole board texel up on MOVE_A — the
-nose for seven of the eight, the weight gone back over the drivers as the
+vehicles stand ONE END of the chassis a whole board texel up on MOVE_A/MOVE_C —
+the nose for seven of the eight, the weight gone back over the drivers as the
 machine pulls away and the front of the running gear off the ground; the tail
 on the rockets truck, whose cast shadow cannot afford the nose (see
-`rockets`) — and take the off-beat from the chassis too: the whole hull
-jolting that texel of ride height clear of the ground (`_roll`), or, where
-lifting all of a low hull would raise its silhouette into a neighbour's, the
-OTHER end rising instead (the MBT rocks tail-up, see `tank`) or a sprung
+`rockets`) — and take the off-beat from the chassis on MOVE_B/MOVE_D too: the
+whole hull jolting that texel of ride height clear of the ground (`_roll`), or,
+where lifting all of a low hull would raise its silhouette into a neighbour's,
+the OTHER end rising instead (the MBT rocks tail-up, see `tank`) or a sprung
 sub-assembly riding up over a level chassis (the scout's cabin, see `recon`).
-Under it the tread stripe walks a half period, and `_tread_phase` starts the
-move clip on the opposite foot from the ambient one so the parked frame and
-the frame under way never stand at the same point in the stripe either.
+The chassis attitude is the two-frame reading HELD across the four — the
+family's own two authored keys, played twice a cycle (`beat(pose) % 2`) — and
+what makes the clip a walk rather than a repeat is the tread: `_track`'s link
+stripe now steps a QUARTER period on every one of the four frames
+(`_tread_phase`), so a full stride crosses the whole 8-voxel run once per
+640 ms cycle instead of flipping between two halves of it. The foot family
+alone earns a genuinely four-key gait (`infantry`/`mech`, contact-lead /
+passing / contact-lead-mirrored / passing), because a figure's stride is the
+one motion on the sheet with a real third and fourth thing to say; every other
+family's `beat(pose) % 2` interpolates its existing pair across the extra two
+frames rather than authoring new attitudes for them.
 
 Only the uids in `MOVES` author the move clip; every other unit falls back to
 its ambient counterpart in `build_model`, so the move sheets are valid from
@@ -59,17 +68,22 @@ fallback is also why a builder's pose test has to say which question it asks:
 
 * `if pose is Pose.B` is an AMBIENT-only branch — the idle beat, and nothing
   else. A move pose reaching that builder must not fall into it.
-* `if beat(pose)` is the off-beat KEY a builder authors (B or MOVE_B) — for
-  anything whose MODEL ticks with the frame regardless of clip, such as a
-  rotor blade phase. The fire clip is outside it on purpose: its second key is
-  hand-authored for `FIRE_PAIRS` and by nobody else, so a single-shot weapon
-  draws one model into both fire frames. What every clip's second FRAME does
-  share is its PLACEMENT — `off_beat`, which `atlas.cell_placement` asks for
-  the air/sea bob and a builder never does.
+* `beat(pose)` answers WHERE in its own clip's cycle a pose sits — 0/1 for the
+  ambient pair, 0-3 for the move clip's four — for anything whose MODEL ticks
+  with the FRAME rather than with the clip, such as a rotor blade phase or the
+  rifleman's stride; `beat(pose) % 2` is the same question asked as the old
+  boolean, for a family that plays its two authored keys twice across the
+  four move frames rather than authoring new ones. The fire clip is outside
+  it on purpose: its second key is hand-authored for `FIRE_PAIRS` and by
+  nobody else, so a single-shot weapon draws one model into both fire frames.
+  What every clip's second FRAME does share is its PLACEMENT — `off_beat`,
+  which `atlas.cell_placement` asks for the air/sea bob and a builder never
+  does.
 
-An `else` that quietly means "pose B" is the trap: with four poses,
-`X if pose is Pose.A else Y` hands MOVE_A the B branch. Write the beat side as
-the condition (`Y if beat(pose) else X`) so an unlisted pose lands on A.
+An `else` that quietly means "pose B" is the trap: with six or more poses,
+`X if pose is Pose.A else Y` hands every one of them but A the Y branch. Write
+the beat side as the condition (`Y if beat(pose) % 2 else X`, or a lookup keyed
+on `beat(pose)` for a genuine four-way branch) so an unlisted pose lands on A.
 """
 
 from __future__ import annotations

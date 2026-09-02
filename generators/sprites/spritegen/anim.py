@@ -81,19 +81,27 @@ FIRE_SHEETS: tuple[str, ...] = (
 AMBIENT_MS = 500
 
 # The move clip: the same 18x5 grid, the same cell rects, one frame per key of
-# a unit under way. One facing only — the art faces +y, which the projection
-# puts at screen lower-LEFT (`voxel` header: "+y toward screen lower-left,
-# units face +y"), so these sheets are the LEFT-facing clip and the consumer
-# mirrors them about the cell centre for a rightward move. Nothing in a move
-# frame may encode screen-handedness; a mirrored rifleman leading with the
-# other leg is correct.
-MOVE_SHEETS: tuple[str, ...] = ("units_atlas_move.png", "units_atlas_move_b.png")
-# Milliseconds per move frame. The board tweens one cell per 0.06 s x
-# anim_scale — 0.18 s/cell at the normal tier, 0.12 s at quick — so 160 ms is
-# about one stride per cell crossed, which is the whole reason a walk cycle
-# reads instead of skating. It is also deliberately coprime-ish with the other
-# two cadences: it neither divides nor multiplies 500 (ambient) or 900 (sea),
-# so a moving unit, an idling one and the water never turn over on one tick.
+# a unit under way — four of them since S6 (2026-09-02), where a two-frame
+# shuffle grew into a walked gait. One facing only — the art faces +y, which
+# the projection puts at screen lower-LEFT (`voxel` header: "+y toward screen
+# lower-left, units face +y"), so these sheets are the LEFT-facing clip and
+# the consumer mirrors them about the cell centre for a rightward move.
+# Nothing in a move frame may encode screen-handedness; a mirrored rifleman
+# leading with the other leg is correct.
+MOVE_SHEETS: tuple[str, ...] = (
+    "units_atlas_move.png",
+    "units_atlas_move_b.png",
+    "units_atlas_move_c.png",
+    "units_atlas_move_d.png",
+)
+# Milliseconds per move frame — unchanged by the frame count, S6's own lock:
+# the board tweens one cell per 0.06 s x anim_scale — 0.18 s/cell at the
+# normal tier, 0.12 s at quick — so 160 ms is about one stride per cell
+# crossed, which is the whole reason a walk cycle reads instead of skating.
+# Four frames at the same rate puts a full gait cycle at 640 ms rather than
+# 320. It is also deliberately coprime-ish with the other two cadences: it
+# neither divides nor multiplies 500 (ambient) or 900 (sea), so a moving
+# unit, an idling one and the water never turn over on one tick.
 MOVE_MS = 160
 
 # The sea's clip: the same three spatial phases in the same column order, once

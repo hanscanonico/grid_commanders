@@ -316,6 +316,43 @@ forms named in the root index are in `docs/design_record.md`.
   `refresh()`. **The mirror is the CLIP'S and ends with it**, because the ambient pair's cast shadow
   is not cell-centred and a unit left mirrored at rest drops its shadow to the other side of itself.
   An unauthored unit needs no fallback code; `tests/unit/test_move_frames.gd` pins all of it.
+  **The move clip grew from two frames to four (animation-frames S6, 2026-09-02)**, the plan's one
+  structural slice: **`BoardBeat.frame_at`/`frame` took a defaulted `frames := 2` parameter**, so
+  every ambient/sea call site reads unchanged, and **`UnitSprite._sheet_path(frame)` indexes a
+  per-clip array** (`UNITS_ATLAS_SHEETS`, two entries; `UNITS_ATLAS_MOVE_SHEETS`, four —
+  `units_atlas_move_c.png` / `_d.png` the new pair) rather than a ternary, with `_frame_count()`
+  sized off whichever array is playing. The gait cadence (`MOVE_MS` 160) is unchanged, so the full
+  cycle is 640 ms; `Instant` and the capture pin still land on frame A by construction, since both
+  route through `BoardBeat.frozen`/`Settings.speed.instant` before the frame count is ever asked.
+  On the generator side `units.pose.beat(pose)` changed shape with it: it answers a POSITION in the
+  pose's own clip (0/1 ambient, 0-3 move) rather than a boolean, so a rotor disc can key a four-tick
+  table off it directly (`parts.BLADES`) and a builder that only ever had one delta to repeat asks
+  `beat(pose) % 2` for the old two-key alternation. **MOVE_A and MOVE_B stay the shipped art, pixel
+  for pixel, in every family** — the legibility ratchet already holds a verdict on both, and moving
+  either costs already-passing cells for no claim this slice makes about them — so every new thing a
+  family has to say lives on MOVE_C and MOVE_D alone. Three readings, all pinned by
+  `generators/sprites/tests/test_clips.py GaitPhases`: the **foot pair** (`infantry`, `mech`) earns a
+  genuine four-key gait, but the two builders spend the constraint differently — `infantry`'s
+  `beat(pose)` swaps the lead leg at frame 2 and back at frame 3, so its own cycle already reads
+  contact-L / passing / contact-R / passing across all four keys, while `mech`'s scissor has no
+  passing key at all until S6 (MOVE_A/MOVE_B are its shipped instant swap, `swing=1` then `swing=6`),
+  so MOVE_C and MOVE_D are two PASSING steps back to back — `_mech_legs(m, gather=1)` then `gather=2`,
+  two magnitudes rather than one repeated, since the pair sits between two already-fixed contacts and
+  has to read as two distinct steps entirely on its own; the negative sign (gathered forward) was
+  measured and dropped, reading closer to the rifleman's own silhouette than to the trooper's
+  (`generators/sprites/tests/test_board_read.py Silhouette`). The **five tracked hulls** (`tank`, `md_tank`, `anti_air`,
+  `artillery`, `apc`) keep their two-key chassis attitude (`beat(pose) % 2`) and gain a genuine
+  quarter-phase tread crawl instead — `parts._track`'s link stripe steps `2 * phase` rather than
+  `4 * phase`, with `_tread_phase` holding MOVE_A/MOVE_B at the exact two quarters they always stood
+  at and handing MOVE_C/MOVE_D the two quarters between them, so the move clip's four visit all four
+  quarter-positions of the run's own period once a cycle. The **two copters** (`b_copter`,
+  `t_copter`) read a real four-tick rotor off the same `beat(pose)` index, `parts.BLADES` grown from
+  two ticks to four by the construction `_BLADE_B` already used from `_BLADE_A`; every other family
+  — wheeled (`recon`, `rockets`, `missiles`), the two fixed-wing jets and the four sea hulls —
+  interpolates its existing two-frame motion across the extra pair (`GaitPhases.REUSED`), MOVE_C and
+  MOVE_D byte-identical to MOVE_A and MOVE_B. `b_copter`'s S5-deferred fire-window rotor freeze is
+  untouched: `beat`'s table answers FIRE_A and FIRE_B both 0, so the contour budget that deferred it
+  (52.48% against the 52% bar) never re-opens.
   **The ninth slice is the cut-ins' idle beat** — `UnitSprite.figure_texture_for` grew a
   **defaulted** `frame` and stays the one way to ask for a figure, and
   **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the arithmetic, read off the director's own `t`

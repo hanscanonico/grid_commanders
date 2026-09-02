@@ -36,6 +36,7 @@ from spritegen.units import (
     UNITS,
     Pose,
     build_model,
+    off_beat,
 )
 
 from pixel_helpers import pose_cell, units_sheet
@@ -278,26 +279,38 @@ class ReconSweep(unittest.TestCase):
 class Bob(unittest.TestCase):
     """The air/sea bob ticks with the FRAME, not with the clip.
 
-    Asked of EVERY two-frame clip rather than of the fire pair alone, since
+    Asked of every multi-frame clip rather than of the fire pair alone, since
     what breaks is silent: the cut-in swaps the fire pair in and out
     mid-window on the same 500 ms director's clock the idle pair runs on
-    (`CutsceneSide._figure_now`), so a clip whose second frame sat at the
-    first's altitude would step the figure `BOB_PX` the moment the window
+    (`CutsceneSide._figure_now`), so a clip whose off-beat frame sat at the
+    rest one's altitude would step the figure `BOB_PX` the moment the window
     opened or closed — a pop no still frame of a posed capture can show.
     A land unit's origin is pose-invariant instead: its own beat is authored
     in the model (`parts._roll`), never in the placement.
+
+    The move clip's own four frames (S6, 2026-09-02) are read against
+    `poses[0]` rather than unpacked as a pair, and each is asked by
+    `units.off_beat` rather than by position — MOVE_C is a rest frame like
+    MOVE_A, MOVE_D an off-beat one like MOVE_B — so this still covers every
+    clip CLIP_POSES publishes without a frame-count assumption baked in.
     """
 
-    def test_every_two_frame_clip_lifts_its_off_beat_for_air_and_sea(self):
+    def test_every_clip_lifts_its_off_beat_for_air_and_sea(self):
         for uid, (_, kind) in UNITS.items():
             lift = atlas.BOB_PX if kind in ("air", "sea") else 0
             for clip, poses in CLIP_POSES.items():
                 if len(poses) < 2:
                     continue
                 with self.subTest(unit=uid, clip=clip):
-                    rest, off_beat = (atlas.cell_placement(uid, p) for p in poses)
-                    self.assertEqual(rest.origin[0], off_beat.origin[0])
-                    self.assertEqual(rest.origin[1] - off_beat.origin[1], lift)
+                    rest = atlas.cell_placement(uid, poses[0])
+                    for pose in poses[1:]:
+                        placement = atlas.cell_placement(uid, pose)
+                        expected = lift if off_beat(pose) else 0
+                        with self.subTest(pose=pose.name):
+                            self.assertEqual(placement.origin[0], rest.origin[0])
+                            self.assertEqual(
+                                rest.origin[1] - placement.origin[1], expected
+                            )
 
 
 class ReadDelta(unittest.TestCase):

@@ -125,16 +125,9 @@ def terrain_sheet() -> Image.Image:
 RUNG_1_CELL = (16, 24)
 
 
-def rung1_texels(
-    uid: str, fac: Faction, poses: tuple[Pose, ...] = AMBIENT_POSES
-) -> tuple[int, int]:
-    """Rung-1 texels a clip's two poses disagree on, and how many of those
-    disagreements are the silhouette rather than the tone."""
-    w, h = RUNG_1_CELL
-    pa, pb = (
-        pose_cell(uid, fac, pose).resize(RUNG_1_CELL, Image.NEAREST).load()
-        for pose in poses
-    )
+def _rung1_delta(pa, pb, w: int, h: int) -> tuple[int, int]:
+    """Rung-1 texels two already-loaded frames disagree on, and how many of
+    those disagreements are the silhouette rather than the tone."""
     changed = silhouette = 0
     for y in range(h):
         for x in range(w):
@@ -144,3 +137,30 @@ def rung1_texels(
                 if (ca[3] > 128) != (cb[3] > 128):
                     silhouette += 1
     return changed, silhouette
+
+
+def rung1_texels(
+    uid: str, fac: Faction, poses: tuple[Pose, ...] = AMBIENT_POSES
+) -> tuple[int, int]:
+    """Rung-1 texels a clip's poses disagree on frame-to-frame, worst adjacent
+    step first, and how many of those disagreements are the silhouette rather
+    than the tone.
+
+    A two-pose clip (the ambient pair) has one step, read both ways, so this
+    is unchanged for every caller that predates the move clip's growth to
+    four (S6): the worst of a symmetric pair is itself. A four-pose clip is
+    read AROUND the cycle — A-B, B-C, C-D, D-A — and the worst of the four is
+    what stands for the clip, since a floor exists to catch the QUIETEST step
+    a gait takes, not its busiest.
+    """
+    w, h = RUNG_1_CELL
+    cells = [
+        pose_cell(uid, fac, pose).resize(RUNG_1_CELL, Image.NEAREST).load()
+        for pose in poses
+    ]
+    worst_changed, worst_silhouette = None, None
+    for i in range(len(cells)):
+        changed, silhouette = _rung1_delta(cells[i], cells[(i + 1) % len(cells)], w, h)
+        if worst_silhouette is None or silhouette < worst_silhouette:
+            worst_changed, worst_silhouette = changed, silhouette
+    return worst_changed, worst_silhouette

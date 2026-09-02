@@ -16,6 +16,9 @@ var ambient_a: Image
 var ambient_b: Image
 var move_a: Image
 var move_b: Image
+var move_c: Image
+var move_d: Image
+var move_sheets: Array[Image]
 var opened_at: GameSpeed
 
 
@@ -25,6 +28,9 @@ func before_each() -> void:
 	ambient_b = _sheet(UnitSprite.UNITS_ATLAS_B_PATH)
 	move_a = _sheet(UnitSprite.UNITS_ATLAS_MOVE_PATH)
 	move_b = _sheet(UnitSprite.UNITS_ATLAS_MOVE_B_PATH)
+	move_c = _sheet(UnitSprite.UNITS_ATLAS_MOVE_C_PATH)
+	move_d = _sheet(UnitSprite.UNITS_ATLAS_MOVE_D_PATH)
+	move_sheets = [move_a, move_b, move_c, move_d]
 	opened_at = Settings.speed
 
 
@@ -37,27 +43,30 @@ func after_each() -> void:
 ## else, so a move sheet cut on a different grid would put every unit in its
 ## neighbour's cell.
 func test_the_move_sheets_are_the_ambient_grid() -> void:
-	assert_not_null(move_a, "the move sheet did not load")
-	assert_not_null(move_b, "move frame B did not load")
-	assert_eq(move_a.get_size(), ambient_a.get_size(), "the move sheet is a different size")
-	assert_eq(move_b.get_size(), ambient_a.get_size(), "move frame B is a different size")
+	assert_eq(UnitSprite.UNITS_ATLAS_MOVE_SHEETS.size(), 4, "the move clip is not four frames")
+	for i in move_sheets.size():
+		var sheet := move_sheets[i]
+		assert_not_null(sheet, "move frame %d did not load" % i)
+		assert_eq(sheet.get_size(), ambient_a.get_size(), "move frame %d is a different size" % i)
 
 
 ## The gait is opt-in per unit family in the generator, so an unauthored column
-## carries its ambient cell in both move sheets — which is what lets the game
-## play the clip for the whole roster with no per-unit branch. What may not
-## happen is one of the pair moving without the other: that is a half-authored
+## carries its ambient cell in all four move sheets — which is what lets the
+## game play the clip for the whole roster with no per-unit branch. What may
+## not happen is one frame moving without the rest: that is a half-authored
 ## family, and it reads as a unit snapping between parked and striding.
-func test_every_column_is_authored_in_both_move_frames_or_in_neither() -> void:
+func test_every_column_is_authored_in_every_move_frame_or_in_none() -> void:
 	assert_gt(units.size(), 0, "no units loaded, so this would pass vacuously")
 	for type in units.all():
 		var walks_a := _column_differs(ambient_a, move_a, type.atlas_col)
-		var walks_b := _column_differs(ambient_b, move_b, type.atlas_col)
-		assert_eq(
-			walks_a,
-			walks_b,
-			"%s: one move frame is its ambient cell and the other is not" % type.id
-		)
+		for i in move_sheets.size():
+			var ambient := ambient_b if i % 2 else ambient_a
+			var walks := _column_differs(ambient, move_sheets[i], type.atlas_col)
+			assert_eq(
+				walks,
+				walks_a,
+				"%s: move frame %d disagrees with the rest about walking" % [type.id, i]
+			)
 
 
 ## Otherwise the clip is the idle and nothing shipped.
@@ -67,6 +76,23 @@ func test_at_least_one_column_walks() -> void:
 		if _column_differs(ambient_a, move_a, type.atlas_col):
 			walkers.append(String(type.id))
 	assert_gt(walkers.size(), 0, "no column differs from its ambient cell, so the clip is the idle")
+
+
+## The plumbing's own claim (S6): the third and fourth frames are not a mute
+## repeat of the first two for every unit that walks — some units interpolate
+## their existing motion across the extra pair (`GaitPhases.REUSED` on the
+## generator side) and read identically, but at least one family (the foot
+## pair's real gait, the tracked hulls' tread crawl, the copters' rotor tick)
+## must show something new, or the sheet count grew for nothing.
+func test_at_least_one_column_differs_between_the_first_and_second_half() -> void:
+	var grown: Array[String] = []
+	for type in units.all():
+		if (
+			_column_differs(move_a, move_c, type.atlas_col)
+			or _column_differs(move_b, move_d, type.atlas_col)
+		):
+			grown.append(String(type.id))
+	assert_gt(grown.size(), 0, "no column's third or fourth frame differs from its first pair")
 
 
 ## The tier is named rather than inherited: this machine's stored preference may
@@ -80,6 +106,23 @@ func test_the_move_beat_alternates_every_cadence() -> void:
 	assert_eq(
 		BoardBeat.frame(BoardBeat.MOVE_MS, 2 * BoardBeat.MOVE_MS), 0, "the gait did not come back"
 	)
+
+
+## S6's own plumbing pin: `frame_at`/`frame` grew a `frames` parameter,
+## defaulted to two so every ambient/sea call site above stays valid unread,
+## and this is the one that asks for four — the move clip's own count since
+## the gait grew from a shuffle to a walk.
+func test_the_move_beat_visits_all_four_frames_at_its_own_cadence() -> void:
+	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
+	var gait := BoardBeat.MOVE_MS
+	assert_eq(BoardBeat.frame(gait, 0, 4), 0, "the gait did not open on frame A")
+	assert_eq(BoardBeat.frame(gait, gait, 4), 1, "the gait did not reach frame B")
+	assert_eq(BoardBeat.frame(gait, 2 * gait, 4), 2, "the gait did not reach frame C")
+	assert_eq(BoardBeat.frame(gait, 3 * gait, 4), 3, "the gait did not reach frame D")
+	assert_eq(BoardBeat.frame(gait, 4 * gait, 4), 0, "the four-frame cycle did not come back")
+	# The defaulted count stays two, so a caller that never names it — the
+	# ambient beat, the sea's swell — reads the shape it always has.
+	assert_eq(BoardBeat.frame(gait, 2 * gait), 0, "the defaulted frame count moved")
 
 
 ## The gait belongs to the move tween, which the tier scales, so its cadence has
@@ -117,9 +160,21 @@ func test_a_frozen_clock_and_instant_hold_frame_a() -> void:
 	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
 	BoardBeat.frozen = true
 	assert_eq(BoardBeat.frame(BoardBeat.MOVE_MS, BoardBeat.MOVE_MS), 0, "a pinned capture strode")
+	# Named at the move clip's own four frames too — a capture must not depend
+	# on which of the walk's four positions the shutter would otherwise land on.
+	assert_eq(
+		BoardBeat.frame(BoardBeat.MOVE_MS, 3 * BoardBeat.MOVE_MS, 4),
+		0,
+		"a pinned capture strode on the four-frame gait"
+	)
 	BoardBeat.frozen = false
 	Settings.speed = GameSpeed.by_id(&"instant")
 	assert_eq(BoardBeat.frame(BoardBeat.move_ms(), BoardBeat.MOVE_MS), 0, "Instant played the gait")
+	assert_eq(
+		BoardBeat.frame(BoardBeat.move_ms(), 3 * BoardBeat.MOVE_MS, 4),
+		0,
+		"Instant played the four-frame gait"
+	)
 
 
 ## The tier shows a turn rather than playing it out, so the pad before the

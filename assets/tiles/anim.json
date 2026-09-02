@@ -64,11 +64,15 @@
       "ms_per_frame": 160,
       "order": [
         0,
-        1
+        1,
+        2,
+        3
       ],
       "sheets": [
         "units_atlas_move.png",
-        "units_atlas_move_b.png"
+        "units_atlas_move_b.png",
+        "units_atlas_move_c.png",
+        "units_atlas_move_d.png"
       ]
     },
     "sea": {

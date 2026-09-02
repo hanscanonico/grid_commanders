@@ -40,7 +40,9 @@ static func move_ms() -> int:
 	return Settings.speed.clip_period_ms(MOVE_MS)
 
 
-## Which frame of a two-frame clip is showing, at `period_ms` per frame.
+## Which frame of an N-frame clip is showing, at `period_ms` per frame.
+## `frames` defaults to two, the ambient and sea beats' own count, so every
+## call site that predates the move clip's four stays valid unread.
 ##
 ## Instant is a still board by the same rule the tier states everywhere else —
 ## it shows a result rather than playing one out — so it answers frame A, the
@@ -49,15 +51,15 @@ static func move_ms() -> int:
 ## The clock is a defaulted argument so that both stills — Instant and a pinned
 ## capture — are checkable rather than being read off whichever beat the suite
 ## happened to run in.
-static func frame(period_ms: int, now_ms: int = Time.get_ticks_msec()) -> int:
+static func frame(period_ms: int, now_ms: int = Time.get_ticks_msec(), frames: int = 2) -> int:
 	if frozen or Settings.speed.instant:
 		return 0
-	return frame_at(period_ms, now_ms)
+	return frame_at(period_ms, now_ms, frames)
 
 
 ## The same arithmetic on a clock of the caller's own. The two cut-ins read this
 ## one directly, off CutscenePlayback's `t`: inside a cut-in everything is a pure
 ## function of that clock, so a posed still and a skip both land on a fixed
 ## frame — which the board's wall beat and its two stills cannot promise.
-static func frame_at(period_ms: int, elapsed_ms: int) -> int:
-	return int(elapsed_ms / period_ms) % 2
+static func frame_at(period_ms: int, elapsed_ms: int, frames: int = 2) -> int:
+	return int(elapsed_ms / period_ms) % frames

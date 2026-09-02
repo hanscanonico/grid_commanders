@@ -164,8 +164,10 @@ def infantry(pose: Pose = Pose.A) -> Model:
     is diagonal rather than a drop.
 
     The move clip walks him: a held forward lean, a hip line that bobs a
-    board texel, and the two legs taking it in turns to be at toe-off
-    (`_stride` and the `moving(pose)` branch below).
+    board texel every other frame, and a real four-key gait since S6 —
+    contact-L / passing / contact-R / passing, the legs swapping which one
+    leads and not just whether one is at toe-off (`_stride` and the
+    `moving(pose)` branch below).
     """
     if pose is Pose.KO:
         return _infantry_ko()
@@ -265,60 +267,96 @@ def infantry(pose: Pose = Pose.A) -> Model:
         #
         # The LEAN is forward — `(dx -1, dy +1)`, the way the man faces, the
         # opposite diagonal from the idle beat's settle back over his trailing
-        # boot — and it is HELD across both frames. A lean that alternated
+        # boot — and it is HELD across all four frames. A lean that alternated
         # would be the man rocking on the spot at 160 ms, which reads as a
         # stumble, not as travel; held, it is simply the attitude of someone
         # walking. The belt stays out of it: the hips stay over the feet, the
         # way the hull may not translate along its own run.
         #
-        # The RISE is the walk's bob, and it is what alternates. On the beat
-        # the man is at his passing position — over a straight planted leg,
-        # hips and everything above them a texel higher, both shins grown to
-        # meet them so the planted boot never leaves the ground row. That bob
-        # is the same jolt of ride height the tracked family takes on its
-        # off-beat (`_roll`), and on a figure it is the difference between a
-        # walk and a foot that twitches: the toe-off alone measured 6 changed
-        # silhouette texels at rung 1, one over the `MoveFrames` floor, and 5
-        # on the mech, which is under it. Bobbing the body carries the whole
-        # upper mass with it — rifle bar, shoulder line, helmet — and the
-        # pair measures 16 texels at rung 1 and 66 at rung 2, at a shimmer of
-        # 1.75 (`tests/measure_motion.py`).
+        # The RISE is the walk's bob, and it alternates with `beat(pose) % 2`:
+        # on the odd frames the man is at his passing position — over a
+        # straight planted leg, hips and everything above them a texel
+        # higher, both shins grown to meet them so the planted boot never
+        # leaves the ground row. That bob is the same jolt of ride height the
+        # tracked family takes on its off-beat (`_roll`), and on a figure it
+        # is the difference between a walk and a foot that twitches: the
+        # toe-off alone measured 6 changed silhouette texels at rung 1, one
+        # over the `MoveFrames` floor, and 5 on the mech, which is under it.
+        # Bobbing the body carries the whole upper mass with it — rifle bar,
+        # shoulder line, helmet — and the pair measures 16 texels at rung 1
+        # and 66 at rung 2, at a shimmer of 1.75 (`tests/measure_motion.py`).
         #
         # Up rather than down: `dz = -2` costs this sprite its own floors, as
         # pose B's note records (33 px tall and 619 opaque against a
         # `test_infantry_read` MIN_HEIGHT of 34 and MIN_PIXELS of 640).
-        rise = 2 if beat(pose) else 0
+        #
+        # A two-frame gait shuffles; four is a walk (S6, 2026-09-02). The
+        # LEAD is what makes it one: `beat(pose)` names a position round the
+        # cycle (0-3) rather than a beat, and the man's lead leg swaps at
+        # index 1 and swaps BACK at index 2 — `"far"` on the two middle
+        # frames, `"near"` on the two outer ones — which reads
+        # contact-L / passing / contact-R / passing rather than the old
+        # contact-L / passing / contact-L / passing a plain `% 2` on lead
+        # would repeat. Rise still alternates every frame (`% 2`), since the
+        # bob is the same jolt on either lead.
+        step = beat(pose)
+        rise = 2 if step % 2 else 0
+        lead = "far" if step in (1, 2) else "near"
         if rise:
             _shift(m, (0, 12, 0, 9, 6, 16), dz=rise)
         _shift(m, (0, 12, 0, 9, 7 + rise, 16 + rise), dx=-1, dy=1)
-        _stride(m, "far" if beat(pose) else "near", rise)
+        _stride(m, lead, rise)
     else:
         _stride(m, "planted")
     return m
 
 
-def _mech_legs(m: Model, swing: int | None = None) -> None:
-    """The rocket trooper's stance: two armoured legs under a fixed hip line,
-    with the leg at `swing` — an x0 of 1 or 6, or None when he is standing —
-    stepped a board texel FORWARD and the other one the same texel BACK.
+def _mech_legs(m: Model, swing: int | None = None, gather: int = 0) -> None:
+    """The rocket trooper's stance: two armoured legs under a fixed hip line.
+
+    `swing` is CONTACT — the leg at `swing`, an x0 of 1 or 6, stepped a board
+    texel FORWARD and the other one the same texel BACK — or None for the
+    neutral standing pair, both legs voxel for voxel. `gather` is PASSING
+    (S6, 2026-09-02): with no `swing`, both legs take the SAME board texel
+    together, mutually exclusive with `swing` and ignored when it is given.
+    Only a POSITIVE `gather` (both legs back) is ever asked for — see the
+    sign note below — and never `1`, alone: `foot.mech` asks for two
+    magnitudes, `1` then `2`, which is what tells its own two passing frames
+    apart.
 
     The rifleman's legs stand apart on both axes and swap through the hip
     centre; these two stand apart in x alone, side by side on screen, so a
     swap is a no-op and the gait has to be a SCISSOR instead: the boots
-    take a whole board texel each along the run, in opposite directions, and
-    exchange those places on the next frame. Two texels of stride open
-    between them, and the leg that shows — the near one, out against sky —
-    carries one of them by itself. A LIFT instead is what this walked as
-    first and it is worth five silhouette texels, under the move clip's
-    floor of six (`tests/measure_motion.py`): the raised leg has to be the
-    far one half the time, where it crosses inside the torso's own field and
-    the board never sees it, and a raised NEAR leg takes the whole sprite
-    off the ground row, which drops a tenth of its mass and floats it over
-    its own shadow.
+    take a whole board texel each along the run, in opposite directions on
+    the CONTACT frames, and exchange those places two frames later. A LIFT
+    was tried first, for the single frame between two contacts, and it is
+    worth five silhouette texels, under the move clip's floor of six
+    (`tests/measure_motion.py`): the raised leg has to be the far one half
+    the time, where it crosses inside the torso's own field and the board
+    never sees it, and a raised NEAR leg takes the whole sprite off the
+    ground row, which drops a tenth of its mass and floats it over its own
+    shadow. A neutral STAND between the two contacts (both legs at `step 0`,
+    S6's first draft) measures the same five: splitting one whole-texel
+    scissor into two half-texel ones lands each half under the floor a full
+    swing clears easily. `gather` is what answers it instead — both legs
+    take the WHOLE texel together, so a passing frame is as big a step as
+    either contact, just taken by the pair rather than by one leg trading
+    with the other. The negative sign (both gathered forward) measures the
+    same floor but reads a shade closer to the rifleman's own silhouette
+    than to this trooper's own frame A (`tests/test_board_read.py
+    Silhouette`) — a mech standing on gathered-forward feet loses the wide
+    splayed base that keeps the roster's two foot units apart at 32x32 — so
+    `foot.mech`'s `moving(pose)` branch never asks for it. Two BACKWARD
+    magnitudes, `1` then `2`, are what MOVE_C and MOVE_D need instead of one
+    repeated: MOVE_A and MOVE_B stay the shipped scissor byte for byte (S6
+    moved neither), so the pair between them has to do the work of reading
+    as two distinct steps on its own, and `2` clears the same floor against
+    `1` that either magnitude clears against a contact.
 
-    Both boots therefore stay on the ground row. The board's tween is what
-    travels, so a planted boot is not a contact the art has to hold — it is
-    only the line the figure stands on, and both frames stand on it.
+    Both boots therefore stay on the ground row in every reading. The
+    board's tween is what travels, so a planted boot is not a contact the
+    art has to hold — it is only the line the figure stands on, and every
+    frame stands on it.
 
     Only the boots and shins step. The knee plates stay in the column under
     their own hip, one voxel below the belt band, so each leg still hangs
@@ -329,10 +367,10 @@ def _mech_legs(m: Model, swing: int | None = None) -> None:
     for x0 in (1, 6):
         # `step` is signed along the run: -1 is the forward `(dx -1, dy +1)`
         # diagonal, +1 is back, 0 is the standing pair, voxel for voxel.
-        if swing is None:
-            step = 0
-        else:
+        if swing is not None:
             step = -1 if x0 == swing else 1
+        else:
+            step = gather
         bx, by = x0 + step, 4 - step
         m.box(bx, bx + 1, by, by + 2, 0, 0, "tire")  # boot
         m.box(bx, bx + 1, by, by + 2, 1, 2, "hull")  # shin
@@ -372,7 +410,11 @@ def mech(pose: Pose = Pose.A) -> Model:
 
     The move clip walks him on the rifleman's held forward lean, but the
     beat is his legs alone: torso and launcher hold still while the boots
-    scissor a board texel each along the run, so the warhead tip is a fixed
+    scissor a board texel each along the run. MOVE_A and MOVE_B are the
+    shipped two-frame shuffle, unmoved by S6 (2026-09-02) — contact,
+    contact-mirrored — and MOVE_C/MOVE_D add the pair a two-frame gait
+    never had: a real PASSING step, twice, closing the stance back down
+    before it opens onto the next contact. So the warhead tip is a fixed
     landmark and what moves is a stride (`_mech_legs` and the `moving(pose)`
     branch below)."""
     if pose is Pose.KO:
@@ -429,13 +471,13 @@ def mech(pose: Pose = Pose.A) -> Model:
         m.set(1, 9, 14, "flame")
     if moving(pose):
         # The rifleman's held forward `(dx -1, dy +1)` lean — the attitude of
-        # a man walking, the same on both frames, because a lean that
+        # a man walking, the same on every frame, because a lean that
         # alternated at 160 ms is a stumble — and under it a scissor of the
         # legs (`_mech_legs`).
         #
         # The beat stops at the belt. Everything over it — torso, backpack,
         # helmet, pauldrons, launcher and its amber warhead tip — is placed
-        # identically on both frames, so the tip is a landmark the eye holds
+        # identically on every frame, so the tip is a landmark the eye holds
         # while the stance swaps beneath it. Bobbing the body a texel too,
         # which is what this walked as first, translated every landmark at
         # once and read as a HOP in place rather than as travel. A hip that
@@ -443,17 +485,39 @@ def mech(pose: Pose = Pose.A) -> Model:
         # it only buries the belt in the chest and stretches the stance leg
         # into a slab.
         #
-        # WHICH leg leads is what alternates: the near one on the beat, the
-        # far one off it, so the pair opens into a stride and closes through
-        # a passing position at 160 ms.
+        # MOVE_A and MOVE_B are the shuffle S6 inherited — `swing=1` then
+        # `swing=6`, the same instant scissor the two-frame clip always
+        # played, byte-identical to the shipped art the legibility ratchet
+        # already holds a verdict on. Moving either would cost real,
+        # already-passing cells for no claim this slice makes about them
+        # (`parts._tread_phase`'s own docstring states the same rule for the
+        # tracked family's tread). What is new is MOVE_C and MOVE_D, a real
+        # PASSING pair between the two contacts: `gather` steps both legs the
+        # SAME board texel together rather than standing dead neutral
+        # (`_mech_legs`'s own docstring has the measurement: a neutral stand
+        # between two contacts splits one whole-texel scissor into two
+        # half-texel ones, each under the move clip's floor). `gather=+1`
+        # then `+2` — both BACK, never forward — because the forward sign
+        # measured the same floor but put the trooper's own 32x32 silhouette
+        # a shade closer to the rifleman's frame A than to his own: gathered
+        # forward, the mech loses the wide splayed base that keeps the
+        # roster's two foot units apart at that scale
+        # (`tests/test_board_read.py Silhouette`). Two magnitudes rather than
+        # one repeated is what keeps MOVE_C and MOVE_D themselves a texel
+        # apart — the walk closes B's contact, gathers back a texel, gathers
+        # a second, then opens onto A's contact from there.
         #
-        # Measured 14 changed silhouette texels at rung 1 and 47 at rung 2,
-        # at a shimmer of 0.14-0.19 (`tests/measure_motion.py`). The hop
-        # scored 20 and 72, but nine tenths of that was the body: this is
-        # what the LEGS are worth, and it is the cleanest ratio of shape to
-        # tone on the sheet.
+        # Measured 14 changed silhouette texels at rung 1 and 47 at rung 2
+        # across the shipped MOVE_A-MOVE_B scissor, at a shimmer of 0.14-0.19
+        # (`tests/measure_motion.py`). The hop scored 20 and 72, but nine
+        # tenths of that was the body: this is what the LEGS are worth, and
+        # it is the cleanest ratio of shape to tone on the sheet.
         _shift(m, (-1, 9, 1, 10, 5, 16), dx=-1, dy=1)
-        _mech_legs(m, 6 if beat(pose) else 1)
+        step = beat(pose)
+        if step < 2:
+            _mech_legs(m, swing=1 if step == 0 else 6)
+        else:
+            _mech_legs(m, gather=1 if step == 2 else 2)
     else:
         _mech_legs(m)
     return m

@@ -6,34 +6,39 @@ from enum import IntEnum
 
 
 class Pose(IntEnum):
-    """One clip's one frame. A/B are the ambient clip, MOVE_A/MOVE_B the move.
+    """One clip's one frame. A/B are the ambient clip, MOVE_A..MOVE_D the move.
 
-    A is the parked/rest key and B the idle beat; MOVE_A and MOVE_B are the
-    same machine under way, one stride apart. KO is the casualty clip's one
-    frame — a single key, never a pair, because the dead don't loop.
-    FIRE_A/FIRE_B are the cut-in's muzzle-lit pose: a pair, like the ambient
-    clip, because the three SUSTAINED weapon families (`FIRE_PAIRS`) need a
-    second key for the stream to read as a blaze rather than a held aim — a
-    single-shot weapon draws the same model into both, which is FIRE's own
-    fallback and not the unauthored-unit one (`_FALLBACK` still handles
-    that). The values of A and B are frozen at 0 and 1 because the sheets
-    and the manifest's frame order are written against them.
+    A is the parked/rest key and B the idle beat; MOVE_A through MOVE_D are
+    the same machine under way, a quarter of one gait cycle apart each (S6,
+    2026-09-02 — the clip grew from a shuffling pair to a walked four). KO is
+    the casualty clip's one frame — a single key, never a pair, because the
+    dead don't loop. FIRE_A/FIRE_B are the cut-in's muzzle-lit pose: a pair,
+    like the ambient clip, because the three SUSTAINED weapon families
+    (`FIRE_PAIRS`) need a second key for the stream to read as a blaze rather
+    than a held aim — a single-shot weapon draws the same model into both,
+    which is FIRE's own fallback and not the unauthored-unit one (`_FALLBACK`
+    still handles that). The values of A and B are frozen at 0 and 1 because
+    the sheets and the manifest's frame order are written against them; the
+    four move values are frozen the same way now that a builder's `beat()`
+    reads them as a position rather than as a name.
     """
 
     A = 0
     B = 1
     MOVE_A = 2
     MOVE_B = 3
-    KO = 4
-    FIRE_A = 5
-    FIRE_B = 6
+    MOVE_C = 4
+    MOVE_D = 5
+    KO = 6
+    FIRE_A = 7
+    FIRE_B = 8
 
 
 # The clips, as frame order. `CLIP_POSES` is keyed by the clip names
 # `anim.MANIFEST["clips"]` publishes, so a sheet, a pose and a clip entry
 # cannot end up meaning different things.
 AMBIENT_POSES: tuple[Pose, ...] = (Pose.A, Pose.B)
-MOVE_POSES: tuple[Pose, ...] = (Pose.MOVE_A, Pose.MOVE_B)
+MOVE_POSES: tuple[Pose, ...] = (Pose.MOVE_A, Pose.MOVE_B, Pose.MOVE_C, Pose.MOVE_D)
 KO_POSES: tuple[Pose, ...] = (Pose.KO,)
 FIRE_POSES: tuple[Pose, ...] = (Pose.FIRE_A, Pose.FIRE_B)
 CLIP_POSES: dict[str, tuple[Pose, ...]] = {
@@ -59,6 +64,11 @@ CLIP_POSES: dict[str, tuple[Pose, ...]] = {
 _FALLBACK: dict[Pose, Pose] = {
     Pose.MOVE_A: Pose.A,
     Pose.MOVE_B: Pose.B,
+    # The move clip's own extra pair falls back the same interpolated way an
+    # unauthored unit's whole clip already does (S6): a unit with no gait of
+    # its own plays A/B/A/B, not a stall on the second half.
+    Pose.MOVE_C: Pose.A,
+    Pose.MOVE_D: Pose.B,
     Pose.KO: Pose.A,
     Pose.FIRE_A: Pose.A,
     Pose.FIRE_B: Pose.B,
@@ -75,35 +85,70 @@ def fires(pose: Pose) -> bool:
     return Pose(pose) in FIRE_POSES
 
 
+# `beat`'s table. A and B keep the ambient clip's own two positions; the move
+# clip's four count on from there rather than restarting at 0, so a pose that
+# reaches a builder still answers `beat` with WHERE in its own clip it sits.
+# KO and the fire pair sit outside the frame-ticking contract entirely — the
+# fire clip's second key is hand-authored per `FIRE_PAIRS` unit, never a tick
+# — so both map to 0, `beat`'s old boolean reading of them (neither was ever
+# in the two-member tuple `in` checked against).
+_BEAT_INDEX: dict[Pose, int] = {
+    Pose.A: 0,
+    Pose.B: 1,
+    Pose.MOVE_A: 0,
+    Pose.MOVE_B: 1,
+    Pose.MOVE_C: 2,
+    Pose.MOVE_D: 3,
+    Pose.KO: 0,
+    Pose.FIRE_A: 0,
+    Pose.FIRE_B: 0,
+}
+
+
+def beat(pose: Pose) -> int:
+    """Where in its own clip's cycle this pose sits: 0/1 for the ambient
+    pair, 0-3 for the (S6, four-frame) move clip.
+
+    Anything whose MODEL ticks with the FRAME rather than with the clip — a
+    rotor blade phase, the rifleman's stride — asks this instead of
+    `pose is Pose.B`, and now reads a position rather than a name: a rotor
+    keys a four-blade table straight off it (`air.py`), and a true four-phase
+    gait (`foot.py`) branches on the index directly instead of a boolean.
+    A builder that only ever authored the ambient pair's single off-beat delta
+    and wants the SAME two-frame motion held across the four move frames asks
+    `beat(pose) % 2` instead — 0 on MOVE_A/MOVE_C, 1 on MOVE_B/MOVE_D, which
+    is `units/__init__.py`'s "interpolate" idiom for a family with nothing new
+    to say between the two it already authored.
+
+    `FIRE_B` is deliberately outside the index it shares with B and MOVE_B:
+    the fire clip's second key is authored by hand for the units in
+    `FIRE_PAIRS` and by nobody else, so a unit whose weapon fires one shot
+    draws the SAME model into both fire frames (`test_fire_pose.PairVsSingle`)
+    — a tick leaking onto `FIRE_B` would quietly make a single-key unit a
+    pair. What the fire frames still take from the frame is their PLACEMENT:
+    see `off_beat`.
+    """
+    return _BEAT_INDEX[Pose(pose)]
+
+
 def off_beat(pose: Pose) -> bool:
-    """True on the second FRAME of whichever clip is playing.
+    """True on the second FRAME of whichever clip is playing — B, MOVE_B,
+    MOVE_D or FIRE_B.
 
     A COMPOSITION question — the air/sea bob (`atlas.cell_placement`), which
     belongs to every clip alike because the cut-in swaps the fire pair in and
     out mid-window on the same 500 ms clock the idle pair runs on: a fire
     frame placed at its own clip's rest altitude would step the figure
-    `BOB_PX` the moment the window opened or closed.
+    `BOB_PX` the moment the window opened or closed. The move clip's own
+    second and fourth frames — the ones `beat(pose) % 2` calls the off-beat —
+    bob the same way, so a family that interpolates its two-frame motion
+    across four still hops on every other one, the way it always hopped on
+    every other ambient beat.
 
-    A BUILDER asks `beat` instead. The two differ on `FIRE_B` alone, and see
-    `beat` for why.
+    A BUILDER asks `beat` instead. The two differ on `FIRE_B` alone, which
+    `beat` maps to 0 rather than 1 — see its own docstring for why.
     """
-    return Pose(pose) in (Pose.B, Pose.MOVE_B, Pose.FIRE_B)
-
-
-def beat(pose: Pose) -> bool:
-    """True on the off-beat KEY a builder authors — B or MOVE_B.
-
-    Anything whose MODEL ticks with the frame rather than with the clip — a
-    rotor blade phase, a canopy glint — asks this instead of
-    `pose is Pose.B`. `FIRE_B` is deliberately outside it: the fire clip's
-    second key is authored by hand for the units in `FIRE_PAIRS` and by
-    nobody else, so a unit whose weapon fires one shot draws the SAME model
-    into both fire frames (`test_fire_pose.PairVsSingle`) — an ambient tick
-    leaking onto `FIRE_B` would quietly make a single-key unit a pair. What
-    the fire frames still take from the frame is their PLACEMENT: see
-    `off_beat`.
-    """
-    return Pose(pose) in (Pose.B, Pose.MOVE_B)
+    return Pose(pose) is Pose.FIRE_B or beat(pose) % 2 == 1
 
 
 # The uids that author the move clip. Each family task adds its units here as
