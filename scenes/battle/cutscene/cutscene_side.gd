@@ -136,37 +136,33 @@ const HOVER_PHASE := 1.1
 ## The unlit pip. The banded fill beside it is UiTheme.hp_color's, never a copy —
 ## see _draw_pips.
 const HP_EMPTY := Color(1.0, 1.0, 1.0, 0.12)
-## What a knocked-out figure still drawn from the idle sheet burns down to on
-## its way over: a multiply over its own art, so it stays dead by value and
-## never by hue — a darkened faction tone reads as a healthy rear rank in
-## shadow. Its luma is that burn-down's floor, and the floor is measured: two
-## ramp steps (0.1543 each, docs/sprite_legibility.md) above the figure
-## sheet's own S0 ink at 0.086. Under it the interior stops reading as a
-## shape inside the outline and the figure reads as a hole, which 0.205 —
-## what this was, 0.77 of a step — did.
+## What a knocked-out figure burns down to on its way off the field: a multiply
+## over its own art, so a wreck is dead by value and never by hue — a darkened
+## faction tone reads as a healthy rear rank in shadow. Its luma is that
+## burn-down's floor, and the floor is measured: two ramp steps (0.1543 each,
+## docs/sprite_legibility.md) above the figure sheet's own S0 ink at 0.086. Under
+## it the interior stops reading as a shape inside the outline and the figure
+## reads as a hole, which 0.205 — what this was, 0.77 of a step — did.
 ##
-## Since S4 this is the ramp of a figure with no authored KO frame to swap to —
-## air, the one such domain, whose `_figures` third slot stays null — and it
-## runs the whole fall, `[0, 0.35, 1.0]` onto `[0, 0.85, 1.0]`, exactly as every
-## figure's did before the KO clip existed.
+## Every toppling figure falls on this, `[0, 0.35, 1.0]` onto `[0, 0.85, 1.0]`;
+## it is retired past `TOPPLE_KO_AT` for the one that has an authored frame to
+## swap to, where `KO_SETTLE_TINT` picks the burn up.
 const WRECK_TINT := Color(0.4, 0.4, 0.4)
-## Where that burn-down lands instead for a figure that HAS an authored KO
-## frame — the replacement's own floor, reached over `[0, TOPPLE_KO_AT]` so the
-## multiplied idle art meets the KO frame's baked tone AT the swap and the
-## texture change is a silhouette rather than a step in value.
+## What the authored KO frame wears at the swap, easing to 1.0 by `0.55` — the
+## alpha fade's own start, so the wreck is at its authored tone by the time it
+## begins leaving.
 ##
-## Above 1.0 because the replacement is floored, not darkened: `wreck_tone`
-## stretches each sprite's own band into [two ramp steps above the sheet's S0
-## ink, S_TOP], which lifts a living body's dark planes and drops its rim, so a
-## wreck reads flatter and rim-less rather than dimmer. Measured over the
-## shipped sheets, a KO cell's mean value is 1.245x its own live cell's (per
-## faction 1.20-1.35, per cell 1.005-1.66 over 14 units x 6 factions), and one
-## scalar carries all of them: the spread that leaves is a fraction of the 2.6x
-## step an untinted approach to a floored frame would land on.
-##
-## Retired past the swap. The KO art already carries that tone, and multiplying
-## anything over it there would cross back under its own floor.
-const KO_LEAD_TINT := Color(1.245, 1.245, 1.245)
+## Measured, so the value is continuous where the texture changes: the burn
+## above leaves the idle art at 0.469 of its own value by `TOPPLE_KO_AT`, and a
+## KO cell's own band is 1.245x that same live cell's (93.3L against 115.0L,
+## meaned over 14 units x 6 factions of the shipped sheets — `wreck_tone` floors
+## a wreck two ramp steps above the sheet's S0 ink and drops its rim, so it
+## reads flatter and rim-less rather than dimmer, and lands ABOVE the body it
+## was). 0.469 / 1.245 is what the replacement has to wear to arrive on the
+## value the idle art left. Nothing here may exceed 1.0: the 2D framebuffer is
+## RGBA8 under `gl_compatibility`, where a modulate over 1 clips the lit planes
+## flat rather than brightening them.
+const KO_SETTLE_TINT := Color(0.377, 0.377, 0.377)
 ## The wash the vignette darkens the arena's edges with, a step per band.
 const VIGNETTE := Color(0.05, 0.06, 0.10)
 
@@ -666,13 +662,13 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## white-hit language UnitSprite already uses on the board.
 ##
 ## `fall` above zero knocks it out: kicked up and back, tipping over, burning
-## off its living value as it goes — onto `KO_LEAD_TINT` or `WRECK_TINT`, which
-## of the two being the domain's. The tip is deliberately shallow — these are
-## the board's own three-quarter-view sprites, and spinning one right over reads
-## as a rendering glitch rather than a casualty (plan R3). Past `TOPPLE_KO_AT`
-## the art itself swaps to the unit's authored KO frame, for whichever domain
-## carries one — `spin`, `lift` and the fade all keep running unmoved, so only
-## the texture changes, never a beat.
+## down to a dark silhouette as it goes. The tip is deliberately shallow — these
+## are the board's own three-quarter-view sprites, and spinning one right over
+## reads as a rendering glitch rather than a casualty (plan R3). Past
+## `TOPPLE_KO_AT` the art itself swaps to the unit's authored KO frame, for
+## whichever domain carries one, and the burn hands over with it
+## (`KO_SETTLE_TINT`) — `spin`, `lift` and the fade all keep running unmoved, so
+## only the texture changes, never a beat.
 ##
 ## `jerk` above zero is the knock-back that precedes the fall: the round has
 ## landed on this figure and it is thrown outward and lit before it goes over.
@@ -691,10 +687,9 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool, jerk: float) -> vo
 	var tip := aim_tilt(aim_p, aim_pitch)
 	var alpha := squad_alpha
 	var tint := Color(1.0, 1.0, 1.0)
-	# One burn-down per domain, each onto its own constant: a figure with an
-	# authored KO frame is carried onto that frame's value by TOPPLE_KO_AT and
-	# then drawn as it, untinted; one without falls onto WRECK_TINT over the
-	# whole fall. Only the alpha fade below touches the art past the swap.
+	# One burn-down, handed over at the swap: every figure falls on WRECK_TINT,
+	# and the authored KO frame picks it up at the value that ramp had reached
+	# and eases off it as the fade opens.
 	var ko_art: AtlasTexture = _figures[2]
 	var ko := ko_art != null and fall >= TOPPLE_KO_AT
 	if fall > 0.0:
@@ -702,10 +697,12 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool, jerk: float) -> vo
 		lift = CutsceneFx.ramp(fall, [0.0, 0.3, 1.0], [0.0, -13.0, 46.0])
 		spin = CutsceneFx.ramp(fall, [0.0, 1.0], [0.0, _inward(-0.55)])
 		alpha *= CutsceneFx.ramp(fall, [0.0, 0.55, 1.0], [1.0, 1.0, 0.0])
-		if ko_art == null:
+		if ko:
+			tint = tint.lerp(
+				KO_SETTLE_TINT, CutsceneFx.ramp(fall, [TOPPLE_KO_AT, 0.55], [1.0, 0.0])
+			)
+		else:
 			tint = tint.lerp(WRECK_TINT, CutsceneFx.ramp(fall, [0.0, 0.35, 1.0], [0.0, 0.85, 1.0]))
-		elif not ko:
-			tint = tint.lerp(KO_LEAD_TINT, CutsceneFx.ramp(fall, [0.0, TOPPLE_KO_AT], [0.0, 1.0]))
 	elif hittable:
 		tint = tint.lerp(Color(3.4, 3.4, 3.4), flash)
 	else:

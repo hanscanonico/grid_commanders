@@ -1,9 +1,10 @@
 """Dev instrument for the unit animation clips — not a test, a readout.
 
 `--clip {ambient,move}` picks which pair of poses is measured (default
-ambient); the pair itself comes from `units.CLIP_POSES`, so a clip that gains
-a frame is measured without editing this file. The uids are positional and
-default to the whole atlas:
+ambient); the choices and the pair both come from `units.CLIP_POSES` — every
+clip there that is authored as a pair, so a new one is measured without
+editing this file and a one-frame clip is not offered. The uids are positional
+and default to the whole atlas:
 
   .venv/bin/python tests/measure_motion.py [--clip CLIP] [unit ...]
 
@@ -279,6 +280,14 @@ def shimmer(changed: int, silhouette: int) -> float:
     return (changed - silhouette) / max(silhouette, 1)
 
 
+# What `--clip` may name: the counts below compare two frames, so a clip
+# authored as a single held key (`ko`) is left out rather than offered and
+# then refused by `poses_for`.
+MEASURABLE_CLIPS: tuple[str, ...] = tuple(
+    sorted(clip for clip, poses in CLIP_POSES.items() if len(poses) == 2)
+)
+
+
 def poses_for(clip: str) -> tuple[Pose, Pose]:
     """The pose pair the clip is measured across.
 
@@ -335,7 +344,7 @@ def main(argv: list[str]) -> None:
     )
     parser.add_argument(
         "--clip",
-        choices=sorted(CLIP_POSES),
+        choices=MEASURABLE_CLIPS,
         default="ambient",
         help="which clip's pose pair to measure (default: ambient)",
     )

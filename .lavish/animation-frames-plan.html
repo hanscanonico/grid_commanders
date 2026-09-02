@@ -177,7 +177,7 @@
 	<h3>S4 — A KO pose: new clip <code>figures_ko</code> <span class="tag art">ART</span> <span class="tag size">L</span> <span class="tag shipped">shipped</span></h3>
 	<p><strong>Frames to add:</strong> one authored KO frame per unit (single-frame clip — the dead don't loop), emitted as a figures-only sheet <code>units_atlas_figures_ko.png</code> (composed with <code>shadow=False</code>; the board never draws it, so no board-sheet sibling). Art direction per family, all "dead by value, never hue", interior floored two ramp steps above S0 ink:</p>
 	<ul>
-		<li><strong>foot (infantry, mech):</strong> crumpled prone silhouette at ~⅓ height, weapon dropped alongside.</li>
+		<li><strong>foot (infantry, mech):</strong> crumpled prone silhouette at ~⅓ height, weapon dropped alongside. <em>As built:</em> the ⅓ is a voxel reading and lands lower — z tops at 2 of 16 for the rifleman and 4 of 16 for the trooper — while the dimetric projection reads a prone body back along the y it turns into screen rows, so the rendered sprite is 20 px of 37 and 22 of 41, about half the standing height rather than a third.</li>
 		<li><strong>vehicles (tracked + wheeled):</strong> burnt-out hull — weapon askew, a thrown track / flattened tyre, hatches open; contour intact.</li>
 		<li><strong>sea:</strong> hull settled by the stern, superstructure darkened, waterline high.</li>
 		<li><strong>air:</strong> optional in v1 — surplus air casualties may keep the transform-topple via the fallback contract (the move clip's <code>fallback: "ambient"</code> idiom, one manifest key).</li>

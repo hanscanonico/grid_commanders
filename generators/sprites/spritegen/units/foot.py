@@ -57,10 +57,13 @@ def _stride(m: Model, lead: str, rise: int = 0) -> None:
 
 
 def _infantry_ko() -> Model:
-    """The rifleman down: a crumpled silhouette at roughly a third of the
-    standing model's height (z tops out at 2 against pose A's 16), head
-    toward the low end of y and boots trailing off the high end, a splay of
-    daylight left open between the legs the way the stride keeps one. The
+    """The rifleman down: crumpled to a stack two voxels tall against pose A's
+    sixteen, which the dimetric projection reads back as 20 rendered rows
+    against the standing figure's 37 — the prone body and the rifle dropped
+    beside it lie along the y the projection turns into screen height, so an
+    eighth of the standing model is a little over half the standing sprite.
+    Head toward the low end of y and boots trailing off the high end, a splay
+    of daylight left open between the legs the way the stride keeps one. The
     rifle is dropped clear of the body rather than pinned under it — a hand
     still gripping it would read as a man resting, not a casualty — and the
     helmet has come off, face turned up in the one skin patch on him.
@@ -323,8 +326,9 @@ def _mech_legs(m: Model, swing: int | None = None) -> None:
 
 
 def _mech_ko() -> Model:
-    """The trooper down: bulkier and squarer than the rifleman's own wreck,
-    at the same third-height floor. One pauldron is still strapped on; the
+    """The trooper down: bulkier and squarer than the rifleman's own wreck and
+    crumpled the same way — four voxels tall against pose A's sixteen, 22
+    rendered rows against 41. One pauldron is still strapped on; the
     other went with the launch tube, dropped clear of the shoulder that
     carried it, warhead tip still live in the amber it fires with.
     """
