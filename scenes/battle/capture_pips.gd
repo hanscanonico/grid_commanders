@@ -31,8 +31,22 @@ const BASELINE := 6.0
 ## Outline weight on the digits, matching unit_sprite.tscn's HP badge.
 const OUTLINE := 2
 
+## How far out the flip flash's own spark reaches, and how far in world pixels
+## its centre sits from a badge's ORIGIN — the pennant's own middle.
+const FLIP_REACH := 5.0
+const FLIP_AT := PENNANT.position + PENNANT.size * 0.5
+
 ## Cell -> capture points still owed.
 var _pips: Dictionary[Vector2i, int] = {}
+
+## 1.0 the moment a repaint reaches the viewer, 0.0 at rest — MuzzleFlash's own
+## shape, so the property's pennant catches the same spark a shot does.
+## Tweened by BattleAnimator.
+var flip: float = 0.0:
+	set(value):
+		flip = value
+		queue_redraw()
+var _flip_at := Vector2i.ZERO
 
 
 ## Replaces everything drawn. An empty dictionary clears, so callers never need a
@@ -42,12 +56,42 @@ func set_pips(pips: Dictionary[Vector2i, int]) -> void:
 	queue_redraw()
 
 
+## Marks `cell`'s pennant as having just changed hands — BattleView emits the
+## fact only when a repaint actually presents to the viewer, fog-deferred
+## captures included. Replaces whatever was flashing; `clear_flip` is the only
+## other writer, the way `clear_shot` is MuzzleFlash's.
+func show_flip(cell: Vector2i) -> void:
+	_flip_at = cell
+	flip = 1.0
+
+
+func clear_flip() -> void:
+	flip = 0.0
+
+
 func _draw() -> void:
-	if _pips.is_empty():
-		return
 	var font := UiTheme.stat(true)
 	for cell: Vector2i in _pips:
 		_draw_badge(font, Vector2(cell * TILE) + ORIGIN, str(_pips[cell]))
+	if flip > 0.0:
+		_draw_flip(Vector2(_flip_at * TILE) + ORIGIN + FLIP_AT)
+
+
+## The flip's own spark, over the pennant it belongs to — MuzzleFlash's star at
+## a smaller reach and CAPTURE's own hue, so the flash reads as this pennant
+## catching the light rather than a foreign mark landing on it.
+func _draw_flip(at: Vector2) -> void:
+	var reach := MuzzleFlash.reach_for(FLIP_REACH, flip)
+	var bars := MuzzleFlash.arms(at, reach)
+	if bars.is_empty():
+		return
+	var heart := MuzzleFlash.core_mark(at, reach)
+	for mark in bars + heart:
+		draw_rect(mark.grow(1.0), UiTheme.HARD_BORDER)
+	for mark in bars:
+		draw_rect(mark, UiTheme.CAPTURE)
+	for mark in heart:
+		draw_rect(mark, UiTheme.WHITE)
 
 
 ## A green flag and the count, both outlined rather than boxed — BoardMark says

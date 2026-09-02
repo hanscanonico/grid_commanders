@@ -72,6 +72,13 @@ const GROUND_BLEND := 0.4
 const GLOW_DEPTH := 0.22
 const GLOW_BANDS := 5
 const GLOW_ALPHA := 0.20
+## Each band's seam is broken into this many column segments rather than drawn
+## as one ruler-straight rect, its top nudged a few pixels off the same integer
+## hash every other scatter in this file reads — the fix for the seams reading
+## as banding (Claude Design, round 3): a posed still repaints the same jitter
+## every time.
+const GLOW_SEAM_SEGMENTS := 24
+const GLOW_SEAM_JITTER_PX := 2.0
 
 ## The field's own variety: patches of a rougher green lying in each row, and
 ## tufts standing in the rows near enough the front to hold one. Both are
@@ -82,7 +89,20 @@ const PATCH_POINTS := 12
 const PATCH_WIDE := 0.13
 const PATCH_TALL := 0.62
 const PATCH_ALPHA := 0.14
-const TUFTS_PER_ROW := 13
+## Tufts scale with the row's own footprint rather than a flat count — a row
+## widens toward the camera (`row_h *= 1.5` each step), and 13 read the same
+## near or far even though the far rows are a sliver and the near ones fill the
+## width. `TUFT_DENSITY` is tufts per row-height pixel, clamped so a shallow
+## row still stands a handful and a full-width one does not drown in them.
+const TUFT_DENSITY := 0.22
+const TUFT_MIN := 4
+const TUFT_MAX := 22
+## Tufts no longer spread independently across a row — near-uniform spacing
+## from a flat hash was the wallpaper-repeat Claude Design flagged (round 3).
+## Instead a row throws down a handful of clumps, each a clutch of tufts close
+## together, with real bare ground between them the way grass actually grows.
+const TUFT_CLUSTERS := 3
+const TUFT_CLUSTER_SPREAD := 0.10
 ## How shallow a row may be and still stand a tuft — a row near the horizon is a
 ## few pixels deep and grows a smear rather than grass.
 const TUFT_ROW_PX := 18.0
@@ -193,7 +213,7 @@ static func draw_ground(
 		var base := light if toggle % 2 == 0 else dark
 		var shade := Color(base.r * lit, base.g * lit, base.b * lit)
 		canvas.draw_rect(Rect2(0.0, y, width, row_h + 1.0), shade)
-		_dress_row(canvas, width, y, row_h, toggle, shade)
+		_dress_row(canvas, width, y, row_h, toggle, shade, floor_y)
 		y += row_h
 		row_h *= 1.5
 		toggle += 1
@@ -205,9 +225,18 @@ static func draw_ground(
 
 ## One row's patches, and its tufts once a row is deep enough to stand any. Both
 ## are drawn in the row's own shade so a desert or a city capture dresses its own
-## ground rather than a lawn's.
+## ground rather than a lawn's. `floor_y` is the arena's own bottom edge: the
+## nearest row's own height can run past it, and a tuft whose foot lands there
+## is invisible work the clip already throws away (Claude Design, round 3) —
+## so it is never drawn rather than drawn and wasted.
 static func _dress_row(
-	canvas: CanvasItem, width: float, top: float, row_h: float, row: int, shade: Color
+	canvas: CanvasItem,
+	width: float,
+	top: float,
+	row_h: float,
+	row: int,
+	shade: Color,
+	floor_y: float
 ) -> void:
 	for i in PATCHES_PER_ROW:
 		var at := Vector2(
@@ -222,11 +251,16 @@ static func _dress_row(
 		_draw_patch(canvas, at, radius, Color(tone, PATCH_ALPHA))
 	if row_h < TUFT_ROW_PX:
 		return
-	for i in TUFTS_PER_ROW:
+	var count := clampi(roundi(TUFT_DENSITY * row_h), TUFT_MIN, TUFT_MAX)
+	for i in count:
+		var cluster := _scatter(row + SCATTER_STRIDE * 5, i % TUFT_CLUSTERS)
+		var within := _scatter(row + SCATTER_STRIDE * 4, i) - 0.5
 		var foot := Vector2(
-			_scatter(row + SCATTER_STRIDE * 4, i) * width,
+			clampf(cluster + within * TUFT_CLUSTER_SPREAD, 0.0, 1.0) * width,
 			top + row_h * lerpf(0.45, 0.95, _scatter(row + SCATTER_STRIDE * 4, i + SCATTER_STRIDE))
 		)
+		if foot.y > floor_y:
+			continue
 		var height := (
 			row_h
 			* BLADE_TALL
@@ -258,16 +292,21 @@ static func _draw_tuft(canvas: CanvasItem, foot: Vector2, height: float, shade: 
 
 
 ## The band of low sun on the far grass, fading forward out of the horizon.
+## Each band's own top seam is nudged per column rather than drawn as one flat
+## rect, so the translucent overlap between neighbours varies along the width
+## instead of meeting on a ruler-straight line.
 static func _draw_horizon_glow(
 	canvas: CanvasItem, width: float, horizon: float, depth: float
 ) -> void:
 	var band_h := depth * GLOW_DEPTH / float(GLOW_BANDS)
+	var seg_w := width / float(GLOW_SEAM_SEGMENTS)
 	for i in GLOW_BANDS:
 		var fade := 1.0 - float(i) / float(GLOW_BANDS)
-		canvas.draw_rect(
-			Rect2(0.0, horizon + band_h * float(i), width, band_h),
-			Color(SKY_LOW, GLOW_ALPHA * fade * fade)
-		)
+		var tint := Color(SKY_LOW, GLOW_ALPHA * fade * fade)
+		var top := horizon + band_h * float(i)
+		for s in GLOW_SEAM_SEGMENTS:
+			var jitter := (_scatter(i, s) - 0.5) * 2.0 * GLOW_SEAM_JITTER_PX
+			canvas.draw_rect(Rect2(seg_w * s, top + jitter, seg_w + 1.0, band_h), tint)
 
 
 ## Where a mark lands, as a fixed hash rather than a draw: the same row and the

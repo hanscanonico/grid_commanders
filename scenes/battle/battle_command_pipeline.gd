@@ -243,6 +243,7 @@ func _present_mission_event(command: MissionEventCommand) -> void:
 func _present_build(command: BuildCommand) -> void:
 	_battle.action_feedback.mark_built(command.built_unit)
 	_battle.view.spawn_sprite_for(command.built_unit)
+	_battle.animator.animate_build(_battle.view.sprite_for(command.built_unit))
 	EventBus.unit_built.emit(command.built_unit)
 
 

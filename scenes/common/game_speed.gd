@@ -47,6 +47,12 @@ const BASE_FLASH_IN_SECONDS := 0.08
 const BASE_FLASH_OUT_SECONDS := 0.12
 const BASE_DEATH_FADE_SECONDS := 0.25
 const BASE_COMMAND_DELAY_SECONDS := 0.2
+## The board moments animation-frames S7 added: a built unit's rise-and-fade,
+## and the flip flash a captured property's pennant plays when the repaint
+## actually reaches the viewer. Both are shorter than the death fade — neither
+## is a hit landing, only a badge and a flag catching the eye.
+const BASE_BUILD_RISE_SECONDS := 0.15
+const BASE_FLAG_FLIP_SECONDS := 0.18
 ## Banners are information, not theatre: they hold at a readable length whatever
 ## the tier and only tighten under Instant, because whose day it is must still
 ## register even when nothing else is being shown. The power banner holds longer
@@ -185,6 +191,14 @@ func flash_out_seconds() -> float:
 
 func death_fade_seconds() -> float:
 	return BASE_DEATH_FADE_SECONDS * anim_scale
+
+
+func build_rise_seconds() -> float:
+	return BASE_BUILD_RISE_SECONDS * anim_scale
+
+
+func flag_flip_seconds() -> float:
+	return BASE_FLAG_FLIP_SECONDS * anim_scale
 
 
 ## How fast the cut-in clock runs, as a multiplier on delta — the one duration a

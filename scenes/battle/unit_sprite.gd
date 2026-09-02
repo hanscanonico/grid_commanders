@@ -108,14 +108,33 @@ const UNITS_ATLAS_FIGURES_FIRE_B_PATH := "res://assets/tiles/units_atlas_figures
 ## checkerboard darkens alternate screen pixels, so the faction hue survives
 ## on the pixels between; one shared material serves every sprite because the
 ## scrim has no per-unit state.
+## `fade` is the S7 addition: 0 leaves the art untouched and 1 is the effect
+## above, so a sprite that has just acted can tween into the scrim instead of
+## snapping into it. The uniform's own default is 1 — the HUD icon's shared
+## material never sets it and still wants the full effect, being a still.
 const _ACTED_SCRIM := """
 shader_type canvas_item;
+uniform float fade : hint_range(0.0, 1.0) = 1.0;
 void fragment() {
 	if (mod(floor(FRAGCOORD.x) + floor(FRAGCOORD.y), 2.0) < 0.5) {
-		COLOR.rgb *= 0.62;
+		COLOR.rgb *= mix(1.0, 0.62, fade);
 	}
 }"""
+static var _scrim_shader: Shader
 static var _acted_material: ShaderMaterial
+## How long the scrim takes to fade in the first time a unit's `acted` flag
+## turns true this turn. Fixed rather than a GameSpeed tier's: `refresh()` has
+## no single caller to thread a duration in from the way BattleAnimator hands
+## flash_hit and die theirs, and the scrim only ever plays this once a unit per
+## turn — `Settings.speed.instant` alone is what Instant asks of it.
+const SCRIM_FADE_SECONDS := 0.15
+## A brief scale punch on the HP number whenever it changes, so a hit or a heal
+## registers on the badge and not only on the flash and fade around it. Fixed
+## for the same reason SCRIM_FADE_SECONDS is.
+const HP_PUNCH_SCALE := 1.5
+const HP_PUNCH_SECONDS := 0.16
+## How far a built unit rises into place over `spawn_in`'s run.
+const BUILD_RISE_PX := 6.0
 ## A submerged boat is drawn faint for its own side. The enemy does not see it
 ## at all — that is Vision's answer, arriving here as `fogged`.
 const DIVED_ALPHA := 0.5
@@ -174,6 +193,21 @@ var moving: bool = false:
 ## Which frame of the current clip this sprite shows. Instance state so a
 ## repaint (atlas_row, refresh) rebuilds the texture on the right sheet.
 var _frame: int = 0
+
+## The scrim's own material, unique to this sprite so its `fade` uniform can
+## tween without touching a neighbour's — a unit acting mid-turn must not blip
+## every already-acted unit on the board. `acted_scrim()`'s shared instance is
+## the HUD icon's alone, which is never animated and so may stay one for every
+## icon.
+var _scrim_material: ShaderMaterial
+## Whether the scrim is currently up, so `refresh()` only plays the fade on the
+## pass `acted` actually flips rather than on every reconciliation that finds a
+## unit already greyed out.
+var _scrim_up := false
+## The displayed HP `hp_label` last showed, so `refresh()` only punches the
+## label on the pass the number actually changes — never on a sprite's first
+## paint, where this still holds the sentinel.
+var _last_hp := -1
 
 @onready var hp_label: Label = $HpLabel
 @onready var fuel_label: Label = $FuelLabel
@@ -353,24 +387,70 @@ func refresh() -> void:
 	position = Vector2(unit.cell * TILE) + Vector2(TILE, TILE) / 2.0
 	visible = unit.carrier == null and not fogged
 	var acted := unit.acted and unit.team == active_team
-	material = acted_scrim() if acted else null
+	_set_acted(acted)
 	acted_label.visible = acted
 	var tint := Color.WHITE
 	tint.a *= DIVED_ALPHA if unit.dived else 1.0
 	modulate = tint
-	hp_label.visible = unit.displayed_hp() < 10
-	hp_label.text = str(unit.displayed_hp())
+	var displayed := unit.displayed_hp()
+	if _last_hp != -1 and displayed != _last_hp:
+		_punch_hp_label()
+	_last_hp = displayed
+	hp_label.visible = displayed < 10
+	hp_label.text = str(displayed)
 	fuel_label.visible = unit.running_dry()
 
 
+## Brings the scrim to whichever state `acted` names. The pass that first finds
+## it true fades it in; the pass that first finds it false snaps it away
+## outright — readying for the next turn needs no flourish, only spending one
+## does.
+func _set_acted(acted: bool) -> void:
+	if acted == _scrim_up:
+		return
+	_scrim_up = acted
+	if not acted:
+		material = null
+		return
+	if _scrim_material == null:
+		_scrim_material = ShaderMaterial.new()
+		_scrim_material.shader = _shared_shader()
+	material = _scrim_material
+	if Settings.speed.instant:
+		_scrim_material.set_shader_parameter(&"fade", 1.0)
+		return
+	_scrim_material.set_shader_parameter(&"fade", 0.0)
+	var tween := create_tween()
+	tween.tween_property(_scrim_material, "shader_parameter/fade", 1.0, SCRIM_FADE_SECONDS)
+
+
+## A brief scale punch on the HP number whenever it changes, off `HP_PUNCH_SCALE`
+## and back down — the impulse-and-decay shape `SHAKE_STEP_SECONDS` and
+## `CURSOR_PULSE_SECONDS` already use for a beat that is not gameplay theatre.
+func _punch_hp_label() -> void:
+	if Settings.speed.instant:
+		return
+	var base := Vector2.ONE / SPRITE_SCALE
+	hp_label.scale = base * HP_PUNCH_SCALE
+	var tween := create_tween()
+	tween.tween_property(hp_label, "scale", base, HP_PUNCH_SECONDS)
+
+
+static func _shared_shader() -> Shader:
+	if _scrim_shader == null:
+		_scrim_shader = Shader.new()
+		_scrim_shader.code = _ACTED_SCRIM
+	return _scrim_shader
+
+
 ## Shared by HudBottomBar's unit icon, so a unit that has acted looks the
-## same in the bar as it does on the tile.
+## same in the bar as it does on the tile. Always at rest — the icon is a
+## still, so its material never touches `fade` and draws at the uniform's own
+## default of 1.
 static func acted_scrim() -> ShaderMaterial:
 	if _acted_material == null:
-		var shader := Shader.new()
-		shader.code = _ACTED_SCRIM
 		_acted_material = ShaderMaterial.new()
-		_acted_material.shader = shader
+		_acted_material.shader = _shared_shader()
 	return _acted_material
 
 
@@ -400,3 +480,21 @@ func die(fade_seconds: float) -> void:
 	tween.tween_property(self, "modulate:a", 0.0, fade_seconds)
 	await tween.finished
 	queue_free()
+
+
+## Rises into place and fades in over `seconds` — the flourish over a build's
+## own single-frame pop-in (`_present_build` already stands the unit up fully
+## formed). `seconds` arrives from BattleAnimator, `flash_hit`'s own shape, and
+## a zero-length rise is skipped outright — Instant shows the built unit rather
+## than playing its arrival. `.from()` pins both start values explicitly rather
+## than reading them off the sprite when the tween begins running: the pipeline
+## reconciles every sprite (`sync_sprites`) in the very same synchronous call
+## this is armed from, and that pass writes `position` and `modulate` too.
+func spawn_in(seconds: float) -> void:
+	if seconds <= 0.0:
+		return
+	var rest := position
+	var settled_alpha := modulate.a
+	var tween := create_tween().set_parallel()
+	tween.tween_property(self, "position", rest, seconds).from(rest + Vector2(0.0, BUILD_RISE_PX))
+	tween.tween_property(self, "modulate:a", settled_alpha, seconds).from(0.0)

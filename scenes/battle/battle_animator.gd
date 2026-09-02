@@ -73,6 +73,16 @@ var power_marks: PowerMarks
 var power_meteor: PowerMeteor
 ## The star at a firing unit's muzzle on the map path — see `_flash_muzzle`.
 var muzzle_flash: MuzzleFlash
+## The burst over a unit that just died on the map path — MuzzleFlash's
+## sibling, see `_blast_death`.
+var death_blast: DeathBlast
+## The rising damage number on the map path — PowerMarks' shape, see
+## `_show_damage`.
+var damage_callout: DamageCallout
+## The capture badge's pennant, held here only for the flip flash it plays
+## when a repaint reaches the viewer — see `animate_flag_flip`. Every other
+## use of the pips is BattleOverlays'.
+var capture_pips: CapturePips
 ## What a scripted mission beat says, held like the power card and retired by the
 ## same press; down for every skirmish, because nothing else ever fills it.
 var mission_speech: MissionSpeechCard
@@ -168,11 +178,18 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		return
 	Sfx.play(&"shot")
 	await _flash_muzzle(attacker, defender, result.attacker_weapon_slot)
+	# Non-blocking, like the departing twin's fade in `animate_join`: the map
+	# path never showed a number at all, and this is only the flourish that
+	# fixes it — the exchange's own pacing must not wait on it.
+	_show_damage(
+		defender.cell, result.defender_hp_before - result.defender_hp_after, attacker, defender
+	)
 	await flash_hit(defender_sprite)
 	shake_camera()
 	if result.defender_died:
 		Sfx.play(&"explosion")
 		view.release_sprite(defender)
+		_blast_death(attacker, result.attacker_weapon_slot, defender.cell, attacker, defender)
 		await _fade_out(defender_sprite)
 	else:
 		view.refresh_sprite(defender)
@@ -182,10 +199,11 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		await flash_hit(attacker_sprite)
 	if result.attacker_died:
 		view.release_sprite(attacker)
+		_blast_death(defender, result.counter_weapon_slot, attacker.cell, attacker, defender)
 		await _fade_out(attacker_sprite)
 	else:
 		view.refresh_sprite(attacker)
-	view.sync_sprites()
+	view.sync_sprites(Settings.speed.death_fade_seconds())
 
 
 ## The shot leaving, on the map path the cut-in stands in for: a star at the
@@ -232,6 +250,61 @@ func flash_hit(sprite: UnitSprite) -> void:
 ## a sprite outside combat entirely and comes through here for that reason.
 func _fade_out(sprite: UnitSprite) -> void:
 	await sprite.die(Settings.speed.death_fade_seconds())
+
+
+## The board's death blast — MuzzleFlash's sibling, tinted from the shot that
+## just killed something and posed the same way: this decides nothing, only
+## draws what it is handed. Non-blocking, fired alongside the sprite's own fade
+## rather than awaited before or after it — the sim has already moved on, so
+## nothing downstream needs to wait on the flourish over it.
+##
+## Same fog rule as `_flash_muzzle`: both combatants have to be on screen, or a
+## burst with only one of them visible would be an effect with no cause.
+func _blast_death(
+	shooter: Unit, slot: StringName, dead_cell: Vector2i, attacker: Unit, defender: Unit
+) -> void:
+	if death_blast == null:
+		return
+	if not perspective.can_see_unit(attacker) or not perspective.can_see_unit(defender):
+		return
+	var seconds := Settings.speed.death_fade_seconds()
+	if seconds <= 0.0:
+		return
+	var style := BattleStyleDB.shared().for_weapon(shooter.type, slot)
+	death_blast.show_blast(dead_cell, style)
+	var tween := node.create_tween()
+	tween.tween_property(death_blast, "blast", 1.0, seconds)
+	await tween.finished
+	death_blast.clear_blast()
+
+
+## The board's damage number, PowerMarks' own rise-then-fade shape off
+## `BoardMark.count`: the cut-in already prints what a hit cost, and the map
+## path never has — only ever posed here, on the branch that already means the
+## cut-in was gated out for this exchange. Non-blocking, for the same reason
+## `_blast_death` is; the amount is the result's own snapshot, never recomputed.
+##
+## Same fog rule as `_flash_muzzle` again: a number over a unit only one side
+## can see would out a hidden exchange.
+func _show_damage(cell: Vector2i, amount: int, attacker: Unit, defender: Unit) -> void:
+	if damage_callout == null or amount <= 0:
+		return
+	if not perspective.can_see_unit(attacker) or not perspective.can_see_unit(defender):
+		return
+	var seconds := Settings.speed.power_mark_seconds()
+	if seconds <= 0.0:
+		return
+	damage_callout.show_hit(cell, amount)
+	var tween := node.create_tween().set_parallel()
+	(
+		tween
+		. tween_property(damage_callout, "rise", 1.0, seconds)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(damage_callout, "modulate:a", 0.0, seconds).set_delay(seconds)
+	await tween.finished
+	damage_callout.clear_hit()
 
 
 ## Whether this exchange gets the cut-in.
@@ -318,12 +391,48 @@ func _drop_punch() -> void:
 
 
 ## The map beats the cut-in stands in for. Both sides have already been shown
-## dying on screen, so there is no fade left to play: this only brings the board
-## back into step with a sim that has moved on — dropping the sprites of units
-## the exchange removed (cargo that went down with a transport included) and
-## redrawing the survivors.
+## dying on screen, so there is no fade left to play for them: this only brings
+## the board back into step with a sim that has moved on — dropping the
+## sprites of units the exchange removed and redrawing the survivors. Cargo
+## that went down with a transport was never shown by the cut-in, so it gets
+## the same parting fade the map-path deaths above do.
 func _sync_aftermath() -> void:
-	view.sync_sprites()
+	view.sync_sprites(Settings.speed.death_fade_seconds())
+
+
+# --- build -------------------------------------------------------------------
+
+
+## A built unit's rise-and-fade, over `_present_build`'s single-frame pop-in —
+## the unit already stands fully formed on the tile; this is the flourish over
+## it. Non-blocking, like `spawn_in` itself: the pipeline does not wait on it.
+func animate_build(sprite: UnitSprite) -> void:
+	if sprite == null:
+		return
+	sprite.spawn_in(Settings.speed.build_rise_seconds())
+
+
+# --- property ----------------------------------------------------------------
+
+
+## The flag flip: `BattleView.repaint_property` is the instant recolour, so
+## this is only the flourish over it — a brief flash on CapturePips' pennant at
+## the cell that just changed hands. Wired to `BattleView.property_flipped`
+## rather than called from the capture flow directly, which is what makes it
+## fire on the fog-deferred repaint too: a capture finished out of the
+## viewer's sight flips the moment they scout it, and that repaint is
+## `BattleView.repaint_property`'s own call, never `_present_capture`'s.
+func animate_flag_flip(cell: Vector2i) -> void:
+	if capture_pips == null:
+		return
+	var seconds := Settings.speed.flag_flip_seconds()
+	if seconds <= 0.0:
+		return
+	capture_pips.show_flip(cell)
+	var tween := node.create_tween()
+	tween.tween_property(capture_pips, "flip", 0.0, seconds)
+	await tween.finished
+	capture_pips.clear_flip()
 
 
 # --- capture -----------------------------------------------------------------
