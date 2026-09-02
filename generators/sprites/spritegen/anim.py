@@ -62,7 +62,7 @@ KO_SHEET = "units_atlas_figures_ko.png"
 # The fire clip's pair: an authored muzzle-lit frame per armed unit, composed
 # the same shadowless way — no board-sheet sibling, since the board never
 # draws a figure sheet either — and AUTHORED like the KO sheet, not the
-# ambient pair's subtraction. Two sheets rather than KO's one because the two
+# ambient pair's subtraction. Two sheets rather than KO's one because the three
 # sustained weapon families need a second key for the stream to read as a
 # blaze; every other armed unit draws the same model into both, which is the
 # schema's existing single-frame-in-a-pair idiom (`units.pose.FIRE_PAIRS`)

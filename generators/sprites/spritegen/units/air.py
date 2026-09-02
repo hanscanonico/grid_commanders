@@ -202,11 +202,22 @@ def bomber(pose: Pose = Pose.A) -> Model:
             _shift(m, (4, 7, 14, 20, 1, 3), dz=-2)
             m.box(4, 7, 13, 13, 0, 1, "hull")
     if fires(pose):
-        # Bay doors open — the natural bomb-run frame: a dark gap drops
-        # clear under the belly the doors line marks, one board texel below
-        # the fuselage's own lowest course. Bomb is not sustained, so
-        # FIRE_B draws this same key.
-        m.box(4, 7, 7, 11, 1, 2, "bore")
+        # Bay doors open — the natural bomb-run frame: the belly line goes
+        # dark where the bay swung open, the opening hangs a voxel clear
+        # under it, and a door panel stands proud of the hull at each end.
+        # Bomb is not sustained, so FIRE_B draws this same key.
+        #
+        # It is drawn AHEAD of the pose-A doors line, not on it, because
+        # this projection cannot show that line: the wing root covers the
+        # fuselage's whole lower-right flank from y8 to y13, and a voxel
+        # under the belly there is occluded at every depth — a bay hung
+        # inside that span changes 17 pixels of a thousand and no
+        # silhouette texel at all. y14 is where the flank comes back out
+        # from under the wing, which is also where a heavy's bay sits.
+        m.box(7, 7, 14, 17, 3, 3, "bore")
+        m.box(7, 7, 14, 17, 2, 2, "bore")
+        m.set(7, 13, 2, "hull_dk")
+        m.set(7, 18, 2, "hull_dk")
     return m
 
 

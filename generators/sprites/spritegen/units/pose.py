@@ -12,7 +12,7 @@ class Pose(IntEnum):
     same machine under way, one stride apart. KO is the casualty clip's one
     frame — a single key, never a pair, because the dead don't loop.
     FIRE_A/FIRE_B are the cut-in's muzzle-lit pose: a pair, like the ambient
-    clip, because the two SUSTAINED weapon families (`FIRE_PAIRS`) need a
+    clip, because the three SUSTAINED weapon families (`FIRE_PAIRS`) need a
     second key for the stream to read as a blaze rather than a held aim — a
     single-shot weapon draws the same model into both, which is FIRE's own
     fallback and not the unauthored-unit one (`_FALLBACK` still handles

@@ -94,7 +94,7 @@ func test_the_ko_clip_is_a_single_held_frame() -> void:
 	)
 
 
-## A pair, looped — unlike ko's single held frame, since the two SUSTAINED
+## A pair, looped — unlike ko's single held frame, since the three SUSTAINED
 ## weapon families need a second key for the stream to read as a blaze — with
 ## the same fallback idiom (a unit outside the generator's FIRES draws its own
 ## rest key, same as an unauthored move or KO column).

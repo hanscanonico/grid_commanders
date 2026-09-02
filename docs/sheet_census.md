@@ -34,7 +34,7 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | `autotiles/shoals.png` | 5.4 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
 | `autotiles/woods.png` | 16.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 
-**Totals: 863.2 KiB of PNG, 26,390.7 KiB of decoded RGBA, over 21 sheets — every one of which the
+**Totals: 863.3 KiB of PNG, 26,390.7 KiB of decoded RGBA, over 21 sheets — every one of which the
 battle scene loads.** The instrument reads that last column off the game rather than off a list:
 it scans `scenes/` for `res://assets/tiles/*.png`, and finds `scenes/battle/unit_sprite.gd` naming
 the nine unit sheets, `scenes/battle/terrain_autotiles.gd` the ten autotile sheets,

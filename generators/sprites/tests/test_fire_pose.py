@@ -8,7 +8,7 @@ either authored sheet. Unlike KO, these units are LIVE — dead-by-value rules
 (`voxel.wreck_tone`, the interior value floor) do not apply here; a fired gun
 is not a casualty and the fire cells keep every faction's ordinary ramp.
 
-Two sheets rather than KO's one, because the two SUSTAINED weapon families
+Two sheets rather than KO's one, because the three SUSTAINED weapon families
 (`units.pose.FIRE_PAIRS` — small_arms, pintle and autocannon) need a second
 key for the stream to read as a blaze. Everything else armed draws the same
 model into both — the chosen idiom for "one frame in a two-sheet clip" is
@@ -189,6 +189,14 @@ class OnePiece(unittest.TestCase):
     reading a fire pose is allowed to have; a detached radome is not. All
     eighteen units answer 1 in all four poses, so the bar is the whole roster's
     and not this clip's alone.
+
+    The two poses NOT in that tuple are a choice, not an oversight. MOVE_A and
+    MOVE_B pass today and are one edit from joining it — until they do, a gait
+    that shook a part loose would still slip through. KO cannot join without a
+    decision first: `battleship` and `cruiser` wrecks render 872 + 14 and
+    766 + 14 pixels in every livery, a detached 14-px piece this clip neither
+    introduced nor touched, so adding the pose means either authoring those two
+    wrecks whole or writing the carve-out down.
     """
 
     @staticmethod

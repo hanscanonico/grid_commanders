@@ -27,7 +27,7 @@ Outputs (under --out, default ./out):
   units_atlas_figures_fire.png / units_atlas_figures_fire_b.png
                           one AUTHORED muzzle-lit frame per ARMED unit,
                           shadowless like the figure pair and a second key
-                          for the two sustained weapon families — for the
+                          for the three sustained weapon families — for the
                           cut-ins' fire beat (the fire clip)
   units_atlas_move.png / units_atlas_move_b.png
                           the same grid again, under way — one facing (the
