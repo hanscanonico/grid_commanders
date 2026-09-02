@@ -277,16 +277,19 @@ class BoardScaleEdge(unittest.TestCase):
     S0. It also cost 34.5% of every unit's pixels, which is the interior the
     sel-out rewrite got back (see docs/outlines.md).
 
-    A 1px outline cannot win that same reading and does not try: 19-27% of the
-    board's boundary lands on S0 now. What the reading becomes is the claim
-    selective outlining actually makes — the edge is a VALUE BREAK, dark away
-    from the sun and light into it, and the board sees the break either way.
-    Measured as the share of board-sampled boundary pixels whose value is
-    outside the sprite's own interquartile band: 75.1-78.9% at the four
-    phases, against 81.4-87.0% for the band it replaces. That is the
-    legibility round 10 bought, carried by two tones instead of one, and the
-    terrain ceiling is what makes the light half of it safe: no tile may reach
-    the band this sheet's lit planes live in.
+    A 1px outline cannot win that same reading and does not try: round 11's
+    line alone put 19-27% of the board's boundary on S0. S8 grew that line
+    back into an inward band on the units, which buys most of the reading
+    back without the band's whole area — 57-65% at the four phases, measured
+    2026-09-01 (see docs/outlines.md). What the gate below reads, in either
+    round, is the claim selective outlining actually makes — the edge is a
+    VALUE BREAK, dark away from the sun and light into it, and the board sees
+    the break either way. Measured as the share of board-sampled boundary
+    pixels whose value is outside the sprite's own interquartile band:
+    76.4-79.4% at the four phases, against 81.4-87.0% for the band it
+    replaces. That is the legibility round 10 bought, carried by two tones
+    instead of one, and the terrain ceiling is what makes the light half of it
+    safe: no tile may reach the band this sheet's lit planes live in.
     """
 
     MIN_BOARD_BREAK = 0.70

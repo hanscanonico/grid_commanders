@@ -261,9 +261,12 @@ class RowSeparation(unittest.TestCase):
         about the rows changed; the outline got thicker on all five.
 
         Round 11 gave it back by spending a pixel instead of a band (see
-        docs/outlines.md): the closest pair is 45.2 now, against 34.6 under
-        the band. The bar is still the faction-pixel bar above, which is the
-        floor this diluted figure may never sink below.
+        docs/outlines.md): 45.2, against 34.6 under the band. S8 spends S0
+        again wherever a sunward lift cannot clear the board's ground band,
+        and the dilution comes back with it — the closest pair is 33.0 now
+        (neutral against gold), still over the bar. The bar is still the
+        faction-pixel bar above, which is the floor this diluted figure may
+        never sink below.
         """
         means = {f.key: self._cell_mean(f.key) for f in FACTIONS}
         keys = list(means)
