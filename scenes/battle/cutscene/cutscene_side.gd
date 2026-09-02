@@ -157,18 +157,19 @@ const WRECK_TINT := Color(0.4, 0.4, 0.4)
 ## frame — which does not smooth a value step, it just moves it a frame later.
 ## The fade opens at 0.55 and takes the tail of this.
 ##
-## Measured, so the value is continuous where the texture changes: the burn
-## above leaves the idle art at 0.469 of its own value by `TOPPLE_KO_AT`, and a
-## KO cell's own band is 1.245x that same live cell's — 115.0L dead against
-## 93.3L alive, the 1.245 being the mean of the 84 per-cell ratios (14 units x 6
-## factions of the shipped sheets). It lands ABOVE the body it was because
+## Measured on the shipped sheets, so the value is continuous where the texture
+## changes: the burn above leaves the idle art at 0.469 of its own value by
+## `TOPPLE_KO_AT`, and a KO cell's own band is 1.250x that same live cell's —
+## 115.4L dead against 93.3L alive, the 1.250 being the mean of the 84 per-cell
+## ratios (14 units x 6 factions). It lands ABOVE the body it was because
 ## `wreck_tone` floors a wreck two ramp steps over the sheet's S0 ink and drops
 ## its rim, so a wreck reads flatter and rim-less rather than dimmer. 0.469 /
-## 1.245 is what the replacement has to wear to arrive on the value the idle art
-## left. Nothing here may exceed 1.0: the 2D framebuffer is RGBA8 under
-## `gl_compatibility`, where a modulate over 1 clips the lit planes flat rather
-## than brightening them.
-const KO_SETTLE_TINT := Color(0.377, 0.377, 0.377)
+## 1.250 is what the replacement has to wear to arrive on the value the idle art
+## left. Re-take both readings off the installed PNGs if the burn is ever
+## re-authored — this pair moved when it last was. Nothing here may exceed 1.0:
+## the 2D framebuffer is RGBA8 under `gl_compatibility`, where a modulate over 1
+## clips the lit planes flat rather than brightening them.
+const KO_SETTLE_TINT := Color(0.375, 0.375, 0.375)
 ## The wash the vignette darkens the arena's edges with, a step per band.
 const VIGNETTE := Color(0.05, 0.06, 0.10)
 
