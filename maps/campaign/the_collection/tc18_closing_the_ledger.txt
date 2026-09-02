@@ -25,12 +25,12 @@ MMMM..MMMMBMMMM..MMMM
 2 18 10
 [units]
 # team symbol x y
-1 i 1 3
-1 t 2 3
-1 g 1 4
-1 a 2 4
-1 r 1 5
-1 m 2 5
+1 i 1 3 ^
+1 t 2 3 ^
+1 g 1 4 ^
+1 a 2 4 ^
+1 r 1 5 ^
+1 m 2 5 ^
 2 i 19 9 ledger_guard
 2 t 18 9
 2 g 19 8
