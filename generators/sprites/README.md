@@ -234,7 +234,12 @@ boundary texel they own, and carry a named beat besides: the fighter lights a
 course of burner plume past its nozzles, and both retone rather than move
 (its canopy glint and elevon tips, the bomber's tail tips), because the
 legibility ratchet fails a silhouette texel added anywhere on either idle beat
-(`units/air.py`'s `beat(pose)` branches) — and
+(`units/air.py`'s `beat(pose)` branches). **Since S8 the bomber's retone reaches
+no composed pixel**: its tail tips sit on the silhouette, which now falls to the
+same ground-facing contour in both poses, so the model differs and the drawn
+cell does not — measured and waived for that one unit's idle beat alone by
+`AmbientFrames.test_the_bob_lifts_the_airframe_and_a_named_delta_besides`, its
+move clip untouched. And
 `test_no_unit_shimmers_more_than_it_moves` caps the other half of the ratio, so
 the floor can never be bought by repainting an interior under an outline that
 holds still. The picture behind those numbers is
@@ -629,9 +634,11 @@ that pipeline's paste step can be pointed at this art instead.
      plane they were nearly part of. The alpha never moves: the silhouette is
      the shape the model drew, and only the colour under it changes.
 
-     **Outlines are 1px, per pixel, and selective.** `gbuffer.edge_mask` finds
-     every pixel whose 4-neighbour breaks the depth step a continuous surface
-     can carry, which in this projection is the silhouette and a self-overlap
+     **Outlines are classified per pixel and selective**, and on a unit the
+     line they classify is then grown inward into a band (S8, below).
+     `gbuffer.edge_mask` finds every pixel whose 4-neighbour breaks the depth
+     step a continuous surface can carry, which in this projection is the
+     silhouette and a self-overlap
      in one reading. What each one becomes is fixed by where the break is, in
      one order, so no pixel is both dark and light: a break toward the ground
      (down or right) is the faction's own S0 — the outer boundary is S0's
@@ -644,30 +651,32 @@ that pipeline's paste step can be pointed at this art instead.
      wearing. `gbuffer.convex_edges` adds the same lift along a convex crease
      on a lit top face, and concave gutters get nothing. The sunward lift is
      also **graded per faction** (`palette.OUTLINE_LIGHT` / `OUTLINE_HEAVY` /
-     `OUTLINE_RIM`): a lit line only separates a unit from the tile it stands
-     on where it clears the ground's own value band, and neutral (the sand's
-     own khaki) and Iron (achromatic, capped at S3, the middle of that band)
-     have no colour left to break with when it does not — so on those two rows
-     a sunward silhouette pixel that cannot clear takes the ground-facing
-     contour instead. Aurora and verdant have the opposite problem and get the
-     opposite answer: a ground IS their colour — the water a shoal is half made
-     of, the grass — so where their lift lands inside both the ground's band
-     and its hue (`palette.shares_a_ground_hue`) the line climbs to the **rim**
-     rather than falling to the contour, into the one band the terrain ceiling
-     reserves for units. That took the two pairs the sheet carried as named
-     debt for three rounds — a boundary tying with the tile in value AND colour
-     — from 10.3% and 6.5% to 0.39% and 0.55%. Meridian is untouched by either
-     grade, and so is every building: a property stops at
-     `BUILDING_TOP_SLOT`, so the rim is not a rung it can climb to.
+     `OUTLINE_RIM`): a lit line only separates a figure from the tile it
+     stands on where it clears the ground's own value band, so where it
+     cannot, neutral (the sand's own khaki) and Iron (achromatic, capped at S3,
+     the middle of that band) fall to the ground-facing contour, while aurora
+     and verdant — whose own hue a ground owns — climb to the **rim** instead,
+     the band the terrain ceiling reserves for units
+     (`palette.shares_a_ground_hue`).
+     **Since S8 that grading is a PROPERTY's alone.** The board's 4:1 reading
+     measured no row's ordinary lift clearing the ground band at all, so on a
+     unit every grade falls to the contour and the rim climb is switched off:
+     the three constants draw one and the same unit and are kept only for the
+     rows they still tell apart off the board. **A unit's line is no longer
+     1px either** — `voxel._thicken_contour` grows it inward to
+     `CONTOUR_DEPTH` (4 lit, 2 ground-facing) so it survives that downsample,
+     moving no alpha. A building is outside both: it stops at
+     `BUILDING_TOP_SLOT`, so the rim is not a rung it can climb to and the band
+     never reaches it.
      Selective outlining
-     is what buys the interior back: the 4px band it replaces spent 34.5% of
-     every unit's pixels on S0 (53.1% on the worst sprite) against 14.22% and
-     24.22% on the light row, 14.28% / 24.67% on the rim pair and 17.35% /
-     30.76% on the heavy pair, and the livery gates moved with it — the
-     composed rows' closest pair went from 34.6 to 45.2 against a bar of 30.
+     is still what buys the interior back: round 10's 4px band spent 34.5% of
+     every unit's pixels on S0 (53.1% on the worst sprite) against 32.7-33.0%
+     and 50.43% now, every grade alike, with round 11's own 14-17% / 24-31% the
+     reading in between. The livery gates moved with all of it — the composed
+     rows' closest pair was 34.6 under the band and 45.2 under round 11, and is
+     33.0 now against a bar of 30.
      **docs/outlines.md** has the full
-     reading, including what a 1px line costs at board scale and why the
-     contrast pair covers it.
+     reading, its S8 section the board-scale answer.
      The **property buildings** are drawn by this renderer too, one band
      lower: `voxel.BUILDING_TOP_SLOT` stops every ramp at the top plane, so
      the rim step — the flash the band above the terrain ceiling is reserved
@@ -782,15 +791,18 @@ that pipeline's paste step can be pointed at this art instead.
    silhouette is still the shape the model drew. It reads whatever that line
    is rather than assuming it is dark, and where line and body are one slot
    apart there is nothing between them to write: today that leaves every
-   sunward `SEL_OUT_LIFT` edge alone and softens only the shaded ones — plus,
-   on the two `OUTLINE_HEAVY` rows, the sunward pixels that came back as
-   contour, which is why those rows soften 40 pixels each against 22 on a
-   light row. The
+   sunward `SEL_OUT_LIFT` edge alone and softens only the shaded ones. Since
+   S8 the six rows no longer differ, every unit row's sunward silhouette
+   falling to the same contour, and the band behind that line has taken most
+   of the rest: 8 pixels a row per pose, on seven units, where round 11 spent
+   146 across the sheet. A write that would strand the corner's only
+   same-toned neighbour is refused (`_safe`, settled to a fixed point, and
+   the band is what made that a live case). The
    restraint is the point: the projection draws its diagonals as runs of TWO,
    which is already the smoothest line a grid can hold, and softening every
    step of one would only grey the outline down. What is left for it are the
    shallower stretches — a wing root, a hull front, the shoulders of a foot
-   unit — 146 pixels across the whole sheet. The property buildings come
+   unit. The property buildings come
    through the same seam (`terrain.property_sprite`) and it moves no pixel of
    any of them: walls and a base plate are runs of two end to end, so
    `MIN_RUN` excludes every corner they have. `ENABLED` turns the pass off;

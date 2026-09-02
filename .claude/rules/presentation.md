@@ -281,8 +281,10 @@ forms named in the root index are in `docs/design_record.md`.
   another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable without a
   scene. **The constants stay hardcoded and `assets/tiles/anim.json` is *pinned*, never read at
   runtime**, `tests/unit/test_anim_manifest.gd` the one place it is consumed. **The legibility ruler
-  reads a REGRESSION** against the previous art; nothing was tuned in response and answering it is
-  the generator's, with `docs/sprite_legibility.md` carrying the re-read.
+  read a REGRESSION** against the previous art; nothing was tuned in response, and it was **answered
+  in the generator by the animation-frames plan's S8** (a board-scale contour band, no game code) —
+  `docs/sprite_legibility.md`'s 2026-09-01 re-read is the record, and no baseline cell fails on
+  purpose any more.
   **The seventh slice is the sea's swell**, and it costs one pointer:
   **`TerrainAutotiles.sheet_path(family, frame)` is the filename authority**, as it is for every
   other sheet, and frame 0 is what every surface has always read — the miniature and the legibility

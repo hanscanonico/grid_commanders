@@ -48,13 +48,10 @@ tiles`: read the new sweep first, then commit the digest with the art it describ
 `make verify` for the sweep's own reason — it renders the whole matrix and takes about 24 minutes on
 a loaded machine — so it is a step before an art merge, not a per-commit gate.
 
-**One baseline cell fails on purpose, since 2026-09-01.** The animation-frames plan's S3 fitted the
-land cast shadow to the footprint it stands on, and mech's narrower ellipse takes
-`board:idle_b:mech:iron:ready:port:fog` from 1.11 to **0.77** against the one-step fog bar — the one
-verdict of 231 that moved the wrong way, measured exhaustively and accepted rather than answered by
-widening the shadow back. The digest was deliberately not rewritten for it: the milestone's S8
-re-reads this page and re-baselines with it. Until then `make legibility-ratchet` reports that cell
-and nothing else, so a second name in its output is a real regression.
+**No baseline cell fails on purpose**, so any name in `make legibility-ratchet`'s output is a real
+regression. S3's one accepted exception — `board:idle_b:mech:iron:ready:port:fog`, carried here from
+2026-09-01 — was retired by S8, which re-measured it at **1.25** against the one-step fog bar and
+re-baked the digest with it (the 2026-09-01 re-read below).
 
 ## Re-read 2026-08-19, over the terrain variants
 
@@ -265,7 +262,9 @@ the next change is held to.
 ## Re-read 2026-09-01, after S8 answered the board-scale regression
 
 The 2026-08-25 regression above is answered. Read the whole way through this page as **the previous
-art's** until here; this section supersedes every headline number above it. Same control this page
+art's** until here; this section supersedes every headline number above it — including the
+worst-twenty gallery embedded twice above, which is one regenerated file and today holds S8's own
+twenty, described under *What resists* below. Same control this page
 has always used, run on this tree before the change: **clear 31,625 failing (86.1%) and 6,968 (80.6%)
 fogged**, against 4,082 (50.4%) the round-10 band once bought and 1,276 (15.8%) the 1px G-buffer
 outline it replaced — three re-reads of unrelated shipped work (S2's air retones, S3's shadow refit,
@@ -380,6 +379,8 @@ building-side survivor, `mountain` 49-53% across its three phases. This is a VAL
 ground, which S8's own locked scope leaves to the ground: **nothing here was tuned in response**, and
 moving a property's or the massif's own value to answer it is the follow-up this page names rather
 than slides in.
+
+![the twenty worst-scoring composites](images/legibility_worst20.png)
 
 **The eighteen cells that went the other way.** They are 0.10% of the sweep against 17,672 recoveries,
 and none is a new class — every one is a dark or mid hull already inside the residual above, tipped

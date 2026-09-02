@@ -84,7 +84,11 @@ of the same grade land:
 
 Buildings sit a little over the units of their grade, and the reason is
 geometric: a lot is a flat plate, so its whole sunward edge is a ground-facing
-step with nothing above it to lift. The heavy pair sits near the top for the
+step with nothing above it to lift. (The buildings' two columns still read
+exactly as measured — S8 changed no property pixel — but the `units` column is
+2026-08-23's: every unit row takes the heavy grade's fallback since, so a unit
+no longer sits under a building of its grade. `docs/outlines.md`'s S8 section
+has the current figures.) The heavy pair sits near the top for the
 reason `docs/outlines.md` gives for the rows themselves — a lit line only pays
 where it clears the ground's value band, and nothing on a building is allowed
 high enough to.

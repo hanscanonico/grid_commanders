@@ -1432,7 +1432,10 @@ and which is given one back here. Reproduced otherwise verbatim.
   **The legibility ruler was re-run and it reads a REGRESSION**: 86.7% of clear cells failing
   against a same-day control of 16.0% on the previous art, the failure entirely at board resolution
   (94.8% board against 21.6% cut-in) and 71.1% of it hue-carried. `docs/sprite_legibility.md`
-  carries the re-read; nothing was tuned in response, and answering it is the generator's.
+  carries the re-read; nothing was tuned in response, and answering it was the generator's —
+  **answered 2026-09-01 by the animation-frames plan's S8**, whose contour band and value fallback
+  took the board to 52.5% and the cut-in to 4.3% with no game code touched (that page's own
+  2026-09-01 section, and `generators/sprites/docs/outlines.md` for the mechanism).
   **The milestone's seventh slice is the sea's swell**, `autotiles/sea_b.png` on `BoardBeat`'s
   `SEA_MS`, and it costs one pointer: frame B is **the same three phases in the same order** with
   only the glints moved, so the source id, the cut, `sheet_cells`, `atlas_coords`, `variant` and

@@ -818,8 +818,9 @@ def _broad_flat_tops(
 
 # What a pixel's line is, before the material says which slot draws it.
 # `_LINE_LIT_GROUND` is the sunward SILHOUETTE — the lit pair drawn against
-# the tile rather than against more of the model — and is the one the heavy
-# grade may take back (see `_selective_outline`).
+# the tile rather than against more of the model — and is the one every grade
+# takes back on a unit, the heavy grade alone off it (see
+# `_selective_outline`).
 _LINE_DARK, _LINE_OVERLAP, _LINE_LIT, _LINE_LIT_GROUND = 0, 1, 2, 3
 
 

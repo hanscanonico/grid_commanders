@@ -9,6 +9,12 @@ patch passes holding the art together against it (`_settle_rims`,
 It is now one pass over the depth and normal planes: `gbuffer.edge_mask` and
 `gbuffer.convex_edges`, read per pixel, drawing lines one pixel wide.
 
+**Read every "now" below as round 11's**, the state this page was written in.
+Since S8 (2026-09-01) that classified line is grown back into an inward band
+on a unit and on the massif, and the sunward grades collapse into one answer
+there; the last section of this page is the current reading, and a property is
+the one thing still drawn exactly as described here.
+
 ## What the band was for, and what it cost
 
 The band was round 10's answer to a real defect. The game draws the 64px cell
@@ -325,6 +331,33 @@ failing through it and 48-52% through the plain fallback, the same range
 every other row now sits in. `OUTLINE_LIGHT` and `OUTLINE_RIM` keep every
 number this file records for a PROPERTY unchanged; only a unit's own
 sunward silhouette moved.
+
+**So the three grades draw one and the same unit now** — `OUTLINE_LIGHT`,
+`OUTLINE_HEAVY` and `OUTLINE_RIM` differ only on a property, and all three
+are kept rather than collapsed because that is where they still tell rows
+apart. A grade is a property's answer; do not read one as a unit's.
+
+Which moves the table at the top of this page. Re-measured 2026-09-01 over
+both poses of all 18 units, the same reading, now identical per grade
+(`test_livery.MAX_SUNWARD_DARK` / `MAX_CONTOUR` carry the pins):
+
+| reading | band | 1px + sel-out | + S8 band |
+| --- | --- | --- | --- |
+| S0 share of a unit's own pixels | 34.5% | 13.9% | **32.7-33.0%** |
+| S0 share on the worst sprite (b_copter, pose B) | 53.1% | 25.6% | **50.43%** |
+| sunward-only boundary pixels drawn dark | 100% | 7.1% | **67.7-68.0%** |
+| iron vs neutral row distance (gate: 60) | 63.7 | 64.6 | **63.9** |
+| iron vs neutral as composed (gate: 30) | 36.1 | 45.2 | **37.8** |
+
+The interior is bought back thinner than it was, and the composed rows are
+diluted with it again: the closest composed pair is neutral vs gold at
+**33.0** (34.6 under the band, 45.2 under round 11), still over its bar of
+30, while the faction-pixel reading `RowSeparation` actually gates on barely
+moves — an army's own pixels are not what the band spends. That is the price
+of a line the board can sample, paid where round 10 paid it and stated here
+rather than left to be rediscovered. What is not paid at all is the alpha:
+the band is inward only, so every geometry reading this file's tests take is
+untouched.
 
 The full re-read, with the mountain-and-masonry residual this did not
 answer, is `docs/sprite_legibility.md`'s own 2026-09-01 section.
