@@ -2,17 +2,23 @@
 # Aurora coast, landing armour behind the picket line. Cassian Rook has to
 # buy the same morning Voss bought inland, on ground with the sea at his
 # back instead of open country.
-# Symbols: . plains  F woods  M mountain  = road  S sea  C city  Q HQ
+# The sea is real: open water north and east, a bay cutting in under the
+# headland, a beach of shoals on its inner edge where the second tide lands,
+# and an Iron battleship on station whose guns reach the coast road's eastern
+# end below the enemy HQ and nothing west of the city.
+# Symbols: . plains  F woods  M mountain  = road  S sea  _ shoal  * reef
+#          C city  Q HQ
 [terrain]
-SSSSSSSSSSSSSSSS
-S.Q==...F...MM.S
-S..=....F...MM.S
-S..=..C........S
-SFF=====.......S
-S..F...=..C....S
-S.....==....MM.S
-S........===..QS
-SSSSSSSSSSSSSSSS
+MMF.FF.MMMSSSSSSSS
+F.Q==...F...MSSS*S
+...=....F...MSSSSS
+M..=..C......_.SSS
+MFF=====......_SS*
+...F...=..C...._SS
+F.....==....MM.SSS
+.........===..QSSS
+M.F...F.....M..SSS
+MMM.FF.MM.FFMMMSSS
 [owners]
 # team x y — Rook (1) holds the west HQ, Draeg (2) the east.
 1 2 1
@@ -21,13 +27,16 @@ SSSSSSSSSSSSSSSS
 # team symbol x y [tag]
 # The coast watch is the fourth unit the briefing counts, and it carries no
 # weapon: west is inland, and the HQ is as far inland as this coast goes.
+# The t-copter is its spotter — the first air transport of the war.
 1 i 3 2
 1 r 3 1
 1 t 4 3
 1 p 4 2 coast_watch
+1 H 2 2
 2 i 11 6
 2 i 12 5
 2 r 10 6
 2 t 11 5
 2 t 14 6
 2 a 9 5
+2 B 16 3 iron_escort

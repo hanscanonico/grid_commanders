@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -9,6 +9,11 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="14"]
 
 [sub_resource type="Resource" id="Objective_hold_the_coast"]
 script = ExtResource("2")
@@ -39,12 +44,12 @@ text = "Two landings, one plan. Noted. We have no ground to trade for time, so w
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Four units against a beachhead. The tide won't cover for you twice."
+text = "Four units and a spotter against a beachhead, and a battleship off the bay whose guns reach the road as far west as the city and not a cell further."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "We make the first tide count. Get the coast watch moving inland the moment the road's secure."
+text = "We make the first tide count. Get the coast watch moving inland the moment the road's secure, and keep the copter west of those guns."
 
 [sub_resource type="Resource" id="Watch_inland"]
 script = ExtResource("9")
@@ -100,6 +105,38 @@ effects = Array[Resource]([SubResource("Effect_watch_saved")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("10")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_second_tide_1"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(13, 3)
+
+[sub_resource type="Resource" id="Spawn_second_tide_2"]
+script = ExtResource("12")
+unit_type = ExtResource("14")
+cell = Vector2i(14, 4)
+
+[sub_resource type="Resource" id="Effect_second_tide"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_second_tide_1"), SubResource("Spawn_second_tide_2")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Second tide's in. Boots on the beach under the headland, a mech and a squad. That's the second column Orin promised, and it's ashore behind the road."
+
+[sub_resource type="Resource" id="Event_the_second_tide"]
+script = ExtResource("6")
+id = &"the_second_tide"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_second_tide")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [sub_resource type="Resource" id="Run_routed"]
 script = ExtResource("9")
 flag = &"run:cause"
@@ -154,7 +191,7 @@ difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_hold_the_coast")])
 failures = Array[Resource]([SubResource("Failure_the_watch")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_watch_inland")])
-events = Array[Resource]([SubResource("Event_the_watch_is_inland")])
+events = Array[Resource]([SubResource("Event_the_watch_is_inland"), SubResource("Event_the_second_tide")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])

@@ -1,27 +1,38 @@
 # The Long Front 4 — "Seawall Retreat". The port district empties out while
 # Lyra Quill's screen holds the seawall road. Fewer units than Riptide
 # Landing — the picket has already taken losses covering the evacuation.
-# Symbols: . plains  F woods  M mountain  = road  S sea  C city  Q HQ
+# The port sits on the north-west coast behind Quill's line, the quay is the
+# two shoals beside it, and the last boat waits on the water past the quay. A
+# ridge walls the harbour from the plain, so an Iron squad that wants the port
+# walks ten cells through the screen to reach it — a 5-day mission cannot be
+# lost to a captured port. Draeg's column opens on the far coast road.
+# Symbols: . plains  F woods  M mountain  = road  S sea  _ shoal  * reef
+#          C city  P port  Q HQ
 [terrain]
-SSSSSSSSSSSSSSSS
-S.Q==..F....MM.S
-S..=...F....MM.S
-S..=.C.........S
-SFF====.....C..S
-S..F..=........S
-S....==.....MM.S
-S.......====..QS
-SSSSSSSSSSSSSSSS
+MM..SSSSSSSSSSSSSS
+..Q==.P__M..MSSS*S
+F..=..MMMM..MSSSSS
+M..=.C.........SSS
+MFF====.....C..SS*
+...F..=........SSS
+M....==.....MM.SSS
+F.......====..QSSS
+..F..M...F..M..SSS
+MMF.MM..FMM.MMMSSS
 [owners]
-# team x y — Quill (1) holds the west HQ, Draeg (2) the east.
+# team x y — Quill (1) holds the west HQ and the port, Draeg (2) the east HQ.
 1 2 1
+1 6 1
 2 14 7
 [units]
-# team symbol x y
+# team symbol x y [tag]
+# The last boat is a real lander on the water past the quay; the day-4 beat
+# sails it, cargo and all.
 1 i 3 2
 1 t 4 3
 1 m 1 1
 1 r 3 1
+1 l 8 0 last_boat
 2 i 10 6
 2 i 11 5
 2 r 9 6
