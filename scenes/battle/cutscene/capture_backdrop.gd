@@ -107,6 +107,11 @@ const TUFT_CLUSTER_SPREAD := 0.10
 ## few pixels deep and grows a smear rather than grass.
 const TUFT_ROW_PX := 18.0
 const TUFT_ALPHA := 0.40
+## How many of a row's tufts catch the light rather than sit in shade. Drawn on
+## its own scatter stream rather than off the tuft's index, which is what picks
+## its clump: keyed to the index the two would partition a row the same way and
+## every clump would come out one flat tone.
+const TUFT_LIGHT_SHARE := 1.0 / 3.0
 ## The blades one tuft is cut from: an offset off its foot, a height and a lean,
 ## all shares of the three lengths below. Three blades read as grass where one
 ## reads as a pin stuck in the lawn.
@@ -266,7 +271,8 @@ static func _dress_row(
 			* BLADE_TALL
 			* lerpf(0.7, 1.0, _scatter(row + SCATTER_STRIDE * 4, i + SCATTER_STRIDE * 2))
 		)
-		var tone := shade.darkened(0.30) if i % 3 > 0 else shade.lightened(0.30)
+		var lit := _scatter(row + SCATTER_STRIDE * 7, i) < TUFT_LIGHT_SHARE
+		var tone := shade.lightened(0.30) if lit else shade.darkened(0.30)
 		_draw_tuft(canvas, foot, height, Color(tone, TUFT_ALPHA))
 
 

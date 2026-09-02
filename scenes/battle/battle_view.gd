@@ -421,9 +421,7 @@ func sync_sprites(fade_seconds: float = 0.0) -> void:
 		if unit in game.units:
 			refresh_sprite(unit)
 			continue
-		var sprite: UnitSprite = _sprites[unit]
-		_sprites.erase(unit)
-		sprite.die(_parting_fade(unit, sprite, fade_seconds))
+		_part_with(unit, fade_seconds)
 	for unit: Unit in game.units:
 		if not _sprites.has(unit):
 			spawn_sprite_for(unit)
@@ -436,35 +434,41 @@ func sync_sprites(fade_seconds: float = 0.0) -> void:
 ## Asked for at the moment the transport's own death is shown, so the stack
 ## sinks together. `sync_sprites` runs at the end of the exchange instead, a
 ## whole death fade later, and riders reaching it there would stand up opaque on
-## a tile the board had already emptied. Fire-and-forget on `_parting_fade`'s
-## own terms: posed at the transport's cell, and silent where the viewer cannot
+## a tile the board had already emptied. Fire-and-forget on `_part_with`'s own
+## terms: posed at the transport's cell, and silent where the viewer cannot
 ## see it.
 func drop_cargo_of(carrier: Unit, fade_seconds: float) -> void:
 	for unit: Unit in _sprites.keys():
 		if unit.carrier != carrier or unit in game.units:
 			continue
-		var sprite: UnitSprite = _sprites[unit]
-		_sprites.erase(unit)
-		sprite.die(_parting_fade(unit, sprite, fade_seconds))
+		_part_with(unit, fade_seconds)
 
 
-## How long a sprite this pass frees gets to fade, and where it fades from.
-##
-## A rider was drawn hidden for as long as it rode, so a fade left on it where
-## it lies is a tween nobody can watch: it is stood on the transport's own last
-## cell and un-hidden to go down with it. What the viewer may see of the
-## transport is what decides that — `can_see_unit`, the fog rule the death blast
-## asks of a kill it draws, rather than the cell alone, because un-hiding is an
-## override and a doctrine that hides a hull hides what was riding in it. A
-## rider lost out of sight goes without a fade, the way every freed sprite used
-## to.
-func _parting_fade(unit: Unit, sprite: UnitSprite, fade_seconds: float) -> float:
-	if fade_seconds <= 0.0 or unit.carrier == null:
-		return fade_seconds
-	if not perspective.can_see_unit(unit.carrier):
-		return 0.0
-	sprite.pose_at(unit.carrier.cell)
-	return fade_seconds
+## Stops tracking `unit` and sends its sprite off, the one way this view lets a
+## sprite go. A rider is stood up first and keeps its fade only if that pose
+## landed; everything else fades where it already stands.
+func _part_with(unit: Unit, fade_seconds: float) -> void:
+	var sprite: UnitSprite = _sprites[unit]
+	_sprites.erase(unit)
+	var seconds := fade_seconds
+	if fade_seconds > 0.0 and unit.carrier != null:
+		seconds = fade_seconds if _pose_rider(sprite, unit.carrier) else 0.0
+	sprite.die(seconds)
+
+
+## Stands a rider on the cell its transport went down on and un-hides it, so a
+## parting fade has something to run on: `refresh` drew it hidden for as long as
+## it rode. Answers whether it was posed at all, which is what the viewer may
+## see of the transport — `can_see_unit`, the fog rule the death blast asks of a
+## kill it draws, rather than the cell alone, because un-hiding is an override
+## and a doctrine that hides a hull hides what was riding in it. A rider lost
+## out of sight is left hidden and goes without a fade, the way every freed
+## sprite used to.
+func _pose_rider(sprite: UnitSprite, carrier: Unit) -> bool:
+	if not perspective.can_see_unit(carrier):
+		return false
+	sprite.pose_at(carrier.cell)
+	return true
 
 
 ## Re-resolves the match's [SideIdentity] from the sim's current commander picks
