@@ -1,6 +1,6 @@
 extends GutTest
-## What a board and a mission may author about the carried army, and the one
-## chain the shipped content declares.
+## What a board and a mission may author about the carried army, and the
+## chains the shipped content declares.
 ##
 ## `test_campaign_roster.gd` is what the army does; this is the gate `make
 ## campaigns` runs before it can do it. Every check here catches a slip with no
@@ -99,9 +99,8 @@ func test_a_chain_with_a_hole_in_it_is_refused() -> void:
 
 
 ## Voss's retreat, the chain this test pins: she holds the customs line and
-## falls back to the causeway with the same three units. The furnace act's
-## fw12 → fw18 veteran column is the other shipped chain, counted by the census
-## below.
+## falls back to the causeway with the same three units. The other shipped
+## chains — a war's whole last act each — are counted by the census below.
 func test_the_shipped_chain_carries_the_army_it_says_it_does() -> void:
 	var campaign := CampaignDB.load_default().by_id(&"the_long_front")
 	assert_not_null(campaign)
