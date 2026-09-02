@@ -1,7 +1,7 @@
 # The Quiet War 14 — "The Daylight March". Rumours put Viktor Draeg's
 # own spearhead on this stretch of border, hedging Orlov's play with real
 # armour. Rhea Sol answers by taking and holding every city on the map —
-# three on each bank of a river with three bridges, the least ambiguous
+# three on each bank of a river with four bridges, the least ambiguous
 # statement there is.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge  C city  B base  Q HQ
 [terrain]
