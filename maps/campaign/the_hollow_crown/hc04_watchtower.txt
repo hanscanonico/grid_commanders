@@ -1,16 +1,19 @@
 # The Hollow Crown — "Watchtower".
-# A standard two-army front. No allies here yet — the succession war has
-# not reached this crossing.
+# The high road bends north around the watchtower's knoll: the middle checkpoint
+# sits between two mountains and overlooks the road it no longer stands on.
+# No allies here yet — the succession war has not reached this crossing.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
 .......M...........
-....F...F...F......
-.Q...............Q.
-.====C===C===C====.
-.B...............B.
-......F...F...F....
-...........M.......
+......=======......
+.Q....=..M..=....Q.
+.====C=.FCF.=C====.
+.B.......M.......B.
+......F.......F....
+....F......M...F...
+.......F.....F.....
+..M.............M..
 [owners]
 1 1 2
 1 1 4
