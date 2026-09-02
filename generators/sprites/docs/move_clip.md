@@ -7,8 +7,8 @@ the gait the tween never had — and it is the contract both sides implement
 against.
 
 Status: **shipped on both sides.** `move` is in `anim.json` beside `ambient`,
-`ambient_figures` and `sea`, and the game plays it for exactly the length of
-`BattleAnimator.animate_path`'s tween. A reader that finds no `move` key is
+`ambient_figures`, `sea` and `ko`, and the game plays it for exactly the length
+of `BattleAnimator.animate_path`'s tween. A reader that finds no `move` key is
 reading a manifest from before that batch and falls back to `ambient` — which
 is the `fallback` field saying so in the file rather than in a comment.
 
@@ -50,14 +50,33 @@ mirrors for the other one: `"flip_x_for": ["right"]`.
 **Semantics of the two new keys.** `facing` is which screen direction the art
 is drawn facing; a clip with **no** `facing` key must never be mirrored, which
 is what keeps `ambient`, `ambient_figures` and `sea` byte-identical in
-behaviour — the manifest schema is additive and `VERSION` stays 1. `fallback`
-names the clip to play when this clip's sheets are missing from the install.
+behaviour — the manifest schema is additive and `VERSION` stays 1.
 
-A unit with no authored move pose renders its ambient counterpart
-(MOVE_A → A, MOVE_B → B), so the move sheets are valid from the day they ship —
-initially identical to the ambient pair — and the per-unit opt-in
-(`units.MOVES`) grows one family at a time. The consumer never has to know
-which units are authored.
+**`fallback`** names the clip to fall back on, and it answers two absences with
+one key.
+
+*The install's.* A consumer that does not find this clip's sheets plays the
+named clip instead. That is the reading `move` shipped with, and it is why a
+manifest from before the move batch reads as `ambient`.
+
+*A unit's.* Every clip past `ambient` is a per-unit opt-in, and the columns of a
+unit that has not opted in carry the fallback clip's own frame, so the sheet is
+a valid 18-column grid from the day it ships. A unit with no authored move pose
+renders its ambient counterpart (MOVE_A → A, MOVE_B → B), so the move sheets
+were initially identical to the ambient pair and the opt-in (`units.MOVES`)
+grows one family at a time.
+
+The two readings agree wherever the fallback frame is a legal thing to draw in
+the clip's own place, which is the whole of `move`: a unit that does not walk is
+drawn parked, and the consumer never has to know which units are authored. They
+part on `ko`, where the fallback frame is the unit STANDING and drawing it as a
+casualty would be a lie. Air authors no wreck in v1, so its four columns of
+`units_atlas_figures_ko.png` carry pose A byte for byte, and **the consumer must
+not draw them**: it takes the fallback clip's own *behaviour* for that unit
+rather than its cells, which for the cut-in is `CutsceneSide.bind` leaving the
+KO cut null for a flying unit and keeping the transform-topple. Which units are
+authored is not in the manifest, so a consumer that cannot tell must draw
+nothing from a `ko` column rather than trust the cell it finds there.
 
 ## 2. Region maths — identical to ambient
 

@@ -71,8 +71,15 @@ The duplication is real and it is small. The terrain atlas is 54% redundant — 
 720 KiB of decoded RGBA — but the terrain atlas is only 1.3 MiB of a 20.7 MiB runtime set, and
 the five property columns that genuinely differ per faction are why the six-row shape exists at
 all. The cost that dominates is the seven 1152×576 unit sheets: **17.7 MiB, 86% of the decoded
-total, with no duplicate cell between them.** Squeezing every repeated cell out of every sheet
-would return 752 KiB, about 3.5% of what the game holds — so the case for a relayout is a tidiness
+total**, and since the KO sheet shipped they also hold the set's only duplication *between*
+sheets — 24 of `units_atlas_figures_ko.png`'s 108 cells, the four air columns (9–12) on all six
+rows, 576 KiB decoded, byte-identical to the same cells of `units_atlas_figures.png`. That is
+deliberate and it is what a valid grid costs: air authors no wreck in v1, so `units.build_model`
+fills those columns with its rest key rather than leaving holes in an 18-column sheet, and nothing
+draws them — `CutsceneSide.bind` leaves the KO cut null for a flying unit. The table above cannot
+see it, because `dup` counts only cells repeated inside **one** sheet, which is why the KO row
+reads 0. Squeezing every repeated cell out of every sheet would return 752 KiB within sheets plus
+those 576 across them, about 6% of what the game holds — so the case for a relayout is a tidiness
 case, not a memory one, and it is paid for in `BattleView`'s region maths, which reads a terrain's
 cell as (column, faction row). Two small oddities the instrument turned up and this page does not
 explain: `autotiles/roads.png` cell 10 and `autotiles/shoals.png` cell 4 are byte-identical to

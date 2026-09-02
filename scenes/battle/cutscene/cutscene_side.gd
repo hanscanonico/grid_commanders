@@ -668,13 +668,19 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## white-hit language UnitSprite already uses on the board.
 ##
 ## `fall` above zero knocks it out: kicked up and back, tipping over, burning
-## down to a dark silhouette as it goes. The tip is deliberately shallow — these
-## are the board's own three-quarter-view sprites, and spinning one right over
-## reads as a rendering glitch rather than a casualty (plan R3). Past
-## `TOPPLE_KO_AT` the art itself swaps to the unit's authored KO frame, for
-## whichever domain carries one, and the burn hands over with it
-## (`KO_SETTLE_TINT`) — `spin`, `lift` and the fade all keep running unmoved, so
-## only the texture changes, never a beat.
+## down as it goes. The tip is deliberately shallow — these are the board's own
+## three-quarter-view sprites, and spinning one right over reads as a rendering
+## glitch rather than a casualty (plan R3).
+##
+## Where the burn ends is the domain's. A figure with no authored KO frame —
+## air, in v1 — burns the whole fall down to a dark silhouette, as every figure
+## did before S4. One that HAS a frame swaps to it past `TOPPLE_KO_AT`, and the
+## burn turns around there: `KO_SETTLE_TINT` opens on the value the burn had
+## reached and eases back to 1.0 by the landing, so the wreck settles onto its
+## own baked tone — which `wreck_tone` floors and rim-strips, leaving it flatter
+## and, by the end, brighter than the figure stood. The alpha fade is over it
+## from 0.55. `spin`, `lift` and that fade all keep running unmoved across the
+## swap, so only the texture changes, never a beat.
 ##
 ## `jerk` above zero is the knock-back that precedes the fall: the round has
 ## landed on this figure and it is thrown outward and lit before it goes over.
