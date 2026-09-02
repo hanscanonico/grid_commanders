@@ -36,10 +36,11 @@ from spritegen.voxel import render_indexed
 SCALE = 4
 PHASES = [(dx, dy) for dy in range(SCALE) for dx in range(SCALE)]
 # Every pose that stands: the ambient pair and the two strides. Pose.KO is
-# deliberately absent — the man is down, at a third of this height, and none
-# of the standing read below (the stride's leg gap, the rifle held across
-# the chest, the shoulder line a head sits inside) is a claim a crumpled
-# figure can answer; `test_ko_pose.py` holds the KO frame to its own bar.
+# deliberately absent — the man is down, 20 rendered rows against this pose's
+# 37, and none of the standing read below (the stride's leg gap, the rifle
+# held across the chest, the shoulder line a head sits inside) is a claim a
+# crumpled figure can answer; `test_ko_pose.py` holds the KO frame to its own
+# bar.
 STANDING_POSES = (Pose.A, Pose.B, Pose.MOVE_A, Pose.MOVE_B)
 
 

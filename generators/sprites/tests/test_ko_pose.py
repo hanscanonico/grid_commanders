@@ -132,9 +132,10 @@ class AirFallback(unittest.TestCase):
 
 class Silhouette(unittest.TestCase):
     """Per-column silhouette floor, measured off the shipped models rather
-    than argued: a KO cell may lose mass — a prone figure is a third the
-    height of a standing one — but never enough to read as a blob or a
-    speck. `MIN_RATIO` is a floor under every measured ratio; the foot
+    than argued: a KO cell may lose mass — a prone figure renders about half
+    the height of a standing one, 20 rows against 37 for the rifleman — but
+    never enough to read as a blob or a speck. `MIN_RATIO` is a floor under
+    every measured ratio, and mass is not height; the foot
     family's own crouch (0.685-0.703 of its own pose-A count) is the
     tightest reading on the roster and sets it, everything else clearing it
     by a wide margin (0.87-1.03, `apc` and `missiles` even gaining mass from
