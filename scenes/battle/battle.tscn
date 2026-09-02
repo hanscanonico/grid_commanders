@@ -54,9 +54,6 @@ script = ExtResource("23")
 [node name="DeathBlast" type="Node2D" parent="."]
 script = ExtResource("24")
 
-[node name="DamageCallout" type="Node2D" parent="."]
-script = ExtResource("25")
-
 [node name="CapturePips" type="Node2D" parent="."]
 script = ExtResource("14")
 
@@ -72,6 +69,9 @@ texture = ExtResource("3")
 
 [node name="PowerMarks" type="Node2D" parent="."]
 script = ExtResource("21")
+
+[node name="DamageCallout" type="Node2D" parent="."]
+script = ExtResource("25")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(2, 2)

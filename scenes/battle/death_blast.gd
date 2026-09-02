@@ -53,15 +53,4 @@ static func alpha_for(progress: float) -> float:
 
 
 func _draw() -> void:
-	var reach := reach_for(blast)
-	var alpha := alpha_for(blast)
-	var bars := MuzzleFlash.arms(_at, reach)
-	if bars.is_empty() or alpha <= 0.0:
-		return
-	var heart := MuzzleFlash.core_mark(_at, reach)
-	for mark in bars + heart:
-		draw_rect(mark.grow(1.0), Color(UiTheme.HARD_BORDER, alpha))
-	for mark in bars:
-		draw_rect(mark, Color(_tint, alpha))
-	for mark in heart:
-		draw_rect(mark, Color(UiTheme.WHITE, alpha))
+	MuzzleFlash.draw_star(self, _at, reach_for(blast), _tint, alpha_for(blast))

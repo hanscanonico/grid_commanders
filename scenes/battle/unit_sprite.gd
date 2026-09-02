@@ -469,6 +469,16 @@ func flash_hit(in_seconds: float, out_seconds: float) -> void:
 	await tween.finished
 
 
+## Stands the sprite on `cell` and shows it, whatever the last `refresh` decided
+## — a parting pose, for a rider going down with the transport it was riding.
+## `refresh` hides a sprite for as long as it has a carrier, so without this its
+## fade would run on a node nobody can see. Only ever used on a sprite already
+## on its way out: BattleView has stopped tracking it and `die` is next.
+func pose_at(cell: Vector2i) -> void:
+	position = Vector2(cell * TILE) + Vector2(TILE, TILE) / 2.0
+	visible = true
+
+
 ## Fade out and free. Awaitable; the caller must drop its reference first.
 ## `fade_seconds` is handed in for the same reason as `flash_hit`'s, and a zero
 ## fade frees on the spot.

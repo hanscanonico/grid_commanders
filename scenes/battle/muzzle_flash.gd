@@ -92,15 +92,28 @@ static func core_mark(at: Vector2, reach: float) -> Array[Rect2]:
 	return [Rect2(at - Vector2(CORE, CORE) * 0.5, Vector2(CORE, CORE))]
 
 
-func _draw() -> void:
-	var reach := reach_for(_radius, spark)
-	var bars := arms(_at, reach)
-	if bars.is_empty():
+## The whole outlined star, drawn onto `canvas`: the dark edge grown off the one
+## `OUTLINE` weight, the arms in `tint`, the white heart inside them. Shared
+## because three board marks wear this same star — the shot's flash, the death
+## blast and a pennant's flip flash — and a second copy of it is a second
+## opinion about how thick the board's outline is. `alpha` fades the whole mark
+## together, for the blast that thins as it spreads; a star that only shrinks
+## passes 1.0. Nothing is drawn below a whole pixel of reach, which is `arms`'
+## own answer.
+static func draw_star(
+	canvas: CanvasItem, at: Vector2, reach: float, tint: Color, alpha: float = 1.0
+) -> void:
+	var bars := arms(at, reach)
+	if bars.is_empty() or alpha <= 0.0:
 		return
-	var heart := core_mark(_at, reach)
+	var heart := core_mark(at, reach)
 	for mark in bars + heart:
-		draw_rect(mark.grow(OUTLINE), UiTheme.HARD_BORDER)
+		canvas.draw_rect(mark.grow(OUTLINE), Color(UiTheme.HARD_BORDER, alpha))
 	for mark in bars:
-		draw_rect(mark, _tint)
+		canvas.draw_rect(mark, Color(tint, alpha))
 	for mark in heart:
-		draw_rect(mark, UiTheme.WHITE)
+		canvas.draw_rect(mark, Color(UiTheme.WHITE, alpha))
+
+
+func _draw() -> void:
+	draw_star(self, _at, reach_for(_radius, spark), _tint)

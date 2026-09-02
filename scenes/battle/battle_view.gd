@@ -423,10 +423,26 @@ func sync_sprites(fade_seconds: float = 0.0) -> void:
 			continue
 		var sprite: UnitSprite = _sprites[unit]
 		_sprites.erase(unit)
-		sprite.die(fade_seconds)
+		sprite.die(_parting_fade(unit, sprite, fade_seconds))
 	for unit: Unit in game.units:
 		if not _sprites.has(unit):
 			spawn_sprite_for(unit)
+
+
+## How long a sprite this pass frees gets to fade, and where it fades from.
+##
+## A rider was drawn hidden for as long as it rode, so a fade left on it where
+## it lies is a tween nobody can watch: it is stood on the transport's own last
+## cell and un-hidden to go down with it. The viewer has to be able to see that
+## cell — the fog rule the death blast asks of a kill it draws — and a rider
+## lost out of sight goes without a fade, the way every freed sprite used to.
+func _parting_fade(unit: Unit, sprite: UnitSprite, fade_seconds: float) -> float:
+	if fade_seconds <= 0.0 or unit.carrier == null:
+		return fade_seconds
+	if not perspective.can_see_cell(unit.carrier.cell):
+		return 0.0
+	sprite.pose_at(unit.carrier.cell)
+	return fade_seconds
 
 
 ## Re-resolves the match's [SideIdentity] from the sim's current commander picks

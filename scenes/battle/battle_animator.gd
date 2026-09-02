@@ -104,6 +104,17 @@ var _cards: Array[BlockingCard] = []
 ## fast pace cannot leak out of a computer's turn into the player's next one.
 var _last_cut_in_ms := -CUT_IN_STREAK_GAP_MS
 var _cut_in_streak := 0
+## The damage number's live tween, and which show it belongs to. One drawer
+## serves every exchange and a second hit can land while the first number is
+## still up, so a new show kills the tween the old one was riding and only the
+## newest show's finish is allowed to clear the drawer — otherwise the older
+## run drags the newer number toward alpha 0 and then blanks it mid-flight.
+var _callout_tween: Tween
+var _callout_show := 0
+## The flip flash running on each cell, for the same reason: a property can
+## flip again while its own flash is still up, and the earlier tween's finish
+## would clear the later one's.
+var _flip_tweens: Dictionary[Vector2i, Tween] = {}
 
 # --- movement ----------------------------------------------------------------
 
@@ -174,6 +185,7 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		await cutscene.play(result, attacker, defender)
 		_drop_punch()
 		_last_cut_in_ms = Time.get_ticks_msec()
+		_clear_cut_in_dead(result, attacker, defender)
 		_sync_aftermath()
 		return
 	Sfx.play(&"shot")
@@ -294,8 +306,13 @@ func _show_damage(cell: Vector2i, amount: int, attacker: Unit, defender: Unit) -
 	var seconds := Settings.speed.power_mark_seconds()
 	if seconds <= 0.0:
 		return
+	if _callout_tween != null and _callout_tween.is_valid():
+		_callout_tween.kill()
+	_callout_show += 1
+	var show := _callout_show
 	damage_callout.show_hit(cell, amount)
 	var tween := node.create_tween().set_parallel()
+	_callout_tween = tween
 	(
 		tween
 		. tween_property(damage_callout, "rise", 1.0, seconds)
@@ -304,7 +321,8 @@ func _show_damage(cell: Vector2i, amount: int, attacker: Unit, defender: Unit) -
 	)
 	tween.tween_property(damage_callout, "modulate:a", 0.0, seconds).set_delay(seconds)
 	await tween.finished
-	damage_callout.clear_hit()
+	if show == _callout_show:
+		damage_callout.clear_hit()
 
 
 ## Whether this exchange gets the cut-in.
@@ -400,6 +418,24 @@ func _sync_aftermath() -> void:
 	view.sync_sprites(Settings.speed.death_fade_seconds())
 
 
+## Drops the sprites of whichever side the cut-in just showed dying, before the
+## pass above reaches them. Freed outright rather than faded: the death has
+## already played full-screen, and a corpse fading back in on the board would
+## stand on a tile the survivor may be moving onto.
+func _clear_cut_in_dead(
+	result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit
+) -> void:
+	var dead: Array[Unit] = []
+	if result.defender_died:
+		dead.append(defender)
+	if result.attacker_died:
+		dead.append(attacker)
+	for unit in dead:
+		var sprite := view.release_sprite(unit)
+		if sprite != null:
+			sprite.queue_free()
+
+
 # --- build -------------------------------------------------------------------
 
 
@@ -422,17 +458,29 @@ func animate_build(sprite: UnitSprite) -> void:
 ## fire on the fog-deferred repaint too: a capture finished out of the
 ## viewer's sight flips the moment they scout it, and that repaint is
 ## `BattleView.repaint_property`'s own call, never `_present_capture`'s.
+##
+## One flash per cell, run on the cell's own progress: a single synchronous
+## repaint can flip many properties at once — a scout revealing several
+## fog-deferred captures, or an army falling and forfeiting every city it held —
+## and each of those pennants flashes and clears on its own.
 func animate_flag_flip(cell: Vector2i) -> void:
 	if capture_pips == null:
 		return
 	var seconds := Settings.speed.flag_flip_seconds()
 	if seconds <= 0.0:
 		return
+	var running: Tween = _flip_tweens.get(cell)
+	if running != null and running.is_valid():
+		running.kill()
 	capture_pips.show_flip(cell)
 	var tween := node.create_tween()
-	tween.tween_property(capture_pips, "flip", 0.0, seconds)
+	_flip_tweens[cell] = tween
+	tween.tween_method(capture_pips.set_flip.bind(cell), 1.0, 0.0, seconds)
 	await tween.finished
-	capture_pips.clear_flip()
+	if _flip_tweens.get(cell) != tween:
+		return
+	_flip_tweens.erase(cell)
+	capture_pips.clear_flip(cell)
 
 
 # --- capture -----------------------------------------------------------------

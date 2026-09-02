@@ -1,9 +1,12 @@
 class_name DamageCallout
 extends Node2D
-## The map path's damage number — MuzzleFlash's sibling again, and PowerMarks'
-## own rise-then-fade shape. The cut-in already prints what a hit cost the
-## side that took it; the map path never has, which is what an exchange
-## watched without the theatre showed: a flinch and no number.
+## The map path's damage number — PowerMarks' own rise-then-fade shape, and its
+## neighbour above the fog layer for the same reason: the number lifts into the
+## tile above the defender, which is often ground the board is still hiding, and
+## a figure the fog dims is a figure that has to be read twice. The cut-in
+## already prints what a hit cost the side that took it; the map path never
+## has, which is what an exchange watched without the theatre showed: a flinch
+## and no number.
 ##
 ## Dumb, like PowerMarks: BattleAnimator hands over the cell and the amount —
 ## displayed HP a hit cost, off the result's own snapshot — and this only
