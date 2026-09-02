@@ -248,10 +248,13 @@ two poses at both rungs plus one GIF per unit at the manifest's cadence, all
 composited over the terrain the unit stands on; it takes its output directory
 on argv, so it adds nothing to `out/` and the snapshot gate never sees it.
 
-Both instruments take `--clip {ambient,move}` (default `ambient`) and read the
-clip's frames from `units.CLIP_POSES` — `preview_motion.py` also takes its
-sheet tuple and its cadence (`*_MS`) from `spritegen.anim` — so a clip that
-gains a frame is measured and drawn without either file being edited.
+Both instruments take a `--clip` (default `ambient`) and read the clip's frames
+from `units.CLIP_POSES`, so a clip that gains a frame is measured without this
+file being edited: `measure_motion.py` offers every two-frame clip there
+(`{ambient,fire,move}` today). `preview_motion.py` also needs the clip's sheet
+tuple and its cadence (`*_MS`) in its own `CLIP_SHEETS`, which names the
+ambient and move pairs — `{ambient,move}` — so drawing the fire pair is one
+table entry away.
 `measure_motion.py` adds a `MOVES?` column on the move clip — a "no" row is a
 unit rendering its ambient counterpart, and says nothing about a stride.
 `preview_motion.py` draws the move clip FLIPPED as well by default, each unit's
@@ -454,7 +457,7 @@ the composed cell's own spans, so a shadow that was never drawn would have
 moved the foam. Everything else — every hull pixel, every fleck of foam — is
 identical, which is what the `FigureSheet` tests hold it to.
 
-There are two of them, one per ambient key pose, because a frozen figure is
+There are two SUBTRACTED ones, one per ambient key pose, because a frozen figure is
 the closest look a player ever gets at this art and the cut-in should breathe
 like the board does. `_b` is frame B put through the same subtraction, and
 `clips.ambient_figures` in `anim.json` names the pair at the ambient cadence,

@@ -1,6 +1,6 @@
 """Dev instrument for the unit animation clips — not a test, a readout.
 
-`--clip {ambient,move}` picks which pair of poses is measured (default
+`--clip {ambient,fire,move}` picks which pair of poses is measured (default
 ambient); the choices and the pair both come from `units.CLIP_POSES` — every
 clip there that is authored as a pair, so a new one is measured without
 editing this file and a one-frame clip is not offered. The uids are positional
@@ -226,7 +226,7 @@ sampling artefact of the dip's own size and not a smaller
 delta — the un-decimated reading is `test_clips.py`'s IoU, 0.991 (fighter) and
 0.902 (bomber), both clear of the copters' 0.85 bar.
 
-Run: .venv/bin/python tests/measure_motion.py [--clip {ambient,move}] [unit ...]
+Run: .venv/bin/python tests/measure_motion.py [--clip {ambient,fire,move}] [unit ...]
 """
 
 from __future__ import annotations

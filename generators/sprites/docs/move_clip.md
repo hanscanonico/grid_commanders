@@ -7,8 +7,8 @@ the gait the tween never had — and it is the contract both sides implement
 against.
 
 Status: **shipped on both sides.** `move` is in `anim.json` beside `ambient`,
-`ambient_figures`, `sea`, `ko` and `fire`, and the game plays it for exactly the length
-of `BattleAnimator.animate_path`'s tween. A reader that finds no `move` key is
+`ambient_figures`, `sea`, `ko` and `fire`, and the game plays it for exactly
+the length of `BattleAnimator.animate_path`'s tween. A reader that finds no `move` key is
 reading a manifest from before that batch and falls back to `ambient` — which
 is the `fallback` field saying so in the file rather than in a comment.
 
