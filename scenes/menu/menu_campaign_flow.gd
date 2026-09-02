@@ -292,6 +292,7 @@ func _pose_hub(open_briefing: bool) -> void:
 		return
 	_campaign = posed[0]
 	_menu_root.hide()
+	_hub.set_moving(false)
 	_hub.begin(posed[0], CampaignState.begin(posed[0]))
 	if open_briefing:
 		_hub.debug_open_first()
@@ -315,6 +316,7 @@ func _pose_hub_deep() -> void:
 		progress.complete(campaign, next, POSED_STARS, POSED_DAY)
 	_campaign = campaign
 	_menu_root.hide()
+	_hub.set_moving(false)
 	_hub.begin(campaign, progress)
 
 
