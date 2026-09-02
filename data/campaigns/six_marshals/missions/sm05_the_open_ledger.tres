@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -98,9 +98,15 @@ effects = Array[Resource]([SubResource("Effect_crossroads_output")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "Vale's expensive army caught up with us, and our towns could not pay for the answer."
+speaker = &"konrad_vale"
+text = "You held fewer than four of the six towns. The rest was interest. It accrued while you decided."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We tried to outspend him. I'm the one who said don't. Calder was in the room."
 
 [resource]
 script = ExtResource("1")
@@ -125,4 +131,4 @@ events = Array[Resource]([SubResource("Event_interest_accrues"), SubResource("Ev
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

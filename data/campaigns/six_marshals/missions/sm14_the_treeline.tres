@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -113,9 +113,15 @@ effects = Array[Resource]([SubResource("Effect_gate_column")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The line thinned to chase the last town, and Draeg's column found a lane after all."
+speaker = &"viktor_draeg"
+text = "Your line thinned out chasing the fourth town, so I put a lane through the thin part and the formation's still whole."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We answered a lone tank with a tank of our own. I said artillery. I'm fairly sure I said artillery."
 
 [resource]
 script = ExtResource("1")
@@ -140,4 +146,4 @@ events = Array[Resource]([SubResource("Event_no_lane"), SubResource("Event_the_g
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

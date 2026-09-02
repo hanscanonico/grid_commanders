@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -8,10 +8,11 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_take_the_crossroads_base_before_vale"]
 script = ExtResource("2")
-text = "Take the crossroads base before Vale finishes it."
+text = "Capture the crossroads base before Vale finishes it."
 cell = Vector2i(7, 4)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -78,9 +79,38 @@ effects = Array[Resource]([SubResource("Effect_vale_takes_the_gate"), SubResourc
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Ferrow_was_paid"]
+script = ExtResource("10")
+flag = &"ferrow_paid"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_ferrow_paid"]
 script = ExtResource("4")
-text = "Vale finished the base, and every unit that rolled out of it cost us twice."
+speaker = &"dane_ferrow"
+text = "Vale. They paid me on the customs road. I've sold you the list of what they can't afford to lose."
+requires = SubResource("Ferrow_was_paid")
+
+[sub_resource type="Resource" id="Line_ferrow_unpaid"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Vale. I came home with an empty column. Don't spend what you haven't taken."
+unless = SubResource("Ferrow_was_paid")
+
+[sub_resource type="Resource" id="Line_concord"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "The Concord's lent us Sol. It shares no border with Iron. It lends arithmetic."
+
+[sub_resource type="Resource" id="Line_defeat_1"]
+script = ExtResource("4")
+speaker = &"konrad_vale"
+text = "The crossroads opened on schedule. It is producing. Everything it builds is paid for with ground you left me."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We went at the base head-on and paid his prices for it, when what Sol said was take it off him, don't trade for it."
 
 [resource]
 script = ExtResource("1")
@@ -103,6 +133,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_gate_finishes")])
 par_day = 6
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_ferrow_paid"), SubResource("Line_ferrow_unpaid"), SubResource("Line_concord"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

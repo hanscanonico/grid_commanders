@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -115,9 +115,15 @@ effects = Array[Resource]([SubResource("Effect_compound_guns")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The race turned into a long fight, and a long fight was always hers."
+speaker = &"iona_vance"
+text = "You stopped to trade with me on the way to the towns, though every trade I've made since day one has been a little better than the last."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "It was a race. We made it a fight. That's the one thing she's built to win."
 
 [resource]
 script = ExtResource("1")
@@ -142,4 +148,4 @@ events = Array[Resource]([SubResource("Event_counting_turns"), SubResource("Even
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

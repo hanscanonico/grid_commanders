@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -145,9 +145,28 @@ effects = Array[Resource]([SubResource("Effect_bought_raider")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("14")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The passes changed hands, and Ferrow was paid for all of it."
+speaker = &"dane_ferrow"
+text = "Four on the climb. A good week's wages. I barely had to slow down for them."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Four of ours on the climb, each one paying for the raider that caught the next, so we'd been funding his war ourselves."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We went up his own lane after him, which is a fight Ferrow's never once lost when he picked the ground."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -172,4 +191,4 @@ events = Array[Resource]([SubResource("Event_he_commits"), SubResource("Event_th
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

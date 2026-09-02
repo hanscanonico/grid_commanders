@@ -23,13 +23,13 @@ text = "Ferrow's column went home in the second week of the thaw. It's the only 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"dane_ferrow"
-text = "The Directorate is dead. Six of us are bidding for its chair, and I'm the only one keeping receipts."
+text = "The old man is dead. Six of us are bidding for his chair, and I'm the only one keeping receipts."
 requires = SubResource("Unpaid")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"dane_ferrow"
-text = "The Directorate is dead. Six of us want its chair, and I walk into that room with a full column and a bill for your losses."
+text = "The old man is dead. Six of us want his chair, and I walk into that room with a full column and a bill for your losses."
 requires = SubResource("Paid")
 
 [sub_resource type="Resource" id="Line_4"]

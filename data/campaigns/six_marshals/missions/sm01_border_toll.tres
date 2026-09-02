@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -8,10 +8,11 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_take_road_city"]
 script = ExtResource("2")
-text = "Take the customs city north of the road."
+text = "Capture the customs city north of the road."
 cell = Vector2i(5, 3)
 
 [sub_resource type="Resource" id="Failure_the_toll"]
@@ -21,7 +22,7 @@ max_losses = 2
 
 [sub_resource type="Resource" id="Bonus_south_city"]
 script = ExtResource("2")
-text = "Hold the southern city as well."
+text = "Capture the southern city as well."
 cell = Vector2i(5, 7)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -85,9 +86,28 @@ effects = Array[Resource]([SubResource("Effect_toll_funds"), SubResource("Effect
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("10")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "The road stayed shut, and the toll went on being collected in armour and men."
+speaker = &"dane_ferrow"
+text = "Three wrecks on the customs road means the toll's paid in full, so I'll be back the day the next column's worth the trip."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Three down. He's paid three times over now. He never wanted the city, only our wrecks."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We met him on open ground after all, which is the one thing Ward said we'd never do."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -112,4 +132,4 @@ events = Array[Resource]([SubResource("Event_the_toll_is_paid")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])
