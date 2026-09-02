@@ -54,6 +54,11 @@ speaker = &"gideon_holt"
 text = "We've got the courier's count and Vale's payment book. Every entry in that audit can be read back to the men holding this ground."
 requires = SubResource("Books_in_hand")
 
+[sub_resource type="Resource" id="Line_1c"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Same columns that crossed the border line, what's left of them. Nobody on this floor was hired yesterday."
+
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
@@ -268,6 +273,8 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus"), SubResource("Bonus_take_the_southern_town_for_a_bonus")])
 events = Array[Resource]([SubResource("Event_paid_for_by_you"), SubResource("Event_the_foundry_answers"), SubResource("Event_read_it_out")])
 par_day = 10
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
+carry_in = true
+carry_floor_hp = 50
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_1c"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_6"), SubResource("Line_6_par"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9_losses"), SubResource("Line_9_full"), SubResource("Line_9_best"), SubResource("Line_5")])
 defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3_books")])
