@@ -140,12 +140,6 @@ func _ready() -> void:
 		func() -> void: get_tree().change_scene_to_file(BATTLE_SCENE)
 	)
 
-	# Coming back from a mission lands on the hub it was launched from, not on the
-	# menu: the campaign is still the thing being played, and the next mission is
-	# one row below the one just finished. The session is cleared as it is read, so
-	# a later Quit-to-menu cannot reopen a campaign nobody is in.
-	if CampaignSession.active():
-		_campaign_flow.resume()
 	# Where the slot comes from stays this page's: the disk, or a posed one when a
 	# capture owns it, so a photographed menu never depends on what this machine
 	# has saved.
@@ -179,6 +173,12 @@ func _ready() -> void:
 			_seat_strip.set_human(seat, true)
 		_refresh_seats()
 	_start_button.grab_focus()
+	# Coming back from a mission lands on the debrief and the hub, not on the menu:
+	# the campaign is still the thing being played. The session is cleared as it is
+	# read, so a later Quit-to-menu cannot reopen a campaign nobody is in. Last,
+	# after the Start button's grab, so the debrief's own button keeps the focus.
+	if CampaignSession.active():
+		_campaign_flow.resume()
 
 	await _pose_seats()
 

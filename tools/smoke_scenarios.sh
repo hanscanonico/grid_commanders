@@ -263,14 +263,15 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # The campaign menu scenarios are the same argument for the six authored
 # wars, which had no frame anywhere: `menu_campaigns` is the war picker,
 # `menu_campaign_hub` its mission list, `menu_campaign_brief` that hub with the
-# open mission's briefing up, and `menu_campaign_debrief` and
-# `menu_campaign_interlude` the two panels a war speaks through on the way back
-# from a board. Each poses a fresh profile the way `menu_with_save` poses a
+# open mission's briefing up, and `menu_campaign_debrief`, `menu_campaign_defeat`
+# and `menu_campaign_interlude` the panels a war speaks through on the way back
+# from a board — the debrief after a win and after a loss, which is the one frame
+# with Retry on it. Each poses a fresh profile the way `menu_with_save` poses a
 # save — how far the machine running the sweep has played is not something a
 # frame may depend on — and each measures its own page's chrome against the
 # frame before it writes, as the rest of the menu family does: a panel whose
 # rows stacked at the container's origin writes a perfectly healthy PNG.
-# `menu_campaign_deep` is the sixth, and the only frame in the sweep where the
+# `menu_campaign_deep` is the seventh, and the only frame in the sweep where the
 # hub's list is scrolled: it walks the flagship war forward past the twelve rows
 # that fit the page, so the open mission is one the list has to scroll to, which
 # makes it the regression frame for that list's follow_focus.
@@ -369,7 +370,8 @@ DEFAULT_MODES=(
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
 	menu_with_save menu_no_save menu_setup_context menu_four_seats menu_replays
 	menu_campaigns menu_campaign_hub menu_campaign_brief menu_campaign_debrief
-	menu_campaign_interlude menu_campaign_deep menu_commander_select
+	menu_campaign_defeat menu_campaign_interlude menu_campaign_deep
+	menu_commander_select
 )
 
 # mobile_back is deliberately NOT in that list. A touch build is a boot fact of the

@@ -42,6 +42,10 @@ var _pending: CampaignInterlude
 ## spoke to rather than the profile re-read off disk, so the two pages of one beat
 ## cannot disagree about how the block went when a progress write fails.
 var _pending_ledger: CampaignState
+## The mission the open debrief is about, for a Retry from it. Set as the debrief
+## opens and dropped as it closes either way, so nothing after it can deploy a
+## mission nobody is looking at.
+var _debrief_mission: StringName
 ## The menu stack the panels are shown over, hidden while either is up.
 var _menu_root: Control
 ## Where a Back from the campaign list lands.
@@ -63,6 +67,7 @@ func _init(host: Node, menu_root: Control, on_closed: Callable, launch: Callable
 	_debrief = CampaignDebriefPanel.new()
 	host.add_child(_debrief)
 	_debrief.continued.connect(_after_debrief)
+	_debrief.retried.connect(_retry)
 	_interlude = CampaignInterludePanel.new()
 	host.add_child(_interlude)
 	_interlude.continued.connect(_after_interlude)
@@ -96,25 +101,22 @@ func resume() -> bool:
 		_show_hub(campaign)
 		return true
 	_menu_root.hide()
-	var stars := CampaignSession.max_stars()
 	var progress := CampaignSession.progress
-	# Read before the clear below, which takes the tally with it.
-	var losses := CampaignSession.tally.losses() if CampaignSession.tally != null else 0
-	_pending = _closing_interlude(campaign, mission, outcome)
-	_pending_ledger = progress
 	# The ledger has already settled — `CampaignSession.record` runs on the victory
 	# screen — so the debrief speaks against the war as it now stands, which is what
 	# a variant victory line is written against, and reports what that write took.
-	_debrief.begin(
-		mission,
-		outcome,
-		stars,
-		_next_title(campaign, progress, outcome),
-		progress,
-		CampaignSession.recorded_notes(),
-		losses,
-		Settings.menu_animations
-	)
+	# Everything is read before the clear below, which takes the tally with it.
+	var report := CampaignDebriefPanel.Report.new(mission, outcome)
+	report.next_title = _next_title(campaign, progress, outcome)
+	report.ledger = progress
+	report.recorded = CampaignSession.recorded_notes()
+	report.losses = CampaignSession.tally.losses() if CampaignSession.tally != null else 0
+	report.previous = CampaignSession.previous_record()
+	report.campaign = campaign
+	_pending = _closing_interlude(campaign, mission, outcome)
+	_pending_ledger = progress
+	_debrief_mission = mission.id
+	_debrief.begin(report, Settings.menu_animations)
 	CampaignSession.clear()
 	return true
 
@@ -146,6 +148,7 @@ func _closing_interlude(
 ## The debrief is done: the page between the blocks, if this mission closed one,
 ## and the hub after it.
 func _after_debrief() -> void:
+	_debrief_mission = &""
 	if _campaign == null:
 		return
 	if _pending == null:
@@ -154,6 +157,19 @@ func _after_debrief() -> void:
 	_interlude.begin(_pending, _pending_ledger, Settings.menu_animations)
 	_pending = null
 	_pending_ledger = null
+
+
+## Retry from the debrief of a lost mission: the same deploy the hub makes.
+## `CampaignSession.record` already cleared the profile's active mission on the
+## loss, so this starts the mission fresh rather than resuming the board it was
+## lost on.
+func _retry() -> void:
+	var mission_id := _debrief_mission
+	_debrief_mission = &""
+	if mission_id == &"":
+		push_error("MenuCampaignFlow: retried with no debrief open")
+		return
+	_deploy(mission_id)
 
 
 func _after_interlude() -> void:
@@ -179,6 +195,9 @@ func pose(driver: MenuCaptureDriver) -> Callable:
 		return _chrome_picker
 	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_DEBRIEF):
 		_pose_debrief(true)
+		return _chrome_debrief
+	if driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_DEFEAT):
+		_pose_debrief(false)
 		return _chrome_debrief
 	if driver.poses_campaign_hub():
 		_pose_hub(driver.poses(MenuCaptureDriver.DEMO_CAMPAIGN_BRIEF))
@@ -211,10 +230,8 @@ func _pose_debrief(won: bool) -> void:
 	var campaign: CampaignDefinition = posed[0]
 	var mission: MissionDefinition = campaign.missions[0]
 	# One earned and one missed, so the frame photographs the shape a real
-	# mission's awards take rather than the padded fallback — which is why the
-	# posed max is the array's own size and not the mission's. The posed day is
-	# past this mission's own par, so the missed star and the scoreboard beside it
-	# tell the same story.
+	# mission's awards take. The posed day is past this mission's own par, so the
+	# missed star and the scoreboard beside it tell the same story.
 	var late_day := mission.par_day + 2
 	var awards: Array[MissionRuntime.Award] = [
 		MissionRuntime.Award.new("Mission complete", true),
@@ -229,19 +246,20 @@ func _pose_debrief(won: bool) -> void:
 	)
 	# The route is what names the mission this one opened, so the pose walks it: a
 	# fresh profile with this mission cleared is the war the debrief is speaking to.
+	# Cleared twice, the first time slower, so the won frame shows what a clear is
+	# worth against the record it beat rather than only a first clear.
+	var previous := CampaignState.MissionRecord.new(outcome.stars, late_day + 2)
 	var progress := CampaignState.begin(campaign)
+	progress.complete(campaign, mission.id, previous.stars, previous.best_day)
 	progress.complete(campaign, mission.id, outcome.stars, late_day)
+	var report := CampaignDebriefPanel.Report.new(mission, outcome)
+	report.next_title = _next_title(campaign, progress, outcome)
+	report.ledger = progress
+	report.losses = 2
+	report.previous = previous
+	report.campaign = campaign
 	_menu_root.hide()
-	_debrief.begin(
-		mission,
-		outcome,
-		awards.size(),
-		_next_title(campaign, progress, outcome),
-		progress,
-		[],
-		2,
-		false
-	)
+	_debrief.begin(report, false)
 
 
 func _chrome_debrief() -> Dictionary[String, Control]:

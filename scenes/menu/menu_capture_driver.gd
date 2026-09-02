@@ -55,6 +55,8 @@ const DEMO_CAMPAIGN_HUB := "menu_campaign_hub"
 ## The hub pose that opens its first mission's briefing rather than the list.
 const DEMO_CAMPAIGN_BRIEF := "menu_campaign_brief"
 const DEMO_CAMPAIGN_DEBRIEF := "menu_campaign_debrief"
+## The same page after a loss: the reason, the defeat lines and Retry leading.
+const DEMO_CAMPAIGN_DEFEAT := "menu_campaign_defeat"
 const DEMO_CAMPAIGN_INTERLUDE := "menu_campaign_interlude"
 ## The hub pose a war is most of the way through: the one frame the list is
 ## scrolled in, so the row the keyboard lands on is a row the page had to move to
@@ -71,6 +73,7 @@ const DEMO_MODES: Array[String] = [
 	DEMO_CAMPAIGN_HUB,
 	DEMO_CAMPAIGN_BRIEF,
 	DEMO_CAMPAIGN_DEBRIEF,
+	DEMO_CAMPAIGN_DEFEAT,
 	DEMO_CAMPAIGN_INTERLUDE,
 	DEMO_CAMPAIGN_DEEP,
 	DEMO_COMMANDER_SELECT,
