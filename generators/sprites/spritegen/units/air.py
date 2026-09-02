@@ -311,8 +311,12 @@ def b_copter(pose: Pose = Pose.A) -> Model:
         # says heading on a sheet that may never translate the hull. The
         # airframe RAKES about the mast, which stays where it is: the disc is
         # the part the eye tracks and tilting it would read as a second
-        # animation, so every shift below is capped under z9 and the four
-        # blades of both move frames are the ambient frames' voxel for voxel.
+        # animation, so every shift below is SELECTED from under z9 and the
+        # main disc comes out of a move frame voxel for voxel with the
+        # ambient pose of the same beat. What it does between the four
+        # frames is TURN — `BLADES[beat(pose)]` above, MOVE_C and MOVE_D on
+        # ticks neither ambient pose draws — and the rake never reaches it.
+        # The TAIL rotor is not that disc and does ride the boom up.
         #
         # Ahead of the mast the nose, the tandem canopy and the chin gun drop
         # one board texel (dz = -2). Behind it the boom comes UP, and it comes
@@ -343,7 +347,8 @@ def t_copter(pose: Pose = Pose.A) -> Model:
     """Tandem-rotor transport helicopter — unarmed.
 
     Both discs are clipped along y so they do not meet over the hold, and
-    both take pose B's tick together, as on b_copter.
+    both take the FRAME's own tick together, as on b_copter — the ambient
+    pair's two positions and, since S6, the move clip's four.
     """
     m = Model()
     # boxy hold in hull livery, rounded top edges so it stops reading as a

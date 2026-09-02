@@ -352,7 +352,11 @@ forms named in the root index are in `docs/design_record.md`.
   carries direction — a later slice free to move MOVE_A/MOVE_B could buy the lap. The **two
   copters** (`b_copter`,
   `t_copter`) read a real four-tick rotor off the same `beat(pose)` index, `parts.BLADES` grown from
-  two ticks to four by the construction `_BLADE_B` already used from `_BLADE_A`; every other family
+  two ticks to four by the construction `_BLADE_B` already used from `_BLADE_A` — with ONE
+  exception that must survive any later tick: `_BLADE_D` advances only the outer four points and
+  HOLDS index 2 at `_BLADE_C`'s value, because `_rotor` turns that delta 90 degrees onto the
+  clipped arm (`t_copter`'s tandem, `arm[:-2]`) where the naive fifth point opens a three-voxel gap
+  and strands a rung-1 texel (`parts.py` states the measurement); every other family
   — wheeled (`recon`, `rockets`, `missiles`), the two fixed-wing jets and the four sea hulls —
   interpolates its existing two-frame motion across the extra pair (`GaitPhases.REUSED`), MOVE_C and
   MOVE_D byte-identical to MOVE_A and MOVE_B. `b_copter`'s S5-deferred fire-window rotor freeze is

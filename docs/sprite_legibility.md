@@ -638,14 +638,22 @@ tread content living on MOVE_C/MOVE_D alone), and the ruler agrees to four signi
 | cutin `idle_b` | 1,080 | 36 | 3.3% | — | — | — |
 
 Board and cut-in are separate views on separate sheets and each row is one of them, as in the
-2026-09-01 table above: the six board rows reproduce that section's figures to the digit, and the
+2026-09-01 table above: the four rows that section also read — `idle_a`, `idle_b`, `walk_a`,
+`walk_b` — reproduce its figures to the digit, `walk_c` and `walk_d` are first reads, and the
 cut-in carries no fogged reading because fog is a board overlay. The whole-run lines below are the
 two views added together.
 
 Whole run: clear 54,000 cells, 27,376 failing (50.7%), 18,880 hue-carried (69.0%); fogged 12,960
-cells, 4,426 failing (34.2%), 887 hue-carried (20.0%) — both a shade under the S8 control's own
-52.5%/33.8% board-plus-cutin figures, `walk_c` and `walk_d` landing a little easier than `walk_a`/
-`walk_b` rather than a little harder. Nothing was tuned to buy that; it is the two new gait keys'
+cells, 4,426 failing (34.2%), 887 hue-carried (20.0%) — both a shade OVER the S8 section's own
+board-plus-cut-in figures of 49.7% clear and 33.8% fogged, and the board-only halves move the same
+way, 52.5% → 52.6%. All three readings rise, and none of the three by more than a point.
+
+That rise is the frame axis, not the contour. The two runs are not a like-for-like control: S8 read
+four board frames and this one reads six, and the two it adds are GAIT keys, every one of which
+reads harder than either idle frame — the walk rows run 50.8-55.6% clear against the idle pair's
+47.7% and 51.4%, so averaging six of them lands above an average of four. Within the gait itself the
+new pair is the easy half: `walk_c` and `walk_d` land a little easier than `walk_a`/`walk_b` rather
+than a little harder. Nothing was tuned to buy that; it is the two new gait keys'
 own geometry (the tracked family's quarter-phase tread step and the two copters' further rotor
 tick move less of a unit's silhouette per frame than the parked-to-walking beat does) read through
 the same contour S8 shipped.
