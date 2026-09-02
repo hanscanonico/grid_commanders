@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -14,7 +14,7 @@
 
 [sub_resource type="Resource" id="Objective_take_the_waystation"]
 script = ExtResource("2")
-text = "Take the waystation."
+text = "Capture the waystation."
 cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Bonus_take_the_courier"]
@@ -123,9 +123,15 @@ effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("4")
-text = "The waystation held, and stayed exactly as hidden as it needed to be."
+speaker = &"dane_ferrow"
+text = "You found my depot on a hunch and lost it to a watch you never saw arrive. Hunches don't hold ground. Vale pays me either way."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "The waystation holds. My screen saw further than most and still missed the watch he doubled. Marking the depot lost."
 
 [resource]
 script = ExtResource("1")
@@ -150,4 +156,4 @@ events = Array[Resource]([SubResource("Event_the_garrison_learns"), SubResource(
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

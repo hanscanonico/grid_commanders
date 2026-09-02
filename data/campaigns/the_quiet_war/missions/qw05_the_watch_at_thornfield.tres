@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="13"]
 
 [sub_resource type="Resource" id="Objective_hold_thornfield"]
 script = ExtResource("2")
@@ -71,7 +72,7 @@ units = Array[Resource]([SubResource("Spawn_vale_armour")])
 [sub_resource type="Resource" id="Event_line_bluff"]
 script = ExtResource("3")
 speaker = &"konrad_vale"
-text = "The wood line is a bluff, Commander Rook. I am sending something that does not care what is standing in it."
+text = "The wood line is a bluff, Rook. I am sending something that does not care what is standing in it."
 
 [sub_resource type="Resource" id="Event_vales_column_presses"]
 script = ExtResource("5")
@@ -113,9 +114,27 @@ effects = Array[Resource]([SubResource("Effect_thornfield_held")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_fifth_morning")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure_fired"]
+script = ExtResource("13")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "Thornfield fell before the relief column crossed the ridge, and Vale had his town by nightfall."
+speaker = &"konrad_vale"
+text = "You put a picket in a wood line and asked me to believe in it. My armour came through fog you never saw across. Thornfield is filed."
+
+[sub_resource type="Resource" id="Line_defeat_cause"]
+script = ExtResource("3")
+speaker = &"konrad_vale"
+text = "Four of yours in the tree line. The bluff was costed."
+requires = SubResource("Run_failure_fired")
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Relief was six days out. The wood line ran out of picket before then. Thornfield's his by nightfall."
 
 [resource]
 script = ExtResource("1")
@@ -140,4 +159,4 @@ events = Array[Resource]([SubResource("Event_vales_column_presses"), SubResource
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_cause"), SubResource("Line_defeat_staff")])

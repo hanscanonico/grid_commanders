@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -14,7 +14,7 @@
 
 [sub_resource type="Resource" id="Objective_take_the_node"]
 script = ExtResource("2")
-text = "Take Morn's forward base."
+text = "Capture Morn's forward base."
 cell = Vector2i(8, 4)
 
 [sub_resource type="Resource" id="Relay_is_dark"]
@@ -110,9 +110,27 @@ effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_at_par"]
+script = ExtResource("5")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("4")
-text = "The node held, and rebuilt itself somewhere the next scout will have to find all over again."
+speaker = &"radek_morn"
+text = "You came for the base and never saw the armour I kept behind it. I said I was done being a rumour. Now you know what that costs."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "The node holds. Everything it ran is being rebuilt somewhere the next scout has to find all over again. I'm out of pieces to hand you."
+
+[sub_resource type="Resource" id="Line_4b"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "Five days. You moved faster than my armour did. I'll remember the number."
+requires = SubResource("Run_at_par")
 
 [resource]
 script = ExtResource("1")
@@ -136,5 +154,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_morn_stops_being_quiet"), SubResource("Event_the_network_is_mapped")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_4b"), SubResource("Line_5"), SubResource("Line_6")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

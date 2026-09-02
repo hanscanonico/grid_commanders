@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -97,9 +97,20 @@ effects = Array[Resource]([SubResource("Effect_her_whole_reserve")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_reserve")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "The line broke in the open, with nowhere to hide the reason why."
+speaker = &"iona_vance"
+text = "I spent my whole reserve on one line and the scales tipped. Your line's in the open with nowhere to hide why it broke."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The line broke before the seventh day. No fog to put the reason in this time. It goes in the file the way it happened."
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Her whole column's on my screen and none of it's hiding. I've never had a page this easy to read. I like it less than the fog."
 
 [resource]
 script = ExtResource("1")
@@ -122,6 +133,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_her_whole_reserve")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

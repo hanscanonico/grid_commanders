@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_take_vances_base"]
 script = ExtResource("2")
-text = "Take Vance's forward base."
+text = "Capture Vance's forward base."
 cell = Vector2i(17, 7)
 
 [sub_resource type="Resource" id="Columns_broken"]
@@ -65,7 +65,7 @@ text = "Orlov wanted this fought in shadows because he didn't think we could win
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Orlov's people will have to write this one up exactly as it happened, and I'd pay real money to read the draft they try first."
+text = "Orlov's people will have to write this one up the way it happened, and I'd pay real money to read the draft they try first."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -104,9 +104,20 @@ effects = Array[Resource]([SubResource("Effect_second_corps")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_second_corps"), SubResource("Event_line_second_corps_holt")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "Vance's base held, and the open war is not yet the alliance's to win outright."
+speaker = &"iona_vance"
+text = "You wanted a war in the open. My column gave you one and your army came apart in daylight. The base is still mine."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "First fight in daylight and the army's off the board in front of an audience. Her base holds. Nothing about the open war is ours yet."
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Six entries in the file and the seventh is walking at us in daylight."
 
 [resource]
 script = ExtResource("1")
@@ -129,6 +140,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_second_corps")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4"), SubResource("Line_4b")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4"), SubResource("Line_4b")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

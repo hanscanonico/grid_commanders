@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,7 +11,7 @@
 
 [sub_resource type="Resource" id="Objective_take_the_works"]
 script = ExtResource("2")
-text = "Take the works base behind the wall."
+text = "Capture the works base behind the wall."
 cell = Vector2i(16, 2)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -61,7 +61,7 @@ units = Array[Resource]([SubResource("Spawn_wall_battery")])
 [sub_resource type="Resource" id="Event_line_concrete"]
 script = ExtResource("3")
 speaker = &"konrad_vale"
-text = "There is nothing left to file, Commander. What is left is concrete and a battery behind it, and concrete does not negotiate."
+text = "There is nothing left to file, Marr. What is left is concrete and a battery behind it, and concrete does not negotiate."
 
 [sub_resource type="Resource" id="Event_concrete_does_not_negotiate"]
 script = ExtResource("5")
@@ -71,9 +71,20 @@ effects = Array[Resource]([SubResource("Effect_wall_battery")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_concrete")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "The works held, and Vale's fortifications proved as stubborn as his paperwork."
+speaker = &"konrad_vale"
+text = "You brought too little to argue with concrete. The works stand. Nothing about them is left to file."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The works hold. His wall took everything you sent at it in daylight. It never needed a permit to do that."
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The works are on every map now, mine included. First thing Vale's built that I didn't have to find."
 
 [resource]
 script = ExtResource("1")
@@ -96,6 +107,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_concrete_does_not_negotiate")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

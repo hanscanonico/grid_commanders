@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_cut_the_relay"]
 script = ExtResource("2")
-text = "Take the relay city."
+text = "Capture the relay city."
 cell = Vector2i(9, 2)
 
 [sub_resource type="Resource" id="Bonus_catch_the_rider"]
@@ -115,9 +115,15 @@ effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("4")
-text = "The relay kept broadcasting, and somewhere east of here a column got exactly the orders it was waiting for."
+speaker = &"radek_morn"
+text = "The relay reported on schedule and you never got close enough to hear it. My rider's already east of you with the next set of orders."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Your column's gone short of the relay. It's still broadcasting. Somewhere east of here a column got the orders it was waiting for."
 
 [resource]
 script = ExtResource("1")
@@ -142,4 +148,4 @@ events = Array[Resource]([SubResource("Event_orders_by_hand"), SubResource("Even
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

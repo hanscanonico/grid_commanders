@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_retake_selwich"]
 script = ExtResource("2")
-text = "Retake Selwich."
+text = "Recapture Selwich."
 cell = Vector2i(6, 3)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -91,9 +91,15 @@ effects = Array[Resource]([SubResource("Effect_evidence")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "Selwich stayed flipped, and the border district got a second town nobody officially lost."
+speaker = &"cass_orlov"
+text = "Selwich stays mine, and nobody declared a thing. Write that down. That's how I'd like the whole season to go."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Your column's off the board. The garrison Selwich flipped for is still drawing pay. I've opened the file anyway."
 
 [resource]
 script = ExtResource("1")
@@ -118,4 +124,4 @@ events = Array[Resource]([SubResource("Event_orlov_garrisons"), SubResource("Eve
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

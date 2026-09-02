@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -117,9 +117,27 @@ effects = Array[Resource]([SubResource("Effect_columns_broken")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure_fired"]
+script = ExtResource("6")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "The ambush caught the column exactly where the map promised it would be."
+speaker = &"cass_orlov"
+text = "You took the tree line the map calls empty. My raiders were in the fog around it the whole time. Nobody drew that on your map."
+
+[sub_resource type="Resource" id="Line_defeat_cause"]
+script = ExtResource("3")
+speaker = &"cass_orlov"
+text = "The wood was worth one of yours. You spent two in it."
+requires = SubResource("Run_failure_fired")
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Your column went into that wood right where the map said it would. His ambush closed on it. The file stays one raid column short."
 
 [resource]
 script = ExtResource("1")
@@ -145,4 +163,4 @@ events = Array[Resource]([SubResource("Event_the_trap_springs"), SubResource("Ev
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_cause"), SubResource("Line_defeat_staff")])

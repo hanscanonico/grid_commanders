@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -114,9 +114,15 @@ effects = Array[Resource]([SubResource("Effect_towns_saved")])
 once = true
 lines = Array[Resource]([])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("3")
-text = "One town changed hands again before the other two were secure, and the argument goes on."
+speaker = &"dane_ferrow"
+text = "Fifth trade on that town, Reed, and you never saw my riders come in for it. Somebody paid for the fifth. Nobody paid me to stop."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Your garrison broke before all three towns were secure. One of them traded hands again. Ferrow's still drawing his rate on the argument."
 
 [resource]
 script = ExtResource("1")
@@ -142,4 +148,4 @@ events = Array[Resource]([SubResource("Event_ferrow_comes_back"), SubResource("E
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
