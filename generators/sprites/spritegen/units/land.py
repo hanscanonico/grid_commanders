@@ -930,11 +930,18 @@ def missiles(pose: Pose = Pose.A) -> Model:
         # Launch elevation: both rounds run a SECOND board texel up the rail
         # past the idle beat's own raised position, the pedestal repainted
         # to match, and the seeker tips lit — rounds part-run. Rocket is not
-        # sustained, so FIRE_B draws this same key.
+        # sustained, so FIRE_B draws this same key. Each rail grows all FOUR
+        # voxels its round rose, not the idle beat's two: filled to the beat's
+        # height the round clears its own rail and hangs in open air. The
+        # round is lifted in two boxes because it is a STAIRCASE — one box
+        # deep enough to take its seated base also reaches the cab roof under
+        # the tail of it, and at this height that tears the roof open and
+        # floats the piece it took.
         m.box(2, 7, 1, 4, 4, 5, "hull_dk")
         for x0 in (2, 6):
-            _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=4)
-            m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
+            _shift(m, (x0, x0 + 1, 3, 4, 5, 16), dz=4)
+            _shift(m, (x0, x0 + 1, 5, 9, 6, 16), dz=4)
+            m.box(x0, x0 + 1, 3, 4, 5, 8, "hull_dk")
             m.set(x0, 9, 20, "flame")
             m.set(x0 + 1, 9, 20, "flame")
     if pose is Pose.MOVE_A:

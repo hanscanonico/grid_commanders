@@ -102,7 +102,12 @@ def fighter(pose: Pose = Pose.A) -> Model:
         # forward fuselage, held to just the tip since the airframe is not
         # under way. FIRE_B lights a course further out, the jitter a
         # sustained stream reads as — fighter is one of `pose.FIRE_PAIRS`.
+        # The course the tip came off is repainted down to meet it, the same
+        # seam the move clip's own deeper dip closes: dropped on its own, a
+        # tip two courses under the fuselage ahead of it shares no face with
+        # the airframe and the jet flies with its nose detached.
         _shift(m, (4, 5, 18, 19, 3, 3), dz=-2)
+        m.box(4, 5, 18, 18, 2, 3, "hull")
         m.set(4, 20, 1, "flame")
         m.set(5, 20, 1, "flame")
         if pose is Pose.FIRE_B:

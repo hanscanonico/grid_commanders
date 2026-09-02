@@ -23,9 +23,11 @@ byte-identical voxels by construction — never a manifest or schema change.
 from __future__ import annotations
 
 import unittest
+from collections import deque
 
-from spritegen import anim, atlas, pipeline
+from spritegen import aa, anim, atlas, pipeline
 from spritegen.palette import FACTIONS
+from spritegen.voxel import render_indexed
 from spritegen.units import (
     ATLAS_ORDER,
     CLIP_POSES,
@@ -167,6 +169,65 @@ class PairVsSingle(unittest.TestCase):
                 self.assertEqual(
                     build_model(uid, Pose.FIRE_A).vox, build_model(uid, Pose.FIRE_B).vox
                 )
+
+
+class OnePiece(unittest.TestCase):
+    """A unit's own art is ONE piece, and a fire pose may not break it.
+
+    A key pose moves a sub-assembly, and an assembly carried past the face it
+    shared with the machine leaves the machine — a nose tip, a round on its
+    rail — floating clear at 1:1 in the cut-in. The silhouette floor counts
+    pixels and the contour ratchet a ratio, so both pass a sprite that has
+    come apart; `parts._rotor`'s own thickening records the same defect from
+    the other side.
+
+    Asked of the SPRITE the renderer draws rather than of the composed cell,
+    because a cell also carries water: a hull's waterline foam is a deliberate
+    dither and the sub's wake sits on the water plane the bobbed hull rises
+    off, so both are their own components in every clip and neither is the
+    machine. Asked without the MUZZLE FLAME too — a detached spark is a
+    reading a fire pose is allowed to have; a detached radome is not. All
+    eighteen units answer 1 in all four poses, so the bar is the whole roster's
+    and not this clip's alone.
+    """
+
+    @staticmethod
+    def _components(img) -> list[int]:
+        px = img.convert("RGBA").load()
+        w, h = img.size
+        lit = {(x, y) for y in range(h) for x in range(w) if px[x, y][3] == 255}
+        seen: set[tuple[int, int]] = set()
+        sizes = []
+        for start in lit:
+            if start in seen:
+                continue
+            queue, size = deque([start]), 0
+            seen.add(start)
+            while queue:
+                x, y = queue.popleft()
+                size += 1
+                for step in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    near = (x + step[0], y + step[1])
+                    if near in lit and near not in seen:
+                        seen.add(near)
+                        queue.append(near)
+            sizes.append(size)
+        return sorted(sizes, reverse=True)
+
+    @staticmethod
+    def _unlit_sprite(uid, fac, pose):
+        model = build_model(uid, pose)
+        for cell in [c for c, material in model.vox.items() if material == "flame"]:
+            del model.vox[cell]
+        return aa.soften_sprite(render_indexed(model, fac).image, model, fac)
+
+    def test_every_pose_of_every_unit_draws_one_connected_sprite(self):
+        for uid in ATLAS_ORDER:
+            for fac in FACTIONS:
+                for pose in (Pose.A, Pose.B, Pose.FIRE_A, Pose.FIRE_B):
+                    with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        sizes = self._components(self._unlit_sprite(uid, fac, pose))
+                        self.assertEqual(len(sizes), 1, f"detached: {sizes}")
 
 
 class ReconSweep(unittest.TestCase):
