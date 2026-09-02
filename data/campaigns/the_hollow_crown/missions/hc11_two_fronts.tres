@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -10,10 +10,11 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the relay guarding the eastern pass."
+text = "Capture the relay guarding the eastern pass."
 cell = Vector2i(17, 3)
 
 [sub_resource type="Resource" id="Objective_1"]
@@ -30,7 +31,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"radek_morn"
-text = "Orlov and I split the attack across two passes, Quill. Bet you can't answer both."
+text = "Orlov and I split the attack across two passes, Quill, so I'll bet you can't answer both."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -89,9 +90,38 @@ effects = Array[Resource]([SubResource("Effect_orlov_takes_the_west"), SubResour
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("12")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("6")
-text = "One front gave way, and Morn's bet on our alliance's seams paid off."
+speaker = &"cassian_rook"
+text = "Morn and Orlov have a pass each, for the record. Draeg's taking the west. Quill, the eastern one's on your page."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "One front gave way, Quill. I bet on the seams. The seams paid."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("6")
+speaker = &"cassian_rook"
+text = "Quill's headquarters fell on the eastern pass, so two fronts get logged as one loss."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("6")
+speaker = &"cassian_rook"
+text = "The Concord's column is gone from the spur. Draeg still holds the western pass. Nobody's on his right."
+unless = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_ally"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "Two passes, two armies. Neither of us fought alone. We lost as two anyway."
 
 [resource]
 script = ExtResource("1")
@@ -116,6 +146,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_both_passes_at_once")])
 par_day = 6
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_rook"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout"), SubResource("Line_defeat_ally")])

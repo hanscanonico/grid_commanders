@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the wall relay — the last garrison outside the capital."
+text = "Capture the wall relay."
 cell = Vector2i(3, 7)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -104,9 +104,38 @@ effects = Array[Resource]([SubResource("Effect_the_whole_purse_leaves")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("6")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("5")
-text = "The outer wall held, and the last garrison stayed exactly what its name promised."
+speaker = &"cassian_rook"
+text = "Vance's ledger and Ferrow's bounty book both close on the outer wall, noted. Draeg's banner is beside ours for the last garrison. Also noted."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "The wall holds, Rowan, so my ledger's closing the season in the black."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Rowan's headquarters fell under the outer wall. The last garrison stays the last one. Logged."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Verdant's army is gone from the outer wall. Vance enters it. Ferrow invoices it."
+unless = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_ally"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "One wall short of the throne room. I told you I hadn't forgotten the ridge. Now there's nothing to remember it by."
 
 [resource]
 script = ExtResource("1")
@@ -131,6 +160,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_he_takes_the_receipts"), SubResource("Event_no_second_season_for_free")])
 par_day = 6
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_rook"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout"), SubResource("Line_defeat_ally")])

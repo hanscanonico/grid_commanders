@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -8,10 +8,11 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take Orlov's command post while the Directorate burns behind it."
+text = "Capture Orlov's command post."
 cell = Vector2i(19, 3)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -81,9 +82,45 @@ effects = Array[Resource]([SubResource("Effect_the_strays_walk_off"), SubResourc
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_hq_taken"]
+script = ExtResource("10")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("10")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_rook"]
 script = ExtResource("5")
-text = "Orlov held, and whatever is coming for Iron arrives with us no closer to it than before."
+speaker = &"cassian_rook"
+text = "Noted, for whatever the record's worth this week. Nine days since the capital answered a courier. I've stopped sending them."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "My line held without a capital behind it, Reed, so think about what that makes me."
+
+[sub_resource type="Resource" id="Line_defeat_hq"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Reed's headquarters fell to a column that nobody's giving orders to, which I've logged as the worse news."
+requires = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_defeat_rout"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "The interior column's gone. Whatever's coming for Iron, we meet it a step further back. I've moved the pins."
+unless = SubResource("Run_hq_taken")
+
+[sub_resource type="Resource" id="Line_victory_par"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "Five days, Reed. That's faster than the capital took to fall. I watched both."
+requires = SubResource("Run_par")
 
 [resource]
 script = ExtResource("1")
@@ -106,6 +143,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_column_stops_answering")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_rook"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_victory_par")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout")])

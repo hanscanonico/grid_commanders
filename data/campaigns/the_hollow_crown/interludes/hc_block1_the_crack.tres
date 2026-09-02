@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
@@ -29,6 +29,11 @@ script = ExtResource("2")
 speaker = &"cassian_rook"
 text = "Six marshals, six armies, no crown left for any of them to answer to, and every border we're holding now borders a different war."
 
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Five of them are on a border. Vale's in the supply office, working out which claimant can pay him."
+
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"radek_morn"
@@ -50,4 +55,4 @@ text = "There's one marshal at your border who doesn't want the throne. I want t
 script = ExtResource("1")
 after_block = 0
 title = "The Crack"
-lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
