@@ -59,9 +59,13 @@ fallback is also why a builder's pose test has to say which question it asks:
 
 * `if pose is Pose.B` is an AMBIENT-only branch — the idle beat, and nothing
   else. A move pose reaching that builder must not fall into it.
-* `if beat(pose)` is the OFF-BEAT of whatever clip is playing (B or MOVE_B) —
-  for anything that ticks with the frame regardless of clip, such as a rotor
-  blade phase.
+* `if beat(pose)` is the off-beat KEY a builder authors (B or MOVE_B) — for
+  anything whose MODEL ticks with the frame regardless of clip, such as a
+  rotor blade phase. The fire clip is outside it on purpose: its second key is
+  hand-authored for `FIRE_PAIRS` and by nobody else, so a single-shot weapon
+  draws one model into both fire frames. What every clip's second FRAME does
+  share is its PLACEMENT — `off_beat`, which `atlas.cell_placement` asks for
+  the air/sea bob and a builder never does.
 
 An `else` that quietly means "pose B" is the trap: with four poses,
 `X if pose is Pose.A else Y` hands MOVE_A the B branch. Write the beat side as
@@ -85,6 +89,7 @@ from .pose import FIRE_PAIRS as FIRE_PAIRS
 from .pose import FIRE_POSES as FIRE_POSES
 from .pose import MOVE_POSES as MOVE_POSES
 from .pose import beat as beat
+from .pose import off_beat as off_beat
 from .sea import battleship, cruiser, lander, sub
 
 
@@ -122,11 +127,11 @@ def resolved_pose(uid: str, pose: Pose) -> Pose:
     `pose` belongs to.
 
     The one seam `build_model` reaches a builder through, and also the one
-    `atlas.cell_placement` reads before asking `units.beat` whether this
+    `atlas.cell_placement` reads before asking `units.off_beat` whether this
     frame bobs — a fallback cell has to bob exactly as its FALLBACK pose
     does (an unarmed air unit's `FIRE_B` cell is pixel-identical to its `B`
-    cell, bob included), which asking `beat` of the un-resolved `FIRE_B`
-    cannot answer, `beat` never having heard of the fire clip.
+    cell, bob included), and `KO`'s fallback is the rest key, which the raw
+    pose cannot say.
     """
     pose = Pose(pose)
     if moving(pose) and uid not in MOVES:

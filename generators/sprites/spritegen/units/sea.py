@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from ..voxel import Model
 from .parts import _shift
-from .pose import Pose, beat, moving
+from .pose import Pose, beat, fires, moving
 
 
 def battleship(pose: Pose = Pose.A) -> Model:
@@ -85,7 +85,7 @@ def battleship(pose: Pose = Pose.A) -> Model:
             m.set(x, 18, 5, "hull_dk")
             _shift(m, (x, x, 0, 2, 4, 4), dz=2)
             m.set(x, 3, 5, "body_dk")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Batteries trained out: both turrets slew their guns one board
         # texel to the same broadside — the safe traverse direction the
         # under-way beat's own aft training already uses, since this hull
@@ -189,7 +189,7 @@ def cruiser(pose: Pose = Pose.A) -> Model:
         # muzzles included, on a mount that grows the same two voxels
         _shift(m, (3, 4, 14, 16, 3, 4), dz=2)
         m.box(3, 4, 13, 13, 4, 5, "hull_dk")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Forward mount blazing: the twin autocannon barrels recoil a board
         # texel back through their pedestal, muzzles included. FIRE_B kicks
         # them one further texel back, the jitter a sustained stream reads
@@ -317,7 +317,7 @@ def sub(pose: Pose = Pose.A) -> Model:
         # working
         _shift(m, (3, 3, 11, 11, 7, 8), dz=2)
         m.box(3, 3, 11, 11, 7, 8, "steel")
-    if moving(pose) or pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if moving(pose) or fires(pose):
         # Search mast up TWO board texels and standing in its own shaft, not
         # the one texel pose B rides: at rung 1 a mast is at most a texel wide
         # whatever it is made of, so its length is the only thing the board
@@ -349,7 +349,7 @@ def sub(pose: Pose = Pose.A) -> Model:
         for y in range(14, 20):
             for x in (2, 3, 4, 5):
                 m.unset(x, y, 1)
-        if beat(pose) or pose in (Pose.FIRE_A, Pose.FIRE_B):
+        if beat(pose) or fires(pose):
             # The delta is the short ATTACK scope coming up beside the search
             # one — the search mast is already up in both frames, so what the
             # board sees moving is the second mast and not the first. It came
@@ -358,7 +358,7 @@ def sub(pose: Pose = Pose.A) -> Model:
             # boat that has opened its bow caps keeps its scope up.
             _shift(m, (4, 4, 13, 13, 5, 5), dz=2)
             m.set(4, 13, 5, "steel")
-        if pose in (Pose.FIRE_A, Pose.FIRE_B):
+        if fires(pose):
             # Bow caps open: the tapered bow tip's own deck row goes dark, two
             # tube doors on the waterline the trim above already bared.
             # Torpedo is not sustained, so FIRE_B draws this same key.

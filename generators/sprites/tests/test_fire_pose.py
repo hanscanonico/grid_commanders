@@ -26,7 +26,15 @@ import unittest
 
 from spritegen import anim, atlas, pipeline
 from spritegen.palette import FACTIONS
-from spritegen.units import ATLAS_ORDER, FIRE_PAIRS, FIRES, UNITS, Pose, build_model
+from spritegen.units import (
+    ATLAS_ORDER,
+    CLIP_POSES,
+    FIRE_PAIRS,
+    FIRES,
+    UNITS,
+    Pose,
+    build_model,
+)
 
 from pixel_helpers import pose_cell, units_sheet
 
@@ -159,6 +167,31 @@ class PairVsSingle(unittest.TestCase):
                 self.assertEqual(
                     build_model(uid, Pose.FIRE_A).vox, build_model(uid, Pose.FIRE_B).vox
                 )
+
+
+class Bob(unittest.TestCase):
+    """The air/sea bob ticks with the FRAME, not with the clip.
+
+    Asked of EVERY two-frame clip rather than of the fire pair alone, since
+    what breaks is silent: the cut-in swaps the fire pair in and out
+    mid-window on the same 500 ms director's clock the idle pair runs on
+    (`CutsceneSide._figure_now`), so a clip whose second frame sat at the
+    first's altitude would step the figure `BOB_PX` the moment the window
+    opened or closed — a pop no still frame of a posed capture can show.
+    A land unit's origin is pose-invariant instead: its own beat is authored
+    in the model (`parts._roll`), never in the placement.
+    """
+
+    def test_every_two_frame_clip_lifts_its_off_beat_for_air_and_sea(self):
+        for uid, (_, kind) in UNITS.items():
+            lift = atlas.BOB_PX if kind in ("air", "sea") else 0
+            for clip, poses in CLIP_POSES.items():
+                if len(poses) < 2:
+                    continue
+                with self.subTest(unit=uid, clip=clip):
+                    rest, off_beat = (atlas.cell_placement(uid, p) for p in poses)
+                    self.assertEqual(rest.origin[0], off_beat.origin[0])
+                    self.assertEqual(rest.origin[1] - off_beat.origin[1], lift)
 
 
 class Silhouette(unittest.TestCase):

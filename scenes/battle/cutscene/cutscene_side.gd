@@ -238,7 +238,8 @@ var arrive_p := 1.0
 var aim_p := 0.0
 ## 0 -> 1 over the fire window CombatBeats.fire_window composes (the recoil
 ## ramp through the volley's own travel) — open exactly while this half's
-## muzzle should read as lit, zero for a side that never fires. Only
+## muzzle should read as lit, zero for a side that never took a shot at all
+## (a defender that did not counter, whose recoil ramp is ZERO). Only
 ## `_figure_now` reads it; the procedural aim lift/pitch above still carries
 ## the wind-up regardless.
 var fire_p := 0.0
@@ -283,9 +284,10 @@ var _figures: Array[AtlasTexture] = []
 ## The fire clip's own pair, cut at bind like `_figures`. Bound for every
 ## unit, armed or not: the generator's own fallback (`units.pose._FALLBACK`)
 ## already fills an unarmed column with its idle key, so this needs no
-## domain gate the way the KO slot's flying carve-out does — an unarmed
-## side's `fire_p` window simply never opens (CombatBeats never sizes a
-## recoil ramp for a style that does not fire).
+## domain gate the way the KO slot's flying carve-out does. The window is no
+## gate either: CombatBeats sizes a recoil ramp off `aim_seconds` alone, so
+## an attacking transport's `fire_p` opens like anyone else's — it opens onto
+## textures byte-identical to `_figures`, which is what makes it harmless.
 var _fire_figures: Array[AtlasTexture] = []
 var _ridge_tint := Color.SLATE_GRAY
 ## Cached off the unit's domain at bind time — asked once per cut-in rather than

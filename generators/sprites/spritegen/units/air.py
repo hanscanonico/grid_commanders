@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from ..voxel import Model
 from .parts import _BLADE_A, _BLADE_B, _rotor, _shift
-from .pose import Pose, beat, moving
+from .pose import Pose, beat, fires, moving
 
 
 def _burner_reach(pose: Pose) -> int:
@@ -96,7 +96,7 @@ def fighter(pose: Pose = Pose.A) -> Model:
         m.set(5, 12, 5, "glass_dk")
         m.set(2, 1, 3, "hull_dk")
         m.set(7, 1, 3, "hull_dk")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Nose gun blaze: the radome tip dips one board texel, the same
         # nose-down attitude the move clip's own dip gives the whole
         # forward fuselage, held to just the tip since the airframe is not
@@ -196,7 +196,7 @@ def bomber(pose: Pose = Pose.A) -> Model:
             # step behind the flight deck.
             _shift(m, (4, 7, 14, 20, 1, 3), dz=-2)
             m.box(4, 7, 13, 13, 0, 1, "hull")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Bay doors open — the natural bomb-run frame: a dark gap drops
         # clear under the belly the doors line marks, one board texel below
         # the fuselage's own lowest course. Bomb is not sustained, so
@@ -251,7 +251,7 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # The rotor ticks with the FRAME, not the clip: a moving helicopter's
     # blades are at the off-beat position on MOVE_B exactly as on B.
     _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Nose down two texels, chin gun on the line: the nose and canopy
         # rake down twice the move clip's own dip, and the chin gun tracks
         # with it — capped a texel shallower so its muzzle never crosses

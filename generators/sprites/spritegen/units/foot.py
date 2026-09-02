@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ..voxel import Model
 from .parts import _shift
-from .pose import Pose, beat, moving
+from .pose import Pose, beat, fires, moving
 
 
 def _stride(m: Model, lead: str, rise: int = 0) -> None:
@@ -246,7 +246,7 @@ def infantry(pose: Pose = Pose.A) -> Model:
         # rifle-only one-voxel settle, half a texel and inside the shape),
         # 12 now; rung 2 goes 8 -> 45 (`tests/measure_motion.py`).
         _shift(m, (1, 11, 2, 8, 6, 16), dx=1, dy=-1)
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Shouldered to the cheek: the whole rifle line and the wrist that
         # carries it climb a whole board texel, landing the receiver by the
         # jaw instead of the chest — the muzzle rides with it, which is what
@@ -417,7 +417,7 @@ def mech(pose: Pose = Pose.A) -> Model:
         # against 7 now, 15 -> 29 at rung 2 (`tests/measure_motion.py`).
         _shift(m, (0, 0, 3, 6, 7, 8), dz=-2)  # left pauldron
         _shift(m, (0, 1, 2, 9, 9, 16), dz=-2)  # launcher, arm, pauldron top
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Kneeling brace: everything the belt carries — torso, backpack,
         # pauldrons, helmet and the launch tube — settles a board texel onto
         # a crouch, the tube left at pose A's own resting angle (level on

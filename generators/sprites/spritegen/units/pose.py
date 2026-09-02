@@ -52,9 +52,10 @@ CLIP_POSES: dict[str, tuple[Pose, ...]] = {
 # instead (`CutsceneSide`'s fallback, gated on domain rather than on this
 # one). FIRE_A/FIRE_B fall back the same way MOVE_A/MOVE_B do, which is what
 # an unarmed unit's fire clip draws — its own idle beat, so a side that never
-# fires never needs a runtime "is this unit armed" question of its own
-# (`CutsceneSide` asks the window instead, and an unarmed unit's window never
-# opens).
+# fires never needs a runtime "is this unit armed" question of its own. An
+# attacker's fire window opens whatever it carries (`CombatBeats.plan` sizes
+# a recoil ramp off `aim_seconds` alone); what makes that safe is the columns
+# it opens onto being byte-identical to the idle pair, bob included.
 _FALLBACK: dict[Pose, Pose] = {
     Pose.MOVE_A: Pose.A,
     Pose.MOVE_B: Pose.B,
@@ -74,11 +75,33 @@ def fires(pose: Pose) -> bool:
     return Pose(pose) in FIRE_POSES
 
 
-def beat(pose: Pose) -> bool:
-    """True on the off-beat of whichever clip is playing (B or MOVE_B).
+def off_beat(pose: Pose) -> bool:
+    """True on the second FRAME of whichever clip is playing.
 
-    Anything that ticks with the frame rather than with the clip — a rotor
-    blade phase, the air/sea bob — asks this instead of `pose is Pose.B`.
+    A COMPOSITION question — the air/sea bob (`atlas.cell_placement`), which
+    belongs to every clip alike because the cut-in swaps the fire pair in and
+    out mid-window on the same 500 ms clock the idle pair runs on: a fire
+    frame placed at its own clip's rest altitude would step the figure
+    `BOB_PX` the moment the window opened or closed.
+
+    A BUILDER asks `beat` instead. The two differ on `FIRE_B` alone, and see
+    `beat` for why.
+    """
+    return Pose(pose) in (Pose.B, Pose.MOVE_B, Pose.FIRE_B)
+
+
+def beat(pose: Pose) -> bool:
+    """True on the off-beat KEY a builder authors — B or MOVE_B.
+
+    Anything whose MODEL ticks with the frame rather than with the clip — a
+    rotor blade phase, a canopy glint — asks this instead of
+    `pose is Pose.B`. `FIRE_B` is deliberately outside it: the fire clip's
+    second key is authored by hand for the units in `FIRE_PAIRS` and by
+    nobody else, so a unit whose weapon fires one shot draws the SAME model
+    into both fire frames (`test_fire_pose.PairVsSingle`) — an ambient tick
+    leaking onto `FIRE_B` would quietly make a single-key unit a pair. What
+    the fire frames still take from the frame is their PLACEMENT: see
+    `off_beat`.
     """
     return Pose(pose) in (Pose.B, Pose.MOVE_B)
 

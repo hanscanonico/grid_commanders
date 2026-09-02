@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from ..voxel import Model
 from .parts import _gear_down, _roll, _shift, _tire, _track, _tread_phase
-from .pose import Pose, moving
+from .pose import Pose, fires, moving
 
 
 def recon(pose: Pose = Pose.A) -> Model:
@@ -109,7 +109,7 @@ def recon(pose: Pose = Pose.A) -> Model:
         # both staying inside the hull's own x/y extents
         _shift(m, (4, 5, 4, 10, 6, 7), dx=1, dy=-1)
         _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Pintle depressed on target: the mount, barrel and muzzle tip down
         # a board texel off the roof instead of sweeping across it, the
         # gunner braced behind it. FIRE_B traverses one further diagonal
@@ -237,17 +237,17 @@ def tank(pose: Pose = Pose.A) -> Model:
         # rebuilt down to the deck as the mount that holds it there
         _shift(m, (4, 7, 10, 20, 6, 7), dz=4)
         m.box(4, 7, 10, 10, 6, 9, "hull_dk")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Full recoil back through the mantlet: the whole gun — mantlet,
         # barrel, evacuator and muzzle brake — slides down its own axis
         # into the turret instead of laying up, and a fresh mantlet plug
         # closes the mount it recoiled through, the mirror of pose B's own
-        # rebuild the other way. The hull squats a half texel on its
+        # rebuild the other way. The hull squats one board texel on its
         # suspension under the shot, the whole model settling with it —
         # cannon is not a sustained style, so FIRE_B draws this same key.
         _shift(m, (4, 7, 10, 20, 6, 7), dy=-4)
         m.box(4, 7, 10, 10, 6, 7, "hull_dk")  # mantlet plug, closing the mount
-        _roll(m, -1)
+        _roll(m, -2)
     if pose is Pose.MOVE_A:
         # nose up: hull front, glacis and the leading track run, gun excluded,
         # with the run's contact courses painted back onto the ground
@@ -340,15 +340,15 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     m.box(5, 7, 21, 21, 10, 10, "bore")
     if pose is Pose.B:
         _shift(m, (4, 8, 12, 21, 7, 11), dz=2)
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Full recoil, the MBT's own reading scaled to the heavier gun: the
         # wide mantlet, the sleeved barrel and the muzzle brake slide back
         # through the mount instead of laying up, a fresh mantlet plug
-        # closing it. The hull squats a half texel with the rest of the
+        # closing it. The hull squats one board texel with the rest of the
         # model — cannon is not sustained, so FIRE_B draws this same key.
         _shift(m, (4, 8, 12, 21, 7, 11), dy=-4)
         m.box(4, 8, 12, 12, 7, 11, "hull_dk")  # mantlet plug, closing the mount
-        _roll(m, -1)
+        _roll(m, -2)
     if pose is Pose.MOVE_A:
         # nose up: stepped glacis, front hull and the leading track run
         _shift(m, (0, 12, 13, 16, 0, 6), dz=2)
@@ -442,7 +442,7 @@ def anti_air(pose: Pose = Pose.A) -> Model:
         for x in (3, 7):
             _shift(m, (x, x, 9, 14, 8, 18), dz=2)
             m.box(x, x, 8, 8, 8, 9, "gunmetal_dk")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Barrels level, runs staggered: one run at a time pulls back a
         # board texel through its own trunnion, the raked climb left at
         # pose A's travelling angle rather than pose B's elevated track —
@@ -557,7 +557,7 @@ def artillery(pose: Pose = Pose.A) -> Model:
         # ones, over the 5.0 shimmer bar. The full stroke clears the spike's
         # own width off the top of the sky.
         _shift(m, (3, 7, 6, 12, 8, 27), dz=-4)
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Max recoil: the barrel rides twice the idle beat's own recoil
         # stroke down through its trunnion pedestal, and the whole carriage
         # rocks back onto its dug-in spade — the tracked family's own
@@ -666,7 +666,7 @@ def rockets(pose: Pose = Pose.A) -> Model:
             y0 = 11 - 2 * k
             _shift(m, (1, 8, y0, y0 + 1, 4 + 2 * k, 5 + 2 * k), dz=2)
         m.box(2, 7, 1, 2, 14, 15, "hull_dk")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Launch elevation: the whole slab pitches up a SECOND board texel
         # past the idle beat's own raised angle, the launch-frame wall grown
         # to match, and the high row's tube mouths lit — rounds part-run.
@@ -919,7 +919,7 @@ def missiles(pose: Pose = Pose.A) -> Model:
         for x0 in (2, 6):
             _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=2)
             m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
-    if pose in (Pose.FIRE_A, Pose.FIRE_B):
+    if fires(pose):
         # Launch elevation: both rounds run a SECOND board texel up the rail
         # past the idle beat's own raised position, the pedestal repainted
         # to match, and the seeker tips lit — rounds part-run. Rocket is not
