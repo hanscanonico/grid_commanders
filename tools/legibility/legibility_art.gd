@@ -4,9 +4,10 @@ extends RefCounted
 ## from. Nothing here is a second opinion: every image is the one the battle
 ## scene loads, and every number is read out of the file that owns it —
 ##
-##   units / terrain atlas  UnitSprite's six standing unit sheets — the seventh,
-##                                      the KO sheet, holds no standing pose to
-##                                      rule — and BattleView.ATLAS_PATH
+##   units / terrain atlas  UnitSprite's six standing unit sheets — the two
+##                                      authored cut-in clips, KO and fire, hold
+##                                      no standing pose to rule — and
+##                                      BattleView.ATLAS_PATH
 ##   the reach / fire / threat washes  OverlayPalette.MOVE / ATTACK / THREAT
 ##   the threat stripe period           BattleOverlays.THREAT_STRIPE
 ##   the fog shroud                     FogLayer's modulate in battle.tscn

@@ -76,10 +76,13 @@ const UNITS_ATLAS_FIGURES_KO_PATH := "res://assets/tiles/units_atlas_figures_ko.
 ## shadowless like the figure pair — the board never draws it, so there is
 ## no board-sheet sibling — for the combat cut-in's fire window
 ## (`CutsceneSide._figure_now`). A unit outside the generator's `FIRES` draws
-## its own rest key in both slots (`units.pose._FALLBACK`, the fire clip's
-## own fallback contract), and the second sheet is a real second key only
-## for the sustained weapon families (`units.pose.FIRE_PAIRS`) — everything
-## else armed carries the same cell in both, byte for byte.
+## its own IDLE PAIR here — the fallback is per frame, not per sheet
+## (`units.pose._FALLBACK` maps FIRE_A to A and FIRE_B to B), so an unarmed
+## column keeps the beat its idle one rides. The second sheet is a real
+## second KEY only for the sustained weapon families
+## (`units.pose.FIRE_PAIRS`); everything else armed draws the same MODEL into
+## both, though an air or sea one's second cell still sits a bob higher, the
+## frame's own lift rather than a second key.
 const UNITS_ATLAS_FIGURES_FIRE_PATH := "res://assets/tiles/units_atlas_figures_fire.png"
 const UNITS_ATLAS_FIGURES_FIRE_B_PATH := "res://assets/tiles/units_atlas_figures_fire_b.png"
 ## The acted grey-out is a screen-space dither scrim, not desaturate-and-dim:

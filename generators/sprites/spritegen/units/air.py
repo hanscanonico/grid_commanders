@@ -249,7 +249,14 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # same four blades a notch; the tail rotor is vertical and stays)
     m.box(4, 4, 10, 10, 7, 8, "hull_dk")
     # The rotor ticks with the FRAME, not the clip: a moving helicopter's
-    # blades are at the off-beat position on MOVE_B exactly as on B.
+    # blades are at the off-beat position on MOVE_B exactly as on B. The FIRE
+    # pair is the one clip whose disc holds still, and it is a measured
+    # constraint rather than a reading: this airframe is the contour ratchet's
+    # worst sprite, and the fire pose alone already spends 51.95% of aurora's
+    # own pixels on the line against `test_livery`'s 52% bar — ticking the
+    # blades there measures 52.48%, and on FIRE_A instead 52.58%. A disc that
+    # turns through the window costs a re-measured budget, so it waits for the
+    # pass that takes one.
     _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
     if fires(pose):
         # Nose down two texels, chin gun on the line: the nose and canopy
