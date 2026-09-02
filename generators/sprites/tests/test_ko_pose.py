@@ -22,7 +22,7 @@ import unittest
 
 from spritegen import anim, atlas, pipeline
 from spritegen.palette import FACTIONS, RAMPS, S_TOP, luminance
-from spritegen.units import ATLAS_ORDER, KOS, UNITS, Pose
+from spritegen.units import ATLAS_ORDER, KOS, UNITS, Pose, build_model
 from spritegen.voxel import ramp_floor
 
 from pixel_helpers import pose_cell, units_sheet
@@ -113,6 +113,21 @@ class AirFallback(unittest.TestCase):
                 continue
             with self.subTest(unit=uid):
                 self.assertIn(uid, KOS)
+
+    def test_a_membership_without_a_wreck_is_not_a_ko_frame(self):
+        """`KOS` is the claim that this unit has a wreck; the builder is where
+        the claim is kept, and they are independent — `atlas.unit_cell` burns
+        the tone on membership alone, so a uid added to `KOS` whose builder
+        grew no `Pose.KO` branch would ship its REST pose, standing, dead by
+        value and nothing else. Every pin above still passes that sheet: the
+        silhouette is the live one, and the tone band is `wreck_tone`'s. So
+        ask the models, which the burn does not reach — the same reading
+        `test_clips` takes of a move pair that is the ambient pair."""
+        for uid in sorted(KOS):
+            with self.subTest(unit=uid):
+                self.assertNotEqual(
+                    build_model(uid, Pose.KO).vox, build_model(uid, Pose.A).vox
+                )
 
 
 class Silhouette(unittest.TestCase):
