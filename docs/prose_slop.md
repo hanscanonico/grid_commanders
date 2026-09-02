@@ -28,9 +28,9 @@ blacklist) is kept only so the day somebody does paste one in, it is caught.
 ## What is scored
 
 Every `MissionLine` the game speaks: each mission's `briefing`, `victory` and `defeat` dialogue,
-every scripted event's lines, and every `CampaignInterlude` page. The `defeat` slot is now lines
-with speakers like its siblings; its 108 lines are still the migrated narrator sentences, so the
-numbers below stand until the per-war content passes give them voices.
+every scripted event's lines, and every `CampaignInterlude` page. The report groups them three
+ways — per mission, per speaker, and per slot (briefing, event, victory, defeat, interlude), the
+last so a slot rewritten wholesale can be measured on its own when the campaign mean cannot see it.
 **Every authored variant**, not one route's — a line gated behind a ledger condition is writing
 too. Narration ("" speaker) is scored as a voice of its own rather than skipped: it is 12% of
 the corpus and the one nobody thinks to characterise.
@@ -171,6 +171,40 @@ The interlude slice is what moved: mean 0.105 → 0.072, two-sentence share 63% 
 lines to 34/42/45 at the same words per line. The Collection's three pages went 0.167 → 0.041
 with no two-sentence line left. What tops the slice now is Konrad Vale's `negation` and
 `register`, which is the first false positive on the list above.
+
+## After the defeat voice — measured 2026-09-02
+
+Until #629 a mission's defeat was one narrator string. The slot held **108 lines, 100% narration,
+101 of them a compound ", and " sentence** — "The passes changed hands, and Ferrow was paid for
+all of it." — the one shape on every loss screen in the game. #629 made the slot `MissionLine`
+dialogue, #633 gave the lines a run's own facts, and #634–#641 wrote each war's defeats in its
+commanders' voices. `make prose` over main at `7e1eb978`, the tree those left:
+
+```
+prose: 1382 lines, 23 voices
+prose: mean score 0.075 | mean sentence 9.5 words | sentence-count entropy 1.57 bits
+prose: fired on — lockstep 46%, aphorism 1%, negation 2%, em_dash 1%,
+                  cadence 75%, triad 6%, stock 0%, vocative 1%, register 45%
+prose: speaker sentence-length σ spans 2.64 to 5.78 words
+```
+
+The per-slot table the report now prints after the worst-missions one:
+
+| slot | lines | mean | two-sentence | spoken |
+|---|---|---|---|---|
+| briefing | 461 | 0.083 | 54% | 100% |
+| event | 216 | 0.098 | 61% | 100% |
+| victory | 299 | 0.075 | 58% | 100% |
+| defeat | 281 | 0.047 | 12% | 100% |
+| interlude | 125 | 0.070 | 34% | 81% |
+
+The defeat slot went from 108 narrator sentences to 281 spoken lines, none of them narration, and
+is now the best-scoring slot in the corpus by a wide margin: mean 0.047 against the next slot's
+0.070, and one line in eight the two-sentence shape that is still half of every other mission
+slot. The corpus grew 1067 → 1382 lines since the interlude pass, 173 of them defeat lines and
+the rest the same PRs' rank lines, finale ledgers and staff voices, so the corpus mean's fall
+(0.086 → 0.075) and the entropy's rise (1.53 → 1.57 bits) are mostly, not only, the defeat slot.
+Events are the slot to read next: the highest mean and the highest two-sentence share of the five.
 
 ## The control corpus
 

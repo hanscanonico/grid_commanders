@@ -35,7 +35,15 @@ func test_gathering_a_line_keeps_its_provenance() -> void:
 
 
 func test_narration_is_a_voice_rather_than_a_gap() -> void:
-	assert_eq(_line("m01", "briefing", 0, "", "The line goes dark.").voice(), &"(narration)")
+	var narrated := _line("m01", "briefing", 0, "", "The line goes dark.")
+	assert_eq(narrated.voice(), &"(narration)")
+	assert_false(narrated.is_spoken())
+	assert_true(_line("m01", "briefing", 0, "vale", "Dark.").is_spoken())
+
+
+func test_slot_kind_folds_every_event_into_one() -> void:
+	assert_eq(_line("m01", "event:relief", 0, "vale", "Relief.").slot_kind(), "event")
+	assert_eq(_line("m01", "defeat", 0, "vale", "Lost.").slot_kind(), "defeat")
 
 
 func test_excerpt_flattens_and_elides() -> void:
@@ -165,6 +173,30 @@ func test_vocative_sources_flag_only_the_missions_over_the_rate() -> void:
 	assert_eq(flagged[0]["source"], "fixture_war/m01")
 
 
+## Two defeat lines, one of them the narrator's, beside one briefing and two
+## events with different ids: the defeat row counts both and halves its spoken
+## share, the events fold into one row, and the rows come in a mission's order.
+func test_slot_table_counts_each_slot_and_its_spoken_share() -> void:
+	var lines: Array[ProseLine] = [
+		_line("m01", "defeat", 0, "vale", "The road held. We did not."),
+		_line("m01", "defeat", 1, "", "The road stayed shut, and the toll went on."),
+		_line("m01", "briefing", 0, "vale", "Hold the bridge."),
+		_line("m01", "event:relief", 0, "vale", "Relief is on the road."),
+		_line("m01", "event:fall", 0, "quill", "The ridge is gone."),
+	]
+	var table := ProseReport.slot_table(ProseReport.rows(lines))
+	assert_eq(table.size(), 3)
+	assert_eq(table[0]["slot"], "briefing")
+	assert_eq(table[1]["slot"], "event")
+	assert_eq(table[1]["lines"], 2)
+	assert_eq(table[2]["slot"], "defeat")
+	assert_eq(table[2]["lines"], 2)
+	assert_almost_eq(float(table[2]["spoken_share"]), 0.5, 0.001)
+	assert_almost_eq(float(table[2]["two_sentence_share"]), 0.5, 0.001)
+	assert_almost_eq(float(table[0]["spoken_share"]), 1.0, 0.001)
+	assert_almost_eq(float(table[0]["two_sentence_share"]), 0.0, 0.001)
+
+
 func test_aggregate_answers_for_every_heuristic() -> void:
 	var lines := _corpus()
 	var totals := ProseReport.aggregate(lines, ProseReport.rows(lines))
@@ -184,6 +216,7 @@ func test_an_empty_corpus_answers_without_dividing_by_zero() -> void:
 	assert_eq(ProseReport.shared_openings(empty).size(), 0)
 	assert_eq(ProseReport.voice_overlap(empty).size(), 0)
 	assert_eq(ProseReport.vocative_sources(scored).size(), 0)
+	assert_eq(ProseReport.slot_table(scored).size(), 0)
 	var totals := ProseReport.aggregate(empty, scored)
 	assert_eq(totals["lines"], 0)
 	assert_eq(totals["mean_score"], 0.0)
