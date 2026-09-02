@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=44 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=45 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -42,6 +42,11 @@ text = "Every flipped town, every ledger, every raid pointed here. Orlov never c
 script = ExtResource("3")
 speaker = &"perrin_ash"
 text = "I finish it the way it should have started. An army, in daylight, against a headquarters that thought nobody would ever find it."
+
+[sub_resource type="Resource" id="Line_2b"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The column on your screen walked here from the open field, Ash. Same names, same dents. I stopped filing the road as free at the engineering works."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -220,6 +225,8 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_regulars_stand_down"), SubResource("Event_the_wall_is_held")])
 par_day = 9
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
+carry_in = true
+carry_floor_hp = 50
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_2b"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_5b"), SubResource("Line_6"), SubResource("Line_6b"), SubResource("Line_6c"), SubResource("Line_7"), SubResource("Line_7b"), SubResource("Line_8")])
 defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_draeg"), SubResource("Line_defeat_staff")])
