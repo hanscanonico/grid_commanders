@@ -52,9 +52,12 @@ sub-assembly riding up over a level chassis (the scout's cabin, see `recon`).
 The chassis attitude is the two-frame reading HELD across the four — the
 family's own two authored keys, played twice a cycle (`beat(pose) % 2`) — and
 what makes the clip a walk rather than a repeat is the tread: `_track`'s link
-stripe now steps a QUARTER period on every one of the four frames
-(`_tread_phase`), so a full stride crosses the whole 8-voxel run once per
-640 ms cycle instead of flipping between two halves of it. The foot family
+stripe stands at a QUARTER period of its own on each of the four frames
+(`_tread_phase`), so the cycle visits all four quarter-positions of the
+8-voxel run every 640 ms instead of flipping between two halves of it. The
+ORDER is not a lap — MOVE_A/MOVE_B are pinned art and the two quarters they
+hold rule every monotone 4-cycle out, so direction is carried by the one
+unambiguous step the four make (`_tread_phase` states the argument). The foot family
 alone earns a genuinely four-key gait (`infantry`/`mech`, contact-lead /
 passing / contact-lead-mirrored / passing), because a figure's stride is the
 one motion on the sheet with a real third and fourth thing to say; every other

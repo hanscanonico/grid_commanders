@@ -80,8 +80,9 @@ const CUTIN_SHEETS: Dictionary[String, String] = {
 }
 
 ## The units atlas at the board's idle frame A — the sheet the ramp step is
-## measured off and the one a `--units=` run replaces. The other five reach the
-## harness through `frame_sheet`.
+## measured off and the one a `--units=` run replaces. The other seven the
+## sweep reads (five more board sheets, two cut-in) reach the harness through
+## `frame_sheet`.
 var units: Image
 ## Where `units` was read from — the shipped path, or the file a `--units=` run
 ## put in its place. The ramp step is measured off that sheet, so a report has

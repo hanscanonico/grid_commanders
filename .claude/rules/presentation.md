@@ -342,10 +342,14 @@ forms named in the root index are in `docs/design_record.md`.
   measured and dropped, reading closer to the rifleman's own silhouette than to the trooper's
   (`generators/sprites/tests/test_board_read.py Silhouette`). The **five tracked hulls** (`tank`, `md_tank`, `anti_air`,
   `artillery`, `apc`) keep their two-key chassis attitude (`beat(pose) % 2`) and gain a genuine
-  quarter-phase tread crawl instead — `parts._track`'s link stripe steps `2 * phase` rather than
+  quarter-phase tread step instead — `parts._track`'s link stripe steps `2 * phase` rather than
   `4 * phase`, with `_tread_phase` holding MOVE_A/MOVE_B at the exact two quarters they always stood
   at and handing MOVE_C/MOVE_D the two quarters between them, so the move clip's four visit all four
-  quarter-positions of the run's own period once a cycle. The **two copters** (`b_copter`,
+  quarter-positions of the run's own period once a cycle. Visiting all four is the claim, not a
+  one-way lap: the two pinned quarters (2 and 0) sit a half-period apart, which rules out both
+  monotone 4-cycles, so the sequence is 2, 0, 1, 3 and its single unambiguous `+1` step is what
+  carries direction — a later slice free to move MOVE_A/MOVE_B could buy the lap. The **two
+  copters** (`b_copter`,
   `t_copter`) read a real four-tick rotor off the same `beat(pose)` index, `parts.BLADES` grown from
   two ticks to four by the construction `_BLADE_B` already used from `_BLADE_A`; every other family
   — wheeled (`recon`, `rockets`, `missiles`), the two fixed-wing jets and the four sea hulls —

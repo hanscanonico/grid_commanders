@@ -639,9 +639,9 @@ Whole run: clear 54,000 cells, 27,376 failing (50.7%), 18,880 hue-carried (69.0%
 cells, 4,426 failing (34.2%), 887 hue-carried (20.0%) — both a shade under the S8 control's own
 52.5%/33.8% board-plus-cutin figures, `walk_c` and `walk_d` landing a little easier than `walk_a`/
 `walk_b` rather than a little harder. Nothing was tuned to buy that; it is the two new gait keys'
-own geometry (the tracked family's tread crawl and the two copters' further rotor tick move less
-of a unit's silhouette per frame than the parked-to-walking beat does) read through the same
-contour S8 shipped.
+own geometry (the tracked family's quarter-phase tread step and the two copters' further rotor
+tick move less of a unit's silhouette per frame than the parked-to-walking beat does) read through
+the same contour S8 shipped.
 
 **The ratchet is clean by construction, not by exception.** Every builder in the diff moved MOVE_C
 and MOVE_D only — `parts._tread_phase` holds MOVE_A/MOVE_B at the exact quarter-positions they
@@ -657,6 +657,18 @@ was re-baked once after, `tests/fixtures/legibility_baseline.csv` now 66,960 row
 `mech` under fog, the same pale-airframe-and-hull and fogged-transport classes every previous
 worst-twenty has read — `walk_d` inheriting `walk_b`'s own worst cells rather than opening new ones,
 and no `walk_c` cell placing at all.
+
+**One `walk_d` correction since, same day.** Review found the rocket trooper's `gather=2` passing
+step had moved its whole shin as one block, leaving each boot two voxels along both axes from its
+own knee plate — a leg touching the figure at a corner and nothing else, which no gate then read
+(`foot._mech_legs`, now bridged by a joint voxel; `generators/sprites/tests/test_board_read.py`
+`BoardScaleEdge.test_no_foot_figure_walks_out_of_its_own_legs` is where a boot that comes off the
+figure fails from here on). `units_atlas_move_d.png` is the only sheet it moved, and only the mech
+column's six cells of it, and every table above still stands: the ratchet reads **0 regressed /
+0 recovered / 0 added / 0 missing** against the re-baked baseline, so no cell changed verdict and
+no frame's percentage moved. The mech's own gait readings are unchanged too — the
+`MOVE_C`-to-`MOVE_D` step measures the same 13 changed / 6 silhouette rung-1 texels it did
+before the bridge.
 
 ## What the grounds are
 

@@ -362,7 +362,16 @@ def _mech_legs(m: Model, swing: int | None = None, gather: int = 0) -> None:
     their own hip, one voxel below the belt band, so each leg still hangs
     off the hips rather than floating and the caller's hip line is never
     punched through; the one-voxel diagonal between a knee and its stepped
-    shin is the bend.
+    shin is the bend, and a step of one voxel is the widest bend that
+    diagonal spans. `gather=2` is two voxels along BOTH axes, which leaves
+    knee and shin sharing a corner and no face — a leg hanging off the
+    trooper as its own 18-voxel island, which nothing above catches
+    (`Silhouette` reads identity and mass that merely moves does not drift).
+    So a step past the bend lays one joint voxel on the shin corner nearest
+    its own knee, closing the diagonal at the knee's own rank. It is inert
+    for every magnitude the shipped scissor uses, which is why MOVE_A and
+    MOVE_B are untouched by it, and `test_board_read.py BoardScaleEdge` is
+    where a boot that comes off the figure fails by name.
     """
     for x0 in (1, 6):
         # `step` is signed along the run: -1 is the forward `(dx -1, dy +1)`
@@ -371,10 +380,16 @@ def _mech_legs(m: Model, swing: int | None = None, gather: int = 0) -> None:
             step = -1 if x0 == swing else 1
         else:
             step = gather
+        bend = max(-1, min(1, step))
         bx, by = x0 + step, 4 - step
         m.box(bx, bx + 1, by, by + 2, 0, 0, "tire")  # boot
         m.box(bx, bx + 1, by, by + 2, 1, 2, "hull")  # shin
         m.box(x0, x0 + 1, 4, 6, 3, 3, "hull_dk")  # knee plate
+        if step != bend:
+            # the joint: the knee's own inner corner, dropped to the shin's
+            # rank, where it reaches both the plate above and the stepped
+            # shin beside it
+            m.set(x0 + max(bend, 0), 5 - bend, 2, "hull")
 
 
 def _mech_ko() -> Model:

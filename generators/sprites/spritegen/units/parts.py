@@ -53,9 +53,20 @@ def _tread_phase(pose: Pose) -> int:
     Moving either would cost real, already-passing rows for no claim this
     slice makes about them. What is new is `MOVE_C` and `MOVE_D`, which take
     the two quarters `MOVE_A`/`MOVE_B` leave unused (1 and 3) — so the four
-    move frames between them visit the stripe's whole period once a cycle,
-    which is what turns a tread flip into a tread CRAWL, and every frame
-    touched by it is one this slice is free to move.
+    move frames between them VISIT ALL FOUR quarter-positions of the run
+    once a cycle rather than flipping between two halves of it.
+
+    Visit, not march: in frame order the quarters read 2, 0, 1, 3, whose
+    steps are +2, +1, +2, -1. A monotone lap is not available — the two
+    frames the ratchet pins stand at quarters 2 and 0, and both monotone
+    4-cycles through all four quarters (2, 1, 0, 3 and 2, 3, 0, 1) put a
+    quarter between them, so preserving MOVE_A/MOVE_B byte for byte and
+    walking the stripe one way round are mutually exclusive. Of the two
+    orders left this is the one whose only unambiguous step points forward:
+    a half-period shift of a 4-on/4-off stripe is its own inverse and says
+    nothing about direction, which leaves the single +1 to carry it and the
+    single -1 to close the loop. A slice free to move all four frames could
+    have the lap instead.
 
     KO and FIRE both stand at pose A's own phase: a wreck does not walk, and
     neither does a hull recoiling from a shot fired at a halt — `artillery`'s

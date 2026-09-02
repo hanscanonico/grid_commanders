@@ -24,7 +24,14 @@ from spritegen.units import (
 from spritegen import voxel
 from spritegen.voxel import CAST, FOAM
 
-from pixel_helpers import RUNG_1_CELL, pose_cell, rung1_texels, units_sheet
+from pixel_helpers import (
+    RUNG_1_CELL,
+    pose_cell,
+    rung1_steps,
+    rung1_texels,
+    rung1_worst_shimmer,
+    units_sheet,
+)
 
 
 def air_beat_readings(uid: str, rest: Pose, off: Pose) -> tuple[int, float]:
@@ -138,13 +145,16 @@ class AmbientFrames(unittest.TestCase):
         change tone, per texel of silhouette that actually moves, under
         `MAX_SHIMMER` at rung 1. The two numbers together say the change the
         board sees is mostly the shape going somewhere.
+
+        The floor above reads the clip's quietest step and this reads its
+        NOISIEST (`rung1_worst_shimmer`): a ceiling that a clip could satisfy
+        on one step out of four would not be a ceiling.
         """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
-                    changed, silhouette = self._texels(uid, fac)
-                    interior = changed - silhouette
-                    self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
+                    shimmer = rung1_worst_shimmer(uid, fac, AMBIENT_POSES)
+                    self.assertLess(shimmer, self.MAX_SHIMMER)
 
     def _texels(self, uid: str, fac: Faction) -> tuple[int, int]:
         return rung1_texels(uid, fac, AMBIENT_POSES)
@@ -514,10 +524,13 @@ class MoveFrames(unittest.TestCase):
 
     def test_every_moving_unit_crosses_a_whole_board_texel(self):
         """The gait at the size the board draws it: how many rung-1 texels
-        the two move frames disagree about being PAINTED, for every livery.
-        Under this floor the stride re-tones the inside of a shape that
-        holds still, which is the sliding-sprite failure the ambient gate
-        was written for, doubled because a gait moves more than an idle."""
+        the clip's QUIETEST adjacent step disagrees about being PAINTED, for
+        every livery. Under this floor the stride re-tones the inside of a
+        shape that holds still, which is the sliding-sprite failure the
+        ambient gate was written for, doubled because a gait moves more than
+        an idle. The quietest of the four steps is what stands for the clip
+        because a frame that goes nowhere is the failure however far the
+        other three travel."""
         for uid in self._movers():
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
@@ -594,13 +607,56 @@ class MoveFrames(unittest.TestCase):
         """The other half of the ratio, as in `AmbientFrames`: interior
         texels that only change tone, per texel of silhouette that actually
         moves. Together the two say the change the board sees is mostly the
-        shape going somewhere."""
+        shape going somewhere.
+
+        Asked of every step the gait takes, A-B through D-A, and gated on the
+        worst: a four-frame clip has four chances to boil and a bar that read
+        one of them would be a bar on the frames that happened to be quiet."""
         for uid in self._movers():
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
-                    changed, silhouette = rung1_texels(uid, fac, MOVE_POSES)
-                    interior = changed - silhouette
-                    self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
+                    shimmer = rung1_worst_shimmer(uid, fac, MOVE_POSES)
+                    self.assertLess(shimmer, self.MAX_SHIMMER)
+
+    def test_the_shimmer_bar_reads_past_the_step_the_floor_reads(self):
+        """The two gates above reduce the same four readings opposite ways,
+        and folding both out of ONE step is how a four-frame gait hides its
+        worst frames behind its calmest.
+
+        `rung1_texels` hands back the quietest step and did hand back that
+        step's changed count with it, which the ceiling then divided — so
+        with `MOVE_POSES` grown to four the bar was being applied to one of
+        the clip's four steps, chosen by a measure it has nothing to do with.
+        The mech is the roster's own case: its quietest step shimmers at
+        0.67 and its noisiest at 1.17. So pin the relation — the bar is never
+        under the floor step's own reading, and on the shipped roster it is
+        somewhere strictly over it, which a ceiling folded out of the floor
+        could not be.
+        """
+        strictly_over = []
+        for uid in self._movers():
+            for fac in FACTIONS:
+                quiet_changed, quiet_silhouette = rung1_texels(uid, fac, MOVE_POSES)
+                at_the_floor = (quiet_changed - quiet_silhouette) / max(
+                    quiet_silhouette, 1
+                )
+                worst = rung1_worst_shimmer(uid, fac, MOVE_POSES)
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertGreaterEqual(worst, at_the_floor)
+                if worst > at_the_floor:
+                    strictly_over.append((uid, fac.key))
+        self.assertTrue(strictly_over, "no gait's shimmer bar read past its floor step")
+
+    def test_the_clip_is_read_around_the_cycle(self):
+        """Four poses are four adjacent steps, A-B through D-A, not three:
+        the clip loops, so the frame the player sees after MOVE_D is MOVE_A
+        and that swap is as much a step as the three inside the sheet order.
+        The ambient pair is one step read both ways, which is why every
+        two-pose caller reads the same numbers it always did."""
+        for uid in self._movers():
+            with self.subTest(unit=uid):
+                self.assertEqual(len(rung1_steps(uid, FACTIONS[0], MOVE_POSES)), 4)
+        self.assertEqual(len(rung1_steps("infantry", FACTIONS[0], AMBIENT_POSES)), 2)
 
     def test_the_gait_keeps_the_units_mass(self):
         for uid in self._movers():

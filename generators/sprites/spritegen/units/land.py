@@ -21,10 +21,11 @@ Every builder's `if pose is Pose.MOVE_A:` / `if pose is Pose.MOVE_B:` reads
 plays MOVE_B's — every measurement below, taken against the original pair,
 still describes those two frames byte for byte. What the extra pair adds is
 the tread: `_track`'s link stripe is keyed off `_tread_phase(pose)`, which
-now steps a quarter of its own period on each of the four move frames rather
-than flipping between two halves of it, so the crawl completes one full lap
-of the run every 640 ms gait cycle while the hull's rock or roll repeats
-twice across it.
+stands the four move frames at a quarter of its own period each rather than
+flipping between two halves of it, so the stripe visits all four
+quarter-positions of the run every 640 ms gait cycle while the hull's rock or
+roll repeats twice across it. Not a one-way lap — `_tread_phase` says why the
+two pinned frames rule that out and which step carries the direction.
 """
 
 from __future__ import annotations
