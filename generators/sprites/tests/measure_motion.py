@@ -1,10 +1,13 @@
 """Dev instrument for the unit animation clips — not a test, a readout.
 
-`--clip {ambient,fire,move}` picks which pair of poses is measured (default
-ambient); the choices and the pair both come from `units.CLIP_POSES` — every
-clip there that is authored as a pair, so a new one is measured without
-editing this file and a one-frame clip is not offered. The uids are positional
-and default to the whole atlas:
+`--clip {ambient,fire,move}` picks which clip is measured (default ambient);
+the choices and the frames both come from `units.CLIP_POSES` — every clip
+there authored as two frames or more, so a clip that grows one is measured
+without editing this file and a one-frame clip is not offered. A two-frame
+clip is one step; a longer one is read AROUND its cycle and prints a block per
+adjacent step (the move clip's four: MOVE_A-B, B-C, C-D, D-A), because a
+gait's frames do not all move the same amount and an average over them would
+hide the quiet one. The uids are positional and default to the whole atlas:
 
   .venv/bin/python tests/measure_motion.py [--clip CLIP] [unit ...]
 
@@ -14,8 +17,8 @@ with nearest filtering, so at zoom rung 1 the player sees a 16x24 texel
 sample of the cell and at rung 2 a 32x48 one. This prints what survives that
 sample, per unit, per rung:
 
-  opaque       texels the clip's first pose paints (alpha > 128)
-  changed      texels whose colour differs between the clip's two poses
+  opaque       texels the step's first pose paints (alpha > 128)
+  changed      texels whose colour differs between the step's two poses
   silhouette   of those, texels one pose paints and the other does not
   shimmer      interior changed / silhouette changed (the divisor floors at
                1, so a unit whose silhouette holds still reports its whole
@@ -280,34 +283,39 @@ def shimmer(changed: int, silhouette: int) -> float:
     return (changed - silhouette) / max(silhouette, 1)
 
 
-# What `--clip` may name: the counts below compare two frames, so a clip
-# authored as a single held key (`ko`) is left out rather than offered and
-# then refused by `poses_for`.
+# What `--clip` may name: the counts below compare two frames at a time, so a
+# clip authored as a single held key (`ko`) is left out rather than offered and
+# then refused by `steps_for`. A clip with more than two is measured step by
+# step, so growing one adds rows here rather than taking it off the menu.
 MEASURABLE_CLIPS: tuple[str, ...] = tuple(
-    sorted(clip for clip, poses in CLIP_POSES.items() if len(poses) == 2)
+    sorted(clip for clip, poses in CLIP_POSES.items() if len(poses) >= 2)
 )
 
 
-def poses_for(clip: str) -> tuple[Pose, Pose]:
-    """The pose pair the clip is measured across.
+def steps_for(clip: str) -> list[tuple[Pose, Pose]]:
+    """The adjacent pose pairs the clip is measured across.
 
-    The counts compare two frames, so a clip that ever grows a third says so
-    here rather than being silently measured on its ends.
+    A two-pose clip is ONE step, in sheet order, which is what this instrument
+    always printed. A longer clip is read AROUND the cycle — the frame the
+    player sees after the last one is the first, so that swap is as much a
+    step as the ones inside sheet order — and every step gets its own block,
+    since a gait's frames do not all move the same amount and an average over
+    them would hide the quiet one.
     """
     poses = CLIP_POSES[clip]
-    if len(poses) != 2:
+    if len(poses) < 2:
         sys.exit(
-            f"clip {clip!r} has {len(poses)} poses; measure_motion compares a pair"
+            f"clip {clip!r} has {len(poses)} poses; measure_motion compares frames"
         )
-    return poses[0], poses[1]
+    if len(poses) == 2:
+        return [(poses[0], poses[1])]
+    return [(poses[i], poses[(i + 1) % len(poses)]) for i in range(len(poses))]
 
 
-def report(uids: list[str], clip: str = "ambient") -> None:
+def report_step(
+    uids: list[str], clip: str, first: Pose, second: Pose, show_moves: bool
+) -> None:
     fac = faction_by_key("red")
-    first, second = poses_for(clip)
-    # Only the move clip has units that fall back, so only it carries the
-    # column that says which ones do.
-    show_moves = clip == "move"
     cells = {
         uid: (
             atlas.unit_cell(uid, fac, first),
@@ -338,6 +346,14 @@ def report(uids: list[str], clip: str = "ambient") -> None:
         print()
 
 
+def report(uids: list[str], clip: str = "ambient") -> None:
+    # Only the move clip has units that fall back, so only it carries the
+    # column that says which ones do.
+    show_moves = clip == "move"
+    for first, second in steps_for(clip):
+        report_step(uids, clip, first, second, show_moves)
+
+
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(
         description="Count what survives the board's sample, per unit, per rung.",
@@ -346,7 +362,7 @@ def main(argv: list[str]) -> None:
         "--clip",
         choices=MEASURABLE_CLIPS,
         default="ambient",
-        help="which clip's pose pair to measure (default: ambient)",
+        help="which clip to measure, step by step (default: ambient)",
     )
     parser.add_argument(
         "unit",

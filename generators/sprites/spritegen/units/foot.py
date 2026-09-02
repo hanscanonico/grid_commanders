@@ -367,8 +367,9 @@ def _mech_legs(m: Model, swing: int | None = None, gather: int = 0) -> None:
     knee and shin sharing a corner and no face — a leg hanging off the
     trooper as its own 18-voxel island, which nothing above catches
     (`Silhouette` reads identity and mass that merely moves does not drift).
-    So a step past the bend lays one joint voxel on the shin corner nearest
-    its own knee, closing the diagonal at the knee's own rank. It is inert
+    So a step past the bend lays one joint voxel on the knee plate's own
+    inner corner, dropped to the shin's rank, where it reaches the plate
+    above it and the stepped shin beside it. It is inert
     for every magnitude the shipped scissor uses, which is why MOVE_A and
     MOVE_B are untouched by it, and `test_board_read.py BoardScaleEdge` is
     where a boot that comes off the figure fails by name.

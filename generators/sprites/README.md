@@ -250,8 +250,9 @@ on argv, so it adds nothing to `out/` and the snapshot gate never sees it.
 
 Both instruments take a `--clip` (default `ambient`) and read the clip's frames
 from `units.CLIP_POSES`, so a clip that gains a frame is measured without this
-file being edited: `measure_motion.py` offers every two-frame clip there
-(`{ambient,fire,move}` today). `preview_motion.py` also needs the clip's sheet
+file being edited: `measure_motion.py` offers every clip there with two frames
+or more (`{ambient,fire,move}` today) and prints one block per adjacent step,
+which is one block for a pair and four for the move clip's cycle. `preview_motion.py` also needs the clip's sheet
 tuple and its cadence (`*_MS`) in its own `CLIP_SHEETS`, which names the
 ambient and move pairs — `{ambient,move}` — so drawing the fire pair is one
 table entry away.

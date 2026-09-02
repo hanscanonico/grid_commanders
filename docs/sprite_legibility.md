@@ -628,12 +628,19 @@ tread content living on MOVE_C/MOVE_D alone), and the ruler agrees to four signi
 
 | frame | clear cells | failing | % | fogged cells | fogged failing | % |
 | --- | --- | --- | --- | --- | --- | --- |
-| board `idle_a` | 9,720 | 4,177 | 43.0% | 2,160 | 613 | 28.4% |
-| board `idle_b` | 9,720 | 4,479 | 46.1% | 2,160 | 696 | 32.2% |
+| board `idle_a` | 8,640 | 4,121 | 47.7% | 2,160 | 613 | 28.4% |
+| board `idle_b` | 8,640 | 4,443 | 51.4% | 2,160 | 696 | 32.2% |
 | board `walk_a` | 8,640 | 4,791 | 55.5% | 2,160 | 742 | 34.4% |
 | board `walk_b` | 8,640 | 4,800 | 55.6% | 2,160 | 870 | 40.3% |
 | board `walk_c` | 8,640 | 4,390 | **50.8%** | 2,160 | 679 | **31.4%** |
 | board `walk_d` | 8,640 | 4,739 | **54.8%** | 2,160 | 826 | **38.2%** |
+| cutin `idle_a` | 1,080 | 56 | 5.2% | — | — | — |
+| cutin `idle_b` | 1,080 | 36 | 3.3% | — | — | — |
+
+Board and cut-in are separate views on separate sheets and each row is one of them, as in the
+2026-09-01 table above: the six board rows reproduce that section's figures to the digit, and the
+cut-in carries no fogged reading because fog is a board overlay. The whole-run lines below are the
+two views added together.
 
 Whole run: clear 54,000 cells, 27,376 failing (50.7%), 18,880 hue-carried (69.0%); fogged 12,960
 cells, 4,426 failing (34.2%), 887 hue-carried (20.0%) — both a shade under the S8 control's own
