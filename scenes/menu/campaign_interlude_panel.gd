@@ -11,7 +11,9 @@ extends Control
 ## Presentation only, and it decides nothing at all — not even which lines are
 ## said. `MissionLine.spoken` filters those against the ledger it is handed, the
 ## same filter the briefing and the debrief use, so a block that went badly reads
-## differently without a second kind of variant existing.
+## differently without a second kind of variant existing. The heading, the tally
+## and the act coming next are handed over as words for the same reason: which
+## act just closed, and whether it was the war's last, is the menu's to say.
 
 signal continued
 
@@ -20,6 +22,8 @@ const _LINE_FADE := 0.3
 
 var _title: Label
 var _heading: Label
+var _tally: Label
+var _next: Label
 var _body: VBoxContainer
 var _continue_button: Button
 var _commanders := CommanderDB.load_default()
@@ -33,19 +37,31 @@ func _ready() -> void:
 
 ## Opens on one page, read against the war as the profile now records it. A null
 ## ledger is a campaign with no profile on disk, where every fact reads zero and
-## the unconditional lines are what is said.
+## the unconditional lines are what is said. `heading` names the act that closed
+## (or the war, on its last page), `tally` what that act came to, and `next_act`
+## the block coming — empty when none is, which is the war's end.
 ##
 ## The lines land one at a time — the page is the act's payoff, and a wall of
 ## text that appears whole is a page that gets skimmed. A press completes the
 ## reveal; the next one turns the page. Captures pose the finished frame.
 func begin(
-	interlude: CampaignInterlude, ledger: CampaignState = null, animate: bool = true
+	interlude: CampaignInterlude,
+	heading: String,
+	tally: String,
+	next_act: String,
+	ledger: CampaignState = null,
+	animate: bool = true
 ) -> void:
 	if _line_tween != null and _line_tween.is_valid():
 		_line_tween.kill()
 	_line_tween = null
+	_heading.text = heading
 	_title.text = interlude.title.to_upper()
 	_title.visible = interlude.title != ""
+	_tally.text = tally
+	_tally.visible = tally != ""
+	_next.text = "NEXT ACT   %s" % next_act.to_upper()
+	_next.visible = next_act != ""
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()
@@ -97,16 +113,14 @@ func _build() -> void:
 	UiKit.page_veil(self)
 	var main := UiKit.page_body(self, 5, UiTheme.PAGE_BUTTON_MARGIN)
 
-	_heading = Label.new()
-	_heading.text = "INTERLUDE"
-	_heading.add_theme_font_override("font", UiTheme.stat())
-	_heading.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	_heading.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_heading = _micro("")
 	main.add_child(_heading)
 
 	_title = UiKit.page_title()
 	main.add_child(_title)
+
+	_tally = _micro("")
+	main.add_child(_tally)
 
 	var frame := UiKit.vscroll()
 	main.add_child(frame)
@@ -116,10 +130,20 @@ func _build() -> void:
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	frame.add_child(_body)
 
+	_next = _micro("")
+	main.add_child(_next)
+
 	_continue_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.PRIMARY, null, 140)
 	_continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_continue_button.pressed.connect(_advance)
 	main.add_child(_continue_button)
+
+
+## The page's quiet lines, centred over the veil — `CampaignDebriefPanel`'s own.
+func _micro(text: String) -> Label:
+	var label := ListRow.detail(text, UiTheme.NEUTRAL_LIGHT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return label
 
 
 func _leave() -> void:

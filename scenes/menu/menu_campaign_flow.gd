@@ -42,6 +42,9 @@ var _pending: CampaignInterlude
 ## spoke to rather than the profile re-read off disk, so the two pages of one beat
 ## cannot disagree about how the block went when a progress write fails.
 var _pending_ledger: CampaignState
+## The block the pending page closes, so the page can be headed as that act's
+## end — or the war's, when it is the last.
+var _pending_block: int = -1
 ## The mission the open debrief is about, for a Retry from it. Set as the debrief
 ## opens and dropped as it closes either way, so nothing after it can deploy a
 ## mission nobody is looking at.
@@ -113,7 +116,8 @@ func resume() -> bool:
 	report.losses = CampaignSession.tally.losses() if CampaignSession.tally != null else 0
 	report.previous = CampaignSession.previous_record()
 	report.campaign = campaign
-	_pending = _closing_interlude(campaign, mission, outcome)
+	_pending_block = _closing_block(campaign, mission, outcome)
+	_pending = campaign.interlude_after(_pending_block) if _pending_block >= 0 else null
 	_pending_ledger = progress
 	_debrief_mission = mission.id
 	_debrief.begin(report, Settings.menu_animations)
@@ -134,15 +138,14 @@ func _next_title(
 	return entry.title if entry != null else ""
 
 
-## The page this mission earned, or null: a block is closed by its last mission,
+## The block this mission closed, or -1: a block is closed by its last mission,
 ## and only by winning it.
-func _closing_interlude(
+func _closing_block(
 	campaign: CampaignDefinition, mission: MissionDefinition, outcome: MissionRuntime.Outcome
-) -> CampaignInterlude:
+) -> int:
 	if outcome.status != MissionRuntime.Status.SUCCESS:
-		return null
-	var block := campaign.closes_block(mission.id)
-	return campaign.interlude_after(block) if block >= 0 else null
+		return -1
+	return campaign.closes_block(mission.id)
 
 
 ## The debrief is done: the page between the blocks, if this mission closed one,
@@ -154,9 +157,45 @@ func _after_debrief() -> void:
 	if _pending == null:
 		_show_hub(_campaign)
 		return
-	_interlude.begin(_pending, _pending_ledger, Settings.menu_animations)
+	_open_interlude(_campaign, _pending, _pending_block, _pending_ledger, Settings.menu_animations)
 	_pending = null
 	_pending_ledger = null
+	_pending_block = -1
+
+
+## The interlude as the act's own page: headed with the act that closed, its
+## tally under the title, and the act coming next at the foot — or, after the
+## last block, headed as the war's end with nothing announced after it.
+func _open_interlude(
+	campaign: CampaignDefinition,
+	page: CampaignInterlude,
+	block: int,
+	ledger: CampaignState,
+	animate: bool
+) -> void:
+	var last := campaign.is_last_block(block)
+	var heading := (
+		"THE WAR IS WON · %s" % campaign.title.to_upper()
+		if last
+		else "END OF ACT %d · %s" % [block + 1, campaign.block_titles[block].to_upper()]
+	)
+	var next_act := "" if last else campaign.block_titles[block + 1]
+	_interlude.begin(page, heading, _act_tally(campaign, block, ledger), next_act, ledger, animate)
+
+
+## What the act came to, counted the way the hub counts the war: cleared out of
+## what the route offered, never the authored length, and the stars likewise.
+func _act_tally(campaign: CampaignDefinition, block: int, ledger: CampaignState) -> String:
+	var cleared := 0
+	var offered := 0
+	for mission_id: StringName in campaign.block_mission_ids(block):
+		if ledger != null and ledger.is_skipped(campaign, mission_id):
+			continue
+		offered += 1
+		if ledger != null and ledger.is_cleared(mission_id):
+			cleared += 1
+	var stars := campaign.block_stars(block, ledger)
+	return "%d / %d MISSIONS · %d ★ OF %d" % [cleared, offered, stars.x, stars.y]
 
 
 ## Retry from the debrief of a lost mission: the same deploy the hub makes.
@@ -275,7 +314,7 @@ func _pose_interlude() -> void:
 			if page == null:
 				continue
 			_menu_root.hide()
-			_interlude.begin(page, CampaignState.begin(campaign), false)
+			_open_interlude(campaign, page, page.after_block, CampaignState.begin(campaign), false)
 			return
 
 
