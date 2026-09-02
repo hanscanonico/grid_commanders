@@ -21,6 +21,9 @@ const VOCATIVE_RATE := 0.25
 ## What survives tokenisation, lower-cased. The apostrophe stays because
 ## "don't" and "dont" are not the same word to a voice-overlap reading.
 const WORD_CHARS := "abcdefghijklmnopqrstuvwxyz0123456789'"
+## The order a mission speaks its slots in, which is the order the per-slot
+## table reads in; a kind not listed trails, alphabetically.
+const SLOT_ORDER: Array[String] = ["briefing", "event", "victory", "defeat", "interlude"]
 
 
 ## The corpus's mean sentence length in words — the number every line's cadence
@@ -102,6 +105,37 @@ static func worst_sources(
 			)
 	)
 	return table.slice(0, maxi(0, count))
+
+
+## Per slot kind (`ProseLine.slot_kind`): the line count, the mean score, the
+## share of lines that are exactly two sentences and the share a commander says
+## rather than the narrator. The table that says whether a slot rewritten
+## wholesale — the defeat voice — moved, when the campaign mean cannot.
+static func slot_table(scored: Array[Dictionary]) -> Array[Dictionary]:
+	var groups: Dictionary = {}
+	for row: Dictionary in scored:
+		var line: ProseLine = row["line"]
+		var kind := line.slot_kind()
+		if not groups.has(kind):
+			groups[kind] = {"lines": 0, "score": 0.0, "two_sentence": 0, "spoken": 0}
+		var group: Dictionary = groups[kind]
+		group["lines"] += 1
+		group["score"] += float(row["score"])
+		if float(row["measures"]["lockstep"]) > 0.0:
+			group["two_sentence"] += 1
+		if line.is_spoken():
+			group["spoken"] += 1
+	var table: Array[Dictionary] = []
+	for kind: String in groups:
+		var group: Dictionary = groups[kind]
+		var count := float(group["lines"])
+		var row := {"slot": kind, "lines": int(group["lines"])}
+		row["mean_score"] = float(group["score"]) / count
+		row["two_sentence_share"] = float(group["two_sentence"]) / count
+		row["spoken_share"] = float(group["spoken"]) / count
+		table.append(row)
+	table.sort_custom(_by_slot_order)
+	return table
 
 
 ## Per-speaker sentence-length spread: the mean, the standard deviation and the
@@ -256,6 +290,17 @@ static func aggregate(lines: Array[ProseLine], scored: Array[Dictionary]) -> Dic
 		"narrowest_speaker_sigma": 0.0 if spread.is_empty() else float(spread[0]["sigma"]),
 		"widest_speaker_sigma": 0.0 if spread.is_empty() else float(spread[-1]["sigma"]),
 	}
+
+
+static func _by_slot_order(a: Dictionary, b: Dictionary) -> bool:
+	var rank_a := _slot_rank(a["slot"])
+	var rank_b := _slot_rank(b["slot"])
+	return rank_a < rank_b if rank_a != rank_b else a["slot"] < b["slot"]
+
+
+static func _slot_rank(slot: String) -> int:
+	var rank := SLOT_ORDER.find(slot)
+	return SLOT_ORDER.size() if rank == -1 else rank
 
 
 static func _by_score_then_place(a: Dictionary, b: Dictionary) -> bool:

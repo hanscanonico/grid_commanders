@@ -126,6 +126,20 @@ func _print_tables(lines: Array[ProseLine], scored: Array[Dictionary]) -> void:
 	_print_section("worst missions (mean score)")
 	for row: Dictionary in ProseReport.worst_sources(scored, 10):
 		print("  %.3f  %-34s %d lines" % [row["mean_score"], row["source"], row["lines"]])
+	_print_section("by slot")
+	for row: Dictionary in ProseReport.slot_table(scored):
+		print(
+			(
+				"  %-10s %4d lines  mean %.3f  two-sentence %3.0f%%  spoken %3.0f%%"
+				% [
+					row["slot"],
+					row["lines"],
+					row["mean_score"],
+					row["two_sentence_share"] * 100.0,
+					row["spoken_share"] * 100.0,
+				]
+			)
+		)
 	_print_section("openings shared across voices")
 	for row: Dictionary in ProseReport.shared_openings(lines):
 		print("  %-24s %d uses across %d voices" % [row["opening"], row["uses"], row["speakers"]])

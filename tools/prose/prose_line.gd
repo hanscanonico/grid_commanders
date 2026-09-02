@@ -66,11 +66,23 @@ func where() -> String:
 	return "%s %s#%d" % [source(), slot, index]
 
 
+## The slot a line is counted under in the per-slot table. An event's id is
+## provenance rather than a kind of slot, so every `event:<id>` folds into one
+## "event" row beside briefing, victory, defeat and interlude.
+func slot_kind() -> String:
+	return "event" if slot.begins_with("event:") else slot
+
+
+## Said by a commander rather than by the narrator.
+func is_spoken() -> bool:
+	return speaker != &""
+
+
 ## Who is talking, for a per-speaker table. Narration is a voice too — it is a
 ## third of the corpus and the one nobody thinks to characterise — so it is
 ## named rather than skipped.
 func voice() -> StringName:
-	return speaker if speaker != &"" else &"(narration)"
+	return speaker if is_spoken() else &"(narration)"
 
 
 ## The first `width` characters, on one line, for a grep-able report row. An
