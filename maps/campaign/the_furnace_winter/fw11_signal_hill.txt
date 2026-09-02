@@ -1,17 +1,25 @@
-# The Furnace Winter, The Depots — "Signal Hill".
-# A road spine with 3 garrisoned relays, taken together or not at all.
-# Ferrow's paymaster (recon, tagged paymaster) rides behind the east relay:
-# the hidden bonus the middle relay's intercept reveals.
+# The Furnace Winter, The Depots — "Signal Hill": three relays on the relay road, the middle one the summit of a hill the road climbs from west and east only.
+# The middle relay (11,3) sits on a summit ringed by mountains — (10..12,1),
+# (9,2), (13,2), (9,4), (13,4), (10..12,5) — so the road at (10,3) and (12,3)
+# is the only way onto it that is not a climb. A lower slope on row 7 with
+# three gaps gives the south lowland a way round the hill to the eastern
+# relay. Ferrow's paymaster (recon, tagged paymaster) rides behind the east
+# relay: the hidden bonus the middle relay's intercept reveals. The day-4
+# riders land at (9,1) and (13,5), the hill's outer corners.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
 .......M...............
-....F.....F.....F......
-.Q...................Q.
+....F.....MMM.....F....
+.Q.......M...M.......Q.
 .====C=====C=====C====.
-.B...................B.
-......F.....F.....F....
-...............M.......
+.B.......M...M.......B.
+......F...MMM.....F....
+...F.......F.......F...
+....MM...MMMMM...MM....
+.F.....F.......F.....F.
+...M.....M...M.....M...
+......F.........F......
 [owners]
 1 1 2
 1 1 4

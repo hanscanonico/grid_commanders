@@ -1,17 +1,27 @@
-# The Furnace Winter, The Depots — "Last Mile".
-# Teaching board: a road spine with 3 garrisoned depots in sequence.
-# There is no convoy to escort — the depots hold still. Take them in order.
+# The Furnace Winter, The Depots — "Last Mile": the fuel road runs down a valley between two mountain shoulders to the foundry's outer works.
+# Mountain shoulders on rows 1-2 and 9-10 from x=8 to x=20 wall the valley;
+# the three depots (5,4), (11,4), (17,4) stand on its floor and the road hugs
+# the northern shoulder. In front of Vale's headquarters the foundry's outer
+# works — woods at x=19..21 with rock at (19,6) — cost every approach but
+# the road at (21,4) a wood's worth of tread. Vale's rearguard stands in
+# those works, tagged vale_rearguard_a (18,4) and vale_rearguard_b (19,3);
+# both withdraw when the third depot falls. There is no convoy to escort —
+# the depots hold still.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-.......M...............
-.......................
-....F.....F.....F......
-.Q...................Q.
+.......M...F.......F...
+....F...MMMMMMMMMMMMM..
+........MMMMMMMMMMMMMF.
+.Q....F..........F.FFQ.
 .====C=====C=====C====.
-.B...................B.
-......F.....F.....F....
-...............M.......
+.B......F.....F....FFB.
+...F.......F.......MF..
+......M.......M........
+..F.....F.......F......
+....M...MMMMMMMMMMMMM..
+........MMMMMMMMMMMMM.F
+.F.........F.....F.....
 [owners]
 1 1 3
 1 1 5

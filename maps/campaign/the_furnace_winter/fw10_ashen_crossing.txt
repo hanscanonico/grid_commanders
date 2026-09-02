@@ -1,8 +1,10 @@
-# The Furnace Winter, The Depots — "Ashen Crossing".
-# The crossing board: two frozen streams cut the road into three chambers,
-# one depot in each, with a bridge at (8,3) and (12,3). Wheels and treads
-# force the bridges; mechs and infantry wade the ice between them. Take the
-# depots chamber by chamber.
+# The Furnace Winter, The Depots — "Ashen Crossing": two frozen streams cut the road into three chambers, and the column can cross each stream in two places.
+# The fuel road bridges both streams at (8,3) and (12,3), one depot in each
+# chamber. Both streams run out before the southern edge: the old ash track
+# on row 8 skirts their frozen headwaters, so a column held at a bridge can go
+# the long way round — eighteen cells against the road's eight. Wheels and
+# treads take a bridge or the track; mechs and infantry wade the ice
+# anywhere. Take the depots chamber by chamber, or turn the middle one.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
@@ -12,7 +14,9 @@
 .====C==+=C=+==C====.
 .B......~...~......B.
 ......F.~..F~...F....
-........~...~M.......
+...M....~...~M.......
+.....F....F......F...
+.....F=========F.....
 [owners]
 1 1 2
 1 1 4

@@ -81,12 +81,12 @@ day = 4
 [sub_resource type="Resource" id="Spawn_rider_north"]
 script = ExtResource("11")
 unit_type = ExtResource("14")
-cell = Vector2i(9, 2)
+cell = Vector2i(9, 1)
 
 [sub_resource type="Resource" id="Spawn_rider_south"]
 script = ExtResource("11")
 unit_type = ExtResource("14")
-cell = Vector2i(13, 4)
+cell = Vector2i(13, 5)
 
 [sub_resource type="Resource" id="Effect_two_more_riders"]
 script = ExtResource("10")

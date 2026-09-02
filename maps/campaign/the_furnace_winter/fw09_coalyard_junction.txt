@@ -1,22 +1,31 @@
-# The Furnace Winter, The Depots — "Coalyard Junction".
-# A road spine with 2 garrisoned depots — and Ferrow's two pay-riders on it,
-# tagged rider_a and rider_b: the bonus hunt, and the strongbox beat fires
-# when both are down.
+# The Furnace Winter, The Depots — "Coalyard Junction": the fuel road crosses a slag ridge's shadow, and a spur runs north to the coalyard.
+# The fuel road holds its two garrisoned depots at (5,3) and (15,3); at (10,3)
+# a spur branches north to the coalyard, a neutral city at (10,1) that pays
+# whoever holds it, with woods on the junction's four corners. South of the
+# road a slag ridge runs the whole width (row 6) with three cuts — x=3, x=10,
+# x=17 — and both bases sit in the yards below it, so every reinforcement
+# comes up through a cut. Ferrow's two pay-riders ride the road, tagged
+# rider_a and rider_b: the bonus hunt, and the strongbox beat fires when both
+# are down.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-.......M.............
-....F.........F......
-.Q.................Q.
+.......M..F....M.....
+....F....FCF....F....
+.Q.......F=F.......Q.
 .====C=========C====.
-.B.................B.
-......F.........F....
-.............M.......
+.........F.F.........
+...F....F.....F...F..
+MMM.MMMMMM.MMMMMM.MMM
+......F........F.....
+.B..M.....M.....M..B.
+...F....F....F.......
+......M..........M...
 [owners]
 1 1 2
-1 1 4
+1 1 8
 2 19 2
-2 19 4
+2 19 8
 2 5 3
 2 15 3
 [units]
