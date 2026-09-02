@@ -1321,7 +1321,7 @@ already failing would muddy both readings.
   match loop itself; `tools/run_campaign_difficulty.gd`, which plays every shipped mission to a
   verdict and reads how hard it was (`docs/campaign_difficulty.md`); the composite legibility sweep
   under `tools/legibility/`, which stacks every unit, tint, ground, board overlay and animation
-  frame out of the six shipped unit sheets and measures how far each figure's contour separates
+  frame out of the six standing unit sheets and measures how far each figure's contour separates
   from the ground just outside it (`docs/sprite_legibility.md`), and diffs those verdicts against
   the committed digest in `tests/fixtures/legibility_baseline.csv` when asked
   (`make legibility-ratchet`); plus `tools/focus_timeline.sh`,

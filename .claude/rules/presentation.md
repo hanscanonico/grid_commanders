@@ -93,12 +93,17 @@ forms named in the root index are in `docs/design_record.md`.
   `stands_in_cutin()`, never by terrain id; `tests/unit/test_terrain_db.gd` lints the pair together.
   D5: how a weapon looks is a `BattleStyle` under `data/battle_anim/`, `UnitType.battle_style` /
   `secondary_battle_style` are presentation keys like `atlas_col`, and no gameplay number may ever
-  appear in a style. **A figure is that art minus the shadow the tile needed** —
+  appear in a style. **An idle figure is that art minus the shadow the tile needed** —
   `UnitSprite.figure_texture_for` is the one way to ask for it,
   `assets/tiles/units_atlas_figures.png` and its frame-B sibling the sheets it cuts from, the pixels
   **subtracted by the generator** and never by a redraw or a colour-keyed shader in `scenes/`;
-  `tests/unit/test_figure_sheet.gd` is the pin. **`UnitSprite.CELL_GROUND_PX` (7) is the cell's
-  ground line, and it is not the cell's bottom edge** — it is where a cut-in centres its own contact
+  `tests/unit/test_figure_sheet.gd` is the pin. **That subtract-only rule is the idle PAIR's alone**
+  (animation-frames S4): `units_atlas_figures_ko.png` is *authored* wreck art merely composed the
+  same shadowless way, so `UnitSprite.ko_figure_texture_for` is its own accessor — but
+  `UnitSprite._region_of` stays the one path to any of the three sheets, and only `CutsceneSide`
+  decides whether a KO cell may be shown (never for a flying unit, which authors none in v1).
+  **`UnitSprite.CELL_GROUND_PX` (7) is the cell's ground line, and it is not the cell's bottom
+  edge** — it is where a cut-in centres its own contact
   ellipse. **The board's cast shadow and the buildings' drop shadow are both SOLID**, measured
   through the board's own sampling rather than argued, and the tone and the parity are the
   generator's alone: there is no shadow tone and no parity anywhere in `scenes/`, which is what
@@ -309,8 +314,10 @@ forms named in the root index are in `docs/design_record.md`.
   **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the arithmetic, read off the director's own `t`
   rather than the wall clock**, so a posed still and a skip both land on a fixed pose. The board's
   two stills stay `frame`'s and do not reach in.
-  **Since 2026-08-29 the legibility ruler reads all six unit sheets**: a `frame` axis names a clip
-  and a beat (`idle_a`/`idle_b`/`walk_a`/`walk_b`), the view says which file draws it — the board's
+  **Since 2026-08-29 the legibility ruler reads all six STANDING unit sheets** (S4's KO sheet is the
+  seventh and deliberately out — the ruler asks how a standing figure separates from its ground):
+  a `frame` axis names a clip and a beat (`idle_a`/`idle_b`/`walk_a`/`walk_b`), the view says which
+  file draws it — the board's
   own cells, the cut-in's shadow-subtracted pair — and every report row and `--dump` key carries it
   (`LegibilityArt.BOARD_SHEETS` / `CUTIN_SHEETS`, `docs/sprite_legibility.md`'s 2026-08-29
   re-read). The sea's swell frames stay out, a *time* frame still being another axis.

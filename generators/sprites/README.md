@@ -417,17 +417,20 @@ one more place the number drifts. It is written deterministically like
 everything else here: sorted keys, two-space indent, trailing newline. See
 `spritegen/anim.py`.
 
-`clips.move` is the one clip with keys of its own, and they are additive:
-`version` stays **1**, because their ABSENCE is the reading a version-1
-consumer already makes. `facing` (`"left"`) is the screen direction the art is
-drawn facing and `flip_x_for` (`["right"]`) is the direction the consumer
-mirrors it for; a clip with no `facing` — `ambient`, `ambient_figures`, `sea` —
-must never be mirrored. `fallback` (`"ambient"`) names the clip to play when
-the move sheets are not in the install, so a checkout from before these sheets
-existed degrades to the idle instead of drawing nothing. The cadence is
-`anim.MOVE_MS` = **160 ms**, and it is chosen against the game's tween rather
-than against the art: the board moves a unit one cell in 0.06 s x `anim_scale`
-— 0.18 s per cell at the normal tier, 0.12 s at quick — so 160 ms is about one
+`clips.move` and `clips.ko` are the clips with keys past the common four, and
+they are additive: `version` stays **1**, because their ABSENCE is the reading
+a version-1 consumer already makes. `facing` (`"left"`) and `flip_x_for`
+(`["right"]`) are `move`'s alone — the screen direction the art is drawn facing
+and the direction the consumer mirrors it for; a clip with no `facing` —
+`ambient`, `ambient_figures`, `sea`, `ko` — must never be mirrored. `fallback`
+(`"ambient"`) is shared by the two clips a unit may be left out of, and
+`docs/move_clip.md` owns what it means: the install's absence for `move`, and a
+unit's own for both, which is why an unauthored `ko` column must not be drawn.
+
+The move cadence is `anim.MOVE_MS` = **160 ms**, and it is chosen against the
+game's tween rather than against the art: the board moves a unit one cell in
+0.06 s x `anim_scale` — 0.18 s per cell at the normal tier, 0.12 s at quick —
+so 160 ms is about one
 stride per cell crossed. It is also deliberately neither a divisor nor a
 multiple of 500 (`AMBIENT_MS`) or 900 (`SEA_MS`), so a walking unit, a parked
 one and the water never turn over on the same tick and the board never blinks
