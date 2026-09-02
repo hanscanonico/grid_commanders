@@ -69,6 +69,51 @@ func test_the_page_after_a_block_is_the_one_that_names_it() -> void:
 	assert_null(campaign.interlude_after(1), "a block with no page hands back to the hub")
 
 
+func test_a_block_is_its_run_of_missions_and_the_runs_cover_the_list() -> void:
+	var campaign := _campaign()
+	assert_eq(campaign.block_mission_ids(0), [&"one", &"two"] as Array[StringName])
+	assert_eq(campaign.block_mission_ids(1), [&"three", &"four"] as Array[StringName])
+	assert_eq(campaign.block_mission_ids(2).size(), 0, "a block the campaign does not have")
+	var covered := 0
+	for block in campaign.block_lengths.size():
+		covered += campaign.block_mission_ids(block).size()
+	assert_eq(covered, campaign.mission_count())
+
+
+func test_only_the_last_block_closes_the_war() -> void:
+	var campaign := _campaign()
+	assert_false(campaign.is_last_block(0))
+	assert_true(campaign.is_last_block(1))
+	assert_false(campaign.is_last_block(-1))
+
+
+# --- what the act came to ----------------------------------------------------
+
+
+func test_a_block_tallies_the_stars_its_missions_earned_out_of_those_on_offer() -> void:
+	var campaign := _campaign()
+	campaign.missions[1].par_day = 5
+	assert_eq(campaign.block_stars(0, null), Vector2i(0, 3), "a null ledger earned nothing")
+	var state := CampaignState.begin(campaign)
+	state.complete(campaign, &"one", 1, 4)
+	state.complete(campaign, &"two", 2, 5)
+	assert_eq(campaign.block_stars(0, state), Vector2i(3, 3))
+	assert_eq(campaign.block_stars(1, state), Vector2i(0, 2), "the next block is untouched")
+
+
+## The hub's rule for the war, at the width a block has: a mission the route
+## walked past could never be cleared, so it is not on offer either.
+func test_a_mission_the_route_skipped_is_not_on_offer() -> void:
+	var campaign := _campaign()
+	campaign.missions[2].unlock_requires = _condition(1, -1)
+	var state := CampaignState.begin(campaign)
+	state.complete(campaign, &"one", 1, 4)
+	state.complete(campaign, &"two", 1, 4)
+	state.complete(campaign, &"four", 1, 4)
+	assert_true(state.is_skipped(campaign, &"three"))
+	assert_eq(campaign.block_stars(1, state), Vector2i(1, 1))
+
+
 # --- what it says ------------------------------------------------------------
 
 

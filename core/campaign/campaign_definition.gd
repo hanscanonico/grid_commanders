@@ -77,6 +77,41 @@ func interlude_after(block: int) -> CampaignInterlude:
 	return null
 
 
+## The missions of one block in play order — the authored run, empty for a block
+## the campaign does not have.
+func block_mission_ids(block: int) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	if block < 0 or block >= block_lengths.size():
+		return ids
+	var first := 0
+	for length in block_lengths.slice(0, block):
+		first += length
+	for entry: MissionDefinition in missions.slice(first, first + block_lengths[block]):
+		if entry != null:
+			ids.append(entry.id)
+	return ids
+
+
+## What a block earned and what it had on offer, as (earned, possible). Read the
+## way the hub counts a war: a road the route walked past is left out of the
+## possible, so a block that went well by a route that skipped one never reads
+## short. A null ledger has earned nothing and skipped nothing.
+func block_stars(block: int, ledger: CampaignState) -> Vector2i:
+	var stars := Vector2i.ZERO
+	for mission_id: StringName in block_mission_ids(block):
+		if ledger != null and ledger.is_skipped(self, mission_id):
+			continue
+		stars.y += MissionRuntime.new(mission(mission_id)).max_stars()
+		if ledger != null:
+			stars.x += ledger.stars_for(mission_id)
+	return stars
+
+
+## Whether closing this block closes the war.
+func is_last_block(block: int) -> bool:
+	return block >= 0 and block == block_lengths.size() - 1
+
+
 ## What the war has recorded, in the words the beats that wrote it put on those
 ## facts — the hub's answer to "what has my war come to". Mission order, and one
 ## line per fact: a `note` is the author's sentence about a flag, so a fact two
