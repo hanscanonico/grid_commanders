@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -100,9 +100,40 @@ effects = Array[Resource]([SubResource("Effect_watch_saved")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_routed"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The coast road broke before the watch got out, and behind them there was only the sea."
+speaker = &"viktor_draeg"
+text = "Two landings, one morning. The beachhead's a road now. It goes where I point it."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "The picket broke on the beach road. My tanks were inland before the tide turned. The sea can keep whatever it caught."
+requires = SubResource("Run_routed")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The watch was caught on the beach road. Nothing behind it but water. Every name on the district's lists was on that road."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_4"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The road's gone and the second column's inland. The watch is still moving, which is more than I can say for anything else on this coast."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -127,4 +158,4 @@ events = Array[Resource]([SubResource("Event_the_watch_is_inland")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3"), SubResource("Line_defeat_4")])

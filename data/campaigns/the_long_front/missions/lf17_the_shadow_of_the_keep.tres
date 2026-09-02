@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -23,7 +23,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Objective_take_the_outpost"]
 script = ExtResource("2")
-text = "Take Orlov's outpost base."
+text = "Capture Orlov's outpost base."
 cell = Vector2i(16, 7)
 
 [sub_resource type="Resource" id="Failure_short_a_flank"]
@@ -97,9 +97,28 @@ effects = Array[Resource]([SubResource("Effect_the_last_of_the_purse")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("4")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "Orlov's outpost held, and the keep stayed exactly as far away as it has been for eleven weeks."
+speaker = &"cass_orlov"
+text = "Everything the Dominion had left to spare is still standing on this hill. So is the outpost. The keep's as far off tonight as it was this morning."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "More than nine units gone and the outpost still standing. That's nothing left to arrive with. I said late was better than short a flank."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Orlov's outpost held and the keep is still a day's march past it. Eleven weeks to get within sight of the thing. We're not in sight of it tonight."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -124,4 +143,4 @@ events = Array[Resource]([SubResource("Event_everything_left_to_spare")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

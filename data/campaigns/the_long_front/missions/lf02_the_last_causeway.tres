@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -94,9 +94,27 @@ effects = Array[Resource]([SubResource("Effect_the_moment")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_routed"]
+script = ExtResource("4")
+flag = &"run:cause"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The causeway fell before the column cleared, and the river stopped being a defence at all."
+speaker = &"viktor_draeg"
+text = "My armour is across the Arden. Your column on the ridge road can stop hurrying. It won't matter now."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "Your line broke. My treads didn't slow to notice."
+requires = SubResource("Run_routed")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The bridge went. The Arden stopped being a river the same minute. Every hour we didn't hold is a mile the column doesn't have."
 
 [resource]
 script = ExtResource("1")
@@ -123,4 +141,4 @@ carry_in = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3a"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

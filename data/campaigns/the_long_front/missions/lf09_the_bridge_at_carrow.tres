@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_take_carrow"]
 script = ExtResource("2")
-text = "Take Carrow and open the crossing."
+text = "Capture Carrow and open the crossing."
 cell = Vector2i(10, 3)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -128,9 +128,15 @@ effects = Array[Resource]([SubResource("Effect_the_second_line")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_vale")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "Vale's second trench line closed before we reached the bridge, and Carrow stayed the one crossing east that nobody could use."
+speaker = &"konrad_vale"
+text = "The second line closed on schedule; you arrived after it, as the estimate allowed. Carrow remains the one crossing east for forty miles, held by those who built it."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Carrow's still his. The road east stays shut behind a finished trench line. Forty miles of river and one bridge, seen from the wrong bank."
 
 [resource]
 script = ExtResource("1")
@@ -155,4 +161,4 @@ events = Array[Resource]([SubResource("Event_inside_the_window"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

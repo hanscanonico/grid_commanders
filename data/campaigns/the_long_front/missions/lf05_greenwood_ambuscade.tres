@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
 [ext_resource type="Resource" path="res://data/units/mech.tres" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_hold_the_woods"]
 script = ExtResource("2")
@@ -76,9 +77,27 @@ effects = Array[Resource]([SubResource("Effect_the_wardens")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_routed"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The trees slowed Draeg down, but not enough — the road broke and the column marched on through open ground."
+speaker = &"viktor_draeg"
+text = "The trees cost me a day. The road past them cost nothing. It's open the whole way to your rear."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "Your line came apart in the tree line. Wood slows treads. It's never stopped one."
+requires = SubResource("Run_routed")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "The greenwood road is his. From here to the shrine it's open ground. I said I could replace the units; I can't replace the day."
 
 [resource]
 script = ExtResource("1")
@@ -103,4 +122,4 @@ events = Array[Resource]([SubResource("Event_the_wardens_rise")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

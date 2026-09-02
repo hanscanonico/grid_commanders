@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -106,9 +106,28 @@ effects = Array[Resource]([SubResource("Effect_column_saved")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_failure"]
+script = ExtResource("9")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The column was still on the road when the line broke. Draeg's armour did not stop to count what it drove over."
+speaker = &"viktor_draeg"
+text = "Four units and a border post. Neither cost my column an hour. The customs road is mine."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The column was still on the road. I'm not writing down how much of it."
+requires = SubResource("Run_failure")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The line's gone and the road behind it is his. The column's still moving, for whatever a road with no line on it is worth."
+unless = SubResource("Run_failure")
 
 [resource]
 script = ExtResource("1")
@@ -134,4 +153,4 @@ par_day = 6
 carry_out = true
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6"), SubResource("Line_8")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

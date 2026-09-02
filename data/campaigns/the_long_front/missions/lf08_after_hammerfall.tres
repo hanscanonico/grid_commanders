@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
@@ -21,7 +21,7 @@ tag = &"ruin_garrison"
 
 [sub_resource type="Resource" id="Objective_hold_averyn"]
 script = ExtResource("2")
-text = "Retake Averyn's ground and keep it two days."
+text = "Hold Averyn's ground for two whole days."
 cell = Vector2i(9, 5)
 days = 2
 
@@ -131,9 +131,15 @@ effects = Array[Resource]([SubResource("Effect_averyn_held")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("4")
-text = "Morn's garrison dug in before Holt reached the ruins, and Averyn stayed his."
+speaker = &"radek_morn"
+text = "You crossed a week of ashes to argue with my engineers. They've dug in. The ground is billed to you at the daily rate."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Morn's garrison is still in the ruins and we're not. I filed Averyn as a town once. I don't have a word for what to file it as now."
 
 [resource]
 script = ExtResource("1")
@@ -158,4 +164,4 @@ events = Array[Resource]([SubResource("Event_morn_bills_the_ground"), SubResourc
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

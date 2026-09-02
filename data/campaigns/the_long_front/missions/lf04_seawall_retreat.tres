@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -42,6 +42,11 @@ speaker = &"orin_flux"
 text = "His coast watch never got off the beach road, so nobody at the quay has a list. We load until the boats are full and hope that was everyone."
 requires = SubResource("Watch_lost")
 
+[sub_resource type="Resource" id="Line_1c"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The Concord lent us you and your arithmetic. They don't send a flag. They never have."
+
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"lyra_quill"
@@ -55,7 +60,7 @@ text = "Worse than yesterday's, better than tomorrow's. That's the only trend I 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"lyra_quill"
-text = "Good enough to bet on. Let the last boats clear — that's the whole job."
+text = "Good enough to bet on. Let the last boats clear — that is the whole job."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
@@ -65,7 +70,7 @@ text = "Last boat clears the harbour mouth as your line finally breaks. I have b
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"lyra_quill"
-text = "The port's his. Nobody left in it was worth the keeping."
+text = "The port is his. Nobody left in it was worth the keeping."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("6")
@@ -94,9 +99,27 @@ effects = Array[Resource]([SubResource("Effect_the_district_is_yours")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_routed"]
+script = ExtResource("4")
+flag = &"run:cause"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The seawall gave way with the harbour still full, and the retreat became a rout."
+speaker = &"viktor_draeg"
+text = "The seawall's down and the harbour's still full of boats. They can stay full. Nothing in that port's going anywhere now."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "Your line broke short of the last boat. Ask the quay what a day's worth. I already know."
+requires = SubResource("Run_routed")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The wall gave with the harbour still full. I have the boat count and the day count. They never met."
 
 [resource]
 script = ExtResource("1")
@@ -119,6 +142,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_port_is_empty")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_1c"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

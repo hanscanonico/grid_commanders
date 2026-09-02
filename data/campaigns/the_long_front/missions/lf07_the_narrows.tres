@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=46 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=49 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -184,9 +184,27 @@ effects = Array[Resource]([SubResource("Effect_league")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_league")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_routed"]
+script = ExtResource("4")
+flag = &"run:cause"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The narrows broke, and three nations' retreats became one rout with nowhere left to fall back to."
+speaker = &"viktor_draeg"
+text = "Three flags on one road. The road's mine now. They learned to retreat together; standing together was a different lesson."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "The narrows broke. Three retreats went back to being three retreats. Nowhere left to run them."
+requires = SubResource("Run_routed")
+
+[sub_resource type="Resource" id="Line_defeat_3"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The narrows are his and there's nothing behind them but the depots. Three nations spent six weeks learning to hold one road. We didn't hold it."
 
 [resource]
 script = ExtResource("1")
@@ -211,4 +229,4 @@ events = Array[Resource]([SubResource("Event_the_line_forms"), SubResource("Even
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

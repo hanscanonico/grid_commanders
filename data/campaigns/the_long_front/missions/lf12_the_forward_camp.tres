@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -9,10 +9,11 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="8"]
 [ext_resource type="Resource" path="res://data/units/mech.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_take_the_camp"]
 script = ExtResource("2")
-text = "Take Orlov's forward base."
+text = "Capture Orlov's forward base."
 cell = Vector2i(13, 3)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -83,9 +84,27 @@ effects = Array[Resource]([SubResource("Effect_bring_the_line_forward")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Run_par"]
+script = ExtResource("10")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "Orlov's camp held, and the first order that said advance was filed unsent."
+speaker = &"cass_orlov"
+text = "The camp holds. Six weeks of falling back, one week of walking forward. Here's where the walk stopped."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Orlov's camp is still standing and the order that said advance goes back in the drawer. I've written fall back so often the pen knows the way."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Inside the week. The line moved every day of it. Put that in the report before anyone asks what it cost."
+requires = SubResource("Run_par")
 
 [resource]
 script = ExtResource("1")
@@ -109,5 +128,5 @@ bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_line_moves")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

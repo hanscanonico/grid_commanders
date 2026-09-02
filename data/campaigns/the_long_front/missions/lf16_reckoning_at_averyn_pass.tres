@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -31,7 +31,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Objective_take_the_garrison"]
 script = ExtResource("2")
-text = "Take Morn's garrison at the pass."
+text = "Capture Morn's garrison at the pass."
 cell = Vector2i(15, 3)
 
 [sub_resource type="Resource" id="Bonus_silence_the_battery"]
@@ -139,9 +139,15 @@ effects = Array[Resource]([SubResource("Effect_battery_silenced")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_morn")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_1"]
 script = ExtResource("3")
-text = "The garrison held the pass, and Morn's Command Power still has an army to shelter behind."
+speaker = &"radek_morn"
+text = "You named the pass for the town and lost the pass. Go and name something else. I've got the ashes, the guns and the high ground, same as last month."
+
+[sub_resource type="Resource" id="Line_defeat_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The garrison's still in the pass and the battery's still ranged on it. Three weeks Reed waited for this fight. It's going to be four."
 
 [resource]
 script = ExtResource("1")
@@ -166,4 +172,4 @@ events = Array[Resource]([SubResource("Event_the_guns_that_ranged_averyn"), SubR
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_morn"), SubResource("Line_draeg"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])
