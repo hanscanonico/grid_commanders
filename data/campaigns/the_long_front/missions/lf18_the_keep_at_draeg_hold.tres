@@ -74,6 +74,11 @@ speaker = &"alina_ward"
 text = "Averyn's ground came back to us late, and Morn made us pay for every acre. Whatever happens on this hill, that is the one bill we never got out from under."
 requires = SubResource("Averyn_lost")
 
+[sub_resource type="Resource" id="Line_holt_veterans"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The column under this gate is the one that came off the foothill road, Voss. Nobody sent it fresh hulls for the passes. What they cost is standing in the line, and I've put nothing in the report the line can't show you."
+
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
@@ -369,6 +374,8 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_allies_arrive"), SubResource("Event_meridian_marches"), SubResource("Event_aurora_marches"), SubResource("Event_the_league_marches"), SubResource("Event_the_captured_guns"), SubResource("Event_the_keeps_own_wing")])
 par_day = 9
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+carry_in = true
+carry_floor_hp = 50
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_holt_veterans"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_8"), SubResource("Line_6"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_7"), SubResource("Line_11"), SubResource("Line_12")])
 defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2")])

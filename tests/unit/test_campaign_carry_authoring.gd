@@ -12,7 +12,7 @@ extends GutTest
 ## carry an army in or out. Every other mission carries nothing and marks no
 ## slot.
 const CHAINED: Dictionary[StringName, int] = {
-	&"the_long_front": 2,  # Voss's retreat, lf01 -> lf02
+	&"the_long_front": 8,  # Voss's retreat, lf01 -> lf02, and the last act, lf13 -> lf18
 	&"the_furnace_winter": 7,  # the veteran column, fw12 -> fw18
 	&"six_marshals": 6,  # the crews that held the gate, sm13 -> sm18
 	&"the_collection": 6,  # the veteran column, tc13 -> tc18
