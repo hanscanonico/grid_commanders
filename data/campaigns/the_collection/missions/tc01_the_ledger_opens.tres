@@ -14,7 +14,7 @@
 
 [sub_resource type="Resource" id="Objective_hold_the_customs_depot_two_days"]
 script = ExtResource("2")
-text = "Hold the customs depot the ledger names for two days."
+text = "Hold the customs depot the ledger names for 2 days."
 cell = Vector2i(6, 4)
 days = 2
 

@@ -26,7 +26,7 @@ max_losses = 8
 
 [sub_resource type="Resource" id="Bonus_hold_the_central_relay"]
 script = ExtResource("4")
-text = "Hold the relay in the middle of the province three whole days."
+text = "Hold the relay in the middle of the province for 3 days."
 cell = Vector2i(9, 6)
 days = 3
 

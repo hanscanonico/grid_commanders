@@ -215,7 +215,7 @@ requires = SubResource("Run_par")
 [sub_resource type="Resource" id="Line_9_losses"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Three columns crossed the wall and three columns are standing on his floor. Nothing owed on our side."
+text = "Three columns crossed the wall. Three columns are standing on his floor. Nothing owed on our side."
 requires = SubResource("Run_few_losses")
 
 [sub_resource type="Resource" id="Line_9_full"]
@@ -227,7 +227,7 @@ requires = SubResource("Run_full")
 [sub_resource type="Resource" id="Line_9_best"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Cheaper than the last time you closed this ledger. I've written the new figure under the old one."
+text = "Better figures than the last time you closed this ledger, so I've written the new ones in under the old."
 requires = SubResource("Run_best")
 unless = SubResource("Run_first")
 

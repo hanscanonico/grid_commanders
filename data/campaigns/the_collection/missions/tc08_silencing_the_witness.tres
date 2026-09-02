@@ -140,7 +140,7 @@ requires = SubResource("Run_failure")
 [sub_resource type="Resource" id="Line_defeat_2_tactical"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Calder's column is gone with the towns still his, which leaves the auditor alive with nobody to walk her to a witness."
+text = "Calder's column is gone with the towns still his. Whatever the auditor wrote down, nobody's left to walk it to a witness."
 unless = SubResource("Run_failure")
 
 [resource]

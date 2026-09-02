@@ -21,7 +21,7 @@ cell = Vector2i(9, 3)
 
 [sub_resource type="Resource" id="Bonus_keep_our_own_town_four_days"]
 script = ExtResource("5")
-text = "Keep our own border town all four days as well."
+text = "Keep our own border town for 4 days."
 cell = Vector2i(6, 3)
 days = 4
 

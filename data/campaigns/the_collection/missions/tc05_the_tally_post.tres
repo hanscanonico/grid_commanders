@@ -135,7 +135,7 @@ text = "The post stands. So does the count. Entry posted for the column that wal
 [sub_resource type="Resource" id="Line_defeat_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Whatever he was counting up there, he's still counting it, with the newest line being us under losses."
+text = "Whatever he was counting up there, he's still counting it. Newest line on the sheet is us, filed under losses."
 
 [resource]
 script = ExtResource("1")

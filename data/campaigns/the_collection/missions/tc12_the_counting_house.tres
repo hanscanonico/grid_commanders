@@ -122,7 +122,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_4_par"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "Eight days. The ledgers left an hour before you did. I timed it."
+text = "Eight days. I priced this house to hold twelve. Better sums than mine, it seems."
 requires = SubResource("Run_par")
 
 [sub_resource type="Resource" id="Line_defeat_1"]
@@ -133,7 +133,7 @@ text = "The counting house is open. Interest was drawn on the whole occupation t
 [sub_resource type="Resource" id="Line_defeat_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The house that pays the squeeze is still paying it, Rowan's ground having held better than a treasury right up until it didn't."
+text = "The house that pays the squeeze is still paying it. Rowan's ground held better than a treasury, right up until it didn't."
 
 [resource]
 script = ExtResource("1")

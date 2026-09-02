@@ -134,7 +134,7 @@ requires = SubResource("Run_failure")
 [sub_resource type="Resource" id="Line_defeat_2_tactical"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Ferrow stood in the notch himself, so the first thing this repossession took back turned out to be Ash's column."
+text = "Ferrow stood in the notch himself. First thing repossessed in the whole Repossession turned out to be Ash's column."
 unless = SubResource("Run_failure")
 
 [resource]
