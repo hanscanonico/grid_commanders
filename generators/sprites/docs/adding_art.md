@@ -83,7 +83,7 @@ Gates a new unit meets, and what each wants:
 | `tests/test_value_bands.py` | 3% of the unit above L200 on every row, 55% of it changing colour when the row does, and no row out-lighting the chromatic band |
 | `tests/test_board_read.py` | a silhouette no other unit shares, at board zoom and zoomed out |
 | `tests/test_cell_geometry.py`, `tests/test_raised_armour.py` | the model is anchored to the cell's bottom edge and spends the 64x96 headroom on mass, not on fine detail |
-| `tests/test_clips.py` | frame B reads as motion at the furthest rung, and so does the move pair |
+| `tests/test_clips.py` | frame B reads as motion at the furthest rung, and so does every adjacent step of the move clip's four — the quietest step still crosses a whole board texel and the noisiest does not boil the interior. `GaitPhases` also wants each uid in `MOVES` to settle the third and fourth frames one way or the other: author something new on MOVE_C/MOVE_D, or repeat MOVE_A/MOVE_B byte for byte AND join `GaitPhases.REUSED` — a silent repeat off that list fails by name |
 | `tests/test_ko_pose.py` | a land or sea unit is in `KOS` and its `Pose.KO` is an authored model rather than its rest key, floored above the sheet's own ink and narrower in tone than the unit it was |
 | `tests/test_fire_pose.py` | an armed unit is in `FIRES` and authors a `fires(pose)` branch, a `FIRE_PAIRS` member's two keys differ and nobody else's do, an unarmed column is byte-identical to the idle pair, every pose draws as ONE connected sprite, and the fire frame changes enough pixels to be seen |
 | `tests/check_snapshots.py` | every generated PNG has an installed twin — the failure you get for skipping `make tiles` |
