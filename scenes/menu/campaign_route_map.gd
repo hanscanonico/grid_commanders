@@ -87,6 +87,7 @@ func _init() -> void:
 	_standing.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(_standing)
 	resized.connect(_layout)
+	set_process(false)
 
 
 ## Reads the war's shape and the profile's answer for every mission of it. The
@@ -159,8 +160,17 @@ static func standing(campaign: CampaignDefinition, progress: CampaignState) -> S
 	)
 
 
+## Breathing is for a ring somebody can see: a hub hidden under the menu, or under
+## its own briefing, has nothing to redraw every frame.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED:
+		_apply_motion()
+
+
 func _apply_motion() -> void:
-	var breathing := _moving and Settings.menu_animations and _open_index() >= 0
+	var breathing := (
+		_moving and Settings.menu_animations and is_visible_in_tree() and _open_index() >= 0
+	)
 	set_process(breathing)
 	if not breathing:
 		_phase = 0.0
