@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import unittest
 
-from spritegen import atlas
+from spritegen import anim, atlas, pipeline
 from spritegen.palette import FACTIONS, RAMPS, S_TOP, luminance
 from spritegen.units import ATLAS_ORDER, KOS, UNITS, Pose
 from spritegen.voxel import ramp_floor
@@ -33,6 +33,13 @@ from pixel_helpers import pose_cell, units_sheet
 # unit's own burn-down never reaches either, and testing them as if it did
 # would fail every hull on its own sea state rather than its own paint.
 COMPOSED = {(16, 18, 24), (226, 240, 250)}
+
+
+def _shipped_ko_sheet():
+    """The KO sheet a full run writes, built through the row that declares it
+    so the pins read the composition the game installs."""
+    ko = next(o for o in pipeline.SHEETS if o.rel == anim.KO_SHEET)
+    return ko.build()
 
 
 def _opaque(img):
@@ -53,22 +60,30 @@ class KoSheet(unittest.TestCase):
     """The grid: same size as every other units sheet, one frame, shadowless."""
 
     def test_it_is_the_same_grid_as_the_other_units_sheets(self):
-        ko = units_sheet(Pose.KO, shadow=False)
+        ko = _shipped_ko_sheet()
         self.assertEqual(
             ko.size, (len(ATLAS_ORDER) * atlas.CELL_W, len(FACTIONS) * atlas.CELL_H)
         )
         self.assertEqual(ko.mode, "RGBA")
 
-    def test_it_carries_no_cast_shadow(self):
-        # Composed with shadow=False, like the figure pair: the board never
-        # draws this sheet, so there is no shadow=True sibling to pair it
-        # against, and every faction row differs from a flat re-tint alone.
-        ko = units_sheet(Pose.KO, shadow=False)
-        rows = [
-            ko.crop((0, r * atlas.CELL_H, ko.width, (r + 1) * atlas.CELL_H)).tobytes()
-            for r in range(len(FACTIONS))
-        ]
-        self.assertEqual(len(set(rows)), len(FACTIONS))
+    def test_the_shipped_sheet_leaves_the_tile_shadow_off(self):
+        """Asked of the row `pipeline.SHEETS` actually writes, not of a
+        composition this test picked: the cut-in draws its own contact shadow
+        under the figure, so a tile shadow baked into this sheet would be a
+        second one. Flip that row to `shadow=True` and the two sheets become
+        the same picture — `removed` falls to zero and this fails."""
+        shipped = _shipped_ko_sheet().convert("RGBA").load()
+        shadowed = units_sheet(Pose.KO).convert("RGBA").load()
+        removed = 0
+        for y in range(len(FACTIONS) * atlas.CELL_H):
+            for x in range(len(ATLAS_ORDER) * atlas.CELL_W):
+                if shipped[x, y] == shadowed[x, y]:
+                    continue
+                # The only legal difference: an opaque shadow pixel is gone.
+                self.assertEqual(shipped[x, y][3], 0, f"repainted pixel at {x},{y}")
+                self.assertEqual(shadowed[x, y][3], 255, f"half-shadow at {x},{y}")
+                removed += 1
+        self.assertGreater(removed, 0)
 
     def test_it_is_reproducible(self):
         self.assertEqual(

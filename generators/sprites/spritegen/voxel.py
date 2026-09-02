@@ -436,16 +436,9 @@ def render_indexed(
 # trick, restated here rather than imported — that one keys a single base
 # colour, this one keys a whole rendered sprite already carrying its shading).
 #
-# A flat multiply was tried first — the ratio `CutsceneSide.WRECK_TINT`
-# fades a toppling figure toward — and clamping its output at a floor is what
-# `docs/sprite_legibility.md`'s "two ramp steps above S0 ink" reads as on
-# paper. Measured, it collapsed the sheet: a faction ramp's own body plane
-# (S1-S3, 56-148L on meridian) already multiplies under that floor, so nearly
-# every interior pixel clamped to the SAME value and the wreck read as a flat
-# silhouette rather than a shaded one. Re-keying the whole visible range
-# instead — 0..255 in, `WRECK_FLOOR`..`WRECK_CEILING` out — keeps every
-# pixel's ORDER against its neighbours, so the shading a unit was rendered
-# with is still legible, just burnt dark and narrow.
+# The band's own floor, in rungs of the ramp's own step above its S0 ink:
+# `docs/sprite_legibility.md`'s "two ramp steps above S0 ink". `wreck_tone`
+# says why the band is stretched into rather than clamped at.
 WRECK_FLOOR_RUNGS = 2
 # The band's own ceiling: a ramp's own S4 (S_TOP), the ordinary lit plane —
 # never the rim, the flash a WRECK may not still carry — so the brightest
@@ -479,8 +472,8 @@ def wreck_tone(img: Image.Image, ramp: Ramp) -> None:
     A flat multiply was tried first — the ratio `CutsceneSide.WRECK_TINT`
     fades a toppling figure toward — with the same floor CLAMPED on rather
     than stretched into. Measured, it collapsed the sheet: a ramp's own body
-    plane (S1-S3) already multiplies under the floor, so nearly every
-    interior pixel clamped to one shared value and the wreck read as a flat
+    plane (S1-S3, 56-148L on meridian) already multiplies under the floor, so
+    nearly every interior pixel clamped to one shared value and the wreck read as a flat
     silhouette rather than a shaded one. The stretch keeps every pixel's
     ORDER against its neighbours instead, so the shading a unit was rendered
     with is still legible, just burnt dark and narrow.

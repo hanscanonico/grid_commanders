@@ -470,7 +470,10 @@ class MoveFrames(unittest.TestCase):
         that passes through the rest pose — but not both)."""
         for uid in self._movers():
             for fac in FACTIONS:
-                cells = {pose: pose_cell(uid, fac, pose).tobytes() for pose in Pose}
+                cells = {
+                    pose: pose_cell(uid, fac, pose).tobytes()
+                    for pose in AMBIENT_POSES + MOVE_POSES
+                }
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertNotEqual(cells[Pose.MOVE_A], cells[Pose.MOVE_B])
                     self.assertNotEqual(
