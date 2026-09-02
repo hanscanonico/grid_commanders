@@ -193,6 +193,33 @@ static func recoil_window(ready: Vector2) -> Vector2:
 	return Vector2(ready.y - maxf(RECOIL_SHARE * (ready.y - ready.x), RECOIL_FLOOR), ready.y)
 
 
+## The window a side's fire pose replaces its idle one: open as the recoil
+## ramp starts pulling the weapon back and closed once the round has arrived,
+## composed from the two windows this sheet already sized rather than a new
+## one of its own — S5's whole beat-side seam, since the pose constants stay
+## untouched and only which texture is drawn moves. `recoil` ends exactly
+## where `travel` starts (`atk_fire`/`def_fire`), so the union is the two
+## Vector2s' own endpoints; `recoil == ZERO` is the side that never fired.
+##
+## How long that runs is the attacker's own wind-up and time of flight, so the
+## slowest shell on the sheet outlives the posed cut-in frame: artillery's aim
+## of 0.28 and travel_scale of 1.5 put its window at (0.508, 1.055), which
+## contains BattleCutsceneScenario.CUT_IN_POSE (1.05) by five milliseconds.
+## That one capture therefore photographs the howitzer at max recoil with the
+## round still in the air — deliberate, and the picture the frame exists for.
+## Every other ATTACKER closes first (torpedo next at 0.966). A counter sizes
+## its own window off `def_recoil`/`def_travel` and can reach that frame from
+## the other side: small arms answering small arms with no figure lost opens
+## the defender's at 0.9265 and closes it at 1.273, so infantry against
+## infantry is photographed on the counter's ramp instead. No cut-in smoke
+## matchup stages that — the tightest counter there is cruiser against sub,
+## whose ramp opens at 1.1455.
+static func fire_window(recoil: Vector2, travel: Vector2) -> Vector2:
+	if recoil == Vector2.ZERO:
+		return Vector2.ZERO
+	return Vector2(recoil.x, travel.y)
+
+
 ## The window surplus figures topple over, sized by how many this side lost.
 static func casualty_window(impact: Vector2, lost: int) -> Vector2:
 	if impact.y <= impact.x:

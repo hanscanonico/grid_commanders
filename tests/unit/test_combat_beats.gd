@@ -294,6 +294,41 @@ func test_the_volley_pose_sits_between_the_last_barrel_and_the_first_arrival() -
 	)
 
 
+# --- fire window (S5, animation-frames) ----------------------------------------
+#
+# CombatBeats.fire_window composes the recoil ramp and the travel window it
+# already sizes rather than adding a new time of its own — the cut-in's fire
+# pose is texture selection only, so every beat above stays exactly where it
+# was pinned.
+
+
+func test_the_fire_window_spans_the_recoil_ramp_through_the_volley() -> void:
+	var beats := CombatBeats.plan(_clean(), _style(&"cannon"), _style(&"cannon"), 1.0, 1.0)
+	var window := CombatBeats.fire_window(beats.atk_recoil, beats.atk_travel)
+	assert_eq(window.x, beats.atk_recoil.x, "opens with the recoil ramp")
+	assert_eq(window.y, beats.atk_travel.y, "closes with the volley's own arrival")
+	assert_eq(
+		CombatBeats.fire_window(Vector2.ZERO, Vector2.ZERO),
+		Vector2.ZERO,
+		"a defender with no counter has no fire window"
+	)
+
+
+## The volley pose already has to sit inside every firing style's travel window
+## (see `test_every_signature_still_has_a_round_in_the_air_at_the_volley_pose`);
+## since the fire window opens no later than the recoil ramp does and closes
+## with that same travel, the pose falls inside it too — which is the smoke
+## gate's own claim that VOLLEY_POSE photographs the fire cut.
+func test_every_firing_style_is_in_its_own_fire_window_at_the_volley_pose() -> void:
+	for id in STYLE_IDS:
+		var style := _style(id)
+		if not style.fires():
+			continue
+		var beats := CombatBeats.plan(_clean(), style, _style(&"cannon"), 1.0, 1.0)
+		var window := CombatBeats.fire_window(beats.atk_recoil, beats.atk_travel)
+		_assert_inside("fire_window:%s" % id, BattleCutsceneScenario.VOLLEY_POSE, window)
+
+
 # --- helpers -------------------------------------------------------------------
 
 

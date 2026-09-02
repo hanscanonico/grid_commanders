@@ -9,10 +9,11 @@ extends GutTest
 ## in the draw path and give an install a silent way to change behaviour. What the
 ## manifest is worth is drift detection, and this suite is the one place it is
 ## consumed: regenerate the art with a different cell, cadence or column and the
-## gate says so by name. Every sheet it names is now drawn by something: the five
+## gate says so by name. Every sheet it names is now drawn by something: the six
 ## clips are the board's ambient beat, the cut-ins' idle, the walk cycle, the
-## sea's swell, and ko — the authored casualty frame the cut-in's death beat
-## swaps to as a figure topples.
+## sea's swell, ko — the authored casualty frame the cut-in's death beat swaps
+## to as a figure topples — and fire, the authored muzzle-lit pair the cut-in's
+## fire window (CutsceneSide.fire_p) swaps to while a shot is going out.
 
 const MANIFEST_PATH := "res://assets/tiles/anim.json"
 const TILES_DIR := "res://assets/tiles/"
@@ -42,6 +43,11 @@ func test_the_clips_run_at_the_cadences_the_board_beats_on() -> void:
 	assert_eq(_clip_ms("ambient_figures"), BoardBeat.AMBIENT_MS, "the figures' cadence")
 	assert_eq(_clip_ms("move"), BoardBeat.MOVE_MS, "the move cadence")
 	assert_eq(_clip_ms("sea"), BoardBeat.SEA_MS, "the sea's cadence")
+	# The fire pair reuses the ambient period outright on the director's own
+	# clock (CutscenePlates.figure_now, off CutscenePlayback's `t`) rather
+	# than the wall one — the ninth animation slice's idiom for a cut-in-only
+	# pair, and the cadence-disjointness lock's own exemption for it.
+	assert_eq(_clip_ms("fire"), BoardBeat.AMBIENT_MS, "the fire pair's cadence")
 
 
 func test_the_clips_name_the_sheets_the_game_loads() -> void:
@@ -69,6 +75,11 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 		"the sea pair"
 	)
 	assert_eq(_clip_sheets("ko"), [UnitSprite.UNITS_ATLAS_FIGURES_KO_PATH], "the ko sheet")
+	assert_eq(
+		_clip_sheets("fire"),
+		[UnitSprite.UNITS_ATLAS_FIGURES_FIRE_PATH, UnitSprite.UNITS_ATLAS_FIGURES_FIRE_B_PATH],
+		"the fire pair"
+	)
 
 
 ## The dead don't loop: one frame, held rather than cycled, and a fallback
@@ -81,6 +92,17 @@ func test_the_ko_clip_is_a_single_held_frame() -> void:
 	assert_eq(
 		clip["fallback"], "ambient", "air keeps the transform-topple until it authors its own frame"
 	)
+
+
+## A pair, looped — unlike ko's single held frame, since the three SUSTAINED
+## weapon families need a second key for the stream to read as a blaze — with
+## the same fallback idiom (a unit outside the generator's FIRES draws its own
+## rest key, same as an unauthored move or KO column).
+func test_the_fire_clip_is_a_looped_pair() -> void:
+	var clip: Dictionary = manifest["clips"]["fire"]
+	assert_eq(clip["sheets"].size(), 2, "the sustained pair needs a second key")
+	assert_eq(clip["mode"], "loop", "the fire pair loops on the director's clock")
+	assert_eq(clip["fallback"], "ambient", "an unarmed unit keeps its idle key")
 
 
 func test_every_sheet_the_manifest_names_is_installed() -> void:

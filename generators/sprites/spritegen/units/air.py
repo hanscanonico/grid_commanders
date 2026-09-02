@@ -1,10 +1,20 @@
-"""The four aircraft: two jets and two helicopters."""
+"""The four aircraft: two jets and two helicopters.
+
+Three of the four also author a fire pose, live rather than dead-toned: a
+nose gun dipping the radome into its own muzzle blaze, bay doors open on the
+bomb run, a chin gun on the line under a deeper nose-down. `t_copter` is
+unarmed and carries none — the manifest's fallback contract (`_FALLBACK`)
+draws its idle key there instead, the same as `apc` and `lander`.
+`units.pose.FIRE_PAIRS` names the two autocannon airframes (`fighter`,
+`b_copter`), whose second key strobes the blaze; `bomber`'s bomb run is not
+sustained, so it draws the same model into both.
+"""
 
 from __future__ import annotations
 
 from ..voxel import Model
 from .parts import _BLADE_A, _BLADE_B, _rotor, _shift
-from .pose import Pose, beat, moving
+from .pose import Pose, beat, fires, moving
 
 
 def _burner_reach(pose: Pose) -> int:
@@ -31,7 +41,8 @@ def _burner_reach(pose: Pose) -> int:
 
 
 def fighter(pose: Pose = Pose.A) -> Model:
-    """Swept-wing air-superiority jet (autocannon)."""
+    """Swept-wing air-superiority jet (autocannon). FIRE: see the branch
+    below."""
     m = Model()
     # fuselage in desaturated airframe grey, nose toward +y
     m.box(4, 5, 0, 17, 3, 4, "hull")
@@ -85,6 +96,23 @@ def fighter(pose: Pose = Pose.A) -> Model:
         m.set(5, 12, 5, "glass_dk")
         m.set(2, 1, 3, "hull_dk")
         m.set(7, 1, 3, "hull_dk")
+    if fires(pose):
+        # Nose gun blaze: the radome tip dips one board texel, the same
+        # nose-down attitude the move clip's own dip gives the whole
+        # forward fuselage, held to just the tip since the airframe is not
+        # under way. FIRE_B lights a course further out, the jitter a
+        # sustained stream reads as — fighter is one of `pose.FIRE_PAIRS`.
+        # The course the tip came off is repainted down to meet it, the same
+        # seam the move clip's own deeper dip closes: dropped on its own, a
+        # tip two courses under the fuselage ahead of it shares no face with
+        # the airframe and the jet flies with its nose detached.
+        _shift(m, (4, 5, 18, 19, 3, 3), dz=-2)
+        m.box(4, 5, 18, 18, 2, 3, "hull")
+        m.set(4, 20, 1, "flame")
+        m.set(5, 20, 1, "flame")
+        if pose is Pose.FIRE_B:
+            m.set(4, 21, 1, "flame")
+            m.set(5, 21, 1, "flame")
     if moving(pose):
         # Under way the jet holds one board texel of nose-down (dz = -2): the
         # fuselage ahead of the cockpit and the radome drop, while the wings,
@@ -107,7 +135,8 @@ _NACELLES: tuple[tuple[int, int], ...] = ((-3, 0), (-1, 1), (12, 1), (14, 0))
 
 
 def bomber(pose: Pose = Pose.A) -> Model:
-    """Heavy strategic bomber: four podded engines, deep fuselage (bomb)."""
+    """Heavy strategic bomber: four podded engines, deep fuselage (bomb).
+    FIRE: see the branch below."""
     m = Model()
     # deep fuselage in airframe grey; rounded nose
     m.box(4, 7, 0, 19, 3, 5, "hull")
@@ -172,11 +201,30 @@ def bomber(pose: Pose = Pose.A) -> Model:
             # step behind the flight deck.
             _shift(m, (4, 7, 14, 20, 1, 3), dz=-2)
             m.box(4, 7, 13, 13, 0, 1, "hull")
+    if fires(pose):
+        # Bay doors open — the natural bomb-run frame: the belly line goes
+        # dark where the bay swung open, the opening hangs a voxel clear
+        # under it, and a door panel stands proud of the hull at each end.
+        # Bomb is not sustained, so FIRE_B draws this same key.
+        #
+        # It is drawn AHEAD of the pose-A doors line, not on it, because
+        # this projection cannot show that line: the wing root covers the
+        # fuselage's whole lower-right flank from y8 to y13, and a voxel
+        # under the belly there is occluded at every depth — a bay hung
+        # inside that span changes 17 pixels of a thousand and no
+        # silhouette texel at all. y14 is where the flank comes back out
+        # from under the wing, which is also where a heavy's bay sits.
+        m.box(7, 7, 14, 17, 3, 3, "bore")
+        m.box(7, 7, 14, 17, 2, 2, "bore")
+        m.set(7, 13, 2, "hull_dk")
+        m.set(7, 18, 2, "hull_dk")
     return m
 
 
 def b_copter(pose: Pose = Pose.A) -> Model:
     """Attack helicopter: chin gun, stub-wing rocket pods, tail rotor.
+
+    FIRE: see the branch below.
 
     Pose B is the same aircraft with the same four blades a tick further
     round (`_BLADE_B`), so alternating the two poses turns the disc rather
@@ -217,8 +265,29 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # same four blades a notch; the tail rotor is vertical and stays)
     m.box(4, 4, 10, 10, 7, 8, "hull_dk")
     # The rotor ticks with the FRAME, not the clip: a moving helicopter's
-    # blades are at the off-beat position on MOVE_B exactly as on B.
+    # blades are at the off-beat position on MOVE_B exactly as on B. The FIRE
+    # pair is the one clip whose disc holds still, and it is a measured
+    # constraint rather than a reading: this airframe is the contour ratchet's
+    # worst sprite, and the fire pose alone already spends 51.95% of aurora's
+    # own pixels on the line against `test_livery`'s 52% bar — ticking the
+    # blades there measures 52.48%, and on FIRE_A instead 52.58%. A disc that
+    # turns through the window costs a re-measured budget, so it waits for the
+    # slice that takes one: S6 generalises the beat into a frame index and
+    # offers the rotor a four-tick disc on it, which is where this is revisited
+    # with the outline bill reopened rather than squeezed under.
     _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
+    if fires(pose):
+        # Nose down two texels, chin gun on the line: the nose and canopy
+        # rake down twice the move clip's own dip, and the chin gun tracks
+        # with it — capped a texel shallower so its muzzle never crosses
+        # the floor. Held rather than travelling, so the gun stays trained.
+        # FIRE_B lights the muzzle a course further out, the jitter a
+        # sustained stream reads as — b_copter is one of `pose.FIRE_PAIRS`.
+        _shift(m, (3, 5, 10, 18, 3, 6), dz=-4)
+        _shift(m, (4, 4, 15, 18, 2, 2), dz=-2)
+        m.set(4, 18, 0, "flame")
+        if pose is Pose.FIRE_B:
+            m.set(4, 19, 0, "flame")
     if moving(pose):
         # A helicopter under way flies nose-down, and that attitude is what
         # says heading on a sheet that may never translate the hull. The

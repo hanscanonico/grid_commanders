@@ -4,9 +4,10 @@ extends RefCounted
 ## from. Nothing here is a second opinion: every image is the one the battle
 ## scene loads, and every number is read out of the file that owns it —
 ##
-##   units / terrain atlas  UnitSprite's six standing unit sheets — the seventh,
-##                                      the KO sheet, holds no standing pose to
-##                                      rule — and BattleView.ATLAS_PATH
+##   units / terrain atlas  UnitSprite's six standing unit sheets — the two
+##                                      authored cut-in clips, KO and fire, hold
+##                                      no standing pose to rule — and
+##                                      BattleView.ATLAS_PATH
 ##   the reach / fire / threat washes  OverlayPalette.MOVE / ATTACK / THREAT
 ##   the threat stripe period           BattleOverlays.THREAT_STRIPE
 ##   the fog shroud                     FogLayer's modulate in battle.tscn
@@ -65,9 +66,10 @@ const BOARD_SHEETS: Dictionary[String, String] = {
 }
 ## Frame -> the sheet the cut-in draws it from. The idle clip only: a cut-in
 ## poses a unit rather than walking it, so there is no gait sheet without the
-## tile's cast shadow to read. The KO sheet is out for a different reason — the
-## ruler asks how a STANDING figure separates from the ground it stands on, and
-## a wreck is authored to read as dead rather than as legible.
+## tile's cast shadow to read. The two authored cut-in clips are out for a
+## different reason — the ruler asks how a STANDING figure separates from the
+## ground it stands on, and neither a wreck, authored to read as dead, nor a
+## machine at full recoil is standing at rest.
 const CUTIN_SHEETS: Dictionary[String, String] = {
 	FRAME_IDLE_A: UnitSprite.UNITS_ATLAS_FIGURES_PATH,
 	FRAME_IDLE_B: UnitSprite.UNITS_ATLAS_FIGURES_B_PATH,

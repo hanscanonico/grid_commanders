@@ -12,8 +12,13 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    `spritegen/units/land.py`, `air.py`, `sea.py` or `foot.py` — with the
    signature every other builder has, `def <id>(pose: Pose = Pose.A) -> Model`.
    Build out of `spritegen/units/parts.py` (tracks, rotors, shifts) so the new
-   machine shares the roster's scale and light. Branch on the pose with
-   `beat(pose)`, never on `pose is Pose.A`.
+   machine shares the roster's scale and light. Branch on the pose with a
+   membership helper, never on `pose is Pose.A`: `moving(pose)` for the gait,
+   `fires(pose)` for the muzzle, and `beat(pose)` for whatever ticks with the
+   frame inside the ambient and move clips. `beat` deliberately excludes
+   `FIRE_B` — a fire branch written behind it makes a single-shot unit a pair —
+   and the fire pair's own altitude is `off_beat`'s, asked by the placement
+   rather than by a builder.
 2. **Register it.** Add `"<id>": (<builder>, "land"|"air"|"sea")` to `UNITS`
    and the id to `ATLAS_ORDER` in `spritegen/units/__init__.py`. The column
    index is the position in `ATLAS_ORDER`, and it is the number the game reads.
@@ -30,7 +35,21 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    `KOS`, and fails an id in `KOS` whose builder grew no `Pose.KO` branch, so
    the two land together. Air authors none in v1 and keeps the cut-in's
    transform-topple.
-5. **Give the game the unit.** Add `data/units/<id>.tres` with `atlas_col` set
+5. **Author the fire frame.** The third opt-in table, and the same shape
+   again: a unit in `FIRES` (`spritegen/units/pose.py`) draws a muzzle-lit
+   `Pose.FIRE_A` behind `if fires(pose):`, and a unit left out renders its idle
+   PAIR there (FIRE_A → A, FIRE_B → B) — per frame, so an unarmed column keeps
+   the beat its idle one rides. Like `KOS` this is not optional: every ARMED id
+   must be in `FIRES` and every id in `FIRES` must author a branch, and
+   `tests/test_fire_pose.py` fails each half by name. A second key is authored
+   ONLY for `FIRE_PAIRS` — the units whose primary weapon is sustained — with a
+   `pose is Pose.FIRE_B` sub-branch inside that same block; everything else
+   draws one model into both frames. Whatever the branch moves must stay
+   attached to the machine and must be VISIBLE in this projection: a part
+   carried past the face it shared comes off as a floating island, and a frame
+   authored where the wing root or the hull occludes it changes nothing the
+   player can see. Both are gates, not advice.
+6. **Give the game the unit.** Add `data/units/<id>.tres` with `atlas_col` set
    to the new column and `battle_style` (and `secondary_battle_style`) naming a
    `data/battle_anim/*.tres` weapon signature; `tests/unit/test_battle_styles.gd`
    fails on a style that does not exist. The generator draws the weapon
@@ -38,7 +57,7 @@ root, and keep `py=~/.cache/grid_commanders/venv-sprites/bin/python` handy.
    unit also needs its row and its columns in `data/damage_chart.tres` —
    `tests/unit/test_damage_chart.gd` fails a gun that can hit nothing and a
    unit nothing can hit.
-6. **Install and gate.** `make tiles`, then `make sprites-test`,
+7. **Install and gate.** `make tiles`, then `make sprites-test`,
    `make sprites-snapshot` and `make verify`.
 
 Gates a new unit meets, and what each wants:
@@ -53,6 +72,7 @@ Gates a new unit meets, and what each wants:
 | `tests/test_cell_geometry.py`, `tests/test_raised_armour.py` | the model is anchored to the cell's bottom edge and spends the 64x96 headroom on mass, not on fine detail |
 | `tests/test_clips.py` | frame B reads as motion at the furthest rung, and so does the move pair |
 | `tests/test_ko_pose.py` | a land or sea unit is in `KOS` and its `Pose.KO` is an authored model rather than its rest key, floored above the sheet's own ink and narrower in tone than the unit it was |
+| `tests/test_fire_pose.py` | an armed unit is in `FIRES` and authors a `fires(pose)` branch, a `FIRE_PAIRS` member's two keys differ and nobody else's do, an unarmed column is byte-identical to the idle pair, every pose draws as ONE connected sprite, and the fire frame changes enough pixels to be seen |
 | `tests/check_snapshots.py` | every generated PNG has an installed twin — the failure you get for skipping `make tiles` |
 
 ## Add a terrain tile

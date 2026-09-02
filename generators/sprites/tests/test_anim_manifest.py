@@ -161,6 +161,8 @@ class Clip(unittest.TestCase):
                 f"the move clip shares a sheet with {sheets}",
             )
         self.assertNotIn(anim.KO_SHEET, anim.FIGURE_SHEETS)
+        self.assertTrue(set(anim.FIRE_SHEETS).isdisjoint(anim.FIGURE_SHEETS))
+        self.assertNotIn(anim.KO_SHEET, anim.FIRE_SHEETS)
 
     def test_the_ko_clip_plays_its_one_sheet_held_with_a_fallback(self):
         """The dead don't loop: one sheet, order derived from its own count
@@ -171,6 +173,21 @@ class Clip(unittest.TestCase):
         self.assertEqual(clip["sheets"], [anim.KO_SHEET])
         self.assertEqual(clip["order"], [0])
         self.assertEqual(clip["mode"], "hold")
+        self.assertEqual(clip["fallback"], "ambient")
+        self.assertNotIn("facing", clip)
+        self.assertNotIn("flip_x_for", clip)
+
+    def test_the_fire_clip_plays_its_pair_looped_with_a_fallback(self):
+        """Two sheets, order derived from their own count (S4's idiom, grown
+        to a pair rather than needing a new schema key), looped at the
+        ambient cadence — the cadence-disjointness lock's own exemption for
+        reusing 500 outright on a director's clock rather than the wall
+        one — and the same `fallback` idiom the move and ko clips carry."""
+        clip = anim.MANIFEST["clips"]["fire"]
+        self.assertEqual(clip["sheets"], list(anim.FIRE_SHEETS))
+        self.assertEqual(clip["order"], [0, 1])
+        self.assertEqual(clip["ms_per_frame"], anim.AMBIENT_MS)
+        self.assertEqual(clip["mode"], "loop")
         self.assertEqual(clip["fallback"], "ambient")
         self.assertNotIn("facing", clip)
         self.assertNotIn("flip_x_for", clip)

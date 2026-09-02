@@ -248,10 +248,13 @@ two poses at both rungs plus one GIF per unit at the manifest's cadence, all
 composited over the terrain the unit stands on; it takes its output directory
 on argv, so it adds nothing to `out/` and the snapshot gate never sees it.
 
-Both instruments take `--clip {ambient,move}` (default `ambient`) and read the
-clip's frames from `units.CLIP_POSES` — `preview_motion.py` also takes its
-sheet tuple and its cadence (`*_MS`) from `spritegen.anim` — so a clip that
-gains a frame is measured and drawn without either file being edited.
+Both instruments take a `--clip` (default `ambient`) and read the clip's frames
+from `units.CLIP_POSES`, so a clip that gains a frame is measured without this
+file being edited: `measure_motion.py` offers every two-frame clip there
+(`{ambient,fire,move}` today). `preview_motion.py` also needs the clip's sheet
+tuple and its cadence (`*_MS`) in its own `CLIP_SHEETS`, which names the
+ambient and move pairs — `{ambient,move}` — so drawing the fire pair is one
+table entry away.
 `measure_motion.py` adds a `MOVES?` column on the move clip — a "no" row is a
 unit rendering its ambient counterpart, and says nothing about a stride.
 `preview_motion.py` draws the move clip FLIPPED as well by default, each unit's
@@ -384,6 +387,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
 | `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the tile's cast shadow subtracted, for the cut-ins (see below) |
 | `units_atlas_figures_ko.png` | one AUTHORED casualty frame per unit — a crumpled figure, a burnt-out hull, a hull settled by the stern — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; air carries no frame in v1 and draws its own rest key instead (`units.KOS`), which the cut-in never asks for |
+| `units_atlas_figures_fire.png`, `units_atlas_figures_fire_b.png` | one AUTHORED muzzle-lit frame per ARMED unit — a barrel at full recoil, a rack at launch elevation, bay doors open — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; a unit outside `units.FIRES` draws its own rest key instead (`units.pose._FALLBACK`), which the cut-in DOES ask for — an attacker's fire window opens whatever it carries — and gets a column byte-identical to its idle pair, bob included, which is what makes the fallback need no domain gate. The second sheet is a real second key only for the sustained weapon families (`units.pose.FIRE_PAIRS`) — everything else draws the same model into both, so the pair reads as a held muzzle flash rather than a cycle |
 | `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
 | `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
 | `terrain_atlas.png` | 896x384 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
@@ -417,15 +421,17 @@ one more place the number drifts. It is written deterministically like
 everything else here: sorted keys, two-space indent, trailing newline. See
 `spritegen/anim.py`.
 
-`clips.move` and `clips.ko` are the clips with keys past the common four, and
-they are additive: `version` stays **1**, because their ABSENCE is the reading
-a version-1 consumer already makes. `facing` (`"left"`) and `flip_x_for`
-(`["right"]`) are `move`'s alone — the screen direction the art is drawn facing
-and the direction the consumer mirrors it for; a clip with no `facing` —
-`ambient`, `ambient_figures`, `sea`, `ko` — must never be mirrored. `fallback`
-(`"ambient"`) is shared by the two clips a unit may be left out of, and
-`docs/move_clip.md` owns what it means: the install's absence for `move`, and a
-unit's own for both, which is why an unauthored `ko` column must not be drawn.
+`clips.move`, `clips.ko` and `clips.fire` are the clips with keys past the
+common four, and they are additive: `version` stays **1**, because their
+ABSENCE is the reading a version-1 consumer already makes. `facing`
+(`"left"`) and `flip_x_for` (`["right"]`) are `move`'s alone — the screen
+direction the art is drawn facing and the direction the consumer mirrors it
+for; a clip with no `facing` — `ambient`, `ambient_figures`, `sea`, `ko`,
+`fire` — must never be mirrored. `fallback` (`"ambient"`) is shared by the
+three clips a unit may be left out of, and `docs/move_clip.md` owns what it
+means: the install's absence for `move`, and a unit's own for the other two.
+An unauthored `ko` column must not be drawn; an unauthored `fire` one is drawn
+and is simply the unit's idle key, which is the contract the cut-in leans on.
 
 The move cadence is `anim.MOVE_MS` = **160 ms**, and it is chosen against the
 game's tween rather than against the art: the board moves a unit one cell in
@@ -451,7 +457,7 @@ the composed cell's own spans, so a shadow that was never drawn would have
 moved the foam. Everything else — every hull pixel, every fleck of foam — is
 identical, which is what the `FigureSheet` tests hold it to.
 
-There are two of them, one per ambient key pose, because a frozen figure is
+There are two SUBTRACTED ones, one per ambient key pose, because a frozen figure is
 the closest look a player ever gets at this art and the cut-in should breathe
 like the board does. `_b` is frame B put through the same subtraction, and
 `clips.ambient_figures` in `anim.json` names the pair at the ambient cadence,

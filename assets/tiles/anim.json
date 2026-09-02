@@ -30,6 +30,19 @@
         "units_atlas_figures_b.png"
       ]
     },
+    "fire": {
+      "fallback": "ambient",
+      "mode": "loop",
+      "ms_per_frame": 500,
+      "order": [
+        0,
+        1
+      ],
+      "sheets": [
+        "units_atlas_figures_fire.png",
+        "units_atlas_figures_fire_b.png"
+      ]
+    },
     "ko": {
       "fallback": "ambient",
       "mode": "hold",

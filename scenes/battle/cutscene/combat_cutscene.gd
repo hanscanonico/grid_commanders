@@ -226,6 +226,7 @@ func _apply() -> void:
 	_atk.arrive_p = arrive
 	_atk.aim_p = _play.window(_beats.atk_ready)
 	_atk.lunge = _lunge(_play.window(_beats.atk_recoil), _atk_style.recoil)
+	_atk.fire_p = _play.window(CombatBeats.fire_window(_beats.atk_recoil, _beats.atk_travel))
 	_atk.flash = maxf(0.0, 1.0 - atk_hit / 0.3) if atk_hit > 0.0 else 0.0
 	_atk.hp_shown = _tick(_result.attacker_hp_before, _result.attacker_hp_after, atk_hit)
 	_atk.casualty_p = _play.window(_beats.atk_casualty)
@@ -239,6 +240,7 @@ func _apply() -> void:
 	_def.arrive_p = arrive
 	_def.aim_p = _play.window(_beats.ctr_ready)
 	_def.lunge = _lunge(_play.window(_beats.def_recoil), _def_style.recoil)
+	_def.fire_p = _play.window(CombatBeats.fire_window(_beats.def_recoil, _beats.def_travel))
 	_def.flash = maxf(0.0, 1.0 - def_hit / 0.3) if def_hit > 0.0 else 0.0
 	_def.hp_shown = _tick(_result.defender_hp_before, _result.defender_hp_after, def_hit)
 	_def.casualty_p = _play.window(_beats.def_casualty)

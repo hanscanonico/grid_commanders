@@ -18,6 +18,8 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | `units_atlas_b.png` | 80.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures.png` | 76.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures_b.png` | 77.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_figures_fire.png` | 78.5 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_figures_fire_b.png` | 80.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures_ko.png` | 87.2 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_move.png` | 83.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_move_b.png` | 86.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
@@ -32,10 +34,10 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | `autotiles/shoals.png` | 5.4 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
 | `autotiles/woods.png` | 16.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 
-**Totals: 704.7 KiB of PNG, 21,206.7 KiB of decoded RGBA, over 19 sheets — every one of which the
+**Totals: 863.3 KiB of PNG, 26,390.7 KiB of decoded RGBA, over 21 sheets — every one of which the
 battle scene loads.** The instrument reads that last column off the game rather than off a list:
 it scans `scenes/` for `res://assets/tiles/*.png`, and finds `scenes/battle/unit_sprite.gd` naming
-the seven unit sheets, `scenes/battle/terrain_autotiles.gd` the ten autotile sheets,
+the nine unit sheets, `scenes/battle/terrain_autotiles.gd` the ten autotile sheets,
 `scenes/battle/battle_view.gd` (and `scenes/menu/map_thumbnail.gd`) the terrain atlas, and
 `scenes/battle/battle_overlays.gd` the overlay. How each sheet is cut comes from the contract
 shipped beside the art, `assets/tiles/anim.json`: it names the unit sheets and their 64×96 cell,
@@ -68,22 +70,31 @@ fourteen columns are six copies of row 0:
 ## The reading
 
 The duplication is real and it is small. The terrain atlas is 54% redundant — 45 of its 84 cells,
-720 KiB of decoded RGBA — but the terrain atlas is only 1.3 MiB of a 20.7 MiB runtime set, and
-the five property columns that genuinely differ per faction are why the six-row shape exists at
-all. The cost that dominates is the seven 1152×576 unit sheets: **17.7 MiB, 86% of the decoded
-total**, and since the KO sheet shipped they also hold the set's only duplication *between*
-sheets — 24 of `units_atlas_figures_ko.png`'s 108 cells, the four air columns (9–12) on all six
-rows, 576 KiB decoded, byte-identical to the same cells of `units_atlas_figures.png`. That is
-deliberate and it is what a valid grid costs: air authors no wreck in v1, so `units.build_model`
-fills those columns with its rest key rather than leaving holes in an 18-column sheet, and nothing
-draws them — `CutsceneSide.bind` leaves the KO cut null for a flying unit. The table above cannot
-see it, because `dup` counts only cells repeated inside **one** sheet, which is why the KO row
-reads 0. Squeezing every repeated cell out of every sheet would return 752 KiB within sheets plus
-those 576 across them, about 6% of what the game holds — so the case for a relayout is a tidiness
-case, not a memory one, and it is paid for in `BattleView`'s region maths, which reads a terrain's
-cell as (column, faction row). Two small oddities the instrument turned up and this page does not
-explain: `autotiles/roads.png` cell 10 and `autotiles/shoals.png` cell 4 are byte-identical to
-cell 0 of their own sheets — two connection variants the art draws the same, not a layout choice.
+720 KiB of decoded RGBA — but the terrain atlas is only 1.3 MiB of a 25.8 MiB runtime set, and the
+five property columns that genuinely differ per faction are why the six-row shape exists at all.
+The cost that dominates is the nine 1152×576 unit sheets: **22.8 MiB, 88% of the decoded total**,
+and the two authored cut-in clips are where all of the duplication *between* sheets sits, 96 cells
+and 2,304 KiB decoded in three lots. 24 of `units_atlas_figures_ko.png`'s 108 cells are the four
+air columns (9–12) on all six rows, byte-identical to the same cells of `units_atlas_figures.png`.
+The fire pair adds 18 apiece — the three unarmed columns (`apc` 8, `t_copter` 12, `lander` 17),
+`units_atlas_figures_fire.png` matching the idle sheet and `units_atlas_figures_fire_b.png` the
+idle sheet's frame B, per frame rather than per sheet. And 36 are shared between the two fire
+sheets themselves: the six LAND units that fire a single shot (`mech`, `tank`, `md_tank`,
+`artillery`, `rockets`, `missiles`) draw one model into both frames, and having no bob to ride
+they land on the same pixels too — `bomber`, `battleship` and `sub` draw the same model and are
+still not duplicates, their frame-B cell sitting `BOB_PX` higher. All of it is deliberate and it
+is what a valid grid costs: air authors no wreck in v1 and a transport no muzzle, so
+`units.build_model` fills those columns with the idle key of the same frame rather than leaving
+holes in an 18-column sheet. Nothing draws the KO fallback — `CutsceneSide.bind` leaves that cut
+null for a flying unit — while the fire fallback IS drawn and is exactly the point: an unarmed
+attacker's window opens onto its own idle pair. The table above cannot see any of this, because
+`dup` counts only cells repeated inside **one** sheet, which is why those rows read 0. Squeezing
+every repeated cell out of every sheet would return 752 KiB within sheets plus those 2,304 across
+them, about 12% of what the game holds — so the case for a relayout is a tidiness case, not a
+memory one, and it is paid for in `BattleView`'s region maths, which reads a terrain's cell as
+(column, faction row). Two small oddities the instrument turned up and this page does not explain:
+`autotiles/roads.png` cell 10 and `autotiles/shoals.png` cell 4 are byte-identical to cell 0 of
+their own sheets — two connection variants the art draws the same, not a layout choice.
 
 ## What a plan would weigh
 
@@ -93,7 +104,7 @@ cell 0 of their own sheets — two connection variants the art draws the same, n
    ("faction row only if the terrain is a property"), a matching change in `build_terrain_atlas`,
    and a re-render of every shipped sheet.
 2. **Keep the six-row contract.** One rule — cell = (terrain column, faction row) — with no
-   special case anywhere, for 720 KiB of a 20.7 MiB set. A terrain that later wants faction
+   special case anywhere, for 720 KiB of a 25.8 MiB set. A terrain that later wants faction
    colour (a fortified woods, a paved road) already has a row waiting, and a sixth army would add
    its row here without a second layout to teach.
 
