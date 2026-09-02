@@ -19,10 +19,13 @@ only ever a game constant; the manifest is now their source, and the comment
 over each carries the reasoning.
 
 The schema grows by ADDING, never by rewriting: `move` is the one clip carrying
-`facing`, `flip_x_for` and `fallback`, and `VERSION` stays 1 because the absence
-of those keys is the reading a version-1 consumer already makes — never mirror,
-no fallback. `docs/move_clip.md` is the contract the game implements against;
-the README's outputs table names the sheets.
+`facing` and `flip_x_for`, `fallback` is the shared key of the clips a unit may
+be left out of (`move` and `ko`), and `VERSION` stays 1 because the absence of
+those keys is the reading a version-1 consumer already makes — never mirror, no
+fallback. `mode` grew a VALUE rather than appearing: every clip has always
+carried it, `loop` on all of them until `ko` shipped a single held frame.
+`docs/move_clip.md` is the contract the game implements against; the README's
+outputs table names the sheets.
 
 The JSON is deterministic like the rest of the pipeline: sorted keys, two-space
 indent, trailing newline, so two runs are byte-identical.

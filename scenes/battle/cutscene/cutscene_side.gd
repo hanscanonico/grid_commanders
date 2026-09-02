@@ -148,20 +148,26 @@ const HP_EMPTY := Color(1.0, 1.0, 1.0, 0.12)
 ## it is retired past `TOPPLE_KO_AT` for the one that has an authored frame to
 ## swap to, where `KO_SETTLE_TINT` picks the burn up.
 const WRECK_TINT := Color(0.4, 0.4, 0.4)
-## What the authored KO frame wears at the swap, easing to 1.0 by `0.55` — the
-## alpha fade's own start, so the wreck is at its authored tone by the time it
-## begins leaving.
+## What the authored KO frame wears at the swap, easing to 1.0 over the whole
+## rest of the fall — `[TOPPLE_KO_AT, 1.0]`, and the width is the point. A
+## figure's fall runs about 0.30 s at the default tier (a one-figure loss sizes
+## the casualty window at 0.38 s, of which `_knock_share` spends 0.08 before the
+## fall starts), so half of it is ~150 ms and ~9 frames at 60 Hz. Easing over
+## the 0.05 up to the alpha fade's own start instead would be 15 ms — under one
+## frame — which does not smooth a value step, it just moves it a frame later.
+## The fade opens at 0.55 and takes the tail of this.
 ##
 ## Measured, so the value is continuous where the texture changes: the burn
 ## above leaves the idle art at 0.469 of its own value by `TOPPLE_KO_AT`, and a
-## KO cell's own band is 1.245x that same live cell's (93.3L against 115.0L,
-## meaned over 14 units x 6 factions of the shipped sheets — `wreck_tone` floors
-## a wreck two ramp steps above the sheet's S0 ink and drops its rim, so it
-## reads flatter and rim-less rather than dimmer, and lands ABOVE the body it
-## was). 0.469 / 1.245 is what the replacement has to wear to arrive on the
-## value the idle art left. Nothing here may exceed 1.0: the 2D framebuffer is
-## RGBA8 under `gl_compatibility`, where a modulate over 1 clips the lit planes
-## flat rather than brightening them.
+## KO cell's own band is 1.245x that same live cell's — 115.0L dead against
+## 93.3L alive, the 1.245 being the mean of the 84 per-cell ratios (14 units x 6
+## factions of the shipped sheets). It lands ABOVE the body it was because
+## `wreck_tone` floors a wreck two ramp steps over the sheet's S0 ink and drops
+## its rim, so a wreck reads flatter and rim-less rather than dimmer. 0.469 /
+## 1.245 is what the replacement has to wear to arrive on the value the idle art
+## left. Nothing here may exceed 1.0: the 2D framebuffer is RGBA8 under
+## `gl_compatibility`, where a modulate over 1 clips the lit planes flat rather
+## than brightening them.
 const KO_SETTLE_TINT := Color(0.377, 0.377, 0.377)
 ## The wash the vignette darkens the arena's edges with, a step per band.
 const VIGNETTE := Color(0.05, 0.06, 0.10)
@@ -689,7 +695,7 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool, jerk: float) -> vo
 	var tint := Color(1.0, 1.0, 1.0)
 	# One burn-down, handed over at the swap: every figure falls on WRECK_TINT,
 	# and the authored KO frame picks it up at the value that ramp had reached
-	# and eases off it as the fade opens.
+	# and eases off it over the rest of the fall.
 	var ko_art: AtlasTexture = _figures[2]
 	var ko := ko_art != null and fall >= TOPPLE_KO_AT
 	if fall > 0.0:
@@ -698,9 +704,7 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool, jerk: float) -> vo
 		spin = CutsceneFx.ramp(fall, [0.0, 1.0], [0.0, _inward(-0.55)])
 		alpha *= CutsceneFx.ramp(fall, [0.0, 0.55, 1.0], [1.0, 1.0, 0.0])
 		if ko:
-			tint = tint.lerp(
-				KO_SETTLE_TINT, CutsceneFx.ramp(fall, [TOPPLE_KO_AT, 0.55], [1.0, 0.0])
-			)
+			tint = tint.lerp(KO_SETTLE_TINT, CutsceneFx.ramp(fall, [TOPPLE_KO_AT, 1.0], [1.0, 0.0]))
 		else:
 			tint = tint.lerp(WRECK_TINT, CutsceneFx.ramp(fall, [0.0, 0.35, 1.0], [0.0, 0.85, 1.0]))
 	elif hittable:
