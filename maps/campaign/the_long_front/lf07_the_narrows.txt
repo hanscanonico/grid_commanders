@@ -2,9 +2,12 @@
 # for the first time the line holds together rather than falling back alone.
 # Mara Voss coordinates the allied picket at the chokepoint — narrative only,
 # the board is still Voss's army against Draeg's.
-# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+# The sea arm along the north bank is Tidewatch's last water: no port, no shoal,
+# so nothing is built on it — only what the ledger sends (lf03's coast watch).
+# Symbols: . plains  F woods  M mountain  = road  S sea  C city  B base  Q HQ
 [terrain]
-..................
+SSSSSSSSSSSSSSSSSS
+SSSSSSSSSS........
 .Q====.B...F..MM..
 ..=....F....MM....
 ..=...C.......MM..
@@ -15,19 +18,19 @@ FF=======.........
 ..................
 ..................
 [owners]
-1 1 1
-1 7 1
-2 17 7
+1 1 2
+1 7 2
+2 17 8
 [units]
-1 i 2 2
-1 i 3 3
-1 m 4 2
-1 r 2 1
-1 t 3 4
-2 i 13 6
-2 i 14 5
-2 r 12 6
-2 t 15 5
-2 t 14 6
-2 a 12 5
-2 g 13 4
+1 i 2 3
+1 i 3 4
+1 m 4 3
+1 r 2 2
+1 t 3 5
+2 i 13 7
+2 i 14 6
+2 r 12 7
+2 t 15 6
+2 t 14 7
+2 a 12 6
+2 g 13 5
