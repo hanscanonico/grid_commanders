@@ -302,7 +302,7 @@ the board paying it forward: the figure sheets are the board sheets minus the ti
 (`test_figure_sheet.gd`), so a thicker, value-clearing contour on the board is the same contour at
 1:1.
 
-| faction row | failing (clear, bare board) |
+| faction row | failing (all clear cells, board + cut-in) |
 | --- | --- |
 | iron | **35.7%** |
 | gold | 52.5% |
@@ -310,6 +310,10 @@ the board paying it forward: the figure sheets are the board sheets minus the ti
 | aurora | 50.9% |
 | neutral | 53.9% |
 | verdant | 54.1% |
+
+(Every non-fog row of the digest: the board under all four washes plus the cut-in, which carries
+`none` alone — **not** the `bare board, no wash` slice the previous art's tables below are cut on,
+which is one view and one overlay of the six.)
 
 Iron stays the strongest row — it was already answering the board-scale question the other five
 now share, having worn `OUTLINE_HEAVY` since round 11 — and the other five converge on one number

@@ -734,7 +734,7 @@ def _thicken_contour(
                     ix, iy = x - step[0] * k, y - step[1] * k
                     if blocked(ix, iy):
                         break
-                    claims.setdefault((ix, iy), (colour, mid))
+                    claims[(ix, iy)] = (colour, mid)
 
     for (ix, iy), (colour, mid) in claims.items():
         idx = iy * w + ix

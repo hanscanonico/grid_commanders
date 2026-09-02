@@ -136,9 +136,11 @@ def soften_staircase(
 ) -> Image.Image:
     """A copy of `rgba` with every qualifying staircase inner corner softened.
 
-    Pure: the input is never touched, and every write is computed off the
-    ORIGINAL pixels, so two corners that see each other cannot cascade and
-    the result does not depend on scan order.
+    Pure and deterministic: the input is never touched, and every write is
+    computed off the ORIGINAL pixels, so two corners that see each other
+    cannot cascade. Which of them SURVIVES is scan order's, though — `_safe`
+    settles its refusals walking `writes`, and of a mutually blocking pair it
+    drops the one it reaches first.
 
     One write may still strand a THIRD pixel that never qualified as a
     corner itself: since S8's contour band (`voxel._thicken_contour`) a
