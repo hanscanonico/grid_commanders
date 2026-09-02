@@ -291,8 +291,10 @@ floor. `MoveFrames.MIN_SILHOUETTE_TEXELS` is **6** at rung 1, double the idle's
 texels is the quietest of those anyone can see, where a gait is the whole
 running gear and a board that cannot see six texels of it move is watching a
 unit slide. `MAX_SHIMMER` (5.0) and `MAX_MASS_DRIFT` (0.08) carry over from
-`AmbientFrames` unchanged, the drift measured against pose A for both move
-frames so a stride may not grow the unit either.
+`AmbientFrames` unchanged, the drift measured against pose A for every one of
+the four move frames so a stride may not grow the unit either — and the shimmer
+ceiling reads the NOISIEST of the clip's four adjacent steps while the
+silhouette floor reads its quietest, so neither hides behind a calm frame.
 
 **The sheet may never translate the hull.** The game's `animate_path` tweens the
 sprite one cell per 0.06 s x `anim_scale`; that tween IS the travel. A frame
@@ -303,10 +305,16 @@ placement pins all four poses to pose A's crop.
 All 18 units author the clip (`units.MOVES`), by family:
 
 - **Tracked** (`tank`, `md_tank`, `anti_air`, `artillery`, `apc`) — the tread's
-  link stripe walks a half period (`_track`'s eight-voxel stripe, so the step is
-  one whole texel along the run) under a hull jolted one texel of ride height on
-  the off-beat (`_roll`). The MBT pitches its NOSE that texel instead: rolled
-  whole, its rung-1 silhouette matched `md_tank`'s frame A better than its own
+  link stripe walks a QUARTER period per frame (`_track`'s eight-voxel stripe
+  advanced by two, one whole texel along the run), so the clip's four frames
+  visit all four quarter-positions once a cycle — `_tread_phase` holds MOVE_A
+  and MOVE_B at the two quarters the shipped art already stood at and gives
+  MOVE_C and MOVE_D the two between them, which is a visit rather than a lap
+  (its docstring has the arithmetic). Underneath, a hull jolted one texel of
+  ride height on the off-beat (`_roll`, `beat(pose) % 2`, so the chassis
+  attitude is the two-key one it always was). The MBT pitches its NOSE that
+  texel instead: rolled whole, its rung-1 silhouette matched `md_tank`'s
+  frame A better than its own
   (0.799 against 0.761) and the unit stopped reading as itself. Weapons stay at
   pose A's travel-lock throughout — a vehicle on the move does not lay its gun,
   recoil its howitzer or track a target.
@@ -318,20 +326,32 @@ All 18 units author the clip (`units.MOVES`), by family:
   the tail.
 - **Foot** (`infantry`, `mech`) — a HELD forward `(dx -1, dy +1)` lean (an
   alternating one would be a man rocking on the spot at 160 ms), a hip line that
-  alternates a texel of rise, and the legs taking it in turns to be at toe-off.
-  The rifleman's pair swaps through the hip centre (`_stride`); the trooper's
-  stand side by side with nothing to swap, so his gait alternates a lift
-  (`_mech_legs`). Toe-off alone measured 6 texels on the rifleman and 5 on the
-  mech — the bob is what carries both clear.
+  alternates a texel of rise every other frame, and the only two families with a
+  real four-key gait. The rifleman's legs swap through the hip centre
+  (`_stride`), and since S6 his LEAD swaps at frame index 1 and back at 3, so
+  the cycle reads contact-L / passing / contact-R / passing rather than the same
+  contact twice. The trooper's stand side by side in x alone, where a swap is a
+  no-op, so his is a SCISSOR — both boots a texel along the run in opposite
+  directions — on MOVE_A/MOVE_B (`_mech_legs(swing=…)`, the shipped two-key
+  shuffle, untouched), with S6's two frames spent on the passing steps between
+  them: both legs gathered back together, one texel then two (`gather=1`, then
+  `2`, two magnitudes so the pair reads as two distinct steps). A LIFT was tried
+  there first and is worth five silhouette texels, under the clip's floor of
+  six. Toe-off alone measured 6 texels on the rifleman and 5 on the mech — the
+  bob is what carries both clear.
 - **Air** (`fighter`, `bomber`, `b_copter`, `t_copter`) — a held nose-down
   attitude, one texel of `dz` on the forward fuselage about a wing root or a
   rotor mast that stays, which is what says heading on a sheet that may not
   translate. The frame-to-frame change is the `atlas.BOB_PX` bob, the two
-  helicopters' rotor blades a notch further round, the fighter's nozzles lit a
-  course beyond the burn `MOVE_A` holds (which reaches only the occluded mouth
-  course, so the visible plume is `MOVE_B`'s alone), and the bomber's four
-  nacelle mouths flaring with its nose dipped a further texel over `MOVE_A`'s
-  trim — all of which tick with the FRAME rather than the clip (`beat(pose)`).
+  helicopters' rotor blades a notch further round — a real four-position disc
+  under way since S6 (`parts.BLADES` keyed straight off `beat(pose)`, the
+  ambient pair still reading only its first two ticks) — the fighter's nozzles
+  lit a course beyond the burn `MOVE_A` holds (which reaches only the occluded
+  mouth course, so the visible plume is the odd frames' alone), and the bomber's
+  four nacelle mouths flaring with its nose dipped a further texel over
+  `MOVE_A`'s trim — all of which tick with the FRAME rather than the clip
+  (`beat(pose)`; the two jets have nothing new to say on the extra pair and read
+  `beat(pose) % 2`, so `MOVE_C`/`MOVE_D` repeat `MOVE_A`/`MOVE_B`).
   The bomber's mouths are gated on `moving` besides: the same flare on the idle
   beat costs the legibility ratchet two baseline cells, which `units/air.py`'s
   `beat(pose)` branches and `tests/measure_motion.py` record.

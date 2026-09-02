@@ -443,14 +443,16 @@ class MoveFrames(unittest.TestCase):
     numbers, carried over unchanged and for the same reasons: a frame that
     repaints its interior instead of moving its outline reads as boiling,
     and a unit that walks is still the same mass of metal. The drift is
-    measured against pose A for BOTH move frames, so a gait may not grow the
-    unit across the clip either.
+    measured against pose A for EVERY one of the four move frames, so a gait
+    may not grow the unit across the clip either; the silhouette floor reads
+    the clip's quietest adjacent step and the shimmer ceiling its noisiest,
+    so neither hides behind a calm frame.
 
     Everything that reads pixels is scoped to `units.MOVES`, the opt-in set
     of units with an authored gait. The rest render their ambient
-    counterpart (`MOVE_A -> A`, `MOVE_B -> B`), which the fallback test
-    checks byte-for-byte; while `MOVES` is empty the scoped tests skip
-    loudly rather than pass vacuously.
+    counterpart per frame (`MOVE_A`/`MOVE_C -> A`, `MOVE_B`/`MOVE_D -> B`),
+    which the fallback test checks byte-for-byte; while `MOVES` is empty the
+    scoped tests skip loudly rather than pass vacuously.
     """
 
     MIN_SILHOUETTE_TEXELS = 6
@@ -671,13 +673,13 @@ class MoveFrames(unittest.TestCase):
         """The game's tween is the travel; the sheet shows gait only.
 
         A move frame that translated the hull in-sheet would travel twice —
-        once by the tween and once by the art — so all four poses hang off
+        once by the tween and once by the art — so every pose hangs off
         pose A's crop: `MOVE_A` places exactly where `A` does and `MOVE_B`
-        where `B` does (the air/sea bob included, since `beat` is true for
-        both off-beats), and the footprint the shadow is sized from and the
-        ground row it sits on are one number for the whole unit. Asked of
-        all eighteen units, `MOVES` or not, because it is placement and
-        costs no render."""
+        where `B` does (the air/sea bob included, since `off_beat` answers
+        MOVE_B and MOVE_D the way it answers B), and the footprint the shadow
+        is sized from and the ground row it sits on are one number for the
+        whole unit. Asked of all eighteen units, `MOVES` or not, because it
+        is placement and costs no render."""
         for uid in ATLAS_ORDER:
             a = atlas.cell_placement(uid, Pose.A)
             with self.subTest(unit=uid):
