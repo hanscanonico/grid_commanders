@@ -420,6 +420,9 @@ func _carry_error(map: MapData) -> String:
 ## star is unearnable. A hold objective bounds par from the other end: the
 ## mission is not won before its day, so a par below it is a star nobody can
 ## take.
+##
+## Wording is the last bar: the card says the word the action menu says, and
+## which word that is belongs to each objective (`MissionObjective.wording_error`).
 func content_error(commander_db: CommanderDB) -> String:
 	if events.is_empty():
 		return "mission '%s' scripts nothing" % id
@@ -437,7 +440,10 @@ func content_error(commander_db: CommanderDB) -> String:
 	for objective: MissionObjective in objectives + bonus_objectives:
 		if objective is DayDeadlineObjective:
 			return "mission '%s' files a deadline as a goal" % id
-	return _par_error()
+	var par := _par_error()
+	if par != "":
+		return par
+	return _wording_error()
 
 
 func _par_error() -> String:
@@ -452,6 +458,14 @@ func _par_error() -> String:
 			and par_day < (objective as SurviveUntilDayObjective).day
 		):
 			return "mission '%s': par %d is before its own hold day" % [id, par_day]
+	return ""
+
+
+func _wording_error() -> String:
+	for objective: MissionObjective in objectives + failures + bonus_objectives:
+		var error := objective.wording_error()
+		if error != "":
+			return "mission '%s': %s" % [id, error]
 	return ""
 
 

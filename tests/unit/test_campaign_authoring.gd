@@ -84,7 +84,7 @@ func _on_the_relay() -> CellOwnedTrigger:
 func _capture(cell: Vector2i) -> CaptureCellObjective:
 	var objective := CaptureCellObjective.new()
 	objective.cell = cell
-	objective.text = "Take %s." % cell
+	objective.text = "Capture %s." % cell
 	return objective
 
 
@@ -329,6 +329,13 @@ func test_every_content_bar_names_what_the_mission_is_missing() -> void:
 	var par_before_the_hold := _authored()
 	par_before_the_hold.objectives.append(_hold_until(6))
 	assert_string_contains(par_before_the_hold.content_error(db), "before its own hold day")
+	var wrong_word := _authored()
+	var taken := _capture(Vector2i(2, 0))
+	taken.text = "Take the relay."
+	wrong_word.bonus_objectives.append(taken)
+	assert_string_contains(
+		wrong_word.content_error(db), "has to say Capture or Recapture", "a star is held to it too"
+	)
 
 
 # --- a goal that costs nothing ----------------------------------------------
@@ -381,25 +388,33 @@ func test_a_goal_that_opens_true_by_design_is_left_alone() -> void:
 # --- a war told in narration -------------------------------------------------
 
 
-func _speaks(mission: MissionDefinition, speaker: StringName, lines: int) -> void:
+func _speaks(page: Array[MissionLine], speaker: StringName, lines: int) -> void:
 	for i in lines:
 		var line := _line("Line %d." % i)
 		line.speaker = speaker
-		mission.briefing.append(line)
+		page.append(line)
 
 
+## A defeat is dialogue exactly as a victory is, so its lines are in the ratio
+## on both sides: a narrated loss counts against the war, a spoken one for it.
 func test_a_campaign_more_narrated_than_spoken_is_refused() -> void:
 	var campaign := _campaign()
-	_speaks(campaign.missions[0], &"tomas_reed", 1)
-	_speaks(campaign.missions[1], &"", 2)
+	_speaks(campaign.missions[0].briefing, &"tomas_reed", 1)
+	_speaks(campaign.missions[1].briefing, &"", 2)
 	assert_string_contains(campaign.speech_error(), "only 1 of 3 story lines have a speaker")
+	_speaks(campaign.missions[1].defeat, &"", 2)
+	assert_string_contains(
+		campaign.speech_error(), "only 1 of 5 story lines", "a narrated defeat is narration"
+	)
+	_speaks(campaign.missions[0].defeat, &"tomas_reed", 4)
+	assert_eq(campaign.speech_error(), "", "and a spoken one is dialogue")
 
 
 ## And a war with no story lines at all is a ratio with no denominator rather
 ## than a war told in narration.
 func test_a_campaign_mostly_spoken_is_fine() -> void:
 	var campaign := _campaign()
-	_speaks(campaign.missions[0], &"tomas_reed", 2)
-	_speaks(campaign.missions[1], &"", 1)
+	_speaks(campaign.missions[0].briefing, &"tomas_reed", 2)
+	_speaks(campaign.missions[1].briefing, &"", 1)
 	assert_eq(campaign.speech_error(), "")
 	assert_eq(_campaign().speech_error(), "", "and a war that says nothing is not judged")

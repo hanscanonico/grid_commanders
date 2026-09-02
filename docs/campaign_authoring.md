@@ -28,7 +28,9 @@ check `TerrainType.services` and transports. A difficulty tier that does not
 ship. A story line whose speaker is not on the commander roster, or a seat cast
 as a commander who is not. A briefing with nothing to say when it is won. A
 mission with nothing to say when it is lost. A briefing, debrief or interlude
-with no unconditional line — a page that can render empty. A deadline
+with no unconditional line — a page that can render empty. A `CaptureCell`
+whose card does not open with `Capture` or `Recapture`, or a `HoldCell` that
+does not open with `Hold` or `Keep`. A deadline
 filed in `objectives` or `bonus_objectives` rather than in `failures`, and a
 `par_day` falling past the mission's own deadline, or before the day a hold
 objective says the mission cannot be won. A launch that does not build.
@@ -48,7 +50,7 @@ which costs nothing without the mission being over. A hidden objective and an
 second is met exactly while the war is going well.
 
 **The whole war at once.** A campaign whose story is more narration than
-dialogue — over half its briefing and victory lines with no speaker. A fact some
+dialogue — over half its briefing, victory and defeat lines with no speaker. A fact some
 mission reads and no mission of that campaign writes, or a `cleared:` / `stars:`
 name the campaign does not run. A
 mission opening only once some fact is written when no mission *ahead of it*
@@ -89,8 +91,8 @@ own staff voice comes second, and it may carry `requires` / `unless`: the debrie
 is read against the ledger after `CampaignSession.record`, so a loss can sound
 different on a different route. Two or three lines, never a fourth — a player who
 has just lost is not reading a page. `content_error` refuses a mission with no
-defeat line at all; the 108 shipped ones were migrated from the old narrator
-sentence and read as narration until each war's own pass gives them speakers.
+defeat line at all, and `speech_error` counts the page with the briefing and the
+victory: a loss is spoken, not narrated.
 
 ## The vocabulary
 
@@ -120,12 +122,16 @@ one deliberate exception is `DefeatTeam`, which is about one army on purpose.
 story — the story is in `MissionLine`, which is where the voice belongs. Three
 rules, and every shipped objective follows them:
 
-**The verb names the mechanic.** `Capture` a `CaptureCell`, `Hold … for N days` a
-`HoldCell`, `Move N units to …` a `ReachCell`, `Destroy` a `DestroyUnit`,
-`Survive until day N` a `SurviveUntilDay`. A `CaptureCell` written "Hold the
-eastern relay" or "Reach the shrine" tells the player the wrong mechanic, and
-those two really shipped. Where the player *already* owns the cell, `Keep` reads
-truer than `Capture` — the only two are Signal Hill's.
+**The verb names the mechanic.** `Capture` a `CaptureCell` — `Recapture` where
+the ground was ours and was taken — `Hold … for N days` a `HoldCell`, or `Keep`
+where the player already owns it; `Move N units to …` a `ReachCell`, `Destroy` a
+`DestroyUnit`, `Survive until day N` a `SurviveUntilDay`. A `CaptureCell` written
+"Hold the eastern relay" or "Reach the shrine" tells the player the wrong
+mechanic, and those two really shipped. Two of them are gated, because each
+already has its word: `MissionObjective.wording_error` holds a `CaptureCell`'s
+first word to `Capture` or `Recapture` — the word the action menu says — and a
+`HoldCell`'s to `Hold` or `Keep`, and `content_error` refuses the mission
+otherwise.
 
 **A failure states the loss, in the present.** "Time runs out at the end of day
 10", not "Vale's garrison held the crossroads past day 10": a `failures` entry is

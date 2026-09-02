@@ -14,6 +14,10 @@ extends MissionObjective
 ## through `GameState.allied`, so an ally who takes the ridge is holding it for
 ## both of you.
 
+## What the card may open with: `Hold` ground to be taken, `Keep` ground the
+## player already owns.
+const VERBS: Array[String] = ["Hold", "Keep"]
+
 @export var cell: Vector2i = Vector2i.ZERO
 @export var days: int = 3
 
@@ -28,6 +32,10 @@ func readout(_state: GameState, _team: int, progress: MissionProgress) -> String
 
 func marker_cells() -> Array[Vector2i]:
 	return [cell]
+
+
+func wording_error() -> String:
+	return MissionObjective.verb_error("hold", text, VERBS)
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:

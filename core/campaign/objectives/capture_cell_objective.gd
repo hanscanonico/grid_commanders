@@ -6,6 +6,10 @@ extends MissionObjective
 ## Satisfied while the cell is owned by the player's **side**, so an ally who
 ## takes it has taken it for both of you.
 
+## What the card may open with: the action menu's own verb, or the same deed on
+## ground that was ours.
+const VERBS: Array[String] = ["Capture", "Recapture"]
+
 @export var cell: Vector2i = Vector2i.ZERO
 
 
@@ -16,6 +20,10 @@ func is_met(state: GameState, team: int, _progress: MissionProgress) -> bool:
 
 func marker_cells() -> Array[Vector2i]:
 	return [cell]
+
+
+func wording_error() -> String:
+	return MissionObjective.verb_error("capture", text, VERBS)
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
