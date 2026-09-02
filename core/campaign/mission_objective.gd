@@ -83,6 +83,23 @@ func definition_error(_map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	return ""
 
 
+## Why this objective's card says the wrong word, or "". The card has to say the
+## word the board already uses — a `CaptureCell` reads "Capture" because that is
+## the verb on the action menu — so a subclass whose mechanic has a settled word
+## holds `text` to it. A content bar rather than a definition one: a mission
+## worded wrong plays perfectly well, it just tells the player the wrong mechanic.
+func wording_error() -> String:
+	return ""
+
+
+## `wording_error`'s one shape: the first word of `text` is one of `verbs`, or
+## the reason it is not. `kind` is the objective's name on the card.
+static func verb_error(kind: String, text: String, verbs: Array[String]) -> String:
+	if verbs.has(text.strip_edges().get_slice(" ", 0)):
+		return ""
+	return "%s objective reads '%s'; it has to say %s" % [kind, text, " or ".join(verbs)]
+
+
 ## The unit this board calls `tag`, or null when nothing on it does. The one
 ## place a name is resolved, so two conditions asking after the same marshal
 ## cannot disagree about who it is; a tag names at most one unit per board

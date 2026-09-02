@@ -200,3 +200,45 @@ func test_an_objective_about_a_count_names_no_ground() -> void:
 		LossLimitObjective.new(),
 	]:
 		assert_eq(objective.marker_cells(), [], "%s marks nothing" % objective.get_class())
+
+
+# --- the word the card says -------------------------------------------------
+
+
+func test_a_capture_objective_has_to_say_capture() -> void:
+	# The card says the word the action menu says, so a CaptureCell worded
+	# "Take" names a mechanic the player will not find on the menu.
+	var objective := CaptureCellObjective.new()
+	objective.text = "Take the relay."
+	assert_eq(
+		objective.wording_error(),
+		"capture objective reads 'Take the relay.'; it has to say Capture or Recapture"
+	)
+	objective.text = "Capture the relay."
+	assert_eq(objective.wording_error(), "")
+	objective.text = "Recapture the relay."
+	assert_eq(objective.wording_error(), "", "ground that was ours is recaptured")
+
+
+func test_a_hold_objective_has_to_say_hold() -> void:
+	var objective := HoldCellObjective.new()
+	objective.text = "Take the ridge for 3 days."
+	assert_eq(
+		objective.wording_error(),
+		"hold objective reads 'Take the ridge for 3 days.'; it has to say Hold or Keep"
+	)
+	objective.text = "Hold the ridge for 3 days."
+	assert_eq(objective.wording_error(), "")
+	objective.text = "Keep the ridge for 3 days."
+	assert_eq(objective.wording_error(), "", "ground already ours is kept")
+
+
+func test_an_objective_the_menu_does_not_name_is_worded_freely() -> void:
+	for objective: MissionObjective in [
+		OwnPropertiesObjective.new(),
+		DayDeadlineObjective.new(),
+		SurviveUntilDayObjective.new(),
+		AllySurvivesObjective.new(),
+	]:
+		objective.text = "Take whatever reads best."
+		assert_eq(objective.wording_error(), "", "%s is not gated" % objective.get_class())

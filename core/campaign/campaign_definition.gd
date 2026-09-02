@@ -370,17 +370,16 @@ func block_error() -> String:
 ## legitimate and an entire campaign of them is the thing that was wrong.
 ##
 ## Campaign-wide because that is the width the judgement has: no single mission's
-## narration is a fault. The defeat page is left out of the count on purpose: its
-## 108 lines were migrated from narrator sentences and stay narration until each
-## war's own pass gives them speakers, so counting them would fail every campaign
-## for the state the migration left them in.
+## narration is a fault. All three pages count — a defeat is dialogue exactly as a
+## victory is, and a page left out of the ratio is a page free to drift back to
+## narration.
 func speech_error() -> String:
 	var spoken := 0
 	var total := 0
 	for entry: MissionDefinition in missions:
 		if entry == null:
 			continue
-		for line: MissionLine in entry.briefing + entry.victory:
+		for line: MissionLine in entry.briefing + entry.victory + entry.defeat:
 			total += 1
 			if not line.is_narration():
 				spoken += 1
