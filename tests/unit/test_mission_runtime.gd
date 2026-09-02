@@ -245,3 +245,38 @@ func test_every_star_a_mission_offers_is_named() -> void:
 	var outcome := runtime.evaluate(state, _tally)
 	assert_eq(outcome.awards.size(), runtime.max_stars())
 	assert_eq(outcome.awards[2].text, "Hold the depot")
+
+
+func _hidden_bonus(cell: Vector2i, text: String) -> CaptureCellObjective:
+	var bonus := _capture(cell, text)
+	bonus.id = &"depot"
+	bonus.hidden = true
+	return bonus
+
+
+func test_a_bonus_never_revealed_is_still_a_named_star() -> void:
+	var state := _state()
+	var mission := _mission([_capture(Vector2i(1, 0))])
+	mission.bonus_objectives.append(_hidden_bonus(Vector2i(2, 0), "Hold the depot"))
+	var runtime := MissionRuntime.new(mission)
+	state.set_owner(Vector2i(1, 0), 1)
+	state.set_owner(Vector2i(2, 0), 1)
+	var outcome := runtime.evaluate(state, _tally)
+	assert_eq(outcome.awards.size(), runtime.max_stars(), "the sheet names every star")
+	assert_eq(outcome.awards.back().text, "Hidden objective")
+	assert_false(outcome.awards.back().earned, "a bonus never judged cannot be earned")
+	assert_eq(outcome.stars, 1)
+
+
+func test_a_revealed_bonus_is_named_in_its_own_words() -> void:
+	var state := _state()
+	var mission := _mission([_capture(Vector2i(1, 0))])
+	mission.bonus_objectives.append(_hidden_bonus(Vector2i(2, 0), "Hold the depot"))
+	var runtime := MissionRuntime.new(mission)
+	_tally.reveal(&"depot")
+	state.set_owner(Vector2i(1, 0), 1)
+	state.set_owner(Vector2i(2, 0), 1)
+	var outcome := runtime.evaluate(state, _tally)
+	assert_eq(_award_texts(outcome), ["Mission complete", "Hold the depot"])
+	assert_true(outcome.awards.back().earned)
+	assert_eq(outcome.stars, 2)

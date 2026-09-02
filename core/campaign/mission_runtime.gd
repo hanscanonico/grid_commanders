@@ -29,6 +29,9 @@ enum Status { RUNNING, SUCCESS, FAILURE }
 ## headquarters the same, and a defeat line wants to say which.
 enum Cause { NONE, ROUTED, HQ_TAKEN, FAILURE, SCRIPTED }
 
+## What the star sheet calls a bonus the mission never revealed.
+const HIDDEN_AWARD := "Hidden objective"
+
 
 ## One star, named — so the debrief can say what it was for and what was missed.
 class Award:
@@ -184,9 +187,10 @@ static func _live(
 
 
 ## One star for finishing, one for finishing inside par, one for every bonus
-## objective standing at the end — each of them named, earned or missed, in the
-## order `max_stars` counts them, so the debrief can say what it scored and what
-## it did not.
+## objective — each of them named, earned or missed, so the debrief can say what
+## it scored and what it did not. A bonus no event revealed is still a star
+## `max_stars` counts, so it is named as the hidden one it stayed rather than
+## left as a nameless gap: `awards.size()` always equals `max_stars()`.
 func _awards(state: GameState, progress: MissionProgress) -> Array[Award]:
 	var awards: Array[Award] = [Award.new("Mission complete", true)]
 	if _mission.par_day > 0:
@@ -195,6 +199,9 @@ func _awards(state: GameState, progress: MissionProgress) -> Array[Award]:
 		)
 	for bonus: MissionObjective in _live(_mission.bonus_objectives, progress):
 		awards.append(Award.new(bonus.text, bonus.is_met(state, _mission.player_team, progress)))
+	for bonus: MissionObjective in _mission.bonus_objectives:
+		if bonus != null and not bonus.is_live(progress):
+			awards.append(Award.new(HIDDEN_AWARD, false))
 	return awards
 
 
