@@ -207,8 +207,13 @@ static func recoil_window(ready: Vector2) -> Vector2:
 ## contains BattleCutsceneScenario.CUT_IN_POSE (1.05) by five milliseconds.
 ## That one capture therefore photographs the howitzer at max recoil with the
 ## round still in the air — deliberate, and the picture the frame exists for.
-## Every other matchup closes first (torpedo next at 0.966), and no counter's
-## own ramp has opened by then.
+## Every other ATTACKER closes first (torpedo next at 0.966). A counter sizes
+## its own window off `def_recoil`/`def_travel` and can reach that frame from
+## the other side: small arms answering small arms with no figure lost opens
+## the defender's at 0.9265 and closes it at 1.273, so infantry against
+## infantry is photographed on the counter's ramp instead. No cut-in smoke
+## matchup stages that — the tightest counter there is cruiser against sub,
+## whose ramp opens at 1.1455.
 static func fire_window(recoil: Vector2, travel: Vector2) -> Vector2:
 	if recoil == Vector2.ZERO:
 		return Vector2.ZERO

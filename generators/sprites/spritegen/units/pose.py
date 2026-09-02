@@ -189,6 +189,13 @@ FIRES: frozenset[str] = frozenset(
 # `FIRES` draws the same model into FIRE_B that it draws into FIRE_A (a
 # single shot has one key, not a cycle); everything outside `FIRES` falls
 # back to the idle pair instead.
+#
+# The mirror is of a unit's PRIMARY style, while the cut-in resolves a style
+# per weapon SLOT (`CombatCutscene._pose`, off the slot the rules picked). So
+# a tank firing its `small_arms` secondary draws a stream and a strobing
+# muzzle over a figure holding its single cannon-recoil key: the sheet is
+# authored per unit and cannot answer per shot. That is the pair set's known
+# edge, not a drift in it.
 FIRE_PAIRS: frozenset[str] = frozenset(
     {
         "infantry",
