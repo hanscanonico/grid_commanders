@@ -256,7 +256,9 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # own pixels on the line against `test_livery`'s 52% bar — ticking the
     # blades there measures 52.48%, and on FIRE_A instead 52.58%. A disc that
     # turns through the window costs a re-measured budget, so it waits for the
-    # pass that takes one.
+    # slice that takes one: S6 generalises the beat into a frame index and
+    # offers the rotor a four-tick disc on it, which is where this is revisited
+    # with the outline bill reopened rather than squeezed under.
     _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
     if fires(pose):
         # Nose down two texels, chin gun on the line: the nose and canopy

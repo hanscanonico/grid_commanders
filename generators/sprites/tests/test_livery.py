@@ -429,12 +429,21 @@ class IndexedPalette(unittest.TestCase):
     # contour out of the same budget) at 30.76% / 17.35% — all of it well
     # under round 10's band, 53.1% worst / 34.5% over the row. S8's board-scale
     # fallback (`voxel._selective_outline`) puts every grade on the heavy
-    # grade's own bill now: re-measured 2026-09-01, all three land at 50.43%
-    # worst (b_copter's frame B, still the worst sprite) and 32.7-33.0% over
-    # the row. That is still short of round 10's band on both counts — the
-    # G-buffer outline is one pixel wide everywhere the fallback does not
-    # fire, which round 10's band never was — and is measured here so a
-    # future pass cannot quietly grow past it either.
+    # grade's own bill now: measured 2026-09-01 all three landed at 50.43%
+    # worst (b_copter's frame B) and 32.7-33.0% over the row.
+    #
+    # S5's fire clip spent most of what was left, and this is the record of
+    # it: re-measured 2026-09-02, the worst sprite is b_copter's FIRE_A in
+    # every grade — 51.28% light, 51.95% rim, 51.55% heavy — and the row runs
+    # 32.75-33.08%. A helicopter's disc is a 1px lattice and so nearly all
+    # boundary, and the fire pose's deeper nose-down trades interior for more
+    # of it; the worst cell is 386 contour pixels of 743 drawn against a bar
+    # that allows 386.36, so the margin this ships on is a THIRD OF A PIXEL.
+    # Both counts are still short of round 10's band — the G-buffer outline is
+    # one pixel wide everywhere the fallback does not fire, which that band
+    # never was — but the next pass to touch this airframe's silhouette should
+    # expect to re-measure the budget rather than fit under it, and the bar
+    # below has not moved to make room for anything.
     MAX_CONTOUR = {
         palette.OUTLINE_LIGHT: (0.52, 0.34),
         OUTLINE_RIM: (0.52, 0.34),
@@ -446,8 +455,9 @@ class IndexedPalette(unittest.TestCase):
         fire: what neither takes is the whole picture.
 
         `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
-        and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
-        1px lattice and so nearly all boundary). Round 11's G-buffer outline
+        and 53.1% on the worst sprite (b_copter's, whose rotor is a 1px
+        lattice and so nearly all boundary — its frame B then, its FIRE_A
+        since S5). Round 11's G-buffer outline
         spent 14-17% and 24-31%; S8 asks one more question of every grade's
         sunward silhouette (does the lift clear the board's own ground band)
         and none does, so every grade now falls back to the ground-facing

@@ -200,6 +200,15 @@ static func recoil_window(ready: Vector2) -> Vector2:
 ## untouched and only which texture is drawn moves. `recoil` ends exactly
 ## where `travel` starts (`atk_fire`/`def_fire`), so the union is the two
 ## Vector2s' own endpoints; `recoil == ZERO` is the side that never fired.
+##
+## How long that runs is the attacker's own wind-up and time of flight, so the
+## slowest shell on the sheet outlives the posed cut-in frame: artillery's aim
+## of 0.28 and travel_scale of 1.5 put its window at (0.508, 1.055), which
+## contains BattleCutsceneScenario.CUT_IN_POSE (1.05) by five milliseconds.
+## That one capture therefore photographs the howitzer at max recoil with the
+## round still in the air — deliberate, and the picture the frame exists for.
+## Every other matchup closes first (torpedo next at 0.966), and no counter's
+## own ramp has opened by then.
 static func fire_window(recoil: Vector2, travel: Vector2) -> Vector2:
 	if recoil == Vector2.ZERO:
 		return Vector2.ZERO
