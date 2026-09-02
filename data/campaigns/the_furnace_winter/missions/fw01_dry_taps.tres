@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,12 +11,12 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the crossroads base. It is the only way this army builds anything."
+text = "Capture the crossroads base. It is the only way this army builds anything."
 cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Take the northern relay as well."
+text = "Capture the northern relay as well."
 cell = Vector2i(9, 2)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -71,9 +71,15 @@ effects = Array[Resource]([SubResource("Effect_garrison_arrives")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_defeat_foe"]
 script = ExtResource("4")
-text = "The depot stayed shut, and so did every factory behind our line."
+speaker = &"dane_ferrow"
+text = "The crossroads never changed hands. I'm paid by the day. Stay away as long as you like."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Without the base nothing builds, so every factory behind our line stays as cold as it was this morning."
 
 [resource]
 script = ExtResource("1")
@@ -98,4 +104,4 @@ events = Array[Resource]([SubResource("Event_the_garrison_arrives")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

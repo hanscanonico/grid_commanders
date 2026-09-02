@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=53 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=57 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -198,9 +198,34 @@ effects = Array[Resource]([SubResource("Effect_siege_broken")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_4")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Cond_failed"]
+script = ExtResource("15")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_holt"]
 script = ExtResource("6")
-text = "The yard went back to Vance, and the smelters fed Vale's furnace all spring."
+speaker = &"gideon_holt"
+text = "Half the depot road behind you is scrap, Rowan. Relief's coming up it slowly. Eight days. Count them."
+unless = SubResource("Cond_depots_ten")
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("6")
+speaker = &"iona_vance"
+text = "The yard came back for less than the price I wrote down for it."
+
+[sub_resource type="Resource" id="Line_defeat_failed"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Seven of ours gone from the yard. Machines don't replace columns. The relief turns round on the ridge road."
+requires = SubResource("Cond_failed")
+
+[sub_resource type="Resource" id="Line_defeat_broken"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "The relief column found the yard empty, so whatever the depot road carried up here it carries back down again."
+unless = SubResource("Cond_failed")
 
 [resource]
 script = ExtResource("1")
@@ -226,6 +251,6 @@ par_day = 8
 carry_in = true
 carry_out = true
 carry_floor_hp = 50
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_failed"), SubResource("Line_defeat_broken")])

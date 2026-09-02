@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -10,20 +10,21 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Retake depot 1 of the fuel road."
+text = "Recapture depot 1 of the fuel road."
 cell = Vector2i(5, 4)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Retake depot 2 of the fuel road."
+text = "Recapture depot 2 of the fuel road."
 cell = Vector2i(11, 4)
 
 [sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("2")
-text = "Retake depot 3 of the fuel road."
+text = "Recapture depot 3 of the fuel road."
 cell = Vector2i(17, 4)
 
 [sub_resource type="Resource" id="Objective_3"]
@@ -33,7 +34,7 @@ count = 5
 
 [sub_resource type="Resource" id="Objective_4"]
 script = ExtResource("4")
-text = "Stand on the middle depot for a whole day. Hold what we take."
+text = "Hold the middle depot for a whole day. Keep what we take."
 cell = Vector2i(11, 4)
 days = 1
 
@@ -135,9 +136,45 @@ effects = Array[Resource]([SubResource("Effect_three_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Cond_road_six"]
+script = ExtResource("12")
+flag = &"fw_depots_open"
+at_least = 6
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_par"]
+script = ExtResource("12")
+flag = &"run:par"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_holt_road"]
 script = ExtResource("6")
-text = "The last mile held, and the foundry road stayed exactly as far away as it started."
+speaker = &"gideon_holt"
+text = "Six on the wall or better, Ash. Three more to chalk here. A road that long, even the furnace notices."
+requires = SubResource("Cond_road_six")
+
+[sub_resource type="Resource" id="Line_holt_short"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "The wall's got fewer marks on it than the road's got depots, Ash. Open this stretch whole and it starts looking like a road again."
+unless = SubResource("Cond_road_six")
+
+[sub_resource type="Resource" id="Line_par"]
+script = ExtResource("6")
+speaker = &"perrin_ash"
+text = "Six days for three depots. Chalk that next to the count, quartermaster."
+requires = SubResource("Cond_par")
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "The last mile is still mine, along with the foundry road behind it, which is what I told you would happen."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "The foundry road's as far off as it was in the freeze. I've carried that tally up this road since the pipelines. It stops one mile short."
 
 [resource]
 script = ExtResource("1")
@@ -161,6 +198,6 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_vale_withdraws_east"), SubResource("Event_the_last_mile_runs")])
 par_day = 6
 carry_out = true
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_holt_road"), SubResource("Line_holt_short"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_par"), SubResource("Line_5"), SubResource("Line_6")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

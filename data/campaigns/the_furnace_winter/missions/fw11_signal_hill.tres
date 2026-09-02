@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=50 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=52 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -24,17 +24,17 @@ cell = Vector2i(21, 2)
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("15")
-text = "Hold the western relay."
+text = "Capture the western relay."
 cell = Vector2i(5, 3)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("15")
-text = "Hold the middle relay."
+text = "Capture the middle relay."
 cell = Vector2i(11, 3)
 
 [sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("15")
-text = "Hold the eastern relay."
+text = "Capture the eastern relay."
 cell = Vector2i(17, 3)
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -193,9 +193,20 @@ effects = Array[Resource]([SubResource("Effect_three_depots_open")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Line_holt"]
 script = ExtResource("4")
-text = "Signal Hill stayed dark, and Ferrow's raiders kept their bounty and their ground."
+speaker = &"gideon_holt"
+text = "Three relays, Flux. They go on the wall if the stores inside come through whole. Take them intact."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Three relays. Three sieges, paid by the day. Best contract I've had all winter, Flux."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Signal Hill stays dark. Nothing on the relay road moves without him hearing it. So nothing moves."
 
 [resource]
 script = ExtResource("1")
@@ -218,6 +229,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2"), SubResource("Bonus_0"), SubResource("Bonus_paymaster")])
 events = Array[Resource]([SubResource("Event_two_more_riders"), SubResource("Event_invoice_submitted"), SubResource("Event_the_intercept"), SubResource("Event_the_relays_answer")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

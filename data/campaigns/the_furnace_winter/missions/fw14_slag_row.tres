@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=46 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=50 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
@@ -167,9 +167,33 @@ effects = Array[Resource]([SubResource("Effect_picket_walks")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
 
-[sub_resource type="Resource" id="Line_defeat"]
+[sub_resource type="Resource" id="Cond_failed"]
+script = ExtResource("15")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_holt"]
 script = ExtResource("6")
-text = "The column kept riding, and the bounty kept paying out of Slag Row."
+speaker = &"gideon_holt"
+text = "Ferrow bills per head, Thorne. Bring the line home the size it left. He rides out of Slag Row unpaid."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("6")
+speaker = &"dane_ferrow"
+text = "Slag Row's still paying, Thorne. The armour rides and the outrider rides. So do I."
+
+[sub_resource type="Resource" id="Line_defeat_failed"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Six of ours off the line on the slag. He's paid per head. That's the best week he's had all winter."
+requires = SubResource("Cond_failed")
+
+[sub_resource type="Resource" id="Line_defeat_broken"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "The raiding column's still whole. Slag Row goes on funding it. He'll be at the next junction before we are."
+unless = SubResource("Cond_failed")
 
 [resource]
 script = ExtResource("1")
@@ -195,6 +219,6 @@ par_day = 7
 carry_in = true
 carry_out = true
 carry_floor_hp = 50
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_holt"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = Array[Resource]([SubResource("Line_defeat")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_failed"), SubResource("Line_defeat_broken")])
