@@ -415,5 +415,5 @@ bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_fo
 events = Array[Resource]([SubResource("Event_ferrow_sold_it_on"), SubResource("Event_the_crossroads_outlives_him"), SubResource("Event_orlov_keeps_what_he_catches"), SubResource("Event_vance_still_compounding"), SubResource("Event_draegs_column_keeps_its_word"), SubResource("Event_morn_never_spent_it"), SubResource("Event_the_charge_is_ready"), SubResource("Event_the_directorate_recalls_him")])
 par_day = 9
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_morn_losses"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_ward_par"), SubResource("Line_6"), SubResource("Line_holt_full"), SubResource("Line_holt_best")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_morn_losses"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_6"), SubResource("Line_ward_par"), SubResource("Line_holt_full"), SubResource("Line_holt_best")])
 defeat = Array[Resource]([SubResource("Line_defeat_1"), SubResource("Line_defeat_2"), SubResource("Line_defeat_3")])

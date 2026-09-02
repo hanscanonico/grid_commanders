@@ -144,7 +144,7 @@ text = "The queue at the bridge was long. It's shorter now. Every hull that reac
 [sub_resource type="Resource" id="Line_defeat_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The span went down on day eleven with the bank still contested, so relief turned up four days late to a fight that'd already ended."
+text = "The span went down on day eleven with the bank still contested, so the relief on the west road didn't have anything left to relieve."
 requires = SubResource("Run_failure")
 
 [sub_resource type="Resource" id="Line_defeat_3"]
