@@ -429,6 +429,25 @@ func sync_sprites(fade_seconds: float = 0.0) -> void:
 			spawn_sprite_for(unit)
 
 
+## Frees the sprites of whatever went down inside `carrier` — the riders the sim
+## took off the board with it, which no combat result names and which only a
+## reconciliation pass would otherwise reach.
+##
+## Asked for at the moment the transport's own death is shown, so the stack
+## sinks together. `sync_sprites` runs at the end of the exchange instead, a
+## whole death fade later, and riders reaching it there would stand up opaque on
+## a tile the board had already emptied. Fire-and-forget on `_parting_fade`'s
+## own terms: posed at the transport's cell, and silent where the viewer cannot
+## see it.
+func drop_cargo_of(carrier: Unit, fade_seconds: float) -> void:
+	for unit: Unit in _sprites.keys():
+		if unit.carrier != carrier or unit in game.units:
+			continue
+		var sprite: UnitSprite = _sprites[unit]
+		_sprites.erase(unit)
+		sprite.die(_parting_fade(unit, sprite, fade_seconds))
+
+
 ## How long a sprite this pass frees gets to fade, and where it fades from.
 ##
 ## A rider was drawn hidden for as long as it rode, so a fade left on it where

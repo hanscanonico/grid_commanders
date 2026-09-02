@@ -104,16 +104,13 @@ var _cards: Array[BlockingCard] = []
 ## fast pace cannot leak out of a computer's turn into the player's next one.
 var _last_cut_in_ms := -CUT_IN_STREAK_GAP_MS
 var _cut_in_streak := 0
-## The damage number's live tween, and which show it belongs to. One drawer
-## serves every exchange and a second hit can land while the first number is
-## still up, so a new show kills the tween the old one was riding and only the
-## newest show's finish is allowed to clear the drawer — otherwise the older
-## run drags the newer number toward alpha 0 and then blanks it mid-flight.
+## The damage number's live tween. One drawer serves every exchange and a second
+## hit can land while the first number is still up, so a new show kills the
+## tween the old one was riding — otherwise the older run drags the newer number
+## toward alpha 0 and then blanks it mid-flight.
 var _callout_tween: Tween
-var _callout_show := 0
-## The flip flash running on each cell, for the same reason: a property can
-## flip again while its own flash is still up, and the earlier tween's finish
-## would clear the later one's.
+## The flip flash running on each cell, for the same reason: a property can flip
+## again while its own flash is still up.
 var _flip_tweens: Dictionary[Vector2i, Tween] = {}
 
 # --- movement ----------------------------------------------------------------
@@ -193,15 +190,14 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 	# Non-blocking, like the departing twin's fade in `animate_join`: the map
 	# path never showed a number at all, and this is only the flourish that
 	# fixes it — the exchange's own pacing must not wait on it.
-	_show_damage(
-		defender.cell, result.defender_hp_before - result.defender_hp_after, attacker, defender
-	)
+	_show_damage(defender, result.defender_hp_before - result.defender_hp_after, attacker)
 	await flash_hit(defender_sprite)
 	shake_camera()
 	if result.defender_died:
 		Sfx.play(&"explosion")
 		view.release_sprite(defender)
-		_blast_death(attacker, result.attacker_weapon_slot, defender.cell, attacker, defender)
+		_blast_death(attacker, result.attacker_weapon_slot, defender)
+		_sink_cargo(defender)
 		await _fade_out(defender_sprite)
 	else:
 		view.refresh_sprite(defender)
@@ -211,7 +207,8 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		await flash_hit(attacker_sprite)
 	if result.attacker_died:
 		view.release_sprite(attacker)
-		_blast_death(defender, result.counter_weapon_slot, attacker.cell, attacker, defender)
+		_blast_death(defender, result.counter_weapon_slot, attacker)
+		_sink_cargo(attacker)
 		await _fade_out(attacker_sprite)
 	else:
 		view.refresh_sprite(attacker)
@@ -272,22 +269,27 @@ func _fade_out(sprite: UnitSprite) -> void:
 ##
 ## Same fog rule as `_flash_muzzle`: both combatants have to be on screen, or a
 ## burst with only one of them visible would be an effect with no cause.
-func _blast_death(
-	shooter: Unit, slot: StringName, dead_cell: Vector2i, attacker: Unit, defender: Unit
-) -> void:
+func _blast_death(shooter: Unit, slot: StringName, dead: Unit) -> void:
 	if death_blast == null:
 		return
-	if not perspective.can_see_unit(attacker) or not perspective.can_see_unit(defender):
+	if not perspective.can_see_unit(shooter) or not perspective.can_see_unit(dead):
 		return
 	var seconds := Settings.speed.death_fade_seconds()
 	if seconds <= 0.0:
 		return
 	var style := BattleStyleDB.shared().for_weapon(shooter.type, slot)
-	death_blast.show_blast(dead_cell, style)
+	death_blast.show_blast(dead.cell, style)
 	var tween := node.create_tween()
 	tween.tween_property(death_blast, "blast", 1.0, seconds)
-	await tween.finished
-	death_blast.clear_blast()
+	tween.tween_callback(death_blast.clear_blast)
+
+
+## The riders that went down inside a transport this exchange just killed, sent
+## on their way as its own fade begins rather than left to the reconciliation
+## the exchange closes with: one stack sinking together. Nothing is drawn where
+## the viewer cannot see the cell — `BattleView.drop_cargo_of` owns both halves.
+func _sink_cargo(dead: Unit) -> void:
+	view.drop_cargo_of(dead, Settings.speed.death_fade_seconds())
 
 
 ## The board's damage number, PowerMarks' own rise-then-fade shape off
@@ -298,7 +300,7 @@ func _blast_death(
 ##
 ## Same fog rule as `_flash_muzzle` again: a number over a unit only one side
 ## can see would out a hidden exchange.
-func _show_damage(cell: Vector2i, amount: int, attacker: Unit, defender: Unit) -> void:
+func _show_damage(defender: Unit, amount: int, attacker: Unit) -> void:
 	if damage_callout == null or amount <= 0:
 		return
 	if not perspective.can_see_unit(attacker) or not perspective.can_see_unit(defender):
@@ -308,9 +310,8 @@ func _show_damage(cell: Vector2i, amount: int, attacker: Unit, defender: Unit) -
 		return
 	if _callout_tween != null and _callout_tween.is_valid():
 		_callout_tween.kill()
-	_callout_show += 1
-	var show := _callout_show
-	damage_callout.show_hit(cell, amount)
+	_clear_callout()
+	damage_callout.show_hit(defender.cell, amount)
 	var tween := node.create_tween().set_parallel()
 	_callout_tween = tween
 	(
@@ -320,9 +321,16 @@ func _show_damage(cell: Vector2i, amount: int, attacker: Unit, defender: Unit) -
 		. set_ease(Tween.EASE_OUT)
 	)
 	tween.tween_property(damage_callout, "modulate:a", 0.0, seconds).set_delay(seconds)
-	await tween.finished
-	if show == _callout_show:
-		damage_callout.clear_hit()
+	tween.chain().tween_callback(_clear_callout)
+
+
+## Takes the number down, whether it finished its run or a fresher hit is about
+## to replace it. The tween carries this as its own last step rather than a
+## coroutine waiting on it, so killing a superseded run leaves nothing pending
+## that could blank the number that replaced it.
+func _clear_callout() -> void:
+	_callout_tween = null
+	damage_callout.clear_hit()
 
 
 ## Whether this exchange gets the cut-in.
@@ -452,8 +460,8 @@ func animate_build(sprite: UnitSprite) -> void:
 
 
 ## The flag flip: `BattleView.repaint_property` is the instant recolour, so
-## this is only the flourish over it — a brief flash on CapturePips' pennant at
-## the cell that just changed hands. Wired to `BattleView.property_flipped`
+## this is only the flourish over it — a brief flash on CapturePips over the
+## property that just changed hands. Wired to `BattleView.property_flipped`
 ## rather than called from the capture flow directly, which is what makes it
 ## fire on the fog-deferred repaint too: a capture finished out of the
 ## viewer's sight flips the moment they scout it, and that repaint is
@@ -472,13 +480,18 @@ func animate_flag_flip(cell: Vector2i) -> void:
 	var running: Tween = _flip_tweens.get(cell)
 	if running != null and running.is_valid():
 		running.kill()
+	_clear_flag_flip(cell)
 	capture_pips.show_flip(cell)
 	var tween := node.create_tween()
 	_flip_tweens[cell] = tween
 	tween.tween_method(capture_pips.set_flip.bind(cell), 1.0, 0.0, seconds)
-	await tween.finished
-	if _flip_tweens.get(cell) != tween:
-		return
+	tween.tween_callback(_clear_flag_flip.bind(cell))
+
+
+## Takes one cell's flash down, `_clear_callout`'s sibling and for its reason:
+## the flash's own tween carries this as its last step, so a cell flipping again
+## mid-flash kills a run with nothing left pending to clear the flash after it.
+func _clear_flag_flip(cell: Vector2i) -> void:
 	_flip_tweens.erase(cell)
 	capture_pips.clear_flip(cell)
 
