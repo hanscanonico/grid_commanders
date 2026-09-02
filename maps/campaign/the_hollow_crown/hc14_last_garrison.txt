@@ -35,11 +35,11 @@ MMMCMM=MCMMMMMCM=MMCMMM
 4 1 13
 4 2 13
 [units]
-1 i 1 2
-1 i 2 2
-1 m 3 2
-1 g 2 3
-1 r 4 1
+1 i 1 2 ^
+1 i 2 2 ^
+1 m 3 2 ^
+1 g 2 3 ^
+1 r 4 1 ^
 2 i 21 2
 2 i 20 2
 2 m 19 2

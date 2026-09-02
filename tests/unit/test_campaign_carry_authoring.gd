@@ -17,6 +17,7 @@ const CHAINED: Dictionary[StringName, int] = {
 	&"six_marshals": 6,  # the crews that held the gate, sm13 -> sm18
 	&"the_collection": 6,  # the veteran column, tc13 -> tc18
 	&"the_quiet_war": 6,  # the last act in daylight, qw13 -> qw18
+	&"the_hollow_crown": 6,  # the veteran column, hc13 -> hc18
 }
 
 ## One carry slot for team 1, and the enemy's own row marked as well.
