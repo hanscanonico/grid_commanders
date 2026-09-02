@@ -212,7 +212,9 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		await _fade_out(attacker_sprite)
 	else:
 		view.refresh_sprite(attacker)
-	view.sync_sprites(Settings.speed.death_fade_seconds())
+	# No fade to hand out: whoever died was released above and their riders went
+	# down with them, so nothing left for this pass to free still owes a death.
+	view.sync_sprites()
 
 
 ## The shot leaving, on the map path the cut-in stands in for: a star at the

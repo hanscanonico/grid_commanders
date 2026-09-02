@@ -427,10 +427,19 @@ func _set_acted(acted: bool) -> void:
 ## A brief scale punch on the HP number whenever it changes, off `HP_PUNCH_SCALE`
 ## and back down — the impulse-and-decay shape `SHAKE_STEP_SECONDS` and
 ## `CURSOR_PULSE_SECONDS` already use for a beat that is not gameplay theatre.
+##
+## A Control grows out of its pivot, and the badge is drawn at `1 / SPRITE_SCALE`
+## to undo the sprite's own shrink — so pinning the pivot at the number's middle
+## slides the badge by that whole ratio, and the same line pays it back. Both
+## come off the label's size as it stands, so a number that re-lays itself is
+## still pinned at its own middle and still lands where it was authored.
 func _punch_hp_label() -> void:
 	if Settings.speed.instant:
 		return
 	var base := Vector2.ONE / SPRITE_SCALE
+	var middle := hp_label.size * 0.5
+	hp_label.pivot_offset = middle
+	hp_label.position = HP_LABEL_OFFSET / SPRITE_SCALE + middle * (base - Vector2.ONE)
 	hp_label.scale = base * HP_PUNCH_SCALE
 	var tween := create_tween()
 	tween.tween_property(hp_label, "scale", base, HP_PUNCH_SECONDS)
