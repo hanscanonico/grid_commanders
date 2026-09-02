@@ -40,6 +40,11 @@ script = ExtResource("5")
 speaker = &"cassian_rook"
 text = "Then you'll lose both. Ten days, this fortress, and it ends."
 
+[sub_resource type="Resource" id="Line_veterans"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Noted for the record: the column at this gate is the one that took the capital road. Five fights, and it stands here in whatever shape they left it."
+
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"radek_morn"
@@ -281,6 +286,8 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_nine_properties"), SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_two_divisions_arrive"), SubResource("Event_three_divisions_arrive")])
 par_day = 10
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+carry_in = true
+carry_floor_hp = 50
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_veterans"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_victory_losses"), SubResource("Line_victory_full"), SubResource("Line_victory_par"), SubResource("Line_victory_best")])
 defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_hq"), SubResource("Line_defeat_rout"), SubResource("Line_defeat_two_divisions"), SubResource("Line_defeat_three_divisions")])
