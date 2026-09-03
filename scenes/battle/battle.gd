@@ -1049,7 +1049,7 @@ func _open_commander_info() -> void:
 	var picks: Dictionary = {}
 	for team in game.teams:
 		picks[team] = game.commander_of(team)
-	commander_info_sheet.open(picks, game.sides)
+	commander_info_sheet.open(picks, game, perspective, game.sides)
 
 
 func _close_commander_info() -> void:

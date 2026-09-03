@@ -10,11 +10,18 @@ extends Control
 ## sit together (four-players plan D5): a duel is the single row it always was, a
 ## 2v2 is a pair over a pair.
 ##
-## Reuses the same CommanderCard the selection page does; the only thing new is a
-## faction header over each, named and tinted by the resolved side identity (a
-## mirror shows the borrowed classic). Pure presentation — it reads the match's
-## CommanderTypes and closes itself; Battle owns when it opens and blocks board
-## input while it is up.
+## Reuses the same CommanderCard the selection page does; what is added around it
+## is a faction header, named and tinted by the resolved side identity (a mirror
+## shows the borrowed classic), and the seat's economy under it. Pure presentation
+## — it reads the match's CommanderTypes and closes itself; Battle owns when it
+## opens and blocks board input while it is up.
+##
+## The economy row is why this sheet takes a GameState at all: on a four-army
+## board "who is winning" had no readout anywhere, the top bar naming only the
+## funds of whoever holds the turn. Properties and the income they pay are public
+## here because the flags they are counted off are already drawn on the board;
+## funds are not, and BattlePerspective is asked which seats may show them rather
+## than a second opinion being formed in a layout function.
 
 signal closed
 
@@ -29,6 +36,11 @@ const SCROLL_ACTIONS: Dictionary = {
 	&"ui_down": 1,
 }
 
+## What a seat whose bank the viewer may not read prints instead of a number.
+## Not a zero: an army with nothing left and an army you cannot audit are
+## opposite readings of the same match.
+const FUNDS_WITHHELD := "--"
+
 var _built := false
 ## The card grid; columns are rebuilt per match, because how many there are is the
 ## board's answer and not this scene's.
@@ -37,6 +49,10 @@ var _cards: GridContainer
 ## which is what `layout_error` measures the shown slice against.
 var _frames: Array[ScrollContainer] = []
 var _close_button: Button
+## The match the open sheet is reading, and the viewer policy it reads funds
+## through. Both live for one open() and are only ever read by the economy row.
+var _game: GameState
+var _perspective: BattlePerspective
 ## One scroll line per directional gesture; see DirectionalInput.
 var _dirs := DirectionalInput.new()
 
@@ -51,10 +67,19 @@ func _ready() -> void:
 ##
 ## `commanders_by_team` is the match's picks and `sides` its grouping — both taken
 ## whole rather than as a pair, because how many armies play is the board's answer
-## (four-players plan D1) and how they group is the match's.
-func open(commanders_by_team: Dictionary, sides: Dictionary = {}) -> void:
+## (four-players plan D1) and how they group is the match's. `game` and
+## `perspective` are the economy row's, and a seat the state does not know reads
+## as an empty treasury rather than refusing to lay out.
+func open(
+	commanders_by_team: Dictionary,
+	game: GameState,
+	perspective: BattlePerspective,
+	sides: Dictionary = {}
+) -> void:
 	if not _built:
 		_build()
+	_game = game
+	_perspective = perspective
 	# The same resolver the board uses, so a mirror match shows the borrowed
 	# classic here too: two Iron doctrines read "IRON DOMINION" over slate and blue.
 	var identity := SideIdentity.resolve(commanders_by_team)
@@ -192,6 +217,7 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_child(label)
 	column.add_child(header)
+	column.add_child(_economy_strip(team))
 
 	# Same bounded frame the select page gives its card: the card's height is
 	# content-driven, so it is the one child allowed to run out of room, and the
@@ -215,6 +241,37 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	frame.add_child(card)
 	_frames.append(frame)
 	return card
+
+
+## What this seat is worth: the properties it holds, the income they pay each turn,
+## and its bank when the viewer is allowed to see it.
+##
+## A strip rather than a fourth block inside CommanderCard, because the card is
+## also the selection page's and the gallery's, where a match's economy does not
+## exist. Every number is asked of the authority that owns it — properties of the
+## state, income of TurnRules, whose funds may be read of BattlePerspective — so
+## this only lays them out.
+func _economy_strip(team: int) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_reading(row, "PROPERTIES", str(_game.properties_of(team).size()), UiTheme.WHITE)
+	_reading(row, "INCOME", str(TurnRules.income_for(_game, team)), UiTheme.WHITE)
+	var bank: String = (
+		str(_game.funds.get(team, 0)) if _perspective.can_see_funds(team) else FUNDS_WITHHELD
+	)
+	_reading(row, "FUNDS", bank, UiTheme.FUNDS_INK)
+	var strip := PanelContainer.new()
+	strip.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.SLATE_800))
+	strip.add_child(UiKit.pad(row, 5, 2))
+	return strip
+
+
+## One "CAPTION value" pair on that strip, in the docked bars' own dress so the
+## sheet's numbers read as the same instruments the top bar prints.
+func _reading(row: HBoxContainer, caption: String, value: String, ink: Color) -> void:
+	row.add_child(UiTheme.hud_label(caption, UiTheme.SIZE_STAT, UiTheme.INK_3))
+	row.add_child(UiTheme.hud_label(value, UiTheme.SIZE_STAT, ink))
 
 
 ## Why the open sheet is not showing what it was opened with, or "" when it is.

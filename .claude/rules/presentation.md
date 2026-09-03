@@ -587,10 +587,13 @@ shape lives here, where it loads with the files it governs.
 
 - **`BattlePerspective` is the one adapter from the vision rules to viewer policy.**
   `scenes/battle/battle_perspective.gd` owns viewing team plus hot-seat blackout, firing geometry
-  delegated to `AttackRange`, typed transport drop options, and how much of a unit's reach and fire
-  ring an overlay may show (that rule is the range-preview plan's, above). `Battle`, `BattleView`,
-  `BattleAnimator`, `BattleCommandPipeline`, `BattleTargeting`, `BattleHandoff` and
-  `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private
+  delegated to `AttackRange`, typed transport drop options, how much of a unit's reach and fire
+  ring an overlay may show (that rule is the range-preview plan's, above), and — since the
+  commander sheet grew a per-seat economy row — `can_see_funds`, whose side's bank may be printed.
+  Properties and income are deliberately **not** gated: they are counted off flags the board
+  already draws for everyone, and a treasury is the one economic number it does not show.
+  `Battle`, `BattleView`, `BattleAnimator`, `BattleCommandPipeline`, `BattleTargeting`,
+  `BattleHandoff` and `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private
   helper, and the runner drives AI turns through `Battle`'s own named entry points. The rule
   authority itself is `core/rules/vision.gd` — its rationale is in `docs/design_record.md`.
 - **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`

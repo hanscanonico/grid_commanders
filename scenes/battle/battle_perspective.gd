@@ -93,6 +93,19 @@ func can_see_cell(cell: Vector2i) -> bool:
 	return not _blacked_out and (not _game.fog_enabled or _visible_cells.has(cell))
 
 
+## Whether the viewer may read `team`'s bank — its own side's, and nobody else's.
+##
+## Funds are the one economic number the board does not already show: a side's
+## property count and the income it pays are read off flags every player can see,
+## while what is banked is private. It is here rather than at the sheet that
+## prints it for the same reason every other viewer question is — one adapter
+## answers who may see what, and a replay has nobody left to hide it from.
+func can_see_funds(team: int) -> bool:
+	if _omniscient:
+		return true
+	return not _blacked_out and _game.allied(team, _viewing_team)
+
+
 ## Whether the viewer may see `unit`, including doctrine and dive hiding.
 func can_see_unit(unit: Unit) -> bool:
 	if _omniscient:
