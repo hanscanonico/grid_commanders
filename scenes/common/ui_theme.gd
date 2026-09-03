@@ -476,6 +476,21 @@ static func hud_label(text: String, font_size: int, color: Color, display_face :
 	return label
 
 
+## 13000 -> "13,000". A quantity a player reads as a quantity — the top bar's
+## funds, the commander sheet's economy row — grouped so it is legible at a
+## glance. Here rather than on the bar that first needed it, for the reason the
+## HUD labels are: a number format defined twice is a number format that drifts,
+## and the sheet's strip claims to be the docked bars' own dress.
+static func thousands(value: int) -> String:
+	var digits := str(absi(value))
+	var out := ""
+	for i in digits.length():
+		if i > 0 and (digits.length() - i) % 3 == 0:
+			out += ","
+		out += digits[i]
+	return ("-" if value < 0 else "") + out
+
+
 ## The headline on a card that stops the board: bold Pixelify at the banner size,
 ## centred. The turn banner and the victory lockup are one recipe — the lockup
 ## calls itself the turn banner's card one size up.

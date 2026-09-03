@@ -129,7 +129,7 @@ func show_turn(
 	)
 	_faction_label.text = faction.to_upper()
 	_doctrine_label.text = doctrine
-	_funds_label.text = _thousands(funds)
+	_funds_label.text = UiTheme.thousands(funds)
 
 
 ## Lights the threat chip while the lens is up. Colour only — the text never
@@ -165,16 +165,3 @@ func _light(chip: Button, on: bool) -> void:
 func show_keys(legend: String) -> void:
 	if _keys_label != null:
 		_keys_label.text = legend
-
-
-## 13000 -> "13,000". The funds readout is the one number on this bar a player
-## reads as a quantity rather than an identifier, and grouping is what makes it
-## legible at a glance.
-static func _thousands(value: int) -> String:
-	var digits := str(absi(value))
-	var out := ""
-	for i in digits.length():
-		if i > 0 and (digits.length() - i) % 3 == 0:
-			out += ","
-		out += digits[i]
-	return ("-" if value < 0 else "") + out
