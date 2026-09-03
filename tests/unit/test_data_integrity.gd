@@ -128,6 +128,26 @@ func test_every_power_expires_at_one_of_the_two_points() -> void:
 		assert_has(expiries, int(co.power_duration), "%s's power expires at no known point" % co.id)
 
 
+## `unload_terrain` is the one id-shaped field whose wrong value is not a typo
+## but a real terrain in the wrong place: &"reef" resolves, so the lint above is
+## silent, and the Lander then sails with nowhere it may put an army down.
+## Asked of the movement data rather than a terrain list, because that is what
+## "ashore" means here — a landing craft ties up on ground its own cargo could
+## stand on, and DropCommand puts the rider down over the same `is_passable`.
+func test_every_transport_unloads_from_ground_its_cargo_can_stand_on() -> void:
+	for type in unit_db.all():
+		for terrain_id: StringName in type.unload_terrain:
+			var terrain := terrain_db.by_id(terrain_id)
+			for cargo_class: StringName in type.cargo_classes:
+				assert_true(
+					terrain != null and terrain.is_passable(cargo_class),
+					(
+						"%s unloads from '%s', which its %s cargo cannot stand on"
+						% [type.id, terrain_id, cargo_class]
+					)
+				)
+
+
 # --- the walk ----------------------------------------------------------------
 
 
