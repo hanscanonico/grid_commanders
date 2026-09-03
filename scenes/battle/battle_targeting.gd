@@ -36,13 +36,15 @@ func _init(battle: Battle, run_command: Callable, reopen_menu: Callable) -> void
 ## the menu rows the two lists unlock. One call rather than a fill and two
 ## questions: the Fire row and the Drop rows *are* what the lists are for, so
 ## nothing outside needs to see them.
+##
+## The perspective's refusal travels with the empty list rather than being
+## flattened into one, so a Fire row that cannot be pressed still says why.
 func arm(unit: Unit, path: Array[Vector2i]) -> Array[Dictionary]:
 	var dest: Vector2i = path[path.size() - 1]
-	_attack_targets = _battle.perspective.attackable_cells(unit, dest, path.size() > 1)
+	var fire := _battle.perspective.fire_targets(unit, dest, path.size() > 1)
+	_attack_targets = fire.cells
 	_drop_options = _battle.perspective.drop_options(unit, dest)
-	return BattleMenus.unit_actions(
-		_battle.game, unit, path, not _attack_targets.is_empty(), _drop_options
-	)
+	return BattleMenus.unit_actions(_battle.game, unit, path, fire.block, _drop_options)
 
 
 ## The Fire row: the cursor lands on the first target rather than where the move

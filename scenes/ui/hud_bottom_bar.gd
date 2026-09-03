@@ -29,6 +29,10 @@ signal fire_pressed
 ## the button, what a press means is Battle's.
 signal end_turn_pressed
 
+## The order line's one danger word: this unit cannot fire at anything until it
+## is resupplied.
+const ALARM_NO_AMMO := "NO AMMO"
+
 const CLASS_LABELS: Dictionary = {
 	TerrainType.FOOT: "Foot",
 	TerrainType.BOOT: "Boot",
@@ -78,6 +82,9 @@ var _charge_label: Label
 var _unit_data: Control
 var _unit_icon: TextureRect
 var _unit_name: Label
+## The dry-gun flag, its own Label because a Label carries one ink and the whole
+## point of this word is that it is not the ink the rest of the line is in.
+var _unit_alarm: Label
 var _unit_sub: Label
 var _pips: HpPips
 var _fuel_label: Label
@@ -202,6 +209,12 @@ func _build_unit(row: HBoxContainer) -> void:
 	data.add_child(head)
 	_unit_name = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	head.add_child(_unit_name)
+	# Before the order line rather than after it: the line is the row's expanding
+	# child, so a flag placed behind it would be parked against the terrain chip
+	# half a bar away from the unit it is about.
+	_unit_alarm = UiTheme.hud_label(ALARM_NO_AMMO, UiTheme.SIZE_STAT, UiTheme.DANGER)
+	_unit_alarm.visible = false
+	head.add_child(_unit_alarm)
 	_unit_sub = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	_unit_sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_unit_sub.clip_text = true
@@ -336,6 +349,8 @@ func show_tile(
 func unit_order_line() -> String:
 	if not _built or not _unit_data.visible:
 		return ""
+	if _unit_alarm.visible:
+		return "%s · %s" % [_unit_alarm.text, _unit_sub.text]
 	return _unit_sub.text
 
 
@@ -361,6 +376,7 @@ func _show_unit(
 	var waited := unit.acted and unit.team == active_team
 	_unit_icon.material = UnitSprite.acted_scrim() if waited else null
 	_unit_name.text = unit.type.display_name
+	_unit_alarm.visible = _out_of_ammo(unit)
 	_unit_sub.text = _order_line(
 		unit, carrying, waited, allegiance, range_band, cover_stars, tile_stars
 	)
@@ -371,6 +387,18 @@ func _show_unit(
 		_ammo_label.text = "MAIN %d/%d · MG ∞" % [unit.ammo, unit.type.max_ammo]
 	else:
 		_ammo_label.text = "AMMO %d/%d" % [unit.ammo, unit.type.max_ammo]
+
+
+## Whether every weapon this unit owns has run dry — the same fact the refused
+## Fire row says "No ammo" for, and the reason a full-looking tank is about to
+## turn a shot down. Asked of the chart, which owns weapon choice and its stock:
+## a Tank at zero still fires its infinite machine gun, so counting `unit.ammo`
+## here would call it empty, and a unit carrying no stocked weapon at all — an
+## APC, an infantry squad — has nothing to run out of.
+func _out_of_ammo(unit: Unit) -> bool:
+	if chart == null or unit.type.max_ammo <= 0:
+		return false
+	return not chart.has_ready_weapon(unit.type.id, unit.ammo, unit.type.max_ammo)
 
 
 ## Movement class first, then whatever the unit is currently doing — the order

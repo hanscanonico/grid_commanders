@@ -24,10 +24,24 @@ extends RefCounted
 
 const CANCEL := {"id": &"cancel", "label": "Cancel"}
 
+## What a refused Fire row says after its verb. `UNARMED` is deliberately absent:
+## a transport has no shot to explain, so it keeps getting no row at all, while
+## the other three are the confusions this table exists for — an artillery whose
+## Fire row vanished the moment it moved, and a tank that "refuses to shoot".
+const FIRE_REFUSALS: Dictionary = {
+	BattlePerspective.FireBlock.MOVED: "Moved",
+	BattlePerspective.FireBlock.NO_AMMO: "No ammo",
+	BattlePerspective.FireBlock.NO_TARGET: "No target",
+}
+
 
 ## Rows for a unit whose move preview has finished on `dest` (the last cell of
-## `path`). `can_fire` and `drop_options` are passed in because working them
+## `path`). `fire_block` and `drop_options` are passed in because working them
 ## out needs the viewing team's fog, which is Battle's to know and not ours.
+##
+## A refused Fire row is shown greyed rather than dropped. Removing it answered
+## "why can this not shoot?" by deleting the question, which is the one thing a
+## player cannot read; the row that stays names the reason the perspective gave.
 ##
 ## Each droppable passenger gets its own row — a Lander can hold two and only one
 ## of them might fit the ground beside it — so a row names the unit it unloads and
@@ -36,13 +50,16 @@ static func unit_actions(
 	game: GameState,
 	unit: Unit,
 	path: Array[Vector2i],
-	can_fire: bool,
+	fire_block: BattlePerspective.FireBlock,
 	drop_options: Array[BattlePerspective.DropOption]
 ) -> Array[Dictionary]:
 	var dest: Vector2i = path[path.size() - 1]
 	var actions: Array[Dictionary] = []
-	if can_fire:
+	if fire_block == BattlePerspective.FireBlock.NONE:
 		actions.append({"id": &"fire", "label": "Fire"})
+	elif FIRE_REFUSALS.has(fire_block):
+		var reason: String = FIRE_REFUSALS[fire_block]
+		actions.append({"id": &"fire", "label": "Fire · %s" % reason, "disabled": true})
 	if CaptureCommand.new(unit, path).validate(game) == "":
 		actions.append({"id": &"capture", "label": "Capture"})
 	for i in drop_options.size():
