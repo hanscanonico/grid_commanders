@@ -36,9 +36,11 @@ func test_a_river_meeting_the_sea_flows_into_it() -> void:
 	assert_eq(_mask(rows, Vector2i(1, 1)), N)
 
 
-func test_a_river_flows_into_a_port() -> void:
-	var rows: Array[String] = ["...", "P~.", "..."]
-	assert_eq(_mask(rows, Vector2i(1, 1)), W)
+## A port's cell is painted as plains under a building, so its quay is ground
+## the channel ends against rather than water it empties into.
+func test_a_river_stops_at_a_port_quay() -> void:
+	var rows: Array[String] = [".~.", "P~.", "..."]
+	assert_eq(_mask(rows, Vector2i(1, 1)), N)
 
 
 ## A run of river with land all round it — first_steps' pond — is still river,
@@ -91,6 +93,14 @@ func test_the_board_rim_grows_no_shoreline() -> void:
 	assert_eq(_mask(rows, Vector2i(1, 0)), S)
 	assert_eq(_family(rows, Vector2i(0, 0)), TerrainAutotiles.Family.SEA)
 	assert_eq(_mask(rows, Vector2i(0, 0)), 0)
+
+
+## Same cell, same reading as the shoal's: a quay stands on the plains the
+## board draws under it, so the coast sheet has an edge to break on.
+func test_the_sea_shores_against_a_port_quay() -> void:
+	var rows: Array[String] = ["SSS", "PSS", "SSS"]
+	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.COAST)
+	assert_eq(_mask(rows, Vector2i(1, 1)), W)
 
 
 func test_a_reef_keeps_its_base_tile_and_breaks_no_coastline() -> void:
@@ -157,3 +167,10 @@ func test_a_shoal_surfs_against_the_sea_but_not_its_own_run() -> void:
 	# Surf on the seaward edge only: the neighbouring shoal and the land are dry.
 	assert_eq(_mask(rows, Vector2i(0, 1)), N)
 	assert_eq(_mask(rows, Vector2i(1, 1)), N)
+
+
+## The board paints a port's ground as plains, so the water breaks on it like
+## any other shore — otherwise the sea runs seamlessly into a quay on grass.
+func test_a_shoal_surfs_against_a_port_quay() -> void:
+	var rows: Array[String] = ["SSS", "P_S", "SSS"]
+	assert_eq(_mask(rows, Vector2i(1, 1)), N | E | S)
