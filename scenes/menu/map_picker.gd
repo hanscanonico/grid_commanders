@@ -623,7 +623,7 @@ func _ask_manage() -> void:
 func _rename(map: MapData, wanted: String, notice: Label) -> void:
 	var error := UserMaps.rename(_user_name_of(map), wanted)
 	if error != "":
-		notice.text = error
+		await _refuse(notice, error)
 		return
 	_close_confirm()
 	await _reload_on(UserMaps.slug(wanted))
@@ -636,7 +636,7 @@ func _duplicate(map: MapData, notice: Label) -> void:
 	var copy := UserMaps.copy_name(_user_name_of(map))
 	var error := UserMaps.copy_to(_user_name_of(map), copy)
 	if error != "":
-		notice.text = error
+		await _refuse(notice, error)
 		return
 	_close_confirm()
 	await _reload_on(copy)
@@ -645,7 +645,7 @@ func _duplicate(map: MapData, notice: Label) -> void:
 func _remove(map: MapData, notice: Label) -> void:
 	var error := UserMaps.delete(_user_name_of(map))
 	if error != "":
-		notice.text = error
+		await _refuse(notice, error)
 		return
 	_close_confirm()
 	await _reload()
@@ -670,14 +670,24 @@ func _open_page(title: String, note: String) -> VBoxContainer:
 	return body
 
 
-## Where a refusal lands. Both pages carry one and every action writes to it, so
-## a delete the disk would not take says so where it was asked for — the sentence
-## `UserMaps` composed is the whole of it, since nothing here knows better.
+## Where a refusal lands. Rename, Duplicate and Delete each write theirs to the
+## page they were pressed on, so a delete the disk would not take says so where
+## it was asked for — the sentence `UserMaps` composed is the whole of it, since
+## nothing here knows better.
 func _notice_line(body: VBoxContainer) -> Label:
 	var notice := UiKit.page_note("")
 	notice.add_theme_color_override("font_color", UiTheme.DANGER)
+	notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_child(notice)
 	return notice
+
+
+## A refusal on the page that asked for it, and the shelf re-dealt behind it. The
+## action did not happen, but the board `UserMaps` says is not there was deleted
+## outside the game, so the row the player is reading the refusal over has to go.
+func _refuse(notice: Label, error: String) -> void:
+	notice.text = error
+	await _reload()
 
 
 ## The page's footer: the actions it was opened for, then the way out. The way out
