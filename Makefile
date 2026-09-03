@@ -161,7 +161,8 @@ balance-sim:
 # docs/balance_sim.md has the flags, the merge bar and the measured scaling curve.
 # The pool drives either preset over that engine: `--preset=arena` plays the
 # shards with tools/run_ai_arena.gd instead, whose sides are profile paths and
-# whose shards merge as JSON.
+# whose shards merge as JSON. It resumes on the content too — `<out>/stamp.json`
+# — so one directory aimed at two commits replays rather than re-reporting.
 POOL ?=
 balance-pool:
 	GODOT="$(GODOT)" tools/balance_pool.py $(POOL)
@@ -183,7 +184,7 @@ ai-arena:
 # Score a finished arena run: one row per candidate, in each pool (arena plan
 # AR4). Reads records and plays nothing, so re-scoring a run after the fitness
 # function moves costs no matches. docs/ai_arena.md is the function it applies.
-#   make arena-report REPORT="--matches=reports/ai_arena/anchors_training"
+#   make arena-report REPORT="--matches=reports/ai_arena/anchors_training_<sha>"
 REPORT ?=
 arena-report:
 	$(call require-godot)
@@ -199,15 +200,21 @@ arena-report:
 # the grep is for.
 ARENA_POOL ?= training
 WORKERS ?= 6
+# The run directory carries the commit, because the pool resumes: a shard whose
+# marker is on disk is skipped, so one directory across two commits hands back
+# yesterday's ladder as today's calibration. The pool's content stamp refuses
+# that too, and this is what keeps the two commits' rows apart in the first place.
+POOL_SHA = $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+ANCHORS = ai_arena/anchors_$(ARENA_POOL)_$(POOL_SHA)
 arena-anchors:
 	$(call require-godot)
 	@plan=$$($(GODOT) --headless --path . -s res://tools/run_arena_plan.gd -- \
 		--pool=$(ARENA_POOL) | grep '^--maps=') && \
 	echo "arena: $(ARENA_POOL) pool -> $$plan" && \
 	GODOT="$(GODOT)" tools/balance_pool.py --preset=arena $$plan \
-		--batch=4 --workers=$(WORKERS) --out=ai_arena/anchors_$(ARENA_POOL) && \
+		--batch=4 --workers=$(WORKERS) --out=$(ANCHORS) && \
 	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- \
-		--matches=reports/ai_arena/anchors_$(ARENA_POOL)
+		--matches=reports/$(ANCHORS)
 
 # Search a block of planner dials against the fixed anchors (arena plan AR5).
 # The loop over the three instruments above — propose a vector, play it through

@@ -421,8 +421,10 @@ make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seed
 | `--workers=` | Processes at a time (default `min(6, cores)` — 6 is the measured peak below) |
 | `--out=` | Run directory, **relative to `reports/`**, default `reports/balance_pool/<spec>` |
 | `--timeout=` | Seconds per shard, default 3600 |
-| `--dry-run` | Resolve the spec, print the shard plan, and stop |
-| `--self-check` | Run the `--out`, resume-key and merge rules over their cases and stop |
+| `--refresh` | Replay every shard: the markers on disk are deleted before a match is played |
+| `--reuse-stale` | Report shards whose content stamp moved anyway — the escape hatch for a commit that touched nothing a match reads. It keeps the old stamp, so the next run says the same thing again |
+| `--dry-run` | Resolve the spec, print the shard plan and what the stamp says about the markers on disk, and stop |
+| `--self-check` | Run the `--out`, resume-key, content-stamp and merge rules over their cases and stop |
 
 **Everything a run writes lands under `reports/`, and a path that would leave it
 is refused before a match is played.** That rule is every instrument's, not just
@@ -465,6 +467,25 @@ resume key: the same sweep asked for twice finds its own work. **A shard is keye
 on the arguments it was played with**, digest and all, so the same directory
 asked for a different sweep — `--out=mine --days=20`, then `--out=mine
 --days=100` — replays rather than handing back the answer to the other question.
+
+**Resume is keyed on the content too, not only on the spec.** An argument list
+cannot tell that `data/ai/default.tres` was retuned underneath it, so a run also
+writes `<out>/stamp.json`: the SHA-1 of `data/rules.tres`, of
+`data/damage_chart.tres` and of every side that names a file (the arena's
+profiles; a Lab side is `<commander>:<tier>` and names none), beside `HEAD` and
+what is uncommitted under `core/ ai/ data/`. A run whose stamp does not match the
+one on disk names each thing that moved and replays every shard — the markers are
+**deleted before the new stamp is written**, so a replay killed half-way leaves
+no marker its own stamp would vouch for, and the rerun this tool asks you to make
+picks up only what it actually played. The stamp answers for the whole directory,
+so what a content change deletes is every marker under it and not only the ones
+today's plan names: `--maps=a,b` yesterday and `--maps=a` today would otherwise
+leave `b` sitting under today's stamp. The stamp itself is written whole or not at
+all, for the same reason a marker is. `--reuse-stale` reports them anyway and
+keeps the old stamp; `--refresh` replays regardless. A directory with no stamp at
+all predates this and is trusted once, and a file only the new run names — the
+arena search's next wave of candidates in the same pool directory — is not a
+change. `--dry-run` prints what the stamp says without playing anything.
 
 The driver **aggregates nothing**. It expands the matrix, runs processes and
 concatenates their rows in plan order, because a merged summary would be a second
