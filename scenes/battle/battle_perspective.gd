@@ -93,6 +93,34 @@ func can_see_cell(cell: Vector2i) -> bool:
 	return not _blacked_out and (not _game.fog_enabled or _visible_cells.has(cell))
 
 
+## Whether the viewer may read `team`'s bank — its own seat's, and no other's,
+## an ally's included. Funds are infrastructure, which a side shares sight and
+## purpose but never any of (maps plan D2), so the army fighting beside you is
+## still not owed your treasury.
+func can_see_funds(team: int) -> bool:
+	if _omniscient:
+		return true
+	return not _blacked_out and team == _viewing_team
+
+
+## Whether the viewer may be told what `team` holds — the properties it owns and
+## the income they pay.
+##
+## With fog off every flag on the board is drawn for everyone, so the count says
+## nothing the board is not already saying. Under fog it would: a property
+## captured inside the viewer's fog keeps its last-seen colour until they scout
+## it, which is exactly the enemy expansion and income `BattleView.repaint_property`
+## refuses to paint through, and a live count would announce the same capture in
+## numerals. So under fog only the viewer's own side is counted — sight is unioned
+## over a side, so an ally's flags are already drawn for them.
+func can_see_holdings(team: int) -> bool:
+	if _omniscient:
+		return true
+	if _blacked_out:
+		return false
+	return not _game.fog_enabled or _game.allied(team, _viewing_team)
+
+
 ## Whether the viewer may see `unit`, including doctrine and dive hiding.
 func can_see_unit(unit: Unit) -> bool:
 	if _omniscient:

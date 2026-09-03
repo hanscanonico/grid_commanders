@@ -612,7 +612,7 @@ func _check_sheet_scrolls(sheet: CommanderInfoSheet) -> void:
 	var picks: Dictionary = {}
 	for team in [1, 2, 3, 4]:
 		picks[team] = _battle.commander_db.by_id(FOUR_ARMY_PROBE_COMMANDERS[team - 1])
-	sheet.open(picks)
+	sheet.open(picks, _battle.game, _battle.perspective)
 	await _settle_layout()
 	# The 2x2 is where the footer row is likeliest to crowd the cards, so it is
 	# measured here as well as on the pair this scenario photographs.

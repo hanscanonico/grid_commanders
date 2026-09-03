@@ -1,20 +1,29 @@
 class_name CommanderInfoSheet
 extends Control
 ## The in-battle commander reference: every army's full card, opened from the
-## battle menu rather than a hover tooltip (readiness plan G3). Showing them all
-## is deliberate and safe — a commander's identity and doctrine are match
-## metadata, not a fog-hidden unit position, so nothing here leaks what the viewer
-## cannot see on the board.
+## battle menu rather than a hover tooltip (readiness plan G3). Showing every
+## commander is deliberate and safe — an identity and a doctrine are match
+## metadata, not a fog-hidden unit position. The economy row under each card is
+## the part that could leak, so every number on it is gated: BattlePerspective
+## says whether this viewer may be told what a seat holds and what it banks, and
+## a seat it withholds prints `--` rather than a figure.
 ##
 ## One card per seat the board dealt, laid out two to a row and ordered so allies
 ## sit together (four-players plan D5): a duel is the single row it always was, a
 ## 2v2 is a pair over a pair.
 ##
-## Reuses the same CommanderCard the selection page does; the only thing new is a
-## faction header over each, named and tinted by the resolved side identity (a
-## mirror shows the borrowed classic). Pure presentation — it reads the match's
-## CommanderTypes and closes itself; Battle owns when it opens and blocks board
-## input while it is up.
+## Reuses the same CommanderCard the selection page does; what is added around it
+## is a faction header, named and tinted by the resolved side identity (a mirror
+## shows the borrowed classic), and the seat's economy under it. Pure presentation
+## — it reads the match's CommanderTypes and closes itself; Battle owns when it
+## opens and blocks board input while it is up.
+##
+## The economy row is why this sheet takes a GameState and a perspective at all:
+## on a four-army board "who is winning" had no readout anywhere, the top bar
+## naming only the funds of whoever holds the turn. What it may answer is asked of
+## BattlePerspective — `can_see_holdings` for the properties and their income,
+## `can_see_funds` for the bank — rather than a second opinion being formed in a
+## layout function.
 
 signal closed
 
@@ -29,6 +38,11 @@ const SCROLL_ACTIONS: Dictionary = {
 	&"ui_down": 1,
 }
 
+## What a reading the viewer may not be told prints instead of a number. Not a
+## zero: an army with nothing left and an army you cannot audit are opposite
+## readings of the same match.
+const WITHHELD := "--"
+
 var _built := false
 ## The card grid; columns are rebuilt per match, because how many there are is the
 ## board's answer and not this scene's.
@@ -36,7 +50,15 @@ var _cards: GridContainer
 ## One scroll frame per open card, in layout order — each holds exactly its card,
 ## which is what `layout_error` measures the shown slice against.
 var _frames: Array[ScrollContainer] = []
+## The economy strips, in the same order: `layout_error` holds each to the card's
+## reading width, since a strip wider than the card is what would push the 2x2
+## off a small screen.
+var _strips: Array[Control] = []
 var _close_button: Button
+## The match the open sheet is reading, and the viewer policy it reads funds
+## through. Both live for one open() and are only ever read by the economy row.
+var _game: GameState
+var _perspective: BattlePerspective
 ## One scroll line per directional gesture; see DirectionalInput.
 var _dirs := DirectionalInput.new()
 
@@ -51,10 +73,20 @@ func _ready() -> void:
 ##
 ## `commanders_by_team` is the match's picks and `sides` its grouping — both taken
 ## whole rather than as a pair, because how many armies play is the board's answer
-## (four-players plan D1) and how they group is the match's.
-func open(commanders_by_team: Dictionary, sides: Dictionary = {}) -> void:
+## (four-players plan D1) and how they group is the match's. `game` and
+## `perspective` are the economy row's, and a seat the state does not know holds
+## nothing and banks nothing the viewer may read — zeros and a withheld bank —
+## rather than refusing to lay out.
+func open(
+	commanders_by_team: Dictionary,
+	game: GameState,
+	perspective: BattlePerspective,
+	sides: Dictionary = {}
+) -> void:
 	if not _built:
 		_build()
+	_game = game
+	_perspective = perspective
 	# The same resolver the board uses, so a mirror match shows the borrowed
 	# classic here too: two Iron doctrines read "IRON DOMINION" over slate and blue.
 	var identity := SideIdentity.resolve(commanders_by_team)
@@ -62,6 +94,7 @@ func open(commanders_by_team: Dictionary, sides: Dictionary = {}) -> void:
 		_cards.remove_child(child)
 		child.queue_free()
 	_frames.clear()
+	_strips.clear()
 	for team: int in _seat_order(commanders_by_team, sides):
 		_titled_card(_cards, identity, team).bind(commanders_by_team.get(team))
 	show()
@@ -192,6 +225,9 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_child(label)
 	column.add_child(header)
+	var strip := _economy_strip(team)
+	column.add_child(strip)
+	_strips.append(strip)
 
 	# Same bounded frame the select page gives its card: the card's height is
 	# content-driven, so it is the one child allowed to run out of room, and the
@@ -217,6 +253,44 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	return card
 
 
+## What this seat is worth, as far as this viewer may be told: the properties it
+## holds, the income they pay each turn, and its bank.
+##
+## A strip rather than a fourth block inside CommanderCard, because the card is
+## also the selection page's and the gallery's, where a match's economy does not
+## exist. Every number is asked of the authority that owns it — properties of the
+## state, income of TurnRules, who may read either of BattlePerspective — so this
+## only lays them out. The two gates differ: a bank is the viewer's own seat's
+## alone, while holdings are public with fog off and own-side-only under it.
+func _economy_strip(team: int) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var holdings := _perspective.can_see_holdings(team)
+	var funds: int = _game.funds.get(team, 0)
+	_reading(row, "PROPERTIES", _figure(_game.properties_of(team).size(), holdings), UiTheme.WHITE)
+	_reading(row, "INCOME", _figure(TurnRules.income_for(_game, team), holdings), UiTheme.WHITE)
+	_reading(row, "FUNDS", _figure(funds, _perspective.can_see_funds(team)), UiTheme.FUNDS_INK)
+	var strip := PanelContainer.new()
+	strip.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.SLATE_800))
+	strip.add_child(UiKit.pad(row, 5, 2))
+	return strip
+
+
+## One number as the strip prints it, or WITHHELD when the viewer may not be told
+## it. Grouped through UiTheme so a figure here reads exactly as the same figure
+## on the top bar: 13000 is "13,000" on both.
+static func _figure(value: int, readable: bool) -> String:
+	return UiTheme.thousands(value) if readable else WITHHELD
+
+
+## One "CAPTION value" pair on that strip, in the docked bars' own dress so the
+## sheet's numbers read as the same instruments the top bar prints.
+func _reading(row: HBoxContainer, caption: String, value: String, ink: Color) -> void:
+	row.add_child(UiTheme.hud_label(caption, UiTheme.SIZE_STAT, UiTheme.INK_3))
+	row.add_child(UiTheme.hud_label(value, UiTheme.SIZE_STAT, ink))
+
+
 ## Why the open sheet is not showing what it was opened with, or "" when it is.
 ##
 ## A read off the live controls rather than a look at the frame, the way the
@@ -225,7 +299,10 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 ## collapsed columns wrote a perfectly healthy PNG and passed (COM-47 review).
 ## The slice each card is *shown* through is the measure — a card sized normally
 ## inside a zero-tall scroll frame renders into nothing — and one that cannot even
-## show its portrait band is showing nothing worth photographing.
+## show its portrait band is showing nothing worth photographing. Width is the
+## other way this row breaks: the column is the card's reading width by design, so
+## an economy strip asking for more widens both columns and walks the 2x2 off a
+## small screen, which a frame taken on a desktop viewport would not show either.
 func layout_error(expected_cards: int) -> String:
 	if _frames.size() != expected_cards:
 		return (
@@ -238,6 +315,13 @@ func layout_error(expected_cards: int) -> String:
 			return (
 				"a commander card is shown %.0fpx tall, less than its %dpx portrait band"
 				% [shown, CommanderCard.PORTRAIT_H]
+			)
+	for strip in _strips:
+		var needed := strip.get_combined_minimum_size().x
+		if needed > CommanderCard.READING_WIDTH:
+			return (
+				"an economy strip needs %.0fpx, over the card's %dpx reading width"
+				% [needed, CommanderCard.READING_WIDTH]
 			)
 	return ""
 

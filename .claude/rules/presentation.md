@@ -587,8 +587,18 @@ shape lives here, where it loads with the files it governs.
 
 - **`BattlePerspective` is the one adapter from the vision rules to viewer policy.**
   `scenes/battle/battle_perspective.gd` owns viewing team plus hot-seat blackout, firing geometry
-  delegated to `AttackRange`, typed transport drop options, and how much of a unit's reach and fire
-  ring an overlay may show (that rule is the range-preview plan's, above). `Battle`, `BattleView`,
+  delegated to `AttackRange`, typed transport drop options, how much of a unit's reach and fire
+  ring an overlay may show (that rule is the range-preview plan's, above), and — since the
+  commander sheet grew a per-seat economy row — **both economy readings, which gate differently**.
+  `can_see_funds` is the viewer's **own seat and no other, an ally's included**: funds are
+  infrastructure, which a side never shares (maps D2). `can_see_holdings` covers the property count
+  and the income it pays: **public with fog off**, where every flag on the board is drawn for
+  everyone, and **the viewer's own side only under fog**, because a property captured inside the
+  viewer's fog keeps its last-seen colour (`BattleView.repaint_property` refuses to paint the flip
+  through, and the tile card falls back to the last-seen owner) and a live count would announce in
+  numerals the expansion the board is hiding. So **a fogged property contributes nothing**: the
+  seat's whole strip reads `--` rather than a partial total dressed as a full one, an ally's
+  holdings being readable only because sight is unioned over the side. `Battle`, `BattleView`,
   `BattleAnimator`, `BattleCommandPipeline`, `BattleTargeting`, `BattleHandoff` and
   `BattleScenarioDriver` ask it; none re-derives visibility or reaches through a sibling's private
   helper, and the runner drives AI turns through `Battle`'s own named entry points. The rule
