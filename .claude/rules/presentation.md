@@ -282,6 +282,31 @@ forms named in the root index are in `docs/design_record.md`.
   from the `BattleStyle` the result's own weapon slot names through `BattleStyleDB.shared()` so the
   cut-in and the board read one registry. **It obeys the cut-in's fog rule, both combatants
   visible**, and Instant draws nothing.
+  **The board moments that used to snap got their flourishes (animation-frames S7, 2026-09-03)**,
+  and every one hangs off a seam that already existed. **`MuzzleFlash.draw_star` is the one star
+  the board draws** — the shot's flash, `scenes/battle/death_blast.gd` (`DeathBlast`) over a kill
+  and `CapturePips`' flip flash all pose it, so nothing holds a second opinion about how thick an
+  outlined mark is. `DeathBlast` and `scenes/battle/damage_callout.gd` (`DamageCallout`) are dumb
+  in the same idiom: **the tint and the amount are the `CombatResult`'s own weapon slot and
+  snapshot** (`BattleStyleDB.shared().for_weapon`, `defender_hp_before − defender_hp_after`),
+  never re-decided, and both hang off `animate_combat`'s **existing** cut-in-gating branch rather
+  than a second visibility condition — the map path's number exists because the cut-in prints its
+  own and the board never did. Fog is `perspective.can_see_unit` on both combatants, the muzzle
+  flash's rule again. **The flip flash rides `BattleView.property_flipped`**, emitted by
+  `repaint_property` behind its `can_see_cell` early return, which is what honours the fog-deferred
+  path: a capture finished out of sight flashes when the viewer scouts it, not when the sim
+  recorded it. `BattleAnimator` poses `CapturePips` for that flash directly, so the pips are the
+  one overlay node with two drivers — `BattleOverlays.show_capture_pips` for the progress badges
+  (D3/D4 above, unchanged), the animator for the flash — and it runs one tween per cell, since a
+  single repaint pass can flip many properties at once. **Cargo goes down with its transport**:
+  `BattleView.drop_cargo_of` parts with the riders as the hull's own fade begins, where
+  `sync_sprites` used to free them with none a whole fade later; the cut-in path pays the same debt
+  through `sync_sprites`' new fade argument, the cut-in having shown no rider dying. **Every new duration is the tier's** —
+  `GameSpeed.build_rise_seconds()` and `flag_flip_seconds()` — and every new tween short-circuits
+  at `seconds <= 0`, which is the whole of Instant here; the acted scrim's `fade` uniform and the
+  HP badge's punch read `Settings.speed.instant` directly instead, `refresh()` having no
+  animator-threaded duration to take (`UnitSprite.SCRIM_FADE_SECONDS` states it). All of it is
+  fire-and-forget: **the pipeline's apply path gains no `await`**.
   **The fifth slice is the 64x96 unit cell** — `UnitSprite.SPRITE_H` is 96 with every vertical
   landmark measured up from the cell's **bottom** edge, so the extra rows are sky and an unraised
   unit is byte-identical. **The headroom is spent on MASS, not height** (`docs/density_128.md`), and
