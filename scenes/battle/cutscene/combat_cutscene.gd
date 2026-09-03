@@ -141,6 +141,11 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 	# there is nothing for it to be shooting with.
 	_atk.weapon_label = String(_atk_style.label)
 	_def.weapon_label = String(_def_style.label) if result.countered else ""
+	# And the cover each half fought with, asked of the authority the damage
+	# formula asks — the plate would otherwise promise a flier the ground's stars
+	# and then show it taking the damage of a unit standing on nothing.
+	_atk.cover_stars = _cover_of(attacker)
+	_def.cover_stars = _cover_of(defender)
 	_atk.hp_shown = result.attacker_hp_before
 	_def.hp_shown = result.defender_hp_before
 	_squads(_atk, result.attacker_hp_before, result.attacker_hp_after, result.attacker_died)
@@ -197,6 +202,13 @@ func _paving_for(of: TerrainType) -> TerrainType:
 ## ground the shot was actually taken from, not the one it started the turn on.
 func _terrain_at(cell: Vector2i) -> TerrainType:
 	return view.map.terrain_at(cell)
+
+
+## The cover a unit gets where it is standing: CombatResolver's, the one answer
+## the formula and the AI planner both price, so the plate cannot promise defence
+## the shot beside it refuses (HudBottomBar reads it for the same reason).
+func _cover_of(unit: Unit) -> int:
+	return CombatResolver.cover_stars(view.game, unit, unit.cell)
 
 
 ## How long this exchange runs: the beat sheet's own end.
