@@ -3,28 +3,15 @@ extends GutTest
 ## river or shoal cell wears. Split from test_terrain_autotiles.gd so neither
 ## suite sits over the public-method ceiling; the rules are one authority's,
 ## TerrainAutotiles, and both files ask only its statics.
+##
+## The beat that swells this water — the sea's, the river's flow and the
+## shoal's foam (S9) — is `test_terrain_autotiles_beat.gd`, split out for the
+## same ceiling reason: this file's own logic tests already sit near it.
 
 const N := TerrainAutotiles.BIT_N
 const E := TerrainAutotiles.BIT_E
 const S := TerrainAutotiles.BIT_S
 const W := TerrainAutotiles.BIT_W
-
-## How much of the sea sheet a swell is allowed to move. Frame B is the same
-## water a beat later with its glints shifted, not a second sea: a regeneration
-## that redrew the surface would be a legibility question rather than a beat, and
-## the ruler reads frame A only.
-const GLINT_SHARE := 0.05
-
-var _opened_at: GameSpeed
-
-
-func before_each() -> void:
-	_opened_at = Settings.speed
-
-
-func after_each() -> void:
-	Settings.speed = _opened_at
-	BoardBeat.frozen = false
 
 
 func _map(rows: Array[String]) -> MapData:
@@ -159,96 +146,6 @@ func test_the_sea_sheet_is_cut_as_one_row_of_phases() -> void:
 	var variant := TerrainAutotiles.variant(map, open)
 	assert_eq(variant, TerrainAutotiles.phase(open, TerrainAutotiles.SEA_PHASES))
 	assert_has(cells, TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.SEA, variant))
-
-
-# --- the sea's beat ----------------------------------------------------------
-
-
-func test_the_two_sea_frames_are_cut_the_same() -> void:
-	var frame_a := _sea_sheet(0)
-	var frame_b := _sea_sheet(1)
-	assert_not_null(frame_a, "the sea sheet did not load")
-	assert_not_null(frame_b, "the sea sheet's frame B did not load")
-	assert_eq(frame_b.get_size(), frame_a.get_size(), "the two frames are different sizes")
-	# The beat re-points one texture on a source whose tiles are already
-	# registered, so the cut has to survive the swap: the same phases, at the
-	# same margin and separation, in the same sheet.
-	var phases := TerrainAutotiles.sheet_cells(TerrainAutotiles.Family.SEA).size()
-	assert_eq(phases, TerrainAutotiles.SEA_PHASES)
-	var margin := TerrainAutotiles.SHEET_MARGIN
-	var separation := TerrainAutotiles.SHEET_SEPARATION
-	var span := phases * (BattleView.TERRAIN_PX + separation) - separation
-	assert_eq(frame_b.get_width(), 2 * margin + span, "frame B holds other than three phases")
-	assert_eq(frame_b.get_height(), 2 * margin + BattleView.TERRAIN_PX, "frame B is another row")
-
-
-func test_frame_b_moves_the_glints_and_does_not_redraw_the_sea() -> void:
-	var frame_a := _sea_sheet(0)
-	var frame_b := _sea_sheet(1)
-	var moved := 0
-	for y in frame_a.get_height():
-		for x in frame_a.get_width():
-			if frame_a.get_pixel(x, y) != frame_b.get_pixel(x, y):
-				moved += 1
-	assert_gt(moved, 0, "the two frames are the same water, so there is no beat")
-	var pixels := frame_a.get_width() * frame_a.get_height()
-	assert_lt(
-		float(moved) / float(pixels),
-		GLINT_SHARE,
-		"%d of %d pixels moved: that is a redrawn sea rather than a swell" % [moved, pixels]
-	)
-
-
-func test_the_frame_a_readers_cannot_drift() -> void:
-	# The miniature and the legibility ruler ask for a sheet with no frame, and
-	# what they get has to stay the file every other surface has always read.
-	assert_eq(
-		TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SEA),
-		TerrainAutotiles.SHEET_PATHS[TerrainAutotiles.Family.SEA]
-	)
-	assert_eq(
-		TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SEA, 1), TerrainAutotiles.SEA_B_PATH
-	)
-	# Only the sea has a second frame; every other family answers its one sheet
-	# whatever it is asked, so no caller has to know which families animate.
-	for family: int in TerrainAutotiles.SHEET_PATHS:
-		if family == TerrainAutotiles.Family.SEA:
-			continue
-		assert_eq(
-			TerrainAutotiles.sheet_path(family, 1),
-			TerrainAutotiles.SHEET_PATHS[family],
-			"family %d grew a frame B" % family
-		)
-
-
-## The tier is named rather than inherited: this machine's stored preference may
-## be Instant, which is a still board and would pass this vacuously.
-func test_the_swell_alternates_on_its_own_cadence() -> void:
-	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
-	assert_eq(BoardBeat.frame(BoardBeat.SEA_MS, 0), 0, "the swell did not open on frame A")
-	assert_eq(BoardBeat.frame(BoardBeat.SEA_MS, BoardBeat.SEA_MS), 1, "the swell did not turn over")
-	assert_eq(
-		BoardBeat.frame(BoardBeat.SEA_MS, 2 * BoardBeat.SEA_MS), 0, "the swell did not come back"
-	)
-
-
-func test_a_pinned_capture_holds_frame_a() -> void:
-	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
-	BoardBeat.frozen = true
-	assert_eq(
-		BoardBeat.frame(BoardBeat.SEA_MS, BoardBeat.SEA_MS), 0, "a pinned capture read a beat"
-	)
-
-
-func test_instant_holds_frame_a() -> void:
-	Settings.speed = GameSpeed.by_id(&"instant")
-	assert_eq(BoardBeat.frame(BoardBeat.SEA_MS, BoardBeat.SEA_MS), 0, "Instant played the swell")
-
-
-func _sea_sheet(frame: int) -> Image:
-	var path := TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SEA, frame)
-	var texture := load(path) as Texture2D
-	return texture.get_image() if texture != null else null
 
 
 # --- shoals ------------------------------------------------------------------

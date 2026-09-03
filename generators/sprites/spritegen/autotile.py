@@ -97,6 +97,16 @@ ROAD_LIT = lighten(ROAD, 0.12)
 BANK_LIT = mix(BANK, SAND, 0.25)
 WATER_LIT = mix(WATER, WATER_LIGHT, 0.5)
 
+# The river's second time frame (S9): the same idiom `terrain.sea`'s
+# `SEA_GLINT_SLIDE` established, on the channel rather than the open sea. Four
+# atlas px is one board texel at the 4:1 rung — the sea's own reasoning, and
+# the same floor applies here: less than a texel is a re-tone the
+# nearest-filtered board can swallow, a texel is a move. The channel geometry
+# gives every streak enough clearance in its own arm that the slide needs no
+# wrap the way the sea's isotropic dash does — see `river_tile`.
+RIVER_FRAMES = 2
+RIVER_GLINT_SLIDE = 4
+
 
 def _closed_half(x: int, y: int, open_bit: int) -> bool:
     """Whether a pixel is past the joint centre on the side a one-connection
@@ -259,38 +269,46 @@ def _round_head(t: Image.Image, base: Image.Image, open_bit: int) -> None:
             px[x, y] = (*BANK, 255) if d <= _BANK_R else bp[x, y]
 
 
-def river_tile(mask: int, salt: int = 0) -> Image.Image:
+def river_tile(mask: int, salt: int = 0, frame: int = 0) -> Image.Image:
     """A river channel to each connected edge, banked and streaked to match
     its flow direction. `salt` shifts the streak placement so a run of
-    same-mask tiles doesn't chain its glints into a dashed line."""
+    same-mask tiles doesn't chain its glints into a dashed line.
+
+    `frame` is the time frame (S9, the sea's own idiom applied to the
+    channel): frame 0 is the tile as it has always been, byte for byte, and
+    frame 1 slides every flow streak `RIVER_GLINT_SLIDE` px along the arm it
+    streaks — the channel and its banks are drawn from `mask` alone and never
+    move.
+    """
     base = plains()
     t = base.copy()
     _shape_river(t, base, mask)
     shore = {BANK, POND_BANK, POND_BANK_DK, WATER}
     _edge_pass(t, lambda c: c in shore, BANK_DARK, GRASS_DARK, BANK_LIT)
     _edge_pass(t, lambda c: c == WATER, WATER_DARK, BANK_WET, WATER_LIT)
+    slide = frame * RIVER_GLINT_SLIDE
     if mask == 0:
-        _rect(t, 25, 30, 7, 2, WATER_LIGHT)
-        _rect(t, 34, 36, 5, 1, WATER_LIT)
+        _rect(t, 25 + slide, 30, 7, 2, WATER_LIGHT)
+        _rect(t, 34 + slide, 36, 5, 1, WATER_LIT)
         return t
     # flow streaks oriented along each arm, drifted per tile
     half = WATER_LIT
     d1 = int(h01(salt, 1, 45) * 10) - 5
     d2 = int(h01(salt, 2, 45) * 8) - 4
     if mask & W:
-        _rect(t, 5 + (d1 % 4), 27 + d2 // 2, 9, 2, WATER_LIGHT)
-        _rect(t, 8, 36 + d1 // 3, 7, 1, half)
+        _rect(t, 5 + (d1 % 4) + slide, 27 + d2 // 2, 9, 2, WATER_LIGHT)
+        _rect(t, 8 + slide, 36 + d1 // 3, 7, 1, half)
     if mask & E:
-        _rect(t, 47 + (d2 % 4), 27 - d1 // 3, 9, 2, WATER_LIGHT)
-        _rect(t, 46, 36 + d2 // 2, 7, 1, half)
+        _rect(t, 47 + (d2 % 4) + slide, 27 - d1 // 3, 9, 2, WATER_LIGHT)
+        _rect(t, 46 + slide, 36 + d2 // 2, 7, 1, half)
     if mask & N:
-        _rect(t, 27 + d1, 5 + (d2 % 4), 2, 9, WATER_LIGHT)
-        _rect(t, 36 + d2, 8, 1, 7, half)
+        _rect(t, 27 + d1, 5 + (d2 % 4) + slide, 2, 9, WATER_LIGHT)
+        _rect(t, 36 + d2, 8 + slide, 1, 7, half)
     if mask & S:
-        _rect(t, 27 + d2, 47 + (d1 % 4), 2, 9, WATER_LIGHT)
-        _rect(t, 36 + d1, 46, 1, 7, half)
+        _rect(t, 27 + d2, 47 + (d1 % 4) + slide, 2, 9, WATER_LIGHT)
+        _rect(t, 36 + d1, 46 + slide, 1, 7, half)
     # one glint in the joint
-    _rect(t, 29 + d1 // 2, 31 + d2 // 2, 4, 1, WATER_LIGHT)
+    _rect(t, 29 + d1 // 2 + slide, 31 + d2 // 2, 4, 1, WATER_LIGHT)
     return t
 
 
@@ -345,6 +363,15 @@ _SHORE_AMP = 5.0  # peak to trough of the waterline
 _SHORE_SALT = 206
 _SHORE_R = 7.0  # the radius the beach turns through at an outside corner
 _SIDE = {N: 0, E: 1, S: 2, W: 3}
+
+# The shoal's second time frame (S9), the sea's idiom on the foam rather than
+# the flow: the waterline itself (`_inland`'s `d`) never depends on `slide`,
+# so the sand/water boundary a frame draws is fixed by `mask` alone and only
+# the scallop `_foam_run` cuts into the surf band moves — one board texel,
+# `_draw_shore`'s own reasoning for why less would be invisible at the 4:1
+# rung.
+SHOAL_FRAMES = 2
+SHOAL_FOAM_SLIDE = 4
 
 
 def _shore_wobble(u: int, side: int) -> float:
@@ -403,7 +430,9 @@ def _foam_run(u: int, offset: int, run: int) -> bool:
     return offset <= u % 8 < offset + run + k * 2
 
 
-def _draw_shore(t: Image.Image, prof: dict[int, list[float]], beach: bool) -> None:
+def _draw_shore(
+    t: Image.Image, prof: dict[int, list[float]], beach: bool, slide: int = 0
+) -> None:
     """Paint the waterline `prof` describes: water, a one-pixel wet lip on the
     sand side of it, dry sand beyond, and foam breaking on the water side.
 
@@ -412,6 +441,10 @@ def _draw_shore(t: Image.Image, prof: dict[int, list[float]], beach: bool) -> No
     enclose the water and the sand is the ring. Either way only the half that
     is not the tile's own plate gets painted, so the sea keeps its glints and
     the beach keeps its grain.
+
+    `slide` (S9) offsets `_foam_run`'s position along the shore, which is the
+    ONLY thing it reads `u` for — `d`, which draws the water/sand boundary
+    itself, never sees it, so a caller sliding the foam moves no other pixel.
     """
     if not prof:
         return
@@ -430,9 +463,9 @@ def _draw_shore(t: Image.Image, prof: dict[int, list[float]], beach: bool) -> No
             else:
                 if beach:
                     px[x, y] = (*WATER, 255)
-                if d < snow_w and _foam_run(u, 0, 5):
+                if d < snow_w and _foam_run(u + slide, 0, 5):
                     px[x, y] = (*SNOW, 255)
-                elif d < snow_w + 1.0 and _foam_run(u, 2, 3):
+                elif d < snow_w + 1.0 and _foam_run(u + slide, 2, 3):
                     px[x, y] = (*foam_mix, 255)
 
 
@@ -461,17 +494,21 @@ def coast_tile(edges: int, corners: int = 0) -> Image.Image:
     return t
 
 
-def shoal_tile(edges: int, corners: int = 0) -> Image.Image:
+def shoal_tile(edges: int, corners: int = 0, frame: int = 0) -> Image.Image:
     """A beach tile: dry sand with surf along each seaward edge.
 
     `edges` marks which sides the water is on; `corners` carries the same
     bits for water that touches only diagonally (N->NE, E->SE, S->SW, W->NW),
     the mirror of `coast_tile`'s.
+
+    `frame` is the time frame (S9): frame 0 is the tile as it has always
+    been, byte for byte, and frame 1 shimmers the foam edge — see
+    `_draw_shore`'s `slide`.
     """
     if edges == 0:
         edges = S
     t = _ground(SAND, 7)
-    _draw_shore(t, _shore_profile(edges, 8.0), beach=True)
+    _draw_shore(t, _shore_profile(edges, 8.0), beach=True, slide=frame * SHOAL_FOAM_SLIDE)
 
     # diagonal-only water: a small pool in that corner, skipped when an
     # adjacent surf band already reaches it
@@ -509,6 +546,22 @@ def sheet(tiles: list[Image.Image], cols: int) -> Image.Image:
 def variant_sheet(builder, cols: int = 4) -> Image.Image:
     """All 16 masks of one builder on a labelled-by-position grid sheet."""
     return sheet([builder(mask) for mask in range(16)], cols)
+
+
+def rivers_sheet(frame: int = 0) -> Image.Image:
+    """The river's 16 connection variants, in mask order (S9).
+
+    `variant_sheet(river_tile)`'s own layout, with a time frame threaded
+    through every mask — frame 0 is that sheet byte for byte, and frame 1 is
+    the same 16 channels with their flow glints slid.
+    """
+    return sheet([river_tile(mask, frame=frame) for mask in range(16)], 4)
+
+
+def shoals_sheet(frame: int = 0) -> Image.Image:
+    """The shoal's 16 connection variants, in mask order, the same time-frame
+    contract as `rivers_sheet` (S9): frame 1 shimmers the foam edge alone."""
+    return sheet([shoal_tile(mask, frame=frame) for mask in range(16)], 4)
 
 
 def bridge_sheet() -> Image.Image:

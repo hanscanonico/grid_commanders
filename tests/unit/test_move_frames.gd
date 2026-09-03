@@ -147,11 +147,15 @@ func test_the_gait_beats_on_the_tier_being_played() -> void:
 
 ## A tier hurries the legs; it may not put them back on a cadence that shares a
 ## tick with the scenery, which is the anti-stutter rule below at every tier.
+## `test_board_beat.gd` is the exhaustive pairwise version of this same rule,
+## across all five of the board's cadences rather than the gait's own three.
 func test_every_tier_keeps_the_gait_off_the_other_cadences() -> void:
 	for id: StringName in [GameSpeed.DEFAULT_ID, &"quick", &"instant"]:
 		Settings.speed = GameSpeed.by_id(id)
 		var gait := BoardBeat.move_ms()
-		for other in [BoardBeat.AMBIENT_MS, BoardBeat.SEA_MS]:
+		for other in [
+			BoardBeat.AMBIENT_MS, BoardBeat.SEA_MS, BoardBeat.RIVER_MS, BoardBeat.SHOAL_MS
+		]:
 			assert_ne(other % gait, 0, "%s: the gait divides %d" % [id, other])
 			assert_ne(gait % other, 0, "%s: the gait is a multiple of %d" % [id, other])
 
@@ -191,7 +195,7 @@ func test_instant_opens_a_turn_with_no_delay() -> void:
 ## A walking unit, a parked one and the water must never turn over on the same
 ## tick, or the whole board blinks at once instead of moving.
 func test_the_cadences_share_no_tick() -> void:
-	for other in [BoardBeat.AMBIENT_MS, BoardBeat.SEA_MS]:
+	for other in [BoardBeat.AMBIENT_MS, BoardBeat.SEA_MS, BoardBeat.RIVER_MS, BoardBeat.SHOAL_MS]:
 		assert_ne(other % BoardBeat.MOVE_MS, 0, "the gait divides %d" % other)
 		assert_ne(BoardBeat.MOVE_MS % other, 0, "the gait is a multiple of %d" % other)
 

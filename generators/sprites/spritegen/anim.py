@@ -120,6 +120,20 @@ SEA_SHEETS: tuple[str, ...] = ("autotiles/sea.png", "autotiles/sea_b.png")
 # two-frame cycle at 1.8 s, about the period of the sea it is drawing.
 SEA_MS = 900
 
+# The river and shoal clips (S9): the sea's own idiom — a second sheet, only
+# the water's own highlight moving — extended to the other two water
+# families, written under the same autotile directory the sea's pair is.
+RIVER_SHEETS: tuple[str, ...] = ("autotiles/rivers.png", "autotiles/rivers_b.png")
+SHOAL_SHEETS: tuple[str, ...] = ("autotiles/shoals.png", "autotiles/shoals_b.png")
+# Milliseconds per frame for the river's flow and the shoal's foam. Neither
+# divides nor is divided by 500 (ambient), 160 (move) or 900 (sea) — nor by
+# each other, 700 and 1150 sharing no common tick either — so no pair of the
+# five animated clips ever turns over together. A river runs faster than the
+# open sea (a current reads livelier than a swell) and a shoal slower still
+# (a foam line breaking is the laziest of the three motions on the board).
+RIVER_MS = 700
+SHOAL_MS = 1150
+
 # The terrain families that ship phase variants, and the table each counts.
 # Named for the autotile sheet each family is drawn onto.
 _PHASE_TABLES = {
@@ -179,6 +193,8 @@ def _clips() -> dict[str, dict]:
         # POSE a unit outside the clip's own set draws, not a sheet family.
         "fire": _clip(FIRE_SHEETS, AMBIENT_MS, fallback="ambient"),
         "sea": _clip(SEA_SHEETS, SEA_MS),
+        "rivers": _clip(RIVER_SHEETS, RIVER_MS),
+        "shoals": _clip(SHOAL_SHEETS, SHOAL_MS),
         "move": _clip(
             MOVE_SHEETS,
             MOVE_MS,

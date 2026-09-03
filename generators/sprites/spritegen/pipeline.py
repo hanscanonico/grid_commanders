@@ -128,16 +128,23 @@ SHEETS: tuple[Output, ...] = (
     _units(_MOVE_D, Pose.MOVE_D),
     Output("terrain_atlas.png", _terrain_sheet, TILES_DIR),
     _autotiles("roads", partial(autotile.variant_sheet, autotile.road_tile)),
-    _autotiles("rivers", partial(autotile.variant_sheet, autotile.river_tile)),
     _autotiles("coast", partial(autotile.variant_sheet, autotile.coast_tile)),
-    _autotiles("shoals", partial(autotile.variant_sheet, autotile.shoal_tile)),
     _autotiles("woods", partial(autotile.variant_sheet, autotile.woods_tile)),
     _autotiles("bridges", autotile.bridge_sheet),
-    # Both sea time frames, named by the clip that plays them so the manifest
-    # and the files on disk cannot drift apart.
+    # Every animated family's time frames, named by the clip that plays them
+    # so the manifest and the files on disk cannot drift apart — the sea
+    # first, rivers and shoals beside it since S9.
     *(
         Output(name, partial(autotile.sea_sheet, frame), AUTOTILES_DIR)
         for frame, name in enumerate(anim.SEA_SHEETS)
+    ),
+    *(
+        Output(name, partial(autotile.rivers_sheet, frame), AUTOTILES_DIR)
+        for frame, name in enumerate(anim.RIVER_SHEETS)
+    ),
+    *(
+        Output(name, partial(autotile.shoals_sheet, frame), AUTOTILES_DIR)
+        for frame, name in enumerate(anim.SHOAL_SHEETS)
     ),
     _autotiles("plains", autotile.plains_sheet),
     _autotiles("mountain", autotile.mountain_sheet),

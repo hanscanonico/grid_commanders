@@ -418,7 +418,10 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `iso_buildings/<id>_<team>.png` | 30 property-building cells, review output the same way |
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
 | `preview_map.png` | an authored little battle map proving the sheet in context: the shipped maps' terrain mix, autotiled, phased by the game's own coordinate hash |
-| `autotiles/{roads,rivers,coast,shoals,woods}.png` | 16-variant connection sheets (see below) |
+| `autotiles/{roads,coast,woods}.png` | 16-variant connection sheets (see below) |
+| `autotiles/rivers.png`, `autotiles/shoals.png` | 16-variant connection sheets, each with a second time frame (see below) |
+| `autotiles/rivers_b.png` | the same 16 channels one time frame later: only the flow glints have moved (see below) |
+| `autotiles/shoals_b.png` | the same 16 shores one time frame later: only the foam scallop has moved (see below) |
 | `autotiles/bridges.png` | the two bridge deck orientations, E-W then N-S |
 | `autotiles/sea.png` | the three sea phase variants, phase 0 first (see below) |
 | `autotiles/sea_b.png` | the same three phases in the same order, one time frame later: only the glints have moved (see below) |
@@ -564,6 +567,21 @@ the untouched base. The clip is in `anim.json` as `clips.sea`, at 900 ms a
 frame — slower than the 500 ms ambient beat because a swell is the slow motion
 on the board, and deliberately not a multiple of it, so the water and the army
 do not turn over on the same tick.
+
+The sea's idiom extends to the two connection-keyed water families (S9):
+`autotiles/rivers_b.png` slides `river_tile`'s flow streaks the same one board
+texel along the arm they run on — the channel and its banks are drawn from the
+mask alone and never move, so every one of the 16 variants is a straight
+addition to a position rather than a wrap the way the isotropic sea needs.
+`autotiles/shoals_b.png` shimmers the foam scallop instead: `_draw_shore`'s
+`slide` offsets only the coordinate `_foam_run` reads, never the one the
+water/sand boundary is drawn from, so the shoreline itself is pixel-identical
+between the two frames and only the foam toggles. `tests/test_river_frames.py`
+and `tests/test_shoal_frames.py` are the same no-boil, texel-floor and
+frame-A-is-the-old-sheet proofs `test_sea_frames.py` runs, cloned per family.
+`clips.rivers` runs at 700 ms and `clips.shoals` at 1150 — both share no tick
+with 500, 160 or 900, or with each other, so no pair of the board's five
+animated clips ever turns over on the same frame.
 
 `autotiles/plains.png` is that rule on the ground most of a board is made of,
 and it is phased the same way: eight tiles, phase 0 the atlas plains column

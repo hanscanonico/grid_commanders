@@ -43,6 +43,8 @@ func test_the_clips_run_at_the_cadences_the_board_beats_on() -> void:
 	assert_eq(_clip_ms("ambient_figures"), BoardBeat.AMBIENT_MS, "the figures' cadence")
 	assert_eq(_clip_ms("move"), BoardBeat.MOVE_MS, "the move cadence")
 	assert_eq(_clip_ms("sea"), BoardBeat.SEA_MS, "the sea's cadence")
+	assert_eq(_clip_ms("rivers"), BoardBeat.RIVER_MS, "the river's cadence")
+	assert_eq(_clip_ms("shoals"), BoardBeat.SHOAL_MS, "the shoal's cadence")
 	# The fire pair reuses the ambient period outright on the director's own
 	# clock (CutscenePlates.figure_now, off CutscenePlayback's `t`) rather
 	# than the wall one — the ninth animation slice's idiom for a cut-in-only
@@ -81,6 +83,22 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SEA, 1)
 		],
 		"the sea pair"
+	)
+	assert_eq(
+		_clip_sheets("rivers"),
+		[
+			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.RIVERS),
+			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.RIVERS, 1)
+		],
+		"the river pair"
+	)
+	assert_eq(
+		_clip_sheets("shoals"),
+		[
+			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SHOALS),
+			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SHOALS, 1)
+		],
+		"the shoal pair"
 	)
 	assert_eq(_clip_sheets("ko"), [UnitSprite.UNITS_ATLAS_FIGURES_KO_PATH], "the ko sheet")
 	assert_eq(
