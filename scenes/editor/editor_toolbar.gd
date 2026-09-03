@@ -10,8 +10,8 @@ extends HBoxContainer
 ##
 ## Back is the one press that is not a signal: it dispatches the `cancel` action
 ## through `UiKit.action_chip`, so what leaving asks and what it then does stay
-## the key path's alone. Without it a finger had no way out of the editor at all,
-## Esc being the only door.
+## the key path's alone. It stands on both builds: a finger had no way out of the
+## editor at all, and a pointer had only Esc.
 
 signal undo_asked
 signal redo_asked

@@ -33,7 +33,9 @@ const DIR_ACTIONS: Dictionary = {
 ## What the page says the board answers to. Two legends because a touch build has
 ## no arrows and a desktop one has no second finger; which is printed is
 ## `MobileProfile`'s answer, never a caller's.
-const LEGEND_KEYS := "ARROWS  MOVE     ENTER  APPLY     CTRL+Z  UNDO     +/-  ZOOM     ESC  MENU"
+const LEGEND_KEYS := (
+	"ARROWS  MOVE     ENTER  APPLY     CTRL+Z  UNDO     " + "+/-  ZOOM     ESC/BACK  MENU"
+)
 const LEGEND_TOUCH := (
 	"TAP  PAINT   DRAG  PAN   PINCH  ZOOM   " + "BRUSHES  TOOLS   ERASE  WHOLE CELL   BACK  MENU"
 )
@@ -44,9 +46,10 @@ const _PALETTE_W := 108
 const _INSPECTOR_W := 96
 
 ## Why a save did not happen. The status line shouts and the guard's note
-## speaks, so the one sentence is cased where it is read rather than written out
-## twice.
-const _SAVE_REFUSED := "Fix what is listed below the board first."
+## speaks, so the one sentence is cased and stopped where it is read rather than
+## written out twice. It names no list: the guard's veil is over the one under
+## the board while the guard is the page being read.
+const _SAVE_REFUSED := "This board does not play yet."
 
 ## What the next press on the board lays. Picking from a column arms that
 ## column's brush, because the last thing an author chose is the thing they mean
@@ -93,8 +96,9 @@ var _stroke_changed := false
 ## the file is what it was written as, not what the history remembers.
 var _dirty := false
 ## What the press the guard is standing in front of was asking for, run once the
-## author lets the draft go. Leaving by default, since Esc is the guard's own
-## door and answers before any press has named a second intent.
+## author lets the draft go. `_ask_to_part_with_the_draft` arms it before every
+## raise of the guard, so the initialiser is never the one that runs — it is here
+## only so the field is callable.
 var _after_guard: Callable = _leave
 ## Whether the save dialog was opened from the guard rather than the toolbar. The
 ## guard's Save is an ask to leave as well, and a write that lands honours it.
@@ -322,7 +326,7 @@ func _ask_save() -> void:
 		_guarded_save = false
 		_leave_guard.refuse(_SAVE_REFUSED)
 		return
-	_status.text = _SAVE_REFUSED.to_upper()
+	_status.text = _SAVE_REFUSED.to_upper().trim_suffix(".")
 
 
 ## The guard's own Save, which is an ask to part with the draft *and* keep it: the
@@ -351,9 +355,10 @@ func _on_saved(map_name: String, description: String) -> void:
 		_after_guard.call()
 
 
-## Backing out of any page lands on the draft it stood over — and the press that
-## raised the guard is dropped with it, or a save from the toolbar an hour later
-## would carry the author off the page.
+## Backing out of any page lands on the draft it stood over, and forgets that a
+## save was asked for on the way out — or a save from the toolbar an hour later
+## would carry the author off the page. The intent itself is left armed: it is
+## only ever read while the guard is up, and every raise arms it first.
 func _on_page_cancelled() -> void:
 	_guarded_save = false
 	_hand_the_board_back()
