@@ -47,6 +47,17 @@ func revealed_objective() -> StringName:
 	return &""
 
 
+## The armies this effect names outright — the seats `MissionBoardCheck.absent_team`
+## holds it to, and none for the effects that name a seat nowhere.
+##
+## They are the one half of a `board_error` a *match* can newly make true: a seat
+## is dealt or not for the whole of it, while an army falls in the middle of one.
+## `MissionEvent.names_fallen_army` is what reads them.
+func named_teams() -> Array[int]:
+	var none: Array[int] = []
+	return none
+
+
 ## The names this effect gives the units it lands, in the order it lands them —
 ## `SpawnUnits` alone answers with anything. A tag names exactly one unit on a
 ## board (`UnitTag.duplicate_error`), and a mission can put units on its board

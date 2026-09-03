@@ -31,6 +31,22 @@ CCQ.
 2 i 1 0
 """
 
+## The same row with a third army, because a rout on a duel board is also a
+## verdict: the fallen-army guard can only be read where somebody is still
+## fighting.
+const THREE_ARMIES := """
+[terrain]
+CCQ.
+[owners]
+1 0 0
+2 1 0
+3 2 0
+[units]
+1 i 3 0
+2 i 1 0
+3 i 2 0
+"""
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -71,15 +87,20 @@ func _begin(campaign: CampaignDefinition, resumed: MissionProgress = null) -> Ma
 func _with_a_beat(campaign: CampaignDefinition, id: StringName = &"the_gate_opens") -> MissionEvent:
 	var trigger := DayReachedTrigger.new()
 	trigger.day = 1
-	var effect := SetOwnerEffect.new()
-	effect.team = 1
-	effect.cells = [Vector2i(1, 0)]
 	var event := MissionEvent.new()
 	event.id = id
 	event.triggers = [trigger]
-	event.effects = [effect]
+	event.effects = [_hand_over_to(1)]
 	campaign.missions[0].events.append(event)
 	return event
+
+
+## The enemy's city handed to `team`.
+func _hand_over_to(team: int) -> SetOwnerEffect:
+	var effect := SetOwnerEffect.new()
+	effect.team = team
+	effect.cells = [Vector2i(1, 0)]
+	return effect
 
 
 ## `_campaign` with a deadline on it the board below is past, so `decide` loses it.
@@ -231,6 +252,28 @@ func test_a_decided_match_is_due_no_beats_though_the_mission_is_still_unjudged()
 		MissionEventCommand.new(event, 1).validate(state),
 		"",
 		"which is the refusal that would otherwise have been shouted about"
+	)
+
+
+## The boundary a rout empties a seat on, with the fight still running. Nothing
+## strikes a `once` beat off the fired set but landing it, so a beat offered here
+## would be refused, shouted about as an authoring fault, and offered again at
+## every boundary left in the mission.
+func test_a_beat_aimed_at_an_army_that_has_fallen_is_due_no_longer() -> void:
+	var campaign := _campaign()
+	var event := _with_a_beat(campaign)
+	event.effects = [_hand_over_to(3)]
+	_begin(campaign)
+	var state := Fixture.state(THREE_ARMIES)
+	assert_eq(CampaignSession.due_events(state), [event], "day one is what this beat waits for")
+	state.eliminate(3)
+	assert_eq(state.winner, 0, "two armies are left, so the match runs on")
+	assert_true(CampaignSession.due_events(state).is_empty())
+	assert_false(CampaignSession.tally.has_fired(&"the_gate_opens"), "and it never fired")
+	assert_ne(
+		MissionEventCommand.new(event, 1).validate(state),
+		"",
+		"which is the refusal that would otherwise be shouted at every boundary left"
 	)
 
 

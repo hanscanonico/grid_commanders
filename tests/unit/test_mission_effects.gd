@@ -32,6 +32,22 @@ CCQ...
 1 p 3 1 truck
 """
 
+## The same board with a third army, so a rout can empty a seat without ending
+## the match.
+const THIRD_ARMY := """
+[terrain]
+CCQ...
+....BF
+[owners]
+1 0 0
+2 1 0
+3 2 0
+[units]
+1 i 3 0 courier
+2 t 4 0 siege_gun
+3 i 5 0 garrison
+"""
+
 
 func _state(commanders: Dictionary = {}) -> GameState:
 	return Fixture.state(FIELD, commanders)
@@ -288,3 +304,42 @@ func test_defection_refuses_an_army_that_could_not_receive() -> void:
 	assert_eq(effect.definition_error(_map(), 1, Fixture.unit_db()), "")
 	state.eliminate(1)
 	assert_ne(effect.board_error(state, 1), "", "army 1 has already fallen")
+
+
+# --- the seats an effect names ----------------------------------------------
+
+
+## `named_teams` is the seat half of `board_error` asked on its own, because it
+## is the half a rout can newly make true — and the campaign layer drops a beat
+## on it rather than offering one that would be refused for the rest of the
+## mission. The two grants are here for that question alone; what they do to the
+## board is still `test_mission_grants.gd`'s.
+##
+## A third army, because a rout on a duel board is also a verdict, and neutral
+## ground, which is no army's seat.
+func test_an_effect_names_the_seats_a_rout_can_empty() -> void:
+	var state := Fixture.state(THIRD_ARMY)
+	var spawn := SpawnUnitsEffect.new()
+	spawn.team = 3
+	var ground := SetOwnerEffect.new()
+	ground.team = 3
+	var purse := GrantFundsEffect.new()
+	purse.team = 3
+	var charge := GrantChargeEffect.new()
+	charge.team = 3
+	var defection := DefectEffect.new()
+	defection.from_team = 3
+	defection.to_team = 1
+	var event := MissionEvent.new()
+	for effect: MissionEffect in [spawn, ground, purse, charge, defection]:
+		assert_true(effect.named_teams().has(3), "army 3 is named")
+		event.effects = [effect]
+		assert_false(event.names_fallen_army(state), "and is still fighting")
+	state.eliminate(3)
+	assert_eq(state.winner, 0, "two armies are left, so the match runs on")
+	for effect: MissionEffect in [spawn, ground, purse, charge, defection]:
+		event.effects = [effect]
+		assert_true(event.names_fallen_army(state), "and the beat is now aimed at a fallen one")
+	ground.team = MapData.NEUTRAL
+	event.effects = [ground, RemoveUnitsEffect.new(), null]
+	assert_false(event.names_fallen_army(state), "neutral ground and a removal name no seat")

@@ -38,16 +38,16 @@ func apply(state: GameState, _team: int) -> void:
 			_change_army(state, passenger)
 
 
+func named_teams() -> Array[int]:
+	var named: Array[int] = [from_team, to_team]
+	return named
+
+
 func board_error(state: GameState, _team: int) -> String:
 	var from_error := MissionBoardCheck.absent_team(state, from_team, "defection takes units from")
 	if from_error != "":
 		return from_error
-	var to_error := MissionBoardCheck.absent_team(state, to_team, "defection gives units to")
-	if to_error != "":
-		return to_error
-	if state.is_eliminated(to_team):
-		return "defection gives units to army %d, which has already fallen" % to_team
-	return ""
+	return MissionBoardCheck.absent_team(state, to_team, "defection gives units to")
 
 
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:

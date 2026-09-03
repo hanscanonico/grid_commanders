@@ -211,11 +211,19 @@ func board_error(state: GameState) -> String:
 ##
 ## `definition_error` has already held every effect to the *map*; this is the one
 ## question it cannot ask, because a map deals every seat it names while a mission
-## may have closed some of them — reinforcements for a seat nobody is playing
-## parse perfectly and land nowhere.
+## may have closed some of them, or a rout has since emptied one — reinforcements
+## for an army nobody is playing parse perfectly and land nowhere.
+##
+## An empty slot is skipped rather than named: `definition_error` is the lint that
+## refuses one, and it is a different door, so this walk only has to survive the
+## data that one turns away.
 func events_board_error(state: GameState) -> String:
 	for event: MissionEvent in events:
+		if event == null:
+			continue
 		for effect: MissionEffect in event.effects:
+			if effect == null:
+				continue
 			var error := effect.board_error(state, player_team)
 			if error != "":
 				return "event '%s': %s" % [event.id, error]

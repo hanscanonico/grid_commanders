@@ -15,6 +15,11 @@ func apply(state: GameState, _team: int) -> void:
 	state.funds[team] = maxi(0, state.funds[team] + amount)
 
 
+func named_teams() -> Array[int]:
+	var named: Array[int] = [team]
+	return named
+
+
 func board_error(state: GameState, _team: int) -> String:
 	return MissionBoardCheck.absent_team(state, team, "funds are granted to")
 
