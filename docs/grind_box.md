@@ -111,3 +111,8 @@ the box is trusted with a week:
 ```sh
 GRIND_EXTRA_DIFF="--seeds=1 --days=6" make grind GRIND="--once --jobs=difficulty-check"
 ```
+
+`GRIND_EXTRA_SIM` is the exception: the replay survey pins its own seed range
+after it, so a `--seeds=` or `--seed-offset=` put there is discarded — the survey
+has to read the recordings directory this pass wrote, and that directory is named
+after the seed range. Narrow that job with `GRIND_SIM_SEEDS` instead.

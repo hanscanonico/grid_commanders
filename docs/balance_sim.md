@@ -76,7 +76,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 | `--tier=` | The tier both sides play at, for `--sweep=commanders` |
 | `--commander=` | The doctrine both sides carry, for `--sweep=tiers` |
 | `--no-commands` | Skip `commands.jsonl`; a large sweep's is big |
-| `--replays` | Also write a watchable recording per match, into `replays/` |
+| `--replays` | Also write a watchable recording per match, into `replays_s<seeds>/` beside the report — `replays_seed<N>/` for a `--seed=` run, `replays_s<seeds>_o<offset>/` with an offset |
 | `--out=` | Output directory under `reports/`, default `reports/balance_sim/<run-name>` |
 
 **One axis per run** (plan D5). Commanders × tiers × maps × seeds is a six-figure
@@ -99,11 +99,17 @@ it, land in directories of their own instead of overwriting each other.
 | `commands.jsonl` | one line per applied command (plan Q3) |
 | `summary.json` | the aggregates, the flags and the reading rules |
 | `report.html` | the same numbers drawn — open it off disk, no server |
-| `replays/<match_id>.jsonl` | with `--replays` only: one recording per match |
+| `replays_s<seeds>/<match_id>.jsonl` | with `--replays` only: one recording per match |
 
 `commands.jsonl` describes what happened; a recording can be **re-issued**, which
 is the difference — a suspicious row becomes a match you can watch or read. The
 README's Replays section owns both, and how they differ from `balance-watch`.
+
+The recordings directory carries the seed range like the run directory does —
+`replays_seed7/` for `--seed=7`, `replays_s4_o8/` for `--seeds=4 --seed-offset=8`.
+`--out=` pins the run directory, so without that a pass narrowed to fewer seeds
+would leave the wider pass's `.jsonl` files in place and a survey of the
+directory would fold matches nobody asked for into its rates.
 
 ### Reading the timeline
 

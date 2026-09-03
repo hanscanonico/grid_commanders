@@ -66,9 +66,18 @@ def resolve(path):
 
 
 # Every headless run ends with the engine's own exit chatter — the addon banner
-# and the documented script-cycle leak — and a verdict with that under it reads
-# as a failure to somebody skimming.
-NOISE = ("[godot_ai", "ObjectDB instances were leaked", "resources still in use")
+# and the documented script-cycle leak, headline and per-object lines alike — and
+# a verdict with that under it reads as a failure to somebody skimming. The
+# per-object lines matter most to the fallback reading: there are more of them
+# than `tail()` shows, so leaving them in costs the job's real last word.
+NOISE = (
+    "[godot_ai",
+    "ObjectDB instances were leaked",
+    "resources still in use",
+    "Leaked instance:",
+    "Orphan StringName:",
+    "Hint: Leaked instances",
+)
 
 
 def log_lines(record):
@@ -408,8 +417,9 @@ def self_check():
     case("a job with no reading says so", reading({"kind": "log", "log": ""}) == ["(no output)"])
     case("a missing artifact is not a crash", reading({"kind": "pool", "artifact": "nope"}))
 
-    # reworded.log is difficulty-check with its banner renamed: the marker misses,
-    # and the tail under it is the documented exit leak rather than a measurement.
+    # reworded.log is difficulty-check with its banner renamed, and it ends on the
+    # documented exit leak: the marker misses, so the label has to degrade to the
+    # job's real last word rather than to the engine's per-object leak lines.
     reworded = reading(
         {
             "kind": "section",
@@ -419,7 +429,11 @@ def self_check():
     )
     case("a missed marker labels the reading a fallback", reworded[0].startswith("(marker "))
     case("a missed marker names the marker it wanted", "difficulty ladder" in reworded[0])
-    case("a missed marker still shows the tail", any("Leaked instance" in l for l in reworded))
+    case(
+        "a missed marker falls back to the verdict",
+        any("PASS: every higher tier clears the gate." in line for line in reworded),
+    )
+    case("a missed marker drops the exit leak", not any("Leaked" in line for line in reworded))
 
     state = {"sha": "abc1234", "pass": 2, "job": "difficulty-check", "phase": "running"}
     page = digest_lines(state, [{"job": "difficulty-check", "status": "done", "kind": "log"}])
