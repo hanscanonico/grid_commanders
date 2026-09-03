@@ -50,6 +50,16 @@ func test_unarmed_unit_rejected() -> void:
 	assert_eq(command.validate(state), "unit is unarmed")
 
 
+## Armed, in range and still refused: neither of infantry's matrices covers a
+## fighter, so the chart's own silence is what stops the shot. The message is the
+## one the dive rule also raises, and this is the arm of it that answers before
+## anything gets wet.
+func test_target_the_chart_does_not_cover_rejected() -> void:
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0\n2 f 1 0")
+	var command := AttackCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
+	assert_eq(command.validate(state), "cannot damage the target")
+
+
 func test_indirect_cannot_move_and_fire() -> void:
 	var state := Fixture.state("[terrain]\n.....\n[units]\n1 g 0 0\n2 t 3 0")
 	var command := AttackCommand.new(

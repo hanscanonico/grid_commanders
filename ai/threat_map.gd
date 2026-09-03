@@ -5,11 +5,13 @@ extends RefCounted
 ## cell is threatened by that unit; a caller then asks "if my unit stood here,
 ## what damage answers it?" and gets a luck-free forecast summed over those
 ## enemies. What it buys the planner is a unit that can refuse to end its move in
-## a kill zone. It is not a Difficult-only smart: the three dials that read it
-## (threat_aversion, advance_threat_tiles, withdraw_weight) are as usable to make
-## a tier timid as to make it careful, and any tier weighing one of them above
-## zero builds this map. Which tier carries which value is the tier files'
-## (data/ai/*.tres) and docs/difficulty_check.md's — not this comment's.
+## a kill zone. It is not a Difficult-only smart: the four dials that read it
+## (threat_aversion, advance_threat_tiles, withdraw_weight,
+## capture_threat_aversion) are as usable to make a tier timid as to make it
+## careful, and any tier weighing one of them above zero builds this map —
+## AIProfile.builds_threat_map is the one statement of which they are. Which tier
+## carries which value is the tier files' (data/ai/*.tres) and
+## docs/difficulty_check.md's — not this comment's.
 ##
 ## Node-free like the rest of ai/. Reuses the single authorities and re-derives
 ## no rules: MovementResolver for each enemy's reach, AttackRange for its firing

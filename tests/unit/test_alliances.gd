@@ -277,9 +277,9 @@ func test_allies_share_no_infrastructure() -> void:
 		"two armies' units do not merge"
 	)
 	var lander := Unit.create(unit_db.by_symbol("l"), 2, Vector2i(1, 0))
-	assert_ne(
+	assert_eq(
 		LoadCommand.carriage_error(state, lander, state.units[0]),
-		"",
+		"no friendly transport for this unit",
 		"and one army's rider does not board another's hull"
 	)
 	# Team 1's infantry stands on team 2's city; a wounded unit is not repaired

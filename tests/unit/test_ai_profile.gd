@@ -107,18 +107,17 @@ func test_every_tier_explicitly_writes_every_profile_field() -> void:
 ## map is not one tier's smart. That is a claim about the shipped tiers, so it is
 ## checked rather than asserted in prose: Normal is the only tier that builds no
 ## threat map at all, and every other tier — gentler and harsher alike — weighs
-## at least one of the three dials that read it.
+## at least one of the four dials that read it. Which dials those are is
+## `builds_threat_map`'s answer, asked rather than restated here: a guardrail
+## that re-derived the list would fail on the day a tier seats only the dial it
+## had forgotten, and pass a tier that builds no map at all.
 func test_normal_is_the_only_tier_that_weighs_no_threat_dial() -> void:
 	var db := DifficultyDB.load_default()
 	var tiers := db.all()
 	assert_gt(tiers.size(), 2, "the ladder should ship more than a pair of tiers")
 	for tier in tiers:
 		var profile := tier.profile()
-		var weighs_threat := (
-			profile.threat_aversion > 0.0
-			or profile.advance_threat_tiles > 0.0
-			or profile.withdraw_weight > 0.0
-		)
+		var weighs_threat := profile.builds_threat_map()
 		if tier.id == Difficulty.DEFAULT_ID:
 			assert_false(weighs_threat, "%s: Normal is the threat-blind baseline" % tier.id)
 		else:

@@ -243,7 +243,7 @@ root index are in `docs/design_record.md`.
   why `AIPlanCache._drop_inside` widens a supply unit's envelope by that radius. What is worth
   refilling is graded ammo plus the yes-or-no `Unit.running_dry` already answers, so a land unit's
   half-empty tank is worth nothing here, exactly as it is to the refit errand.
-  **The truck is asked for above `build_priority`**, the way the air answer is: nothing on that
+  **The truck is asked for outside `build_priority`**, the way the air answer is: nothing on that
   list refills anything, so `supply_unit_target` is what puts one in the roster, and it is 1 on
   every tier because the planner has no route to a second.
   **Merging is not this entry's**, though COM-65 shipped a rival for it: the arena plan's AR6c
