@@ -44,10 +44,11 @@ extends SceneTree
 ##   summary.json  — the aggregates and flags
 ##   report.html   — the same numbers, drawn (plan BS4)
 ##
-## With `--replays`, a `replays/` directory beside them holds one file per match,
-## named by match id. `commands.jsonl` describes what happened and this can be
-## re-issued, which is the difference: a suspicious row becomes
-## `make replay REPLAY=<that file>` (replay plan D7).
+## With `--replays`, a `replays_s<seeds>/` directory beside them holds one file
+## per match, named by match id. `commands.jsonl` describes what happened and
+## this can be re-issued, which is the difference: a suspicious row becomes
+## `make replay REPLAY=<that file>` (replay plan D7). The seed range is in the
+## directory name so a narrowed re-run cannot survey the wider run's leftovers.
 ##
 ## Determinism: same map + seed + side specs => byte-identical rows, because the
 ## RNG is seeded, the AI is lookahead-free and RNG-free, and nothing here reads
@@ -497,14 +498,21 @@ func _run_name() -> String:
 		parts.append(String(_sweep_tier))
 	if _sweep == "tiers":
 		parts.append(String(_sweep_commander))
-	if _pinned_seed >= 0:
-		parts.append("seed%d" % _pinned_seed)
-	else:
-		parts.append("s%d" % _sample.seeds)
-		if _sample.seed_offset > 0:
-			parts.append("o%d" % _sample.seed_offset)
+	parts.append(_seed_range_name())
 	parts.append("d%d" % _sample.days_cap)
 	return "_".join(parts).replace(":", "-").replace(" ", "").replace("(", "").replace(")", "")
+
+
+## The seeds this run played, as one path fragment. Both the run directory and
+## the recordings directory carry it: `--out=` pins the former, so without it a
+## pass narrowed to fewer seeds inherited the wider pass's `.jsonl` files and the
+## survey folded matches nobody asked for into its rates.
+func _seed_range_name() -> String:
+	if _pinned_seed >= 0:
+		return "seed%d" % _pinned_seed
+	if _sample.seed_offset > 0:
+		return "s%d_o%d" % [_sample.seeds, _sample.seed_offset]
+	return "s%d" % _sample.seeds
 
 
 ## This match's recording. Named by match id like the timeline rows are, so a
@@ -512,7 +520,9 @@ func _run_name() -> String:
 ## recorder on the first command rather than up front, so a match that never
 ## reaches one leaves no file behind.
 func _open_replay(match_id: String) -> ReplayFile:
-	var dir := BalanceReportWriter.prepare_dir(_artifact_dir.path_join("replays"))
+	var dir := BalanceReportWriter.prepare_dir(
+		_artifact_dir.path_join("replays_" + _seed_range_name())
+	)
 	var name := match_id.replace(":", "-").replace("/", "-")
 	return ReplayFile.open_at(dir.path_join(name + ReplayFile.EXTENSION))
 

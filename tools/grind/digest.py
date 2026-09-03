@@ -93,7 +93,9 @@ def log_section(record):
     lines = log_lines(record)
     starts = [i for i, line in enumerate(lines) if marker and marker in line]
     if not starts:
-        return tail(record)
+        # Say so, or a reworded banner hands the engine's exit chatter to the page
+        # as the instrument's verdict, under a job still reporting `done`.
+        return ["(marker %r not found in the log)" % marker] + tail(record)
     return [line for line in lines[starts[-1]:] if line.strip()]
 
 
@@ -400,10 +402,24 @@ def self_check():
     case("section keeps the verdict", "PASS: every higher tier clears the gate." in section)
     case("section drops the noise", "playing 12 matches" not in "\n".join(section))
     case("engine exit chatter is not a verdict", not any("godot_ai" in l for l in section))
+
     case("a section longer than the cap is capped", len(section) == MAX_RESULT_LINES)
     case("a capped section is elided in the middle", section[-2] == "…")
     case("a job with no reading says so", reading({"kind": "log", "log": ""}) == ["(no output)"])
     case("a missing artifact is not a crash", reading({"kind": "pool", "artifact": "nope"}))
+
+    # reworded.log is difficulty-check with its banner renamed: the marker misses,
+    # and the tail under it is the documented exit leak rather than a measurement.
+    reworded = reading(
+        {
+            "kind": "section",
+            "log": "tests/fixtures/grind/reworded.log",
+            "marker": "=== difficulty ladder ===",
+        }
+    )
+    case("a missed marker labels the reading a fallback", reworded[0].startswith("(marker "))
+    case("a missed marker names the marker it wanted", "difficulty ladder" in reworded[0])
+    case("a missed marker still shows the tail", any("Leaked instance" in l for l in reworded))
 
     state = {"sha": "abc1234", "pass": 2, "job": "difficulty-check", "phase": "running"}
     page = digest_lines(state, [{"job": "difficulty-check", "status": "done", "kind": "log"}])

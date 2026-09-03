@@ -43,7 +43,9 @@
 # GRIND_EXTRA_BAL, GRIND_EXTRA_CAMPAIGN, GRIND_EXTRA_SEARCH, GRIND_EXTRA_POOL
 # and GRIND_EXTRA_SIM are appended to their job's flag list, so
 # `GRIND_EXTRA_DIFF="--seeds=1 --days=6"` plays a real job end to end in a
-# minute. docs/grind_box.md is the install and the reading.
+# minute. GRIND_EXTRA_SIM is the exception: the replay survey pins its own seed
+# range last, so narrow that job with GRIND_SIM_SEEDS.
+# docs/grind_box.md is the install and the reading.
 set -u -o pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
@@ -224,8 +226,13 @@ plan_jobs() {
 			pool "reports/balance_pool/grind_${board}_$SHA" "" "0"
 		# The pool plays with telemetry off, so the recordings the analyser reads
 		# come from a short Lab run of the same pairing rather than from it.
+		# The Lab names that directory after the seed range it played, so the seed
+		# range is pinned *after* GRIND_EXTRA_SIM: the survey has to read the
+		# directory this pass wrote, and an override the path cannot see would
+		# fold the previous pass's wider recordings into the rates. GRIND_SIM_SEEDS
+		# is the knob for this job's seed count.
 		add_job "replay-survey-$board" \
-			"make -C '$ROOT' balance-sim SIM=\"--map=$board --red=none:normal --blue=none:hard --seeds=$SIM_SEEDS --replays --out=reports/balance_sim/grind_replays_$board $GRIND_EXTRA_SIM\" && make -C '$ROOT' replay-report REPLAY=reports/balance_sim/grind_replays_$board/replays ARGS=--out=reports/replay/grind_$board" \
+			"make -C '$ROOT' balance-sim SIM=\"--map=$board --red=none:normal --blue=none:hard --replays --out=reports/balance_sim/grind_replays_$board $GRIND_EXTRA_SIM --seeds=$SIM_SEEDS --seed-offset=0\" && make -C '$ROOT' replay-report REPLAY=reports/balance_sim/grind_replays_$board/replays_s$SIM_SEEDS ARGS=--out=reports/replay/grind_$board" \
 			survey "reports/replay/grind_$board" "" "0"
 	done
 }

@@ -25,14 +25,20 @@ make balance-sim SIM="--map=jet_stream  --seeds=3 --replays --out=replay_survey/
 make balance-sim SIM="--map=powder_keg  --seeds=3 --replays --out=replay_survey/powder_keg"
 
 for m in scrimmage the_straits jet_stream powder_keg; do
-	make replay-report REPLAY=reports/replay_survey/$m/replays \
+	make replay-report REPLAY=reports/replay_survey/$m/replays_s3 \
 		ARGS="--out=reports/replay_survey/$m/survey"
 done
 
 mkdir -p reports/replay_survey/all/replays
-cp reports/replay_survey/*/replays/*.jsonl reports/replay_survey/all/replays/
+cp reports/replay_survey/*/replays_s3/*.jsonl reports/replay_survey/all/replays/
 make replay-report REPLAY=reports/replay_survey/all/replays ARGS="--out=reports/replay_survey/all"
 ```
+
+The `_s3` is the seed count the Lab wrote into the recordings directory, so a
+re-run at a different `--seeds=` lands beside these rather than on top of them —
+surveying a directory folds in every `.jsonl` it finds, and a shrunk pass that
+inherited a wider one's files would quietly widen the pool. `all/replays` is
+gathered by hand above and is not one of those directories.
 
 `ironworks` is deliberately out of the pool: it is the one board measured to hit
 the match-level command cap, and it is out of the arena's pools for that same

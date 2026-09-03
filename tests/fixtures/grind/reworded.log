@@ -1,0 +1,13 @@
+difficulty: playing 12 matches
+difficulty: 12 / 12 matches
+
+=== difficulty tiers ===
+matches 12   rejected 0   cap-stalls 0   gate >= 70%
+  normal  over easy      75.0%  (9/12)  ok
+  hard    over normal    75.0%  (9/12)  ok
+PASS: every higher tier clears the gate.
+Leaked instance: GDScript:-9223372036854775160
+Leaked instance: RefCounted:-9223372036854775159
+Leaked instance: Resource:-9223372036854775158
+Orphan StringName: difficulty
+Hint: Leaked instances can be found with the --verbose flag.
