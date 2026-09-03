@@ -31,7 +31,7 @@ draw() {
 		echo "grind-status: no run yet — start one with \`make grind\`" >&2
 		return 1
 	fi
-	local job phase
+	local job phase sha
 	python3 - "$STATE" <<'PY'
 import json, sys, time
 
@@ -56,7 +56,11 @@ PY
 		(cd "$ROOT" && tools/arena_status.sh "reports/ai_arena/search/${job#arena-search-}")
 		;;
 	balance-pool-*)
-		cat "$ROOT/reports/balance_pool/grind_${job#balance-pool-}/status.txt" 2>/dev/null ||
+		# The pool's run directory carries the pass's commit, and the state file
+		# is where that commit is already recorded — deriving it here would be a
+		# second opinion about which run is on the box.
+		sha=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("sha") or "")' "$STATE")
+		cat "$ROOT/reports/balance_pool/grind_${job#balance-pool-}_$sha/status.txt" 2>/dev/null ||
 			echo "(no shard has reported yet)"
 		;;
 	*)

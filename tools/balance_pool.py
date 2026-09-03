@@ -12,10 +12,11 @@ directory name digests the arguments it was played with, and an argument list
 cannot tell that `data/ai/default.tres` was retuned underneath it — so a run
 also writes `<out>/stamp.json`, the sides' and the match-wide resources' bytes
 beside the commit and what is uncommitted under `core/ ai/ data/`. Markers whose
-stamp no longer matches are not honoured: the run says what moved and plays them
-again. That is the one failure mode a measurement instrument may not have —
-re-reporting a previous commit's matches as today's, indistinguishable from a
-real sweep.
+stamp no longer matches are **deleted before the new stamp is written**: the run
+says what moved and plays them again, and an interrupt in the middle of that
+leaves no marker the fresh stamp would vouch for. That is the one failure mode a
+measurement instrument may not have — re-reporting a previous commit's matches as
+today's, indistinguishable from a real sweep.
 
 A shard is one pairing on one board over a contiguous slice of the seed range
 (`--batch` seeds, handed to the driver as `--seeds=` plus `--seed-offset=`). That
@@ -62,7 +63,8 @@ Flags:
                         it leaves it (default reports/balance_pool/<spec>; a
                         leading `reports/` is accepted, so both spellings work)
   --timeout=SEC         per shard, default 3600
-  --refresh             replay every shard, marker or no marker
+  --refresh             replay every shard: the markers on disk are deleted up
+                        front, marker or no marker
   --reuse-stale         report shards whose content stamp moved anyway. The
                         escape hatch for a commit that touched nothing a match
                         reads; it keeps the old stamp, so the run stays loud
@@ -97,6 +99,7 @@ import sys
 import tempfile
 import threading
 import time
+from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -393,9 +396,26 @@ def shard_dir(out, shard):
     return os.path.join(out, "shards", shard.name)
 
 
-def marker_path(out, shard):
+def marker_path(out, shard, root=ROOT):
     """What resume reads: the artifact its driver writes last and in one go."""
-    return os.path.join(ROOT, shard_dir(out, shard), shard.preset["marker"])
+    return os.path.join(root, shard_dir(out, shard), shard.preset["marker"])
+
+
+def clear_markers(out, shards, root=ROOT):
+    """Drop every marker in this run's plan, and say how many there were.
+
+    The marker is the whole of "this shard is finished", so a replay that left
+    the old ones in place would report the old artifacts as its own if it were
+    killed part-way — and the stamp written beside them would say they answer for
+    today's content.
+    """
+    dropped = 0
+    for shard in shards:
+        marker = marker_path(out, shard, root)
+        if os.path.exists(marker):
+            os.remove(marker)
+            dropped += 1
+    return dropped
 
 
 STAMP = "stamp.json"
@@ -482,13 +502,22 @@ def stamp_changes(previous, current):
     return lines
 
 
-def resumes(refresh, changes, reuse_stale):
-    """Whether a marker already on disk still answers for this run. `--refresh`
-    is the caller saying replay regardless; `--reuse-stale` is the caller taking
-    the stamp that moved on themselves."""
-    if refresh:
-        return False
-    return not changes or reuse_stale
+ResumePlan = namedtuple("ResumePlan", "resume clear stamp")
+
+
+def resume_plan(refresh, changes, reuse_stale):
+    """What this run does with the markers already on disk: honour them, drop
+    them first, and whether the stamp it leaves behind is its own content.
+
+    `--refresh` is the caller saying replay regardless; `--reuse-stale` is the
+    caller taking a stamp that moved on themselves, which keeps the old stamp so
+    the next run is loud about the mix too. **A stamp is never written over a
+    marker this run neither honours nor drops** — that is the interrupted replay
+    that would otherwise hand the previous content's artifacts back as this
+    measurement, through the rerun the interrupt handler itself asks for.
+    """
+    resume = not refresh and (not changes or reuse_stale)
+    return ResumePlan(resume=resume, clear=not resume, stamp=not (resume and changes))
 
 
 def pool_resume(args, shards, log):
@@ -508,19 +537,19 @@ def pool_resume(args, shards, log):
         say("%s has no content stamp; trusting its shards and writing one" % args.out)
     for line in changes:
         say("!! %s" % line)
-    resume = resumes(args.refresh, changes, args.reuse_stale)
-    if changes and resume:
+    plan = resume_plan(args.refresh, changes, args.reuse_stale)
+    if changes and plan.resume:
         say("!! --reuse-stale: reporting shards that were played against other content")
     elif changes:
         say("!! the shards on disk answer for the content above — replaying every one")
         say("!! pass --reuse-stale to report them anyway")
-    elif args.refresh and played:
-        say("--refresh: replaying every shard on disk")
-    # Honouring stale markers leaves the run mixed, so the stamp stays the one
-    # those shards were played under and the next run is loud about it too.
-    if not (changes and resume):
+    if plan.clear:
+        dropped = clear_markers(args.out, shards)
+        if dropped:
+            say("dropped %d shard marker(s); playing them again" % dropped)
+    if plan.stamp:
         write_stamp(args.out, current)
-    return resume
+    return plan.resume
 
 
 class Children:
@@ -570,12 +599,10 @@ CHILDREN = Children()
 def run_shard(shard, args):
     out_rel = shard_dir(args.out, shard)
     marker = marker_path(args.out, shard)
-    if os.path.exists(marker):
-        if args.resume:
-            return ("skip", shard, 0.0, 0, 0)
-        # The marker is the whole of "this shard is finished", so a replay that
-        # left the old one in place would report the old artifacts as its own.
-        os.remove(marker)
+    # A marker this run may not honour is already gone: `pool_resume` clears them
+    # before it stamps the directory, so nothing here has to ask a second time.
+    if args.resume and os.path.exists(marker):
+        return ("skip", shard, 0.0, 0, 0)
     cmd = [
         GODOT, "--headless", "--path", ".", "-s", shard.preset["script"], "--",
         *shard.args, "--out=%s" % out_rel,
@@ -662,13 +689,16 @@ STAMP_CASES = [
 ]
 
 ## What a caller can ask for over a stamp that moved: (refresh, changes,
-## reuse-stale) -> may this run honour the markers on disk.
+## reuse-stale) -> (honour the markers on disk, drop them first, write this run's
+## stamp). The pairing that may never appear is a stamp written while markers are
+## neither honoured nor dropped: killed there, the rerun the interrupt handler
+## asks for reads the fresh stamp and merges the old content's shards.
 RESUME_CASES = [
-    ("a matching stamp resumes", False, [], False, True),
-    ("--refresh replays a matching stamp", True, [], False, False),
-    ("a moved stamp replays", False, ["x"], False, False),
-    ("--reuse-stale keeps a moved stamp's shards", False, ["x"], True, True),
-    ("--refresh beats --reuse-stale", True, ["x"], True, False),
+    ("a matching stamp resumes", False, [], False, (True, False, True)),
+    ("--refresh replays a matching stamp", True, [], False, (False, True, True)),
+    ("a moved stamp replays", False, ["x"], False, (False, True, True)),
+    ("--reuse-stale keeps a moved stamp's shards", False, ["x"], True, (True, False, False)),
+    ("--refresh beats --reuse-stale", True, ["x"], True, (False, True, True)),
 ]
 
 ## Two headers that disagree and the merge that must refuse them. The columns are
@@ -738,9 +768,37 @@ def self_check():
             "ok" if ok else "FAIL", label, first or "resumes"))
 
     for label, refresh, changes, reuse_stale, expected in RESUME_CASES:
-        ok = resumes(refresh, changes, reuse_stale) == expected
+        plan = resume_plan(refresh, changes, reuse_stale)
+        vouches_blindly = plan.stamp and not plan.resume and not plan.clear
+        ok = tuple(plan) == expected and not vouches_blindly
         failures += 0 if ok else 1
         print("%-4s resume: %s" % ("ok" if ok else "FAIL", label))
+
+    with tempfile.TemporaryDirectory() as scratch:
+        ## The interrupted replay, over a scratch tree: a run that refuses the
+        ## markers on disk leaves none of them behind for the rerun its own
+        ## interrupt handler asks for.
+        out = "reports/pool_selfcheck"
+        shards = [
+            Shard("lab", "ironworks", "none:normal", "none:hard", offset, 4, 20)
+            for offset in (0, 4)
+        ]
+        for shard in shards:
+            marker = marker_path(out, shard, scratch)
+            os.makedirs(os.path.dirname(marker), exist_ok=True)
+            with open(marker, "w") as f:
+                f.write("{}")
+        dropped = clear_markers(out, shards, scratch)
+        for label, ok in (
+            ("every refused marker is dropped", dropped == len(shards)),
+            (
+                "none is left for a rerun to skip",
+                not any(os.path.exists(marker_path(out, s, scratch)) for s in shards),
+            ),
+            ("a directory with none is not an error", clear_markers(out, shards, scratch) == 0),
+        ):
+            failures += 0 if ok else 1
+            print("%-4s markers: %s" % ("ok" if ok else "FAIL", label))
 
     with tempfile.TemporaryDirectory() as scratch:
         ## Which files a stamp is taken over, over a scratch tree: a side is a

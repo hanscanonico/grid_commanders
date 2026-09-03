@@ -37,8 +37,10 @@ sudo systemctl enable --now grid-commanders-grind
 
 The unit runs `make grind GRIND="--publish"` at `Nice=10` with `Restart=always`.
 A crash costs the job in flight and nothing else: `arena-search` and
-`balance-pool` resume from their own artifacts, and the runners that cannot
-resume are marked done per commit under `reports/grind/done/`.
+`balance-pool` resume from their own artifacts — the pool's run directory carries
+the pass's commit, so a new commit re-measures instead of picking up yesterday's
+shards — and the runners that cannot resume are marked done per commit under
+`reports/grind/done/`.
 
 ## Where is it at?
 
