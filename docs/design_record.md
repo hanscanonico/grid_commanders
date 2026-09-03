@@ -1089,11 +1089,16 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   and the whole list is: `attacker_hp_before` / `defender_hp_before`, their
   `_after` siblings, the two weapon slots the rules selected (`attacker_weapon_slot` /
   `counter_weapon_slot`, with secondary weapons), which the cut-in maps to a style through
-  `BattleStyleDB.for_weapon` and never re-decides, and `attacker_indirect`. The last three
+  `BattleStyleDB.for_weapon` and never re-decides, `attacker_indirect`, and
+  `attacker_cover_stars` / `defender_cover_stars`. The last three
   arrived by COM-83, which is the rule read the other way: the cut-in was reading "HP after"
   off the *live* unit and asking `AttackRange.is_indirect` at replay time, so it was
   recomputing two things the exchange already knew. `AttackRange` is still the one authority
   on who is indirect — `attacker_indirect` is its answer, taken when the shot resolved. The
+  cover pair arrived the same way: the plate was printing the tile's own `defense_stars`, so
+  an aircraft over a mountain was drawn four stars and then took damage as if it had none.
+  `CombatResolver` stays the one authority on how much cover a cell gives — the two fields are
+  its answer, taken at the Engagement's cells when the shot resolved. The
   counter needs no such flag, because `_counter_shot` refuses any `max_range != 1` and a
   returning volley therefore can never be a lob. D5: how a weapon looks is a `BattleStyle`
   under `data/battle_anim/`, `UnitType.battle_style` / `secondary_battle_style` are presentation keys

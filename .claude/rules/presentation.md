@@ -85,8 +85,9 @@ forms named in the root index are in `docs/design_record.md`.
   measurement and the three solid-shadow readings with their moved-frame counts. D1: **the cut-in
   replays a snapshot, it computes nothing** — `core/` gained only snapshot fields on `CombatResult`
   (`attacker_hp_before` / `defender_hp_before` and their `_after` siblings, the two weapon slots the
-  rules selected, `attacker_indirect`); `AttackRange` stays the one authority on who is indirect and
-  `BattleStyleDB.for_weapon` the one map from a weapon to a style, neither ever re-decided at replay
+  rules selected, `attacker_indirect`, and the two `_cover_stars`); `AttackRange` stays the one
+  authority on who is indirect, `CombatResolver` on how much cover a cell actually gives, and
+  `BattleStyleDB.for_weapon` the one map from a weapon to a style, none ever re-decided at replay
   time. D2: board art, blown up; nothing redrawn — with **one recorded departure, the cut-in's
   scenery**, where a terrain either *paves* the ground or *stands* on it, said by two presentation
   keys on `TerrainType` beside `atlas_col` (`cutin_ground` / `cutin_scenery`) and asked through
