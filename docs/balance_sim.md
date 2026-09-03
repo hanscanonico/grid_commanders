@@ -66,7 +66,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 
 | Flag | Meaning |
 |---|---|
-| `--map=` | Any shipped board, or a balance fixture (`clash`, `ridge`, `combined`, `holdings`, `channel`) |
+| `--map=` | Any shipped board, or any fixture under `maps/fixtures/` (`analysis`, `channel`, `clash`, `combined`, `holdings`, `quartet`, `ridge`, `thicket`) |
 | `--red=` / `--blue=` | Side specs; default `none:normal` |
 | `--seeds=` | Paired seed count, default 4. Each seed plays **both seats** |
 | `--seed=` | One specific seed instead. It pins the seed and nothing else, so both seats are still played; `make balance-watch` on the same flags reproduces the `seat 0` row of the two, the one seating `--red` as red |
@@ -357,9 +357,12 @@ them.
 The balance fixtures live in `maps/fixtures/` rather than in that file, so the
 Lab can name one with `--map=` and the battle scene can boot one for watch mode.
 That directory is deliberately *not* `maps/` itself: `MapCatalog.paths()` scans
-only the top level, so a fixture stays out of the menu, the map lint and the
-per-map AI soak, while `MapCatalog.resolve()` — the single answer to "which board
-is this name?" — finds both.
+only the top level, so a fixture stays out of the menu and the per-map AI soak,
+while `MapCatalog.resolve()` — the single answer to "which board is this name?" —
+finds both. It does **not** stay out of the map lint (COM-106): the balance
+verdicts are measured on these boards, so an unplayable fixture is worse than an
+unplayable shelf board, and `_board_paths()` in `tests/unit/test_maps.gd` lints
+one for playability exactly like the shipped roster.
 
 ## Does the instrument agree with the committed record?
 
