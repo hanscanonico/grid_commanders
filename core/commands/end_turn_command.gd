@@ -3,6 +3,11 @@ extends Command
 ## Hands the turn to the next team; the day advances when the rotation wraps
 ## back past the last seat. Start-of-turn effects run for the new team.
 
+## What the turn that just opened took for an empty tank, in the order it fell —
+## empty for nearly every turn. The scene reads it to fade those units and say so,
+## the same way it reads `ambushed` off a move.
+var starved: Array[Unit] = []
+
 
 func validate(state: GameState) -> String:
 	return Command.decided_error(state)
@@ -23,4 +28,4 @@ func apply(state: GameState) -> void:
 	if state.teams.find(next) <= state.teams.find(state.current_team):
 		state.day += 1
 	state.current_team = next
-	TurnRules.begin_turn(state)
+	starved = TurnRules.begin_turn(state)

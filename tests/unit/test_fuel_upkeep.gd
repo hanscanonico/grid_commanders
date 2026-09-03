@@ -138,3 +138,17 @@ func test_running_dry_flags_only_units_an_empty_tank_kills() -> void:
 	copter.fuel = copter.type.fuel_upkeep + copter.type.move_points
 	assert_true(copter.running_dry())
 	assert_false(copter.running_dry(0), "a zero margin turns the warning off")
+
+
+## The loss has to be reportable, not just applied: nothing else on the board
+## names a unit that ran dry, so the turn that took it carries it out.
+func test_the_turn_names_what_it_took_for_an_empty_tank() -> void:
+	var state := Fixture.state("[terrain]\nS.\n..\n[units]\n1 b 0 0\n1 i 1 0\n2 i 0 1")
+	var bomber := state.units[0]
+	bomber.fuel = bomber.type.fuel_upkeep
+	EndTurnCommand.new().apply(state)
+	var opens_turn := EndTurnCommand.new()
+	opens_turn.apply(state)
+	assert_false(bomber in state.units, "the bomber should have gone down over the sea")
+	assert_eq(opens_turn.starved.size(), 1, "the turn that took it should name it")
+	assert_true(bomber in opens_turn.starved)

@@ -14,10 +14,15 @@ extends RefCounted
 ## second team gets its own call through EndTurnCommand before it acts, so both
 ## have paid exactly once by the time they move. Skipping the opening day would
 ## have charged the first player one fewer time over any equal count of turns.
-static func begin_turn(state: GameState) -> void:
+##
+## Returns what the empty-tank check took, in the order it took it. Nothing else
+## in the sim names those units, and a loss the scene is never told about is the
+## one death on this board with no cue of its own.
+static func begin_turn(state: GameState) -> Array[Unit]:
 	var team := state.current_team
 	expire_power(state, team, CommanderType.Duration.ROUND)
 	state.funds[team] += income_for(state, team)
+	var starved: Array[Unit] = []
 	var suppliers := _suppliers_of(state, team)
 	for unit in state.units_of(team):
 		unit.acted = false
@@ -28,12 +33,14 @@ static func begin_turn(state: GameState) -> void:
 		if _serviced_here(state, unit) or _in_reach_of_suppliers(state, suppliers, unit):
 			unit.resupply()
 		if _lost_to_empty_tank(state, unit):
+			starved.append(unit)
 			# A supplier that starved is off the board, so the units walked after
 			# it must not still be topped up by it.
 			suppliers.erase(unit)
 			continue  # nothing left to repair, and its cargo went down with it
 		_resupply_cargo(state, unit)
 		_repair(state, unit)
+	return starved
 
 
 ## What a turn pays `team`: every property it holds, at the same flat rate. The
