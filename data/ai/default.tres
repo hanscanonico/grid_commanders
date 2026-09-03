@@ -2,6 +2,17 @@
 
 [ext_resource type="Script" path="res://ai/ai_profile.gd" id="1"]
 
+; Normal. Two jobs the filename names neither of: these are the Normal tier's
+; weights — data/difficulty/normal.tres points here — and they are the profile
+; AIProfile.load_default reads, so this doubles as the fallback every tool and
+; arena run measures against.
+;
+; The name is the contract. AIProfile.DEFAULT_PATH spells this path, the class
+; defaults in ai/ai_profile.gd track every number below so an install missing
+; the file still plays Normal (test_ai_profile.gd holds the two together), and
+; tools/, tests/ and docs/difficulty_check.md cite it by name. Retune it and
+; Normal moves; rename it and the fallback goes with it.
+
 [resource]
 script = ExtResource("1")
 kill_bonus = 1.6

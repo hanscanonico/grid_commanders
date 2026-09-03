@@ -376,15 +376,32 @@ stateDiagram-v2
                 <tr><td>Road</td><td class="awp-stars">—</td><td>1</td><td>1</td><td>1</td><td></td></tr>
                 <tr><td>Plains</td><td class="awp-stars">★</td><td>1</td><td>2</td><td>1</td><td></td></tr>
                 <tr><td>Woods</td><td class="awp-stars">★★</td><td>1</td><td>3</td><td>2</td><td>hides units in fog</td></tr>
-                <tr><td>Mountain</td><td class="awp-stars">★★★★</td><td>2</td><td>✕</td><td>✕</td><td>infantry/mech only, +vision</td></tr>
+                <tr><td>Mountain</td><td class="awp-stars">★★★★</td><td>2</td><td>✕</td><td>✕</td><td>infantry/mech only · <s>+vision</s> <span class="badge badge-warning badge-xs align-middle">never shipped</span></td></tr>
                 <tr><td>River</td><td class="awp-stars">—</td><td>2</td><td>✕</td><td>✕</td><td>infantry/mech only</td></tr>
+                <tr><td>Bridge</td><td class="awp-stars">—</td><td>1</td><td>1</td><td>1</td><td>road across a river</td></tr>
                 <tr><td>City</td><td class="awp-stars">★★★</td><td>1</td><td>1</td><td>1</td><td>capturable · income · repairs</td></tr>
                 <tr><td>Base</td><td class="awp-stars">★★★</td><td>1</td><td>1</td><td>1</td><td>capturable · builds units</td></tr>
                 <tr><td>HQ</td><td class="awp-stars">★★★★</td><td>1</td><td>1</td><td>1</td><td>capture = win</td></tr>
-                <tr><td>Sea / Shoal</td><td class="awp-stars">—</td><td>✕</td><td>✕</td><td>✕</td><td>post-MVP (naval)</td></tr>
+                <tr><td>Port</td><td class="awp-stars">★★★</td><td>1</td><td>1</td><td>1</td><td>capturable · builds hulls · repairs ships · landers unload here</td></tr>
+                <tr><td>Airport</td><td class="awp-stars">★★★</td><td>1</td><td>1</td><td>1</td><td>capturable · builds aircraft · repairs them</td></tr>
+                <tr><td>Shoal</td><td class="awp-stars">—</td><td>1</td><td>1</td><td>1</td><td>beach: landers unload here</td></tr>
+                <tr><td>Sea</td><td class="awp-stars">—</td><td>✕</td><td>✕</td><td>✕</td><td>ships and landers only</td></tr>
+                <tr><td>Reef</td><td class="awp-stars">★</td><td>✕</td><td>✕</td><td>✕</td><td>ships and landers only · hides units in fog</td></tr>
               </tbody>
             </table>
           </div>
+          <p class="text-xs opacity-70 mt-2">Every terrain in <code>data/terrain/</code>, as shipped —
+          naval landed at M6+ rather than staying post-MVP, and a shoal is dry ground every land
+          class walks at cost 1. The three columns are the ground classes the MVP roster used;
+          <strong>Boot</strong> (Mech) pays 1 where Foot pays 2, on mountain and river, and
+          <strong>Air</strong> pays 1 everywhere. Ship enters sea, port and reef; Lander adds the
+          shoal, which is what lets it put an army ashore.</p>
+          <p class="text-xs opacity-70 mt-2">Mountain's <s>+vision</s> never shipped.
+          <code>core/rules/vision.gd</code> derives sight from the unit's own <code>vision</code>,
+          its commander's bonus and any enemy jamming — nothing terrain-derived — so infantry on a
+          four-star peak sees exactly as far as infantry in a field. It is left standing here struck
+          through, as the design intent it was: granting it would change what the AI's fog reads and
+          re-open the difficulty measurements, so it is a decision to take, not a bug to fix.</p>
         </div>
       </div>
 
@@ -398,7 +415,7 @@ stateDiagram-v2
               </thead>
               <tbody>
                 <tr><td>Infantry</td><td>1 000</td><td>3</td><td>Foot</td><td>1</td><td>captures, cheap screen</td></tr>
-                <tr><td>Mech</td><td>3 000</td><td>2</td><td>Foot</td><td>1</td><td>captures, kills vehicles</td></tr>
+                <tr><td>Mech</td><td>3 000</td><td>2</td><td>Boot</td><td>1</td><td>captures, kills vehicles</td></tr>
                 <tr><td>Recon</td><td>4 000</td><td>8</td><td>Tires</td><td>1</td><td>fast, anti-infantry, vision</td></tr>
                 <tr><td>Tank</td><td>7 000</td><td>6</td><td>Treads</td><td>1</td><td>workhorse</td></tr>
                 <tr><td>Md&nbsp;Tank</td><td>16 000</td><td>5</td><td>Treads</td><td>1</td><td>heavy breakthrough</td></tr>

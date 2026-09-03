@@ -61,6 +61,9 @@ const HQ := &"hq"
 const BASE := &"base"
 const PORT := &"port"
 const SHOAL := &"shoal"
+## The unit the delivery lint measures an island against. Where it may put its
+## cargo down is its own `unload_terrain` — asked, never restated here.
+const LANDING_CRAFT := &"lander"
 
 ## A description is one whole sentence, so it ends like one. The check exists
 ## because MapData takes the first comment line alone: a sentence carried onto a
@@ -680,14 +683,18 @@ func _delivery_error(map: MapData) -> String:
 
 
 ## Whether the landmass holding `cell` carries a beach or a dock a lander can
-## sail to — the two terrains a landing craft may unload from, so the two that
-## turn an island into ground an army can stand on.
+## sail to — the terrain a landing craft may unload from, so the terrain that
+## turns an island into ground an army can stand on.
+##
+## Which terrain that is comes off the roster, not from a pair of ids repeated
+## here: the boards and the Lander cannot then drift apart, and a hull that
+## beaches somewhere new is a data edit this lint follows on its own.
 func _has_landing_point(map: MapData, cell: Vector2i, beachable: Dictionary) -> bool:
+	var craft := unit_db.by_id(LANDING_CRAFT)
 	for ashore: Vector2i in _flood(map, cell, TerrainType.FOOT):
 		if not beachable.has(ashore):
 			continue
-		var id := map.terrain_at(ashore).id
-		if id == SHOAL or id == PORT:
+		if craft.can_unload_from(map.terrain_at(ashore).id):
 			return true
 	return false
 
