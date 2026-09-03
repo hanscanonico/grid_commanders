@@ -5,8 +5,9 @@ extends GutTest
 ## Read off a fresh instance of the script rather than the live autoload, and
 ## pinned before anything is set, which latches the preference file shut — so
 ## nothing here writes user://settings.cfg. Same terms as test_menu_animations
-## beside it. No real window stands either: `pin` and the setter both reach
-## DisplayServer, which is the headless driver under `make test`.
+## beside it; the two cases that ask the pause menu are the exception, and they
+## only read the autoload. No real window stands either: `pin` and the setter
+## both reach DisplayServer, which is the headless driver under `make test`.
 
 const SETTINGS_SCRIPT := preload("res://autoload/settings.gd")
 
@@ -62,14 +63,21 @@ func test_it_is_a_value_row_the_menu_offers() -> void:
 
 
 ## A phone's game fills the screen whatever anyone prefers, so the row is not
-## offered there at all (mobile plan D5).
+## offered there at all (mobile plan D5). Asked of the pause menu itself and not
+## only of the answer it asks: the constant the menu used to read still holds the
+## Window row, so a menu reading it again is caught here and nowhere else.
 func test_a_touch_build_is_offered_no_window_row() -> void:
 	var fresh = _pinned_settings()
 	MobileProfile.pin(true)
 	var rows: Array[StringName] = fresh.offered_rows()
+	var ids: Array = BattleMenus.map_actions(Fixture.state(Fixture.NEUTRAL_BASE)).map(
+		func(row: Dictionary) -> StringName: return row["id"]
+	)
 	MobileProfile.unpin()
 	assert_false(Settings.WINDOW_ROW in rows, "a phone has no window to stand anywhere but full")
 	assert_true(Settings.SOUND_ROW in rows, "and every other row is still offered")
+	assert_false(Settings.WINDOW_ROW in ids, "so the pause menu prints no Window row on a phone")
+	assert_true(Settings.SOUND_ROW in ids, "while the rows it does offer are still printed")
 
 
 ## The key is the whole of this setting's reach outside a menu, so the action has
