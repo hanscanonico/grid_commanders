@@ -134,6 +134,28 @@ func test_signal_jam_shortens_enemy_vision() -> void:
 	assert_false(jammed.has(Vector2i(0, 1)), "but no longer 5")
 
 
+## The sight half of the same floor the move half already has. Five shipped types
+## see one tile, so the jam takes one of them to its own square and no further;
+## deepening the penalty past that is what reaches `_sight_of`'s floor, which a
+## single shipped jam stops exactly on. The board carries no owned property, or
+## property sight would reveal the cell and neither half would be measured.
+func test_signal_jam_leaves_a_short_sighted_unit_its_own_cell() -> void:
+	var state := _state("[terrain]\n...\n...\n[units]\n1 r 0 0\n2 T 2 1", &"orin_flux")
+	state.fog_enabled = true
+	assert_true(Vision.visible_cells(state, 2).has(Vector2i(1, 1)), "a Md Tank sees one tile")
+	var flux: OrinFlux = state.commander_of(1).duplicate()  # never the shared DB resource
+	state.set_commander(1, flux)
+	assert_eq(Fixture.fire_power(state, 1), "")
+	var jammed := Vision.visible_cells(state, 2)
+	assert_true(jammed.has(Vector2i(2, 1)), "blind, never inside-out: it still sees itself")
+	assert_false(jammed.has(Vector2i(1, 1)), "and nothing beside it")
+	flux.jam_vision_penalty = -2
+	assert_true(
+		Vision.visible_cells(state, 2).has(Vector2i(2, 1)),
+		"and a deeper jam floors at blind rather than inverting the ring"
+	)
+
+
 ## ROUND duration, so "until their next turn" means it is still up while the
 ## opponent actually plays.
 func test_signal_jam_lasts_through_the_opponents_turn() -> void:

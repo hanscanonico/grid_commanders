@@ -15,8 +15,15 @@ extends GutTest
 ## Only a weapon built to hunt a submarine reaches one. That is the whole payoff
 ## of diving, and it has to hold in the command that validates the shot — the
 ## planner and the targeting overlay ask the same authority.
+##
+## Both halves of the command's answer are asserted, not just the cruiser's:
+## `can_engage` and `ready_shot` reach the dive rule by separate calls, so a
+## refusal proven only through `can_engage` would stay green with the check gone
+## from the selector the command actually asks. The battleship stands two tiles
+## off because one is inside its own dead zone, where the range refusal would
+## answer first and prove nothing about the water.
 func test_only_a_hunter_can_engage_a_dived_sub() -> void:
-	var state := Fixture.state("[terrain]\nSSS\n[units]\n1 s 1 0\n2 B 0 0\n2 c 2 0")
+	var state := Fixture.state("[terrain]\nSSSS\n[units]\n1 s 2 0\n2 B 0 0\n2 c 3 0")
 	var sub := state.units[0]
 	sub.dived = true
 	EndTurnCommand.new().apply(state)  # blue's turn
@@ -25,9 +32,16 @@ func test_only_a_hunter_can_engage_a_dived_sub() -> void:
 	assert_false(
 		AttackRange.can_engage(state, battleship, sub), "a battleship's guns do not reach under"
 	)
+	assert_eq(
+		AttackCommand.new(battleship, Fixture.path([Vector2i(0, 0)]), Vector2i(2, 0)).validate(
+			state
+		),
+		"cannot damage the target",
+		"and the command refuses the shot for that reason, not for range or ammo"
+	)
 	assert_true(AttackRange.can_engage(state, cruiser, sub), "a cruiser is built for exactly this")
 	assert_eq(
-		AttackCommand.new(cruiser, Fixture.path([Vector2i(2, 0)]), Vector2i(1, 0)).validate(state),
+		AttackCommand.new(cruiser, Fixture.path([Vector2i(3, 0)]), Vector2i(2, 0)).validate(state),
 		""
 	)
 

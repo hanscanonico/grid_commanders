@@ -9,8 +9,9 @@ extends RefCounted
 ## Spacing between the tiers production ranks candidates in. Wide enough that
 ## no tier's own ordering can reach into the next.
 const TIER_STRIDE := 1000
-## "The army is missing something it cannot do without." Ordered within itself:
-## the capture roster first, then the one truck that keeps the rest firing.
+## "The army cannot take ground without this" — the capture-roster shortfall,
+## and nothing else. The supply truck's want sits a tier below, in `_build_rank`'s
+## `can_resupply` branch, so an army worth supplying is bought before its truck.
 const RANK_SHORTFALL := TIER_STRIDE
 ## "Follow the standing priority" — the doctrine tail and the supply want
 ## share this floor, so a doctrine can pull either up but never past it.

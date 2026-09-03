@@ -39,6 +39,18 @@ func test_load_rejects_vehicles_and_full_or_enemy_transports() -> void:
 	)
 
 
+## The destination is where the command looks for a hull, so walking to bare
+## ground is refused before `carriage_error` is ever asked.
+func test_load_onto_an_empty_cell_rejected() -> void:
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	assert_eq(
+		LoadCommand.new(state.units[0], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).validate(
+			state
+		),
+		"no friendly transport at the destination"
+	)
+
+
 func test_cargo_rides_with_the_transport() -> void:
 	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0\n1 p 1 0")
 	var infantry := state.units[0]
