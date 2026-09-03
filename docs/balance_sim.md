@@ -477,7 +477,11 @@ what is uncommitted under `core/ ai/ data/`. A run whose stamp does not match th
 one on disk names each thing that moved and replays every shard — the markers are
 **deleted before the new stamp is written**, so a replay killed half-way leaves
 no marker its own stamp would vouch for, and the rerun this tool asks you to make
-picks up only what it actually played. `--reuse-stale` reports them anyway and
+picks up only what it actually played. The stamp answers for the whole directory,
+so what a content change deletes is every marker under it and not only the ones
+today's plan names: `--maps=a,b` yesterday and `--maps=a` today would otherwise
+leave `b` sitting under today's stamp. The stamp itself is written whole or not at
+all, for the same reason a marker is. `--reuse-stale` reports them anyway and
 keeps the old stamp; `--refresh` replays regardless. A directory with no stamp at
 all predates this and is trusted once, and a file only the new run names — the
 arena search's next wave of candidates in the same pool directory — is not a

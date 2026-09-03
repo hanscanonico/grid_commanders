@@ -418,6 +418,26 @@ def clear_markers(out, shards, root=ROOT):
     return dropped
 
 
+def clear_every_marker(out, root=ROOT):
+    """Drop every marker under `out`, not only the ones this run's plan names.
+
+    The stamp answers for the whole directory, so a run that narrows the plan —
+    `--maps=a,b` yesterday, `--maps=a` today — would otherwise leave b's marker
+    under today's stamp and hand b's old artifacts to tomorrow's `--maps=a,b` as
+    a fresh measurement. Which markers exist is not a question this run can ask
+    its own plan; it is a question for the directory.
+    """
+    dropped = 0
+    shards_root = os.path.join(root, out, "shards")
+    for name in sorted(os.listdir(shards_root) if os.path.isdir(shards_root) else []):
+        for marker in sorted({preset["marker"] for preset in PRESETS.values()}):
+            path = os.path.join(shards_root, name, marker)
+            if os.path.exists(path):
+                os.remove(path)
+                dropped += 1
+    return dropped
+
+
 STAMP = "stamp.json"
 # Read by every match whatever the pairing: a shard played before either of them
 # moved is a shard about other rules.
@@ -474,8 +494,17 @@ def read_stamp(out):
 
 
 def write_stamp(out, stamp):
-    with open(os.path.join(ROOT, out, STAMP), "w") as f:
+    """Written the way every other artifact here is: complete or not at all.
+
+    A half-written stamp reads as no stamp (`read_stamp` swallows the decode),
+    and no stamp is the branch that trusts the shards already on disk — so a kill
+    inside the dump is exactly the case this whole mechanism exists to catch.
+    """
+    path = os.path.join(ROOT, out, STAMP)
+    part = path + ".part"
+    with open(part, "w") as f:
         json.dump(stamp, f, indent="\t", sort_keys=True)
+    os.replace(part, path)
 
 
 def stamp_changes(previous, current):
@@ -544,7 +573,15 @@ def pool_resume(args, shards, log):
         say("!! the shards on disk answer for the content above — replaying every one")
         say("!! pass --reuse-stale to report them anyway")
     if plan.clear:
-        dropped = clear_markers(args.out, shards)
+        # A content change invalidates the directory, not this plan: the stamp
+        # about to be written vouches for every marker under `out`, so every one
+        # of them has to go. A `--refresh` on unchanged content is the other
+        # case — the markers outside this plan are still true about the same
+        # content, and the stamp stays honest without touching them.
+        if changes:
+            dropped = clear_every_marker(args.out)
+        else:
+            dropped = clear_markers(args.out, shards)
         if dropped:
             say("dropped %d shard marker(s); playing them again" % dropped)
     if plan.stamp:
@@ -796,6 +833,26 @@ def self_check():
                 not any(os.path.exists(marker_path(out, s, scratch)) for s in shards),
             ),
             ("a directory with none is not an error", clear_markers(out, shards, scratch) == 0),
+        ):
+            failures += 0 if ok else 1
+            print("%-4s markers: %s" % ("ok" if ok else "FAIL", label))
+
+        ## The narrowed plan: yesterday's `--maps=a,b` and today's `--maps=a`.
+        ## The stamp answers for the directory, so a run whose content moved has
+        ## to drop the marker its own plan never names.
+        for shard in shards:
+            marker = marker_path(out, shard, scratch)
+            with open(marker, "w") as f:
+                f.write("{}")
+        narrowed = shards[:1]
+        swept = clear_every_marker(out, scratch)
+        for label, ok in (
+            ("a narrowed plan still drops every marker", swept == len(shards)),
+            (
+                "including the one it does not name",
+                not os.path.exists(marker_path(out, shards[1], scratch)),
+            ),
+            ("this run's own plan is dropped too", clear_markers(out, narrowed, scratch) == 0),
         ):
             failures += 0 if ok else 1
             print("%-4s markers: %s" % ("ok" if ok else "FAIL", label))
