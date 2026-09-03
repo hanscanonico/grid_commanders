@@ -56,12 +56,16 @@ const SHEET_PATHS: Dictionary[int, String] = {
 	Family.MOUNTAIN: "res://assets/tiles/autotiles/mountain.png",
 }
 
-## The open water a beat later: the same three phases in the same order, with
-## only the glints moved, so nothing about the cut or the indexing changes and
-## `sheet_path` is the only place the second file is named. The sea is the one
-## animated family today, which is why one constant answers rather than a second
-## dictionary.
-const SEA_B_PATH := "res://assets/tiles/autotiles/sea_b.png"
+## Every animated family's second time frame: the same cut and the same
+## indexing as `SHEET_PATHS`' own file, with only the glint or foam pixels
+## moved — the sea was the first of these, rivers and shoals joined it at the
+## same idiom (S9). `sheet_path` is the only place a frame-B file is named,
+## so a family with no entry here just keeps answering its one sheet.
+const FRAME_B_PATHS: Dictionary[int, String] = {
+	Family.SEA: "res://assets/tiles/autotiles/sea_b.png",
+	Family.RIVERS: "res://assets/tiles/autotiles/rivers_b.png",
+	Family.SHOALS: "res://assets/tiles/autotiles/shoals_b.png",
+}
 
 ## How many cells each family's sheet holds: a connection set's 16 masks, the
 ## bridge sheet's two decks, the phases of the phase-keyed sheets.
@@ -181,11 +185,12 @@ static func phase(cell: Vector2i, count: int) -> int:
 ## `SHEET_PATHS` sheet every surface has always read, so the miniature and the
 ## legibility ruler are unaffected by the beat: a time frame is another axis, and
 ## a thumbnail or a report taken on a different one answers a different question.
-## Only the sea has a second frame; every other family answers frame 0 whatever
-## it is asked, so a caller never has to know which families animate.
+## Only the families in `FRAME_B_PATHS` have a second frame; every other family
+## answers frame 0 whatever it is asked, so a caller never has to know which
+## families animate.
 static func sheet_path(p_family: int, p_frame: int = 0) -> String:
-	if p_family == Family.SEA and p_frame == 1:
-		return SEA_B_PATH
+	if p_frame == 1 and FRAME_B_PATHS.has(p_family):
+		return FRAME_B_PATHS[p_family]
 	return SHEET_PATHS[p_family]
 
 

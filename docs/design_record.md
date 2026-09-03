@@ -1422,13 +1422,15 @@ and which is given one back here. Reproduced otherwise verbatim.
   `units_atlas_move_b.png` and `autotiles/sea_b.png` shipped installed and read by nothing, each
   its own slice — **all four are drawn now** (the seventh, eighth and ninth slices below). Three
   decisions. **`scenes/battle/board_beat.gd` (`BoardBeat`) is the one clock every looping sheet
-  reads** — the cadences (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples
-  of one another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable
-  without a scene; the sea has no business asking a unit sprite what time it is. **`animates` is
-  gone** (above). **The constants stay hardcoded and `assets/tiles/anim.json` is *pinned*, never
-  read at runtime**: the generator's manifest states the cell, the clips, the columns, the rows and
-  the phase counts, and `tests/unit/test_anim_manifest.gd` is the one place it is consumed, so the
-  contract and the game's constants cannot drift without putting a JSON parse in the draw path.
+  reads** — the cadences it opened with (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately
+  not multiples of one another; animation-frames S9 added the river's and the shoal's on the same
+  lock — `.claude/rules/presentation.md` carries that slice), the frozen pin and the Instant rule,
+  Node-free statics so a beat is checkable without a scene; the sea has no business asking a unit
+  sprite what time it is. **`animates` is gone** (above). **The constants stay hardcoded and
+  `assets/tiles/anim.json` is *pinned*, never read at runtime**: the generator's manifest states
+  the cell, the clips, the columns, the rows and the phase counts, and
+  `tests/unit/test_anim_manifest.gd` is the one place it is consumed, so the contract and the
+  game's constants cannot drift without putting a JSON parse in the draw path.
   `PLAINS_PHASES` is 8 with it. **80 of the 85 smoke frames moved** and the five that did not are
   exactly the menu screens that draw neither board art nor a thumbnail (`menu_campaign_hub`,
   `..._debrief`, `..._interlude`, `menu_commander_select`, `menu_replays`).

@@ -47,6 +47,16 @@ const ATLAS_SOURCE_ID := 0
 
 const UNIT_SPRITE_SCENE := preload("res://scenes/battle/unit_sprite.tscn")
 
+## Which autotile families ride the board's beat, and at what cadence.
+## `TerrainAutotiles.FRAME_B_PATHS` says a family HAS a second frame; the
+## period is `BoardBeat`'s to know, not that file's, so the two answers are
+## brought together only here, at the one place a beat is actually hung.
+const _ANIMATED_TERRAIN: Dictionary[int, int] = {
+	TerrainAutotiles.Family.SEA: BoardBeat.SEA_MS,
+	TerrainAutotiles.Family.RIVERS: BoardBeat.RIVER_MS,
+	TerrainAutotiles.Family.SHOALS: BoardBeat.SHOAL_MS,
+}
+
 ## The surface a property overlay stands on, under `terrain_layer`. The atlas
 ## ships its property columns transparent (TerrainDB.GROUND_ID), so a city drawn
 ## alone is a hole in the board; this layer is the ground the building sits on.
@@ -164,13 +174,16 @@ func setup() -> void:
 	ground_layer.tile_set = terrain_layer.tile_set
 	ground_layer.scale = terrain_layer.scale
 	fog_layer.tile_set = _build_fog_tile_set()
-	# The one animated family. Hung on the layer that owns the tile set, so it
+	# The animated families. Hung on the layer that owns the tile set, so each
 	# lives and dies with the board and the two layers sharing that set swell
 	# with it.
-	SeaBeat.attach(
-		terrain_layer,
-		terrain_layer.tile_set.get_source(TerrainAutotiles.Family.SEA) as TileSetAtlasSource
-	)
+	for family: int in _ANIMATED_TERRAIN:
+		SeaBeat.attach(
+			terrain_layer,
+			terrain_layer.tile_set.get_source(family) as TileSetAtlasSource,
+			family,
+			_ANIMATED_TERRAIN[family]
+		)
 	_paint_map()
 	_paint_backdrop()
 	_spawn_unit_sprites()

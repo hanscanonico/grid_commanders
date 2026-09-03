@@ -20,8 +20,17 @@ const AMBIENT_MS := 500
 ## The walk cycle's own rate, faster than a unit's idle by design, and authored
 ## at the default tier — `move_ms` is what a sprite plays it at.
 const MOVE_MS := 160
-## The sea's swell, the slowest of the three.
+## The sea's swell, the slowest of the units' three cadences.
 const SEA_MS := 900
+## The river's flow (S9): faster than the open sea's swell — a current reads
+## livelier than a swell — and coprime-ish with the other four the way MOVE_MS
+## is with AMBIENT_MS/SEA_MS: it neither divides nor is divided by 500, 160 or
+## 900, nor by SHOAL_MS below.
+const RIVER_MS := 700
+## The shoal's foam edge (S9), the laziest of the five: a breaking scallop
+## reads slower than either the river's current or the open sea's swell.
+## Disjoint from all four of the others the same way RIVER_MS is.
+const SHOAL_MS := 1150
 
 ## Captures pin the clock at frame A the way they pin game speed and the hint
 ## strip: a frame must not depend on when the shutter fired. Belt as well as

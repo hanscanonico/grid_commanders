@@ -77,12 +77,14 @@ class Sheet:
 
 
 # Every family the game draws a cell of, in `TerrainAutotiles.Family` order.
-# `sea_b` is the sea's second time frame, which the board animates to.
+# A `_b` sheet is that family's second time frame, which the board animates to.
 SHEETS: tuple[Sheet, ...] = (
     Sheet("roads", "autotiles/roads.png", 16, 4, "mask"),
     Sheet("rivers", "autotiles/rivers.png", 16, 4, "mask"),
+    Sheet("rivers_b", "autotiles/rivers_b.png", 16, 4, "mask"),
     Sheet("coast", "autotiles/coast.png", 16, 4, "mask"),
     Sheet("shoals", "autotiles/shoals.png", 16, 4, "mask"),
+    Sheet("shoals_b", "autotiles/shoals_b.png", 16, 4, "mask"),
     Sheet("woods", "autotiles/woods.png", 16, 4, "mask"),
     Sheet("bridges", "autotiles/bridges.png", 2, 2, "deck"),
     Sheet("sea", "autotiles/sea.png", 3, 3, "phase"),

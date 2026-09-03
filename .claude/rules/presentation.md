@@ -314,10 +314,11 @@ forms named in the root index are in `docs/design_record.md`.
   carries a `FIGURE_H` beside its `FIGURE_PX`, pinned by `tests/unit/test_texel_stability.gd`.
   **The sixth slice is the animation install, the board's new ambient baseline**:
   **`scenes/battle/board_beat.gd` (`BoardBeat`) is the one clock every looping sheet reads** — the
-  cadences (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples of one
-  another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable without a
-  scene. **The constants stay hardcoded and `assets/tiles/anim.json` is *pinned*, never read at
-  runtime**, `tests/unit/test_anim_manifest.gd` the one place it is consumed. **The legibility ruler
+  cadences it opened with (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples
+  of one another; S9's two below joined them), the frozen pin and the Instant rule, Node-free
+  statics so a beat is checkable without a scene. **The constants stay hardcoded and
+  `assets/tiles/anim.json` is *pinned*, never read at runtime**,
+  `tests/unit/test_anim_manifest.gd` the one place it is consumed. **The legibility ruler
   read a REGRESSION** against the previous art; nothing was tuned in response, and it was **answered
   in the generator by the animation-frames plan's S8** (a board-scale contour band, no game code) —
   `docs/sprite_legibility.md`'s 2026-09-01 re-read is the record, and no baseline cell fails on
@@ -328,6 +329,29 @@ forms named in the root index are in `docs/design_record.md`.
   ruler are deliberately unedited, a time frame being another axis. **`scenes/battle/sea_beat.gd`
   (`SeaBeat`) is where the tick lands**, handed its source by `BattleView`, and the backdrop and the
   property ground swell by construction.
+  **Rivers and shoals joined the sea's swell (animation-frames S9, 2026-09-03)**, the same idiom on
+  the two remaining water families: a second sheet, only the moving tone changed, frame 0 the sheet
+  every static surface has always read. `TerrainAutotiles.sheet_path`'s sea special-case retired
+  into **`FRAME_B_PATHS`, a per-family frame table** (`SEA_B_PATH` is gone), and `SeaBeat.attach`
+  generalised to `(parent, source, family, period_ms)` **keeping the class's name** — the sea was
+  its first user, and a rename would have touched every doc and comment that already says "the
+  sea's swell" for no behaviour change, where a sibling class per family would have been three
+  copies of the same eight lines. `BattleView._ANIMATED_TERRAIN` is the one place a family is
+  matched to its cadence, looping `SeaBeat.attach` over it rather than three call sites. Two new
+  `BoardBeat` cadences, both disjoint from the other three and from each other: `RIVER_MS` 700,
+  `SHOAL_MS` 1150 — `tests/unit/test_board_beat.gd` is the exhaustive pairwise check over all five
+  now, rather than trusting each clip's own file to have covered every pair between them.
+  A river's flow streaks slide **`RIVER_GLINT_SLIDE`** (4px, one board texel) along the arm they run
+  on, a straight addition rather than the sea's wrap — a connection-keyed cell's own channel geometry
+  leaves every streak enough clearance in its arm, so nothing needs `_slide_x`'s interior-band wrap.
+  A shoal's foam shimmers instead: `_draw_shore`'s `slide` offsets only the coordinate `_foam_run`
+  reads, never the one the water/sand boundary is drawn from, so the shoreline itself cannot move
+  and only the foam toggles. `generators/sprites/tests/test_river_frames.py` and
+  `test_shoal_frames.py` are the sea-frames suite's pattern, cloned per family over the sixteen
+  connection masks rather than the sea's three phases. Game-side, `test_terrain_autotiles_beat.gd`
+  is the sea's own beat suite (split out of `test_terrain_autotiles_water.gd`, which was already
+  near the public-method ceiling) grown to cover all three families' frame cuts, cadences, pins and
+  Instant. No woods canopy: the plan's own hesitancy stands as a follow-up, never drawn.
   **The eighth slice is the move clip**, played for exactly the length of
   `BattleAnimator.animate_path`'s tween. **It is a clip, not a second beat** —
   `UnitSprite._sheet_path(frame)` is the one answer to which sheet a sprite draws from, so no repaint

@@ -75,6 +75,18 @@
         "units_atlas_move_d.png"
       ]
     },
+    "rivers": {
+      "mode": "loop",
+      "ms_per_frame": 700,
+      "order": [
+        0,
+        1
+      ],
+      "sheets": [
+        "autotiles/rivers.png",
+        "autotiles/rivers_b.png"
+      ]
+    },
     "sea": {
       "mode": "loop",
       "ms_per_frame": 900,
@@ -85,6 +97,18 @@
       "sheets": [
         "autotiles/sea.png",
         "autotiles/sea_b.png"
+      ]
+    },
+    "shoals": {
+      "mode": "loop",
+      "ms_per_frame": 1150,
+      "order": [
+        0,
+        1
+      ],
+      "sheets": [
+        "autotiles/shoals.png",
+        "autotiles/shoals_b.png"
       ]
     }
   },

@@ -1,4 +1,4 @@
-# Sheet census — 2026-09-02
+# Sheet census — 2026-09-03
 
 What the art installed under `assets/tiles/` costs, and how much of it is the same cell twice.
 A reading of one run of `make sheet-census`
@@ -30,23 +30,29 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | `autotiles/mountain.png` | 3.7 KiB | 53.1 KiB | 3 | 0 | 0% | yes |
 | `autotiles/plains.png` | 4.6 KiB | 140.8 KiB | 8 | 0 | 0% | yes |
 | `autotiles/rivers.png` | 6.1 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
+| `autotiles/rivers_b.png` | 6.1 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 | `autotiles/roads.png` | 5.0 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
 | `autotiles/sea.png` | 1.3 KiB | 53.1 KiB | 3 | 0 | 0% | yes |
 | `autotiles/sea_b.png` | 1.3 KiB | 53.1 KiB | 3 | 0 | 0% | yes |
 | `autotiles/shoals.png` | 5.4 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
+| `autotiles/shoals_b.png` | 5.5 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
 | `autotiles/woods.png` | 16.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 
-**Totals: 1,033.1 KiB of PNG, 31,574.7 KiB of decoded RGBA, over 23 sheets — every one of which
-the battle scene loads.** S6's two further move sheets are the whole of the growth since the last
-reading: 5,184 KiB of decoded RGBA, a fifth again on top of the set the mobile budget was last
-weighed against. The instrument reads that last column off the game rather than off a list:
+**Totals: 1,044.7 KiB of PNG, 32,127.5 KiB of decoded RGBA, over 25 sheets — every one of which
+the battle scene loads.** S9's two new frame-B sheets are the whole of the growth since the last
+reading: `autotiles/rivers_b.png` and `autotiles/shoals_b.png`, the sea's own idiom (a second frame,
+only the moving tone changed) extended to the other two water families — 552.8 KiB of decoded RGBA,
+the cost of a beat rather than a new tile. The instrument reads that last column off the game rather
+than off a list:
 it scans `scenes/` for `res://assets/tiles/*.png`, and finds `scenes/battle/unit_sprite.gd` naming
-the eleven unit sheets, `scenes/battle/terrain_autotiles.gd` the ten autotile sheets,
+the eleven unit sheets, `scenes/battle/terrain_autotiles.gd` the twelve autotile sheets,
 `scenes/battle/battle_view.gd` (and `scenes/menu/map_thumbnail.gd`) the terrain atlas, and
 `scenes/battle/battle_overlays.gd` the overlay. How each sheet is cut comes from the contract
 shipped beside the art, `assets/tiles/anim.json`: it names the unit sheets and their 64×96 cell,
 and the row list is where the faction row count comes from — everything else is cut on the board's
-own 64px tile. **47 of the loaded cells are duplicates, 752.0 KiB of the decoded total.**
+own 64px tile. **48 of the loaded cells are duplicates, 768.0 KiB of the decoded total** — one more
+than the last reading, `shoals_b.png` carrying the same single self-duplicate cell `shoals.png`
+does (see below), `rivers_b.png` none.
 
 ## The terrain atlas, column by column
 
@@ -99,12 +105,15 @@ holes in an 18-column sheet. Nothing draws the KO fallback — `CutsceneSide.bin
 null for a flying unit — while the fire fallback IS drawn and is exactly the point: an unarmed
 attacker's window opens onto its own idle pair. The table above cannot see any of this, because
 `dup` counts only cells repeated inside **one** sheet, which is why those rows read 0. Squeezing
-every repeated cell out of every sheet would return 752 KiB within sheets plus those 4,896 across
+every repeated cell out of every sheet would return 768 KiB within sheets plus those 4,896 across
 them, about 18% of what the game holds — so the case for a relayout is a tidiness case, not a
 memory one, and it is paid for in `BattleView`'s region maths, which reads a terrain's cell as
-(column, faction row). Two small oddities the instrument turned up and this page does not explain:
-`autotiles/roads.png` cell 10 and `autotiles/shoals.png` cell 4 are byte-identical to cell 0 of
-their own sheets — two connection variants the art draws the same, not a layout choice.
+(column, faction row). Three small oddities the instrument turned up and this page does not
+explain: `autotiles/roads.png` cell 10, `autotiles/shoals.png` cell 4 and (S9)
+`autotiles/shoals_b.png` cell 4 are byte-identical to cell 0 of their own sheets — `shoal_tile`'s
+own fallback (mask 0 draws as mask `S`, a beach with no water on it reading as a dry run of sand
+rather than nothing) is why cell 4 already matched cell 0 before S9, and a frame that moves the
+foam and nothing else inherits the match in both frames rather than only one.
 
 ## What a plan would weigh
 
