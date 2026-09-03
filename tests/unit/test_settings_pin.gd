@@ -1,10 +1,11 @@
 extends GutTest
 ## What `pin` stands back, and what outranks it.
 ##
-## A capture must not depend on the machine that took it, and four preferences
+## A capture must not depend on the machine that took it, and five preferences
 ## reach a photographed pixel: the map menu's Sound row reads the volume, the two
-## animation toggles draw their own checkmarks, and the end-turn check decides
-## whether a scripted End Turn opens the guard at all.
+## animation toggles draw their own checkmarks, the end-turn check decides
+## whether a scripted End Turn opens the guard at all, and the window mode frames
+## the whole shot.
 ##
 ## Read off a fresh instance of the script rather than the live autoload, and
 ## pinned before anything is written back, so nothing here touches
@@ -19,6 +20,7 @@ func test_a_pinned_launch_stands_every_photographed_preference_back() -> void:
 	fresh.menu_animations = false
 	fresh.battle_animations = false
 	fresh.volume = Settings.OFF_ID
+	fresh.fullscreen = true
 	fresh.pin(GameSpeed.DEFAULT_ID)
 	assert_eq(
 		fresh.end_turn_confirm, Settings.DEFAULT_END_TURN_CONFIRM, "the end-turn check stands back"
@@ -28,6 +30,9 @@ func test_a_pinned_launch_stands_every_photographed_preference_back() -> void:
 		fresh.battle_animations, Settings.DEFAULT_BATTLE_ANIMATIONS, "the cut-in toggle stands back"
 	)
 	assert_eq(fresh.volume, Settings.DEFAULT_VOLUME, "and so does the volume")
+	assert_eq(
+		fresh.fullscreen, Settings.DEFAULT_FULLSCREEN, "and the window comes back out of full"
+	)
 
 
 func test_the_defaults_are_what_a_fresh_install_carries() -> void:

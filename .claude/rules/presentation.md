@@ -527,9 +527,15 @@ forms named in the root index are in `docs/design_record.md`.
   — turn one can reach a neutral property and afford a build, checked by `tests/unit/test_maps.gd`.
   A capture pins the hint set (`Settings.pin_hints`, from `Battle._ready`) so
   `make smoke` frames don't depend on play history; its sibling `Settings.pin` does the same for
-  the speed tier and stands the end-turn check, menu motion, battle animations and volume back at
-  their defaults, so no preference stored on the capturing machine reaches a frame. `--reset-hints`
-  is the one `Settings` flag that deliberately writes. The key legend
+  the speed tier and stands the end-turn check, menu motion, battle animations, volume and the
+  window mode back at their defaults, so no preference stored on the capturing machine reaches a
+  frame — the window most of all, a full-screen machine otherwise framing every capture at its own
+  monitor. **The window mode is a pause-menu row and the `F11` key, and on the main menu it is the
+  key alone**: that page's options row is full at four controls, a fifth putting the setup panel
+  past the 640-wide frame and the menu capture gate refusing it outright. Hidden under
+  `MobileProfile` — `Settings.offered_rows()` is the one answer to whether this device has a window
+  to stand anywhere but full, and the row, the key and the `DisplayServer` call all sit behind it.
+  `--reset-hints` is the one `Settings` flag that deliberately writes. The key legend
   (`scenes/ui/control_hints.gd`) is printed by
   **`Battle.state`'s setter** via `Battle.STATE_CONTEXT` — never refreshed from the dozen sites
   that assign the state.
