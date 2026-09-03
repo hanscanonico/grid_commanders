@@ -41,6 +41,12 @@ func _map() -> MapData:
 	return MapData.parse(FIELD, Fixture.terrain_db())
 
 
+func _withdraw(state: GameState, tags: Array[StringName]) -> void:
+	var effect := RemoveUnitsEffect.new()
+	effect.tags = tags
+	effect.apply(state, 1)
+
+
 func _spawn(symbol: String, cell: Vector2i, tag: StringName = &"") -> MissionSpawn:
 	var spawn := MissionSpawn.new()
 	spawn.unit_type = Fixture.unit_db().by_symbol(symbol)
@@ -127,6 +133,45 @@ func test_removal_banks_nothing_to_either_meter() -> void:
 	assert_eq(state.commander_state(1).charge, 0, "the beat is not a kill")
 	assert_eq(state.commander_state(2).charge, 0, "and it is not a loss to bank either")
 	assert_eq(state.funds[2] as int, purse_before, "and no bounty was taken out of the purse")
+
+
+## COM-179 reached the campaign through a scripted beat: rout judged one unit at
+## a time crowned whichever army the tag list emptied first and left the other
+## standing on an empty board, never flagged. The batch seam judges the whole
+## withdrawal at once, so reversing the tags may not move the outcome. Both
+## armies on this board go into it, so nobody is left to win — the case
+## `_check_victory` flags out loud rather than modelling a draw.
+func test_removal_falls_every_army_it_empties_whatever_order_the_tags_read() -> void:
+	var courier_first := _state()
+	var garrison_first := _state()
+	var tags: Array[StringName] = [&"courier", &"truck", &"siege_gun", &"garrison"]
+	_withdraw(courier_first, tags.duplicate())
+	assert_push_error("every remaining army fell at once")
+	tags.reverse()
+	_withdraw(garrison_first, tags)
+	assert_push_error("every remaining army fell at once")
+	for state in [courier_first, garrison_first]:
+		assert_true(state.is_eliminated(1), "army 1 lost its last unit to the beat")
+		assert_true(state.is_eliminated(2), "and so did army 2, in the same withdrawal")
+		assert_eq(state.winner, 0, "with nobody left standing there is no side to crown")
+
+
+## A rider named beside the hull it is inside is reached twice — once as the
+## transport's cargo, once as its own tag — and both passes are harmless. The
+## second `units.erase` finds nothing left to erase, and a passenger's stored
+## cell is stale from wherever it last boarded, so `carrier != null` keeps it
+## from clearing the capture somebody else is standing on there.
+func test_removal_of_a_hull_and_its_own_rider_clears_no_bystander_capture() -> void:
+	var state := Fixture.state(
+		"[terrain]\nC..\n[units]\n1 p 1 0 truck\n1 i 2 0 courier\n2 i 0 0 sapper"
+	)
+	var courier := MissionObjective.tagged_unit(state, &"courier")
+	courier.carrier = MissionObjective.tagged_unit(state, &"truck")
+	courier.cell = Vector2i(0, 0)
+	state.capture_progress[Vector2i(0, 0)] = 8
+	_withdraw(state, [&"truck", &"courier"])
+	assert_eq(state.units_of(1).size(), 0, "the hull and the rider both left")
+	assert_eq(state.capture_progress.get(Vector2i(0, 0), 0), 8, "the rider owned no cell to lose")
 
 
 func test_removal_refuses_a_name_the_board_never_gave() -> void:

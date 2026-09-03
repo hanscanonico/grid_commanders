@@ -887,10 +887,11 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   Two rules were read off the shipped design rather than invented: a scripted removal **banks
   nothing to either charge meter** (Hammerfall's D4 — charge is minted inside
   `ChargeLedger.bank_losses` and nowhere else), and **a defection does not rout the army it
-  empties**, a rout being reached only through `remove_unit`. `SpawnUnits` **skips an occupied cell**
-  rather than clearing it, Hammerfall staying the only thing in the game that removes a unit without
-  a shot. A defecting unit takes its cargo, its capture progress and its turn (`acted = true`) with
-  it, each with its reason on the class.
+  empties**, `DefectEffect` moving ownership without taking a unit off the board, so no removal —
+  and so no rout check — is reached at all. `SpawnUnits` **skips an occupied cell** rather than
+  clearing it, Hammerfall staying the only thing in the game that removes a unit without a shot.
+  A defecting unit takes its cargo, its capture progress and its turn (`acted = true`) with it,
+  each with its reason on the class.
   **D8 is exceeded rather than met**: `MissionSpeechCard` reads *nothing* — its lines are handed
   over by the command, the way `_present_power` is handed its commander — which is what makes a
   replay speak the same words. **R7 needed no `ai/` code**: `AIPlanCache` already drops on a board
