@@ -29,6 +29,14 @@ signal fire_pressed
 ## `fire_pressed` is.
 signal end_turn_pressed
 
+## A team-tinted cell's paint actually changed in `repaint_property` — a
+## capture completing, or a fog-deferred one finally reaching the viewer.
+## Relayed rather than acted on here, the same reason the two presses above
+## are: the flourish over it belongs to BattleAnimator and the pennant it
+## flashes to BattleOverlays, and this view only decides what the board itself
+## shows.
+signal property_flipped(cell: Vector2i)
+
 const TILE := 16
 ## Terrain atlas cells are 4x the world grid so the generated property
 ## buildings keep their detail; TerrainLayer is scaled down to compensate.
@@ -306,12 +314,17 @@ func repaint_property(cell: Vector2i) -> void:
 	if not perspective.can_see_cell(cell):
 		return
 	var terrain := map.terrain_at(cell)
-	if terrain.team_tinted:
-		terrain_layer.set_cell(
-			cell,
-			ATLAS_SOURCE_ID,
-			Vector2i(terrain.atlas_col, identity.atlas_row(game.owner_at(cell)))
-		)
+	if not terrain.team_tinted:
+		return
+	var row := identity.atlas_row(game.owner_at(cell))
+	# The one place a flip is known rather than assumed: the initial paint
+	# (`_paint_map`) used this same formula, so a cell whose owner never
+	# changed reads back the row it was already given, and only a real flip
+	# differs from it.
+	var flipped := terrain_layer.get_cell_atlas_coords(cell).y != row
+	terrain_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i(terrain.atlas_col, row))
+	if flipped:
+		property_flipped.emit(cell)
 
 
 # --- unit sprites ------------------------------------------------------------
@@ -395,17 +408,67 @@ func set_active_team(team: int) -> void:
 ## square by. Survivors go through `refresh_sprite`, so the pass re-applies fog
 ## instead of leaking whatever the last fog pass hid, and an arrival goes through
 ## `spawn_sprite_for`, which asks the same perspective before it draws anything.
-func sync_sprites() -> void:
+##
+## `fade_seconds` is a death's own parting fade for a unit this pass frees that
+## nothing else already showed dying — cargo lost with its transport, chiefly.
+## Zero is every other caller's answer: the pass runs after ordinary commands
+## too (a build, a join, a power), and those must stay a still board's worth of
+## change. `UnitSprite.die` is fire-and-forget here, the way a merged twin's
+## fade already is in `animate_join` — the reconciliation itself must not wait
+## on it.
+func sync_sprites(fade_seconds: float = 0.0) -> void:
 	for unit: Unit in _sprites.keys():
 		if unit in game.units:
 			refresh_sprite(unit)
 			continue
-		var sprite: UnitSprite = _sprites[unit]
-		_sprites.erase(unit)
-		sprite.queue_free()
+		_part_with(unit, fade_seconds)
 	for unit: Unit in game.units:
 		if not _sprites.has(unit):
 			spawn_sprite_for(unit)
+
+
+## Frees the sprites of whatever went down inside `carrier` — the riders the sim
+## took off the board with it, which no combat result names and which only a
+## reconciliation pass would otherwise reach.
+##
+## Asked for at the moment the transport's own death is shown, so the stack
+## sinks together. `sync_sprites` runs at the end of the exchange instead, a
+## whole death fade later, and riders reaching it there would stand up opaque on
+## a tile the board had already emptied. Fire-and-forget on `_part_with`'s own
+## terms: posed at the transport's cell, and silent where the viewer cannot
+## see it.
+func drop_cargo_of(carrier: Unit, fade_seconds: float) -> void:
+	for unit: Unit in _sprites.keys():
+		if unit.carrier != carrier or unit in game.units:
+			continue
+		_part_with(unit, fade_seconds)
+
+
+## Stops tracking `unit` and sends its sprite off, the one way this view lets a
+## sprite go. A rider is stood up first and keeps its fade only if that pose
+## landed; everything else fades where it already stands.
+func _part_with(unit: Unit, fade_seconds: float) -> void:
+	var sprite: UnitSprite = _sprites[unit]
+	_sprites.erase(unit)
+	var seconds := fade_seconds
+	if fade_seconds > 0.0 and unit.carrier != null:
+		seconds = fade_seconds if _pose_rider(sprite, unit.carrier) else 0.0
+	sprite.die(seconds)
+
+
+## Stands a rider on the cell its transport went down on and un-hides it, so a
+## parting fade has something to run on: `refresh` drew it hidden for as long as
+## it rode. Answers whether it was posed at all, which is what the viewer may
+## see of the transport — `can_see_unit`, the fog rule the death blast asks of a
+## kill it draws, rather than the cell alone, because un-hiding is an override
+## and a doctrine that hides a hull hides what was riding in it. A rider lost
+## out of sight is left hidden and goes without a fade, the way every freed
+## sprite used to.
+func _pose_rider(sprite: UnitSprite, carrier: Unit) -> bool:
+	if not perspective.can_see_unit(carrier):
+		return false
+	sprite.pose_at(carrier.cell)
+	return true
 
 
 ## Re-resolves the match's [SideIdentity] from the sim's current commander picks

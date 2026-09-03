@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/ui/hud_bottom_bar.gd" id="2"]
@@ -23,6 +23,8 @@
 [ext_resource type="Script" path="res://scenes/battle/power_marks.gd" id="21"]
 [ext_resource type="Script" path="res://scenes/battle/board_punch.gd" id="22"]
 [ext_resource type="Script" path="res://scenes/battle/muzzle_flash.gd" id="23"]
+[ext_resource type="Script" path="res://scenes/battle/death_blast.gd" id="24"]
+[ext_resource type="Script" path="res://scenes/battle/damage_callout.gd" id="25"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
@@ -49,6 +51,9 @@ y_sort_enabled = true
 [node name="MuzzleFlash" type="Node2D" parent="."]
 script = ExtResource("23")
 
+[node name="DeathBlast" type="Node2D" parent="."]
+script = ExtResource("24")
+
 [node name="CapturePips" type="Node2D" parent="."]
 script = ExtResource("14")
 
@@ -64,6 +69,9 @@ texture = ExtResource("3")
 
 [node name="PowerMarks" type="Node2D" parent="."]
 script = ExtResource("21")
+
+[node name="DamageCallout" type="Node2D" parent="."]
+script = ExtResource("25")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(2, 2)

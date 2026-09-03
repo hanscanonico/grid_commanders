@@ -100,3 +100,40 @@ func test_instant_tightens_the_speech_card_like_a_banner() -> void:
 		GameSpeed.INSTANT_BANNER_SECONDS,
 		"the tier that shows results rather than playing them out"
 	)
+
+
+func test_the_board_moments_scale_with_the_tier_they_are_played_at() -> void:
+	var normal := GameSpeed.default_speed()
+	var quick := GameSpeed.by_id(&"quick")
+	assert_almost_eq(
+		normal.build_rise_seconds(),
+		GameSpeed.BASE_BUILD_RISE_SECONDS * 3.0,
+		0.001,
+		"a built unit rises over the gentlest tier's own scale"
+	)
+	assert_almost_eq(
+		normal.flag_flip_seconds(),
+		GameSpeed.BASE_FLAG_FLIP_SECONDS * 3.0,
+		0.001,
+		"and a pennant flashes on it too"
+	)
+	assert_lt(
+		quick.build_rise_seconds(), normal.build_rise_seconds(), "a brisker tier plays both shorter"
+	)
+	assert_lt(quick.flag_flip_seconds(), normal.flag_flip_seconds(), "by the same scale")
+
+
+func test_the_board_moments_are_shorter_than_a_death() -> void:
+	var normal := GameSpeed.default_speed()
+	assert_lt(
+		normal.build_rise_seconds(),
+		normal.death_fade_seconds(),
+		"a badge arriving is not a hit landing"
+	)
+	assert_lt(normal.flag_flip_seconds(), normal.death_fade_seconds(), "nor is a flag catching one")
+
+
+func test_instant_leaves_the_board_moments_nothing_to_play() -> void:
+	var instant := GameSpeed.by_id(&"instant")
+	assert_eq(instant.build_rise_seconds(), 0.0, "a zero-length rise is skipped outright")
+	assert_eq(instant.flag_flip_seconds(), 0.0, "and so is the flip flash")

@@ -31,8 +31,26 @@ const BASELINE := 6.0
 ## Outline weight on the digits, matching unit_sprite.tscn's HP badge.
 const OUTLINE := 2
 
+## The flip flash's own spark: where it sits in the tile, and how far it reaches.
+## Anchored on the tile rather than on a badge, because the badge is gone by the
+## time the flash runs — a completed capture clears the cell's progress, and a
+## fallen army's forfeited cities never had one. Over the building's upper half,
+## where a property wears its colours, and short enough that the star and its
+## outline stay inside the 16 pixels the tile owns.
+const FLIP_AT := Vector2(TILE * 0.5, TILE * 0.5 - 2.0)
+const FLIP_REACH := 4.0
+
 ## Cell -> capture points still owed.
 var _pips: Dictionary[Vector2i, int] = {}
+
+## Cell -> how bright that property's flip flash still is: 1.0 the moment a
+## repaint reaches the viewer, spent when it reaches 0.0 — MuzzleFlash's own
+## shape, so a property changing hands catches the same spark a shot does. A
+## dictionary rather than one slot because a single repaint pass can flip many
+## properties at once (a scout revealing several fog-deferred captures, an army
+## falling and forfeiting its cities), and each one has its own flash to run.
+## Driven by BattleAnimator, one tween a cell.
+var _flips: Dictionary[Vector2i, float] = {}
 
 
 ## Replaces everything drawn. An empty dictionary clears, so callers never need a
@@ -42,12 +60,41 @@ func set_pips(pips: Dictionary[Vector2i, int]) -> void:
 	queue_redraw()
 
 
+## Marks `cell`'s property as having just changed hands — BattleView emits the
+## fact only when a repaint actually presents to the viewer, fog-deferred
+## captures included. Starts that one cell's flash at full; `set_flip` runs it
+## down and `clear_flip` takes it off, the way `clear_shot` is MuzzleFlash's.
+func show_flip(cell: Vector2i) -> void:
+	set_flip(1.0, cell)
+
+
+## One cell's flash progress — the tween's own writer, and bound-argument order
+## because `tween_method` hands the value in first.
+func set_flip(progress: float, cell: Vector2i) -> void:
+	_flips[cell] = progress
+	queue_redraw()
+
+
+func clear_flip(cell: Vector2i) -> void:
+	_flips.erase(cell)
+	queue_redraw()
+
+
 func _draw() -> void:
-	if _pips.is_empty():
-		return
 	var font := UiTheme.stat(true)
 	for cell: Vector2i in _pips:
 		_draw_badge(font, Vector2(cell * TILE) + ORIGIN, str(_pips[cell]))
+	for cell: Vector2i in _flips:
+		_draw_flip(Vector2(cell * TILE) + FLIP_AT, _flips[cell])
+
+
+## The flip's own spark, over the property that just changed hands —
+## MuzzleFlash's star at a smaller reach and CAPTURE's own hue, so the flash
+## reads as this building catching the light rather than a foreign mark landing
+## on it. Drawn off the cell alone, so it plays whether or not the tile still
+## carries a progress badge.
+func _draw_flip(at: Vector2, progress: float) -> void:
+	MuzzleFlash.draw_star(self, at, MuzzleFlash.reach_for(FLIP_REACH, progress), UiTheme.CAPTURE)
 
 
 ## A green flag and the count, both outlined rather than boxed — BoardMark says

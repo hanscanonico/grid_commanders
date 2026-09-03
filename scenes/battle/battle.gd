@@ -310,6 +310,7 @@ func _ready() -> void:
 	end_turn_guard.end_requested.connect(_end_turn_anyway)
 	view.fire_pressed.connect(power.fire)
 	view.end_turn_pressed.connect(_request_end_turn)
+	view.property_flipped.connect(animator.animate_flag_flip)
 	handoff.setup(%HandoffScreen, %HandoffBackdrop, %HandoffLabel, %HandoffHint, %HandoffButton)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	zoom = BattleZoom.new(view.board_camera)
@@ -524,6 +525,9 @@ func _build_animator() -> BattleAnimator:
 	built.power_banner = %CommanderBanner
 	built.power_marks = $PowerMarks
 	built.muzzle_flash = $MuzzleFlash
+	built.death_blast = $DeathBlast
+	built.damage_callout = $DamageCallout
+	built.capture_pips = $CapturePips
 	built.mission_speech = %MissionSpeech
 	built.cutscene = %Cutscene
 	built.cutscene.view = view

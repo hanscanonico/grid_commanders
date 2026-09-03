@@ -260,8 +260,13 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # now (COM-267). Battle held an arm that answered three of them and refused the
 # zoom ladder, which moves the camera and no unit; BattleAiRunner.handle_input is
 # that arm, beside the pause it already owns, and the move paid for the ladder.
+# battle.gd 1192 -> 1196: the animation-frames plan's S7 board moments. Three
+# collaborators the animator now poses — DeathBlast, DamageCallout, and
+# CapturePips for its flip flash — wired the way muzzle_flash already was, and
+# BattleView.property_flipped connected the way fire_pressed and
+# end_turn_pressed already are.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1192
+scenes/battle/battle.gd 1196
 scenes/menu/main_menu.gd 785
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
