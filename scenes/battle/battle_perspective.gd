@@ -7,6 +7,29 @@ extends RefCounted
 ## what that viewer may act on or watch. `Vision` still owns sight geometry and
 ## `AttackRange` still owns firing geometry.
 
+## Why the viewer's unit cannot shoot from where it is standing. An empty target
+## list used to say all four of these the same way, and the only thing a menu can
+## do with one fact it cannot name is drop the row.
+enum FireBlock {
+	NONE,  ## something is in reach and the shot is offered
+	UNARMED,  ## no weapon at all, so there is no shot to explain
+	MOVED,  ## indirect, and it has already left the cell it would fire from
+	NO_AMMO,  ## every weapon that could reach a target is dry
+	NO_TARGET,  ## nothing the viewer can see stands inside the ring
+}
+
+
+## What a unit may fire at from a cell, and — when that is nothing — the fact that
+## made it nothing. Paired for the same reason DropOption is: the menu prints a
+## refusal it got no cells for, and asking twice would walk the board twice.
+class FireTargets:
+	var cells: Array[Vector2i]
+	var block: BattlePerspective.FireBlock
+
+	func _init(p_cells: Array[Vector2i], p_block: BattlePerspective.FireBlock) -> void:
+		cells = p_cells
+		block = p_block
+
 
 ## One cargo choice and the cells where that passenger may be unloaded. Keeping
 ## the pair together prevents a menu index from being resolved once for its
@@ -89,12 +112,18 @@ func visible_unit_at(cell: Vector2i) -> Unit:
 	return unit
 
 
-## Enemy cells `unit` may fire at from `dest`. Ammo and indirect movement gate
-## the action; `AttackRange` remains the authority on reach and targetability.
-func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i]:
+## Enemy cells `unit` may fire at from `dest`, and why there are none when there
+## are none. `AttackRange` remains the authority on reach, on readiness and on
+## targetability: the three refusals below are its own answers named, never a
+## second reading of a unit's ammo or its weapon.
+func fire_targets(unit: Unit, dest: Vector2i, moved: bool) -> FireTargets:
 	var cells: Array[Vector2i] = []
+	if AttackRange.maximum(_game, unit) <= 0:
+		return FireTargets.new(cells, FireBlock.UNARMED)
 	if AttackRange.is_indirect(unit) and moved:
-		return cells
+		return FireTargets.new(cells, FireBlock.MOVED)
+	if not AttackRange.has_ready_weapon(_game, unit):
+		return FireTargets.new(cells, FireBlock.NO_AMMO)
 	for other in _game.units:
 		if _game.allied(other.team, unit.team) or other.carrier != null:
 			continue
@@ -105,7 +134,7 @@ func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i
 		if AttackRange.can_fire(_game, unit, other):
 			cells.append(other.cell)
 	cells.sort()
-	return cells
+	return FireTargets.new(cells, FireBlock.NO_TARGET if cells.is_empty() else FireBlock.NONE)
 
 
 ## The cells to paint for `unit`'s reach — where it could move, and where it could
@@ -149,7 +178,7 @@ func threat_overlay_cells(unit: Unit) -> Array[Vector2i]:
 ## another side's ring on scouted ground, and a lens that recomputed either would
 ## be the fourth opinion on firing geometry this repo has had to consolidate.
 ##
-## A carried passenger is skipped for the same reason `attackable_cells` skips
+## A carried passenger is skipped for the same reason `fire_targets` skips
 ## one — it is not on the board to shoot from — and a unit the viewer cannot see
 ## contributes nothing, so the lens never outlines a submarine or an ambush.
 func all_threat_overlay_cells() -> Array[Vector2i]:
