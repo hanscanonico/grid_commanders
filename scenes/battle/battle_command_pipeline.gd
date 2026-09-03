@@ -82,6 +82,8 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 		receipt.team_after != receipt.team_before or receipt.day_after != receipt.day_before
 	)
 	receipt.winner = game.winner
+	if command is EndTurnCommand:
+		receipt.starved = (command as EndTurnCommand).starved
 	var bounty_delta := 0
 	if command is AttackCommand:
 		bounty_delta = int(game.funds.get(receipt.team_before, 0)) - acting_funds_before
@@ -130,37 +132,22 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 		_repaint_properties(game)
 	_battle.refresh_panel()
 	_battle.refresh_hud()
-	# Last, so the banner stands over a board already back in step, and after the
-	# fog pass, whose eyes are the incoming team's rather than the outgoing one's.
-	if command is EndTurnCommand:
-		await _announce_starved(command as EndTurnCommand)
 	return receipt
 
 
 ## A turn-start starvation is the one death this reconciliation is the *first* to
 ## show: nothing animated the plane going down, so the sprites it frees get the
 ## parting fade every other death already played for itself.
+##
+## It rides the reconciliation rather than the banner that names the loss, because
+## this is where the sprite actually leaves the board and the eyes it leaves under
+## are still the ones looking at it — the fog pass that follows has not switched
+## them to the incoming team yet. Fire-and-forget, like every other call here: nothing
+## between the pass and the hot-seat blackout may suspend.
 func _parting_fade(command: Command) -> float:
 	if command is EndTurnCommand and not (command as EndTurnCommand).starved.is_empty():
 		return Settings.speed.death_fade_seconds()
 	return 0.0
-
-
-## Says out loud what the turn's opening took for an empty tank — losing a bomber
-## is too expensive to read as a sprite that was simply never there. The same
-## blocking beat an army leaving the match gets, suppressed while capturing for
-## the same reason, and only over losses this viewer could have watched.
-func _announce_starved(command: EndTurnCommand) -> void:
-	if _battle.animator.capturing:
-		return
-	var seen: Array[Unit] = []
-	for unit in command.starved:
-		if _battle.perspective.can_see_cell(unit.cell):
-			seen.append(unit)
-	if seen.is_empty():
-		return
-	var what := seen[0].type.display_name if seen.size() == 1 else "%d units" % seen.size()
-	await _battle.animator.show_banner("%s lost - out of fuel" % what)
 
 
 ## The armies that fell during this command, in the order they fell. `eliminated`

@@ -32,3 +32,9 @@ func _build() -> void:
 
 func announce(text: String) -> void:
 	_label.text = text
+
+
+## What the card is saying, for a driven flow that has to check the words rather
+## than only that a card is up.
+func announced() -> String:
+	return _label.text

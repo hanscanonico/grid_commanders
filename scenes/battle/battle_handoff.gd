@@ -14,6 +14,10 @@ extends RefCounted
 ## and fog-off matches never gate.
 
 var _battle: Battle
+## What the turn behind the blackout has still to say — the loss an empty tank
+## took as it opened. Parked here because the blackout is exactly what stands
+## between the turn changing and its owner looking at the board.
+var _starved: Array[Unit] = []
 var _screen: Panel
 var _label: Label
 var _button: Button
@@ -68,7 +72,8 @@ func needed() -> bool:
 ## Puts the panel up over a blacked-out board. The order is load-bearing: the
 ## blackout is keyed on `state == HANDOFF` while refresh_fog runs, so the state
 ## is set before the fog pass and the panel goes up after it.
-func enter() -> void:
+func enter(starved: Array[Unit]) -> void:
+	_starved = starved
 	_battle.state = Battle.State.HANDOFF
 	_battle.animator.hide_banner()
 	_battle.refresh_fog()  # blanks the outgoing team's vision before the panel goes up
@@ -91,6 +96,14 @@ func leave() -> bool:
 	# own vision.
 	_battle.state = Battle.State.IDLE
 	return true
+
+
+## Hands back what `enter` was holding, once — the turn that opens on the other
+## side of the blackout says it, and a blackout that opens no turn says nothing.
+func take_starved() -> Array[Unit]:
+	var held := _starved
+	_starved = []
+	return held
 
 
 ## The perspective fog is drawn from: the human whose turn it is, or — while the

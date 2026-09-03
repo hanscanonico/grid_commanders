@@ -130,6 +130,25 @@ func can_see_unit(unit: Unit) -> bool:
 	return Vision.can_see_unit(_game, _viewing_team, unit, _visible_cells)
 
 
+## Which of these losses this viewer may be told about.
+##
+## A loss on the viewer's own side is always told: a lone plane that runs its tank
+## dry away from the rest of the army lights no cell once it is gone, and its owner
+## still has to learn it is down. Another side's loss is told only where the viewer
+## can see the ground it fell on.
+##
+## Asked after the sim has already removed them, which changes no answer here:
+## `Vision` unions over the armies standing with the viewer, so a unit leaving from
+## any other side cannot narrow what this viewer sees — and the one side whose
+## leaving could is the side that is answered without asking.
+func reportable_losses(lost: Array[Unit]) -> Array[Unit]:
+	var told: Array[Unit] = []
+	for unit in lost:
+		if _game.allied(unit.team, _viewing_team) or can_see_cell(unit.cell):
+			told.append(unit)
+	return told
+
+
 ## The unit the viewer can actually see on `cell`, or null when the tile reads
 ## empty to them. A hidden occupant therefore cannot turn a click into a fog
 ## probe; command validation still owns whether anything may land there.

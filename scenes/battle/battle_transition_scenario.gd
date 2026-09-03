@@ -28,6 +28,17 @@ const AUTO_LABEL := "Auto: "
 const OFF_LABEL := "Off"
 ## How long a handed-back seat is watched for a command it must no longer issue.
 const RESUME_WATCH_FRAMES := 120
+## Open ground in the second human's quarter of the fixture, clear of every unit
+## on it. Where `_strand_a_plane` leaves the bomber whose turn-start loss the
+## handoff walk is about.
+const STRANDED_CELL := Vector2i(13, 4)
+## The words the loss earns, checked rather than the whole sentence so the wording
+## stays TurnOpening's to edit.
+const STARVED_WORDS := "out of fuel"
+## How long the opening of a turn is watched for the card the loss earns. Counted
+## in frames like every wait here, and the turn opens on two held cards — at the
+## frame rate a driven run reaches, that is a great many of them.
+const BANNER_WATCH_FRAMES := TURN_WAIT_FRAMES
 
 
 func run(mode: String) -> String:
@@ -112,11 +123,13 @@ func _run_outcome_mash_guard() -> String:
 ## through the menu, the way side_victory poses `sides`; without this flow the
 ## whole policy rests on a reading of the code.
 ##
-## Three claims, every one of which photographs exactly like its opposite:
+## Four claims, every one of which photographs exactly like its opposite:
 ##  - the blackout fires for the incoming person even though the turn before theirs
 ##    was a computer's, because the device still changed hands;
 ##  - while a computer plays, the board is drawn through the fog of the person who
 ##    just played, not through the first human seat on the board;
+##  - a loss the incoming person's own turn opens with is said to *them*, after the
+##    device has changed hands and never in front of the person handing it over;
 ##  - the same person taking two turns in a row, the other having fallen, is not a
 ##    handoff and is not asked for one.
 func _run_mixed_seat_handoff() -> String:
@@ -125,18 +138,11 @@ func _run_mixed_seat_handoff() -> String:
 		return "mixed_seat_handoff needs the four-army board with fog on"
 	_battle.ai_teams = MIXED_AI_SEATS.duplicate()
 	await _until_state(Battle.State.IDLE)  # the driver already left the opening handoff
+	_strand_a_plane(SECOND_HUMAN_SEAT)
 
-	var error := await _end_turn_into(MIXED_AI_SEATS[0])
+	var error := await _walk_starved_handoff()
 	if error != "":
 		return error
-	error = _expect_viewer(FIRST_HUMAN_SEAT)
-	if error != "":
-		return error
-
-	error = await _wait_for_handoff(SECOND_HUMAN_SEAT)
-	if error != "":
-		return error
-	_battle.leave_handoff()
 	await _until_state(Battle.State.IDLE)
 
 	error = await _end_turn_into(MIXED_AI_SEATS[1])
@@ -169,6 +175,42 @@ func _run_mixed_seat_handoff() -> String:
 	if _battle.state == Battle.State.HANDOFF:
 		return "the last player at the table was asked to hand the device to themselves"
 	return ""
+
+
+## Stands a plane in the second human's quarter with one turn of fuel left, so
+## their turn opens on a loss the board owes them. Only one turn stands between the
+## two — the computer's — and it cannot take the plane down inside it: the unit it
+## starts the match with is infantry, which has no shot at a bomber at all, and
+## anything it builds that day cannot act until the plane is already down.
+func _strand_a_plane(team: int) -> void:
+	var plane := Unit.create(_battle.unit_db.by_id(&"bomber"), team, STRANDED_CELL)
+	plane.fuel = plane.type.fuel_upkeep
+	_battle.game.units.append(plane)
+	_battle.view.sync_sprites()
+
+
+## The turn that opens on the stranded plane's loss, walked from the seat before
+## it. The window this is here for sits between the pipeline's fog pass — already
+## drawn through the incoming team's eyes — and the blackout, which does not go up
+## until the turn starts: anything that holds the screen in between holds the
+## *outgoing* player on the incoming player's vision.
+##
+## `capturing` is lowered for the walk, the way capture_power lowers its own three
+## gates: a posed frame gains no card nothing staged it, which is the very banner
+## under test. Every exit puts it back, or the scenarios after this one in the
+## batch would photograph an unpinned board.
+func _walk_starved_handoff() -> String:
+	_battle.animator.capturing = false
+	var error := await _end_turn_into(MIXED_AI_SEATS[0])
+	if error == "":
+		error = _expect_viewer(FIRST_HUMAN_SEAT)
+	if error == "":
+		error = await _wait_for_handoff(SECOND_HUMAN_SEAT)
+	if error == "":
+		_battle.leave_handoff()
+		error = await _wait_for_banner_saying(STARVED_WORDS)
+	_battle.animator.capturing = true
+	return error
 
 
 ## The board a player may take back while the computer plays. In a watched match
@@ -427,7 +469,8 @@ func _wait_for_team(team: int) -> String:
 
 ## The incoming team's turn must open blacked out. A turn that opened straight
 ## onto the board is the leak, so IDLE is a failure rather than something to
-## keep waiting through.
+## keep waiting through — and so is a card held up once the turn has changed but
+## before the blackout, which is the same leak with a beat in front of it.
 func _wait_for_handoff(team: int) -> String:
 	for frame in TURN_WAIT_FRAMES:
 		if _battle.game.current_team == team:
@@ -435,8 +478,20 @@ func _wait_for_handoff(team: int) -> String:
 				return ""
 			if _battle.state == Battle.State.IDLE:
 				return "team %d took the device over with no handoff" % team
+			if _battle.animator.turn_banner.visible:
+				return "a card held the board on team %d's vision before the handoff" % team
 		await _battle.get_tree().process_frame
 	return "team %d never came up for its handoff" % team
+
+
+## Waits for the turn banner to say `words`. The opening says the day first, so
+## this walks past that card to the one the loss earns.
+func _wait_for_banner_saying(words: String) -> String:
+	for frame in BANNER_WATCH_FRAMES:
+		if words in _battle.animator.turn_banner.announced():
+			return ""
+		await _battle.get_tree().process_frame
+	return "the turn opened without ever saying '%s'" % words
 
 
 func _wait_for_banner(visible: bool) -> bool:
