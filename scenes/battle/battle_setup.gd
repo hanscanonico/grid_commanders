@@ -56,6 +56,14 @@ class BuiltMatch:
 	var replay_path := ""
 
 
+## Why there is no match, in the sentence the player is shown. `build` fills it
+## on every refusal, beside the `push_error` that has always gone to the log —
+## an export build has no log a player reads, so a launch that failed with
+## nothing on screen was a frozen board with no way out of it.
+class Failure:
+	var message := ""
+
+
 ## Null, with a pushed error, when the board or the state cannot be built — the
 ## same contract `GameState.create` and `MapData.load_from_file` already have,
 ## and the reason these two failures stopped being `assert()`s: asserts are
@@ -63,13 +71,16 @@ class BuiltMatch:
 ## null map for the scene to dereference on its first touch instead of saying so.
 ##
 ## `save_path` is the slot a resume reads, defaulted like every reader in
-## `SaveGame` so a test names its own rather than the player's.
+## `SaveGame` so a test names its own rather than the player's. `failure` is the
+## caller's copy of the sentence behind that null, defaulted so the instruments
+## and the tests that only ask whether a match built need not carry one.
 static func build(
 	request: MatchRequest,
 	terrain_db: TerrainDB,
 	unit_db: UnitDB,
 	commander_db: CommanderDB,
-	save_path: String = SaveGame.SAVE_PATH
+	save_path: String = SaveGame.SAVE_PATH,
+	failure: Failure = null
 ) -> BuiltMatch:
 	var result := BuiltMatch.new()
 	var chart: DamageChart = load(DamageChart.DEFAULT_PATH)
@@ -77,7 +88,9 @@ static func build(
 	result.ai_teams = request.ai_teams.duplicate()
 	result.difficulty = difficulty_db.by_id(request.difficulty)
 	if request.replay_requested:
-		return _build_replay(request, terrain_db, unit_db, chart, commander_db, difficulty_db)
+		return _build_replay(
+			request, terrain_db, unit_db, chart, commander_db, difficulty_db, failure
+		)
 	# A campaign resume reads the battle embedded in the campaign's profile — the
 	# same `SaveCodec` envelope as the skirmish slot, in a different place on
 	# purpose. Refused out loud rather than dropped to a fresh mission start, for
@@ -85,7 +98,7 @@ static func build(
 	# working, with the player's half-played attempt quietly gone.
 	if request.campaign_resume != &"":
 		return _build_campaign_resume(
-			request, terrain_db, unit_db, chart, commander_db, difficulty_db
+			request, terrain_db, unit_db, chart, commander_db, difficulty_db, failure
 		)
 	# A slot that holds nothing is not a resume that failed: the request states a
 	# board too, and playing it is what a launch that found an empty slot has always
@@ -95,8 +108,7 @@ static func build(
 	if request.resume and SaveGame.has_save(save_path):
 		var loaded := SaveGame.load_game(terrain_db, unit_db, chart, save_path, commander_db)
 		if loaded == null:
-			push_error("battle: the saved match cannot be read; there is no match to play")
-			return null
+			return _refuse(failure, "The saved match cannot be read; there is no match to play.")
 		# A resumed save brings its own map, sides, commanders and tier;
 		# nothing the menu last chose applies to it.
 		result.game = loaded.state
@@ -109,15 +121,22 @@ static func build(
 		return result
 	var map_path := request.map_path
 	result.map = MapData.load_from_file(map_path, terrain_db)
-	if result.map == null and map_path != MatchRequest.DEFAULT_MAP_PATH:
+	# Playing the default board instead is a skirmish's answer — the launch asked
+	# for a match and any board is one. A mission's board carries its objectives
+	# and its scripted beats, so the substitution would open a mission whose script
+	# resolves against nothing; see MatchRequest.campaign_mission.
+	if (
+		result.map == null
+		and not request.campaign_mission
+		and map_path != MatchRequest.DEFAULT_MAP_PATH
+	):
 		push_error(
 			"failed to load %s; falling back to %s" % [map_path, MatchRequest.DEFAULT_MAP_PATH]
 		)
 		map_path = MatchRequest.DEFAULT_MAP_PATH
 		result.map = MapData.load_from_file(map_path, terrain_db)
 	if result.map == null:
-		push_error("battle: failed to load %s; there is no match to play" % map_path)
-		return null
+		return _refuse(failure, "The board %s cannot be loaded." % map_path)
 	# The launch's per-seat tiers go on before the side specs do, so a Lab
 	# `--red=<co>:<tier>` still wins for the seat it names: that grammar states one
 	# seat outright, where these are the match's own tier for each of them.
@@ -133,8 +152,7 @@ static func build(
 	# leaves no match, and `Battle` disables itself rather than inventing one.
 	result.game = GameState.create(result.map, unit_db, chart, commanders, request.seats)
 	if result.game == null:
-		push_error("battle: failed to build game state from %s" % map_path)
-		return null
+		return _refuse(failure, "No match can be seated on %s." % map_path)
 	result.game.map_path = map_path
 	result.game.fog_enabled = request.fog_enabled
 	# How the armies group is the match's choice, not the board's (plan D1). Empty
@@ -201,6 +219,22 @@ static func build(
 	return result
 
 
+## No match, said once: to the log, where a developer reads it, and onto the
+## caller's `Failure`, which is what the scene puts in front of the player.
+static func _refuse(failure: Failure, message: String) -> BuiltMatch:
+	push_error("battle: %s" % message)
+	return _record(failure, message)
+
+
+## `_refuse` for the refusals whose detail the reader that found it has already
+## pushed — ReplayFile, SaveCodec. The player still needs a sentence; the log
+## does not need the same failure named twice.
+static func _record(failure: Failure, message: String) -> BuiltMatch:
+	if failure != null:
+		failure.message = message
+	return null
+
+
 ## The mission a campaign profile was midway through, rebuilt from the envelope
 ## embedded in it. `SaveCodec.decode` is the one rebuilder, exactly as the
 ## skirmish resume above and the replay opening below — so the mission's units,
@@ -213,21 +247,18 @@ static func _build_campaign_resume(
 	unit_db: UnitDB,
 	chart: DamageChart,
 	commander_db: CommanderDB,
-	difficulty_db: DifficultyDB
+	difficulty_db: DifficultyDB,
+	failure: Failure
 ) -> BuiltMatch:
 	var battle := CampaignProfile.load_battle(request.campaign_resume)
 	if battle.is_empty():
-		push_error(
-			(
-				"battle: campaign '%s' holds no mission in progress; there is no match to play"
-				% request.campaign_resume
-			)
+		return _refuse(
+			failure,
+			"Campaign '%s' holds no mission in progress." % request.campaign_resume,
 		)
-		return null
 	var loaded := SaveCodec.decode(battle, terrain_db, unit_db, chart, commander_db)
 	if loaded == null:
-		push_error("battle: the saved mission cannot be read; there is no match to play")
-		return null
+		return _refuse(failure, "The saved mission cannot be read; there is no match to play.")
 	var result := BuiltMatch.new()
 	result.game = loaded.state
 	result.ai_teams = loaded.ai_teams
@@ -297,25 +328,26 @@ static func _build_replay(
 	unit_db: UnitDB,
 	chart: DamageChart,
 	commander_db: CommanderDB,
-	difficulty_db: DifficultyDB
+	difficulty_db: DifficultyDB,
+	failure: Failure
 ) -> BuiltMatch:
 	if request.replay_path == "":
-		push_error("battle: --replay names no recording; there is no match to play")
-		return null
+		return _refuse(failure, "No recording was named; there is no match to play.")
 	var recording := ReplayFile.read(request.replay_path)
 	if recording == null:
-		return null  # ReplayFile has already said what is wrong with the file
+		# ReplayFile has already said what is wrong with the file.
+		return _record(failure, "%s is not a recording this build can play." % request.replay_path)
 	var player := ReplayPlayer.new(recording, unit_db)
 	# A recording of a mission is refused whole rather than at its first scripted
 	# beat: without the mission there is no script to resolve one against, and a
 	# playback that opened anyway would run correctly right up to the moment the
 	# story happens and then stop with a message about the board.
 	if player.mission_error() != "":
-		push_error("battle: %s; there is no recording to play" % player.mission_error())
-		return null
+		return _refuse(failure, "%s; there is no recording to play." % player.mission_error())
 	var loaded := player.opening(terrain_db, chart, commander_db)
 	if loaded == null:
-		return null  # SaveCodec has already said what is wrong with the opening
+		# SaveCodec has already said what is wrong with the opening.
+		return _record(failure, "The recording's opening board cannot be read.")
 	var result := BuiltMatch.new()
 	result.replay = player
 	result.replay_path = request.replay_path

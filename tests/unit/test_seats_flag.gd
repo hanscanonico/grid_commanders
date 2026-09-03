@@ -126,13 +126,13 @@ func test_a_seating_plays_the_board_it_names_a_corner_of() -> void:
 func test_a_seating_with_nobody_to_fight_fails_the_build() -> void:
 	assert_null(_staged(FOUR_ARMY_BOARD, ["--seats=1"]), "one army is no match")
 	assert_push_error("which is no match")
-	assert_push_error("failed to build game state")
+	assert_push_error("No match can be seated")
 
 
 func test_a_seating_naming_a_seat_the_board_never_dealt_fails_the_build() -> void:
 	assert_null(_staged(DUEL_BOARD, ["--seats=1,3"]), "a duel board has no third seat to fill")
 	assert_push_error("does not deal")
-	assert_push_error("failed to build game state")
+	assert_push_error("No match can be seated")
 
 
 ## A grouping may only name a seat this match fills. Seat 2 closed and then allied

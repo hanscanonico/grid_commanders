@@ -265,8 +265,13 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # CapturePips for its flip flash — wired the way muzzle_flash already was, and
 # BattleView.property_flipped connected the way fire_pressed and
 # end_turn_pressed already are.
+# battle.gd 1196 -> 1194: a launch with no match to play. The whole of what the
+# scene does then is scenes/battle/battle_launch_failure.gd's now — the capture
+# run's quit as well as the card that gives the player a way off a disabled
+# board — so the branch here is the disable and one call, two lines shorter than
+# the quit it replaced.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1196
+scenes/battle/battle.gd 1194
 scenes/menu/main_menu.gd 785
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665

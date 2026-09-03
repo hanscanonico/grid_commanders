@@ -70,6 +70,15 @@ var commanders: Dictionary = {}
 ## its own board, sides, commanders and tier, so everything above is ignored when
 ## this is true and the file is actually there.
 var resume := false
+## Whether this launch is an authored campaign mission, which
+## `MissionDefinition.to_request` is the only thing that says. A mission's board,
+## its objectives and its scripted beats are one authored thing, so `BattleSetup`
+## refuses a board it cannot load here rather than substituting the default one:
+## the mission would open on a board its script cannot resolve against, and the
+## player reports that mission seven is unwinnable rather than that a file is
+## missing. A typed fact rather than a `res://maps/campaign` path test, which a
+## relocated or user-authored board would defeat.
+var campaign_mission := false
 ## Resume the battle embedded in this campaign's profile instead of starting the
 ## mission fresh; empty for every other launch. The campaign sibling of `resume`,
 ## kept apart from it because the two read different slots on purpose: a mission

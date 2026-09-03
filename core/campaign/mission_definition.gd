@@ -96,6 +96,11 @@ extends Resource
 ## than a campaign-only one.
 func to_request() -> MatchRequest:
 	var request := MatchRequest.new()
+	# The one thing a mission's launch says that a menu's never does: the board is
+	# not separable from the objectives and the beats authored against it, so a
+	# board that will not load is a refusal rather than a fall back to the default
+	# one. Said here because this is the one conversion.
+	request.campaign_mission = true
 	request.map_path = map_path
 	request.ai_teams = ai_teams.duplicate()
 	request.seats = seats.duplicate()

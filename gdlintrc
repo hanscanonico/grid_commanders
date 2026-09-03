@@ -395,4 +395,7 @@ max-public-methods: 22
 # Python, where this ratchet does not reach — so the four entries above are
 # history rather than a budget, and battle.gd, pinned at its own length in
 # tools/check_scripts.sh, is the longest script in the tree.
-max-file-lines: 1196
+# 1196 -> 1194, tracking battle.gd down: what a launch with no match to play
+# does is BattleLaunchFailure's now. See the same entry in
+# tools/check_scripts.sh.
+max-file-lines: 1194

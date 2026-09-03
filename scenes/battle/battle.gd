@@ -264,18 +264,16 @@ func _ready() -> void:
 	# process-level ones (FS3, COM-118); an ordinary launch gets the process
 	# command line unchanged.
 	request.apply_cmdline(BattleCaptureBatch.scenario_args())
-	var built := BattleSetup.build(request, db, unit_db, commander_db)
+	var failure := BattleSetup.Failure.new()
+	var built := BattleSetup.build(request, db, unit_db, commander_db, SaveGame.SAVE_PATH, failure)
 	if built == null:
-		# BattleSetup has already pushed what failed. There is no match to play, so
-		# this scene does nothing at all: disabling it stops every process and input
-		# callback, here and in its children, which is what makes "nothing can reach
-		# a null map" true by construction rather than a null check per handler.
+		# There is no match to play, so this scene does nothing at all: disabling it
+		# stops every process and input callback, here and in its children, which is
+		# what makes "nothing can reach a null map" true by construction rather than
+		# a null check per handler. BattleLaunchFailure owns what happens next — the
+		# card processes while the board does not, so the way out is still there.
 		process_mode = Node.PROCESS_MODE_DISABLED
-		if ScreenshotUtil.requested() != "" or BattleCaptureBatch.requested() != "":
-			# Nothing will ever drive the capture, and a headless run with no input
-			# to be inert against would otherwise sit here until `make smoke` timed
-			# it out. Non-zero, like a capture that fails its own gate.
-			get_tree().quit(1)
+		BattleLaunchFailure.present(self, failure.message)
 		return
 	Music.play(&"advance")
 	map = built.map
