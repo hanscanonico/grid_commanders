@@ -18,9 +18,10 @@ extends RefCounted
 ## The fewest capture points a part-captured property can still be holding. Zero is
 ## not a property on the brink, it is one already flipped: `CaptureCommand.apply`
 ## erases the entry the moment the meter empties, so a save that records one is
-## describing a board the rules cannot produce. The ceiling is the match's own
-## `capture_points`, asked of the config a decoded save actually plays under rather
-## than pinned to a constant beside it.
+## describing a board the rules cannot produce. The ceiling is that same argument
+## from the other end, one short of the match's own `capture_points` — asked of the
+## config a decoded save actually plays under rather than pinned to a constant
+## beside it.
 const MIN_CAPTURE_POINTS := 1
 
 
@@ -239,7 +240,12 @@ static func _turn_and_winner_error(data: Dictionary) -> String:
 ## unrecorded property to full and subtracts from what it reads, so an entry at zero
 ## or below leaves a negative remainder — the property flips on a single action,
 ## which for a home HQ is an army beheaded in one move, and the cut-in replays a
-## meter draining from 0 to 0. Above the cap the same property is merely slow, or
+## meter draining from 0 to 0. The full cap is refused for the mirror of that reason:
+## `capture_strength` is floored at 1 and `apply` only ever stores `before - strength`,
+## so every entry the rules can write is 1..cap-1 and an untouched property carries no
+## entry at all. One recorded at the cap draws a capture pip and a "20 LEFT" panel line
+## (`BattleOverlays.show_capture_pips`, `BattleView`) over ground nobody is standing on,
+## where the state it claims to be draws nothing. Past the cap it is slower still, or
 ## slower than any unit can finish.
 ##
 ## The cell being a property at all is the other half, and it is the loader's to ask
@@ -251,14 +257,14 @@ static func _capture_progress_error(data: Dictionary, map: MapData) -> String:
 	var off_board := _cells_on_board(entries, map, "capture in progress")
 	if off_board != "":
 		return off_board
-	var cap := RulesConfig.load_default().capture_points
+	var most := RulesConfig.load_default().capture_points - 1
 	for entry: Dictionary in entries as Array:
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
 		var points := int(entry["points"])
-		if points < MIN_CAPTURE_POINTS or points > cap:
+		if points < MIN_CAPTURE_POINTS or points > most:
 			return (
 				"capture in progress at %s has %d points, outside %d-%d"
-				% [cell, points, MIN_CAPTURE_POINTS, cap]
+				% [cell, points, MIN_CAPTURE_POINTS, most]
 			)
 		if not map.terrain_at(cell).is_property:
 			return "capture in progress at %s, which is not a property" % cell
