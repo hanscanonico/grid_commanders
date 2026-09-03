@@ -44,8 +44,14 @@ func base_damage(attacker: StringName, defender: StringName) -> int:
 ## it: their values are Variants either way, and a typed one coerces as quietly.
 ## Refused rather than rounded, because a cell nobody meant to write is not a
 ## number to guess at.
+##
+## The row is asked for with `has` and then indexed rather than through
+## `get(attacker, {})`: arguments are evaluated eagerly, so that default builds a
+## Dictionary on every ask, hit or miss — and this is the sim's hottest read.
 static func _cell(matrix: Dictionary, attacker: StringName, defender: StringName) -> int:
-	var row: Dictionary = matrix.get(attacker, {})
+	if not matrix.has(attacker):
+		return -1
+	var row: Dictionary = matrix[attacker]
 	var value: Variant = row.get(defender, -1)
 	if typeof(value) != TYPE_INT:
 		push_error(
@@ -79,8 +85,7 @@ func select_shot(
 ## question: a secondary is a row in this chart, and the presentation key on
 ## UnitType only names how an already-selected one looks.
 func has_secondary(attacker: StringName) -> bool:
-	var row: Dictionary = secondary_chart.get(attacker, {})
-	return not row.is_empty()
+	return _has_entries(secondary_chart, attacker)
 
 
 ## Whether this attacker has any weapon it could fire now, target aside. Used
@@ -88,8 +93,15 @@ func has_secondary(attacker: StringName) -> bool:
 ## target-specific legality still goes through select_shot().
 func has_ready_weapon(attacker: StringName, primary_ammo: int, primary_ammo_capacity: int) -> bool:
 	var primary_ready := primary_ammo_capacity == 0 or primary_ammo > 0
-	var primary_row: Dictionary = chart.get(attacker, {})
-	if primary_ready and not primary_row.is_empty():
+	if primary_ready and _has_entries(chart, attacker):
 		return true
-	var secondary_row: Dictionary = secondary_chart.get(attacker, {})
-	return not secondary_row.is_empty()
+	return _has_entries(secondary_chart, attacker)
+
+
+## Whether `attacker` has a row with anything in it. Being keyed is not enough: a
+## row authored empty is a weapon that damages nothing.
+static func _has_entries(matrix: Dictionary, attacker: StringName) -> bool:
+	if not matrix.has(attacker):
+		return false
+	var row: Dictionary = matrix[attacker]
+	return not row.is_empty()
