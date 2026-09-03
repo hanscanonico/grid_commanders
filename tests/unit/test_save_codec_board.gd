@@ -149,11 +149,34 @@ func test_an_owned_property_off_the_board_is_rejected() -> void:
 	assert_push_error("owned property at")
 
 
-func test_a_capture_in_progress_off_the_board_is_rejected() -> void:
+## Every rule the capture-progress list is held to, in one function so the suite
+## stays under the shared method ceiling rather than moving it.
+##
+## Points were the last value a save carried that nothing bounded, and the cheapest
+## edit on the board: at zero or below `CaptureCommand.apply` reads `before = 0`,
+## works out a negative remainder and flips the property in a single action — an HQ
+## falls to one move, and the cut-in replays a meter draining from 0 to 0. A full
+## meter is the same fiction from the other end: `capture_strength` is floored at 1,
+## so a property nobody has chipped carries no entry, and an entry at the cap paints
+## a pip and a "20 LEFT" panel line over ground the state it claims draws nothing on.
+## A pip on grass is progress toward nothing, since only a property can be captured
+## at all.
+##
+## first_steps deals a neutral city at (18, 2) and plains at (1, 1).
+func test_a_capture_in_progress_no_board_could_hold_is_rejected() -> void:
 	var data := _encoded()
 	data["capture_progress"] = [{"x": 999, "y": 0, "points": 10}]
 	assert_null(_decode(data))
 	assert_push_error("capture in progress at")
+	for points: int in [0, -5, GameState.CAPTURE_POINTS, GameState.CAPTURE_POINTS + 1]:
+		data = _encoded()
+		data["capture_progress"] = [{"x": 18, "y": 2, "points": points}]
+		assert_null(_decode(data), "%d points is progress no capture could have left" % points)
+		assert_push_error("outside 1-%d" % (GameState.CAPTURE_POINTS - 1))
+	data = _encoded()
+	data["capture_progress"] = [{"x": 1, "y": 1, "points": 10}]
+	assert_null(_decode(data), "plains cannot be captured, so they cannot be part-captured")
+	assert_push_error("not a property")
 
 
 ## The counterpart every rejection test needs: a save the game itself wrote must
@@ -181,6 +204,16 @@ func test_the_bounds_include_their_own_edges() -> void:
 	assert_eq(
 		SaveCodec.board_error(data, map, unit_db), "", "one HP is a unit clinging on, not a corpse"
 	)
+	# And the capture meter's own two edges, on the neutral city at (18, 2): one point
+	# is a property on the brink, and one short of the cap is the fullest meter a
+	# single chip can leave behind.
+	for points: int in [1, GameState.CAPTURE_POINTS - 1]:
+		data["capture_progress"] = [{"x": 18, "y": 2, "points": points}]
+		assert_eq(
+			SaveCodec.board_error(data, map, unit_db),
+			"",
+			"%d points is a capture underway" % points
+		)
 
 
 # --- arrangements no command would have allowed (COM-53) ----------------------
