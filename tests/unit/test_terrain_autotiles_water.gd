@@ -169,8 +169,8 @@ func test_a_shoal_surfs_against_the_sea_but_not_its_own_run() -> void:
 	assert_eq(_mask(rows, Vector2i(1, 1)), N)
 
 
-## The board paints a port's ground as plains, so the water breaks on it like
-## any other shore — otherwise the sea runs seamlessly into a quay on grass.
-func test_a_shoal_surfs_against_a_port_quay() -> void:
+## A port's cell is painted as plains under its building, so a shoal reads the
+## quay as dry land and lays no foam along that edge.
+func test_a_shoal_surfs_against_the_sea_but_not_a_port_quay() -> void:
 	var rows: Array[String] = ["SSS", "P_S", "SSS"]
 	assert_eq(_mask(rows, Vector2i(1, 1)), N | E | S)
