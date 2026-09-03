@@ -18,7 +18,9 @@
 # `balance-pool` pick themselves up where they stopped, and a killed job costs
 # the shard in flight and nothing else; the done-markers under
 # `reports/grind/done/` only exist for the runners that have no resume of their
-# own, and they are keyed on the commit so a new commit re-measures.
+# own, and they are keyed on the commit so a new commit re-measures. The pool's
+# run directory carries the commit for the same reason: a resume that crossed one
+# would report the previous commit's matches as this pass's.
 #
 # **No job may take the supervisor down.** `set -e` is deliberately absent: a
 # failing instrument is a finding, logged and reported in the digest, and the
@@ -30,7 +32,8 @@
 #   --dry-run         print each job's command and whether it would run
 #   --jobs=a,b        only these jobs (prefix match, so `--jobs=arena-search`
 #                     takes all three bases)
-#   --refresh         ignore every done-marker and finished run
+#   --refresh         ignore every done-marker and finished run, the pool's own
+#                     shard markers included
 #   --sleep=SECONDS   idle between passes (default 600)
 #   --workers=N       engines at a time (default cores - 1)
 #   --publish         push the digest and the reports to the `grind-results`
@@ -90,6 +93,12 @@ for arg in "$@"; do
 		;;
 	esac
 done
+
+# The done-markers are keyed on the commit, and a job with a resume of its own
+# has to hear the same thing: without this, `--refresh` re-runs the pool and the
+# pool skips every shard it already has.
+POOL_REFRESH=""
+[ -n "$REFRESH" ] && POOL_REFRESH="--refresh"
 
 say() { printf '%s grind: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
 
@@ -207,9 +216,12 @@ plan_jobs() {
 		"make -C '$ROOT' legibility-ratchet" \
 		section "" "# Legibility ratchet" "0 1"
 	for board in $(pool_boards); do
+		# The commit is in the directory name because the pool resumes: pointed at
+		# one directory across commits it skips every shard and the digest reports
+		# the previous commit's rows as this pass's measurement.
 		add_job "balance-pool-$board" \
-			"make -C '$ROOT' balance-pool POOL=\"--maps=$board --pairings=none:normal/none:hard --seeds=$POOL_SEEDS --workers=$WORKERS --out=balance_pool/grind_$board $GRIND_EXTRA_POOL\"" \
-			pool "reports/balance_pool/grind_$board" "" "0"
+			"make -C '$ROOT' balance-pool POOL=\"--maps=$board --pairings=none:normal/none:hard --seeds=$POOL_SEEDS --workers=$WORKERS --out=balance_pool/grind_${board}_$SHA $POOL_REFRESH $GRIND_EXTRA_POOL\"" \
+			pool "reports/balance_pool/grind_${board}_$SHA" "" "0"
 		# The pool plays with telemetry off, so the recordings the analyser reads
 		# come from a short Lab run of the same pairing rather than from it.
 		add_job "replay-survey-$board" \
@@ -261,7 +273,7 @@ job_progress() {
 	local name=$1 log=$2 status
 	case "$name" in
 	arena-search-*) status="$ROOT/reports/ai_arena/search/${name#arena-search-}/pool/status.txt" ;;
-	balance-pool-*) status="$ROOT/reports/balance_pool/grind_${name#balance-pool-}/status.txt" ;;
+	balance-pool-*) status="$ROOT/reports/balance_pool/grind_${name#balance-pool-}_$SHA/status.txt" ;;
 	*) status="" ;;
 	esac
 	if [ -n "$status" ] && [ -f "$status" ]; then

@@ -7,6 +7,16 @@ killed run costs the shard in flight and nothing else. That property is the
 reason this exists in the shape it does — a sweep that has to start over is a
 sweep nobody dares interrupt.
 
+**Resume is keyed on the content too, not only on the spec.** A shard's
+directory name digests the arguments it was played with, and an argument list
+cannot tell that `data/ai/default.tres` was retuned underneath it — so a run
+also writes `<out>/stamp.json`, the sides' and the match-wide resources' bytes
+beside the commit and what is uncommitted under `core/ ai/ data/`. Markers whose
+stamp no longer matches are not honoured: the run says what moved and plays them
+again. That is the one failure mode a measurement instrument may not have —
+re-reporting a previous commit's matches as today's, indistinguishable from a
+real sweep.
+
 A shard is one pairing on one board over a contiguous slice of the seed range
 (`--batch` seeds, handed to the driver as `--seeds=` plus `--seed-offset=`). That
 is the smallest unit of work that both amortises the engine boot (~0.9 s against
@@ -52,9 +62,16 @@ Flags:
                         it leaves it (default reports/balance_pool/<spec>; a
                         leading `reports/` is accepted, so both spellings work)
   --timeout=SEC         per shard, default 3600
-  --dry-run             resolve the spec, print the shard plan, and stop
-  --self-check          run the out-directory, resume-key and merge rules over
-                        their cases and stop (gated by `make check`)
+  --refresh             replay every shard, marker or no marker
+  --reuse-stale         report shards whose content stamp moved anyway. The
+                        escape hatch for a commit that touched nothing a match
+                        reads; it keeps the old stamp, so the run stays loud
+                        about what it is reporting
+  --dry-run             resolve the spec, print the shard plan and what the
+                        stamp says about the markers on disk, and stop
+  --self-check          run the out-directory, resume-key, content-stamp and
+                        merge rules over their cases and stop (gated by
+                        `make check`)
 
 Poll a live run with `cat <out>/status.txt`; `<out>/progress.log` is the record
 and `<out>/pool.json` the throughput reading. Exit status is 1 if any shard
@@ -208,6 +225,9 @@ PRESETS = {
         "args": lab_args,
         "slug": _slug,
         "pair_sep": "/",
+        # `<commander>:<tier>` names no file, so the content stamp takes the
+        # commit and the working tree for these sides and nothing more.
+        "side_is_path": False,
         "marker": "summary.json",
         "artifacts": [("matches.csv", merge_csv), ("timeline.csv", merge_csv)],
         "count": count_csv_rows,
@@ -218,6 +238,7 @@ PRESETS = {
         "slug": _profile_slug,
         # A side is a path, and paths carry the `/` the Lab pairs on.
         "pair_sep": "::",
+        "side_is_path": True,
         "marker": "matches.json",
         "artifacts": [("matches.json", merge_json)],
         "count": count_json_records,
@@ -231,7 +252,10 @@ class Shard:
 
     That key is the driver's argument list itself, digested into the shard's
     directory name, so a shard on disk is reused only if it was played with the
-    arguments this run would hand it. Naming the spec dimensions by hand is what
+    arguments this run would hand it — whose *bytes* moved underneath it is the
+    content stamp's question, not this key's.
+
+    Naming the spec dimensions by hand is what
     a resume key must never do: the day cap was already missing from one, which
     replayed a 20-day sweep's shards as a 100-day answer, and the next flag added
     to `args` would have fallen off the same list. A digest cannot forget one —
@@ -304,8 +328,11 @@ def parse_args(argv):
     p.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
     p.add_argument("--out", default="")
     p.add_argument("--timeout", type=int, default=3600)
+    p.add_argument("--refresh", action="store_true")
+    p.add_argument("--reuse-stale", dest="reuse_stale", action="store_true")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args(argv)
+    args.resume = not args.refresh
     maps = [m.strip() for m in args.maps.split(",") if m.strip()]
     if not maps:
         p.error("--maps is a comma list of boards, got '%s'" % args.maps)
@@ -371,6 +398,131 @@ def marker_path(out, shard):
     return os.path.join(ROOT, shard_dir(out, shard), shard.preset["marker"])
 
 
+STAMP = "stamp.json"
+# Read by every match whatever the pairing: a shard played before either of them
+# moved is a shard about other rules.
+STAMPED_DATA = ("data/rules.tres", "data/damage_chart.tres")
+
+
+def _sha1_file(path):
+    try:
+        with open(path, "rb") as f:
+            return hashlib.sha1(f.read()).hexdigest()
+    except OSError:
+        return "(missing)"
+
+
+def _git(argv):
+    """Best effort: a checkout without git is not a reason to refuse to play,
+    only a reason for the stamp to say less."""
+    try:
+        done = subprocess.run(
+            ["git", "-C", ROOT, *argv], capture_output=True, text=True, timeout=30
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return done.stdout.strip() if done.returncode == 0 else ""
+
+
+def stamped_files(preset, pairings, root=ROOT):
+    """Every file this run's rows are a statement about: the sides, where a side
+    is a path, and the two match-wide resources. A `<commander>:<tier>` side
+    names none, which is what the commit and the working tree below are for."""
+    paths = list(STAMPED_DATA)
+    if PRESETS[preset]["side_is_path"]:
+        paths += [side for pairing in pairings for side in pairing]
+    return {path: _sha1_file(os.path.join(root, path)) for path in sorted(set(paths))}
+
+
+def content_stamp(args):
+    """What the shards in an out-directory answer for."""
+    return {
+        "files": stamped_files(args.preset, args.pairings),
+        "head": _git(["rev-parse", "HEAD"]) or "(no git)",
+        # A dirty tree must not resume a clean one's shards, nor the other way
+        # round: what is uncommitted under these three is part of the content.
+        "dirty": _git(["status", "--porcelain", "--", "core", "ai", "data"]),
+    }
+
+
+def read_stamp(out):
+    try:
+        with open(os.path.join(ROOT, out, STAMP)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def write_stamp(out, stamp):
+    with open(os.path.join(ROOT, out, STAMP), "w") as f:
+        json.dump(stamp, f, indent="\t", sort_keys=True)
+
+
+def stamp_changes(previous, current):
+    """What moved since the shards on disk were played, one line each — and
+    empty when nothing did, which is the only case resume may honour.
+
+    A file only *this* run names is not a change: the arena search plays wave
+    after wave of content-addressed candidates into one pool directory, and the
+    earlier waves' shards are still true about their own files. An out-directory
+    with no stamp at all is not a change either — it predates the stamp, and
+    replaying a sweep somebody is watching is not how this arrives.
+    """
+    if not previous:
+        return []
+    lines = []
+    for path, before in sorted(previous.get("files", {}).items()):
+        now = current["files"].get(path)
+        if now is not None and now != before:
+            lines.append("%s changed" % path)
+    if previous.get("head") != current["head"]:
+        lines.append("HEAD moved: %s -> %s" % (previous.get("head"), current["head"]))
+    if previous.get("dirty", "") != current["dirty"]:
+        lines.append("core/ ai/ data/ hold different uncommitted work")
+    return lines
+
+
+def resumes(refresh, changes, reuse_stale):
+    """Whether a marker already on disk still answers for this run. `--refresh`
+    is the caller saying replay regardless; `--reuse-stale` is the caller taking
+    the stamp that moved on themselves."""
+    if refresh:
+        return False
+    return not changes or reuse_stale
+
+
+def pool_resume(args, shards, log):
+    """Decides whether this run may skip the shards already on disk, says out
+    loud when it is throwing markers away — or keeping ones it should not — and
+    leaves the stamp those shards answer for behind."""
+    current = content_stamp(args)
+    previous = read_stamp(args.out)
+    changes = stamp_changes(previous, current)
+    played = any(os.path.exists(marker_path(args.out, shard)) for shard in shards)
+
+    def say(line):
+        print("balance-pool: %s" % line, file=sys.stderr)
+        log.write(line + "\n")
+
+    if played and not previous:
+        say("%s has no content stamp; trusting its shards and writing one" % args.out)
+    for line in changes:
+        say("!! %s" % line)
+    resume = resumes(args.refresh, changes, args.reuse_stale)
+    if changes and resume:
+        say("!! --reuse-stale: reporting shards that were played against other content")
+    elif changes:
+        say("!! the shards on disk answer for the content above — replaying every one")
+        say("!! pass --reuse-stale to report them anyway")
+    elif args.refresh and played:
+        say("--refresh: replaying every shard on disk")
+    # Honouring stale markers leaves the run mixed, so the stamp stays the one
+    # those shards were played under and the next run is loud about it too.
+    if not (changes and resume):
+        write_stamp(args.out, current)
+    return resume
+
+
 class Children:
     """The engines this run has in flight, so an interrupt can end them.
 
@@ -419,7 +571,11 @@ def run_shard(shard, args):
     out_rel = shard_dir(args.out, shard)
     marker = marker_path(args.out, shard)
     if os.path.exists(marker):
-        return ("skip", shard, 0.0, 0, 0)
+        if args.resume:
+            return ("skip", shard, 0.0, 0, 0)
+        # The marker is the whole of "this shard is finished", so a replay that
+        # left the old one in place would report the old artifacts as its own.
+        os.remove(marker)
     cmd = [
         GODOT, "--headless", "--path", ".", "-s", shard.preset["script"], "--",
         *shard.args, "--out=%s" % out_rel,
@@ -480,6 +636,41 @@ OUT_CASES = [
 ]
 
 
+def _stamp(files, head="c0", dirty=""):
+    return {"files": dict(files), "head": head, "dirty": dirty}
+
+
+## A stamp on disk, this run's, and the first line the refusal has to say — or ""
+## when the markers still answer. Every case is a day this would have mattered: a
+## retuned anchor, a retuned chart, a new commit, an uncommitted edit. The last
+## two are what it must *not* refuse — the arena search names a new wave of
+## candidates in the same pool directory, and a directory written before the
+## stamp existed is not evidence that anything moved.
+STAMP_CASES = [
+    ("the same content resumes", _stamp({"data/rules.tres": "r1"}),
+     _stamp({"data/rules.tres": "r1"}), ""),
+    ("a retuned side replays", _stamp({"data/ai/default.tres": "a1"}),
+     _stamp({"data/ai/default.tres": "a2"}), "data/ai/default.tres changed"),
+    ("a retuned damage chart replays", _stamp({"data/damage_chart.tres": "d1"}),
+     _stamp({"data/damage_chart.tres": "d2"}), "data/damage_chart.tres changed"),
+    ("a new commit replays", _stamp({}, head="c0"), _stamp({}, head="c1"), "HEAD moved: c0 -> c1"),
+    ("a dirty tree does not resume a clean one's shards", _stamp({}),
+     _stamp({}, dirty=" M core/grid.gd"), "uncommitted work"),
+    ("the next wave's candidates are not a change", _stamp({"reports/s/c1.tres": "1"}),
+     _stamp({"reports/s/c1.tres": "1", "reports/s/c2.tres": "2"}), ""),
+    ("an unstamped run is not a change", {}, _stamp({"data/rules.tres": "r1"}), ""),
+]
+
+## What a caller can ask for over a stamp that moved: (refresh, changes,
+## reuse-stale) -> may this run honour the markers on disk.
+RESUME_CASES = [
+    ("a matching stamp resumes", False, [], False, True),
+    ("--refresh replays a matching stamp", True, [], False, False),
+    ("a moved stamp replays", False, ["x"], False, False),
+    ("--reuse-stale keeps a moved stamp's shards", False, ["x"], True, True),
+    ("--refresh beats --reuse-stale", True, ["x"], True, False),
+]
+
 ## Two headers that disagree and the merge that must refuse them. The columns are
 ## the Lab's own, shortened: what makes a pair legal is that the text matches, so
 ## the names only have to be recognisable.
@@ -501,11 +692,11 @@ ROW_CASES = [
 
 
 def self_check():
-    """The out-directory, resume-key and merge rules, over the cases that made
-    them.
+    """The out-directory, resume-key, content-stamp and merge rules, over the
+    cases that made them.
     Run by `tools/check_scripts.sh`, and so by `make check` and `make verify`,
-    which otherwise reach GDScript only — these are the two decisions in here
-    that are pure and worth pinning, and an ungated check is one that rots."""
+    which otherwise reach GDScript only — these are the decisions in here that
+    are pure and worth pinning, and an ungated check is one that rots."""
     cases = OUT_CASES
     failures = 0
     for out, expected in cases:
@@ -537,6 +728,48 @@ def self_check():
     ):
         failures += 0 if ok else 1
         print("%-4s resume key: %s" % ("ok" if ok else "FAIL", label))
+
+    for label, previous, current, expected in STAMP_CASES:
+        changes = stamp_changes(previous, current)
+        first = changes[0] if changes else ""
+        ok = expected in first if expected else not changes
+        failures += 0 if ok else 1
+        print("%-4s stamp: %-46s -> %s" % (
+            "ok" if ok else "FAIL", label, first or "resumes"))
+
+    for label, refresh, changes, reuse_stale, expected in RESUME_CASES:
+        ok = resumes(refresh, changes, reuse_stale) == expected
+        failures += 0 if ok else 1
+        print("%-4s resume: %s" % ("ok" if ok else "FAIL", label))
+
+    with tempfile.TemporaryDirectory() as scratch:
+        ## Which files a stamp is taken over, over a scratch tree: a side is a
+        ## path only in the arena, and a named side that is not there has to read
+        ## as absent rather than as a digest that happens to match.
+        for path in (*STAMPED_DATA, *AR_SIDES):
+            os.makedirs(os.path.join(scratch, os.path.dirname(path)), exist_ok=True)
+            with open(os.path.join(scratch, path), "w") as f:
+                f.write(path)
+        gone = "data/ai/gone.tres"
+        for label, ok in (
+            (
+                "a lab side names no file",
+                sorted(stamped_files("lab", [("none:normal", "none:hard")], scratch))
+                == sorted(STAMPED_DATA),
+            ),
+            (
+                "an arena side is stamped with the resources",
+                sorted(stamped_files("arena", [AR_SIDES], scratch))
+                == sorted(set(STAMPED_DATA + AR_SIDES)),
+            ),
+            (
+                "a side that is not there is not a silent match",
+                stamped_files("arena", [(gone, AR_SIDES[0])], scratch)[gone] == "(missing)",
+            ),
+            ("an out-directory with no stamp reads empty", read_stamp(scratch) == {}),
+        ):
+            failures += 0 if ok else 1
+            print("%-4s stamped files: %s" % ("ok" if ok else "FAIL", label))
 
     with tempfile.TemporaryDirectory() as scratch:
         for index, (label, shards, agree) in enumerate(MERGE_CASES):
@@ -589,6 +822,8 @@ def main(argv):
             print("%-70s %s" % (shard.name, " ".join(shard.args)))
         print("%d shards, %d seeds, %d workers, writing to %s"
               % (len(shards), matches_hint, args.workers, args.out))
+        for line in stamp_changes(read_stamp(args.out), content_stamp(args)):
+            print("balance-pool: !! %s" % line)
         return 0
 
     if not os.access(GODOT, os.X_OK):
@@ -599,6 +834,7 @@ def main(argv):
     out_abs = os.path.join(ROOT, args.out)
     os.makedirs(out_abs, exist_ok=True)
     log = open(os.path.join(out_abs, "progress.log"), "a", buffering=1)
+    args.resume = pool_resume(args, shards, log)
     status_path = os.path.join(out_abs, "status.txt")
     started = time.time()
     loads = [os.getloadavg()[0]]
