@@ -15,6 +15,11 @@ func apply(state: GameState, _team: int) -> void:
 	state.add_charge(team, points)
 
 
+func named_teams() -> Array[int]:
+	var named: Array[int] = [team]
+	return named
+
+
 func board_error(state: GameState, _team: int) -> String:
 	return MissionBoardCheck.absent_team(state, team, "charge is banked for")
 

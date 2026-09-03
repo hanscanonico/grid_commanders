@@ -38,6 +38,11 @@ func apply(state: GameState, _team: int) -> void:
 			_change_army(state, passenger)
 
 
+func named_teams() -> Array[int]:
+	var named: Array[int] = [from_team, to_team]
+	return named
+
+
 func board_error(state: GameState, _team: int) -> String:
 	var from_error := MissionBoardCheck.absent_team(state, from_team, "defection takes units from")
 	if from_error != "":

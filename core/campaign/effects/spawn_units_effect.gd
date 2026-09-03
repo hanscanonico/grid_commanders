@@ -32,6 +32,11 @@ func apply(state: GameState, _team: int) -> void:
 		state.units.append(unit)
 
 
+func named_teams() -> Array[int]:
+	var named: Array[int] = [team]
+	return named
+
+
 func spawned_tags() -> Array[StringName]:
 	var named: Array[StringName] = []
 	for spawn: MissionSpawn in units:

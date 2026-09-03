@@ -60,13 +60,17 @@ static func open_board(game: GameState, fresh: bool) -> void:
 ##
 ## A beat an earlier one of the batch ended the match on is moot rather than
 ## wrong — the board was read before it was decided, and `MissionEventCommand`
-## refuses a decided board by design — so the batch stops there. What is left
-## rejected is a beat no board could carry, which is an authoring fault and is
-## said out loud.
+## refuses a decided board by design — so the batch stops there. A beat aimed at
+## an army an earlier one of the batch routed is moot the same way, and is
+## skipped rather than ending the batch, because the beats behind it are still
+## landable. What is left rejected is a beat no board could carry, which is an
+## authoring fault and is said out loud.
 static func fire_due(battle: Battle) -> void:
 	for event: MissionEvent in CampaignSession.due_events(battle.game):
 		if battle.game.winner != 0:
 			return
+		if event.names_fallen_army(battle.game):
+			continue
 		var command := MissionEventCommand.new(event, CampaignSession.mission.player_team)
 		var receipt := await battle.execute_command(command)
 		if receipt.rejected():

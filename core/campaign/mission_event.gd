@@ -39,6 +39,24 @@ func is_due(
 	return true
 
 
+## Is one of the armies this beat's effects name already routed?
+##
+## `MissionBoardCheck.absent_team` refuses such a beat, and rightly — a fallen
+## army takes no further turn, so what a beat gives it is worse than wasted — but
+## a rout is a play outcome rather than an authoring fault, and a `once` beat is
+## only struck off the fired set when it lands. Read before the command is built,
+## it lets the campaign layer drop the beat instead of being turned away at every
+## boundary left in the mission.
+func names_fallen_army(state: GameState) -> bool:
+	for effect: MissionEffect in effects:
+		if effect == null:
+			continue
+		for team in effect.named_teams():
+			if state.is_eliminated(team):
+				return true
+	return false
+
+
 ## Every name this beat gives a unit it lands, gathered from its effects. What
 ## `MissionDefinition` holds against the rest of the mission's script and against
 ## the board's own units, a tag naming two units naming neither.

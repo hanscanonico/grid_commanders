@@ -88,9 +88,11 @@ func test_every_beat_applies_to_the_board_its_mission_opens_on() -> void:
 
 
 ## One mission, from the board it opens on to the day cap. Every refusal is a
-## failure: the planner only ever issues commands the rules offered it, and a beat
-## the board will not carry is the authoring fault `MissionEventCommand.validate`
-## exists to name.
+## failure: the planner only ever issues commands the rules offered it, and the
+## beats reaching `_fire_due` are the ones the campaign layer still offers, so
+## one the board will not carry is the authoring fault
+## `MissionEventCommand.validate` exists to name rather than an army this game
+## happened to rout.
 func _play(campaign: CampaignDefinition, mission: MissionDefinition) -> void:
 	var where := "%s/%s" % [campaign.id, mission.id]
 	var built := BattleSetup.build(mission.to_request(), terrain_db, unit_db, commander_db)
@@ -124,13 +126,17 @@ func _play(campaign: CampaignDefinition, mission: MissionDefinition) -> void:
 
 
 ## The beats due on this board, in the order and at the boundary `BattleCampaign`
-## fires them: each is its own command, and one that ends the match closes the
-## batch — a beat landing on a decided board is what the campaign layer already
-## refuses to offer.
+## fires them: each is its own command, one that ends the match closes the batch,
+## and one aimed at an army an earlier beat of the batch routed is skipped. Both
+## are what the campaign layer already refuses to offer; they are repeated here
+## because the board is read once per boundary, so the batch can decide or empty a
+## seat after that read.
 func _fire_due(game: GameState, where: String) -> void:
 	for event: MissionEvent in CampaignSession.due_events(game):
 		if game.winner != 0:
 			return
+		if event.names_fallen_army(game):
+			continue
 		var command := MissionEventCommand.new(event, CampaignSession.mission.player_team)
 		var error := command.validate(game)
 		if error != "":

@@ -18,6 +18,14 @@ func apply(state: GameState, _team: int) -> void:
 		state.capture_progress.erase(cell)
 
 
+## Neutral is nobody's seat, so ground handed back to it names no army.
+func named_teams() -> Array[int]:
+	var named: Array[int] = []
+	if team != MapData.NEUTRAL:
+		named.append(team)
+	return named
+
+
 func board_error(state: GameState, _team: int) -> String:
 	if team != MapData.NEUTRAL:
 		var seat_error := MissionBoardCheck.absent_team(state, team, "ownership is handed to")

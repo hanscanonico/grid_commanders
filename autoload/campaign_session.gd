@@ -96,6 +96,12 @@ func mission_id() -> StringName:
 ## `MissionEventCommand.validate` refuses by design. Offering them would be asking
 ## for a refusal, which reads as an authoring fault and is not one.
 ##
+## A beat aimed at an army the fight has routed is dropped for that same reason,
+## and dropping it is the only way out: it is offered on a board still being
+## played, the fired set is written when a beat *lands*, so one offered and
+## refused would be offered and refused again at every boundary left in the
+## mission.
+##
 ## The board is read **once per boundary**. Asking again after each beat would let
 ## a repeating event fire itself forever inside one command, so a beat another
 ## beat unlocks lands at the next boundary instead.
@@ -104,8 +110,11 @@ func due_events(game: GameState) -> Array[MissionEvent]:
 	if mission == null or outcome != null or game.winner != 0:
 		return due
 	for event: MissionEvent in mission.events:
-		if event != null and event.is_due(game, mission.player_team, tally, progress):
-			due.append(event)
+		if event == null or not event.is_due(game, mission.player_team, tally, progress):
+			continue
+		if event.names_fallen_army(game):
+			continue
+		due.append(event)
 	return due
 
 
