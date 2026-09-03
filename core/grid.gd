@@ -27,18 +27,21 @@ static var _bands: Dictionary[Vector2i, Array] = {}
 ## within each column. A threat overlay is painted in the order its cells are
 ## first seen, so a reordering here would repaint the board.
 ##
-## The array is shared between every ask for the same bounds, so **read it, never
-## write to it** — copy first if a caller needs its own.
+## One array is handed to every ask for the same bounds, so it is frozen rather
+## than copied per call — sharing it is the point. A caller that needs to write
+## duplicates first.
 static func ring_offsets(low: int, high: int) -> Array[Vector2i]:
 	var bounds := Vector2i(low, high)
 	if not _bands.has(bounds):
-		_bands[bounds] = _build_band(low, high)
+		var built := _build_band(low, high)
+		built.make_read_only()
+		_bands[bounds] = built
 	var band: Array[Vector2i] = _bands[bounds]
 	return band
 
 
-## absi(dx) + absi(dy) is manhattan(Vector2i.ZERO, Vector2i(dx, dy)), inlined:
-## this walk is per-cell in the board's hottest fill and a call here is not free.
+## Walks the diamond that bounds the band and drops the cells inside `low`. Runs
+## once per distinct pair of bounds in a process; ring_offsets() remembers it.
 static func _build_band(low: int, high: int) -> Array[Vector2i]:
 	var offsets: Array[Vector2i] = []
 	for dx in range(-high, high + 1):

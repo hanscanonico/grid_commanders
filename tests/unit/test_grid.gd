@@ -82,11 +82,19 @@ func test_a_low_bound_above_the_high_bound_reaches_nothing() -> void:
 
 ## The band is a property of the weapon, not of the cell it fires from, so the
 ## same one is handed back rather than rebuilt: a threat map asks for it once per
-## firing cell per enemy. What comes back is shared, which is why no caller may
-## write to it.
+## firing cell per enemy.
 func test_the_same_band_is_handed_back_rather_than_rebuilt() -> void:
 	var band := Grid.ring_offsets(1, 3)
 	assert_true(is_same(Grid.ring_offsets(1, 3), band), "the band was rebuilt per ask")
+
+
+## The shared array is frozen, so one caller's append cannot widen every later
+## firing ring in the process. A caller that needs to write duplicates first.
+func test_the_shared_band_is_frozen_against_a_caller_writing_to_it() -> void:
+	assert_true(Grid.ring_offsets(1, 3).is_read_only(), "the shared band is writable")
+	var own_copy := Grid.ring_offsets(1, 3).duplicate()
+	own_copy.append(Vector2i(9, 9))
+	assert_false(Grid.ring_offsets(1, 3).has(Vector2i(9, 9)), "a copy wrote through")
 
 
 ## Handing the same array back must not change which cell comes first, since a
