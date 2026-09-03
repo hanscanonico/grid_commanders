@@ -1,17 +1,17 @@
 extends Node
 ## Device preferences: what this machine likes, as opposed to what this match is.
-## Six of them today — how fast the battle's theatre plays out, whether a
+## Seven of them today — how fast the battle's theatre plays out, whether a
 ## resolved attack cuts to the full-screen battle animation at all, whether the
 ## menus move at all, how loud the game is, whether ending the day stops to
-## confirm when units can still act, and which of the first-match hints this
-## player has already earned their way out of.
+## confirm when units can still act, whether the game fills the screen, and which
+## of the first-match hints this player has already earned their way out of.
 ##
 ## Deliberately not MatchConfig and deliberately not in the save file: resuming a
 ## three-day-old save should play at the speed you like *today* and watch battles
 ## the way you like *today*, and a hot-seat pair share one screen anyway. The
 ## hints belong here for the same reason and one more (UX recovery plan D1): a
 ## player who has learned to capture has learned it for good, and tying that to a
-## match would teach them again on every new one. All six are presentation only
+## match would teach them again on every new one. All seven are presentation only
 ## — nothing here may ever change a rule, a number, or what the sim does, so two
 ## players' "same seed, same commands" keep meaning the same result. Nothing here
 ## is ever handed to core/ or ai/, so the sim cannot observe a preference it never
@@ -33,6 +33,7 @@ const BATTLE_ANIMATIONS_KEY := "battle_animations"
 const MENU_ANIMATIONS_KEY := "menu_animations"
 const VOLUME_KEY := "volume"
 const END_TURN_CONFIRM_KEY := "end_turn_confirm"
+const FULLSCREEN_KEY := "fullscreen"
 ## What a fresh install confirms with, and what `pin` stands a scripted launch
 ## back at.
 const DEFAULT_END_TURN_CONFIRM := true
@@ -44,6 +45,13 @@ const DEFAULT_MENU_ANIMATIONS := true
 ## for the reason menu motion stands back: the toggle's own checkmark is on a
 ## photographed menu.
 const DEFAULT_BATTLE_ANIMATIONS := true
+## What a fresh install opens in, and what `pin` stands the window back to: a
+## capture is framed at the project's window size, and a machine whose player
+## plays full-screen would otherwise photograph a different frame entirely.
+const DEFAULT_FULLSCREEN := false
+## The key F11 is bound to. Named here because this file both listens for it and
+## owns what it changes.
+const FULLSCREEN_ACTION := &"toggle_fullscreen"
 const HINTS_KEY := "hints_retired"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
@@ -94,7 +102,12 @@ const RESET_HINTS_ARG := "--reset-hints"
 const SPEED_ROW := &"speed"
 const SOUND_ROW := &"sound"
 const END_TURN_ROW := &"end_turn_confirm"
-const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW]
+## Windowed or full. Offered on the pause menu and nowhere else: the main menu's
+## own options row is full at four controls — a fifth puts the setup panel past
+## the 640-wide frame, which `MenuCaptureDriver`'s gate refuses outright — so on
+## that page the F11 key is the whole of this setting.
+const WINDOW_ROW := &"window"
+const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW, WINDOW_ROW]
 
 ## How fast moves and battles play out on screen. Never null. Callers read it at
 ## the moment they animate rather than caching it, so a mid-match change takes
@@ -124,6 +137,12 @@ var volume: StringName = DEFAULT_VOLUME
 ## ai/ learns it exists, and ReadyUnits still answers who is ready either way.
 var end_turn_confirm := DEFAULT_END_TURN_CONFIRM
 
+## Whether the game fills the screen. Borderless rather than exclusive: the board
+## is nearest-sampled pixel art that the `keep` stretch letterboxes either way, so
+## an exclusive mode would buy a resolution change nobody asked for and cost the
+## instant alt-tab a turn-based game is played with.
+var fullscreen := DEFAULT_FULLSCREEN
+
 ## Which first-match hints this player has already performed their way out of —
 ## `TutorialHints` ids, retired for good. MissionStrip reads it to pick what to
 ## teach next and stops drawing itself once it holds them all.
@@ -148,6 +167,20 @@ func _ready() -> void:
 	_load()
 	_apply_cmdline()
 	_apply_volume()
+	_apply_window_mode()
+	# A phone has no window to stand anywhere but full, so it never listens for
+	# the key either — the same gate the Window row is offered behind.
+	set_process_unhandled_input(_has_a_window())
+
+
+## F11 flips the window mode from any screen. It lives here rather than in the
+## screens that could each hold a row for it because the preference has one owner,
+## and unhandled so a scene that wants the press first still gets it.
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed(FULLSCREEN_ACTION):
+		return
+	set_fullscreen(not fullscreen)
+	get_viewport().set_input_as_handled()
 
 
 ## Changes the tier and writes it back. The only way the speed ever moves.
@@ -165,6 +198,27 @@ func set_volume(id: StringName) -> void:
 	_apply_volume()
 	if _persistent:
 		_save()
+
+
+## Changes the window mode, stands the window in it and writes it back. Mirrors
+## set_volume, down to a pinned or scripted launch leaving the file alone; its two
+## callers are `cycle_row`'s Window row and the F11 key.
+func set_fullscreen(enabled: bool) -> void:
+	fullscreen = enabled
+	_apply_window_mode()
+	if _persistent:
+		_save()
+
+
+## The value rows this device offers, in the order they are shown. Every one of
+## them on a desktop; a phone drops the Window row, its game filling the screen
+## whatever anyone prefers (mobile plan D5).
+func offered_rows() -> Array[StringName]:
+	if _has_a_window():
+		return VALUE_ROWS
+	var rows: Array[StringName] = VALUE_ROWS.duplicate()
+	rows.erase(WINDOW_ROW)
+	return rows
 
 
 ## Where `id` sits in VOLUME_STEPS; -1 when it names no step.
@@ -216,6 +270,8 @@ func row_label(row: StringName) -> String:
 			return "Sound: %s" % volume_label(volume)
 		END_TURN_ROW:
 			return "End-turn check: %s" % ("On" if end_turn_confirm else "Off")
+		WINDOW_ROW:
+			return "Window: %s" % ("Fullscreen" if fullscreen else "Windowed")
 	push_error("Settings: %s names no value row" % row)
 	return ""
 
@@ -232,12 +288,32 @@ func cycle_row(row: StringName, step: int = 1) -> String:
 			set_volume(stepped_volume(volume, step))
 		END_TURN_ROW:
 			set_end_turn_confirm(not end_turn_confirm)
+		WINDOW_ROW:
+			set_fullscreen(not fullscreen)
 	return row_label(row)
 
 
 func _apply_volume() -> void:
 	AudioServer.set_bus_volume_db(MASTER_BUS, volume_db(volume))
 	AudioServer.set_bus_mute(MASTER_BUS, volume == OFF_ID)
+
+
+func _apply_window_mode() -> void:
+	if not _has_a_window():
+		return
+	var mode := (
+		DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+	)
+	DisplayServer.window_set_mode(mode)
+
+
+## Whether this build has a window that can stand anywhere but full — the whole
+## display preference's one gate: what the Window row is offered behind, what the
+## F11 key is listened for behind, and what the mode is ever set behind. A phone
+## is the no (mobile plan D1: nothing under core/ or ai/ may ask this, and nothing
+## there does).
+func _has_a_window() -> bool:
+	return not MobileProfile.active()
 
 
 ## The setter the menu's checkbox is wired to. Mirrors set_speed: writes through
@@ -312,6 +388,11 @@ func pin_hints(all_retired: bool) -> void:
 ## "off" or "Quiet" could reach is the map menu's own Sound row and the toggles'
 ## own checkmarks in the frame.
 ##
+## The window stands back for the strongest reason of the lot: a full-screen
+## machine frames every capture at its own monitor rather than at the project's
+## window size, so the smoke sweep and `make screenshot` would photograph the
+## screen they were taken on.
+##
 ## --no-battle-anim and --mute outrank the pin exactly as --speed= does, each on
 ## its own latch: both are per-launch overrides asked for on the very runs that
 ## pin, so a pin that stood them back would leave neither flag anything to do.
@@ -319,6 +400,8 @@ func pin(id: StringName) -> void:
 	_persistent = false
 	end_turn_confirm = DEFAULT_END_TURN_CONFIRM
 	menu_animations = DEFAULT_MENU_ANIMATIONS
+	fullscreen = DEFAULT_FULLSCREEN
+	_apply_window_mode()
 	if not _anim_flag_wins:
 		battle_animations = DEFAULT_BATTLE_ANIMATIONS
 	if not _volume_flag_wins:
@@ -352,6 +435,9 @@ func _load() -> void:
 	var stored_confirm: Variant = config.get_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
 	if stored_confirm is bool:
 		end_turn_confirm = stored_confirm
+	var stored_full: Variant = config.get_value(SECTION, FULLSCREEN_KEY, fullscreen)
+	if stored_full is bool:
+		fullscreen = stored_full
 	# Stored as strings and read back as StringNames: ConfigFile has no
 	# StringName, and a hint id written by one version must still match the
 	# TutorialHints id in the next. An id nothing answers to any more is kept
@@ -372,6 +458,7 @@ func _save() -> void:
 	config.set_value(SECTION, MENU_ANIMATIONS_KEY, menu_animations)
 	config.set_value(SECTION, VOLUME_KEY, String(volume))
 	config.set_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
+	config.set_value(SECTION, FULLSCREEN_KEY, fullscreen)
 	var hints := PackedStringArray()
 	for id in retired_hints:
 		hints.append(String(id))

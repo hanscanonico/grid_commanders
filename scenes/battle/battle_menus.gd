@@ -211,7 +211,7 @@ static func map_actions(
 	if CampaignSession.active():
 		var card := "On" if objectives_up else "Off"
 		actions.append({"id": &"objectives", "label": "Objectives: %s" % card})
-	for row: StringName in Settings.VALUE_ROWS:
+	for row: StringName in Settings.offered_rows():
 		actions.append(
 			{
 				"id": row,

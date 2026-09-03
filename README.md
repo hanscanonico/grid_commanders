@@ -654,6 +654,9 @@ mouse, keyboard, or controller throughout.
 
 - Arrow keys / mouse hover: move the grid cursor
 - Mouse wheel or `+` / `-`: zoom
+- `F11` fills the screen; a second press puts the window back. It answers from anywhere — board,
+  menu or banner — and the pause menu's **Window** row is the same setting, remembered for this
+  machine either way
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight
   its movement range; move the cursor within range to preview the path — a red arrow laid squarely
   along the cells the unit would walk, its head on the one it would stop on — then confirm a

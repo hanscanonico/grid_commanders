@@ -49,9 +49,10 @@ func test_it_stores_under_a_key_of_its_own() -> void:
 		Settings.MENU_ANIMATIONS_KEY,
 		Settings.VOLUME_KEY,
 		Settings.END_TURN_CONFIRM_KEY,
+		Settings.FULLSCREEN_KEY,
 		Settings.HINTS_KEY,
 	]
-	assert_eq(keys.size(), 6, "six preferences")
+	assert_eq(keys.size(), 7, "seven preferences")
 	var seen: Array = []
 	for key: String in keys:
 		assert_false(key in seen, "%s is stored twice" % key)
