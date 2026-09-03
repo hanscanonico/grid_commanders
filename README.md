@@ -1216,10 +1216,11 @@ anything that stopped early. It writes `survey.md` and `survey.json`. One report
 survey is a number, and `docs/replay_survey.md` is the committed one.
 
 The Balance Lab writes them too. `make balance-sim SIM="… --replays"` puts one file per match in a
-`replays/` directory beside its report, named by the same match id the CSV rows carry, so a
-suspicious row becomes a match you can watch. That is a different instrument from `make
-balance-watch`, which re-plans a row from its seed and is *supposed* to diverge when the AI changes;
-a replay cannot diverge, because the decisions are in the file.
+`replays_s<seeds>/` directory beside its report — `replays_seed<N>/` for a `--seed=` run — named by
+the same match id the CSV rows carry, so a suspicious row becomes a match you can watch. The seed
+range is in the name so a narrowed re-run cannot survey the wider run's leftovers. That is a
+different instrument from `make balance-watch`, which re-plans a row from its seed and is *supposed*
+to diverge when the AI changes; a replay cannot diverge, because the decisions are in the file.
 
 ## Difficulty
 

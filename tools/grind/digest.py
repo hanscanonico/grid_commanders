@@ -66,9 +66,18 @@ def resolve(path):
 
 
 # Every headless run ends with the engine's own exit chatter — the addon banner
-# and the documented script-cycle leak — and a verdict with that under it reads
-# as a failure to somebody skimming.
-NOISE = ("[godot_ai", "ObjectDB instances were leaked", "resources still in use")
+# and the documented script-cycle leak, headline and per-object lines alike — and
+# a verdict with that under it reads as a failure to somebody skimming. The
+# per-object lines matter most to the fallback reading: there are more of them
+# than `tail()` shows, so leaving them in costs the job's real last word.
+NOISE = (
+    "[godot_ai",
+    "ObjectDB instances were leaked",
+    "resources still in use",
+    "Leaked instance:",
+    "Orphan StringName:",
+    "Hint: Leaked instances",
+)
 
 
 def log_lines(record):
@@ -93,7 +102,9 @@ def log_section(record):
     lines = log_lines(record)
     starts = [i for i, line in enumerate(lines) if marker and marker in line]
     if not starts:
-        return tail(record)
+        # Say so, or a reworded banner hands the engine's exit chatter to the page
+        # as the instrument's verdict, under a job still reporting `done`.
+        return ["(marker %r not found in the log)" % marker] + tail(record)
     return [line for line in lines[starts[-1]:] if line.strip()]
 
 
@@ -400,10 +411,29 @@ def self_check():
     case("section keeps the verdict", "PASS: every higher tier clears the gate." in section)
     case("section drops the noise", "playing 12 matches" not in "\n".join(section))
     case("engine exit chatter is not a verdict", not any("godot_ai" in l for l in section))
+
     case("a section longer than the cap is capped", len(section) == MAX_RESULT_LINES)
     case("a capped section is elided in the middle", section[-2] == "…")
     case("a job with no reading says so", reading({"kind": "log", "log": ""}) == ["(no output)"])
     case("a missing artifact is not a crash", reading({"kind": "pool", "artifact": "nope"}))
+
+    # reworded.log is difficulty-check with its banner renamed, and it ends on the
+    # documented exit leak: the marker misses, so the label has to degrade to the
+    # job's real last word rather than to the engine's per-object leak lines.
+    reworded = reading(
+        {
+            "kind": "section",
+            "log": "tests/fixtures/grind/reworded.log",
+            "marker": "=== difficulty ladder ===",
+        }
+    )
+    case("a missed marker labels the reading a fallback", reworded[0].startswith("(marker "))
+    case("a missed marker names the marker it wanted", "difficulty ladder" in reworded[0])
+    case(
+        "a missed marker falls back to the verdict",
+        any("PASS: every higher tier clears the gate." in line for line in reworded),
+    )
+    case("a missed marker drops the exit leak", not any("Leaked" in line for line in reworded))
 
     state = {"sha": "abc1234", "pass": 2, "job": "difficulty-check", "phase": "running"}
     page = digest_lines(state, [{"job": "difficulty-check", "status": "done", "kind": "log"}])
