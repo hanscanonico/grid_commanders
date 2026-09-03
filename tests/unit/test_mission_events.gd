@@ -31,6 +31,23 @@ CCQ...
 1 p 3 1 truck
 """
 
+## The same board with a third army, because an elimination on a duel board is
+## also a verdict and `MissionEventCommand` refuses a decided board first: the
+## fallen-army refusals can only be read where somebody is still fighting.
+const THREE_ARMIES := """
+[terrain]
+CCQ...
+....BF
+[owners]
+1 0 0
+2 1 0
+3 2 0
+[units]
+1 i 3 0 courier
+2 t 4 0 siege_gun
+3 i 5 0 garrison
+"""
+
 
 func _state() -> GameState:
 	return Fixture.state(FIELD)
@@ -202,6 +219,34 @@ func test_the_command_refuses_a_board_it_would_corrupt() -> void:
 	assert_eq(MissionEventCommand.new(event, 1).validate(state), "")
 
 
+## One rule — `MissionBoardCheck.absent_team` — read through the two effects it
+## costs most: a column for a routed army holds ground and counter-attacks
+## forever without ever playing, since `next_team()` skips the fallen, and ground
+## handed back to one undoes the rout that neutralised it.
+func test_the_command_refuses_a_beat_aimed_at_an_army_that_has_fallen() -> void:
+	var state := Fixture.state(THREE_ARMIES)
+	var spawn := MissionSpawn.new()
+	spawn.unit_type = Fixture.unit_db().by_symbol("t")
+	spawn.cell = Vector2i(0, 1)
+	var landing := SpawnUnitsEffect.new()
+	landing.team = 3
+	landing.units = [spawn]
+	var event := _event(&"the_third_wave", [_day(1)])
+	event.effects = [landing]
+	assert_eq(MissionEventCommand.new(event, 1).validate(state), "", "army 3 is still fighting")
+	state.eliminate(3)
+	assert_eq(state.winner, 0, "two armies are left, so the match runs on")
+	assert_eq(
+		MissionEventCommand.new(event, 1).validate(state),
+		"event 'the_third_wave': spawn lands units for army 3, which has already fallen"
+	)
+	event.effects = [_hand_over(Vector2i(1, 0), 3)]
+	assert_eq(
+		MissionEventCommand.new(event, 1).validate(state),
+		"event 'the_third_wave': ownership is handed to army 3, which has already fallen"
+	)
+
+
 func test_the_command_refuses_a_match_that_is_already_decided() -> void:
 	var state := _state()
 	var event := _event(&"iron_relief", [_day(1)])
@@ -350,6 +395,21 @@ func test_a_mission_refuses_two_objectives_with_one_id() -> void:
 	also.id = &"the_depot"
 	event.effects = [_reveal(&"the_hq"), _reveal(&"the_depot")]
 	assert_eq(mission.definition_error(_map(), Fixture.unit_db()), "")
+
+
+## `definition_error` is the lint that refuses an empty slot, and it is a
+## different door from the board walk: the gate asks both, and a mission being
+## held to the board it opens on must not crash before the lint gets to speak.
+func test_the_board_walk_survives_the_empty_slots_the_lint_refuses() -> void:
+	var state := Fixture.state_from_file(RIDGE)
+	var mission := _mission()
+	var event := _event(&"the_gate", [_day(1)])
+	event.effects = [null]
+	mission.events = [event]
+	assert_eq(mission.events_board_error(state), "", "an empty effect slot is the lint's to name")
+	mission.events = [null]
+	assert_eq(mission.events_board_error(state), "", "and so is an empty event slot")
+	assert_ne(mission.definition_error(_map(), Fixture.unit_db()), "", "which it does name")
 
 
 func test_a_mission_holds_an_events_lines_to_the_roster() -> void:

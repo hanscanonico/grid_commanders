@@ -46,9 +46,14 @@ static func unseated_team(map: MapData, team: int, prefix: String) -> String:
 	return "%s army %d, which this board does not seat" % [prefix, team]
 
 
-## "" when `team` is playing this match, else why it is not. The board's own
-## question, asked of the seating a mission actually filled.
+## "" when `team` is playing this match, else why it is not — a seat the match
+## never filled and a seat a rout has since emptied being one question, because a
+## fallen army never takes another turn. A column landed for one is worse than
+## wasted: `next_team()` skips the fallen, so it would hold ground and
+## counter-attack forever without ever playing.
 static func absent_team(state: GameState, team: int, prefix: String) -> String:
-	if state.teams.has(team):
-		return ""
-	return "%s army %d, which is not at this table" % [prefix, team]
+	if state.is_eliminated(team):
+		return "%s army %d, which has already fallen" % [prefix, team]
+	if not state.teams.has(team):
+		return "%s army %d, which is not at this table" % [prefix, team]
+	return ""
