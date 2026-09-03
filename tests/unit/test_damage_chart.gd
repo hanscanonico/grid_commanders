@@ -223,6 +223,30 @@ func test_a_fractional_cell_is_refused_rather_than_truncated() -> void:
 	assert_push_error_count(3, "one per read, each naming the cell")
 
 
+## An attacker with no row is the ordinary answer on the hottest read in the sim —
+## an unarmed unit, or one whose only weapon lives in the other matrix — so it
+## reads as "cannot damage" with no error, exactly like a defender missing from a
+## row that does exist.
+func test_an_attacker_with_no_row_reads_as_no_weapon() -> void:
+	var bare := DamageChart.new()
+	assert_eq(bare.base_damage(&"tank", &"mech"), -1)
+	assert_false(bare.can_attack(&"tank", &"mech"))
+	assert_null(bare.select_shot(&"tank", &"mech", 9, 9))
+	assert_false(bare.has_secondary(&"tank"))
+	assert_false(bare.has_ready_weapon(&"tank", 9, 9))
+
+
+## A row authored with nothing in it is a weapon that damages nothing, not a
+## weapon: these two ask whether the row holds entries, never only whether the
+## attacker is keyed.
+func test_a_row_with_no_entries_is_not_a_weapon() -> void:
+	var hollow := DamageChart.new()
+	hollow.chart = {&"tank": {}}
+	hollow.secondary_chart = {&"tank": {}}
+	assert_false(hollow.has_secondary(&"tank"))
+	assert_false(hollow.has_ready_weapon(&"tank", 9, 9))
+
+
 func test_selector_owns_preference_fallback_and_ammo_spend() -> void:
 	var preferred := chart.select_shot(&"tank", &"mech", 9, 9)
 	assert_eq(preferred.slot, DamageChart.SECONDARY)

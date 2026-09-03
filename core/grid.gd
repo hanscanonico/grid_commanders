@@ -12,6 +12,13 @@ static func manhattan(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x - b.x) + absi(a.y - b.y)
 
 
+## Every band ever asked for, keyed by its bounds. A band belongs to the weapon
+## and not to the cell it is fired from, so the threat map asks for the same
+## handful of them once per firing cell per enemy — thousands of times over one
+## large board.
+static var _bands: Dictionary[Vector2i, Array] = {}
+
+
 ## The offsets of the [low, high] Manhattan diamond around the origin — the shape
 ## every ring in the game is cut to, handed over as offsets so a caller adds its
 ## own centre and applies its own filter.
@@ -20,9 +27,19 @@ static func manhattan(a: Vector2i, b: Vector2i) -> int:
 ## within each column. A threat overlay is painted in the order its cells are
 ## first seen, so a reordering here would repaint the board.
 ##
+## The array is shared between every ask for the same bounds, so **read it, never
+## write to it** — copy first if a caller needs its own.
+static func ring_offsets(low: int, high: int) -> Array[Vector2i]:
+	var bounds := Vector2i(low, high)
+	if not _bands.has(bounds):
+		_bands[bounds] = _build_band(low, high)
+	var band: Array[Vector2i] = _bands[bounds]
+	return band
+
+
 ## absi(dx) + absi(dy) is manhattan(Vector2i.ZERO, Vector2i(dx, dy)), inlined:
 ## this walk is per-cell in the board's hottest fill and a call here is not free.
-static func ring_offsets(low: int, high: int) -> Array[Vector2i]:
+static func _build_band(low: int, high: int) -> Array[Vector2i]:
 	var offsets: Array[Vector2i] = []
 	for dx in range(-high, high + 1):
 		var span := high - absi(dx)

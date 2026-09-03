@@ -78,3 +78,20 @@ func test_every_offset_lies_in_the_band() -> void:
 ## one every time the threat map is built.
 func test_a_low_bound_above_the_high_bound_reaches_nothing() -> void:
 	assert_eq(Grid.ring_offsets(3, 2).size(), 0)
+
+
+## The band is a property of the weapon, not of the cell it fires from, so the
+## same one is handed back rather than rebuilt: a threat map asks for it once per
+## firing cell per enemy. What comes back is shared, which is why no caller may
+## write to it.
+func test_the_same_band_is_handed_back_rather_than_rebuilt() -> void:
+	var band := Grid.ring_offsets(1, 3)
+	assert_true(is_same(Grid.ring_offsets(1, 3), band), "the band was rebuilt per ask")
+
+
+## Handing the same array back must not change which cell comes first, since a
+## threat overlay is painted in the order its cells are first seen.
+func test_a_remembered_band_keeps_its_emission_order() -> void:
+	var first_ask := Grid.ring_offsets(0, 2).duplicate()
+	Grid.ring_offsets(2, 3)
+	assert_eq(Grid.ring_offsets(0, 2), first_ask)
