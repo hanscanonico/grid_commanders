@@ -98,15 +98,22 @@ const _ALL_EDGES := BIT_N | BIT_E | BIT_S | BIT_W
 
 ## What a road reads as continuing into.
 const _ROAD_JOINS: Array[StringName] = [&"road", &"bridge"]
+# A port is in none of the three sets below: the board paints its cell as
+# `TerrainDB.ground()` — plains — under a transparent building, and counted as
+# water it left the sea running seamlessly into a quay standing on grass.
+# These sets are the board's authority. The sprite generator's demo preview
+# (`generators/sprites/spritegen/demo.py`) still holds `port` in its `_WATERY`,
+# so the two diverge by exactly that id; syncing the demo is a follow-up, not a
+# reason to put `port` back here.
 ## What a river reads as flowing into.
-const _RIVER_JOINS: Array[StringName] = [&"river", &"bridge", &"sea", &"port"]
+const _RIVER_JOINS: Array[StringName] = [&"river", &"bridge", &"sea"]
 ## What the sea reads as open water — a coast edge is any neighbour outside
 ## this set. Shoals are water here: they carry their own surf, so the sea draws
-## no second shoreline against them (the generator demo's rule).
-const _SEA_WATER: Array[StringName] = [&"sea", &"river", &"reef", &"shoal", &"bridge", &"port"]
+## no second shoreline against them.
+const _SEA_WATER: Array[StringName] = [&"sea", &"river", &"reef", &"shoal", &"bridge"]
 ## What a shoal surfs against: the same water minus shoal itself, so a run of
-## beach breaks no surf on its own sand (the generator demo's _WATERY).
-const _SHOAL_WATER: Array[StringName] = [&"sea", &"river", &"reef", &"bridge", &"port"]
+## beach breaks no surf on its own sand.
+const _SHOAL_WATER: Array[StringName] = [&"sea", &"river", &"reef", &"bridge"]
 ## What a wood's canopy runs on into. Only more wood: everything else is ground
 ## the tree line has to end against.
 const _WOODS_JOINS: Array[StringName] = [&"woods"]
