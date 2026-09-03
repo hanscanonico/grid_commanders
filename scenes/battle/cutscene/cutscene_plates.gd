@@ -27,6 +27,9 @@ const FIGURE_H := UnitSprite.SPRITE_H
 ## its plate.
 const MAX_STARS := 4
 const STAR_STEP := 11.0
+## How far past the leading star's centre the row's last star ends — where a note
+## qualifying those stars is set from.
+const STAR_RUN := STAR_STEP * (MAX_STARS - 1) + 6.0
 
 
 ## The band left between the two plates — the diorama's own frame.
@@ -62,6 +65,9 @@ static func draw_stars(
 ## rightward, -1 for a mirrored half, whose name is hung back off the anchor so
 ## both sides' rows grow toward the seam. `star_gap` is the space left between
 ## the name and the first star.
+##
+## `note` closes the row where the stars printed are not the unit's to have —
+## a word rather than a redrawn row, because the tile really does have them.
 static func draw_terrain_row(
 	canvas: CanvasItem,
 	font: Font,
@@ -71,25 +77,42 @@ static func draw_terrain_row(
 	dir: float,
 	star_gap: float,
 	stars: int,
-	alpha: float
+	alpha: float,
+	note: String = ""
 ) -> void:
 	var width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-	var text_x := anchor_x - (width if dir < 0.0 else 0.0)
+	_draw_row_text(canvas, font, Vector2(anchor_x, plate_y + 14.0), label, dir, alpha)
+	var stars_x := anchor_x + dir * (width + star_gap)
+	draw_stars(
+		canvas, Vector2(stars_x, plate_y + 10.0), dir * STAR_STEP, mini(stars, MAX_STARS), alpha
+	)
+	if note == "":
+		return
+	_draw_row_text(
+		canvas,
+		font,
+		Vector2(stars_x + dir * (STAR_RUN + star_gap), plate_y + 14.0),
+		note,
+		dir,
+		alpha
+	)
+
+
+## One run of plate copy, laid out from its own end of the row: a mirrored half
+## hangs its text back off the point it reads away from, so both sides' rows grow
+## toward the seam.
+static func _draw_row_text(
+	canvas: CanvasItem, font: Font, at: Vector2, text: String, dir: float, alpha: float
+) -> void:
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
 	canvas.draw_string(
 		font,
-		Vector2(text_x, plate_y + 14.0),
-		label,
+		Vector2(at.x - (width if dir < 0.0 else 0.0), at.y),
+		text,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		9,
 		Color(CutscenePalette.PLATE_TEXT, CutscenePalette.PLATE_TEXT.a * alpha)
-	)
-	draw_stars(
-		canvas,
-		Vector2(anchor_x + dir * (width + star_gap), plate_y + 10.0),
-		dir * STAR_STEP,
-		mini(stars, MAX_STARS),
-		alpha
 	)
 
 

@@ -201,6 +201,7 @@ func _stage_cut_in(spec: String) -> void:
 		pose = VOLLEY_POSE
 	_battle.animator.cutscene.pose_at(result, attacker, defender, pose)
 	_check_cut_in_rows(attacker, defender)
+	_check_cut_in_cover(result, attacker, defender)
 
 
 ## The capture cut-in, held still for the shutter — the sibling of `_stage_cut_in`.
@@ -506,6 +507,51 @@ func _check_cut_in_rows(attacker: Unit, defender: Unit) -> void:
 	_check_row("cut-in defender", def.drawn_unit_row(), _army_row(defender.team))
 	_check_row("cut-in attacker ground", atk.drawn_ground_row(), _ground_row(attacker.cell))
 	_check_row("cut-in defender ground", def.drawn_ground_row(), _ground_row(defender.cell))
+
+
+## The defence each plate promises is the defence the exchange resolved with.
+## The sibling of `_check_cut_in_rows`, and there for the same reason: a half
+## promising four stars over ground its unit only flies above still renders a
+## perfectly good frame, so a scenario that proves one was written proves nothing
+## about the number on it.
+##
+## Three readings have to agree — what the row drew, what the result banked, and
+## what CombatResolver prices the shot with — and the row has to qualify its
+## stars exactly when they overstate that number.
+func _check_cut_in_cover(
+	result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit
+) -> void:
+	var cutscene := _battle.animator.cutscene
+	_check_cover("cut-in attacker", cutscene.attacker_side(), attacker, result.attacker_cover_stars)
+	_check_cover("cut-in defender", cutscene.defender_side(), defender, result.defender_cover_stars)
+
+
+func _check_cover(what: String, side: CutsceneSide, unit: Unit, banked: int) -> void:
+	var priced := CombatResolver.cover_stars(_battle.game, unit, unit.cell)
+	if side.cover_stars != priced or banked != priced:
+		_fail(
+			(
+				"%s plates %d cover star(s) off a record of %d, but the formula gives it %d"
+				% [what, side.cover_stars, banked, priced]
+			)
+		)
+		return
+	var stars := side.terrain.defense_stars
+	var qualified := CutsceneSide.terrain_note(side.cover_stars, stars) != ""
+	if qualified == (priced < stars):
+		return
+	_fail(
+		(
+			"%s fights on %d of the %s's %d star(s) and the row %s"
+			% [
+				what,
+				priced,
+				side.terrain.display_name,
+				stars,
+				"qualifies them" if qualified else "does not"
+			]
+		)
+	)
 
 
 ## The same check over the capture cut-in: the marching squad wears the

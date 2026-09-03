@@ -190,6 +190,11 @@ const CHIP_TEXT := Color(1.0, 1.0, 1.0, 0.68)
 const PLATE_MARGIN := 26.0
 ## The space left between the terrain's name and its first defence star.
 const TERRAIN_STAR_GAP := 12.0
+## What closes the defence row when the stars on it are not this unit's to have.
+## The tile keeps its own stars, exactly as the bottom bar's terrain chip does
+## (HudBottomBar._order_line prints this same word for the same reason): a bare
+## zero beside the word MOUNTAIN trades one misread for another.
+const NO_COVER_NOTE := "NO COVER"
 ## The matching hold-off from the seam, for the content that sits against it.
 const SEAM_MARGIN := 18.0
 
@@ -215,6 +220,12 @@ var mirror := false
 ## no chip, which is what an unarmed unit and a defender that never answers both
 ## want: a chip on a silent side would announce a weapon the frame never shows.
 var weapon_label := ""
+## The cover this unit really fought with — CombatResolver's own answer, banked
+## on the CombatResult when the shot resolved and written here like the weapon
+## label. The terrain's `defense_stars` is not that answer: a unit that flies over
+## the tile instead of standing on it gets none of them, so a copter caught over a
+## mountain was being plated four stars and then shot as if it had none.
+var cover_stars := 0
 
 # --- pose, written every frame by CombatCutscene ------------------------------
 
@@ -988,8 +999,16 @@ func _draw_terrain_row(plate: Rect2) -> void:
 		_inward(1.0),
 		TERRAIN_STAR_GAP,
 		terrain.defense_stars,
-		plate_p
+		plate_p,
+		terrain_note(cover_stars, terrain.defense_stars)
 	)
+
+
+## What closes a defence row showing `stars` when the unit only fights with
+## `cover`: a word when the two disagree, nothing when they do not. Static and
+## pure so the sweep can hold the drawn row to it without posing a frame.
+static func terrain_note(cover: int, stars: int) -> String:
+	return NO_COVER_NOTE if cover == 0 and stars > 0 else ""
 
 
 # --- mirroring helpers -------------------------------------------------------

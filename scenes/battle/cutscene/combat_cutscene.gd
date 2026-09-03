@@ -7,9 +7,10 @@ extends CutsceneDirector
 ##
 ## It replays; it never decides (plan D1). Every number below comes off the
 ## CombatSnapshot.CombatResult it is handed — the HP each side went in and came
-## out with, the weapon each fired, whether the opening shot was lobbed — and the
-## units themselves are read only for what they *are*: type, team, cell. Nothing
-## here touches the damage chart, the RNG, or a rule.
+## out with, the weapon each fired, whether the opening shot was lobbed, the
+## cover each fought with — and the units themselves are read only for what they
+## *are*: type, team, cell. Nothing here touches the damage chart, the RNG, or a
+## rule.
 ##
 ## One clock, one exit — both `CutsceneDirector`'s, held rather than repeated.
 ## Every visual below is a pure function of `_play.t`, so skipping is the clock
@@ -141,6 +142,11 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 	# there is nothing for it to be shooting with.
 	_atk.weapon_label = String(_atk_style.label)
 	_def.weapon_label = String(_def_style.label) if result.countered else ""
+	# And the cover each half fought with, off the record like every other number
+	# here — the plate would otherwise promise a flier the ground's stars and then
+	# show it taking the damage of a unit standing on nothing.
+	_atk.cover_stars = result.attacker_cover_stars
+	_def.cover_stars = result.defender_cover_stars
 	_atk.hp_shown = result.attacker_hp_before
 	_def.hp_shown = result.defender_hp_before
 	_squads(_atk, result.attacker_hp_before, result.attacker_hp_after, result.attacker_died)

@@ -179,6 +179,8 @@ static func resolve(
 	result.defender_hp_after = fight.defender_hp
 	result.attacker_weapon_slot = selected.slot
 	result.attacker_indirect = AttackRange.is_indirect(attacker)
+	result.attacker_cover_stars = cover_stars(state, fight.attacker, fight.attacker_cell)
+	result.defender_cover_stars = cover_stars(state, fight.defender, fight.defender_cell)
 	var base := _damage_pct(state, fight, selected.base_damage)
 	if selected.consumes_primary_ammo:
 		attacker.ammo = maxi(0, attacker.ammo - 1)

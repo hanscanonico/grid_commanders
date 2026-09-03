@@ -64,3 +64,10 @@ class CombatResult:
 	## moment the shot was resolved. The counter needs none: only a max_range of 1
 	## ever answers, so a returning volley is never a lob.
 	var attacker_indirect := false
+	## The terrain cover each side actually fought with, taken off the cells the
+	## exchange resolved on. CombatResolver is still the one authority on what a
+	## tile gives a unit; this is its answer at the moment of the shot, so the
+	## cut-in can plate the defence the formula priced without asking a rule — or
+	## the live board, which by then has already moved on.
+	var attacker_cover_stars := 0
+	var defender_cover_stars := 0
