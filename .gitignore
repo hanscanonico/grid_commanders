@@ -56,7 +56,11 @@ reports/*
 # than `.promo/`: git will not look inside an excluded directory, so the
 # generator below could not be re-included.
 .promo/*
-# The generator that renders all of it is source, and is kept.
+# The scripts that make it are source, and are kept: one records the footage off
+# the running game, one cuts the animation reel out of that footage, and one
+# renders the promo slides.
+!.promo/record_clips.sh
+!.promo/make_reel.sh
 !.promo/make_promo.sh
 
 # Mobile packages and their signing material. The package is build output

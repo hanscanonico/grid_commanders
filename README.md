@@ -268,6 +268,31 @@ to finish would freeze input for the rest of the session.
 is how "with the animation off, the match plays out identically" is checked against the offline
 harness.
 
+### Video capture
+
+Every capture above is a still. When the thing to look at is the motion — a cut-in, the capture
+banner, a whole computer turn — record it instead:
+
+```sh
+.promo/record_clips.sh            # all four clips, into .promo/clips (gitignored)
+.promo/record_clips.sh menu       # one of them: menu · land · sea · victory
+.promo/make_reel.sh               # cut them into .promo/animation_reel.mp4
+```
+
+Both need `ffmpeg` on `PATH`, and the recorder needs a display, exactly as `make smoke` does. It
+records through the engine's Movie Maker mode, which drives the game off a fixed 60 fps clock and
+renders every frame of it however long the frame took to draw — so a clip is the same length and the
+same frames on any machine, with the game's own music and effects mixed in, rather than whatever a
+screen grabber managed to catch. Seeds are pinned for the same reason: a watched match is
+deterministic, so the reel's cut list can name a moment by its timestamp. A rules, balance or
+planner change moves that match and the timestamps quietly stop pointing at what they name, so look
+at the reel after one.
+
+The footage is watched matches (`--watch`, the flag `make balance-watch` uses) rather than smoke
+scenarios, because a `--demo=` run is a *capture*: it pins Instant and suppresses the cut-ins so
+that a still frame cannot depend on the machine that took it, which leaves nothing to film. The one
+demo the reel does use is `victory`, whose lockup a two-and-a-half-minute match never reaches.
+
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
 Thirty-one maps ship. The main menu leads with the teaching board and lists the rest smallest
