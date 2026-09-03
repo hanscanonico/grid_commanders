@@ -31,7 +31,7 @@ hand them, so a match starts here the way the command line starts it.
 | `MatchRequest`, `CmdArgs` (`scenes/common/`) | `test_match_request.gd` and the flag-grammar suites | the flag grammar every `make smoke` scenario and Balance Lab row is launched with |
 | `MatchConfig`'s staging | `test_match_config.gd` | reachable without a scene, and where `take()` clearing is held |
 | `CommanderPicks` (`scenes/common/`) | `test_commander_picks.gd` | the one rule that a general commands a single army, stated Node-free and database-free so the picker, the menu adapter and `--co=` all inherit it rather than each restating it |
-| `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
+| `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd`, `test_launch_failure.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
 | `Settings` | `test_audio_settings.gd`, `test_settings_pin.gd`, `test_end_turn_confirm.gd`, `test_menu_animations.gd` | `--speed=`, `--mute` and `--no-battle-anim` are launch flags this autoload owns, and `pin` is what a captured frame depends on; the volume ladder (`VOLUME_STEPS`, `volume_index`) is static and pure, and every preference case runs on a fresh `autoload/settings.gd` instance rather than the singleton, so nothing here writes `user://settings.cfg` |
 
 ## The autoloads a headless run already stands up

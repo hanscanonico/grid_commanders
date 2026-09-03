@@ -615,9 +615,18 @@ shape lives here, where it loads with the files it governs.
   by the same route. `BattleSetup.build(request, …)` reads no autoload, scans no command line and
   writes nothing back; it returns `null` with a pushed error when the board or the state cannot be
   built (`assert` is stripped from a release build), and `Battle` disables itself rather than
-  dereferencing a null map. `MatchConfig` carries exactly one staged request, and `take()` clearing
-  is load-bearing rather than tidy: it is what makes a resume that found no save on disk unable to
-  latch into the next boot.
+  dereferencing a null map — **with `BattleLaunchFailure` raised over it**, a card on its own
+  CanvasLayer at `PROCESS_MODE_ALWAYS` carrying the sentence `BattleSetup` composed on its
+  `Failure` and one button into `BattleExit.to_main_menu`. A card that processes while the board
+  does not is what keeps the disable an invariant rather than a dead end: an export build's
+  `push_error` reaches only a log, so the player who resumed a campaign into a missing board had
+  nothing to press. **A campaign mission's board is not substitutable** — the skirmish fallback to
+  `MatchRequest.DEFAULT_MAP_PATH` is skipped when `MatchRequest.campaign_mission` says the launch
+  is an authored mission, since the board, its objectives and its scripted beats are one thing;
+  the flag is set by `MissionDefinition.to_request` and by nothing else, never inferred from a
+  `res://maps/campaign` path a relocated board would defeat. `MatchConfig` carries exactly one
+  staged request, and `take()` clearing is load-bearing rather than tidy: it is what makes a
+  resume that found no save on disk unable to latch into the next boot.
 - **The command line is parsed in one place.** `scenes/common/cmd_args.gd` (`CmdArgs`) — `user()`
   is the only `OS.get_cmdline_user_args()` call outside `tools/`, and the six inline scans it
   replaced are why one flag was last-wins and another first-wins with nobody deciding either.
