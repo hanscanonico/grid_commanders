@@ -567,17 +567,18 @@ func _ask_remove() -> void:
 	)
 	if body == null:
 		return
+	var notice := _notice_line(body)
 	var remove := UiKit.action_button(
 		"Delete", "", UiTheme.ButtonVariant.PRIMARY, null, CONFIRM_BUTTON_W
 	)
-	remove.pressed.connect(_remove.bind(map))
+	remove.pressed.connect(_remove.bind(map, notice))
 	body.add_child(_actions([remove], "Keep", CONFIRM_BUTTON_W))
 
 
 ## Everything that may be done to a board the player drew: rename it, take a copy
-## of it, or delete it. `UserMaps` decides all three — the page types a name and
-## reports what it is told, and a refused rename leaves the page open on the name
-## that failed, exactly as the editor's save dialog does.
+## of it, or delete it. `UserMaps` decides all three — the page reports what it is
+## told, and a refused action leaves the page open on what failed, exactly as the
+## editor's save dialog does.
 func _ask_manage() -> void:
 	var map := selected_map()
 	if map == null or not is_custom(map):
@@ -592,9 +593,7 @@ func _ask_manage() -> void:
 	field.text = _user_name_of(map)
 	field.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	body.add_child(field)
-	var notice := UiKit.page_note("")
-	notice.add_theme_color_override("font_color", UiTheme.DANGER)
-	body.add_child(notice)
+	var notice := _notice_line(body)
 
 	var rename_now := func() -> void: _rename(map, field.text, notice)
 	field.text_submitted.connect(func(_text: String) -> void: rename_now.call())
@@ -606,7 +605,7 @@ func _ask_manage() -> void:
 	var copy := UiKit.action_button(
 		"Duplicate", "", UiTheme.ButtonVariant.SECONDARY, null, MANAGE_BUTTON_W
 	)
-	copy.pressed.connect(_duplicate)
+	copy.pressed.connect(_duplicate.bind(map, notice))
 	var remove := UiKit.action_button(
 		"Delete", "", UiTheme.ButtonVariant.SECONDARY, null, MANAGE_BUTTON_W
 	)
@@ -624,7 +623,7 @@ func _ask_manage() -> void:
 func _rename(map: MapData, wanted: String, notice: Label) -> void:
 	var error := UserMaps.rename(_user_name_of(map), wanted)
 	if error != "":
-		notice.text = error
+		await _refuse(notice, error)
 		return
 	_close_confirm()
 	await _reload_on(UserMaps.slug(wanted))
@@ -633,24 +632,22 @@ func _rename(map: MapData, wanted: String, notice: Label) -> void:
 ## A second copy of the board in hand, under a free name of its own, and the
 ## selection lands on it — a duplicate is made to be drawn on, so the board the
 ## player then opens in the editor is the copy rather than the original.
-func _duplicate() -> void:
-	var map := selected_map()
-	if map == null or not is_custom(map):
-		return
+func _duplicate(map: MapData, notice: Label) -> void:
 	var copy := UserMaps.copy_name(_user_name_of(map))
 	var error := UserMaps.copy_to(_user_name_of(map), copy)
-	_close_confirm()
 	if error != "":
-		push_error("map picker: %s" % error)
+		await _refuse(notice, error)
 		return
+	_close_confirm()
 	await _reload_on(copy)
 
 
-func _remove(map: MapData) -> void:
-	_close_confirm()
+func _remove(map: MapData, notice: Label) -> void:
 	var error := UserMaps.delete(_user_name_of(map))
 	if error != "":
-		push_error("map picker: %s" % error)
+		await _refuse(notice, error)
+		return
+	_close_confirm()
 	await _reload()
 
 
@@ -671,6 +668,26 @@ func _open_page(title: String, note: String) -> VBoxContainer:
 	body.add_child(UiKit.page_title(title))
 	body.add_child(UiKit.page_note(note))
 	return body
+
+
+## Where a refusal lands. Rename, Duplicate and Delete each write theirs to the
+## page they were pressed on, so a delete the disk would not take says so where
+## it was asked for — the sentence `UserMaps` composed is the whole of it, since
+## nothing here knows better.
+func _notice_line(body: VBoxContainer) -> Label:
+	var notice := UiKit.page_note("")
+	notice.add_theme_color_override("font_color", UiTheme.DANGER)
+	notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_child(notice)
+	return notice
+
+
+## A refusal on the page that asked for it, and the shelf re-dealt behind it. The
+## action did not happen, but the board `UserMaps` says is not there was deleted
+## outside the game, so the row the player is reading the refusal over has to go.
+func _refuse(notice: Label, error: String) -> void:
+	notice.text = error
+	await _reload()
 
 
 ## The page's footer: the actions it was opened for, then the way out. The way out
