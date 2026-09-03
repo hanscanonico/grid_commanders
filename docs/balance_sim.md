@@ -66,7 +66,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 
 | Flag | Meaning |
 |---|---|
-| `--map=` | Any shipped board, or a balance fixture (`clash`, `ridge`, `combined`, `holdings`, `channel`) |
+| `--map=` | Any shipped board, or any fixture under `maps/fixtures/` (`analysis`, `channel`, `clash`, `combined`, `holdings`, `quartet`, `ridge`, `thicket`) |
 | `--red=` / `--blue=` | Side specs; default `none:normal` |
 | `--seeds=` | Paired seed count, default 4. Each seed plays **both seats** |
 | `--seed=` | One specific seed instead. It pins the seed and nothing else, so both seats are still played; `make balance-watch` on the same flags reproduces the `seat 0` row of the two, the one seating `--red` as red |

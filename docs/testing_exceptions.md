@@ -23,7 +23,8 @@ digest that sweep is diffed against, and only a PASS turning FAIL is a failure.
 
 ## The launch layer
 
-Deliberately made Node-free and argument-taking so it could be tested at all.
+One launch, stated in full without booting one: objects a suite can build itself and flags it can
+hand them, so a match starts here the way the command line starts it.
 
 | subject | suite | why it earns the exception |
 |---|---|---|
@@ -31,11 +32,24 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 | `MatchConfig`'s staging | `test_match_config.gd` | reachable without a scene, and where `take()` clearing is held |
 | `CommanderPicks` (`scenes/common/`) | `test_commander_picks.gd` | the one rule that a general commands a single army, stated Node-free and database-free so the picker, the menu adapter and `--co=` all inherit it rather than each restating it |
 | `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
-| `CampaignSession` | `tests/unit/test_campaign_session.gd` | the autoload is up for the whole headless run and reachable without a scene; its lifecycle — armed by `begin`, silent for every skirmish, emptied whole by `clear` — is what the suite pins |
-| `CampaignSession.record`'s run facts | `tests/unit/test_campaign_run_facts.gd` | the same autoload, one seam: the nine `run:` facts it writes onto the profile after a win or a loss, dropped by `begin` and `clear` and never stored by the codec |
+| `Settings` | `test_audio_settings.gd`, `test_settings_pin.gd`, `test_end_turn_confirm.gd`, `test_menu_animations.gd` | `--speed=`, `--mute` and `--no-battle-anim` are launch flags this autoload owns, and `pin` is what a captured frame depends on; the volume ladder (`VOLUME_STEPS`, `volume_index`) is static and pure, and every preference case runs on a fresh `autoload/settings.gd` instance rather than the singleton, so nothing here writes `user://settings.cfg` |
+
+## The autoloads a headless run already stands up
+
+`Node` subclasses, so not Node-free — the singleton itself is the exception. The engine has each
+one up for the whole run and reachable without a scene, and what a scene asks of it is what these
+suites pin.
+
+| subject | suite | why it earns the exception |
+|---|---|---|
+| `CampaignSession` | `tests/unit/test_campaign_session.gd` | its lifecycle — armed by `begin`, silent for every skirmish, emptied whole by `clear` — is what the suite pins |
+| `CampaignSession.record`'s run facts | `tests/unit/test_campaign_run_facts.gd` | one seam: the nine `run:` facts it writes onto the profile after a win or a loss, dropped by `begin` and `clear` and never stored by the codec |
 | `CampaignSession.previous_record`, `CampaignDebriefPanel.worth_line` / `standing_line` | `tests/unit/test_campaign_debrief_report.gd` | the same autoload's copy of a mission's record before the run that beat it, and the two static, pure lines the debrief prints off it — pinned without building the page |
-| `Settings` | `test_audio_settings.gd`, `test_settings_pin.gd`, `test_end_turn_confirm.gd`, `test_menu_animations.gd` | the volume ladder (`VOLUME_STEPS`, `volume_index`) is static and pure; every preference case runs on a fresh `autoload/settings.gd` instance instead, so nothing here writes `user://settings.cfg`, and `pin` is what a captured frame depends on |
-| `Music` | `test_music.gd` | `CampaignSession`'s exception exactly — the singleton is up for the whole headless run, and one looping track at a time, faded rather than cut, is all a scene asks of it in `_ready` and at victory |
+| `CampaignSession.record_event`, `recorded_notes`, `save_battle` | `tests/unit/test_campaign_ledger.gd` | the consequence ledger's seam on the autoload: which facts a run commits, what the debrief reads back off them, and the mid-mission save that carries the whole envelope — a retried mission writing the war twice is the failure it exists for |
+| `CampaignSession.deploy_army` | `tests/unit/test_campaign_roster.gd` | the carried army, walked across three missions of one chain — that a carry slot always ends up occupied by exactly one unit of the type the board authored |
+| `CampaignSession.mission`, `due_events` | `tests/unit/test_campaign_soak.gd` | every shipped mission played with its script live, driving this autoload rather than reimplementing the boundary order, so which beats come due is the shipping answer and not the soak's own |
+| `CampaignSession.tally` | `tests/unit/test_mission_tallies.gd` | the `MissionProgress` the hold and loss objectives are read from, which this session is the only writer of — including the re-baseline a resume has to make against the board it is handed |
+| `Music` | `test_music.gd` | one looping track at a time, faded rather than cut, is all a scene asks of it in `_ready` and at victory |
 
 ## Pure answers over an input or a state
 
@@ -46,7 +60,7 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 | `DirectionalInput` | `test_directional_input.gd` | a pure answer over an `InputEvent` and the `InputMap`, so the one-step-per-gesture convention the board cursor and every menu obey is checked without a pad |
 | `SeatStrip.normalised_sides`, `SeatStrip.reopened_seats` | `test_seat_strip.gd` | the grouping and seating arithmetic a shrinking roster runs through is static and pure, so it is checked without building the strip |
 | `BattleZoom.floor_for` | `test_texel_stability.gd` | which rungs the zoom ladder offers is arithmetic over a viewport and a board, checked without a camera |
-| `BoardBeat`, `TerrainAutotiles` (both `RefCounted`) | `test_board_beat.gd`, `test_ambient_frames.gd`, `test_move_frames.gd`, `test_anim_manifest.gd`, `test_terrain_autotiles.gd`, `test_terrain_autotiles_beat.gd`, `test_terrain_autotiles_mountain.gd`, `test_terrain_autotiles_water.gd` | a frame is a pure function of the clock and a sheet path a pure function of a family and that frame, both Node-free statics, so which variant a cell wears and which cadences may share a tick are checked with no board on screen — `test_board_beat.gd` is the one place every pair of cadences meets, `test_anim_manifest.gd` is the one place the generator's `assets/tiles/anim.json` is read at all, and the autotile files split only to stay under the public-method ceiling |
+| `BoardBeat`, `TerrainAutotiles` (both `RefCounted`) | `test_board_beat.gd`, `test_ambient_frames.gd`, `test_move_frames.gd`, `test_anim_manifest.gd`, `test_terrain_autotiles.gd`, `test_terrain_autotiles_beat.gd`, `test_terrain_autotiles_mountain.gd`, `test_terrain_autotiles_water.gd` | a frame is a pure function of the clock and a sheet path a pure function of a family and that frame, both Node-free statics, so which variant a cell wears and which cadences may share a tick are checked with no board on screen — `test_board_beat.gd` is the one place every pair of cadences meets, `test_anim_manifest.gd` is the one place the generator's `assets/tiles/anim.json` is read at all, and the autotile files split only to stay under the public-method ceiling. The three frame suites pair a cadence with `UnitSprite`'s sheets, so they are listed on that row too |
 | `BattleLegend` | `test_battle_legend.gd`, `test_end_turn_key.gd` | `context_for` and the four readings off it (`commands_board`, `dock_live`, `paused_in`, `steppable`) are static answers over the battle's own flags, so which contexts still command the board is checked without a HUD |
 | `BattlePower.refusal_for` | `test_battle_power.gd` | a static read of a `GameState` and the computer's seats, so why the power row is refused says the same thing in a test as on the board |
 | `PowerEffects` | `test_power_effects.gd` | `snapshot` and `marks` are a pure diff of two readings of one `GameState` into the marks the board floats, so what a power did is arithmetic rather than a captured frame |
@@ -61,8 +75,8 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 |---|---|---|
 | `BattleMenus` | `test_unit_pricing.gd`, `test_battle_menus_auto.gd`, `test_battle_menus_objectives.gd` | which rows a menu offers is content, gated by the same command authorities the rows would run, not scene plumbing — so the suite reads a build row's price and disabled state straight off it, and `map_actions` is read the same way for the Auto and Objectives rows a recording drops |
 | `BattleCampaign.objective_cells` / `briefing_lines` | `test_objective_marks.gd`, `test_battle_menus_briefing.gd` | static, pure reads over `CampaignSession` and a `GameState` with no `Node` in them, so which objectives put a mark on the board and which lines the Briefing row re-says are pinned without staging a battle |
-| `GameSpeed` | `test_game_speed.gd` | the speed table itself — `ordered`, `by_id`, `has_id` and the base durations every pacing read scales — which is the exception the copy registries below are held to |
-| `TutorialHints`, `ControlHints` | `test_tutorial_copy.gd`, `test_control_hints.gd`, `test_touch_copy.gd` | Node-free copy registries for the same reason `GameSpeed` is: which mission step is next and which key legend a context prints are pure functions of state the suite can hand them. One suite each for the two subjects, each holding its own to its character caps, plus `test_touch_copy.gd` for the touch build's second legend table (`chip_for`, `TOUCH_LEGENDS`) under those same caps |
+| `GameSpeed` | `test_game_speed.gd` | the speed table itself — `ordered`, `by_id`, `has_id`, `default_speed` and the base durations every pacing read scales — which is the exception the copy registries below are held to |
+| `TutorialHints`, `ControlHints` | `test_tutorial_copy.gd`, `test_control_hints.gd`, `test_touch_copy.gd`, `test_battle_legend.gd`, `test_end_turn_key.gd` | Node-free copy registries for the same reason `GameSpeed` is: which mission step is next and which key legend a context prints are pure functions of state the suite can hand them. `test_tutorial_copy.gd` and `test_control_hints.gd` take one subject each and hold it to its character caps; `test_touch_copy.gd` holds the touch build's second legend table (`chip_for`, `TOUCH_LEGENDS`) to those same caps, `test_battle_legend.gd` the dock's own words (`dock_back_for`, `DOCK_CHIPS`) to a narrower one, and `test_end_turn_key.gd` the `END_TURN_CHIP` that leads with its key and is deliberately not in `CHIPS` |
 | `UiTheme`, `DisabledPalette` | `test_ui_theme_box.gd`, `test_ui_theme_font.gd`, `test_disabled_palette.gd` | fonts, style boxes and the drained palette come back from static calls as `Resource`s and `Color`s, so the metrics a layout depends on and the contrast a greyed row keeps are read without building a `Control` |
 | `CommanderVisuals`, `SideIdentity` | `test_side_identity.gd`, `test_side_identity_roster.gd`, `test_side_identity_colorblind.gd`, `test_commander_face.gd`, `test_commander_portraits.gd` | the single authority for a side's presentation — a portrait, a faction theme, an atlas row, resolved once from the match's commander picks with no `Node` and no scene path. `test_commander_face.gd` and `test_commander_portraits.gd` read `face_for` and `portrait_for` on the same terms — a region over a baked bust, whose *measurement* (that the crop clears every jaw) is held per bust by `generators/portraits/tests/test_face_region.py` instead — and `test_side_identity_colorblind.gd` measures the same five `theme_for` hues once red and green have collapsed onto one axis |
 | `BattleStyle` (a `Resource`) and `BattleStyleDB` (`RefCounted`) | `test_battle_styles.gd` | weapon-signature data rather than drawing, so every unit naming a style that exists is checked without staging a cut-in |
@@ -115,7 +129,7 @@ subclass whose suite calls only its statics:
 | subject | suite | the statics it calls |
 |---|---|---|
 | `MuzzleFlash` (`Node2D`) | `test_muzzle_flash.gd` | `reach_for`, `arms`, `core_mark` — the rects the flash's `_draw` paints |
-| `UnitSprite` (`Sprite2D`) | `test_figure_sheet.gd` | `texture_for`, `figure_texture_for` — atlas regions, so a sheet regenerated on one side of the idle pair is caught without a sprite |
+| `UnitSprite` (`Sprite2D`) | `test_figure_sheet.gd`, `test_ambient_frames.gd`, `test_move_frames.gd`, `test_anim_manifest.gd` | `texture_for`, `figure_texture_for`, `facing_for`, and the `UNITS_ATLAS_*` sheet paths against the cell metrics (`SPRITE_W`, `SPRITE_H`, `SPRITE_OVERFLOW`, `CELL_GROUND_PX`) — atlas regions and file names, so a sheet regenerated on one side of a clip is caught without a sprite |
 | `MapPicker` (`VBoxContainer`) | `test_map_picker.gd` | `cell_name`, `caption_text`, `armies_label`, `fullest`, `is_custom`, `random_index` — the picker's words, all pure over a `MapData` |
 | `ActionMenu` (`PanelContainer`) | `test_action_menu_icon.gd`, `test_action_menu_window.gd` | `icon_cap`, and `visible_window` / `rows_that_fit` — the scrolling window a build menu becomes in the band a touch build leaves it |
 | `MissionObjectivesPanel` (`PanelContainer`) | `test_objective_card_dock.gd` | `dock_for` — which corner the objectives card parks in, geometry and nothing else |
