@@ -68,7 +68,9 @@ class TexelRule(unittest.TestCase):
             a = _sample(autotile.shoal_tile(mask, frame=0), Image.BOX)
             b = _sample(autotile.shoal_tile(mask, frame=1), Image.BOX)
             moved = sum(1 for pa, pb in zip(a, b) if pa != pb)
-            self.assertGreaterEqual(moved, 3, f"mask {mask} moves only {moved} board texels")
+            self.assertGreaterEqual(
+                moved, 3, f"mask {mask} moves only {moved} board texels"
+            )
 
     def test_the_slide_is_one_whole_board_texel(self):
         self.assertEqual(autotile.SHOAL_FOAM_SLIDE, 4)
@@ -121,8 +123,12 @@ class Manifest(unittest.TestCase):
 
     def test_the_cadence_shares_no_tick_with_the_other_four(self):
         for other in (anim.AMBIENT_MS, anim.MOVE_MS, anim.SEA_MS, anim.RIVER_MS):
-            self.assertNotEqual(anim.SHOAL_MS % other, 0, f"{anim.SHOAL_MS} divides {other}")
-            self.assertNotEqual(other % anim.SHOAL_MS, 0, f"{other} divides {anim.SHOAL_MS}")
+            self.assertNotEqual(
+                anim.SHOAL_MS % other, 0, f"{anim.SHOAL_MS} divides {other}"
+            )
+            self.assertNotEqual(
+                other % anim.SHOAL_MS, 0, f"{other} divides {anim.SHOAL_MS}"
+            )
 
 
 if __name__ == "__main__":

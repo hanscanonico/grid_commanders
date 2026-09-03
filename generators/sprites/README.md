@@ -433,8 +433,9 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 game to read instead of retype: the cell's size, its ground line and its
 overflow, the clips (which sheets, in what order, at what cadence — the
 army's ambient beat on the board, the same beat on the cut-ins' shadowless
-`ambient_figures` pair because they are the same motion, the sea's own, the
-`move` clip's, and the `ko` clip's — one held frame, `mode: "hold"`, and a
+`ambient_figures` pair because they are the same motion, one clip per
+animated water family (`sea`, `rivers`, `shoals`), the `move` clip's, and
+the `ko` clip's — one held frame, `mode: "hold"`, and a
 `fallback: "ambient"` key naming what a consumer with no authored frame
 plays instead, the move clip's own idiom restated), the units atlas's column
 and row order, and how many
@@ -452,9 +453,9 @@ common four, and they are additive: `version` stays **1**, because their
 ABSENCE is the reading a version-1 consumer already makes. `facing`
 (`"left"`) and `flip_x_for` (`["right"]`) are `move`'s alone — the screen
 direction the art is drawn facing and the direction the consumer mirrors it
-for; a clip with no `facing` — `ambient`, `ambient_figures`, `sea`, `ko`,
-`fire` — must never be mirrored. `fallback` (`"ambient"`) is shared by the
-three clips a unit may be left out of, and `docs/move_clip.md` owns what it
+for; every other clip carries no `facing` and must never be mirrored.
+`fallback` (`"ambient"`) is shared by the three clips a unit may be left
+out of, and `docs/move_clip.md` owns what it
 means: the install's absence for `move`, and a unit's own for the other two.
 An unauthored `ko` column must not be drawn; an unauthored `fire` one is drawn
 and is simply the unit's idle key, which is the contract the cut-in leans on.

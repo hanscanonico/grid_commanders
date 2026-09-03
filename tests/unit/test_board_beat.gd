@@ -1,7 +1,7 @@
 extends GutTest
 ## BoardBeat's own suite: the disjointness the four looping cadences (five
 ## since S9) are held to. `test_move_frames.gd` and
-## `test_terrain_autotiles_water.gd` each check the cadence their own clip
+## `test_terrain_autotiles_beat.gd` each check the cadence their own clip
 ## cares about against its neighbours; this is the one place every pair is
 ## checked against every other, so growing a sixth animated family means
 ## growing the table here rather than trusting N separate files to have

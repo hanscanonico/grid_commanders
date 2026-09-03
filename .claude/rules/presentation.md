@@ -314,10 +314,11 @@ forms named in the root index are in `docs/design_record.md`.
   carries a `FIGURE_H` beside its `FIGURE_PX`, pinned by `tests/unit/test_texel_stability.gd`.
   **The sixth slice is the animation install, the board's new ambient baseline**:
   **`scenes/battle/board_beat.gd` (`BoardBeat`) is the one clock every looping sheet reads** — the
-  cadences (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples of one
-  another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable without a
-  scene. **The constants stay hardcoded and `assets/tiles/anim.json` is *pinned*, never read at
-  runtime**, `tests/unit/test_anim_manifest.gd` the one place it is consumed. **The legibility ruler
+  cadences it opened with (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples
+  of one another; S9's two below joined them), the frozen pin and the Instant rule, Node-free
+  statics so a beat is checkable without a scene. **The constants stay hardcoded and
+  `assets/tiles/anim.json` is *pinned*, never read at runtime**,
+  `tests/unit/test_anim_manifest.gd` the one place it is consumed. **The legibility ruler
   read a REGRESSION** against the previous art; nothing was tuned in response, and it was **answered
   in the generator by the animation-frames plan's S8** (a board-scale contour band, no game code) —
   `docs/sprite_legibility.md`'s 2026-09-01 re-read is the record, and no baseline cell fails on

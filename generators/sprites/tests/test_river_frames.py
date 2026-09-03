@@ -58,14 +58,20 @@ class NoBoil(unittest.TestCase):
                 if pa in GLINT_TONES or pb in GLINT_TONES:
                     continue
                 self.assertEqual(
-                    pa, pb, f"mask {mask} repaints the channel at {i % CELL},{i // CELL}"
+                    pa,
+                    pb,
+                    f"mask {mask} repaints the channel at {i % CELL},{i // CELL}",
                 )
 
     def test_the_flow_neither_grows_nor_shrinks(self):
         """A slide moves the streaks; it does not paint more of them."""
         for mask in range(16):
             counts = [
-                sum(1 for px in _pixels(autotile.river_tile(mask, frame=f)) if px in GLINT_TONES)
+                sum(
+                    1
+                    for px in _pixels(autotile.river_tile(mask, frame=f))
+                    if px in GLINT_TONES
+                )
                 for f in range(autotile.RIVER_FRAMES)
             ]
             self.assertEqual(counts[0], counts[1], f"mask {mask} flow count moved")
@@ -77,7 +83,9 @@ class TexelRule(unittest.TestCase):
             a = _sample(autotile.river_tile(mask, frame=0), Image.BOX)
             b = _sample(autotile.river_tile(mask, frame=1), Image.BOX)
             moved = sum(1 for pa, pb in zip(a, b) if pa != pb)
-            self.assertGreaterEqual(moved, 3, f"mask {mask} moves only {moved} board texels")
+            self.assertGreaterEqual(
+                moved, 3, f"mask {mask} moves only {moved} board texels"
+            )
 
     def test_the_slide_is_one_whole_board_texel(self):
         self.assertEqual(autotile.RIVER_GLINT_SLIDE, 4)
@@ -130,8 +138,12 @@ class Manifest(unittest.TestCase):
 
     def test_the_cadence_shares_no_tick_with_the_other_four(self):
         for other in (anim.AMBIENT_MS, anim.MOVE_MS, anim.SEA_MS, anim.SHOAL_MS):
-            self.assertNotEqual(anim.RIVER_MS % other, 0, f"{anim.RIVER_MS} divides {other}")
-            self.assertNotEqual(other % anim.RIVER_MS, 0, f"{other} divides {anim.RIVER_MS}")
+            self.assertNotEqual(
+                anim.RIVER_MS % other, 0, f"{anim.RIVER_MS} divides {other}"
+            )
+            self.assertNotEqual(
+                other % anim.RIVER_MS, 0, f"{other} divides {anim.RIVER_MS}"
+            )
 
 
 if __name__ == "__main__":

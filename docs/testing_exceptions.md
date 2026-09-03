@@ -44,6 +44,7 @@ Deliberately made Node-free and argument-taking so it could be tested at all.
 | `DirectionalInput` | `test_directional_input.gd` | a pure answer over an `InputEvent` and the `InputMap`, so the one-step-per-gesture convention the board cursor and every menu obey is checked without a pad |
 | `SeatStrip.normalised_sides`, `SeatStrip.reopened_seats` | `test_seat_strip.gd` | the grouping and seating arithmetic a shrinking roster runs through is static and pure, so it is checked without building the strip |
 | `BattleZoom.floor_for` | `test_texel_stability.gd` | which rungs the zoom ladder offers is arithmetic over a viewport and a board, checked without a camera |
+| `BoardBeat`, `TerrainAutotiles` (both `RefCounted`) | `test_board_beat.gd`, `test_terrain_autotiles_beat.gd`, `test_terrain_autotiles_water.gd` | a frame is a pure function of the clock and a sheet path a pure function of a family and that frame, both Node-free statics, so which variant a cell wears and which cadences may share a tick are checked with no board on screen — `test_board_beat.gd` is the one place every pair of cadences meets, and the two autotile files split only to stay under the public-method ceiling |
 
 ## Content registries and resolved identity
 

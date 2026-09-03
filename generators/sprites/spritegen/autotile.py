@@ -508,7 +508,9 @@ def shoal_tile(edges: int, corners: int = 0, frame: int = 0) -> Image.Image:
     if edges == 0:
         edges = S
     t = _ground(SAND, 7)
-    _draw_shore(t, _shore_profile(edges, 8.0), beach=True, slide=frame * SHOAL_FOAM_SLIDE)
+    _draw_shore(
+        t, _shore_profile(edges, 8.0), beach=True, slide=frame * SHOAL_FOAM_SLIDE
+    )
 
     # diagonal-only water: a small pool in that corner, skipped when an
     # adjacent surf band already reaches it
