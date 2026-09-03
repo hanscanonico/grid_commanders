@@ -33,13 +33,23 @@ const DIR_ACTIONS: Dictionary = {
 ## What the page says the board answers to. Two legends because a touch build has
 ## no arrows and a desktop one has no second finger; which is printed is
 ## `MobileProfile`'s answer, never a caller's.
-const LEGEND_KEYS := "ARROWS  MOVE     ENTER  APPLY     CTRL+Z  UNDO     +/-  ZOOM     ESC  MENU"
-const LEGEND_TOUCH := "TAP  PAINT   DRAG  PAN   PINCH  ZOOM   BRUSHES  TOOLS   ERASE  WHOLE CELL"
+const LEGEND_KEYS := (
+	"ARROWS  MOVE     ENTER  APPLY     CTRL+Z  UNDO     " + "+/-  ZOOM     ESC/BACK  MENU"
+)
+const LEGEND_TOUCH := (
+	"TAP  PAINT   DRAG  PAN   PINCH  ZOOM   " + "BRUSHES  TOOLS   ERASE  WHOLE CELL   BACK  MENU"
+)
 
 ## How wide the two columns stand. Wide enough for the longest terrain and unit
 ## name in the display face beside its swatch.
 const _PALETTE_W := 108
 const _INSPECTOR_W := 96
+
+## Why a save did not happen. The status line shouts and the guard's note
+## speaks, so the one sentence is cased and stopped where it is read rather than
+## written out twice. It names no list: the guard's veil is over the one under
+## the board while the guard is the page being read.
+const _SAVE_REFUSED := "This board does not play yet."
 
 ## What the next press on the board lays. Picking from a column arms that
 ## column's brush, because the last thing an author chose is the thing they mean
@@ -85,6 +95,14 @@ var _stroke_changed := false
 ## taking up another draft, never by undoing back to where a stroke started —
 ## the file is what it was written as, not what the history remembers.
 var _dirty := false
+## What the press the guard is standing in front of was asking for, run once the
+## author lets the draft go. `_ask_to_part_with_the_draft` arms it before every
+## raise of the guard, so the initialiser is never the one that runs — it is here
+## only so the field is callable.
+var _after_guard: Callable = _leave
+## Whether the save dialog was opened from the guard rather than the toolbar. The
+## guard's Save is an ask to leave as well, and a write that lands honours it.
+var _guarded_save := false
 ## One step per gesture, the board's convention (see DirectionalInput).
 var _dirs := DirectionalInput.new()
 
@@ -296,12 +314,27 @@ func _revalidate() -> void:
 # --- saving and opening ------------------------------------------------------
 
 
+## The validator has the first word on saving, and the refusal has to land on
+## whichever page asked: the guard hid itself to hand the ask over, so printing
+## under the board would leave that press looking like it did nothing.
 func _ask_save() -> void:
 	_hand_the_board_back()
-	if not _defects.is_empty():
-		_status.text = "FIX WHAT IS LISTED BELOW THE BOARD FIRST"
+	if _defects.is_empty():
+		_save_dialog.begin(_doc.map_name, _doc.description)
 		return
-	_save_dialog.begin(_doc.map_name, _doc.description)
+	if _guarded_save:
+		_guarded_save = false
+		_leave_guard.refuse(_SAVE_REFUSED)
+		return
+	_status.text = _SAVE_REFUSED.to_upper().trim_suffix(".")
+
+
+## The guard's own Save, which is an ask to part with the draft *and* keep it: the
+## write buys the permission the guard was after, so the press it stood in front
+## of goes through once the file lands.
+func _save_on_the_way_out() -> void:
+	_guarded_save = true
+	_ask_save()
 
 
 func _on_saved(map_name: String, description: String) -> void:
@@ -317,22 +350,41 @@ func _on_saved(map_name: String, description: String) -> void:
 	_save_dialog.close()
 	_hand_the_board_back()
 	_status.text = "SAVED AS %s" % _doc.map_name.to_upper()
+	if _guarded_save:
+		_guarded_save = false
+		_after_guard.call()
 
 
-## Backing out of any page lands on the draft it stood over.
+## Backing out of any page lands on the draft it stood over, and forgets that a
+## save was asked for on the way out — or a save from the toolbar an hour later
+## would carry the author off the page. The intent itself is left armed: it is
+## only ever read while the guard is up, and every raise arms it first.
 func _on_page_cancelled() -> void:
+	_guarded_save = false
 	_hand_the_board_back()
 	_say_cursor()
 
 
-## Leaving is the one action the editor asks about first, and only while there
-## is work no file holds.
-func _ask_leave() -> void:
+## Every press that would throw the draft away goes through here, so the ask, the
+## word on its answer and what happens once it is answered are one statement.
+## `intent` runs at once while there is nothing to lose.
+func _ask_to_part_with_the_draft(intent: Callable, discard_word: String) -> void:
 	if not _dirty:
-		_leave()
+		intent.call()
 		return
+	_after_guard = intent
 	_hand_the_board_back()
-	_leave_guard.begin()
+	_leave_guard.begin(discard_word)
+
+
+func _ask_leave() -> void:
+	_ask_to_part_with_the_draft(_leave, "Leave")
+
+
+## Opening asks the same question leaving does: a board taken up over an unsaved
+## one takes the draft, the history and the dirty flag with it.
+func _ask_open() -> void:
+	_ask_to_part_with_the_draft(_open_panel.begin, "Open anyway")
 
 
 func _leave() -> void:
@@ -509,8 +561,8 @@ func _build_pages() -> void:
 
 	_leave_guard = EditorLeaveGuard.new()
 	add_child(_leave_guard)
-	_leave_guard.discarded.connect(_leave)
-	_leave_guard.save_asked.connect(_ask_save)
+	_leave_guard.discarded.connect(func() -> void: _after_guard.call())
+	_leave_guard.save_asked.connect(_save_on_the_way_out)
 	_leave_guard.cancelled.connect(_on_page_cancelled)
 
 	if not MobileProfile.active():
@@ -531,7 +583,7 @@ func _build_header() -> Control:
 	_toolbar.redo_asked.connect(func() -> void: _step_history(true))
 	_toolbar.erase_asked.connect(func() -> void: _arm(Brush.ERASE))
 	_toolbar.brushes_asked.connect(func() -> void: _sheet.begin())
-	_toolbar.open_asked.connect(func() -> void: _open_panel.begin())
+	_toolbar.open_asked.connect(_ask_open)
 	_toolbar.save_asked.connect(_ask_save)
 	return _toolbar
 

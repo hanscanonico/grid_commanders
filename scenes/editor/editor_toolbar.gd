@@ -1,12 +1,17 @@
 class_name EditorToolbar
 extends HBoxContainer
-## The editor's one row of actions: [Undo] [Redo] [Erase] … [Open] [Save].
+## The editor's one row of actions: [Back] [Undo] [Redo] [Erase] … [Open] [Save].
 ##
 ## It holds no draft and decides nothing — every press is a signal the editor
 ## answers, and whether Undo is live is the history's answer, handed in. The row
 ## exists as its own control because the header is where an editor's actions are
 ## expected to be, and a header that also built them would be the page's fourth
 ## job after the board, the columns and the validator.
+##
+## Back is the one press that is not a signal: it dispatches the `cancel` action
+## through `UiKit.action_chip`, so what leaving asks and what it then does stay
+## the key path's alone. It stands on both builds: a finger had no way out of the
+## editor at all, and a pointer had only Esc.
 
 signal undo_asked
 signal redo_asked
@@ -29,6 +34,9 @@ var _headline: Label
 ## only way to the columns, so a desktop one is not offered it.
 func configure(with_brushes: bool) -> void:
 	add_theme_constant_override("separation", 6)
+	var back := UiKit.action_chip("BACK", &"cancel")
+	back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	add_child(back)
 	var title := UiKit.page_title("MAP EDITOR")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	add_child(title)
