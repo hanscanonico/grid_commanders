@@ -34,10 +34,10 @@ const ICON := EditorPalette.SWATCH
 ## because the chip is four characters wide.
 const NEUTRAL_LABEL := "—"
 ## The smallest board worth authoring — under this there is no room for two HQs
-## and the ground between them — and the largest one a player can still pan
-## across. Bulwark, the biggest board that ships, is 49x32.
+## and the ground between them. It is a floor over `MapValidator`'s and not a
+## second opinion about it: how big a board may *be* is the validator's answer,
+## per axis, and the editor only declines to offer the smallest ones it allows.
 const MIN_SIDE := 8
-const MAX_SIDE := 60
 ## The board the editor opens on, big enough to paint a duel across.
 const DEFAULT_SIZE := Vector2i(20, 15)
 
@@ -60,10 +60,14 @@ var _width_value: Label
 var _height_value: Label
 
 
-## Every board side the editor offers, so a stepper can never walk a draft to a
-## size `MapDocument` would have to be resized out of.
-static func clamp_side(value: int) -> int:
-	return clampi(value, MIN_SIDE, MAX_SIDE)
+## Every board side the editor offers on `axis` — 0 wide, 1 tall. Per axis
+## because the two ceilings are different numbers, and cropping back is
+## destructive: `MapDocument.resize` erases every owner and unit outside the new
+## bounds, so a stepper that walked to a size the validator refuses would charge
+## an author a corner of their board to find that out.
+static func clamp_side(value: int, axis: int) -> int:
+	var floor_side: int = maxi(MIN_SIDE, MapValidator.MIN_SIZE[axis])
+	return clampi(value, floor_side, MapValidator.MAX_SIZE[axis])
 
 
 ## Stocks the column from the unit database and dresses it.
@@ -209,7 +213,7 @@ func _build_size() -> Control:
 
 func _step(step: int, axis: int) -> void:
 	var wanted := _size
-	wanted[axis] = clamp_side(wanted[axis] + step)
+	wanted[axis] = clamp_side(wanted[axis] + step, axis)
 	if wanted == _size:
 		return
 	show_size(wanted)

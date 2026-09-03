@@ -89,13 +89,22 @@ func test_the_palette_offers_the_ground_before_the_properties() -> void:
 	assert_true(seen_property, "the palette offers no property to paint")
 
 
-func test_a_board_is_never_stepped_smaller_or_wider_than_the_editor_offers() -> void:
-	assert_eq(EditorSidebar.clamp_side(EditorSidebar.MIN_SIDE - 1), EditorSidebar.MIN_SIDE)
-	assert_eq(EditorSidebar.clamp_side(EditorSidebar.MAX_SIDE + 1), EditorSidebar.MAX_SIDE)
-	assert_eq(EditorSidebar.clamp_side(20), 20)
+## Per axis, because the two ceilings are different numbers: one scalar clamp
+## offered 60x60 boards that MapValidator refuses to save, and cropping back is
+## what erases an author's corner.
+func test_a_stepper_never_offers_a_board_a_map_may_not_be() -> void:
+	for axis in 2:
+		var ceiling: int = MapValidator.MAX_SIZE[axis]
+		assert_eq(
+			EditorSidebar.clamp_side(ceiling, axis), ceiling, "axis %d cannot reach it" % axis
+		)
+		assert_eq(EditorSidebar.clamp_side(ceiling + 1, axis), ceiling, "axis %d walks past" % axis)
+		var floor_side := EditorSidebar.clamp_side(0, axis)
+		assert_eq(floor_side, EditorSidebar.MIN_SIDE, "axis %d sinks under the editor's own" % axis)
+		assert_true(floor_side >= MapValidator.MIN_SIZE[axis], "axis %d sinks under a map's" % axis)
 
 
 func test_the_board_the_editor_opens_on_is_one_the_steppers_can_reach() -> void:
 	var wanted := EditorSidebar.DEFAULT_SIZE
-	assert_eq(EditorSidebar.clamp_side(wanted.x), wanted.x)
-	assert_eq(EditorSidebar.clamp_side(wanted.y), wanted.y)
+	assert_eq(EditorSidebar.clamp_side(wanted.x, 0), wanted.x)
+	assert_eq(EditorSidebar.clamp_side(wanted.y, 1), wanted.y)
