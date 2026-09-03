@@ -335,10 +335,12 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # two seats at the table and two played by the computer — a roster the menu's seat
 # strip can now set up, posed here so the gate does not walk a menu to reach it.
 # It drives whole turns through the live end-
-# turn route and proves the three things a still frame cannot — that the blackout
+# turn route and proves the four things a still frame cannot — that the blackout
 # fires for the incoming person across an intervening computer turn, that a computer
 # turn is watched through the fog of the person who just played rather than the first
-# human seat, and that the last player standing is never asked to hand the device to
+# human seat, that a loss the incoming person's own turn opens with is said to them
+# after the device has changed hands and never in front of the person handing it
+# over, and that the last player standing is never asked to hand the device to
 # themselves.
 #
 # The transition pair is COM-15's two-sided state-boundary gate. The banner mode

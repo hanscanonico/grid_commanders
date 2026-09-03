@@ -376,7 +376,7 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 	await BattleCampaign.fire_due(self)
 	var mission_over := BattleCampaign.decide(self, receipt)
 	if receipt.turn_changed and not mission_over:
-		start_turn()
+		start_turn(receipt.starved)
 	elif mission_over or receipt.winner != 0:
 		enter_victory()
 
@@ -1057,21 +1057,22 @@ func _close_commander_info() -> void:
 		state = rest_state()
 
 
-func start_turn() -> void:
+func start_turn(starved: Array[Unit] = []) -> void:
 	action_feedback.clear_turn()
 	# An air or sea unit that ran its tank dry is already gone from the sim, so
 	# the sprite table is resynced before set_active_team walks it.
 	view.sync_sprites()
 	view.set_active_team(game.current_team)
 	if handoff.needed():
-		handoff.enter()
+		handoff.enter(starved)
 		return
-	_begin_turn()
+	_begin_turn(starved)
 
 
 ## Everything the incoming team is allowed to see, run once the device has
-## actually changed hands (immediately, outside fogged hot-seat).
-func _begin_turn() -> void:
+## actually changed hands (immediately, outside fogged hot-seat) — the loss an
+## empty tank took as it opened included, for the reason TurnOpening carries.
+func _begin_turn(starved: Array[Unit]) -> void:
 	refresh_fog()
 	refresh_hud()
 	refresh_panel()
@@ -1088,11 +1089,10 @@ func _begin_turn() -> void:
 	if not homes.is_empty():
 		set_cursor_cell(homes[0])
 	EventBus.turn_started.emit(game.current_team, game.day)
-	await animator.show_banner(
-		"Day %d - %s" % [game.day, view.identity.display_name(game.current_team)]
-	)
-	if state != State.ANIMATING:
-		return
+	for line in TurnOpening.lines(game, view.identity, perspective, starved, animator.capturing):
+		await animator.show_banner(line)
+		if state != State.ANIMATING:
+			return
 	if _replay != null:
 		# Every seat is the recording's, whoever played it. AI_TURN is the state for
 		# "somebody else is playing" and carries the pause seam this needs, so the
@@ -1136,7 +1136,7 @@ func announce_fallen(fallen: Array[int]) -> void:
 ## BattleHandoff's, and the turn it opens onto is Battle's.
 func leave_handoff() -> void:
 	if handoff.leave():
-		_begin_turn()
+		_begin_turn(handoff.take_starved())
 
 
 ## Refreshes the shared perspective and repaints fog after every committed
