@@ -157,3 +157,12 @@ func test_a_casualty_is_knocked_back_before_it_tips() -> void:
 func test_a_standing_figure_is_neither_knocked_nor_falling() -> void:
 	assert_eq(CutsceneSide.topple_fall(0.0, 0.2), 0.0)
 	assert_eq(CutsceneSide.topple_jerk(0.0, 0.2), 0.0)
+
+
+## The defence row's one decision: the tile keeps its own stars, so the word is
+## what tells a player the unit standing over them is not getting any. A bare
+## zero beside MOUNTAIN would trade one misread for another.
+func test_the_defence_row_qualifies_stars_the_unit_does_not_get() -> void:
+	assert_eq(CutsceneSide.terrain_note(0, 4), CutsceneSide.NO_COVER_NOTE, "a flier over a peak")
+	assert_eq(CutsceneSide.terrain_note(4, 4), "", "a footsoldier on the same peak")
+	assert_eq(CutsceneSide.terrain_note(0, 0), "", "bare ground gives everyone nothing")

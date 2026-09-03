@@ -220,10 +220,10 @@ var mirror := false
 ## no chip, which is what an unarmed unit and a defender that never answers both
 ## want: a chip on a silent side would announce a weapon the frame never shows.
 var weapon_label := ""
-## The cover this unit really fights on this cell with — CombatResolver's own
-## answer, resolved by the director and written here like the weapon label. The
-## terrain's `defense_stars` is not that answer: a unit that flies over the tile
-## instead of standing on it gets none of them, so a copter caught over a
+## The cover this unit really fought with — CombatResolver's own answer, banked
+## on the CombatResult when the shot resolved and written here like the weapon
+## label. The terrain's `defense_stars` is not that answer: a unit that flies over
+## the tile instead of standing on it gets none of them, so a copter caught over a
 ## mountain was being plated four stars and then shot as if it had none.
 var cover_stars := 0
 
@@ -1000,8 +1000,15 @@ func _draw_terrain_row(plate: Rect2) -> void:
 		TERRAIN_STAR_GAP,
 		terrain.defense_stars,
 		plate_p,
-		NO_COVER_NOTE if cover_stars == 0 and terrain.defense_stars > 0 else ""
+		terrain_note(cover_stars, terrain.defense_stars)
 	)
+
+
+## What closes a defence row showing `stars` when the unit only fights with
+## `cover`: a word when the two disagree, nothing when they do not. Static and
+## pure so the sweep can hold the drawn row to it without posing a frame.
+static func terrain_note(cover: int, stars: int) -> String:
+	return NO_COVER_NOTE if cover == 0 and stars > 0 else ""
 
 
 # --- mirroring helpers -------------------------------------------------------

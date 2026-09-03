@@ -76,7 +76,10 @@ own run splits into a knock-back and a fall (`topple_fall` / `topple_jerk`) — 
 on the pose scalars `CombatCutscene` writes, so `test_cutscene_side_motion.gd` calls them and stages
 no cut-in. The load-bearing one is `arrive_offset` returning **exactly** `Vector2.ZERO` for a posted
 squad: every posed frame sits after the arrive beat closes, so an eighth of a pixel there moves a
-dozen baselines for nothing, and that is a check no captured frame makes.
+dozen baselines for nothing, and that is a check no captured frame makes. `terrain_note` is in the
+same file on the same terms — whether the defence row qualifies the stars it printed is a pure
+answer over two ints, and a plate promising a flier the ground's cover renders a frame that looks
+perfectly correct.
 
 `CampaignHubPanel` and `CampaignPickerPanel` join them too. What a hub row's second line says
 (`row_detail`), how wide the star cell every row shares has to be (`star_span`), what a picker row

@@ -116,3 +116,25 @@ func test_resolve_snapshots_each_sides_independent_weapon_slot() -> void:
 	assert_eq(result.counter_weapon_slot, DamageChart.PRIMARY)
 	assert_eq(tank.ammo, tank.type.max_ammo, "the MG spent no cannon round")
 	assert_eq(mech.ammo, mech.type.max_ammo - 1, "the bazooka spent one primary round")
+
+
+## The cover each side fought with is recorded the same way and for the same
+## reason: the battle cut-in plates it, and the board it would otherwise read has
+## already moved on by the time the cut-in plays.
+func test_resolve_snapshots_the_cover_each_side_fought_with() -> void:
+	var state := Fixture.state("[terrain]\n.M\n[units]\n1 t 0 0\n2 i 1 0")
+	state.rng.seed = 5
+	assert_eq(state.map.terrain_at(Vector2i(1, 0)).defense_stars, 4, "the mountain is worth four")
+	var result := CombatResolver.resolve(state, state.units[0], state.units[1])
+	assert_eq(result.attacker_cover_stars, 1, "the tank fights on plains")
+	assert_eq(result.defender_cover_stars, 4, "the infantry fights on the mountain")
+
+
+## And an aircraft is over the tile rather than on it, so a copter caught above a
+## mountain banks none of its stars — the misread the plate was printing.
+func test_resolve_snapshots_no_cover_for_a_unit_in_the_air() -> void:
+	var state := Fixture.state("[terrain]\n.M\n[units]\n1 a 0 0\n2 h 1 0")
+	state.rng.seed = 5
+	var result := CombatResolver.resolve(state, state.units[0], state.units[1])
+	assert_eq(result.defender_cover_stars, 0, "the copter flies over the mountain, not on it")
+	assert_eq(result.attacker_cover_stars, 1, "while the anti-air below it banks the plains")
