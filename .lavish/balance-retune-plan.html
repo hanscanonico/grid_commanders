@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="en" data-theme="grid-commanders">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="Balance retune plan for Grid Commanders, driven by the Grand Balance Atlas: right the difficulty ladder, pull in the apex commander, lift the floor above the no-commander control."
+  >
+  <title>Grid Commanders — Balance Retune Plan</title>
+  <style>
+    @font-face {
+      font-family: "Pixelify Sans";
+      src: url("architecture-PixelifySans-Variable.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Silkscreen";
+      src: url("architecture-Silkscreen-Regular.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Silkscreen";
+      src: url("architecture-Silkscreen-Bold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.gc-grid, .gc-flex) > *,
+    :where([style*="display: grid"], [style*="display:grid"], [style*="display: flex"], [style*="display:flex"]) > * {
+      min-width: 0;
+    }
+    :where(p, h1, h2, h3, h4, li, dd, blockquote, figcaption, td, th, label, code, .gc-badge) {
+      overflow-wrap: anywhere;
+    }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      /* Exact UiTheme / CommanderVisuals authorities used by the game shell. */
+      --gc-slate-900: #23272b;
+      --gc-slate-800: #2b2f34;
+      --gc-slate-700: #3a3f45;
+      --gc-paper: #eee7d6;
+      --gc-paper-raised: #f4efe3;
+      --gc-ink: #252b30;
+      --gc-hard-border: #111619;
+      --gc-neutral: #8a9099;
+      --gc-neutral-light: #adb1b7;
+      --gc-green: #6cc24a;
+      --gc-amber: #e0a92e;
+      --gc-red: #d84a3c;
+      --gc-blue: #3865d8;
+      --gc-verdant: #2c8636;
+      --gc-white: #eeeeee;
+      --gc-shadow: rgba(17, 22, 25, .9);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--gc-ink);
+      background-color: var(--gc-slate-900);
+      background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      font-family: "Pixelify Sans", ui-sans-serif, system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.5;
+    }
+    a { color: inherit; }
+    code, pre, th, .gc-micro, .gc-badge, .gc-file, .gc-button, .gc-status {
+      font-family: "Silkscreen", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    code {
+      padding: .08rem .28rem;
+      border-radius: 2px;
+      background: color-mix(in srgb, var(--gc-slate-700) 12%, transparent);
+      font-size: .76em;
+    }
+    strong { font-weight: 700; }
+
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      background: var(--gc-paper);
+      border-inline: 3px solid var(--gc-hard-border);
+      box-shadow: 10px 0 0 rgba(17,22,25,.65), -10px 0 0 rgba(17,22,25,.65);
+    }
+    .gc-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 46px;
+      padding: .65rem 1rem;
+      color: var(--gc-white);
+      background: var(--gc-slate-800);
+      border-bottom: 3px solid var(--gc-hard-border);
+    }
+    .gc-topbar nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: end;
+      gap: .3rem .85rem;
+    }
+    .gc-topbar a {
+      color: var(--gc-neutral-light);
+      font-size: .86rem;
+      text-decoration: none;
+    }
+    .gc-topbar a:hover, .gc-topbar a:focus-visible { color: var(--gc-white); }
+    .gc-wordmark {
+      color: var(--gc-white);
+      font-weight: 700;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    .gc-hero {
+      position: relative;
+      padding: clamp(2.8rem, 7vw, 5.5rem) clamp(1.2rem, 5vw, 4rem) 3.5rem;
+      color: var(--gc-white);
+      background:
+        linear-gradient(118deg, rgba(35,39,43,.99), rgba(43,47,52,.96)),
+        var(--gc-slate-800);
+      border-bottom: 3px solid var(--gc-hard-border);
+    }
+    .gc-hero::before {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 32%;
+      height: 180px;
+      background:
+        linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px),
+        var(--gc-verdant);
+      background-size: 32px 32px;
+      opacity: .58;
+    }
+    .gc-hero > * { position: relative; z-index: 1; }
+    .gc-kicker {
+      margin: 0;
+      color: var(--gc-neutral-light);
+      font: 700 .68rem/1.5 "Silkscreen", ui-monospace, monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .gc-hero h1 {
+      max-width: 910px;
+      margin: .9rem 0 0;
+      padding-right: .12em;
+      font-size: clamp(2.6rem, 6.4vw, 5.4rem);
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .gc-hero-copy {
+      max-width: 810px;
+      margin: 1.25rem 0 0;
+      color: color-mix(in srgb, var(--gc-white) 86%, transparent);
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+    }
+    .gc-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .55rem;
+      margin-top: 1.35rem;
+    }
+    .gc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      min-height: 1.8rem;
+      padding: .34rem .58rem;
+      border: 2px solid var(--gc-hard-border);
+      border-radius: 2px;
+      font-size: .63rem;
+      line-height: 1.35;
+      text-transform: uppercase;
+      box-shadow: 2px 2px 0 var(--gc-hard-border);
+    }
+    .gc-badge[data-tone="good"] { color: #153f1b; background: #d8f3d0; border-color: var(--gc-verdant); }
+    .gc-badge[data-tone="warn"] { color: #684b00; background: #faecc2; border-color: var(--gc-amber); }
+    .gc-badge[data-tone="info"] { color: #1b356f; background: #dce5fb; border-color: var(--gc-blue); }
+    .gc-badge[data-tone="dark"] { color: var(--gc-white); background: var(--gc-slate-700); }
+
+    .gc-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      color: var(--gc-white);
+      background: var(--gc-slate-800);
+      border-bottom: 3px solid var(--gc-hard-border);
+    }
+    .gc-stat {
+      min-height: 112px;
+      padding: 1.2rem;
+      border-right: 2px solid var(--gc-slate-700);
+    }
+    .gc-stat:last-child { border-right: 0; }
+    .gc-stat-label {
+      color: var(--gc-neutral-light);
+      font: 400 .62rem/1.7 "Silkscreen", monospace;
+      text-transform: uppercase;
+    }
+    .gc-stat-value {
+      margin-top: .55rem;
+      font-size: clamp(1.5rem, 4vw, 2.3rem);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .gc-stat-note { margin-top: .4rem; color: var(--gc-neutral-light); font-size: .84rem; }
+
+    .gc-section {
+      padding: 3.8rem clamp(1.2rem, 5vw, 3.6rem);
+      border-bottom: 2px solid color-mix(in srgb, var(--gc-hard-border) 18%, transparent);
+    }
+    .gc-section:nth-of-type(even) {
+      background: color-mix(in srgb, var(--gc-paper-raised) 72%, var(--gc-paper));
+    }
+    .gc-section-head {
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+      margin-bottom: 1rem;
+    }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2.2rem;
+      height: 2.2rem;
+      flex: none;
+      color: var(--gc-white);
+      background: var(--gc-slate-800);
+      border: 2px solid var(--gc-hard-border);
+      border-radius: 2px;
+      box-shadow: 3px 3px 0 var(--gc-hard-border);
+      font: 700 .7rem/1 "Silkscreen", monospace;
+    }
+    .gc-section h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      line-height: 1.18;
+    }
+    .gc-lede {
+      max-width: 850px;
+      margin: 0 0 1.35rem;
+      color: color-mix(in srgb, var(--gc-ink) 80%, transparent);
+      font-size: 1.05rem;
+    }
+    .gc-grid { display: grid; gap: 1rem; }
+    .gc-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gc-grid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .gc-card {
+      padding: 1.1rem 1.15rem;
+      background: var(--gc-paper-raised);
+      border: 2px solid var(--gc-hard-border);
+      border-radius: 2px;
+      box-shadow: 5px 5px 0 color-mix(in srgb, var(--gc-hard-border) 86%, transparent);
+    }
+    .gc-card[data-tone="good"] { border-top: 7px solid var(--gc-green); }
+    .gc-card[data-tone="risk"] { border-top: 7px solid var(--gc-red); }
+    .gc-card[data-tone="warn"] { border-top: 7px solid var(--gc-amber); }
+    .gc-card[data-tone="info"] { border-top: 7px solid var(--gc-blue); }
+    .gc-card h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.15; }
+    .gc-card p { margin: .45rem 0; }
+    .gc-card ul { margin: .55rem 0 0; padding-left: 1.2rem; }
+    .gc-card li + li { margin-top: .3rem; }
+    .gc-micro {
+      color: var(--gc-neutral);
+      font-size: .62rem;
+      line-height: 1.45;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .gc-file { font-size: .72rem; line-height: 1.5; }
+
+    .gc-callout {
+      margin: 1.2rem 0 0;
+      padding: 1rem 1.15rem;
+      background: var(--gc-paper-raised);
+      border: 2px solid var(--gc-hard-border);
+      border-left-width: 7px;
+      box-shadow: 4px 4px 0 color-mix(in srgb, var(--gc-hard-border) 78%, transparent);
+    }
+    .gc-callout[data-tone="good"] { border-left-color: var(--gc-green); }
+    .gc-callout[data-tone="warn"] { border-left-color: var(--gc-amber); }
+    .gc-callout[data-tone="risk"] { border-left-color: var(--gc-red); }
+    .gc-callout[data-tone="info"] { border-left-color: var(--gc-blue); }
+    .gc-callout p { margin: 0; }
+
+    .gc-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+      border: 2px solid var(--gc-hard-border);
+      box-shadow: 6px 6px 0 var(--gc-hard-border);
+    }
+    .gc-compare > article { padding: 1.3rem; }
+    .gc-compare > article:first-child {
+      color: var(--gc-neutral-light);
+      background: var(--gc-slate-800);
+      border-right: 2px solid var(--gc-hard-border);
+    }
+    .gc-compare > article:last-child { background: var(--gc-paper-raised); }
+    .gc-compare h3 { margin: 0 0 .8rem; }
+    .gc-compare ul { margin: 0; padding-left: 1.25rem; }
+    .gc-compare li + li { margin-top: .42rem; }
+    .gc-compare .gc-micro { color: inherit; opacity: .78; }
+
+    .gc-table-wrap {
+      overflow-x: auto;
+      margin-top: 1rem;
+      background: var(--gc-paper-raised);
+      border: 2px solid var(--gc-hard-border);
+      box-shadow: 5px 5px 0 color-mix(in srgb, var(--gc-hard-border) 86%, transparent);
+    }
+    .gc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .93rem;
+    }
+    .gc-table th, .gc-table td {
+      padding: .8rem .85rem;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid color-mix(in srgb, var(--gc-hard-border) 18%, transparent);
+    }
+    .gc-table th {
+      color: var(--gc-white);
+      background: var(--gc-slate-800);
+      font-size: .61rem;
+      line-height: 1.4;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .gc-table tbody tr:last-child td { border-bottom: 0; }
+    .gc-table tbody tr:hover { background: color-mix(in srgb, var(--gc-blue) 7%, transparent); }
+    .gc-table .gc-num { text-align: center; white-space: nowrap; font-family: "Silkscreen", monospace; font-size: .65rem; }
+    .gc-table .gc-strong { font-weight: 700; }
+
+    .gc-decision {
+      padding: 1.2rem;
+      background: var(--gc-paper-raised);
+      border: 2px solid var(--gc-hard-border);
+      border-top: 7px solid var(--gc-amber);
+      box-shadow: 6px 6px 0 var(--gc-hard-border);
+    }
+    .gc-decision h3 { margin: 0; font-size: 1.35rem; }
+    .gc-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .8rem;
+      margin: 1rem 0;
+    }
+    .gc-option {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: .7rem;
+      padding: 1rem;
+      cursor: pointer;
+      background: var(--gc-paper);
+      border: 2px solid color-mix(in srgb, var(--gc-hard-border) 48%, transparent);
+    }
+    .gc-option:has(input:checked) {
+      border-color: var(--gc-verdant);
+      box-shadow: 4px 4px 0 color-mix(in srgb, var(--gc-verdant) 75%, transparent);
+    }
+    .gc-option input { margin-top: .28rem; accent-color: var(--gc-verdant); }
+    .gc-option strong { display: block; }
+    .gc-option small { display: block; margin-top: .35rem; color: color-mix(in srgb, var(--gc-ink) 72%, transparent); }
+    .gc-notes {
+      width: 100%;
+      min-height: 86px;
+      padding: .7rem;
+      color: var(--gc-ink);
+      background: var(--gc-paper);
+      border: 2px solid var(--gc-hard-border);
+      border-radius: 0;
+      font: inherit;
+      resize: vertical;
+    }
+
+    .gc-milestone {
+      position: relative;
+      padding-left: 3.8rem;
+    }
+    .gc-milestone + .gc-milestone { margin-top: 1.1rem; }
+    .gc-milestone-mark {
+      position: absolute;
+      left: 0;
+      top: .1rem;
+      display: grid;
+      place-items: center;
+      width: 2.8rem;
+      height: 2.8rem;
+      color: var(--gc-white);
+      background: var(--gc-verdant);
+      border: 2px solid var(--gc-hard-border);
+      box-shadow: 3px 3px 0 var(--gc-hard-border);
+      font: 700 .63rem/1 "Silkscreen", monospace;
+    }
+    .gc-milestone h3 { margin: 0; }
+    .gc-milestone ul { margin: .45rem 0 0; padding-left: 1.1rem; }
+
+    .gc-checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .55rem 1rem;
+      margin: 1rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .gc-checklist li {
+      display: grid;
+      grid-template-columns: 1.25rem minmax(0, 1fr);
+      gap: .5rem;
+      align-items: start;
+    }
+    .gc-checklist li::before { content: "✓"; color: var(--gc-verdant); font-weight: 700; }
+
+    .gc-footer {
+      padding: 1.6rem clamp(1.2rem, 5vw, 3.6rem);
+      color: var(--gc-neutral-light);
+      background: var(--gc-slate-800);
+      border-top: 3px solid var(--gc-hard-border);
+      font-size: .85rem;
+    }
+    .gc-footer p { margin: 0; }
+
+    @media (max-width: 850px) {
+      .gc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .gc-stat:nth-child(2) { border-right: 0; }
+      .gc-stat:nth-child(-n+2) { border-bottom: 2px solid var(--gc-slate-700); }
+      .gc-grid[data-cols="3"] { grid-template-columns: 1fr; }
+      .gc-options { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .gc-topbar { align-items: flex-start; }
+      .gc-topbar nav { display: none; }
+      .gc-grid[data-cols="2"], .gc-compare { grid-template-columns: 1fr; }
+      .gc-compare > article:first-child { border-right: 0; border-bottom: 2px solid var(--gc-hard-border); }
+      .gc-checklist { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      body { font-size: 16px; }
+      .gc-shell { width: 100%; border-inline: 0; box-shadow: none; }
+      .gc-stats { grid-template-columns: 1fr; }
+      .gc-stat { border-right: 0; border-bottom: 2px solid var(--gc-slate-700); }
+      .gc-stat:last-child { border-bottom: 0; }
+      .gc-section { padding-block: 3rem; }
+      .gc-milestone { padding-left: 0; padding-top: 3.6rem; }
+    }
+    @media print {
+      body { background: white; }
+      .gc-shell { width: 100%; border: 0; box-shadow: none; }
+      .gc-topbar, .gc-decision { display: none; }
+      .gc-section { break-inside: avoid; }
+      .gc-card, .gc-table-wrap { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="gc-shell">
+    <header class="gc-topbar">
+      <div class="gc-wordmark">GRID COMMANDERS</div>
+      <nav aria-label="Plan sections">
+        <a href="#evidence">Evidence</a>
+        <a href="#diagnosis">Diagnosis</a>
+        <a href="#order">Order</a>
+        <a href="#milestones">Milestones</a>
+        <a href="#gates">Gates</a>
+        <a href="#decisions">Decisions</a>
+        <a href="#risks">Risks</a>
+        <a href="#seat">First seat</a>
+      </nav>
+    </header>
+
+    <main>
+      <header class="gc-hero">
+        <p class="gc-kicker">Balance plan · The Grand Balance Retune · Draft 1 · 2026-07-29</p>
+        <h1>Everyone fights at fifty.</h1>
+        <p class="gc-hero-copy">
+          The Grand Balance Atlas played 20,280 matches — every commander against every commander, on
+          every board, at every tier — and returned three defects: one doctrine beats the entire
+          roster, two doctrines lose to having no commander at all, and the difficulty ladder is
+          inverted at its bottom rung. This plan converts those findings into a tune. The ladder is
+          fixed first, because every commander number is measured on the Normal planner; then the
+          apex comes down and the floor comes up — through <code>.tres</code> numbers, the existing
+          instruments, and the one-variable loop the balance docs already prescribe.
+        </p>
+        <div class="gc-badges" aria-label="Plan summary">
+          <span class="gc-badge" data-tone="warn">3 confirmed defects</span>
+          <span class="gc-badge" data-tone="info">.tres numbers first</span>
+          <span class="gc-badge" data-tone="good">0 sim changes</span>
+          <span class="gc-badge" data-tone="good">AI never cheats — kept</span>
+        </div>
+      </header>
+
+      <section class="gc-stats" aria-label="Headline measurements">
+        <div class="gc-stat">
+          <div class="gc-stat-label">Gideon Holt vs the field · Normal</div>
+          <div class="gc-stat-value" style="color:var(--gc-red)">84.0%</div>
+          <div class="gc-stat-note">Nobody else clears 70. Target: inside 40–60.</div>
+        </div>
+        <div class="gc-stat">
+          <div class="gc-stat-label">Cass Orlov vs the field · Normal</div>
+          <div class="gc-stat-value" style="color:var(--gc-red)">24.0%</div>
+          <div class="gc-stat-note">No Commander wins 31.9. Target: above the control.</div>
+        </div>
+        <div class="gc-stat">
+          <div class="gc-stat-label">Normal beats Easy · long horizon</div>
+          <div class="gc-stat-value" style="color:var(--gc-amber)">15.6%</div>
+          <div class="gc-stat-note">Measured ordering: Easy &gt; Difficult &gt; Normal.</div>
+        </div>
+        <div class="gc-stat">
+          <div class="gc-stat-label">Evidence behind this plan</div>
+          <div class="gc-stat-value" style="color:var(--gc-green)">20,280</div>
+          <div class="gc-stat-note">Seeded, side-normalised matches · 305 core-hours.</div>
+        </div>
+      </section>
+
+      <section class="gc-section" id="evidence">
+        <div class="gc-section-head">
+          <span class="gc-section-number">01</span>
+          <h2>What the atlas measured</h2>
+        </div>
+        <p class="gc-lede">
+          The sweep is trustworthy in exactly the ways that matter for tuning: every pairing was
+          played from both seats so the ~20-point first-move edge cancels, every match was seeded and
+          deterministic, and the roster carries its own control — the <em>No Commander</em> slot,
+          which any doctrine must beat to justify existing. Full interactive record:
+          <code>.lavish/grand-balance-atlas.html</code> (game-speed worktree); readable record on
+          Notion (“The Grand Balance Atlas”).
+        </p>
+
+        <div class="gc-table-wrap">
+          <table class="gc-table">
+            <thead>
+              <tr>
+                <th>Commander</th>
+                <th class="gc-num">Easy</th>
+                <th class="gc-num">Normal</th>
+                <th class="gc-num">Difficult</th>
+                <th class="gc-num">Exchange</th>
+                <th class="gc-num">Power cost</th>
+                <th>Verdict → target</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="gc-strong">Gideon Holt</td>
+                <td class="gc-num">69.4</td><td class="gc-num" style="color:var(--gc-red)">84.0</td><td class="gc-num">79.9</td>
+                <td class="gc-num">1.39×</td><td class="gc-num">10,000</td>
+                <td><strong>Apex.</strong> Tops all three tiers on the cheapest power in the game. BL3 brings him inside 40–60.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Mara Voss</td>
+                <td class="gc-num">48.9</td><td class="gc-num" style="color:var(--gc-amber)">69.5</td><td class="gc-num">58.9</td>
+                <td class="gc-num">1.16×</td><td class="gc-num">13,000</td>
+                <td>High. Re-judge after the extremes move; nerf only if still above 60.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Alina Ward</td>
+                <td class="gc-num">59.0</td><td class="gc-num" style="color:var(--gc-amber)">64.7</td><td class="gc-num">68.7</td>
+                <td class="gc-num">1.06×</td><td class="gc-num">14,000</td>
+                <td>High-borderline. Re-judge after re-baseline.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Orin Flux</td>
+                <td class="gc-num">54.7</td><td class="gc-num" style="color:var(--gc-amber)">63.9</td><td class="gc-num">67.1</td>
+                <td class="gc-num">1.11×</td><td class="gc-num">11,000</td>
+                <td>High-borderline. Re-judge after re-baseline.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Tomas Reed</td>
+                <td class="gc-num">58.2</td><td class="gc-num">58.4</td><td class="gc-num">53.5</td>
+                <td class="gc-num">0.91×</td><td class="gc-num">12,000</td>
+                <td>In band. Untouched.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Viktor Draeg</td>
+                <td class="gc-num">49.0</td><td class="gc-num">51.3</td><td class="gc-num">54.5</td>
+                <td class="gc-num">1.09×</td><td class="gc-num">13,000</td>
+                <td>In band. Untouched.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Nia Rowan</td>
+                <td class="gc-num">49.2</td><td class="gc-num">49.6</td><td class="gc-num">48.8</td>
+                <td class="gc-num">0.96×</td><td class="gc-num">11,000</td>
+                <td>In band. Untouched.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Lyra Quill</td>
+                <td class="gc-num">43.1</td><td class="gc-num">49.3</td><td class="gc-num">48.6</td>
+                <td class="gc-num">1.04×</td><td class="gc-num">14,000</td>
+                <td>In band. Untouched.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Cassian Rook</td>
+                <td class="gc-num">53.8</td><td class="gc-num" style="color:var(--gc-amber)">38.4</td><td class="gc-num">41.1</td>
+                <td class="gc-num">0.83×</td><td class="gc-num">11,000</td>
+                <td>Low. BL4 lifts him to ≥ 40.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Rhea Sol</td>
+                <td class="gc-num">49.1</td><td class="gc-num" style="color:var(--gc-amber)">34.2</td><td class="gc-num">41.2</td>
+                <td class="gc-num">0.96×</td><td class="gc-num">14,000</td>
+                <td>Low, on the roster’s dearest power. BL4 lifts her to ≥ 40.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">No Commander <span class="gc-micro">control</span></td>
+                <td class="gc-num">37.8</td><td class="gc-num">31.9</td><td class="gc-num">31.9</td>
+                <td class="gc-num">0.95×</td><td class="gc-num">—</td>
+                <td>The bar every doctrine must clear.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Sable Wren</td>
+                <td class="gc-num">40.8</td><td class="gc-num" style="color:var(--gc-red)">30.9</td><td class="gc-num">29.5</td>
+                <td class="gc-num">0.95×</td><td class="gc-num">12,000</td>
+                <td><strong>Below control.</strong> Her doctrine costs the army that carries it. BL4.</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Cass Orlov</td>
+                <td class="gc-num">36.9</td><td class="gc-num" style="color:var(--gc-red)">24.0</td><td class="gc-num">26.3</td>
+                <td class="gc-num">0.92×</td><td class="gc-num">12,000</td>
+                <td><strong>Below control, worst on the roster.</strong> BL4.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="gc-hud-note" style="margin-top:.65rem; color: color-mix(in srgb, var(--gc-ink) 72%, transparent); font-size: .88rem;">
+          Win rate is against the whole field at that tier, side-normalised. <em>Exchange</em> is
+          funds destroyed per funds lost at Normal. Easy is measured on six of twelve boards — read
+          its column as a direction, not a magnitude.
+        </p>
+
+        <div class="gc-callout" data-tone="warn">
+          <p>
+            <strong>The ladder finding travels separately from the roster.</strong> Tier-vs-tier with
+            no commanders and a uniform 250-day cap: Normal beats Easy <strong>15.6%</strong>,
+            Difficult beats Normal <strong>70.8%</strong>, Difficult beats Easy
+            <strong>35.4%</strong>. This is not a clock artefact — on Arsenal, Difficult lost 8 of 8
+            to Easy with 100% of games resolved around day 35. The committed DF4 verdict (71.7% both
+            pairings) was measured at a 20-day cap; these games are decided around day 44. The gate
+            measured who is ahead early. The atlas measures who wins.
+          </p>
+        </div>
+      </section>
+
+      <section class="gc-section" id="diagnosis">
+        <div class="gc-section-head">
+          <span class="gc-section-number">02</span>
+          <h2>Why the numbers are what they are</h2>
+        </div>
+        <p class="gc-lede">
+          Every outlier has a mechanical explanation in the code that is already written. None of
+          these requires new telemetry to see — they require the review the balance doc asks for
+          before any number moves, and that review is written here so the tune starts from a
+          diagnosis rather than a leaderboard position.
+        </p>
+
+        <div class="gc-grid" data-cols="2">
+          <article class="gc-card" data-tone="risk">
+            <p class="gc-micro">Apex · gideon_holt.tres</p>
+            <h3>Gideon compounds; everyone else spends.</h3>
+            <p>
+              His entire kit is economy: repairs at 80% price, APCs that supply at range 2, and a
+              10,000-charge power — the cheapest on the roster — that refills fuel and ammo and heals
+              the <em>whole army</em> at once. In AI-vs-AI attrition wars (mean decision around day
+              44–51) a sustain edge compounds every single day, and his 1.39× exchange rate says
+              exactly that: he trades up 39% on funds, forever. He is not winning fights; he is
+              winning ledgers.
+            </p>
+          </article>
+          <article class="gc-card" data-tone="risk">
+            <p class="gc-micro">Floor · cass_orlov.tres</p>
+            <h3>Orlov pays always, collects almost never.</h3>
+            <p>
+              Her passive is −10% defence <em>always on</em>, paid for by +15% attack against enemies
+              at ≤ 5 HP — targets the planner’s <code>kill_bonus</code> already kills without the
+              bonus. The upside rarely changes an outcome; the tax bites every exchange. A
+              negative-sum passive is precisely what “below the No Commander control” looks like.
+            </p>
+          </article>
+          <article class="gc-card" data-tone="risk">
+            <p class="gc-micro">Floor · sable_wren.tres</p>
+            <h3>Wren’s doctrine is terrain-gated; the planner is terrain-blind.</h3>
+            <p>
+              +1 star in woods, −10% on roads. But the planner scores advances by distance and step
+              cost — it never <em>seeks</em> cover — so her armies pay the road tax while rarely
+              standing in the woods that pay her back. Vanish needs a unit in cover to be anything at
+              all. BL4 verifies woods occupancy from match data before touching a number, because if
+              occupancy is ~0, no magnitude fixes a bonus that never applies.
+            </p>
+          </article>
+          <article class="gc-card" data-tone="warn">
+            <p class="gc-micro">Low band · rhea_sol.tres · cassian_rook.tres</p>
+            <h3>Rhea and Rook buy upside the AI can’t cash.</h3>
+            <p>
+              Rhea’s +10% indirect attack costs −10% indirect defence <em>and</em> the roster’s most
+              expensive power (14,000). Rook’s light-unit mobility is worth little to a planner that
+              values Recon and APCs low, while his −10% on Tank and Md Tank bites the units it
+              actually fields; his power spends the turn’s damage to reposition — a concept the
+              planner barely exploits.
+            </p>
+          </article>
+          <article class="gc-card" data-tone="warn">
+            <p class="gc-micro">Ladder · data/ai/default.tres</p>
+            <h3>Normal is the only tier with zero self-preservation.</h3>
+            <p>
+              Normal ships <code>threat_aversion 0.0</code> / <code>advance_threat_tiles 0.0</code> —
+              the pre-difficulty AI, bit for bit, pinned by test. Easy (0.3 / 3.0) hangs back;
+              Difficult (0.1 / 2.0) refuses kill zones. Over a 44-day game, the tier that walks into
+              every kill zone feeds the tier that doesn’t — which is why timid Easy outlasts it and
+              why Difficult beats Normal comfortably. The middle rung is weakest because it is the
+              only one with no judgement about danger at all.
+            </p>
+          </article>
+          <article class="gc-card" data-tone="info">
+            <p class="gc-micro">Context · mara_voss.tres and the upper band</p>
+            <h3>The 60s may fix themselves.</h3>
+            <p>
+              Win rates are against the field, so the distribution is zero-sum: pull 84 down and two
+              sub-32s up, and everyone in between recentres. Mara (69.5), Alina (64.7) and Orin
+              (63.9) are re-judged on the re-baseline after BL2–BL4 land, and touched only if they
+              still sit above 60. Mara’s counter-doctrine also feeds on planners that attack into
+              her — a stronger, more careful Normal may deflate her on its own.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="gc-section" id="order">
+        <div class="gc-section-head">
+          <span class="gc-section-number">03</span>
+          <h2>The order of battle</h2>
+        </div>
+        <p class="gc-lede">
+          The single most important structural fact: <strong>every commander number is measured on
+          the Normal planner.</strong> If Normal’s profile moves after the roster is tuned, every
+          roster number is stale the moment it lands. So the ladder is repaired first, Normal is
+          frozen, and only then does the roster move — extremes first, middle re-judged after,
+          because the field is zero-sum.
+        </p>
+
+        <div class="gc-compare">
+          <article>
+            <p class="gc-micro">The wrong order</p>
+            <h3>Tune the roster, then fix the ladder</h3>
+            <ul>
+              <li>Gideon retuned against today’s Normal planner.</li>
+              <li>BL2 then changes Normal’s judgement weights.</li>
+              <li>Every commander number was measured on a planner that no longer exists.</li>
+              <li>The whole roster pass reruns. Weeks of compute spent twice.</li>
+            </ul>
+          </article>
+          <article>
+            <p class="gc-micro">This plan’s order</p>
+            <h3>Instrument → ladder → freeze → apex → floor → prove</h3>
+            <ul>
+              <li><strong>BL1</strong> builds the long-horizon gate and a fresh baseline.</li>
+              <li><strong>BL2</strong> rights the ladder and freezes Normal.</li>
+              <li><strong>BL3</strong> brings the apex down on the frozen planner.</li>
+              <li><strong>BL4</strong> lifts the floor above the control.</li>
+              <li><strong>BL5</strong> proves the result at scale and records it.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="gc-callout" data-tone="info">
+          <p>
+            <strong>Compute discipline:</strong> the full atlas cost 305 core-hours; it is a
+            verdict instrument, not an iteration loop. Tuning iterates on the focused presets the
+            docs already define (<code>make commander-balance BAL="--commanders=… --seeds=…"</code>,
+            <code>make difficulty-check</code> on resolving boards) and the atlas-scale driver runs
+            once, at the end, on a targeted subset.
+          </p>
+        </div>
+      </section>
+
+      <section class="gc-section" id="milestones">
+        <div class="gc-section-head">
+          <span class="gc-section-number">04</span>
+          <h2>Milestones</h2>
+        </div>
+        <p class="gc-lede">
+          Five milestones, each independently shippable and each ending with the instruments green.
+          One <code>.tres</code> value moves per probe, COM-120 style: every hypothesis gets a row in
+          the doc, rejected values are restored before the next axis moves, and only the runner
+          writes a standing number.
+        </p>
+
+        <div class="gc-milestone">
+          <span class="gc-milestone-mark">BL1</span>
+          <h3>Fresh baseline, and a gate that measures who wins</h3>
+          <ul>
+            <li>
+              Re-run the commander matrix full batch on current rules and record the standing
+              result in <code>docs/commander_balance.md</code> — the doc itself says its N4 numbers
+              predate the charge-meter and planner fixes and must be re-run before quoting. This
+              baseline is the control every later probe is judged against.
+            </li>
+            <li>
+              Give the difficulty check a <strong>long-horizon half</strong>: same runner, same
+              adjacent-pair grammar, run at a cap the games actually finish under
+              (<code>--days=100</code>) on boards that resolve. <code>scrimmage</code> resolves;
+              <code>ironworks</code> demonstrably does not — so this half adds one committed,
+              180°-symmetric, <em>resolving</em> mid-size board to the gate set (modelled on
+              Arsenal’s geometry: 99.6% resolved, mean day 47). The 20-day gate stays exactly as
+              documented — it remains the fast smoke and the committed DF4 record.
+            </li>
+            <li>
+              Additive flags only: the existing <code>make difficulty-check</code> and
+              <code>make commander-balance</code> presets stay byte-stable, proven the standing way —
+              fixed-seed runs on both sides of the change, byte-diff of both reports.
+            </li>
+            <li>
+              Run the new half and record the red honestly: long-horizon Normal-over-Easy is
+              expected to fail. That failing number is BL2’s brief, committed to
+              <code>docs/difficulty_check.md</code> as the pre-tune control.
+            </li>
+          </ul>
+        </div>
+
+        <div class="gc-milestone">
+          <span class="gc-milestone-mark">BL2</span>
+          <h3>The ladder rights itself: Easy &lt; Normal &lt; Difficult, at every horizon</h3>
+          <ul>
+            <li>
+              Retune <code>data/ai/default.tres</code> — judgement weights only, one axis per probe.
+              Leading hypotheses, in order: <code>threat_aversion</code> 0.0 → 0.05 / 0.1 (the §6
+              probes measured 0.02–0.10 as a mild real gain; ≥ 0.2 is the known cliff),
+              <code>advance_threat_tiles</code> 0.0 → 1.6 / 2.0 (the documented floor for a live
+              value is ~1.6), then <code>kill_bonus</code> / <code>retreat_hp</code> if the ladder
+              still wants more. Every probe row lands in <code>docs/difficulty_check.md</code>.
+            </li>
+            <li>
+              This deliberately supersedes the DF-era pin that Normal plans bit-for-bit like the
+              pre-difficulty AI (<code>test_capability_defaults_plan_exactly_like_the_shipped_profile</code>).
+              The <em>class defaults</em> stay 0.0 and the test keeps proving that 0.0 skips the
+              capability code; what changes is the shipped profile’s values, and the test pin moves
+              with them, recorded as decision D2. The never-cheats assertions do not move.
+            </li>
+            <li>
+              Re-gate both pairings at both horizons. If the stronger Normal pushes
+              Difficult-over-Normal below 70% at the 20-day gate, retune
+              <code>data/ai/hard.tres</code> in the same pass — the ladder ships as a whole, not a
+              rung. <code>easy.tres</code> moves only as a last resort: its timidity is the tier’s
+              designed character, and the defect is Normal’s judgement, not Easy’s strength.
+            </li>
+            <li>
+              Exit: 20-day gate green as documented (≥ 70% both pairings) <em>and</em> the new
+              long-horizon half monotone — Normal ≥ 60% over Easy, Difficult ≥ 60% over Normal,
+              Difficult &gt; 50% over Easy head-to-head. Then <strong>Normal freezes</strong> for the
+              rest of the plan, and the BL1 commander baseline is re-run once on the frozen planner.
+            </li>
+          </ul>
+        </div>
+
+        <div class="gc-milestone">
+          <span class="gc-milestone-mark">BL3</span>
+          <h3>The apex comes back to the pack</h3>
+          <ul>
+            <li>
+              Gideon Holt, by the tuning ladder’s own preference order. First lever,
+              <code>power_cost</code> 10,000 → 12,000: the roster’s strongest measured doctrine
+              currently owns its cheapest power, so cadence is the narrowest cut. Second, magnitude:
+              <code>depot_heal_hp</code> 10 → 5 (the refill stays; the free army-wide pip is the
+              part that compounds). Passive last and only with human confirmation:
+              <code>repair_price_pct</code> 80 → 90.
+            </li>
+            <li>
+              Iterate on the focused preset (Gideon vs a 4-commander spread + No Commander, 3
+              scenarios, reduced seeds); confirm each retained probe on the full batch. Exit: Gideon
+              inside 40–60 against the field at Normal, exchange drifting toward ~1.1, identity
+              intact — he should still be the logistics commander, just not a different game.
+            </li>
+            <li>
+              Mara Voss re-judged on the post-BL3 re-baseline; if she still clears 60, same ladder
+              (cost 13,000 → 14,000 first). Alina and Orin re-judged the same way, expected to
+              recentre on their own.
+            </li>
+          </ul>
+        </div>
+
+        <div class="gc-milestone">
+          <span class="gc-milestone-mark">BL4</span>
+          <h3>The floor rises above the control</h3>
+          <ul>
+            <li>
+              <strong>Verify before tuning</strong>, per the balance doc’s own rule: from focused-run
+              CSVs and replays, measure how often each floor doctrine actually fires — Orlov’s
+              finisher bonus on shots that weren’t already lethal, Wren’s woods occupancy and road
+              exposure, Rhea’s indirect share, Rook’s light-unit usage. The number that moves is the
+              one the evidence indicts.
+            </li>
+            <li>
+              <strong>Cass Orlov</strong> (24.0): cost 12,000 → 10,000 first; then
+              <code>no_escape_attack_pct</code>; passive <code>defense_pct</code> −10 → −5 with human
+              confirmation — the always-on tax is the prime suspect for a below-control result.
+            </li>
+            <li>
+              <strong>Sable Wren</strong> (30.9): cost 12,000 → 10,000 first; then
+              <code>ambush_attack_pct</code> 40 → 50; passive <code>road_defense_pct</code> −10 → −5
+              with human confirmation. If verification shows her woods bonus essentially never
+              applies under the planner, numbers cannot lift her — that finding escalates to the
+              doctrine-reshape clause in D4 instead of another magnitude probe.
+            </li>
+            <li>
+              <strong>Rhea Sol</strong> (34.2): cost 14,000 → 12,000 first (dearest power on a
+              bottom-three commander); then <code>indirect_defense_pct</code> −10 → −5 with human
+              confirmation. <strong>Cassian Rook</strong> (38.4): cost 11,000 → 10,000 first; then
+              <code>heavy_attack_pct</code> −10 → −5 with human confirmation.
+            </li>
+            <li>
+              Exit: both below-control commanders measure above No Commander at Normal and
+              Difficult, and all four floor commanders reach ≥ 40 against the field at Normal on the
+              full batch.
+            </li>
+          </ul>
+        </div>
+
+        <div class="gc-milestone">
+          <span class="gc-milestone-mark">BL5</span>
+          <h3>Prove it at scale, and write it down</h3>
+          <ul>
+            <li>
+              One targeted verdict sweep with the resumable grand-sweep driver: all 13 slots at
+              Normal and Difficult on a resolving-board subset (Scrimmage, First Steps, Forge,
+              Riverline, Arsenal, plus Isthmus for a naval read) — a fraction of the 305-hour full
+              grid, aimed exactly at the claims this plan makes.
+            </li>
+            <li>
+              Regenerate the atlas dataset over the new cells, refresh
+              <code>.lavish/grand-balance-atlas.html</code>, and update the Notion record so the
+              readable atlas states the post-tune world.
+            </li>
+            <li>
+              Records: one changelog row per retained probe in <code>docs/commander_balance.md</code>;
+              new standing verdict and tuning table in <code>docs/difficulty_check.md</code>; the
+              CLAUDE.md plan index gains this plan with its invariants.
+            </li>
+            <li>
+              Exit: every commander inside 40–60 at Normal (45–55 preferred), no one below the
+              control at any measured tier, ladder monotone at both horizons, zero rejected
+              commands, zero cap stalls, <code>make verify</code> green. The 24-session human test
+              deck remains the release task it always was — this plan proves the measured half,
+              and does not claim the feel half.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="gc-section" id="gates">
+        <div class="gc-section-head">
+          <span class="gc-section-number">05</span>
+          <h2>Acceptance gates</h2>
+        </div>
+        <p class="gc-lede">
+          The plan is done when every row below holds simultaneously, measured by the runners —
+          never by estimate. Hard rows fail a milestone outright; band rows are the review triggers
+          the balance doc defines, satisfied here by the review being this plan.
+        </p>
+        <div class="gc-table-wrap">
+          <table class="gc-table">
+            <thead>
+              <tr><th>Gate</th><th>Requirement</th><th>Instrument</th><th>Kind</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="gc-strong">Roster band</td>
+                <td>Every commander 40–60% vs the field at Normal (45–55 preferred); no commander below the No Commander control at any measured tier.</td>
+                <td><code>make commander-balance</code> full batch</td>
+                <td class="gc-num">BAND</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Ladder, committed</td>
+                <td>Normal ≥ 70% over Easy and Difficult ≥ 70% over Normal at the documented 20-day gate — unchanged, never loosened.</td>
+                <td><code>make difficulty-check DIFF="--seeds=15"</code></td>
+                <td class="gc-num">HARD</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Ladder, long horizon</td>
+                <td>On resolving boards at the 100-day cap: Normal ≥ 60% over Easy, Difficult ≥ 60% over Normal, Difficult &gt; 50% over Easy. No inversion anywhere.</td>
+                <td>New long-horizon half of the difficulty check</td>
+                <td class="gc-num">HARD</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Rules agreement</td>
+                <td>Zero rejected AI commands, zero cap stalls, across every run this plan quotes.</td>
+                <td>Both runners’ hard invariants</td>
+                <td class="gc-num">HARD</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Instrument stability</td>
+                <td>Existing presets byte-identical across any harness change (fixed-seed, both-sides byte-diff of both reports). <code>tools/balance/match_engine.gd</code> preferably untouched.</td>
+                <td>Byte-diff per the balance-simulator merge bar</td>
+                <td class="gc-num">HARD</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Repo health</td>
+                <td><code>make verify</code> green at every milestone; <code>make screenshot</code> byte-stable (nothing here touches presentation).</td>
+                <td>The aggregate gate</td>
+                <td class="gc-num">HARD</td>
+              </tr>
+              <tr>
+                <td class="gc-strong">Identity</td>
+                <td>Every retuned commander keeps its doctrine’s shape: Gideon still logistics, Orlov still a finisher, Wren still an ambusher. Numbers move; identities don’t.</td>
+                <td>Human review of each retained probe</td>
+                <td class="gc-num">REVIEW</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="gc-section" id="decisions">
+        <div class="gc-section-head">
+          <span class="gc-section-number">06</span>
+          <h2>Locked decisions and explicit non-goals</h2>
+        </div>
+        <p class="gc-lede">
+          The decisions below are load-bearing; a change to any of them is a change to this plan,
+          not an implementation detail.
+        </p>
+        <div class="gc-table-wrap">
+          <table class="gc-table">
+            <thead>
+              <tr><th>ID</th><th>Decision</th><th>Why it’s locked</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="gc-num gc-strong">D1</td>
+                <td>Ladder before roster; Normal freezes after BL2.</td>
+                <td>Every commander number is measured on the Normal planner. Tuning the roster on a planner that then changes wastes the entire pass.</td>
+              </tr>
+              <tr>
+                <td class="gc-num gc-strong">D2</td>
+                <td>DF4 gains a long-horizon half; the 20-day gate survives unchanged; the Normal-identity pin is deliberately superseded.</td>
+                <td>The atlas proved the 20-day gate measures who is ahead early, not who wins. Adding a horizon tightens the gate — nothing is loosened. The pinned test keeps proving 0.0 skips capability code; the shipped profile’s values move with a recorded probe table.</td>
+              </tr>
+              <tr>
+                <td class="gc-num gc-strong">D3</td>
+                <td>The AI never cheats, at any tier — still absolute.</td>
+                <td>The ladder is repaired with judgement weights on <code>AIProfile</code> only. No income, vision, damage or luck moves, in either direction. This is the difficulty plan’s locked invariant and this plan inherits it whole.</td>
+              </tr>
+              <tr>
+                <td class="gc-num gc-strong">D4</td>
+                <td>Numbers first, one variable at a time, cost → magnitude → passive; doctrine reshape only for the two below-control commanders, only on evidence numbers can’t fix it, only with human confirmation.</td>
+                <td>The balance doc’s tuning loop is the standing rule. The narrow reshape clause exists because “worse than nothing at every tier” is a defect, not a preference — but it is the last resort, behaviour stays in the <code>CommanderType</code> subclass, and it lands as its own reviewed change.</td>
+              </tr>
+              <tr>
+                <td class="gc-num gc-strong">D5</td>
+                <td>The telemetry observes; it never instruments the sim.</td>
+                <td>Balance-simulator D2, inherited: nothing under <code>core/</code> or <code>ai/</code> gains a hook for any measurement this plan takes. BL4’s doctrine-usage verification reads match CSVs and replays, not new probes in the sim.</td>
+              </tr>
+              <tr>
+                <td class="gc-num gc-strong">D6</td>
+                <td>Only the runners write standing numbers.</td>
+                <td>Inherited from both balance docs: no number in any record is re-scored by estimate. A claim without a fresh run is not a claim.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin:1.8rem 0 .35rem">Explicit non-goals</h3>
+        <ul class="gc-checklist" style="list-style:none">
+          <li>No <code>core/</code> rules or damage-chart change — this is a <code>.tres</code>-and-docs plan.</li>
+          <li>No AI ferry planning. The Straits stall is the naval plan’s standing R1, owned there; The Straits stays out of every gate board set.</li>
+          <li>No first-seat rules change (komi, staggered income) inside this plan — see the open decision below.</li>
+          <li>Easy’s unfinished-game character (77.7% resolution, HQ-capture endings) is a tier identity read, not a defect this plan fixes.</li>
+          <li>No Easy-tier heavy-board sweep completion — the archived band already showed the roster shape holds; the 30–40 hours buy nothing this plan needs.</li>
+          <li>The human test deck is not automated away — feel remains a release task outside this plan.</li>
+          <li>The commanders plan’s locked D2 (charge accrual split 100% lost / 50% dealt) does not move.</li>
+        </ul>
+      </section>
+
+      <section class="gc-section" id="risks">
+        <div class="gc-section-head">
+          <span class="gc-section-number">07</span>
+          <h2>Named risks and mitigations</h2>
+        </div>
+        <div class="gc-grid" data-cols="3">
+          <article class="gc-card" data-tone="risk">
+            <p class="gc-micro">R1 · The known failure mode</p>
+            <h3>Balancing to the AI leaderboard alone.</h3>
+            <p>The planner underuses terrain, timing and specialised economies — a number that fixes the sweep can hurt human play. Mitigation: the band stays a review trigger, every passive change needs human confirmation, and the human deck keeps the last word on feel.</p>
+          </article>
+          <article class="gc-card" data-tone="risk">
+            <p class="gc-micro">R2 · Cascade</p>
+            <h3>A moving baseline invalidates the pass.</h3>
+            <p>Changing Normal after roster tuning — or tuning two commanders against each other’s stale numbers — turns the plan circular. Mitigation: D1’s ordering, the freeze, one re-baseline per milestone boundary, extremes before middles.</p>
+          </article>
+          <article class="gc-card" data-tone="risk">
+            <p class="gc-micro">R3 · Ladder coupling</p>
+            <h3>Fixing Normal breaks Difficult’s gate.</h3>
+            <p>A sharper Normal squeezes Difficult’s 70% from below. Mitigation: BL2 budgets a <code>hard.tres</code> follow-up in the same milestone; the ladder ships whole or not at all.</p>
+          </article>
+          <article class="gc-card" data-tone="warn">
+            <p class="gc-micro">R4 · Un-liftable floor</p>
+            <h3>Wren or Orlov can’t reach the band on numbers.</h3>
+            <p>A terrain-gated bonus a terrain-blind planner never triggers has no magnitude fix. Mitigation: BL4 verifies doctrine usage before tuning; the reshape clause (D4) is the named escalation, human-confirmed, identity-preserving.</p>
+          </article>
+          <article class="gc-card" data-tone="warn">
+            <p class="gc-micro">R5 · Compute burn</p>
+            <h3>Iterating at atlas scale.</h3>
+            <p>The full grid costs 305 core-hours; a tuning loop through it is weeks. Mitigation: focused presets for iteration, full batch per retained probe, atlas-scale driver exactly once (BL5), resumable by design.</p>
+          </article>
+          <article class="gc-card" data-tone="warn">
+            <p class="gc-micro">R6 · Gate debt</p>
+            <h3>The new long-horizon gate rots or flakes.</h3>
+            <p>A gate on a board that stops resolving, or a cap games outgrow, silently degrades to a tiebreak reading again. Mitigation: the gate board is chosen for resolution and asserted symmetric; resolution share is reported with every run and a collapse below the reading rule’s floor fails the run loudly.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="gc-section" id="seat">
+        <div class="gc-section-head">
+          <span class="gc-section-number">08</span>
+          <h2>Open decision: the first seat</h2>
+        </div>
+        <p class="gc-lede">
+          The atlas’ mirror cells measured going first at roughly +20 points, stable across all
+          three tiers. Every number in this plan is side-normalised, so the tune is immune to it —
+          but the edge is real in a single human match. Fixing it is a game-rules change
+          (komi-style funds offset, staggered banking, alternating seats), which is out of this
+          plan’s <code>.tres</code>-only scope. What should happen to it?
+        </p>
+        <div class="gc-decision">
+          <h3>Choose a disposition</h3>
+          <div class="gc-options">
+            <label class="gc-option">
+              <input type="radio" name="first-seat" value="record" checked>
+              <span>
+                <strong>Record and accept (recommended)</strong>
+                <small>Document the +20 pp edge in the balance docs as a known property. The instruments already cancel it; human matches keep the classic first-move advantage every game in the genre has.</small>
+              </span>
+            </label>
+            <label class="gc-option">
+              <input type="radio" name="first-seat" value="probe">
+              <span>
+                <strong>Probe AI-side levers in BL5</strong>
+                <small>Measure whether the documented <code>save_up_turns</code> timing edge is the dominant term (it measured +5.6 → +14.9 → +20.2 pp at 0/2/3-turn banking). Knowledge only — no shipped change without a follow-up decision.</small>
+              </span>
+            </label>
+            <label class="gc-option">
+              <input type="radio" name="first-seat" value="charter">
+              <span>
+                <strong>Charter a follow-up plan</strong>
+                <small>A komi-style second-player compensation is a sim rules change with save, replay and UI surface area — its own design of record, not a milestone here.</small>
+              </span>
+            </label>
+            <label class="gc-option">
+              <input type="radio" name="first-seat" value="other">
+              <span>
+                <strong>Something else</strong>
+                <small>Annotate this card with the disposition you want.</small>
+              </span>
+            </label>
+          </div>
+          <textarea class="gc-notes" placeholder="Notes for the reviewer…" aria-label="Decision notes"></textarea>
+        </div>
+      </section>
+    </main>
+
+    <footer class="gc-footer">
+      <p>
+        Evidence: the Grand Balance Atlas (20,280 matches, 2026-07-25; Notion record + interactive
+        original) checked against <code>data/commanders/*.tres</code>,
+        <code>core/commanders/*.gd</code>, <code>data/ai/easy.tres</code> /
+        <code>default.tres</code> / <code>hard.tres</code>, <code>docs/commander_balance.md</code>,
+        <code>docs/difficulty_check.md</code>, <code>docs/balance_sim.md</code>, and the balance
+        simulator, difficulty-modes and commanders designs of record.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
