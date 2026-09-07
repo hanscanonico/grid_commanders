@@ -70,3 +70,6 @@ build/
 *.ipa
 *.keystore
 *.jks
+
+# The Cloudflare tunnel token the mini PC's compose stack reads; .env.example is the shape.
+deploy/web/.env

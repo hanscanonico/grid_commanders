@@ -1,0 +1,15 @@
+# The build context for deploy/web: what the headless export needs and nothing more.
+.git
+.godot
+bin
+build
+.claude
+.lavish
+.promo
+generators
+reports
+tests
+docs
+*.png
+screenshot*.png.import
+deploy/web/.env

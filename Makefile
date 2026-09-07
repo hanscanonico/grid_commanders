@@ -26,6 +26,10 @@ IOS_EXPORT_OPTIONS ?= build/ios/grid_commanders/export_options.plist
 # it: DEVELOPMENT_TEAM in both build configurations, the target's
 # DevelopmentTeam attribute, and teamID in export_options.plist.
 IOS_TEAM_PLACEHOLDER := AAAAAAAAAA
+# Where make export-web drops the browser build. Ignored by git, like the APK.
+WEB_DIR ?= build/web
+# The port make serve-web listens on. Fixed so the README's URL is always right.
+WEB_PORT ?= 8060
 
 # The two things a gate can be missing. The gate scripts say the first for
 # themselves, through tools/lib/require_godot.sh; a target that runs the tool
@@ -618,6 +622,23 @@ export-ios: import
 		echo "export-ios: development team set to $(IOS_TEAM_ID)"; }
 	@ls -d $(IOS_XCODEPROJ)
 
+# Browser packaging. Release rather than debug: no signing is involved, and the
+# release template is the smaller, faster one. The preset turns threads off, so
+# the page needs no cross-origin-isolation headers and any static server hosts
+# it — serve-web is Python's, deploy/web/ is the nginx one the mini PC runs.
+# Machine setup is the 4.7.1 export templates from the Android recipe, nothing
+# more. README.md "Web build" is the recipe.
+export-web: import
+	$(call require-godot)
+	@mkdir -p $(WEB_DIR)
+	$(GODOT) --headless --path . --export-release "Web" $(CURDIR)/$(WEB_DIR)/index.html
+	@ls -l $(WEB_DIR)
+
+serve-web:
+	@test -f $(WEB_DIR)/index.html || { echo "$@: run make export-web first" >&2; exit 1; }
+	@echo "serving $(WEB_DIR) at http://127.0.0.1:$(WEB_PORT)/"
+	python3 -m http.server $(WEB_PORT) --bind 127.0.0.1 --directory $(WEB_DIR)
+
 # The battle scene is launched directly so demos and captures skip the menu.
 screenshot: import
 	$(GODOT_GUI) --path . $(BATTLE) -- --screenshot=$(CURDIR)/screenshot.png
@@ -652,7 +673,7 @@ mobile-soak:
 	audio audio-test audio-lint audio-snapshot sprites-test sprites-lint \
 	sprites-snapshot grain-census sheet-census generators-lint generators-test \
 	portraits-test portraits-lint portraits-snapshot \
-	generators-venv portraits import campaign-difficulty export-android export-ios \
+	generators-venv portraits import campaign-difficulty export-android export-ios export-web serve-web \
 	screenshot menu-screenshot gallery-screenshot editor-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns prose legibility-check legibility-ratchet legibility-baseline mobile-soak \

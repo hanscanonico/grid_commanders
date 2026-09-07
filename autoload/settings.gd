@@ -167,7 +167,10 @@ func _ready() -> void:
 	_load()
 	_apply_cmdline()
 	_apply_volume()
-	_apply_window_mode()
+	# A browser grants fullscreen only from a click, so a stored preference cannot
+	# be stood at boot there; the Window row and F11 still apply it on a press.
+	if not OS.has_feature("web"):
+		_apply_window_mode()
 	# A phone has no window to stand anywhere but full, so it never listens for
 	# the key either — the same gate the Window row is offered behind.
 	set_process_unhandled_input(_has_a_window())

@@ -8,7 +8,8 @@ extends RefCounted
 ## `--mobile` flag, which exists so a touch frame can be photographed on a desktop
 ## machine. The flag reaches no MatchRequest field, no save and no replay: a match
 ## played with it resolves identically, because everything downstream of this
-## answer is chrome.
+## answer is chrome. A web build answers only `web_*` tags, never `mobile`, so a
+## phone browser is read off the touchscreen the page reports.
 ##
 ## Here rather than on UiTheme because a platform is not a metric — UiTheme owns
 ## the sizes a touch build reads and UiKit the widgets built from them, and both
@@ -25,8 +26,14 @@ static var _active := -1
 ## True when the game is being played on a touchscreen build, or posed as one.
 static func active() -> bool:
 	if _active < 0:
-		_active = 1 if touch(CmdArgs.user(), OS.has_feature("mobile")) else 0
+		_active = 1 if touch(CmdArgs.user(), _touch_build()) else 0
 	return _active == 1
+
+
+static func _touch_build() -> bool:
+	if OS.has_feature("mobile"):
+		return true
+	return OS.has_feature("web") and DisplayServer.is_touchscreen_available()
 
 
 ## Pins the answer for this process. The driven gate (tests/unit/test_touch_press.gd)
