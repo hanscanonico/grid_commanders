@@ -551,8 +551,9 @@ network.
 
 What differs in a browser: audio starts on the first click, because the page cannot play sound before
 a gesture; saves, settings, campaign progress and editor maps live in the browser's own storage, not
-in a file on disk; the command-line flags do not exist there; and the menu shows no Quit, since a tab
-cannot close itself.
+in a file on disk; the command-line flags do not exist there; the menu shows no Quit, since a tab
+cannot close itself; and a hidden tab pauses the game outright, because the browser stops drawing
+it — a computer turn that seemed to hang while you were away resumes when the tab is back.
 
 ## Main menu
 
