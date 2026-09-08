@@ -9,6 +9,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The Actions "Run workflow" button, for a redeploy without a commit.
+  workflow_dispatch:
 
 # A second push to a branch supersedes the first: the gate only ever answers for
 # the tip.
@@ -235,3 +237,24 @@ jobs:
       - name: Installed art matches a fresh generation
         working-directory: generators/portraits
         run: python tests/check_snapshots.py /tmp/portraits_a
+
+  # The site follows green main by itself. It runs on the web host's own runner
+  # and acts on that machine's live checkout, so there is no actions/checkout
+  # step here: the deploy script fast-forwards the checkout to the tested commit.
+  deploy:
+    name: Deploy the web build
+    runs-on: [self-hosted, grid-prod]
+    needs: [verify, audio, sprites, portraits]
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # No cancel-in-progress: a half-finished deploy is worse than a slow queue.
+    concurrency: deploy-web
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Deploy the tested commit on the host
+        working-directory: /home/mini-pc/Documents/grid_commanders
+        run: |
+          git fetch origin
+          git merge --ff-only "$GITHUB_SHA"
+          deploy/web/deploy --no-pull

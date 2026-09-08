@@ -11,16 +11,50 @@ if [ "${1:-}" != "--no-pull" ]; then
 fi
 
 compose="docker compose -f deploy/web/docker-compose.yml"
+# Must match the web service's `image:` in docker-compose.yml.
+image="grid-commanders-web:latest"
+previous="grid-commanders-web:previous"
+
+wait_healthy() {
+  echo "Waiting for web to become healthy..."
+  for _ in $(seq 1 30); do
+    if curl -fsS http://127.0.0.1:8090/healthz >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+# The rollback target has to be taken before the build, because building the new
+# image moves the :latest tag off the copy that is currently serving.
+if docker image inspect "$image" >/dev/null 2>&1; then
+  docker image tag "$image" "$previous"
+  have_previous=1
+else
+  have_previous=0
+fi
+
 $compose build web
 $compose up -d
 
-echo "Waiting for web to become healthy..."
-for _ in $(seq 1 30); do
-  if curl -fsS http://127.0.0.1:8090/healthz >/dev/null 2>&1; then
-    echo "Deployed and healthy."
-    exit 0
-  fi
-  sleep 2
-done
+if wait_healthy; then
+  echo "Deployed and healthy."
+  exit 0
+fi
+
 echo "web did not become healthy within 60s — check: $compose logs web" >&2
+if [ "$have_previous" = 0 ]; then
+  echo "No previous image to roll back to; the site is down." >&2
+  exit 1
+fi
+
+echo "Rolling back to the previous image..." >&2
+docker image tag "$previous" "$image"
+$compose up -d
+if wait_healthy; then
+  echo "Rolled back: the previous build is serving again." >&2
+else
+  echo "Rollback failed too — the site is down. Check: $compose logs web" >&2
+fi
 exit 1
