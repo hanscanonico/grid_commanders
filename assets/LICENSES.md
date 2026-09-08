@@ -73,11 +73,11 @@ glyphs rasterise on the same pixel grid the tile and unit art lives on.
 The portraits under `portraits/` are project-original and generated, not
 vendored: `generators/portraits` paints each general — pose, backdrop, prop,
 palette — and bakes the 110x134 pixel-art raster the game loads, plus the 31x31
-face chip cut from it. They are the "Heroic
-Commander Portraits" design handoff, drawn to its spec rather than exported from
-it, so no third-party pixels enter the tree. The only colours that are not the
-handoff's own are the faction hues, read from `CommanderVisuals`. Rebuild with
-`make portraits`.
+face chip cut from it. They are the "Heroic Commander Portraits" design handoff,
+drawn to its spec rather than exported from it, so no third-party pixels enter
+the tree. The only colours that are not the handoff's own are the board's own
+ramps and the faction hues, read from `generators/sprites` and
+`CommanderVisuals`. Rebuild with `make portraits`.
 
 ## Retired: PixVoxel Revised Wargame Sprites
 

@@ -5,7 +5,8 @@ Deterministic portrait pipeline for this game, living in the repository it feeds
 sibling `generators/.gdignore` keeps Godot out of it). It bakes the art
 `scenes/common/commander_visuals.gd` loads: the **five 64x64 faction emblems**,
 the **twenty-three 110x134 commander busts** — twenty-two generals and the empty
-seat — and the **28 31x31 face chips** the surfaces too small for a bust draw.
+seat — and the **twenty-three 31x31 face chips** the surfaces too small for a bust
+draw.
 
 The busts are **pixel art**: authored on their own small grid, painted in
 sixteen tones off the board's own ramps, and drawn by the game at a whole-number
@@ -123,9 +124,11 @@ already were.
   jaw. `Canvas.stroke` refuses any other width. On the bust's grid the
   hierarchy is a ceiling rather than three widths: a silhouette is two pixels
   and the two lighter weights are one, which is all a 110px bust has room for.
-- Faction colour comes from `portraitgen/palette.py`, which mirrors the game's
-  own `FactionTheme` — `tests/test_palette_mirror.py` reads the values back out
-  of `scenes/common/commander_visuals.gd` and fails loudly on a rename.
+- Faction colour comes from `portraitgen/palette.py`, which mirrors two sources
+  and is checked against both by `tests/test_palette_mirror.py`: the game's own
+  `FactionTheme`, read back out of `scenes/common/commander_visuals.gd`, and the
+  board's six-slot ramps, compared rung for rung against
+  `generators/sprites/spritegen/palette.py` itself.
 
 ## Module contracts
 

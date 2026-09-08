@@ -1,7 +1,7 @@
 """Deterministic portrait pipeline for grid_commanders.
 
 Bakes the art `CommanderVisuals` loads: the five 64x64 faction emblems, the
-twenty-three 110x134 commander busts and the 28x28 face chip each bust is cut
+twenty-three 110x134 commander busts and the 31x31 face chip each bust is cut
 from. There are no seeds and no randomness — every mark is authored, so every
 run reproduces the same bytes.
 
@@ -13,7 +13,7 @@ that has to be kept in step.
 Outputs (under --out, default ./out):
   factions/<key>.png     64x64 RGBA emblem — drop-in for assets/portraits/factions
   commanders/<id>.png    110x134 RGBA bust — drop-in for assets/portraits/commanders
-  faces/<id>.png         28x28 RGBA chip — drop-in for assets/portraits/faces
+  faces/<id>.png         31x31 RGBA chip — drop-in for assets/portraits/faces
 """
 
 from __future__ import annotations

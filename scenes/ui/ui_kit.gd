@@ -699,11 +699,11 @@ static func _crop_for(size: Vector2) -> BustCrop:
 	return BustCrop.WHOLE
 
 
-## The art at a rung of `CommanderVisuals.art_scale`, centred across the field and
-## hung from its top. Whole texels or nothing: this is pixel art now, and the one
-## thing a field may not do is show it at a fraction of a pixel. A field shorter
-## than the drawing therefore clips, and it clips the chest — the head is the part
-## every surface is showing a bust for.
+## The art at a rung of `CommanderVisuals.art_scale`, centred in the field, and
+## hung from its top edge once it is taller than the field. Whole texels or
+## nothing: this is pixel art now, and the one thing a field may not do is show
+## it at a fraction of a pixel. A field shorter than the drawing therefore clips,
+## and it clips the chest — the head is the part every surface shows a bust for.
 static func _place_bust(field: Panel) -> void:
 	var art := field.get_node_or_null(NodePath(_BUST_ART)) as TextureRect
 	if art == null or art.texture == null:
