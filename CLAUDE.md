@@ -203,3 +203,20 @@ Read the one that owns an area before changing it.
 - Small, focused commits scoped to one milestone task, present-tense imperative subject
   (`Add Dijkstra movement range`).
 - Don't commit generated import caches or engine temp files (`.godot/` is ignored).
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in Linear, team Grid_Commanders (`COM-<n>`), driven through the Linear MCP tools;
+GitHub holds only code and PRs. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, each label string equal to its name (`needs-triage`,
+`needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, both created lazily by
+`/domain-modeling`. See `docs/agents/domain.md`.
