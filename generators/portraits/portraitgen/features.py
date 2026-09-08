@@ -711,25 +711,52 @@ class Worn:
     tint: RGB
     kicker: RGB
 
+    def path(self, points: Iterable[Point]) -> list[Point]:
+        """`points` fitted to this general's own skull."""
+        return self.frame.path(points)
+
+    def fill(self, path: Iterable[Point], colour: RGB) -> None:
+        self.canvas.polygon(path, colour)
+
+    def ink(self, path: Iterable[Point], *, closed: bool = True) -> None:
+        self.canvas.stroke(path, INK_FEATURE, INK, closed=closed)
+
+    def piece(self, points: tuple[Point, ...], colour: RGB) -> list[Point]:
+        """One flat mass of cloth, outlined — what most of headwear is made of.
+
+        Returns the path, because what a painter hands back is what it added to
+        the silhouette.
+        """
+        path = self.path(points)
+        self.fill(path, colour)
+        self.ink(path)
+        return path
+
 
 def _worn(points: tuple[Point, ...]) -> Callable[[Worn], list[Point]]:
-    """A piece of headwear: one flat mass of cloth, outlined."""
+    """A piece of headwear that is nothing but one mass in faction cloth."""
 
     def draw(worn: Worn) -> list[Point]:
-        path = worn.frame.path(points)
-        worn.canvas.polygon(path, worn.tint)
-        worn.canvas.stroke(path, INK_FEATURE, INK, closed=True)
-        return path
+        return worn.piece(points, worn.tint)
 
     return draw
 
 
 def _hood(worn: Worn) -> list[Point]:
-    canvas, frame, tint = worn.canvas, worn.frame, worn.tint
-    path = frame.path(_HOOD)
-    canvas.polygon(path, tint)
-    canvas.polygon(frame.path(_HOOD_LINING), KIT)
-    canvas.stroke(path, INK_FEATURE, INK, closed=True)
+    path = worn.path(_HOOD)
+    worn.fill(path, worn.tint)
+    worn.fill(worn.path(_HOOD_LINING), KIT)
+    worn.ink(path)
+    return path
+
+
+def _crown(worn: Worn, mass: tuple[Point, ...], lit: tuple[Point, ...]) -> list[Point]:
+    """A cap crown: faction cloth carrying the coat's lit rung along the edge
+    the key lands on (`_CAP_LIT`)."""
+    path = worn.path(mass)
+    worn.fill(path, worn.tint)
+    worn.fill(worn.path(lit), worn.kicker)
+    worn.ink(path)
     return path
 
 
@@ -739,50 +766,31 @@ def _cap(worn: Worn) -> list[Point]:
     The peak is what makes it a cap rather than a hat at chip size — a straight
     dark bar over the brow, wider than the band it hangs off.
     """
-    canvas, frame, tint, kicker = worn.canvas, worn.frame, worn.tint, worn.kicker
-    crown = frame.path(_CAP_CROWN)
-    canvas.polygon(crown, tint)
-    canvas.polygon(frame.path(_CAP_LIT), kicker)
-    canvas.stroke(crown, INK_FEATURE, INK, closed=True)
+    crown = _crown(worn, _CAP_CROWN, _CAP_LIT)
     for piece in (_CAP_BAND, _CAP_PEAK):
-        path = frame.path(piece)
-        canvas.polygon(path, KIT)
-        canvas.stroke(path, INK_FEATURE, INK, closed=True)
+        worn.piece(piece, KIT)
     return crown
 
 
 def _fieldcap(worn: Worn) -> list[Point]:
     """A soft field cap: a slouched crown over a kit band, and nothing else."""
-    canvas, frame, tint, kicker = worn.canvas, worn.frame, worn.tint, worn.kicker
-    crown = frame.path(_FIELD_CROWN)
-    canvas.polygon(crown, tint)
-    canvas.polygon(frame.path(_FIELD_LIT), kicker)
-    canvas.stroke(crown, INK_FEATURE, INK, closed=True)
-    band = frame.path(_FIELD_BAND)
-    canvas.polygon(band, KIT)
-    canvas.stroke(band, INK_FEATURE, INK, closed=True)
+    crown = _crown(worn, _FIELD_CROWN, _FIELD_LIT)
+    worn.piece(_FIELD_BAND, KIT)
     return crown
 
 
 def _visor(worn: Worn) -> list[Point]:
     """An eyeshade: a kit strap carrying a brim in the general's own cloth."""
-    canvas, frame, tint = worn.canvas, worn.frame, worn.tint
-    strap = frame.path(_VISOR_STRAP)
-    canvas.polygon(strap, KIT)
-    canvas.stroke(strap, INK_FEATURE, INK, closed=True)
-    brim = frame.path(_VISOR_BRIM)
-    canvas.polygon(brim, tint)
-    canvas.stroke(brim, INK_FEATURE, INK, closed=True)
-    return brim
+    worn.piece(_VISOR_STRAP, KIT)
+    return worn.piece(_VISOR_BRIM, worn.tint)
 
 
 def _goggles(worn: Worn) -> list[Point]:
-    canvas, frame, skull = worn.canvas, worn.frame, worn.skull
-    path = frame.path(_GOGGLE_STRAP)
-    canvas.polygon(path, KIT)
-    canvas.stroke(path, INK_FEATURE, INK, closed=True)
-    for x in _eye_xs(skull):
-        _ringed_ellipse(canvas, frame, (x, 106.0), (13.0, 13.0), GLASS, INK_FEATURE)
+    path = worn.piece(_GOGGLE_STRAP, KIT)
+    for x in _eye_xs(worn.skull):
+        _ringed_ellipse(
+            worn.canvas, worn.frame, (x, 106.0), (13.0, 13.0), GLASS, INK_FEATURE
+        )
     return path
 
 
@@ -791,49 +799,42 @@ def _glasses(worn: Worn) -> list[Point]:
 
     A bridge is the one part of a pair of glasses the mip cannot hold, and it
     was what joined the two lenses into a single grey smear at chip size."""
-    canvas, frame, skull = worn.canvas, worn.frame, worn.skull
-    for x in _eye_xs(skull):
+    for x in _eye_xs(worn.skull):
         lens = (
             (x - LENS_HALF, EYE_LINE - LENS_HALF),
             (x + LENS_HALF, EYE_LINE - LENS_HALF),
             (x + LENS_HALF, EYE_LINE + LENS_HALF),
             (x - LENS_HALF, EYE_LINE + LENS_HALF),
         )
-        canvas.stroke(frame.path(lens), INK_FEATURE, INK, closed=True)
+        worn.ink(worn.path(lens))
     return []
 
 
 def _eyepatch(worn: Worn) -> list[Point]:
-    canvas, frame, skull = worn.canvas, worn.frame, worn.skull
-    x = _eye_xs(skull)[0]
+    x = _eye_xs(worn.skull)[0]
     ear_x, ear_y, radius = EAR
     outer_x, outer_y = _PATCH_PLATE[0]
-    canvas.stroke(
-        frame.path(
-            [(x + outer_x + 2.0, outer_y + 3.0), (ear_x + radius, ear_y - radius)]
-        ),
-        INK_FEATURE,
-        INK,
-    )
-    canvas.polygon(frame.path([(x + dx, y) for dx, y in _PATCH_PLATE]), INK)
+    strap = [(x + outer_x + 2.0, outer_y + 3.0), (ear_x + radius, ear_y - radius)]
+    worn.ink(worn.path(strap), closed=False)
+    worn.fill(worn.path([(x + dx, y) for dx, y in _PATCH_PLATE]), INK)
     return []
 
 
 def _scar(worn: Worn) -> list[Point]:
-    canvas, frame = worn.canvas, worn.frame
-    canvas.ribbon(frame.path(_SCAR_CUT), SCAR, SCAR_DEEP)
+    worn.canvas.ribbon(worn.path(_SCAR_CUT), SCAR, SCAR_DEEP)
     return []
 
 
 def _headset(worn: Worn) -> list[Point]:
-    canvas, frame, tint = worn.canvas, worn.frame, worn.tint
-    band = frame.path(_HEADSET_BAND)
-    canvas.stroke(band, INK_FEATURE, INK)
-    cup = frame.path(_HEADSET_CUP)
-    canvas.polygon(cup, tint)
-    canvas.stroke(cup, INK_FEATURE, INK, closed=True)
-    canvas.ribbon(frame.path([(56.0, 148.0), (48.0, 166.0), (80.0, 170.0)]), KIT, INK)
-    _ringed_ellipse(canvas, frame, (82.0, 169.0), (4.8, 4.8), tint, INK_DETAIL)
+    band = worn.path(_HEADSET_BAND)
+    worn.ink(band, closed=False)
+    cup = worn.piece(_HEADSET_CUP, worn.tint)
+    worn.canvas.ribbon(
+        worn.path([(56.0, 148.0), (48.0, 166.0), (80.0, 170.0)]), KIT, INK
+    )
+    _ringed_ellipse(
+        worn.canvas, worn.frame, (82.0, 169.0), (4.8, 4.8), worn.tint, INK_DETAIL
+    )
     return [*band, *cup]
 
 
