@@ -584,9 +584,9 @@ sudo ~/actions-runner-grid/svc.sh install "$USER" && sudo ~/actions-runner-grid/
 ```
 
 Running the script by hand stays the fallback when Actions is not an option.
+
 `deploy/web/deploy --no-pull` rebuilds the checkout as it stands; `DEPLOY_REF=<sha>` pins a commit.
-A deploy whose new build never answers `/healthz` retags the previous image back and brings that up
-instead, then fails loudly — so a bad build costs a minute of downtime, not the site.
+A build that never answers `/healthz` rolls back to the previous image and then fails loudly.
 `docker compose -f deploy/web/docker-compose.yml up -d web` brings up the server alone, without a
 token, on `127.0.0.1:8090`. If the existing stock_market tunnel should serve it instead, add a public
 hostname to that tunnel pointing at this stack's `web` service — the two only need to share a Docker

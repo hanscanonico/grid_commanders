@@ -246,7 +246,6 @@ jobs:
     runs-on: [self-hosted, grid-prod]
     needs: [verify, audio, sprites, portraits]
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    # No cancel-in-progress: a half-finished deploy is worse than a slow queue.
     concurrency: deploy-web
     timeout-minutes: 30
     permissions:

@@ -34,31 +34,29 @@ serving=""
 if [ -n "$container" ]; then
   serving=$(docker inspect --format '{{.Image}}' "$container" 2>/dev/null || true)
 fi
+# Nothing is running, so fall back to the tag the last build left behind.
+if [ -z "$serving" ] && docker image inspect "$image" >/dev/null 2>&1; then
+  serving=$image
+fi
 if [ -n "$serving" ]; then
   docker image tag "$serving" "$previous"
-  have_previous=1
-else
-  have_previous=0
 fi
 
 $compose build web
-$compose up -d
 
-if wait_healthy; then
+if $compose up -d && wait_healthy; then
   echo "Deployed and healthy."
   exit 0
 fi
 
-echo "web did not become healthy within 60s — check: $compose logs web" >&2
-if [ "$have_previous" = 0 ]; then
+echo "The new build is not serving — check: $compose logs web" >&2
+if [ -z "$serving" ]; then
   echo "No previous image to roll back to; the site is down." >&2
   exit 1
 fi
 
 echo "Rolling back to the previous image..." >&2
-docker image tag "$previous" "$image"
-$compose up -d
-if wait_healthy; then
+if docker image tag "$previous" "$image" && $compose up -d && wait_healthy; then
   echo "Rolled back: the previous build is serving again." >&2
 else
   echo "Rollback failed too — the site is down. Check: $compose logs web" >&2
