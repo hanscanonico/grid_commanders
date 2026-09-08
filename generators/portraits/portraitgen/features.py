@@ -246,23 +246,64 @@ def brow(
 
 # --- nose --------------------------------------------------------------------
 
-_NOSES: dict[str, tuple[Point, ...]] = {
-    "broad": ((110.0, 121.0), (103.6, 130.0), (110.0, 136.0), (116.4, 130.0)),
-    "hook": ((111.2, 116.0), (116.4, 126.8), (112.8, 132.8), (106.0, 132.0)),
-    "tick": ((110.0, 120.0), (107.0, 130.0), (110.0, 133.0), (114.0, 130.4)),
+# The midline every nose is built on, and how deep its underside runs: two
+# texels, so the darkest mark on the face holds the gauge on its own.
+NOSE_X = 110.0
+NOSE_UNDERSIDE = 4.0
+# Where a nose may start. It used to be drawn between 116 and 136 — the band the
+# brows occupy, a good ten texels above the eye line — and what that put on
+# twenty-two foreheads was a wrinkle, or a bindi, rather than a nose. It begins
+# below the eyes now, and this is the floor the suite holds it to.
+NOSE_TOP_FLOOR = EYE_LINE + 2.0
+
+
+@dataclass(frozen=True)
+class NoseShape:
+    """A nose as two marks under the eye line, and no line of its own.
+
+    A stroke down the bridge is one texel of a deep tone laid on a slope, which
+    is the mark the gauge exists to refuse. What is left is what a nose is at
+    this size: the plane the key does not reach, in the skin's shade rung, and
+    the bar of the tip's own underside in its deep one.
+    """
+
+    top: float
+    base: float
+    flank: float
+    wing: float
+
+
+_NOSES: dict[str, NoseShape] = {
+    "broad": NoseShape(top=147.0, base=156.0, flank=8.0, wing=7.0),
+    "hook": NoseShape(top=145.0, base=157.0, flank=7.0, wing=5.0),
+    "tick": NoseShape(top=149.0, base=155.0, flank=5.0, wing=5.0),
 }
 NOSE_KINDS = frozenset(_NOSES)
 
 
 def nose(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
-    """The nose's own line, over the flat plane the light leaves beside it."""
-    line = _NOSES[kind]
+    """The shadow plane beside the bridge, and the bar under the tip."""
+    shape = _NOSES[kind]
     frame = Frame.of(skull)
     # The light is fixed upper-left, so the plane the nose turns away from it is
     # the one to its right; it is a flat band of the skin's own shade tone.
-    plane = [line[0], line[-1], (line[0][0] + 4.0, line[0][1] + 3.0)]
+    plane = [
+        (NOSE_X, shape.top),
+        (NOSE_X + shape.flank, shape.base),
+        (NOSE_X, shape.base),
+    ]
     canvas.polygon(frame.path(plane), ramp.shade)
-    canvas.stroke(frame.path(line), INK_FEATURE, ramp.deep)
+    canvas.polygon(
+        frame.path(
+            [
+                (NOSE_X - shape.wing, shape.base),
+                (NOSE_X + shape.wing, shape.base),
+                (NOSE_X + shape.wing, shape.base + NOSE_UNDERSIDE),
+                (NOSE_X - shape.wing, shape.base + NOSE_UNDERSIDE),
+            ]
+        ),
+        ramp.deep,
+    )
 
 
 # --- mouth -------------------------------------------------------------------
@@ -332,6 +373,9 @@ _OPEN: dict[str, OpenMouth] = {
 }
 OPEN_MOUTH_KINDS = frozenset(_OPEN)
 MOUTH_KINDS = frozenset(_MOUTHS) | OPEN_MOUTH_KINDS
+# The highest row a mouth reaches, an open one's lip line: the ceiling a nose's
+# own underside has to end above, so the two never run into one mass.
+MOUTH_CEILING = min(shape.top for shape in _OPEN.values())
 
 
 def _mouth_half(eye: float) -> float:

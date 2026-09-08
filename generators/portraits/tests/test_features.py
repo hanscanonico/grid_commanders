@@ -210,6 +210,29 @@ class AnUnknownNameRaises(unittest.TestCase):
                 call()
 
 
+class TheNoseSitsUnderTheEyes(unittest.TestCase):
+    """N1: every nose was authored at brow height and read as a forehead mark.
+
+    Measured on the shape table rather than on the raster, because that is
+    where the mistake was: three glyphs drawn between 116 and 136 on a face
+    whose eyes sit on 142. The floor is the eye line plus a texel, so a nose
+    can never climb back over the brows it was tangled in.
+    """
+
+    def test_no_nose_starts_at_or_above_the_eye_line(self):
+        for kind, shape in sorted(features._NOSES.items()):
+            with self.subTest(nose=kind):
+                self.assertGreaterEqual(shape.top, features.NOSE_TOP_FLOOR)
+                self.assertGreater(shape.base, shape.top)
+
+    def test_every_nose_clears_the_mouth_it_sits_over(self):
+        for kind, shape in sorted(features._NOSES.items()):
+            with self.subTest(nose=kind):
+                self.assertLess(
+                    shape.base + features.NOSE_UNDERSIDE, features.MOUTH_CEILING
+                )
+
+
 class TheMouthCannotOutrankTheEyes(unittest.TestCase):
     """C13: an open mouth is a mouth, not a second eye socket.
 
