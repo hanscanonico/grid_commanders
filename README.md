@@ -519,6 +519,42 @@ edge and 16% of the picture's area, and it does not make the type's stems more e
 is texture art, where the fractional lattice leaves 1px slivers. Neither reading is worth the screen,
 so the desktop decision is repeated rather than reopened.
 
+## Web build
+
+`make export-web` writes the browser build into `build/web/` — `index.html`, `index.js`,
+`index.wasm`, `index.pck`, the audio worklet and the icons. It imports first, the way the mobile
+targets do, and the preset is committed as `export_presets.cfg` (`Web`). Machine setup is the 4.7.1
+export templates from the Android recipe above, nothing more. **Threads are off in the preset**: a
+single-threaded page needs no cross-origin-isolation headers, so any static server hosts it and iOS
+Safari runs it. **The PWA is off**, by measurement: Godot's service worker serves the engine and
+the pack cache-first once it holds them, so a returning player's first visit after a redeploy ran
+the old build — the preset's comment has the reading. `make serve-web` serves the folder at
+`http://127.0.0.1:8060/` for a local check.
+
+The mini PC runs it as a docker-compose stack under `deploy/web/`: an nginx container holding the
+export (`deploy/web/Dockerfile` exports inside the image, so the host needs Docker and nothing
+else) and a `cloudflared` tunnel in front of it. The recipe:
+
+```sh
+git clone <this repo> && cd grid_commanders
+# In Cloudflare Zero Trust: Networks → Tunnels → create one, add a public hostname
+# whose service is http://web:80, and copy the tunnel token.
+cp deploy/web/.env.example deploy/web/.env   # paste the token in
+deploy/web/deploy                             # git pull, build, up, wait for /healthz
+```
+
+`deploy/web/deploy --no-pull` rebuilds the checkout as it stands; `DEPLOY_REF=<sha>` pins a commit.
+`docker compose -f deploy/web/docker-compose.yml up -d web` brings up the server alone, without a
+token, on `127.0.0.1:8090`. If the existing stock_market tunnel should serve it instead, add a public
+hostname to that tunnel pointing at this stack's `web` service — the two only need to share a Docker
+network.
+
+What differs in a browser: audio starts on the first click, because the page cannot play sound before
+a gesture; saves, settings, campaign progress and editor maps live in the browser's own storage, not
+in a file on disk; the command-line flags do not exist there; the menu shows no Quit, since a tab
+cannot close itself; and a hidden tab pauses the game outright, because the browser stops drawing
+it — a computer turn that seemed to hang while you were away resumes when the tab is back.
+
 ## Main menu
 
 The game boots to the menu: pick a map, set the **seats**, pick a **Speed**,

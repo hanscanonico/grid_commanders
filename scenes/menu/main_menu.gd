@@ -164,7 +164,6 @@ func _ready() -> void:
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
 	_editor_button.pressed.connect(func() -> void: get_tree().change_scene_to_file(EDITOR_SCENE))
-	_quit_button.pressed.connect(get_tree().quit)
 	if _capture_driver.poses(MenuCaptureDriver.DEMO_SETUP_CONTEXT):
 		# The frame that photographs the dimmed Difficulty: a table of nothing but
 		# people has no computer to tune. Posed by seating everyone rather than by
@@ -509,10 +508,11 @@ func _build_action_stack() -> Control:
 	col.add_child(_press_start)
 	_motion.blink(self, _press_start)
 
-	# Pinned last: leaving is not one of the things this page offers, and a
-	# full-width row is what made it read as a button someone forgot to dress.
-	_quit_button = UiKit.text_link("Quit")
-	col.add_child(_quit_button)
+	# Pinned last: leaving is not what this page offers; a browser tab cannot leave.
+	if not OS.has_feature("web"):
+		_quit_button = UiKit.text_link("Quit")
+		col.add_child(_quit_button)
+		_quit_button.pressed.connect(get_tree().quit)
 	return col
 
 

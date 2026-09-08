@@ -1,0 +1,25 @@
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      # Host-local only, for curl checks and LAN debugging via SSH tunnel.
+      - "127.0.0.1:8090:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/healthz >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    # `:-` rather than `:?`: compose interpolates the whole file, so a required
+    # token would refuse `up -d web` too. A missing one fails here, visibly.
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      web:
+        condition: service_healthy

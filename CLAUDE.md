@@ -88,6 +88,7 @@ res://
 ├─ generators/ # Python pipelines: audio/, sprites/, portraits/ (make audio / tiles / portraits
 │             # install, make *-test gate them); .gdignore hides them from the engine
 ├─ docs/       # the instruments' committed records; how to author a campaign mission
+├─ deploy/     # the mini-PC hosting stack for the web build
 └─ tests/      # GUT tests — target the Node-free layers only (see Testing)
 ```
 

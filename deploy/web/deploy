@@ -1,0 +1,26 @@
+#!/bin/bash -e
+# Deploy the latest main to this machine (the self-hosted web build).
+# Usage: deploy/web/deploy [--no-pull]
+# DEPLOY_REF pins the commit to deploy; defaults to origin/main. Must be a
+# fast-forward of the current checkout.
+cd "$(dirname "$0")/../.."
+
+if [ "${1:-}" != "--no-pull" ]; then
+  git fetch origin
+  git merge --ff-only "${DEPLOY_REF:-origin/main}"
+fi
+
+compose="docker compose -f deploy/web/docker-compose.yml"
+$compose build web
+$compose up -d
+
+echo "Waiting for web to become healthy..."
+for _ in $(seq 1 30); do
+  if curl -fsS http://127.0.0.1:8090/healthz >/dev/null 2>&1; then
+    echo "Deployed and healthy."
+    exit 0
+  fi
+  sleep 2
+done
+echo "web did not become healthy within 60s — check: $compose logs web" >&2
+exit 1
