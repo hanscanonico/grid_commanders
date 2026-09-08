@@ -1,37 +1,17 @@
 """The minimum feature gauge: the smallest mark this grid is allowed to hold.
 
-A bust is 110 pixels wide and the board it sits beside draws nothing thinner
-than two texels. Every stroke in this package is authored in design units and
-divided onto the grid by `canvas.px`, so a detail the handoff drew at 220 can
-come out one texel across — and one texel of a detail tone, laid diagonally, is
-not a line. It is a dotted run of specks: a monocle chain, a headset cable, a
-row of stitching and a scatter of freckles all arrived that way.
+Nothing on a bust is thinner than two texels, because one texel of a detail
+tone laid diagonally is not a line — it is a dotted run of specks, which is how
+a monocle chain, a headset cable and a row of stitching all arrived.
 
-`GAUGE` is the answer, and it has two halves.
-
-**Authored**: a run that has to read as a line is drawn `Canvas.ribbon` rather
-than `Canvas.stroke` — two texels, a lit core against an inked edge — or it is
-cut. There is no third option, and the authored half is the whole of the rule:
-the measured half below cannot reach a continuous one-texel run, because
-quantising a band edge leaves such runs down every silhouette on the sheet and
-a bar that failed them would fail twenty-three busts drawn correctly. So a
-cable is kept off that list by being drawn as a ribbon, not by being measured
-— which is how the drone's tether stood as one texel of slate falling fifty
-down a slope until the round-2 review read it. What a stroke of a detail tone
-one texel wide is still allowed to be is a mark that is not a line: a lens
-glint, a ruled row of text on a ledger, the tick of an antenna.
-
-**Measured**: `despeckle` sweeps what the rasteriser left behind. Quantising a
-finished raster onto sixteen tones rounds an edge pixel by pixel, and a band
-that grazes a silhouette comes back as opaque flecks strung along it — the
-halo the review read as anti-aliasing residue. A cluster of one tone small
-enough to hold no `GAUGE`-square of its own, and no bigger than `MAX_ORPHAN`
-pixels, is that residue; it is repainted in whatever tone borders it most.
-
-Nothing here is a filter. There is no blur, no threshold on a distance and no
-new colour: an orphan takes a tone already touching it, so a despeckled raster
-is painted in the same sixteen the quantiser handed it, and two runs of it are
-the same bytes.
+The rule has an authored half and a measured one. **Authored**: a run that has
+to read as a line is drawn `Canvas.ribbon` — two texels, a lit core against an
+inked edge — or it is cut. That is the whole of it; a bar cannot measure it,
+because quantising a band edge leaves one-texel runs down every silhouette on
+the sheet. **Measured**: `despeckle` sweeps what the rasteriser left behind — a
+cluster too small to hold a `GAUGE`-square and no bigger than `MAX_ORPHAN`
+takes whichever tone borders it most. It invents no colour and settles to a
+fixed point, so two runs of it are the same bytes.
 """
 
 from __future__ import annotations

@@ -238,27 +238,13 @@ GUNMETAL_RAMP: Ramp6 = build_ramp(
 
 # --- where a board ramp does not serve a bust --------------------------------
 #
-# `RAMPS` above is the board's, rung for rung, and stays that way
-# (`tests/test_palette_mirror.py`). Two of the six rows are authored for a
-# surface a bust is not, and each is given exactly the rungs it is short of.
-#
-# **Gold.** The Gilded Concord's ramp sits a band under the other three
-# chromatic rows on purpose (`spritegen.palette`, `_GOLD_L`): its token is a
-# LIT plane, and a row anchored at L190 would put its own top plane over the
-# terrain ceiling on every roof it owns. The board reads gold off the hue and
-# the rim; the chrome wears the token whole. A coat is neither. Painted on that
-# ramp a general's cloth is body L104 and top L136 — olive — and two of the
-# three Gilded generals lost the colour they are named for. So the three rungs
-# the figure is lit in come off the funds gold, on a ladder of a bust's own.
-#
-# **Iron.** The Iron Dominion's ramp is the inverted one: near-black panels
-# jumping to light steel. The window field is the shadow rung on every army
-# (`backdrop.FIELD_SLOT`), which buys a chromatic row 30-50 luma of separation
-# from the coat in front of it and buys Iron 80 — from the wrong side. At L49
-# it is also under every dark cap and every dark skin on the sheet, which is
-# how three Iron faces came out as one black blob at chip size. Its field rung
-# alone comes up to where the others sit; the coat, the panels and the rim are
-# the board's.
+# `RAMPS` above is the board's rung for rung and stays that way
+# (`tests/test_palette_mirror.py`). Four rungs across two rows are not, because
+# a bust asks of them what the board never did: gold's three lit rungs come off
+# the funds gold, since the Gilded ramp is authored a band low for a roof and a
+# coat painted on it is olive, and Iron's field rung comes up to where every
+# other army's sits, since Iron's ramp is the inverted one and a window at L49
+# is under every dark cap and every dark skin on the sheet.
 ACCENT_BASE: RGB = _hex("e9c928")
 ACCENT_RAMP: Ramp6 = build_ramp(ACCENT_BASE, (20.0, 46.0, 70.0, 150.0, 186.0, 225.0))
 IRON_FIELD: RGB = _shape(_hex("79838d"), S_SHADOW, 74.0)
