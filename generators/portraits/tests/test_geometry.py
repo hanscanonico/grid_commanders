@@ -60,7 +60,7 @@ def _mean_luminance(image: Image.Image, patch: tuple[int, int, int, int]) -> flo
 
 
 def _skin_ramp() -> light.Ramp:
-    return light.build_ramp(SKIN, rim_hue=light.faction_ramp("meridian").rim)
+    return light.build_ramp(SKIN)
 
 
 def _tones(ramp: light.Ramp) -> set[tuple[int, ...]]:
@@ -133,8 +133,8 @@ class OneSun(unittest.TestCase):
 
 
 class TheShadowFallsOneWay(unittest.TestCase):
-    """The two bands that read the key read it the same way round: away from
-    the sun. A block is enough to say which side of a shape each landed on."""
+    """The occlusion band reads the key the one way round: away from the sun.
+    A block is enough to say which side of a shape it landed on."""
 
     def _block(self) -> Image.Image:
         layer = Canvas((60, 60), 1)
@@ -147,13 +147,6 @@ class TheShadowFallsOneWay(unittest.TestCase):
         self.assertEqual(band.getpixel((30, 51)), 255)
         self.assertEqual(band.getpixel((8, 30)), 0)
         self.assertEqual(band.getpixel((30, 8)), 0)
-
-    def test_the_rim_runs_along_the_shadow_side_edge(self):
-        alpha = light.rim_light(self._block(), _skin_ramp(), weight=2.0).getchannel("A")
-        self.assertEqual(alpha.getpixel((48, 30)), 255)
-        self.assertEqual(alpha.getpixel((30, 48)), 255)
-        self.assertEqual(alpha.getpixel((10, 30)), 0)
-        self.assertEqual(alpha.getpixel((30, 10)), 0)
 
 
 def _nonzero(image: Image.Image, *, invert: bool = False) -> Image.Image:
@@ -172,9 +165,12 @@ def _skin_luminance(patch: Image.Image, tones: set[tuple[int, ...]]) -> float:
 
 class FourFlatBands(unittest.TestCase):
     def test_every_band_of_the_ramp_is_painted(self):
+        """The four the model names, and only those: the figure carries no rim
+        band any more (see `light`), so a fifth tone on a head would be one
+        this file cannot account for."""
         ramp = _skin_ramp()
         painted = {colour: count for count, colour in _colours(bust(ROW[0][1]))}
-        for band in (*light.BANDS, "rim"):
+        for band in light.BANDS:
             with self.subTest(band=band):
                 self.assertIn((*getattr(ramp, band), 255), painted)
 

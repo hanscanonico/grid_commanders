@@ -65,8 +65,6 @@ EAR_LEFT, EAR_RIGHT, EAR_Y, EAR_R = 62.0, 158.0, 144.0, 10.0
 # The hair fringe and the collar are the same pass at their own layers.
 JAW_DEPTH = 5.0
 # The rim band, and how far in under the silhouette ink it sits.
-RIM_WEIGHT = 2.5
-RIM_INSET = INK_SILHOUETTE / 2.0
 
 # Steps a quadratic is flattened into. Twelve is under a portrait pixel per
 # step on the longest curve here at the working supersample.
@@ -197,15 +195,15 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
 
     Order is the light's: the parts behind the face first, each inked as it is
     laid down, then the face, then the two bands the key writes on it, then
-    what the head occludes, then the rim inside the ink. The two bands and the
-    occlusion are painted through the face's own mask, so a shade can never
-    run off the cheek onto the field. Nothing here is a wash over a fill —
-    every mark is one of the ramp's named tones.
+    what the head occludes. The two bands and the occlusion are painted through
+    the face's own mask, so a shade can never run off the cheek onto the field.
+    Nothing here is a wash over a fill — every mark is one of the ramp's named
+    tones, and there is no kicker inside the ink (see `light`).
 
     `mirrored` pre-flips the light for a layer the pose is about to turn over:
     the two bands are placed on the other side of the face and the occlusion
-    and the rim step the other way in x, so that once the group is flipped they
-    land on the screen's shadow side like every unmirrored bust's.
+    steps the other way in x, so that once the group is flipped they land on
+    the screen's shadow side like every unmirrored bust's.
     """
     skin = canvas.blank()
     skin.polygon(neck(skull), ramp.shade)
@@ -243,16 +241,6 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
     skin.image.paste(_flat(skin, ramp.deep), (0, 0), under_jaw)
 
     skin.stroke(face, INK_SILHOUETTE, (*INK, 255), closed=True)
-    skin.image.alpha_composite(
-        light.rim_light(
-            skin.silhouette(),
-            ramp,
-            weight=RIM_WEIGHT,
-            inset=RIM_INSET,
-            scale=canvas.scale,
-            mirrored=mirrored,
-        )
-    )
     canvas.compose(skin)
 
 

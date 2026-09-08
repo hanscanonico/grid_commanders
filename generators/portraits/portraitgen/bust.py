@@ -14,6 +14,12 @@ are used, so no libm's cosine can move an edge by a pixel between two machines,
 and it is sampled nearest at 3x — the downsample is still the only place a tone
 is blended, which is what keeps a raster inside its colour budget.
 
+**Nothing under the gauge survives the bake.** The last thing `paint` does is
+sweep the quantised raster for clusters too small to be marks (`gauge.despeckle`)
+— the opaque flecks a band leaves strung along a silhouette once every pixel of
+it has been rounded onto sixteen tones. What the sweep takes was never authored;
+what was authored is drawn to the gauge in the first place.
+
 **A prop stays inside the frame the pose would push it out of.** `props.py`
 states its bleed line in portrait pixels, and the zoom is applied after it, so
 the limit can only be kept here: a prop whose posed corner would cross the line
@@ -36,7 +42,7 @@ from dataclasses import dataclass
 
 from PIL import Image
 
-from . import backdrop, features, hair, head, light, props, roster, uniform
+from . import backdrop, features, gauge, hair, head, light, props, roster, uniform
 from .canvas import BUST_DIVISOR, CAST_TONE, CHIP_DIVISOR, Canvas, face_box
 from .palette import Faction, bust_palette, faction_by_key, quantise
 from .roster import EmptySeat, Face
@@ -216,13 +222,20 @@ def _walked(layer: Canvas, by: int) -> Canvas:
     return moved
 
 
-def _face_group(face: Face, skin: light.Ramp, mane: light.Ramp, divisor: int) -> Canvas:
+def _face_group(
+    face: Face, skin: light.Ramp, mane: light.Ramp, cloth: light.Ramp, divisor: int
+) -> Canvas:
     """Everything above the collar: the head, its features and its hair over."""
     group = Canvas(divisor=divisor)
     head.draw(group, face.head, skin, mirrored=face.pose[2])
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
-    tint = _faction(face).body
+    # Headwear cut out of uniform cloth wears the coat's own rung rather than
+    # the raw theme colour, which the quantiser had to round onto one anyway.
+    # On Iron the two rounded apart: the field rung and the theme colour landed
+    # on the same tone, and a dark cap over a dark head disappeared into the
+    # window behind it at chip size.
+    tint = cloth.base
     for worn in (face.acc, face.acc2):
         features.accessory(group, face.head, worn, tint=tint)
     covered = features.covered_eye(face.acc)
@@ -245,8 +258,8 @@ def _general(face: Face, divisor: int) -> Canvas:
     """One general's figure, unposed: the five layers and which of them turn."""
     army = _faction(face)
     cloth = _cloth(army)
-    skin = light.build_ramp(head.SKIN_BASES[face.skin], rim_hue=cloth.rim)
-    mane = hair.ramp_for(face.hair, rim=cloth.rim)
+    skin = light.build_ramp(head.SKIN_BASES[face.skin])
+    mane = hair.ramp_for(face.hair)
 
     behind_prop, front_prop = _prop_layers(face, army, cloth, divisor)
     figure = Canvas(divisor=divisor)
@@ -261,7 +274,7 @@ def _general(face: Face, divisor: int) -> Canvas:
     if face.pip:
         uniform.pip(dress, cloth)
 
-    above = _face_group(face, skin, mane, divisor)
+    above = _face_group(face, skin, mane, cloth, divisor)
     if face.pose[2]:
         behind, above = _flipped(behind), _flipped(above)
 
@@ -302,10 +315,8 @@ def palette_of(spec: Face | EmptySeat) -> tuple[tuple[int, int, int], ...]:
     """The sixteen tones this bust is painted in, before a pixel is drawn."""
     army = _army_of(spec)
     if isinstance(spec, Face):
-        skin = light.build_ramp(
-            head.SKIN_BASES[spec.skin], rim_hue=_cloth(army).rim
-        ).six
-        mane = hair.ramp_for(spec.hair, rim=_cloth(army).rim).six
+        skin = light.build_ramp(head.SKIN_BASES[spec.skin]).six
+        mane = hair.ramp_for(spec.hair).six
     else:
         skin = mane = _cloth(army).six
     return bust_palette(army.key, skin, mane)
@@ -335,7 +346,9 @@ def paint(
     if cast:
         sheet.cast_shadow(figure)
     sheet.compose(figure)
-    return quantise(sheet.resolve(), palette_of(spec), shadow=CAST_TONE)
+    return gauge.despeckle(
+        quantise(sheet.resolve(), palette_of(spec), shadow=CAST_TONE)
+    )
 
 
 def chip(spec: Face | EmptySeat) -> Image.Image:

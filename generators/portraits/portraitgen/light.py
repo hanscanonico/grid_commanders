@@ -1,4 +1,4 @@
-"""The one light: a fixed key direction, a per-material ramp, a rim, an AO pass.
+"""The one light: a fixed key direction, a per-material ramp, an AO pass.
 
 The sheet is lit from the upper left and a mirrored pose flips geometry only, so
 the direction is stated once, here, and never taken from a face's own spec.
@@ -13,9 +13,19 @@ shadow bands and toward the sun in the lit one, the shadow bands mixed toward a
 single cool ambient. Six literal hexes per material drift into the same hue at
 six brightnesses, which is the flattest a ramp can be.
 
-Nothing here blurs. The occlusion band and the rim band are both hard offsets of
-a mask, because the design system's shadows are `4px 4px 0` with zero blur and a
-gradient is the one thing this style does not own.
+Nothing here blurs. The occlusion band is a hard offset of a mask, because the
+design system's shadows are `4px 4px 0` with zero blur and a gradient is the one
+thing this style does not own.
+
+**There is no rim band on the figure.** There was: the silhouette minus a copy
+of itself stepped toward the key, in the army's own rim rung, walked one texel
+in under the ink. On a 110-pixel bust that is a one-texel run of a colour the
+face does not own, laid between a two-texel outline and the cheek — under the
+gauge (`gauge.GAUGE`) in width and alien in hue, and what the review read as
+opaque fleck halos strung along five silhouettes. The form is carried by the
+four bands and the ink instead. The coat keeps a kicker because it can afford
+one: `uniform` draws it as a ribbon, two texels, in a rung the army already
+spends.
 """
 
 from __future__ import annotations
@@ -174,10 +184,17 @@ def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
     The ladder is this sheet's — a contour rung under four bands keyed off the
     base's own luma — and the shaper is the board's (`palette.build_ramp`), so
     a general's coat is lit by the same sun and mixed toward the same sky as
-    the tank outside the window. `rim_hue` is the faction's light tint where a
-    material takes the sheet's rim rather than its own, and it is taken whole
-    rather than re-keyed: a rim that is the army's own rim rung is a tone the
-    bust already spends, and one shaped near it is a seventeenth colour.
+    the tank outside the window.
+
+    **A material with no rim of its own kicks in its own lit rung.** Skin and
+    hair are given four and three rungs on a sixteen-tone bust and a rim is not
+    one of them, so the kicker along their shadow edge has to be a tone the
+    bust already spends. It used to be the army's: a near-white line down an
+    Iron general's jaw, a mint one down a Verdant general's neck — a hue the
+    face does not own, laid one texel from the ink that outlines the same edge,
+    which is the fleck halo the review read off five busts. `rim_hue` overrides
+    it where a material really does take a tint from elsewhere.
+
     Cached because a bust asks for the same handful of ladders on every layer
     it paints.
     """
@@ -185,8 +202,7 @@ def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
     rim_target = lum + (255.0 - lum) * _RIM_HEADROOM
     ladder = (*(min(lum * step, _LIT_CEILING) for step in _LADDER), rim_target)
     six = list(palette.build_ramp(base, ladder))
-    if rim_hue is not None:
-        six[palette.S_RIM] = rim_hue
+    six[palette.S_RIM] = rim_hue if rim_hue is not None else six[palette.S_TOP]
     return Ramp(tuple(six))
 
 
@@ -273,31 +289,3 @@ def occlusion(
     away = _step(mirrored)
     below = _shifted(occluder, away[0] * step, away[1] * step)
     return ImageChops.multiply(ImageChops.subtract(below, occluder), target)
-
-
-def rim_light(
-    silhouette: Image.Image,
-    ramp: Ramp,
-    *,
-    weight: float,
-    inset: float = 0.0,
-    scale: int = 1,
-    mirrored: bool = False,
-) -> Image.Image:
-    """The kicker along the shadow-side silhouette run, as an RGBA layer.
-
-    The band is the silhouette minus a copy of itself stepped toward the key,
-    which leaves exactly the run the key does not reach — the lower-right edge,
-    on every bust, because the light never mirrors with the pose. `inset` walks
-    the band in under the ink that outlines the same edge, so the rim reads as
-    light on the form rather than as a second outline.
-    """
-    step = max(1, round(weight * scale))
-    walked = round(inset * scale)
-    away = _step(mirrored)
-    outer = _shifted(silhouette, -away[0] * walked, -away[1] * walked)
-    inner = _shifted(outer, -away[0] * step, -away[1] * step)
-    band = ImageChops.subtract(outer, inner)
-    layer = Image.new("RGBA", silhouette.size, (0, 0, 0, 0))
-    layer.paste(Image.new("RGBA", silhouette.size, (*ramp.rim, 255)), (0, 0), band)
-    return layer

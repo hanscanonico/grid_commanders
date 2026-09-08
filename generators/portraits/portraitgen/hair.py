@@ -418,14 +418,14 @@ _LOBE_TAPER = 0.22
 SKIN_CONTRAST = 34.0
 
 
-def ramp_for(colour: str, *, rim: RGB | None = None) -> Ramp:
-    """The four tones a hair colour is painted in.
+def ramp_for(colour: str) -> Ramp:
+    """The tones a hair colour is painted in, its own lit rung as its kicker.
 
-    `rim` is the army's own rim rung, the way skin takes it: every kicker on a
-    bust is the one faction tone, so no material spends a seventeenth colour on
-    a light it shares.
+    Hair is given three rungs on a sixteen-tone bust and a rim is not one of
+    them, so `light.build_ramp` hands it back its own lit tone — see the rim
+    note there for why the army's rung is no longer what a mane kicks with.
     """
-    return light.build_ramp(HAIR_BASES[colour], rim_hue=rim)
+    return light.build_ramp(HAIR_BASES[colour])
 
 
 def mass_band(style: str, ramp: Ramp | None = None, skin: Ramp | None = None) -> str:
