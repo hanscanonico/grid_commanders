@@ -416,6 +416,23 @@ _LOBE_TAPER = 0.22
 # wearer instead: a style names the rung it wants, and a mass that would tie
 # with its own face takes the one below whatever it named.
 SKIN_CONTRAST = 34.0
+# The face a mass meets: the cheek in the skin's base rung always, and — for a
+# pale mass only — the forehead the fringe lays its shade rung across. Quill's
+# mane cleared the cheek by seventy and tied with her own fringe to within one,
+# which is the pale-on-pale the round-2 review read. A mass darker than
+# `PALE_HAIR` is not asked to clear the fringe: it is already the dark shape on
+# a lit forehead, and dropping it further is what turned a blonde brown.
+_CHEEK_BAND = "base"
+_FRINGE_BANDS = (_CHEEK_BAND, FRINGE_BAND)
+# Where a rung falls back to when it ties, in order. A mane drops as far as it
+# has to: one rung is enough for almost every wearer, and where it is not, the
+# alternative is a mass that reads as part of the head.
+_FALLBACK: dict[str, tuple[str, ...]] = {
+    "lit": ("lit", "base", "shade", "deep"),
+    "base": ("base", "shade", "deep"),
+    "shade": ("shade", "deep"),
+    "deep": ("deep",),
+}
 
 
 def ramp_for(colour: str) -> Ramp:
@@ -428,17 +445,30 @@ def ramp_for(colour: str) -> Ramp:
     return light.build_ramp(HAIR_BASES[colour])
 
 
+def _stands_off(tone: RGB, skin: Ramp) -> bool:
+    """Whether a tone clears `SKIN_CONTRAST` of every skin band it can meet."""
+    pale = light.luminance(tone) > PALE_HAIR
+    bands = _FRINGE_BANDS if pale else (_CHEEK_BAND,)
+    return all(
+        abs(light.luminance(tone) - light.luminance(skin.band(band))) >= SKIN_CONTRAST
+        for band in bands
+    )
+
+
 def mass_band(style: str, ramp: Ramp | None = None, skin: Ramp | None = None) -> str:
     """Which band of the ramp a style's mass takes. An unknown style raises.
 
-    The style's own rung, dropped to `shade` when the wearer's face is inside
-    `SKIN_CONTRAST` of it — `tests/test_contrast.py` is the measurement.
+    The style's own rung, stepped down `_FALLBACK` until it stands off both of
+    the skin bands it can border — `tests/test_contrast.py` is the measurement.
     """
     band = _STYLES[style].band
-    if ramp is None or skin is None or band != "base":
+    if ramp is None or skin is None:
         return band
-    apart = abs(light.luminance(ramp.base) - light.luminance(skin.base))
-    return "shade" if apart < SKIN_CONTRAST else band
+    steps = _FALLBACK[band]
+    for candidate in steps:
+        if _stands_off(ramp.band(candidate), skin):
+            return candidate
+    return steps[-1]
 
 
 def draw(
