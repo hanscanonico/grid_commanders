@@ -15,8 +15,10 @@ extends RefCounted
 ## line's bust and gap come out of the same measure, so a spoken block and a
 ## narrated paragraph read as one column.
 const WIDTH := 420
-## The square a speaker's bust is fitted into, beside their words.
-const BUST := 28
+## The square a speaker's bust is fitted into, beside their words: the face
+## chip's own size (`CommanderVisuals.FACE_SIZE`), so the chip is drawn one
+## screen pixel per texel, which is the whole point of baking one.
+const BUST := 31
 const _BUST_GAP := 6
 
 

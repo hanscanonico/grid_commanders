@@ -30,16 +30,17 @@ extends RefCounted
 ## on the lockup's own paper rather than on a faction colour.
 const NO_FIELD := Color(0, 0, 0, 0)
 
-## What a field does with a general's art. WHOLE_FITTED stands the drawing in the
-## field entire; WHOLE_COVERED fills the field with it and lets the edges go;
-## FACE shows `CommanderVisuals.face_for` instead. Derived from the field's shape
-## by `_crop_for` — never named by a caller.
-enum BustCrop { WHOLE_FITTED, WHOLE_COVERED, FACE }
+## What a field shows of a general: the whole bust, or the face chip
+## `CommanderVisuals.face_for` bakes for the fields too small for one. Derived
+## from the field's shape by `_crop_for` — never named by a caller. How the art
+## is *sized* is not a choice here any more: it is drawn at a whole-number scale
+## and clipped, which is `_place_bust`.
+enum BustCrop { WHOLE, FACE }
 
 ## The field height a whole bust needs. A portrait is a framed window with the head
-## about five eighths of the drawing tall, so fitted whole into a shorter field the
-## head lands under 40px — where two generals stop telling apart, which is what
-## CommanderVisuals.FACE_REGION exists for.
+## about five eighths of the drawing tall, so in a shorter square field the head
+## lands under 40px — where two generals stop telling apart, which is what the
+## baked face chip exists for.
 const _BUST_MIN_H := 64
 const _BUST_ART := &"Bust"
 
@@ -631,14 +632,10 @@ static func commander_bust(commander: CommanderType, size: Vector2, tint: Color)
 	art.name = _BUST_ART
 	art.texture_filter = CommanderVisuals.ART_FILTER
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	art.stretch_mode = (
-		TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		if _crop_for(size) == BustCrop.WHOLE_FITTED
-		else TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	)
-	art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art.stretch_mode = TextureRect.STRETCH_SCALE
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	field.add_child(art)
+	field.resized.connect(func() -> void: _place_bust(field))
 	bind_bust(field, commander, tint)
 	return field
 
@@ -653,6 +650,7 @@ static func bind_bust(bust: Panel, commander: CommanderType, tint: Color) -> voi
 		art.texture = CommanderVisuals.face_for(commander)
 	else:
 		art.texture = CommanderVisuals.portrait_for(commander)
+	_place_bust(bust)
 
 
 ## Waits a frame for a floating card to be laid out, then answers whether it is
@@ -686,25 +684,36 @@ static func _send_action(action: StringName) -> void:
 
 ## What a field of this shape shows of a general, and the one statement of it.
 ##
-## A field tall enough to hold the drawing stands it there whole — the portrait is
-## a framed window with the head breaking over its top edge, and filling a band
-## that wide can only cut that composition in half.
+## A field that names a square shorter than a bust is a chip: a bust drawn whole
+## in one leaves the head under 40px, where two generals stop telling apart, so it
+## shows the baked face chip instead.
 ##
-## A field that names a square shorter than a bust is a chip: fitted whole its head
-## lands under 40px, where two generals stop telling apart, so it shows the face
-## crop instead.
-##
-## A field that names a short *band*, or names no height at all and takes what a
-## container hands it, gets the drawing whole and covered. The face region is a
-## square, and covering a wide band with it magnifies a head past its own art;
-## covered whole is the reading the commander-select tile has always drawn (#358)
-## and this is where that stays said.
+## Everything else — a field tall enough for the drawing, a short band, or one
+## that names no height at all and takes what a container hands it — shows the
+## bust whole. `_place_bust` decides how much of it fits.
 static func _crop_for(size: Vector2) -> BustCrop:
 	if size.y >= _BUST_MIN_H:
-		return BustCrop.WHOLE_FITTED
+		return BustCrop.WHOLE
 	if size.y > 0.0 and size.x <= size.y:
 		return BustCrop.FACE
-	return BustCrop.WHOLE_COVERED
+	return BustCrop.WHOLE
+
+
+## The art at a rung of `CommanderVisuals.art_scale`, centred across the field and
+## hung from its top. Whole texels or nothing: this is pixel art now, and the one
+## thing a field may not do is show it at a fraction of a pixel. A field shorter
+## than the drawing therefore clips, and it clips the chest — the head is the part
+## every surface is showing a bust for.
+static func _place_bust(field: Panel) -> void:
+	var art := field.get_node_or_null(NodePath(_BUST_ART)) as TextureRect
+	if art == null or art.texture == null:
+		return
+	var drawn := Vector2i(art.texture.get_size())
+	art.size = Vector2(drawn * CommanderVisuals.art_scale(field.size, drawn))
+	art.position = Vector2(
+		roundf((field.size.x - art.size.x) * 0.5),
+		maxf(0.0, roundf((field.size.y - art.size.y) * 0.5))
+	)
 
 
 ## A micro-label carrying its group's explanation, added to `into` in place: shrunk

@@ -106,7 +106,7 @@ func _build() -> void:
 	rows.add_child(_field)
 
 	_emblem = TextureRect.new()
-	_emblem.texture_filter = CommanderVisuals.ART_FILTER
+	_emblem.texture_filter = CommanderVisuals.EMBLEM_FILTER
 	# IGNORE_SIZE, or the 64px source becomes the control's minimum and _EMBLEM_PX
 	# is clamped straight back up to it — which is how the badge has been drawing at
 	# three times its size, unnoticed while an opaque bust filled the field behind it.
