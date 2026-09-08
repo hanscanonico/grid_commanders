@@ -125,15 +125,17 @@ def _mass(canvas: Canvas, ramp: Ramp) -> None:
         (*ramp.lit, 255),
     )
     # The rim: the kicker along the lit run, and the one seam the cloth gets.
-    canvas.stroke(
+    # Both at the gauge — a coat seam and a kicker are the two longest runs on
+    # a bust, and one texel of either broke into dashes across the shoulder.
+    canvas.ribbon(
         [(12.0, 246.0), (22.0, 222.0), (48.0, 210.0), (66.0, 206.0)],
-        INK_DETAIL,
         (*ramp.rim, 255),
+        (*ramp.lit, 255),
     )
-    canvas.stroke(
+    canvas.ribbon(
         [(70.0, 214.0), (92.0, 238.0), (92.0, 268.0)],
-        INK_DETAIL,
         (*ramp.deep, 255),
+        (*ramp.shade, 255),
     )
     _ink(canvas, list(MASS), INK_SILHOUETTE, closed=True)
 
@@ -283,7 +285,7 @@ def _mapcase(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
         closed=True,
     )
     canvas.stroke([(150.0, 236.0), (186.0, 236.0)], INK_DETAIL, (*faction.body_dk, 255))
-    canvas.stroke([(130.0, 208.0), (166.0, 228.0)], INK_DETAIL, (*ramp.deep, 255))
+    canvas.ribbon([(130.0, 208.0), (166.0, 228.0)], (*ramp.deep, 255), (*INK, 255))
 
 
 def _loops(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
@@ -310,10 +312,10 @@ def _boards(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _lanyard(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    canvas.stroke(
+    canvas.ribbon(
         [(88.0, 208.0), (72.0, 246.0), (96.0, 262.0), (128.0, 240.0), (130.0, 208.0)],
-        INK_DETAIL,
         (*GOLD, 255),
+        (*INK, 255),
     )
     canvas.rect((88.0, 254.0, 104.0, 268.0), (*ramp.deep, 255))
 
@@ -322,11 +324,14 @@ def _epaulette(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     pad: list[Point] = [(18.0, 224.0), (70.0, 210.0), (74.0, 226.0), (24.0, 240.0)]
     canvas.polygon(pad, (*faction.body_dk, 255))
     _ink(canvas, pad, INK_DETAIL, closed=True)
+    # Four bullion strands, each a ribbon: at a detail weight they were one
+    # texel of gold on a diagonal, which is the row of ticks the review found
+    # hanging off Marr's shoulder.
     for i in range(4):
-        canvas.stroke(
+        canvas.ribbon(
             [(26.0 + i * 12.0, 236.0), (30.0 + i * 12.0, 252.0)],
-            INK_DETAIL,
             (*GOLD, 255),
+            (*INK, 255),
         )
 
 
@@ -347,7 +352,7 @@ def _crossbelt(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
         ((66.0, 208.0), (168.0, 268.0)),
         ((154.0, 208.0), (52.0, 268.0)),
     ):
-        canvas.stroke([first, second], INK_FEATURE, (*ramp.deep, 255))
+        canvas.ribbon([first, second], (*ramp.deep, 255), (*INK, 255))
     _stud(canvas, (110.0, 238.0), 7.0, GOLD)
 
 

@@ -50,6 +50,9 @@ KIT: RGB = (43, 47, 52)
 GLASS: RGB = (188, 214, 224)
 GOLD: RGB = (224, 169, 46)
 SCAR: RGB = (181, 107, 90)
+# The cut's own shadow side: a scar is a ribbon here, and a ribbon owes its
+# edge a tone a shade under its core.
+SCAR_DEEP: RGB = (126, 72, 62)
 
 # Half a lens, squared on the eye line: what survives the mip is the square,
 # not the frame drawn around it.
@@ -198,12 +201,15 @@ class BrowShape:
     thickness: float
 
 
+# Thickness is in design units and a brow tapers to 40% of it at the outer end,
+# so anything under five came off the grid as a one-texel line that broke where
+# it leaned. Five is the floor here for that reason, not for a drawing one.
 _BROWS: dict[str, BrowShape] = {
-    "angled": BrowShape(125.0, 128.5, 132.0, 11.0, 4.0),
-    "cocked": BrowShape(124.0, 119.0, 124.0, 10.0, 3.5),
-    "heavy": BrowShape(128.0, 131.0, 134.0, 11.0, 6.0),
-    "raised": BrowShape(124.0, 119.0, 124.0, 10.0, 3.5),
-    "soft": BrowShape(127.0, 123.0, 127.0, 10.0, 3.5),
+    "angled": BrowShape(125.0, 128.5, 132.0, 11.0, 5.5),
+    "cocked": BrowShape(124.0, 119.0, 124.0, 10.0, 5.0),
+    "heavy": BrowShape(128.0, 131.0, 134.0, 11.0, 6.5),
+    "raised": BrowShape(124.0, 119.0, 124.0, 10.0, 5.0),
+    "soft": BrowShape(127.0, 123.0, 127.0, 10.0, 5.0),
 }
 BROW_KINDS = frozenset(_BROWS)
 
@@ -211,7 +217,14 @@ BROW_KINDS = frozenset(_BROWS)
 def brow(
     canvas: Canvas, skull: Skull, kind: str, ramp: Ramp, *, covered: int | None = None
 ) -> None:
-    """A tapered mass per eye, in the hair ramp, under a deep-tone edge."""
+    """A tapered mass per eye, in one rung of the hair ramp and no more.
+
+    The mass used to carry a deep-tone hairline along its own top edge. A brow
+    is between two and three texels thick here, so that line was one texel of a
+    detail tone over a taper — and it came off the rasteriser as the string of
+    ink fragments the review read over Vale's and Draeg's sockets. The shade
+    rung the mass is painted in is what the hairline was there to buy.
+    """
     shape = _BROWS[kind]
     frame = Frame.of(skull)
     for side, x in enumerate(_eye_xs(skull)):
@@ -228,8 +241,7 @@ def brow(
             (x, worn.middle + worn.thickness),
             (outer, worn.outer + worn.thickness * 0.4),
         ]
-        canvas.polygon(frame.path([*top, *bottom]), ramp.base)
-        canvas.stroke(frame.path(top), INK_DETAIL, ramp.deep)
+        canvas.polygon(frame.path([*top, *bottom]), ramp.shade)
 
 
 # --- nose --------------------------------------------------------------------
@@ -419,12 +431,23 @@ _STUBBLE: tuple[Point, ...] = (
     (80.0, 184.0),
 )
 _MUSTACHE: tuple[Point, ...] = (
-    (92.0, 160.0),
-    (110.0, 156.0),
-    (128.0, 160.0),
-    (120.0, 168.0),
-    (110.0, 166.0),
-    (100.0, 168.0),
+    (92.0, 158.0),
+    (110.0, 154.0),
+    (128.0, 158.0),
+    (128.0, 166.0),
+    (110.0, 164.0),
+    (92.0, 166.0),
+)
+# The band the light leaves under it, as a band rather than as a line: the
+# lower edge used to be a one-texel run of the deep tone along a shallow
+# diagonal, which is the smudge the review read on Vale's lip.
+_MUSTACHE_SHADE: tuple[Point, ...] = (
+    (92.0, 162.0),
+    (110.0, 160.0),
+    (128.0, 162.0),
+    (128.0, 166.0),
+    (110.0, 164.0),
+    (92.0, 166.0),
 )
 # The band the light leaves along a beard's shadow side, and the one it lights.
 _BEARD_DEEP: tuple[Point, ...] = (
@@ -455,7 +478,7 @@ def _stubble(canvas: Canvas, frame: Frame, ramp: Ramp) -> None:
 
 def _mustache(canvas: Canvas, frame: Frame, ramp: Ramp) -> None:
     canvas.polygon(frame.path(_MUSTACHE), ramp.base)
-    canvas.stroke(frame.path(_MUSTACHE[3:]), INK_DETAIL, ramp.deep)
+    canvas.polygon(frame.path(_MUSTACHE_SHADE), ramp.shade)
 
 
 def _bare(canvas: Canvas, frame: Frame, ramp: Ramp) -> None:
@@ -597,11 +620,12 @@ _PATCH_PLATE: tuple[Point, ...] = (
     (0.0, 158.0),
     (-14.0, 151.0),
 )
-_SCAR_CUTS: tuple[tuple[Point, ...], ...] = (
-    ((134.0, 126.0), (142.0, 148.0)),
-    ((130.0, 132.0), (136.0, 134.0)),
-    ((134.0, 140.0), (140.0, 142.0)),
-)
+# One cut, run at the gauge and down the cheek rather than across the socket.
+# The two cross-ticks it used to carry were four design units long — one texel
+# — and three one-texel marks laid over a brow are the cluster of ink fragments
+# the review found orbiting Vale's eye. A scar reads as a scar beside the eye;
+# on top of it, it reads as damage to the drawing.
+_SCAR_CUT: tuple[Point, ...] = ((140.0, 134.0), (148.0, 164.0))
 
 
 def _worn(points: tuple[Point, ...]) -> Callable[..., list[Point]]:
@@ -703,8 +727,7 @@ def _eyepatch(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Poi
 
 
 def _scar(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    for cut in _SCAR_CUTS:
-        canvas.stroke(frame.path(cut), INK_DETAIL, SCAR)
+    canvas.ribbon(frame.path(_SCAR_CUT), SCAR, SCAR_DEEP)
     return []
 
 
@@ -714,9 +737,7 @@ def _headset(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Poin
     cup = frame.path(_HEADSET_CUP)
     canvas.polygon(cup, tint)
     canvas.stroke(cup, INK_FEATURE, INK, closed=True)
-    canvas.stroke(
-        frame.path([(56.0, 148.0), (48.0, 164.0), (80.0, 168.0)]), INK_DETAIL, INK
-    )
+    canvas.ribbon(frame.path([(56.0, 148.0), (48.0, 166.0), (80.0, 170.0)]), KIT, INK)
     _ringed_ellipse(canvas, frame, (82.0, 169.0), (4.8, 4.8), tint, INK_DETAIL)
     return [*band, *cup]
 
@@ -770,8 +791,22 @@ def earring(canvas: Canvas, skull: Skull) -> None:
     _ringed_ellipse(canvas, frame, (x, y + radius + 3.0), (3.8, 3.8), GOLD, INK_DETAIL)
 
 
+# A freckle at the gauge: a square of skin shade, one per cheek, out where the
+# cheekbone turns. Three dots of a texel and a half apiece — what this drew —
+# quantise into a scatter of specks rather than into freckles.
+FRECKLE_AT = (-3.0, 159.0)
+FRECKLE_HALF = 2.2
+
+
 def freckles(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
     frame = Frame.of(skull)
-    for x in _eye_xs(skull):
-        for dx, dy in ((-6.0, 158.0), (0.0, 162.0), (6.0, 158.0)):
-            canvas.ellipse(frame.ellipse(x + dx, dy, 1.8, 1.8), ramp.shade)
+    dx, dy = FRECKLE_AT
+    for side, x in enumerate(_eye_xs(skull)):
+        outward = -1.0 if side == 0 else 1.0
+        canvas.rect(
+            (
+                *frame.at(x + outward * dx - FRECKLE_HALF, dy - FRECKLE_HALF),
+                *frame.at(x + outward * dx + FRECKLE_HALF, dy + FRECKLE_HALF),
+            ),
+            ramp.shade,
+        )

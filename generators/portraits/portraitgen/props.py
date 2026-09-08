@@ -154,11 +154,14 @@ def _sleeve(canvas: Canvas, cuff: Point, faction: Faction, ramp: Ramp) -> None:
 
 
 def _cord(canvas: Canvas, path: Iterable[Point], colour: RGB) -> None:
-    """One rope of a lanyard, a cable or a sling: ink under a lighter core, so a
-    cord thin enough to read as rope still carries the sheet's outline."""
-    run = list(path)
-    canvas.stroke(run, INK_FEATURE, (*INK, 255))
-    canvas.stroke(run, INK_DETAIL, (*colour, 255))
+    """One rope of a lanyard, a cable or a sling, drawn to the gauge.
+
+    Two texels: the core over the path, the ink one texel toward the shadow.
+    Stroking both weights down the same path — what this did — put the core
+    over every pixel of the ink and left a bare one-texel run, which is the
+    dotted chain the review read off Rowan's monocle and Flux's headset.
+    """
+    canvas.ribbon(list(path), (*colour, 255), (*INK, 255))
 
 
 # --- the five shouldered objects, drawn behind the figure ---------------------
