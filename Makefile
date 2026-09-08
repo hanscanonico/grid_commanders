@@ -628,11 +628,16 @@ export-ios: import
 # it — serve-web is Python's, deploy/web/ is the nginx one the mini PC runs.
 # Machine setup is the 4.7.1 export templates from the Android recipe, nothing
 # more. README.md "Web build" is the recipe.
+#
+# The layout is production's — landing page at the root, game under play/ — so a
+# local check answers for the real URLs.
 export-web: import
 	$(call require-godot)
-	@mkdir -p $(WEB_DIR)
-	$(GODOT) --headless --path . --export-release "Web" $(CURDIR)/$(WEB_DIR)/index.html
-	@ls -l $(WEB_DIR)
+	@mkdir -p $(WEB_DIR)/play
+	$(GODOT) --headless --path . --export-release "Web" $(CURDIR)/$(WEB_DIR)/play/index.html
+	cp -r deploy/web/site/* $(WEB_DIR)/
+	tools/check_web_site.py $(WEB_DIR)
+	@ls -l $(WEB_DIR) $(WEB_DIR)/play
 
 serve-web:
 	@test -f $(WEB_DIR)/index.html || { echo "$@: run make export-web first" >&2; exit 1; }
