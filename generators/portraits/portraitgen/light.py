@@ -50,11 +50,6 @@ SHADOW_STEP: tuple[int, int] = (-1 if KEY[0] > 0 else 1, -1 if KEY[1] > 0 else 1
 # palette discipline: a tone is chosen from a ramp, never mixed at the call.
 BANDS = ("deep", "shade", "base", "lit")
 
-# The sky every shadow on the sheet is lit by. The board's own
-# (`palette.AMBIENT`): one scene lights the busts and the tiles, so a portrait's
-# shadow is the board's shadow colour.
-AMBIENT: RGB = palette.AMBIENT
-
 # The value ladder, as multiples of the base colour's own luminance. The first
 # rung is the contour the board's own ramps open on; the four after it are
 # BANDS, and the rim closes the ladder at its own headroom.
@@ -172,11 +167,6 @@ class Ramp:
         return getattr(self, name)
 
 
-def luminance(colour: RGB) -> float:
-    """Rec. 601 luma, the scale the ladder is authored on."""
-    return palette.luminance(colour)
-
-
 @lru_cache(maxsize=None)
 def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
     """A material's rungs from its base colour, rim included.
@@ -198,7 +188,7 @@ def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
     Cached because a bust asks for the same handful of ladders on every layer
     it paints.
     """
-    lum = luminance(base)
+    lum = palette.luminance(base)
     rim_target = lum + (255.0 - lum) * _RIM_HEADROOM
     ladder = (*(min(lum * step, _LIT_CEILING) for step in _LADDER), rim_target)
     six = list(palette.build_ramp(base, ladder))
@@ -272,7 +262,7 @@ def occlusion(
     target: Image.Image,
     *,
     depth: float,
-    scale: int = 1,
+    divisor: int = 1,
     mirrored: bool = False,
 ) -> Image.Image:
     """The AO pass: where an occluder's own shape lands on what is under it.
@@ -282,10 +272,11 @@ def occlusion(
     the occluder itself. The caller paints the target's `deep` tone through the
     mask this returns, so the band stays a named tone rather than a wash.
 
-    `scale` is the working supersample the two masks were drawn at, so `depth`
-    is stated in portrait pixels at every call site.
+    `depth` is stated in design units like every other geometry in this package;
+    `divisor` is the grid the two masks were drawn on (`Canvas.divisor`), which
+    is what turns it into whole pixels on that grid.
     """
-    step = max(1, round(depth * scale))
+    step = max(1, round(depth / divisor))
     away = _step(mirrored)
     below = _shifted(occluder, away[0] * step, away[1] * step)
     return ImageChops.multiply(ImageChops.subtract(below, occluder), target)

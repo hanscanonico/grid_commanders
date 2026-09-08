@@ -1,35 +1,18 @@
 """The drawing surface every painted layer goes through.
 
-A bust is **pixel art**: it is rasterised straight onto its native 110x134 grid,
-one mark per whole pixel, with no supersample and no downsample anywhere. Every
-module states its geometry in the same **design units** it always has — the
-220x268 space the handoff's viewBox doubles — and this is the one place a design
-unit becomes a native pixel, by `DIVISOR`.
+Every module states its geometry in design units — the 220x268 space the
+handoff's viewBox doubles — and this is the one place a design unit becomes a
+native pixel, by `divisor`: `BUST_DIVISOR` for the bust, `CHIP_DIVISOR` for the
+face chip, so a chip is the same drawing rasterised coarser rather than the bust
+resampled down.
 
-Two grids come out of that one authoring space. The bust divides by
-`BUST_DIVISOR`, the face chip a surface too small for a bust draws divides by
-`CHIP_DIVISOR`: the same geometry rasterised coarser, never the bust resampled
-down. A chip is therefore as hard-edged as the bust is, and both are drawn
-nearest by the engine (`CommanderVisuals.ART_FILTER`).
-
-Determinism is the reason geometry is rounded in exactly one place (`px`):
-float control points coerced to ints implicitly could move an edge by a pixel
-between two libms. It is the reason a stroke walks its own pixels (`_walk`)
-instead of handing Pillow a width — that path decides its corners in C off a
-libm `hypot`, and a diagonal landed a pixel apart on x86-64 and arm. Every
-number this module gives a rasteriser is an integer on the native grid. Nothing
-here reads a clock, an environment variable or a random number.
-
-Ink is a hierarchy of three weights and nothing else, so a scar can never come
-out as heavy as a jaw; `stroke` refuses any other width rather than drawing it.
-At this grid the hierarchy is a ceiling rather than three distinct widths — a
-silhouette is two native pixels and both lighter weights are one, which is as
-many as a 110px-wide bust has room for.
-
-One texel is under the gauge (`gauge.GAUGE`), which is why `ribbon` sits beside
-`stroke`: a run that has to read as a line — a chain, a cable, a strip of
-stitching — is drawn two texels across, a core against an inked edge, because a
-one-texel diagonal comes out of the rasteriser as a dotted line of specks.
+Two invariants hold the rest up. Geometry is rounded in exactly one place
+(`px`), and a stroke walks its own pixels (`_walk`) rather than handing Pillow a
+width, because that path works its corners out off a libm `hypot` and a diagonal
+landed a pixel apart on x86-64 and arm. Ink is three weights and nothing else —
+`stroke` refuses any other — and a run that has to read as a line is drawn
+`ribbon` instead, two texels across: one texel is under the gauge
+(`gauge.GAUGE`) and rasterises as a dotted run of specks.
 """
 
 from __future__ import annotations
@@ -150,12 +133,6 @@ class Canvas:
         self.image = Image.new("RGBA", native_size(size, divisor), (0, 0, 0, 0))
         self._draw = ImageDraw.Draw(self.image)
 
-    @property
-    def scale(self) -> float:
-        """Design units to native pixels, for the light bands stated in design
-        units at their call sites."""
-        return 1.0 / self.divisor
-
     def blank(self) -> Canvas:
         """An empty layer on this canvas's own grid."""
         return Canvas(self.size, self.divisor)
@@ -175,9 +152,6 @@ class Canvas:
         x0, y0, x1, y1 = box
         left, top = self.px(x0), self.px(y0)
         return (left, top, max(left, self.px(x1) - 1), max(top, self.px(y1) - 1))
-
-    def _pen(self, weight: float) -> int:
-        return pen(weight, self.divisor)
 
     def fill(self, colour: RGB | RGBA) -> None:
         self._draw.rectangle((0, 0, *self.image.size), fill=colour)
@@ -236,16 +210,16 @@ class Canvas:
         path = self._points(points)
         if closed:
             path = [*path, path[0]]
-        pen = self._pen(weight)
-        offset = (pen - 1) // 2
+        stamp = pen(weight, self.divisor)
+        offset = (stamp - 1) // 2
         for start, end in zip(path, path[1:]):
             for x, y in _walk(start, end):
                 self._draw.rectangle(
                     (
                         x - offset,
                         y - offset,
-                        x - offset + pen - 1,
-                        y - offset + pen - 1,
+                        x - offset + stamp - 1,
+                        y - offset + stamp - 1,
                     ),
                     fill=colour,
                 )
@@ -254,9 +228,8 @@ class Canvas:
     def texel(self) -> float:
         """One native pixel, in the design units every call site speaks in.
 
-        The gauge is stated in texels because that is what the eye counts; a
-        painter walking a mark clear of another by one has to be able to say
-        so on whichever grid it is drawing.
+        The one name derived from `divisor`: a painter walking a mark clear of
+        another by a texel has to be able to say so on whichever grid it draws.
         """
         return float(self.divisor)
 

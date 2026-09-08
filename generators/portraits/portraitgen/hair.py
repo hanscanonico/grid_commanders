@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import light
+from . import light, palette
 from .canvas import INK_SILHOUETTE, Canvas, Point
 from .features import REFERENCE_BOX, Frame
 from .head import Skull
@@ -447,24 +447,27 @@ def ramp_for(colour: str) -> Ramp:
 
 def _stands_off(tone: RGB, skin: Ramp) -> bool:
     """Whether a tone clears `SKIN_CONTRAST` of every skin band it can meet."""
-    pale = light.luminance(tone) > PALE_HAIR
+    pale = palette.luminance(tone) > PALE_HAIR
     bands = _FRINGE_BANDS if pale else (_CHEEK_BAND,)
     return all(
-        abs(light.luminance(tone) - light.luminance(skin.band(band))) >= SKIN_CONTRAST
+        abs(palette.luminance(tone) - palette.luminance(skin.band(band)))
+        >= SKIN_CONTRAST
         for band in bands
     )
 
 
-def mass_band(style: str, ramp: Ramp | None = None, skin: Ramp | None = None) -> str:
-    """Which band of the ramp a style's mass takes. An unknown style raises.
+def declared_band(style: str) -> str:
+    """The rung a style names for its mass. An unknown style raises."""
+    return _STYLES[style].band
 
-    The style's own rung, stepped down `_FALLBACK` until it stands off both of
-    the skin bands it can border — `tests/test_contrast.py` is the measurement.
+
+def mass_band(style: str, ramp: Ramp, skin: Ramp) -> str:
+    """The rung the mass actually takes against a face: `declared_band` stepped
+    down `_FALLBACK` until it stands off both skin bands it can border.
+
+    `tests/test_fringe.py` is the measurement, on the finished busts.
     """
-    band = _STYLES[style].band
-    if ramp is None or skin is None:
-        return band
-    steps = _FALLBACK[band]
+    steps = _FALLBACK[declared_band(style)]
     for candidate in steps:
         if _stands_off(ramp.band(candidate), skin):
             return candidate
@@ -496,7 +499,8 @@ def front(
     """
     spec = _STYLES[style]
     frame = Frame.of(skull)
-    tone = ramp.band(mass_band(style, ramp, skin))
+    band = declared_band(style) if skin is None else mass_band(style, ramp, skin)
+    tone = ramp.band(band)
     if skin is not None and spec.fringe:
         canvas.polygon(frame.path(spec.fringe), skin.shade)
     for x, y, radius in spec.blobs:
@@ -504,7 +508,7 @@ def front(
         canvas.stroke(_ring(frame, x, y, radius), INK_SILHOUETTE, INK, closed=True)
     for mass in spec.front:
         _mass(canvas, frame, mass, tone)
-    if spec.lobe is not None and light.luminance(ramp.base) <= PALE_HAIR:
+    if spec.lobe is not None and palette.luminance(ramp.base) <= PALE_HAIR:
         canvas.polygon(frame.path(_lobe(spec.lobe)), ramp.lit)
 
 

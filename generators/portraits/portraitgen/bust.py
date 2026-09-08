@@ -129,10 +129,11 @@ def _turned_about(degrees: float, at: tuple[float, float]) -> Matrix:
     )
 
 
-def pose_matrix(
-    tilt: float, zoom: float, *, scale: float = 1.0 / BUST_DIVISOR
-) -> Matrix:
+def pose_matrix(tilt: float, zoom: float, *, divisor: int = BUST_DIVISOR) -> Matrix:
     """The inverse map a pose is sampled through, in native pixels.
+
+    `divisor` is the grid the figure was drawn on: the rotation terms are
+    scale-free, the two translations are design units and divide onto it.
 
     Pillow's affine transform reads its matrix backwards — it asks, for each
     output pixel, which input pixel to take — so what is built here is the
@@ -143,7 +144,7 @@ def pose_matrix(
     )
     a, b, c, d, e, f = inverse
     return tuple(
-        round(value, _COEFF_PLACES) for value in (a, b, c * scale, d, e, f * scale)
+        round(value, _COEFF_PLACES) for value in (a, b, c / divisor, d, e, f / divisor)
     )
 
 
@@ -153,7 +154,7 @@ def _posed(figure: Canvas, tilt: float, zoom: float) -> Canvas:
     posed.image = figure.image.transform(
         figure.image.size,
         Image.Transform.AFFINE,
-        pose_matrix(tilt, zoom, scale=figure.scale),
+        pose_matrix(tilt, zoom, divisor=figure.divisor),
         resample=Image.Resampling.NEAREST,
     )
     return posed

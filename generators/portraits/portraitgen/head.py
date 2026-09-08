@@ -235,7 +235,7 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
         face_mask,
         skin.silhouette(),
         depth=JAW_DEPTH,
-        scale=canvas.scale,
+        divisor=canvas.divisor,
         mirrored=mirrored,
     )
     skin.image.paste(_flat(skin, ramp.deep), (0, 0), under_jaw)

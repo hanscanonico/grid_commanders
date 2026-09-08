@@ -176,7 +176,7 @@ class FourFlatBands(unittest.TestCase):
 
     def test_the_bands_climb_in_value_and_none_of_them_repeats(self):
         ramp = _skin_ramp()
-        values = [light.luminance(ramp.band(band)) for band in light.BANDS]
+        values = [palette.luminance(ramp.band(band)) for band in light.BANDS]
         self.assertEqual(values, sorted(values))
         self.assertEqual(len(set(values)), len(light.BANDS))
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 import unittest
 
 import preview_sheet
-from portraitgen import hair, light
+from portraitgen import hair, light, palette
 from portraitgen.canvas import BUST_DIVISOR, DESIGN_SIZE, Canvas
 from portraitgen.features import REFERENCE_BOX
 from portraitgen.head import Skull
@@ -96,7 +96,7 @@ def _silhouette(cell: Canvas) -> list[tuple[float, float]]:
     pixels = cell.image.load()
     width, height = cell.image.size
     return [
-        (x / cell.scale, y / cell.scale)
+        (x * cell.texel, y * cell.texel)
         for y in range(height)
         for x in range(width)
         if pixels[x, y][3] > 0
@@ -187,7 +187,7 @@ class TheMassTakesOneLitLobe(Combed):
             with self.subTest(style=style):
                 cell = _cell()
                 hair.front(cell, SKULL, style, MANE)
-                mass = MANE.band(hair.mass_band(style))
+                mass = MANE.band(hair.declared_band(style))
                 self.assertEqual(_colours(cell) - {INK}, {mass, MANE.lit})
 
     def test_the_lobe_sits_on_the_side_the_key_is_fixed_to(self):
@@ -200,7 +200,7 @@ class TheMassTakesOneLitLobe(Combed):
     def test_a_pale_mass_takes_no_lobe_at_all(self):
         # Over the pale line the lit band is a step off the base, so the lobe
         # stops separating the mass and starts cutting a seam through it.
-        self.assertGreater(light.luminance(PLATINUM.base), hair.PALE_HAIR)
+        self.assertGreater(palette.luminance(PLATINUM.base), hair.PALE_HAIR)
         for style in COMBED:
             with self.subTest(style=style):
                 cell = _cell()
@@ -254,7 +254,7 @@ class TheBobHemsInAnArc(Combed):
 
     def test_the_mass_takes_the_band_under_its_own_base(self):
         cell = self.drawn("bob")
-        self.assertEqual(hair.mass_band("bob"), "shade")
+        self.assertEqual(hair.declared_band("bob"), "shade")
         self.assertGreater(_area_of(cell, MANE.shade), 0)
         self.assertEqual(_area_of(cell, MANE.base), 0)
 

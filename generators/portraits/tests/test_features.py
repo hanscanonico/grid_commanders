@@ -169,7 +169,7 @@ class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
         features.accessory(cell, SKULL, kind)
         box = cell.image.getbbox()
         assert box, f"{kind} drew nothing"
-        return tuple(value / cell.scale for value in box)
+        return tuple(value * cell.texel for value in box)
 
     def test_the_service_cap_hangs_a_peak_the_field_cap_has_not_got(self):
         self.assertGreater(self._box("cap")[3] - self._box("fieldcap")[3], 8.0)

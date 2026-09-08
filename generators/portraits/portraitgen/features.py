@@ -696,23 +696,36 @@ _PATCH_PLATE: tuple[Point, ...] = (
 _SCAR_CUT: tuple[Point, ...] = ((140.0, 134.0), (148.0, 164.0))
 
 
-def _worn(points: tuple[Point, ...]) -> Callable[..., list[Point]]:
+@dataclass(frozen=True)
+class Worn:
+    """What a headwear painter is handed.
+
+    One object rather than five parameters: only the two caps spend `kicker` —
+    the faction cloth's lit rung — and the other nine painters were carrying it
+    down their signatures to ignore it.
+    """
+
+    canvas: Canvas
+    frame: Frame
+    skull: Skull
+    tint: RGB
+    kicker: RGB
+
+
+def _worn(points: tuple[Point, ...]) -> Callable[[Worn], list[Point]]:
     """A piece of headwear: one flat mass of cloth, outlined."""
 
-    def draw(
-        canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-    ) -> list[Point]:
-        path = frame.path(points)
-        canvas.polygon(path, tint)
-        canvas.stroke(path, INK_FEATURE, INK, closed=True)
+    def draw(worn: Worn) -> list[Point]:
+        path = worn.frame.path(points)
+        worn.canvas.polygon(path, worn.tint)
+        worn.canvas.stroke(path, INK_FEATURE, INK, closed=True)
         return path
 
     return draw
 
 
-def _hood(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _hood(worn: Worn) -> list[Point]:
+    canvas, frame, tint = worn.canvas, worn.frame, worn.tint
     path = frame.path(_HOOD)
     canvas.polygon(path, tint)
     canvas.polygon(frame.path(_HOOD_LINING), KIT)
@@ -720,14 +733,13 @@ def _hood(
     return path
 
 
-def _cap(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _cap(worn: Worn) -> list[Point]:
     """A service cap: a crown in faction cloth over a kit band and a peak.
 
     The peak is what makes it a cap rather than a hat at chip size — a straight
     dark bar over the brow, wider than the band it hangs off.
     """
+    canvas, frame, tint, kicker = worn.canvas, worn.frame, worn.tint, worn.kicker
     crown = frame.path(_CAP_CROWN)
     canvas.polygon(crown, tint)
     canvas.polygon(frame.path(_CAP_LIT), kicker)
@@ -739,10 +751,9 @@ def _cap(
     return crown
 
 
-def _fieldcap(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _fieldcap(worn: Worn) -> list[Point]:
     """A soft field cap: a slouched crown over a kit band, and nothing else."""
+    canvas, frame, tint, kicker = worn.canvas, worn.frame, worn.tint, worn.kicker
     crown = frame.path(_FIELD_CROWN)
     canvas.polygon(crown, tint)
     canvas.polygon(frame.path(_FIELD_LIT), kicker)
@@ -753,10 +764,9 @@ def _fieldcap(
     return crown
 
 
-def _visor(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _visor(worn: Worn) -> list[Point]:
     """An eyeshade: a kit strap carrying a brim in the general's own cloth."""
+    canvas, frame, tint = worn.canvas, worn.frame, worn.tint
     strap = frame.path(_VISOR_STRAP)
     canvas.polygon(strap, KIT)
     canvas.stroke(strap, INK_FEATURE, INK, closed=True)
@@ -766,9 +776,8 @@ def _visor(
     return brim
 
 
-def _goggles(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _goggles(worn: Worn) -> list[Point]:
+    canvas, frame, skull = worn.canvas, worn.frame, worn.skull
     path = frame.path(_GOGGLE_STRAP)
     canvas.polygon(path, KIT)
     canvas.stroke(path, INK_FEATURE, INK, closed=True)
@@ -777,13 +786,12 @@ def _goggles(
     return path
 
 
-def _glasses(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _glasses(worn: Worn) -> list[Point]:
     """P17: two squares at the feature weight, and no bridge between them.
 
     A bridge is the one part of a pair of glasses the mip cannot hold, and it
     was what joined the two lenses into a single grey smear at chip size."""
+    canvas, frame, skull = worn.canvas, worn.frame, worn.skull
     for x in _eye_xs(skull):
         lens = (
             (x - LENS_HALF, EYE_LINE - LENS_HALF),
@@ -795,9 +803,8 @@ def _glasses(
     return []
 
 
-def _eyepatch(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _eyepatch(worn: Worn) -> list[Point]:
+    canvas, frame, skull = worn.canvas, worn.frame, worn.skull
     x = _eye_xs(skull)[0]
     ear_x, ear_y, radius = EAR
     outer_x, outer_y = _PATCH_PLATE[0]
@@ -812,16 +819,14 @@ def _eyepatch(
     return []
 
 
-def _scar(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _scar(worn: Worn) -> list[Point]:
+    canvas, frame = worn.canvas, worn.frame
     canvas.ribbon(frame.path(_SCAR_CUT), SCAR, SCAR_DEEP)
     return []
 
 
-def _headset(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _headset(worn: Worn) -> list[Point]:
+    canvas, frame, tint = worn.canvas, worn.frame, worn.tint
     band = frame.path(_HEADSET_BAND)
     canvas.stroke(band, INK_FEATURE, INK)
     cup = frame.path(_HEADSET_CUP)
@@ -832,14 +837,12 @@ def _headset(
     return [*band, *cup]
 
 
-def _unworn(
-    canvas: Canvas, frame: Frame, skull: Skull, tint: RGB, kicker: RGB
-) -> list[Point]:
+def _unworn(worn: Worn) -> list[Point]:
     """A general who wears nothing: the one kind that draws nothing."""
     return []
 
 
-_ACCESSORIES: dict[str, Callable[[Canvas, Frame, Skull, RGB, RGB], list[Point]]] = {
+_ACCESSORIES: dict[str, Callable[[Worn], list[Point]]] = {
     "bandana": _worn(_BANDANA),
     "cap": _cap,
     "eyepatch": _eyepatch,
@@ -876,7 +879,7 @@ def accessory(
     the kit slate — the module answers for every key on its own, and a crown
     handed no kicker is the flat one it was before.
     """
-    return _ACCESSORIES[kind](canvas, Frame.of(skull), skull, tint, kicker)
+    return _ACCESSORIES[kind](Worn(canvas, Frame.of(skull), skull, tint, kicker))
 
 
 def earring(canvas: Canvas, skull: Skull) -> None:
