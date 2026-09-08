@@ -64,10 +64,9 @@ EAR_LEFT, EAR_RIGHT, EAR_Y, EAR_R = 62.0, 158.0, 144.0, 10.0
 # neck and the skull onto the ear behind it are one band — in portrait pixels.
 # The hair fringe and the collar are the same pass at their own layers.
 JAW_DEPTH = 5.0
-# The rim band, and how far in under the silhouette ink it sits.
 
 # Steps a quadratic is flattened into. Twelve is under a portrait pixel per
-# step on the longest curve here at the working supersample.
+# step on the longest curve here.
 _CURVE_STEPS = 12
 
 

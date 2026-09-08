@@ -1,12 +1,13 @@
 """The five 64x64 faction emblems: hollow diamond, diamond, star, pennant, sun.
 
 Board marks are outlined, not blurred, and these are board marks: each emblem is
-a couple of Manhattan diamonds, discs and bands, drawn **at 1x with integer
-geometry** rather than through the supersampled canvas the busts use. That is a
-decision, not an oversight — every shape here is decided by an integer distance
-test, so a supersample buys nothing but a soft edge, and drawing them the way
-the retired GDScript bake's `_draw_emblem` did keeps the committed PNGs pixel
-for pixel what they already are.
+a couple of Manhattan diamonds, discs and bands, drawn **straight onto the 64px
+raster in integer geometry** rather than through the design-unit grid the busts
+are stated on (`canvas.py`). That is a decision, not an oversight — every shape
+here is decided by an integer distance test off the emblem's own centre, so a
+design space and a divisor buy nothing here, and drawing them the way the
+retired GDScript bake's `_draw_emblem` did keeps the committed PNGs pixel for
+pixel what they already are.
 """
 
 from __future__ import annotations
