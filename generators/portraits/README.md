@@ -140,11 +140,11 @@ already were.
   laid between a two-texel outline and the cheek: a near-white line down an Iron
   jaw, a mint one down a Verdant neck. The coat keeps a kicker because two
   texels of it fit (`uniform` draws it as a ribbon); a head does not.
-- **Two rungs of the sixteen are not the board's**, and each is named in
-  `palette.BUST_RUNGS` with the reason. Gold's three lit rungs come off the
-  funds gold, because the board's Gilded ramp is authored a band low on purpose
-  and a coat painted on it is olive — which cost two generals the colour they
-  are named for. Iron's field rung comes up to where every other army's sits,
+- **Four rungs of the sixteen are not the board's** — three on the gold row and
+  one on the iron — and each is named in `palette.BUST_RUNGS` with the reason.
+  Gold's three lit rungs come off the funds gold, because the board's Gilded
+  ramp is authored a band low on purpose and a coat painted on it is olive —
+  which cost two generals the colour they are named for. Iron's field rung comes up to where every other army's sits,
   because Iron's ramp is the inverted one and a window at L49 is under every
   dark cap and every dark skin on the sheet. Both are spent **inside** the
   sixteen: `bust_palette` reads this same function, so the allowed set moved and
@@ -182,7 +182,7 @@ default.
 | --- | --- | --- |
 | `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `texel`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
 | `portraitgen/gauge.py` | the smallest mark this grid holds, and the sweep | `GAUGE`, `MAX_ORPHAN`, `clusters`, `holds_gauge`, `is_orphan`, `despeckle` |
-| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `faction_ramp(key)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, scale=, mirrored=)` |
+| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `faction_ramp(key)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
 | `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `accessory(…, tint=)`, `earring`, `freckles` |
 | `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |
@@ -233,9 +233,13 @@ both halves together, before the pose.
 ## Frame safety
 
 `FACE_REGION` is `Rect2i(9, 15, 93, 93)` on the bust's grid — `canvas.FACE_REGION`
-in design units, whose origin and side divide by **both** divisors so the chip is
-that same square rasterised coarser. The jaw must never clip it: the sheet clears
-it by 8 (Holt) to 32 (Morn) pixels against a floor of 4, measured per bust by
+in design units, whose origin and side divide by **both** divisors so the chip
+is that same square rasterised coarser. **The chip is a repaint at the chip
+divisor, not a crop of the shipped bust**: the whole drawing is painted again on
+the coarser grid and that square of it is what ships, which is why the two are
+compared byte for byte (`TheChipIsTheSameDrawing`) rather than one being cut out
+of the other. The jaw must never clip it: the sheet clears it by 8 (Holt) to 32
+(Morn) pixels against a floor of 4, measured per bust by
 `tests/test_face_region.py`. It is the hardest acceptance criterion here — if one
 fails, the geometry moves, never the rectangle, because the HUD chip, the speech
 bust and the campaign brief all read it.
