@@ -235,9 +235,12 @@ def _face_group(
     # On Iron the two rounded apart: the field rung and the theme colour landed
     # on the same tone, and a dark cap over a dark head disappeared into the
     # window behind it at chip size.
-    tint = cloth.base
+    # A crown flat in one rung is a silhouette, not a cap: it takes the coat's
+    # lit rung along the edge the key lands on. Iron is what asked for it — its
+    # cloth and its window field round onto neighbouring rungs, and a flat
+    # fieldcap over a dark head was the darkest chip on the sheet.
     for worn in (face.acc, face.acc2):
-        features.accessory(group, face.head, worn, tint=tint)
+        features.accessory(group, face.head, worn, tint=cloth.base, kicker=cloth.lit)
     covered = features.covered_eye(face.acc)
     features.brow(group, face.head, face.brow, mane, covered=covered)
     features.eyes(group, face.head, face.eyes, scale=face.eye, covered=covered)
