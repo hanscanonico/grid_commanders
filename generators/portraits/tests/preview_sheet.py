@@ -13,10 +13,12 @@ the four bands, the rim, the occlusion band and the cast shadow are doing their
 jobs. `uniform_props_backdrop` dresses that stand-in in every collar, chest
 treatment, prop and window field. `features_hair` puts one cell on the sheet per
 key of every vocabulary the face and the hair answer for. `sheet` is the whole
-roster as the game will load it: all twenty-three busts at 220 over one row per
-faction, and the 31px face-crop strip under them, which is the diagnostic
+roster as the game will load it: all twenty-three busts at 110x134 over one row
+per faction, and the face-chip strip under them, which is the diagnostic
 image — a bust that cannot be told from its neighbour at chip size has not been
-drawn yet.
+drawn yet. `board` is the reviewer's own question, "is this one style": every
+bust beside a strip of the board's own art — 16px terrain cells and 64x96 unit
+cells as the game draws them — at one shared zoom.
 
 Run it from the package root, the way the suite is run, so `portraitgen` is on
 the path.
@@ -45,8 +47,8 @@ from portraitgen import (  # noqa: E402
     uniform,
 )
 from portraitgen.canvas import (  # noqa: E402
+    BUST_SIZE,
     INK_FEATURE,
-    PORTRAIT_SIZE,
     Canvas,
 )
 from portraitgen.palette import (  # noqa: E402
@@ -102,8 +104,8 @@ def bust(
     is how C1 is measured — the difference between the two is the shadow.
     """
     theme = faction_by_key(faction)
-    cloth = light.build_ramp(theme.body, rim_hue=theme.body_lt)
-    skin = light.build_ramp(SKIN, rim_hue=theme.body_lt)
+    cloth = light.faction_ramp(theme.key)
+    skin = light.build_ramp(SKIN, rim_hue=cloth.rim)
 
     figure = Canvas()
     figure.polygon(SHOULDER, cloth.base)
@@ -137,7 +139,7 @@ def contact_sheet() -> Image.Image:
 def _dressed(
     faction: Faction, collar: str, treatment: str, prop: str, kind: str
 ) -> Image.Image:
-    ramp = light.build_ramp(faction.body, rim_hue=faction.body_lt)
+    ramp = light.faction_ramp(faction.key)
     canvas = Canvas()
     backdrop.draw(canvas, kind, faction)
     props.draw(canvas, prop, faction, ramp, layer="back")
@@ -150,21 +152,18 @@ def _dressed(
 
 
 def _row(busts: list[Image.Image]) -> Image.Image:
-    width, height = PORTRAIT_SIZE
+    width, height = BUST_SIZE
     sheet = Image.new("RGBA", (width * len(busts), height), (35, 39, 43, 255))
     for index, drawn in enumerate(busts):
         sheet.alpha_composite(drawn, (index * width, 0))
     return sheet
 
 
-def _chips(busts: list[Image.Image]) -> Image.Image:
-    chips = [
-        drawn.crop((16, 25, 206, 215)).resize((31, 31), Image.Resampling.BOX)
-        for drawn in busts
-    ]
-    strip = Image.new("RGBA", (31 * len(chips), 31), (35, 39, 43, 255))
+def _chip_strip(chips: list[Image.Image]) -> Image.Image:
+    side = chips[0].height
+    strip = Image.new("RGBA", (side * len(chips), side), (35, 39, 43, 255))
     for index, chip in enumerate(chips):
-        strip.alpha_composite(chip, (index * 31, 0))
+        strip.alpha_composite(chip, (index * side, 0))
     return strip.resize(
         (strip.width * ZOOM, strip.height * ZOOM), Image.Resampling.NEAREST
     )
@@ -194,7 +193,6 @@ def _uniform_props_backdrop(out: Path) -> list[Path]:
         for index, faction in enumerate(FACTIONS)
     ]
     written.append(_write(out / "factions.png", _row(dressed)))
-    written.append(_write(out / "faction_chips.png", _chips(dressed)))
 
     meridian = faction_by_key("meridian")
     fields = [_dressed(meridian, "v", "plain", "book", kind) for kind in kinds]
@@ -259,7 +257,7 @@ def _worn(skin: light.Ramp, mane: light.Ramp) -> list[Canvas]:
 
 
 def _grid(cells: list[Canvas]) -> Image.Image:
-    width, height = PORTRAIT_SIZE
+    width, height = BUST_SIZE
     rows = -(-len(cells) // COLUMNS)
     page = Image.new("RGBA", (width * COLUMNS, height * rows), (0, 0, 0, 255))
     for index, cell in enumerate(cells):
@@ -276,7 +274,7 @@ def _sheet(out: Path) -> list[Path]:
     ]
     painted = [[painter.paint(face) for face in row] for row in rows]
     painted.append([painter.paint(roster.NEUTRAL)])
-    width, height = PORTRAIT_SIZE
+    width, height = BUST_SIZE
     page = Image.new(
         "RGBA",
         (width * max(map(len, painted)), height * len(painted)),
@@ -284,10 +282,11 @@ def _sheet(out: Path) -> list[Path]:
     )
     for index, row in enumerate(painted):
         page.alpha_composite(_row(row), (0, index * height))
-    every = [drawn for row in painted for drawn in row]
+    chips = [painter.chip(face) for row in rows for face in row]
+    chips.append(painter.chip(roster.NEUTRAL))
     return [
         _write(out / "contact_sheet.png", page),
-        _write(out / "face_crops.png", _chips(every)),
+        _write(out / "face_crops.png", _chip_strip(chips)),
     ]
 
 
@@ -302,6 +301,82 @@ def _features_hair(out: Path) -> list[Path]:
     return [_write(out / "features_hair.png", _grid(_worn(skin, mane)))]
 
 
+# The board's own art, and the scale the game draws it at: a terrain cell is
+# baked at 64 and laid on a 16px world grid, a unit cell at 64x96 on the same
+# grid. Both are `assets/tiles`, so this part reads the game's shipped sheets
+# rather than drawing a stand-in of them.
+GAME = Path(__file__).resolve().parents[3]
+TILE = 16
+TERRAIN_PX = 64
+UNIT_W, UNIT_H = 64, 96
+BOARD_COLUMNS = 7
+
+
+def _cells(sheet: Image.Image, size: tuple[int, int], wanted: int) -> list[Image.Image]:
+    """The first `wanted` cells of an atlas that have anything drawn in them."""
+    width, height = size
+    found: list[Image.Image] = []
+    for top in range(0, sheet.height - height + 1, height):
+        for left in range(0, sheet.width - width + 1, width):
+            cell = sheet.crop((left, top, left + width, top + height))
+            if cell.getbbox() is not None and len(found) < wanted:
+                found.append(cell)
+    return found
+
+
+def _board_strip() -> Image.Image:
+    """A run of the board as the game lays it out: terrain cells on the world
+    grid with a rank of units standing on them, all at the game's own scale."""
+    terrain = Image.open(GAME / "assets/tiles/terrain_atlas.png").convert("RGBA")
+    units = Image.open(GAME / "assets/tiles/units_atlas.png").convert("RGBA")
+    unit_h = UNIT_H * TILE // UNIT_W
+    strip = Image.new("RGBA", (BOARD_COLUMNS * TILE, TILE * 2 + unit_h), (0, 0, 0, 0))
+    for index, cell in enumerate(
+        _cells(terrain, (TERRAIN_PX, TERRAIN_PX), BOARD_COLUMNS * 2)
+    ):
+        spot = (
+            index % BOARD_COLUMNS * TILE,
+            unit_h - TILE + index // BOARD_COLUMNS * TILE,
+        )
+        strip.alpha_composite(cell.resize((TILE, TILE), Image.Resampling.BOX), spot)
+    for index, cell in enumerate(_cells(units, (UNIT_W, UNIT_H), BOARD_COLUMNS)):
+        strip.alpha_composite(
+            cell.resize((TILE, unit_h), Image.Resampling.BOX), (index * TILE, 0)
+        )
+    return strip
+
+
+def _board(out: Path) -> list[Path]:
+    """Every bust next to the board, at one scale — the "is this one style?"
+    read, which is a question about the two sheets side by side and not about
+    either of them alone."""
+    busts = [painter.paint(roster.FACES[key]) for key in sorted(roster.FACES)]
+    busts.append(painter.paint(roster.NEUTRAL))
+    width, height = BUST_SIZE
+    columns = 8
+    rows = -(-len(busts) // columns)
+    strip = _board_strip()
+    page = Image.new(
+        "RGBA",
+        (width * columns, height * rows + strip.height + TILE),
+        (35, 39, 43, 255),
+    )
+    for index, drawn in enumerate(busts):
+        page.alpha_composite(
+            drawn, (index % columns * width, index // columns * height)
+        )
+    for column in range(0, page.width, strip.width):
+        page.alpha_composite(strip, (column, height * rows + TILE // 2))
+    return [
+        _write(
+            out / "board_and_busts.png",
+            page.resize(
+                (page.width * ZOOM, page.height * ZOOM), Image.Resampling.NEAREST
+            ),
+        )
+    ]
+
+
 def _write(path: Path, image: Image.Image) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     image.save(path)
@@ -313,6 +388,7 @@ PARTS = {
     "uniform_props_backdrop": _uniform_props_backdrop,
     "features_hair": _features_hair,
     "sheet": _sheet,
+    "board": _board,
 }
 
 

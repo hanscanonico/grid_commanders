@@ -33,6 +33,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 # package, so it stands on Pillow alone.
 INSTALL_MAP = {
     "commanders": "assets/portraits/commanders",
+    "faces": "assets/portraits/faces",
     "factions": "assets/portraits/factions",
 }
 

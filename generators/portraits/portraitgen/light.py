@@ -20,12 +20,12 @@ gradient is the one thing this style does not own.
 
 from __future__ import annotations
 
-import colorsys
 from dataclasses import dataclass
 from functools import lru_cache
 
 from PIL import Image, ImageChops
 
+from . import palette
 from .canvas import Point
 from .palette import RGB
 
@@ -40,27 +40,24 @@ SHADOW_STEP: tuple[int, int] = (-1 if KEY[0] > 0 else 1, -1 if KEY[1] > 0 else 1
 # palette discipline: a tone is chosen from a ramp, never mixed at the call.
 BANDS = ("deep", "shade", "base", "lit")
 
-# The sky every shadow on the sheet is lit by, and the two hues a rung may
-# rotate toward. The sky is the sprite sheet's own AMBIENT — the board and the
-# busts are lit by one scene, so a portrait's shadow is the board's shadow
-# colour. Rotations are small on purpose: a big one turns a red faction's
-# shadow purple and stops reading as the same army.
-AMBIENT: RGB = (86, 112, 190)
-_SKY_HUE = 225.0
-_SUN_HUE = 45.0
-_HUE_ARC = 14.0
+# The sky every shadow on the sheet is lit by. The board's own
+# (`palette.AMBIENT`): one scene lights the busts and the tiles, so a portrait's
+# shadow is the board's shadow colour.
+AMBIENT: RGB = palette.AMBIENT
 
-# The value ladder, as multiples of the base colour's own luminance, and the
-# chroma shape over it. Index order is BANDS, with the rim last.
-_LADDER = (0.40, 0.68, 1.00, 1.34)
+# The value ladder, as multiples of the base colour's own luminance. The first
+# rung is the contour the board's own ramps open on; the four after it are
+# BANDS, and the rim closes the ladder at its own headroom.
+_LADDER = (0.22, 0.40, 0.68, 1.00, 1.34)
+# Where the lit band stops. A pale skin's own luminance is already 223, and a
+# third over it is white — a forehead painted in pure white is a hole in the
+# sheet rather than a plane the sun is on, and at sixteen tones it also spends
+# the rung the steel wants.
+_LIT_CEILING = 236.0
 # The rim is the one rung that keeps most of its chroma: it is the faction's
 # light tint doing the separating, so washing it toward the sun would spend
 # exactly the colour it is there for.
 _RIM_HEADROOM = 0.55  # of the room between the base's value and white
-_HUE_PULL = (-1.00, -0.58, 0.0, 0.62, 0.35)
-_SAT_SCALE = (1.20, 1.14, 1.0, 0.84, 0.72)
-_AMBIENT_MIX = (0.26, 0.13, 0.0, 0.0, 0.0)
-
 # How far off the face's own centre line the shade may come. C8: a boundary
 # down the nose-mouth axis reads as a two-tone mask rather than as a lit head,
 # so every shade shape starts this fraction of a half-width out from centre —
@@ -127,13 +124,35 @@ _LIGHT_SHAPE: tuple[Point, ...] = (
 
 @dataclass(frozen=True)
 class Ramp:
-    """One material's four flat tones and its rim."""
+    """One material's four flat tones and its rim, over the board's own ramp.
 
-    deep: RGB
-    shade: RGB
-    base: RGB
-    lit: RGB
-    rim: RGB
+    A material is a six-slot `palette.Ramp6` — the ladder the unit sheet and the
+    terrain are painted on — and the four bands a bust paints in are a view onto
+    four of its rungs. The contour rung (S0) is the window's, not the figure's,
+    so it is reached through `six` rather than named a band.
+    """
+
+    six: palette.Ramp6
+
+    @property
+    def deep(self) -> RGB:
+        return self.six[palette.S_UNDER]
+
+    @property
+    def shade(self) -> RGB:
+        return self.six[palette.S_SHADOW]
+
+    @property
+    def base(self) -> RGB:
+        return self.six[palette.S_BODY]
+
+    @property
+    def lit(self) -> RGB:
+        return self.six[palette.S_TOP]
+
+    @property
+    def rim(self) -> RGB:
+        return self.six[palette.S_RIM]
 
     def band(self, name: str) -> RGB:
         """A band by name. An unknown name raises: the vocabulary is the
@@ -145,72 +164,36 @@ class Ramp:
 
 def luminance(colour: RGB) -> float:
     """Rec. 601 luma, the scale the ladder is authored on."""
-    return 0.299 * colour[0] + 0.587 * colour[1] + 0.114 * colour[2]
-
-
-def _clamp8(value: float) -> int:
-    return max(0, min(255, int(round(value))))
-
-
-def _mix(a: RGB, b: RGB, t: float) -> RGB:
-    return tuple(_clamp8(a[i] + (b[i] - a[i]) * t) for i in range(3))
-
-
-def _rotate(hue: float, pull: float) -> float:
-    if pull == 0.0:
-        return hue
-    target = _SKY_HUE if pull < 0 else _SUN_HUE
-    delta = ((target - hue + 180.0) % 360.0) - 180.0
-    step = min(abs(delta), abs(pull) * _HUE_ARC)
-    return hue + (step if delta >= 0 else -step)
-
-
-def _at_luminance(colour: RGB, target: float) -> RGB:
-    """Re-key a colour to an exact luma, keeping its chroma as long as it can:
-    scale first, and wash toward white only once a channel is pinned."""
-    lum = luminance(colour)
-    if lum <= 0.0:
-        return (_clamp8(target), _clamp8(target), _clamp8(target))
-    ceiling = lum * 255.0 / max(colour)
-    if target <= ceiling:
-        return tuple(_clamp8(c * target / lum) for c in colour)
-    pinned = _mix((0, 0, 0), colour, 255.0 / max(colour))
-    return _mix(pinned, (255, 255, 255), (target - ceiling) / (255.0 - ceiling))
-
-
-def _shape(base: RGB, slot: int, target: float) -> RGB:
-    """One rung: the base's hue and chroma shaped for `slot`, keyed to
-    `target` luma. Pure — one base always gives one rung."""
-    hue, sat, _ = colorsys.rgb_to_hsv(*(c / 255.0 for c in base))
-    red, green, blue = colorsys.hsv_to_rgb(
-        (_rotate(hue * 360.0, _HUE_PULL[slot]) % 360.0) / 360.0,
-        min(1.0, sat * _SAT_SCALE[slot]),
-        1.0,
-    )
-    chroma = (_clamp8(red * 255), _clamp8(green * 255), _clamp8(blue * 255))
-    if _AMBIENT_MIX[slot] > 0.0:
-        chroma = _mix(
-            chroma, _at_luminance(AMBIENT, luminance(chroma)), _AMBIENT_MIX[slot]
-        )
-    return _at_luminance(chroma, target)
+    return palette.luminance(colour)
 
 
 @lru_cache(maxsize=None)
 def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
-    """A material's four tones from its base colour, rim included.
+    """A material's rungs from its base colour, rim included.
 
-    Values step on a fixed ladder and chroma rotates toward the sky in shadow
-    and toward the sun in light. `rim_hue` is the faction's light tint where a
-    material takes the sheet's rim rather than its own; it is re-keyed to the
-    rim's value, so a rim is the faction's colour at the light's brightness and
-    never a second hue in the palette. Cached because a bust asks for the same
-    handful of ladders on every layer it paints.
+    The ladder is this sheet's — a contour rung under four bands keyed off the
+    base's own luma — and the shaper is the board's (`palette.build_ramp`), so
+    a general's coat is lit by the same sun and mixed toward the same sky as
+    the tank outside the window. `rim_hue` is the faction's light tint where a
+    material takes the sheet's rim rather than its own, and it is taken whole
+    rather than re-keyed: a rim that is the army's own rim rung is a tone the
+    bust already spends, and one shaped near it is a seventeenth colour.
+    Cached because a bust asks for the same handful of ladders on every layer
+    it paints.
     """
     lum = luminance(base)
-    tones = [_shape(base, slot, lum * step) for slot, step in enumerate(_LADDER)]
     rim_target = lum + (255.0 - lum) * _RIM_HEADROOM
-    rim = _shape(rim_hue if rim_hue is not None else base, len(_LADDER), rim_target)
-    return Ramp(*tones, rim)
+    ladder = (*(min(lum * step, _LIT_CEILING) for step in _LADDER), rim_target)
+    six = list(palette.build_ramp(base, ladder))
+    if rim_hue is not None:
+        six[palette.S_RIM] = rim_hue
+    return Ramp(tuple(six))
+
+
+def faction_ramp(key: str) -> Ramp:
+    """An army's own rungs, straight off the board's palette — no ladder of the
+    portraits' own between a coat and the chassis it is painted to match."""
+    return Ramp(palette.faction_ramp(key))
 
 
 def shade_kind(crown: float, width: float) -> str:

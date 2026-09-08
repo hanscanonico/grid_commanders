@@ -607,7 +607,7 @@ def draw(
         raise KeyError(f"no prop {key!r} (have {sorted(PROPS)})")
     if layer not in LAYERS:
         raise KeyError(f"no prop layer {layer!r} (have {sorted(LAYERS)})")
-    art = Canvas(canvas.size, canvas.scale)
+    art = canvas.blank()
     if layer in ("all", "back") and key in _BACK:
         _BACK[key](art, faction, ramp)
     if layer in ("all", "front"):

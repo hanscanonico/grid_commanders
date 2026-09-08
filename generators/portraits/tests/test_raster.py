@@ -64,13 +64,47 @@ class TheSpansCoverWhatThePolygonCovers(unittest.TestCase):
         self.assertEqual(list(raster.spans([(5, 5)], (32, 32))), [])
 
 
-class AStrokeBuildsItsOwnRectangles(unittest.TestCase):
-    def test_a_segment_quad_lands_on_whole_numbers(self):
-        quad = canvas.segment_quad((198, 624), (504, 804), 4)
-        self.assertEqual(quad, [(196, 627), (502, 807), (506, 801), (200, 621)])
+class AStrokeWalksItsOwnPixels(unittest.TestCase):
+    """A stroke is stamped along the whole pixels its path passes through.
 
-    def test_a_segment_of_no_length_has_no_quad(self):
-        self.assertIsNone(canvas.segment_quad((10, 10), (10, 10), 4))
+    A rectangle per segment was a fair stroke at three times this raster and a
+    smear at one, and its corners came off a libm `hypot` — so the pen is a
+    block walked in whole numbers instead, which is the same block on every
+    machine.
+    """
+
+    def _drawn(self, weight: float) -> set[tuple[int, int]]:
+        layer = canvas.Canvas((64, 64), canvas.BUST_DIVISOR)
+        layer.stroke([(4.0, 4.0), (40.0, 40.0)], weight, (19, 23, 27, 255))
+        pixels = layer.image.load()
+        return {
+            (x, y)
+            for y in range(layer.image.height)
+            for x in range(layer.image.width)
+            if pixels[x, y][3]
+        }
+
+    def test_a_diagonal_at_the_detail_weight_is_one_pixel_per_step(self):
+        drawn = self._drawn(canvas.INK_DETAIL)
+        self.assertEqual(drawn, {(step, step) for step in range(2, 21)})
+
+    def test_a_heavier_weight_stamps_a_wider_block(self):
+        detail, silhouette = (
+            self._drawn(canvas.INK_DETAIL),
+            self._drawn(canvas.INK_SILHOUETTE),
+        )
+        self.assertLess(len(detail), len(silhouette))
+        self.assertEqual(detail - silhouette, set())
+
+    def test_the_pen_is_whole_pixels_and_never_none(self):
+        for weight in canvas.INK_WEIGHTS:
+            with self.subTest(weight=weight):
+                self.assertGreaterEqual(canvas.pen(weight, canvas.BUST_DIVISOR), 1)
+                self.assertGreaterEqual(canvas.pen(weight, canvas.CHIP_DIVISOR), 1)
+        self.assertGreater(
+            canvas.pen(canvas.INK_SILHOUETTE, canvas.BUST_DIVISOR),
+            canvas.pen(canvas.INK_DETAIL, canvas.BUST_DIVISOR),
+        )
 
 
 if __name__ == "__main__":

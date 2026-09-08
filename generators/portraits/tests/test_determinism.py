@@ -37,7 +37,7 @@ class TwoRunsAreOneRun(unittest.TestCase):
 
 class TheCanvasDrawsTheSamePictureTwice(unittest.TestCase):
     def _paint(self) -> canvas.Canvas:
-        layer = canvas.Canvas((32, 40))
+        layer = canvas.Canvas((32, 40), 1)
         layer.polygon([(4.0, 4.3), (28.7, 9.1), (16.2, 35.5)], (200, 60, 40, 255))
         layer.ellipse((6.5, 6.5, 20.5, 18.25), (40, 60, 200, 255))
         layer.stroke(
@@ -54,7 +54,7 @@ class TheCanvasDrawsTheSamePictureTwice(unittest.TestCase):
 
     def test_the_cast_shadow_lands_outside_the_figure(self):
         figure = self._paint()
-        sheet = canvas.Canvas((32, 40))
+        sheet = canvas.Canvas((32, 40), 1)
         sheet.cast_shadow(figure)
         under = sheet.resolve()
         sheet.compose(figure)

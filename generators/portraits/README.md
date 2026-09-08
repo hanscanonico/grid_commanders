@@ -3,9 +3,14 @@
 Deterministic portrait pipeline for this game, living in the repository it feeds
 (`generators/portraits`, an offline instrument the engine never sees — the
 sibling `generators/.gdignore` keeps Godot out of it). It bakes the art
-`scenes/common/commander_visuals.gd` loads: the **five 64x64 faction emblems**
-and the **twenty-three 220x268 commander busts** — twenty-two generals and the
-empty seat.
+`scenes/common/commander_visuals.gd` loads: the **five 64x64 faction emblems**,
+the **twenty-three 110x134 commander busts** — twenty-two generals and the empty
+seat — and the **28 31x31 face chips** the surfaces too small for a bust draw.
+
+The busts are **pixel art**: authored on their own small grid, painted in
+sixteen tones off the board's own ramps, and drawn by the game at a whole-number
+scale with nearest sampling. Nothing is supersampled and nothing is resampled —
+what this tool rasterises is what the screen shows, texel for pixel.
 
 There are **no seeds and no randomness**. Every mark is authored, so every run
 reproduces the same bytes, and regenerating after an edit changes exactly the
@@ -16,7 +21,8 @@ art you edited.
 | Generated | Installs into | What it is |
 | --- | --- | --- |
 | `factions/<key>.png` | `assets/portraits/factions` | 64x64 RGBA emblem, one per army |
-| `commanders/<id>.png` | `assets/portraits/commanders` | 220x268 RGBA bust, one per general plus `none` |
+| `commanders/<id>.png` | `assets/portraits/commanders` | 110x134 RGBA bust, one per general plus `none` |
+| `faces/<id>.png` | `assets/portraits/faces` | 31x31 RGBA face chip, cut from that same drawing |
 
 `portraitgen/pipeline.py`'s `OUTPUTS` table is the one statement of what a run
 produces; `install` derives its copy list from that same table, so there is no
@@ -37,23 +43,32 @@ make portraits-snapshot  # a fresh generation against the installed art
 
 `tests/test_metrics.py` is the style brief's own bars as measurements over the
 sheet this generator emits — the cast shadow lands outside every silhouette,
-four value bands inside each, at most 48 painted tones, one light polarity on
-all twenty-two faces, the collar and chest budgets, the mouth that cannot
-outrank the eyes, and the chip-size silhouette distinctness. `tests/test_face_region.py`
-is the hardest of them: `CommanderVisuals.FACE_REGION` parsed out of the game's
-own source and every general's chin measured against it. If a bust fails it,
-**the geometry moves — never the rectangle**, which the HUD chip, the speech
-bust and the campaign brief all read.
+four value bands inside each, **sixteen painted tones and every one of them a
+rung this bust was given**, one light polarity on all twenty-three, the collar
+and chest budgets, the mouth that cannot outrank the eyes, and the chip-size
+silhouette distinctness. The light is read off the two shoulders rather than off
+a cheek: at sixteen tones a scar or a strap lands on the very rung a cheek is
+painted in, and the coat is the one surface every general wears unbroken.
+
+`tests/test_face_region.py` is the hardest of them: `CommanderVisuals.FACE_REGION`
+parsed out of the game's own source, every general's chin measured against it,
+and every chip checked to be that rectangle of that general's own drawing. If a
+bust fails it, **the geometry moves — never the rectangle**, which the HUD chip,
+the speech bust and the campaign brief all read.
 
 `tests/preview_sheet.py --part sheet` is the reviewer's look: all twenty-three
-busts at 220 over one row per faction, and the 31px face-crop strip under them.
+busts over one row per faction, and the face-chip strip under them.
+`--part board` is the one that answers "is this one style?": every bust beside a
+strip of the board's own art — 16px terrain cells, 64x96 unit cells — at one
+shared zoom.
 
 `make portraits` re-imports because a PNG whose `.import` Godot has never seen
-is baked with **mipmaps off**, and the portraits are the one art in the game
-sampled `TEXTURE_FILTER_LINEAR_WITH_MIPMAPS`. Replacing the *content* of a
-committed PNG is safe — Godot keeps the existing `.import` — but a **new**
-commander writes a fresh one, and `tests/unit/test_commander_portraits.gd`
-is what catches it.
+is baked with a default one. The busts and the chips want **no mip chain**: they
+are sampled `TEXTURE_FILTER_NEAREST` at a whole-number scale, and there is no
+level between the rungs to sample. The emblems keep theirs — a 64px badge drawn
+at 22 has no whole rung under it. Replacing the *content* of a committed PNG is
+safe, Godot keeps the existing `.import`, but a **new** commander writes a fresh
+one and `tests/unit/test_commander_portraits.gd` is what catches it.
 
 The snapshot gate compares **pixels**, not bytes: the committed PNGs may have
 been encoded by a different Pillow than yours. Byte determinism is a separate
@@ -63,12 +78,16 @@ file the generator no longer emits.
 
 ## The rendering stack
 
-Pillow alone, pinned at both ends (`requirements.txt`), drawing at **3x** and
-downsampling once to 220x268 with a box filter. `ImageDraw` has no
-antialiasing of its own; the downsample is where the smooth edge comes from, and
-a plain box average at an exact integer ratio is reproducible on any machine
-Pillow runs on and does not ring on hard ink edges. `portraitgen/canvas.py` is
-the only place a float coordinate becomes an integer.
+Pillow alone, pinned at both ends (`requirements.txt`), drawing **at 1x** onto
+the grid the file is baked at. `ImageDraw` has no antialiasing of its own, and
+nothing here adds any: a bust is hard-edged because every mark is rasterised on
+the raster it ships as.
+
+Every module states its geometry in one **design space** — 220x268, the
+handoff's viewBox doubled — and `portraitgen/canvas.py` divides it onto a grid:
+`BUST_DIVISOR` 2 for the bust, `CHIP_DIVISOR` 6 for the face chip. That is the
+only place a design unit becomes a pixel, which is why a chip is the same
+drawing rasterised coarser rather than a bust sampled down.
 
 Integer coordinates were not enough on their own. Pillow's polygon fill and its
 wide line work their own geometry out in C — a float32 slope and a
@@ -88,14 +107,22 @@ already were.
 
 ## Palette discipline
 
+- **Sixteen tones per bust**, and every one of them off the board's own ramps
+  (`generators/sprites`): the ink, the army's six rungs, four of skin, three of
+  hair and two of gunmetal. `palette.bust_palette` hands them out and
+  `palette.quantise` snaps the finished raster onto them, so a blend has
+  nowhere to come from.
 - **Four flat named tones per material** — deep, shade, base, lit — plus a rim.
-  A band is a tone taken from a ramp, never an alpha wash over a fill.
+  A band is a tone taken from a ramp, never an alpha wash over a fill. The
+  window's own bands are rungs too: the field is the army's shadow rung and the
+  treatments step down from it.
 - **One light**, upper-left, fixed sheet-wide. A mirrored pose flips the
   geometry, never the light; the cast shadow keeps its one offset too.
 - **Three ink weights and no others** (`INK_SILHOUETTE` 4 / `INK_FEATURE` 3 /
-  `INK_DETAIL` 2), so a scar can never come out as heavy as a jaw.
-  `Canvas.stroke` refuses any other width.
-- **At most 48 unique colours** in a finished raster.
+  `INK_DETAIL` 2, in design units), so a scar can never come out as heavy as a
+  jaw. `Canvas.stroke` refuses any other width. On the bust's grid the
+  hierarchy is a ceiling rather than three widths: a silhouette is two pixels
+  and the two lighter weights are one, which is all a 110px bust has room for.
 - Faction colour comes from `portraitgen/palette.py`, which mirrors the game's
   own `FactionTheme` — `tests/test_palette_mirror.py` reads the values back out
   of `scenes/common/commander_visuals.gd` and fails loudly on a rename.
@@ -110,16 +137,16 @@ default.
 
 | Module | Owns | Entry points |
 | --- | --- | --- |
-| `portraitgen/canvas.py` | the 3x surface, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/rect`, `compose`, `silhouette`, `cast_shadow`, `resolve` |
-| `portraitgen/light.py` | the key direction, the ramps, the rim, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `rim_light(silhouette, ramp, weight=, inset=, scale=, mirrored=)`, `occlusion(occluder, target, depth=, scale=, mirrored=)` |
+| `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/rect`, `px`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
+| `portraitgen/light.py` | the key direction, the ramps, the rim, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `faction_ramp(key)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `rim_light(silhouette, ramp, weight=, inset=, scale=, mirrored=)`, `occlusion(occluder, target, depth=, scale=, mirrored=)` |
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
 | `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `accessory(…, tint=)`, `earring`, `freckles` |
 | `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |
 | `portraitgen/uniform.py` | shoulders, collar cut, chest treatment, rank pip | `COLLAR_CUTS`, `CHEST_TREATMENTS`, `draw(canvas, faction, collar, ramp)`, `chest(canvas, treatment, faction, ramp)`, `pip(canvas, ramp)` |
 | `portraitgen/props.py` | the 22 signature props and their rigs | `PROPS`, `SHOULDERED`, `RIGHT_LIMIT`, `draw(canvas, key, faction, ramp, layer=)` |
-| `portraitgen/backdrop.py` | the window field, the treatment, the ink frame | `KINDS`, `OPACITY_BAND`, `field`, `treatment`, `frame`, `draw(canvas, kind, faction)` |
+| `portraitgen/backdrop.py` | the window field, the treatment, the ink frame | `KINDS`, `FIELD_SLOT`, `LATTICE`, `ACCENT`, `field`, `treatment`, `frame`, `draw(canvas, kind, faction)` |
 | `portraitgen/roster.py` | the FACES table | `Face`, `FACES`, `NEUTRAL`, `SKIN_TONES` |
-| `portraitgen/bust.py` | the draw order, the pose, the frame safety | `paint(spec, cast=)`, `window(spec)`, `prop_art(face)`, `busts()`, `FACTION_OF` |
+| `portraitgen/bust.py` | the draw order, the pose, the frame safety | `paint(spec, cast=, divisor=)`, `chip(spec)`, `palette_of(spec)`, `window(spec, divisor=)`, `prop_art(face)`, `busts()`, `chips()`, `FACTION_OF` |
 
 The keyword-only arguments above are the seams the layers are composed through:
 `layer=` splits a prop into the half behind the figure and the rig in front,
@@ -127,10 +154,11 @@ The keyword-only arguments above are the seams the layers are composed through:
 a headset cup in the general's own faction cloth, and `mirrored=` pre-flips the
 light for a layer the pose is about to turn over.
 
-Draw order, all at 3x, in `bust.py`: backdrop, then the figure — prop behind,
-hair behind, uniform and collar, head, features, hair over, prop in front — then
-the pose over the whole figure, the hard cast shadow under it, and the
-downsample. Each layer inks itself as it is laid down.
+Draw order, all on one grid, in `bust.py`: backdrop, then the figure — prop
+behind, hair behind, uniform and collar, head, features, hair over, prop in
+front — then the pose over the whole figure, the hard cast shadow under it, and
+the snap onto the bust's sixteen tones. Each layer inks itself as it is laid
+down.
 
 `Face` carries nineteen columns — `skin`, `hair`, `style`, `brow`, `eyes`,
 `mouth`, `eye`, `facial`, `acc`, `collar`, `chest`, `head`, `nose`, `pose`,
@@ -141,9 +169,9 @@ times over.
 
 ## The pose, and what a mirror may turn
 
-Tilt and zoom are one affine over the working raster, its coefficients rounded
-before they are used so that no libm's cosine can move an edge by a pixel, and
-sampled nearest — the downsample stays the only place a tone is blended.
+Tilt and zoom are one affine over the raster, its coefficients rounded before
+they are used so that no libm's cosine can move an edge by a pixel, and sampled
+nearest — nothing anywhere in this pipeline blends two tones.
 
 A mirrored pose flips **geometry, never light**. Only the layers carrying a
 face's asymmetry turn: the hair and the head with its features. The uniform,
@@ -160,9 +188,10 @@ both halves together, before the pose.
 
 ## Frame safety
 
-`FACE_REGION` is `Rect2i(16, 25, 190, 190)` and the jaw must never clip it: the
-shipped busts clear it by 12 to 21 pixels against a floor of 8, measured by
-`tests/unit/test_commander_face.gd`. It is the hardest acceptance criterion here
-and it is checked per bust — if one fails, the geometry moves, never the
-constant, because the HUD chip, the speech bust and the campaign brief all read
-that rectangle.
+`FACE_REGION` is `Rect2i(9, 15, 93, 93)` on the bust's grid — `canvas.FACE_REGION`
+in design units, whose origin and side divide by **both** divisors so the chip is
+that same square rasterised coarser. The jaw must never clip it: the sheet clears
+it by 8 (Holt) to 32 (Morn) pixels against a floor of 4, measured per bust by
+`tests/test_face_region.py`. It is the hardest acceptance criterion here — if one
+fails, the geometry moves, never the rectangle, because the HUD chip, the speech
+bust and the campaign brief all read it.

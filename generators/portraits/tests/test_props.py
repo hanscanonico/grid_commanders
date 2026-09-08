@@ -29,11 +29,14 @@ from portraitgen.palette import faction_by_key
 
 FACTION = faction_by_key("meridian")
 RAMP = Ramp(
-    deep=(74, 24, 20),
-    shade=(112, 38, 32),
-    base=(158, 58, 48),
-    lit=(206, 92, 76),
-    rim=(238, 150, 136),
+    (
+        (38, 14, 12),
+        (74, 24, 20),
+        (112, 38, 32),
+        (158, 58, 48),
+        (206, 92, 76),
+        (238, 150, 136),
+    )
 )
 # The head the worn props reach for, in portrait pixels: a stand-in for the
 # skull the light model draws, so a pipe or a cigar can be measured against a
@@ -61,16 +64,16 @@ def _prop(key: str, *, layer: str = "all") -> Canvas:
 
 
 def _painted_rows(canvas: Canvas) -> set[int]:
-    """Which portrait rows a layer puts ink on."""
+    """Which rows of the raster a layer puts ink on."""
     mask = canvas.silhouette()
     width = mask.width
     lit = mask.get_flattened_data()
-    return {index // width // canvas.scale for index, value in enumerate(lit) if value}
+    return {index // width for index, value in enumerate(lit) if value}
 
 
 def _area(mask: Image.Image) -> int:
-    """A one-bit mask's painted area, in portrait pixels."""
-    return sum(1 for value in mask.get_flattened_data() if value) // Canvas().scale ** 2
+    """A one-bit mask's painted area, in raster pixels."""
+    return sum(1 for value in mask.get_flattened_data() if value)
 
 
 class EveryPropDraws(unittest.TestCase):
@@ -129,7 +132,7 @@ class TheAnchorHangsBehindTheShoulder(unittest.TestCase):
     object the figure passes in front of has depth, one laid on the chest is a
     decal."""
 
-    HIDDEN_PX = 500
+    HIDDEN_PX = 125
 
     def test_the_shank_runs_behind_the_shoulder(self):
         behind = _prop("anchor", layer="back").silhouette()
@@ -147,9 +150,8 @@ class TheScalesHangPlumb(unittest.TestCase):
 
     def test_the_beam_is_centred_on_the_bust_midline(self):
         left, _, right, _ = _prop("scales").silhouette().getbbox()
-        scale = Canvas().scale
-        centre = (left + right) / 2 / scale
-        midline = canvas_module.PORTRAIT_SIZE[0] / 2
+        centre = (left + right) / 2 * Canvas().divisor
+        midline = canvas_module.DESIGN_SIZE[0] / 2
         self.assertLessEqual(abs(centre - midline), self.OFF_MIDLINE_PX)
 
 
@@ -159,7 +161,7 @@ class TheCigarClearsTheMouth(unittest.TestCase):
     lit tip has to be the sheet's one gold."""
 
     def test_the_stem_starts_below_the_mouth_line(self):
-        top = _prop("cigar").image.getbbox()[1] / Canvas().scale
+        top = _prop("cigar").image.getbbox()[1] * Canvas().divisor
         self.assertGreater(top, props.MOUTH_LINE)
 
     def test_the_tip_carries_an_ember(self):
@@ -204,7 +206,7 @@ class TheFrameIsRespected(unittest.TestCase):
         for key in sorted(props.PROPS):
             with self.subTest(prop=key):
                 canvas = _prop(key)
-                right = canvas.image.getbbox()[2] / canvas.scale
+                right = canvas.image.getbbox()[2] * canvas.divisor
                 self.assertLessEqual(right, props.RIGHT_LIMIT)
 
 

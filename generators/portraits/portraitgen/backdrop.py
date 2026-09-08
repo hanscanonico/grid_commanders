@@ -26,14 +26,17 @@ from collections.abc import Callable, Iterable
 from PIL import Image, ImageChops, ImageDraw
 
 from .canvas import CAST_CUTOFF, INK_SILHOUETTE, Canvas, Point
-from .palette import INK, RGBA, Faction
+from .palette import INK, RGBA, Faction, S_CONTOUR, S_SHADOW, S_UNDER, faction_ramp
 
 KINDS = frozenset({"bars", "burst", "grid", "halftone", "rays", "speed", "wedge"})
-# The band a treatment is drawn at, over the faction field.
-OPACITY_BAND = (0.20, 0.26)
-# The two opacities inside it: the lattice itself, and the second value a
-# treatment lays beside it. A treatment's two bands never overlap.
-LATTICE, ACCENT = 0.24, 0.20
+# Which rung of the army's ramp each part of the window is painted in. A band
+# is a tone off the ramp, never an alpha wash over the field: a wash was what
+# the old downsample hid, and at sixteen tones it is a colour the bust does not
+# have. The field is the shadow rung — a band under the coat that stands in
+# front of it on every army, Iron included — and the two treatments step DOWN
+# from it, so a window can only ever be darker than the general in it.
+FIELD_SLOT = S_SHADOW
+LATTICE, ACCENT = S_UNDER, S_CONTOUR
 
 # The ink-bordered inner window, in portrait pixels — the handoff's 98x96 box at
 # (6, 24) of its 110x134 viewBox, at the pinned raster's scale.
@@ -45,31 +48,33 @@ BURST_AT = (110.0, 166.0)
 RAYS_AT = (110.0, 268.0)
 
 Painter = Callable[[Canvas, Faction], None]
-Band = tuple[float, Painter]
+Band = tuple[int, Painter]
 
 
 def _tone(faction: Faction) -> RGBA:
-    """The one colour a treatment is drawn in; the band supplies its value."""
-    return (*faction.body_lt, 255)
+    """The colour a treatment is drawn in. It is opaque: `_band` flattens the
+    layer to the rung it was asked for once the shape is down."""
+    return (255, 255, 255, 255)
 
 
 def _erase(canvas: Canvas, points: Iterable[Point]) -> None:
     """Cut a shape back out of a layer, so two bands never stack into a third."""
-    hole = Canvas(canvas.size, canvas.scale)
+    hole = canvas.blank()
     hole.polygon(points, (255, 255, 255, 255))
     keep = ImageChops.invert(hole.image.getchannel("A"))
     canvas.image.putalpha(ImageChops.multiply(canvas.image.getchannel("A"), keep))
 
 
-def _band(canvas: Canvas, faction: Faction, paint: Painter, opacity: float) -> None:
-    """Paint one treatment band: opaque, then flattened to a single alpha."""
-    layer = Canvas(canvas.size, canvas.scale)
+def _band(canvas: Canvas, faction: Faction, paint: Painter, slot: int) -> None:
+    """Paint one treatment band: its shape, flattened onto one rung of the
+    army's ramp and clipped to the window."""
+    layer = canvas.blank()
     paint(layer, faction)
-    value = round(opacity * 255)
-    flat = layer.image.getchannel("A").point(lambda a: value if a >= CAST_CUTOFF else 0)
+    flat = layer.image.getchannel("A").point(lambda a: 255 if a >= CAST_CUTOFF else 0)
     window = Image.new("L", layer.image.size, 0)
-    x0, y0, x1, y1 = (round(v * canvas.scale) for v in WINDOW)
+    x0, y0, x1, y1 = (canvas.px(v) for v in WINDOW)
     ImageDraw.Draw(window).rectangle((x0, y0, x1 - 1, y1 - 1), fill=255)
+    layer.image.paste((*faction_ramp(faction.key)[slot], 255), (0, 0), flat)
     layer.image.putalpha(ImageChops.multiply(flat, window))
     canvas.compose(layer)
 
@@ -190,15 +195,15 @@ _TREATMENTS: dict[str, tuple[Band, ...]] = {
 
 def field(canvas: Canvas, faction: Faction) -> None:
     """The window's flat faction field — one tone, no gradient."""
-    canvas.rect(WINDOW, (*faction.body_dk, 255))
+    canvas.rect(WINDOW, (*faction_ramp(faction.key)[FIELD_SLOT], 255))
 
 
 def treatment(canvas: Canvas, kind: str, faction: Faction) -> None:
     """One dramatic treatment, clipped to the window. An unknown kind raises."""
     if kind not in _TREATMENTS:
         raise KeyError(f"no backdrop {kind!r} (have {sorted(_TREATMENTS)})")
-    for opacity, paint in _TREATMENTS[kind]:
-        _band(canvas, faction, paint, opacity)
+    for slot, paint in _TREATMENTS[kind]:
+        _band(canvas, faction, paint, slot)
 
 
 def frame(canvas: Canvas) -> None:

@@ -29,11 +29,14 @@ _AMMO = re.compile(r"const AMMO := Color\(([^)]*)\)")
 
 FACTION = faction_by_key("aurora")
 RAMP = Ramp(
-    deep=(24, 34, 58),
-    shade=(38, 54, 92),
-    base=(56, 78, 132),
-    lit=(84, 110, 172),
-    rim=(150, 176, 226),
+    (
+        (14, 20, 34),
+        (24, 34, 58),
+        (38, 54, 92),
+        (56, 78, 132),
+        (84, 110, 172),
+        (150, 176, 226),
+    )
 )
 # The roster is twenty-two generals and no chest treatment may be worn by more
 # than two of them.

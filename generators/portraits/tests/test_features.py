@@ -18,9 +18,16 @@ import unittest
 import preview_sheet
 from PIL import Image, ImageChops
 from portraitgen import features, light
-from portraitgen.canvas import INK_FEATURE, PORTRAIT_SIZE, SUPERSAMPLE, Canvas
+from portraitgen.canvas import BUST_DIVISOR, DESIGN_SIZE, INK_FEATURE, Canvas, pen
 from portraitgen.head import Skull
 from portraitgen.palette import INK
+
+# Design units to raster pixels: a measurement stated in the geometry's own
+# units, read off the raster the bust is drawn on.
+PIXELS_PER_UNIT = 1.0 / BUST_DIVISOR
+# What the feature weight actually draws on this grid, which is what a gap
+# beside it or a ring drawn in it measures against.
+FEATURE_PEN = pen(INK_FEATURE, BUST_DIVISOR)
 
 SKULL = Skull(1.0, "round", 0.0, 1.0)
 FRAME = features.Frame.of(SKULL)
@@ -44,7 +51,7 @@ NAMED = {
 
 
 def _cell() -> Canvas:
-    return Canvas(PORTRAIT_SIZE)
+    return Canvas(DESIGN_SIZE)
 
 
 def _tally(cell: Canvas) -> list[tuple[int, tuple[int, int, int, int]]]:
@@ -244,7 +251,7 @@ class AnOpenMouthOutspansTheEyes(unittest.TestCase):
         cell = _cell()
         features.eyes(cell, SKULL, "m", scale=dial)
         midline, line = (
-            round(value * SUPERSAMPLE)
+            round(value * PIXELS_PER_UNIT)
             for value in FRAME.at(features.MOUTH_X, features.EYE_LINE)
         )
         left, _, right, _ = cell.image.crop((0, line, midline, line + 1)).getbbox()
@@ -283,7 +290,7 @@ class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
     def _opening(self, kind: str) -> tuple[int, int]:
         """The width and height inside the lip, which is what the cap is of."""
         left, top, right, bottom = self._mouth(kind).image.getbbox()
-        lip = round(2 * INK_FEATURE * SUPERSAMPLE)
+        lip = 2 * FEATURE_PEN
         return (right - left - lip, bottom - top - lip)
 
     def _bared(self, kind: str) -> tuple[int, int]:
@@ -297,7 +304,7 @@ class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
             with self.subTest(mouth=kind):
                 self.assertLessEqual(
                     self._bared(kind)[0],
-                    features.TEETH_WIDTH * self._opening(kind)[0] + SUPERSAMPLE,
+                    features.TEETH_WIDTH * self._opening(kind)[0] + 1,
                 )
 
     def test_a_grin_bares_a_narrower_band_than_a_laugh(self):
@@ -311,11 +318,11 @@ class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
         left, top, right, _ = cell.image.getbbox()
         under_the_lip = (
             (left + right) // 2,
-            top + round(INK_FEATURE * SUPERSAMPLE) + 1,
+            top + FEATURE_PEN + 1,
         )
         self.assertEqual(cell.image.getpixel(under_the_lip)[:3], INK)
         self.assertLessEqual(
-            self._bared("open")[1], round((features.LIT_LIP + 1) * SUPERSAMPLE)
+            self._bared("open")[1], round(features.LIT_LIP * PIXELS_PER_UNIT) + 1
         )
 
 
@@ -333,7 +340,7 @@ class TheGlassesAreTwoSquaresAndNoBridge(unittest.TestCase):
         """Both rings are cropped off, so only a bridge can be left in it."""
         worn = self._worn().image
         left, top, right, bottom = worn.getbbox()
-        lens = round(self._lens_side() * SUPERSAMPLE)
+        lens = round(self._lens_side() * PIXELS_PER_UNIT)
         self.assertIsNone(worn.crop((left + lens, top, right - lens, bottom)).getbbox())
 
     def _lens_side(self) -> float:
@@ -342,12 +349,9 @@ class TheGlassesAreTwoSquaresAndNoBridge(unittest.TestCase):
     def test_each_lens_is_a_square_ring_at_the_feature_weight(self):
         _, top, _, bottom = self._worn().image.getbbox()
         self.assertAlmostEqual(
-            bottom - top, round(self._lens_side() * SUPERSAMPLE), delta=SUPERSAMPLE
+            bottom - top, round(self._lens_side() * PIXELS_PER_UNIT), delta=1
         )
-        self.assertEqual(
-            _ink_run(self._worn(), (top + bottom) // 2),
-            round(INK_FEATURE * SUPERSAMPLE),
-        )
+        self.assertEqual(_ink_run(self._worn(), (top + bottom) // 2), FEATURE_PEN)
 
 
 class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
@@ -364,14 +368,16 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
 
     def test_the_strap_lands_on_the_ear(self):
         """P4a: a plate with no strap is a sticker. It is anchored where it
-        would be worn, so the ear is where the stroke has to end."""
+        would be worn, so the ear is where the stroke has to end — a pixel of
+        the strap's own ink inside the ear's own square, which at a one-pixel
+        pen is the whole of what "ends here" can mean."""
         ear_x, ear_y, radius = features.EAR
         x, y = (
-            round(value * SUPERSAMPLE)
+            round(value * PIXELS_PER_UNIT)
             for value in FRAME.at(ear_x + radius, ear_y - radius)
         )
         anchor = self._patch().image.crop((x - 1, y - 1, x + 2, y + 2))
-        self.assertEqual(anchor.getcolors(), [(9, (*INK, 255))])
+        self.assertIn((*INK, 255), [colour for _, colour in anchor.getcolors()])
 
     def test_the_eyepatch_is_the_one_accessory_that_covers_a_socket(self):
         covering = {

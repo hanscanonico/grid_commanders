@@ -410,15 +410,35 @@ PALE_HAIR = 150.0
 # is a crown highlight tapering down the mass, not a rectangle on it.
 _LOBE_TAPER = 0.22
 
+# How near a hair mass may sit to the skin under it before it drops a rung. Two
+# shapes of one value are one shape, and the ink between them is a single pixel
+# at this size — so the rule the `bob` was given by hand is asked of every
+# wearer instead: a style names the rung it wants, and a mass that would tie
+# with its own face takes the one below whatever it named.
+SKIN_CONTRAST = 34.0
 
-def ramp_for(colour: str) -> Ramp:
-    """The four tones a hair colour is painted in."""
-    return light.build_ramp(HAIR_BASES[colour])
+
+def ramp_for(colour: str, *, rim: RGB | None = None) -> Ramp:
+    """The four tones a hair colour is painted in.
+
+    `rim` is the army's own rim rung, the way skin takes it: every kicker on a
+    bust is the one faction tone, so no material spends a seventeenth colour on
+    a light it shares.
+    """
+    return light.build_ramp(HAIR_BASES[colour], rim_hue=rim)
 
 
-def mass_band(style: str) -> str:
-    """Which band of the ramp a style's mass takes. An unknown style raises."""
-    return _STYLES[style].band
+def mass_band(style: str, ramp: Ramp | None = None, skin: Ramp | None = None) -> str:
+    """Which band of the ramp a style's mass takes. An unknown style raises.
+
+    The style's own rung, dropped to `shade` when the wearer's face is inside
+    `SKIN_CONTRAST` of it — `tests/test_contrast.py` is the measurement.
+    """
+    band = _STYLES[style].band
+    if ramp is None or skin is None or band != "base":
+        return band
+    apart = abs(light.luminance(ramp.base) - light.luminance(skin.base))
+    return "shade" if apart < SKIN_CONTRAST else band
 
 
 def draw(
@@ -446,7 +466,7 @@ def front(
     """
     spec = _STYLES[style]
     frame = Frame.of(skull)
-    tone = ramp.band(spec.band)
+    tone = ramp.band(mass_band(style, ramp, skin))
     if skin is not None and spec.fringe:
         canvas.polygon(frame.path(spec.fringe), skin.shade)
     for x, y, radius in spec.blobs:

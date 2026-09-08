@@ -14,7 +14,7 @@ import unittest
 
 import preview_sheet
 from portraitgen import hair, light
-from portraitgen.canvas import PORTRAIT_SIZE, Canvas
+from portraitgen.canvas import BUST_DIVISOR, DESIGN_SIZE, Canvas
 from portraitgen.features import REFERENCE_BOX
 from portraitgen.head import Skull
 from portraitgen.palette import INK
@@ -27,6 +27,9 @@ LEFT, TOP, RIGHT, BOTTOM = REFERENCE_BOX
 # carries half the silhouette's ink outside its own path on each side, plus the
 # supersampled canvas' own rounding step.
 INK_SLACK = 5
+# Design units per raster pixel: `_silhouette` reads the raster and reports the
+# units the styles are authored in.
+PITCH = BUST_DIVISOR
 # How near the highest row a column has to reach to count as one of the curls.
 CREST_BAND = 2
 MANE = light.build_ramp((90, 60, 40))
@@ -37,12 +40,15 @@ NAMED = {INK, MANE.deep, MANE.shade, MANE.base, MANE.lit, MANE.rim}
 COMBED = sorted(hair.STYLES - {"bald"})
 # A ramp over the pale line, and one under it, to ask the same style twice.
 PLATINUM = hair.ramp_for("platinum")
-# The lobe is a highlight on the mass, not a second mass beside it.
-LOBE_SHARE = 0.25
+# The lobe is a highlight on the mass, not a second mass beside it. A quarter
+# was the bar at three times this raster; a lobe's edge rounds outward by up to
+# a whole pixel all the way round on the bust's own grid, which is a couple of
+# points on a small style like `short`.
+LOBE_SHARE = 0.27
 
 
 def _cell() -> Canvas:
-    return Canvas(PORTRAIT_SIZE)
+    return Canvas(DESIGN_SIZE)
 
 
 def _tally(cell: Canvas) -> list[tuple[int, tuple[int, int, int, int]]]:
@@ -98,13 +104,18 @@ def _silhouette(cell: Canvas) -> list[tuple[float, float]]:
 
 
 def _crests(pixels: list[tuple[float, float]]) -> int:
-    """How many curls a top edge shows: the runs that reach its highest row."""
+    """How many curls a top edge shows: the runs that reach its highest row.
+
+    A run is broken by a column with nothing in it, and a column is a whole
+    raster pixel — `PITCH` design units — so a crest is not counted once per
+    pixel of itself.
+    """
     profile: dict[float, float] = {}
     for x, y in pixels:
         profile[x] = min(y, profile.get(x, y))
     peak = min(profile.values())
     columns = sorted(x for x, y in profile.items() if y <= peak + CREST_BAND)
-    return 1 + sum(1 for near, far in zip(columns, columns[1:]) if far - near > 1.0)
+    return 1 + sum(1 for near, far in zip(columns, columns[1:]) if far - near > PITCH)
 
 
 def _colours(cell: Canvas) -> set[tuple[int, int, int]]:

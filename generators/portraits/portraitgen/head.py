@@ -178,7 +178,7 @@ def skull_box(skull: Skull) -> tuple[float, float, float, float]:
 
 
 def _mask_of(canvas: Canvas, points: list[Point]) -> Image.Image:
-    layer = Canvas(canvas.size, canvas.scale)
+    layer = canvas.blank()
     layer.polygon(points, (255, 255, 255, 255))
     return layer.silhouette()
 
@@ -207,7 +207,7 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
     and the rim step the other way in x, so that once the group is flipped they
     land on the screen's shadow side like every unmirrored bust's.
     """
-    skin = Canvas(canvas.size, canvas.scale)
+    skin = canvas.blank()
     skin.polygon(neck(skull), ramp.shade)
     skin.stroke(neck(skull), INK_FEATURE, (*INK, 255))
     for box in ears(skull):

@@ -73,10 +73,11 @@ the shade, so the two sides of a face are never the same drawing.
 ## What the head module hangs on it
 
 `head.Skull(width, jaw, crown, spread)` is the roster's `head` column exactly.
-The geometry is the handoff's own, moved into portrait pixels: the handoff drew
-a 110x134 viewBox with its origin at y -14 and the pinned raster is 220x268, so
-a handoff x is `2x` and a handoff y is `2(y + 14)`. Nothing was re-authored in
-the move.
+The geometry is the handoff's own, moved into the design space every module
+states its coordinates in: the handoff drew a 110x134 viewBox with its origin at
+y -14 and the design space is 220x268, so a handoff x is `2x` and a handoff y is
+`2(y + 14)`. Nothing was re-authored in the move — and the bust is baked back at
+the handoff's own 110x134, one pixel to two design units (`canvas.BUST_DIVISOR`).
 
 `head.draw` paints in the light's own order — neck and ears, the face, the two
 bands the key writes on it (both through the face's own mask, so a shade cannot
@@ -86,13 +87,12 @@ unknown band name: the vocabulary is the dispatch table.
 
 ## Two numbers this model does not meet head-on
 
-- **Unique colours.** The brief's bar is 48 RGBA per raster. A 3x box
-  downsample blends across every edge it smooths, so a finished raster carries
-  a few hundred values whatever it is painted in — the stand-in row measures 202 to 213
-  against the shipped sheet's 528 to 2,877. The bar is therefore read as what
-  it was written for: `tests/test_geometry.py` counts the tones a raster is
-  *painted* in — colours covering at least a thousandth of it — and holds that
-  to 48.
+- **Unique colours.** The bar is sixteen opaque tones per raster, and every one
+  of them a rung `palette.bust_palette` handed this bust. There is no
+  downsample left to blend an edge, so the count is a plain count:
+  `tests/test_geometry.py` and `tests/test_metrics.py` both read it straight off
+  the raster. A ramp built here that a bust does not spend a slot on is snapped
+  onto one that it does, so this model may not invent a material.
 - **Jaw clearance.** The skull sits where the handoff put it, so a bust's chin
   clears `FACE_REGION` by the pose's own zoom. That measurement is the busts'
   slice, not this one; nothing here may move `FACE_REGION`.

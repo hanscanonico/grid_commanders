@@ -22,21 +22,30 @@ from pathlib import Path
 from PIL import Image
 
 from portraitgen import bust, head, roster
+from portraitgen.canvas import BUST_DIVISOR, BUST_SIZE, CHIP_DIVISOR, CHIP_SIZE
+from portraitgen.canvas import face_box as _face_box
 
 GAME = Path(__file__).resolve().parents[3]
 VISUALS = GAME / "scenes/common/commander_visuals.gd"
 
-# The shipped busts measured 12 (Quill) to 21 (Morn) against a floor of 8. The
-# floor is the GUT suite's own; the target is the band the sheet has held.
-CHIN_CLEARANCE_PX = 8
-CHIN_TARGET_PX = 12
+# The floor and the band the sheet holds, on the bust's own grid — half the
+# raster the eight-pixel floor was set on, so the floor comes down with it. The
+# rebaked sheet measures 8 (Holt) to 32 (Morn) against that floor of 4.
+CHIN_CLEARANCE_PX = 4
+CHIN_TARGET_PX = 8
 
-# How far off one of a general's own skin tones a pixel may be and still be
-# their face. The busts are painted in flat named tones, so the only pixels
-# that drift are the downsample's own edge blends, which are not the chin.
-SKIN_TOLERANCE = 14
+# A bust is snapped onto sixteen named tones and nothing is blended anywhere,
+# so a skin pixel IS one of the skin ramp's rungs. The tolerance is what the
+# quantiser can move a rung by, which is nothing.
+SKIN_TOLERANCE = 0
 
 _REGION = re.compile(r"FACE_REGION.*?Rect2i\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)", re.S)
+
+
+def _as_rect(divisor: int) -> tuple[int, int, int, int]:
+    """The generator's own face box as (x, y, width, height)."""
+    left, top, right, bottom = _face_box(divisor)
+    return (left, top, right - left, bottom - top)
 
 
 def face_region() -> tuple[int, int, int, int]:
@@ -58,22 +67,46 @@ def is_skin(pixel: tuple[int, ...], tones: list[tuple[int, int, int]]) -> bool:
 def chin_row(image: Image.Image, tones: list[tuple[int, int, int]]) -> int:
     """The lowest row of the crop's middle column that is still this face.
 
-    Public because it is the sheet's one reading of where a jaw ends, and
-    `test_props` holds a prop clear of that row rather than taking a second
-    opinion on it.
+        Public because it is the sheet's one reading of where a jaw ends, and
+        `test_props` holds a prop clear of that row rather than taking a second
+        opinion on it.
 
-    A column rather than the whole bottom row, for the GUT suite's own reason: a
-    signature prop is drawn in its owner's skin, so a row-wide scan measures the
-    props instead of the jaw.
+    The face is the one CONNECTED mass of skin in the crop: a bust is snapped
+        onto sixteen tones, so a leather strap under the collar can land on the very
+        rung a cheek is painted in, and a signature prop is drawn in its owner's
+        skin. What tells them apart is that a brow, a jaw and the neck under them
+        touch, and a strap does not — so the jaw is the bottom of the largest island
+        of skin, not the lowest skin pixel anywhere.
     """
+    island = _face_island(image, tones)
+    return max((row for _, row in island), default=-1)
+
+
+def _face_island(
+    image: Image.Image, tones: list[tuple[int, int, int]]
+) -> set[tuple[int, int]]:
+    """The largest four-connected run of this face's own skin inside the crop."""
     x, y, width, height = face_region()
-    column = x + width // 2
-    rows = [
-        row
+    skin = {
+        (column, row)
         for row in range(y, y + height)
+        for column in range(x, x + width)
         if is_skin(image.getpixel((column, row)), tones)
-    ]
-    return rows[-1] if rows else -1
+    }
+    largest: set[tuple[int, int]] = set()
+    while skin:
+        island, edge = set(), [skin.pop()]
+        while edge:
+            column, row = edge.pop()
+            island.add((column, row))
+            for step in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                near = (column + step[0], row + step[1])
+                if near in skin:
+                    skin.remove(near)
+                    edge.append(near)
+        if len(island) > len(largest):
+            largest = island
+    return largest
 
 
 def _clearance(image: Image.Image, tones: list[tuple[int, int, int]]) -> int:
@@ -89,10 +122,48 @@ def skin_tones(skin: str) -> list[tuple[int, int, int]]:
 class TheRectangleIsTheGameSOwn(unittest.TestCase):
     def test_the_region_is_a_square_inside_the_portrait(self):
         x, y, width, height = face_region()
-        self.assertEqual((x, y, width, height), (16, 25, 190, 190))
+        self.assertEqual((x, y, width, height), _as_rect(BUST_DIVISOR))
         self.assertEqual(width, height)
-        self.assertLessEqual(x + width, 220)
-        self.assertLessEqual(y + height, 268)
+        self.assertLessEqual(x + width, BUST_SIZE[0])
+        self.assertLessEqual(y + height, BUST_SIZE[1])
+
+    def test_the_rectangle_lands_on_both_grids(self):
+        """The chip is this square rasterised coarser, so a rectangle that did
+        not divide by the chip grid would put a chip off the bust's own head."""
+        for divisor in (BUST_DIVISOR, CHIP_DIVISOR):
+            with self.subTest(divisor=divisor):
+                left, top, right, bottom = _face_box(divisor)
+                self.assertEqual(right - left, bottom - top)
+        self.assertEqual(_as_rect(CHIP_DIVISOR)[2], CHIP_SIZE)
+
+
+class TheChipIsTheSameDrawing(unittest.TestCase):
+    """The face chip a small surface loads is this rectangle of the bust's own
+    drawing, rasterised on the chip grid — not the bust resampled, and not a
+    second drawing that could drift from it."""
+
+    def test_every_chip_is_the_face_box_of_its_own_bust(self):
+        for key, face in sorted(roster.FACES.items()):
+            with self.subTest(commander=key):
+                cut = bust.paint(face, divisor=CHIP_DIVISOR).crop(
+                    _face_box(CHIP_DIVISOR)
+                )
+                self.assertEqual(bust.chip(face).tobytes(), cut.tobytes())
+
+    def test_every_chip_is_the_chip_square(self):
+        for key, face in sorted(roster.FACES.items()):
+            with self.subTest(commander=key):
+                self.assertEqual(bust.chip(face).size, (CHIP_SIZE, CHIP_SIZE))
+
+    def test_no_chip_spends_a_tone_its_bust_does_not(self):
+        for key, face in sorted(roster.FACES.items()):
+            with self.subTest(commander=key):
+                painted = {
+                    colour[:3]
+                    for _, colour in bust.chip(face).getcolors(1 << 16)
+                    if colour[3] == 255
+                }
+                self.assertEqual(painted - set(bust.palette_of(face)), set())
 
 
 class TheCropClearsEveryJaw(unittest.TestCase):
