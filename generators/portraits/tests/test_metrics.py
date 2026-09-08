@@ -174,6 +174,34 @@ class FourValueBands(unittest.TestCase):
                 self.assertGreaterEqual(len(bands), VALUE_BANDS)
 
 
+class ThePaletteIsSpentPerMaterial(unittest.TestCase):
+    """What the sixteen buy, material by material — the measured half of the
+    README's style bar.
+
+    The light model hands every material four bands (`light.Ramp`), but a bust
+    cannot afford four of each: skin takes four rungs and the army six, which
+    leaves three for hair and two for gunmetal. So the four-tone rule is the
+    model's, not the emitted PNG's, and this is where that is stated in numbers
+    rather than in prose — a slot added to one material has to come out of
+    another, and `bust_palette` raises if the sixteen stop adding up.
+    """
+
+    BUDGET = {"skin": 4, "hair": 3, "metal": 2}
+
+    def test_the_sixteen_are_the_ink_the_army_and_the_three_materials(self):
+        spent = 1 + len(palette.faction_ramp("meridian")) + sum(self.BUDGET.values())
+        self.assertEqual(spent, palette.PAINTED_TONES)
+
+    def test_each_material_gets_the_rungs_the_budget_names(self):
+        for material, slots in (
+            ("skin", palette.SKIN_SLOTS),
+            ("hair", palette.HAIR_SLOTS),
+            ("metal", palette.METAL_SLOTS),
+        ):
+            with self.subTest(material=material):
+                self.assertEqual(len(set(slots)), self.BUDGET[material])
+
+
 class ThePaletteIsBounded(unittest.TestCase):
     """M4/C4: the tones a raster is painted in, against the brief's forty-eight."""
 

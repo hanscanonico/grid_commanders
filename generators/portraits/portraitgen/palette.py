@@ -255,9 +255,14 @@ def faction_ramp(key: str) -> Ramp6:
 # steel top plane is the brightest thing a general in a dark window owns, so a
 # white slot would be a tone spent twice.
 PAINTED_TONES = 16
-_SKIN_SLOTS = (S_UNDER, S_SHADOW, S_BODY, S_TOP)
-_HAIR_SLOTS = (S_SHADOW, S_BODY, S_TOP)
-_METAL_SLOTS = (S_BODY, S_TOP)
+# Which rungs each material actually gets, and the one statement of it. The
+# light model gives every material four bands, but only skin can afford all
+# four here: hair drops its deep and gunmetal keeps its top two, so those two
+# quantise onto the rung above. Adding one back means taking a rung off another
+# material — `bust_palette` refuses a seventeenth tone.
+SKIN_SLOTS = (S_UNDER, S_SHADOW, S_BODY, S_TOP)
+HAIR_SLOTS = (S_SHADOW, S_BODY, S_TOP)
+METAL_SLOTS = (S_BODY, S_TOP)
 
 # How near two colours are, in whole numbers: red, green and blue weighted the
 # way the eye reads them, squared, so `quantise` never divides or takes a root.
@@ -275,9 +280,9 @@ def bust_palette(faction: str, skin: Ramp6, hair: Ramp6) -> tuple[RGB, ...]:
     tones = (
         INK,
         *army,
-        *(skin[slot] for slot in _SKIN_SLOTS),
-        *(hair[slot] for slot in _HAIR_SLOTS),
-        *(GUNMETAL_RAMP[slot] for slot in _METAL_SLOTS),
+        *(skin[slot] for slot in SKIN_SLOTS),
+        *(hair[slot] for slot in HAIR_SLOTS),
+        *(GUNMETAL_RAMP[slot] for slot in METAL_SLOTS),
     )
     if len(tones) != PAINTED_TONES:
         raise ValueError(f"a bust palette is {PAINTED_TONES} tones, not {len(tones)}")

@@ -116,7 +116,14 @@ already were.
 - **Four flat named tones per material** — deep, shade, base, lit — plus a rim.
   A band is a tone taken from a ramp, never an alpha wash over a fill. The
   window's own bands are rungs too: the field is the army's shadow rung and the
-  treatments step down from it.
+  treatments step down from it. **Two materials cannot afford all four on a
+  sixteen-tone bust and do not get them**: hair ships three rungs and gunmetal
+  two (`palette.HAIR_SLOTS`, `METAL_SLOTS`), so their deep — and the metal's
+  shade — quantises onto the rung above. The four-tone model is what
+  `light.Ramp` hands a painter; what a *bust* is measured on is four value
+  bands over the whole figure (`tests/test_metrics.py FourValueBands`) and the
+  per-material budget itself (`ThePaletteIsSpentPerMaterial`). Buying hair its
+  fourth rung means spending a seventeenth tone, which is the rule above.
 - **One light**, upper-left, fixed sheet-wide. A mirrored pose flips the
   geometry, never the light; the cast shadow keeps its one offset too.
 - **Three ink weights and no others** (`INK_SILHOUETTE` 4 / `INK_FEATURE` 3 /
