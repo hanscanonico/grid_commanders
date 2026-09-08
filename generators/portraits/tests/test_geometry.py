@@ -11,8 +11,8 @@ demands a floor between them; the same two rectangles and the same floor are
 read here, in Python, off the same 110x134 raster — which is what keeps "every
 bust is lit from the sheet's side" one claim rather than two.
 
-Colours are counted with `getcolors`, never `getdata`: the dependency pin's
-ceiling is the release that removes `getdata`.
+Colours are counted with `getcolors`, never `getdata`, which Pillow 14 removes:
+this package calls neither, and a suite is the easiest place to reintroduce one.
 """
 
 from __future__ import annotations

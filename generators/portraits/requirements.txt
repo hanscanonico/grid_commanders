@@ -1,8 +1,11 @@
 # Bounded at both ends because byte-stable rendering is this pipeline's promise.
 # Floor: the art committed under assets/portraits is byte for byte what Pillow
 # 12.3 encodes — 11.3 draws identical pixels but deflates them differently, so
-# the regeneration diff only comes back clean from 12.3 up. Ceiling: Pillow 14
-# (2027-10-15) removes Image.getdata.
+# the regeneration diff only comes back clean from 12.3 up. Ceiling: a major
+# release is where an encoder change is allowed, and this pin is what makes
+# `make portraits-snapshot` a real check rather than a coin toss — so 14 is
+# adopted by regenerating the committed art against it and reading the diff,
+# never by widening the range.
 pillow>=12.3,<14
 # The lint gate's own tool, so `make generators-venv` builds an interpreter that
 # can run it. Same pin as .github/workflows/verify.yml and the other two

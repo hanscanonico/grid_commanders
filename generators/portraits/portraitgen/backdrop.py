@@ -47,14 +47,14 @@ WINDOW = (12.0, 76.0, 208.0, 268.0)
 BURST_AT = (110.0, 166.0)
 RAYS_AT = (110.0, 268.0)
 
-Painter = Callable[[Canvas, Faction], None]
+Painter = Callable[[Canvas], None]
 Band = tuple[int, Painter]
 
-
-def _tone(faction: Faction) -> RGBA:
-    """The colour a treatment is drawn in. It is opaque: `_band` flattens the
-    layer to the rung it was asked for once the shape is down."""
-    return (255, 255, 255, 255)
+# The colour a treatment's shape is drawn in, and it is never the colour it ends
+# up: `_band` flattens the whole layer to the rung it was asked for once the
+# shape is down, so a painter only has to lay opaque pixels somewhere. That is
+# why no painter is told which army it is drawing for.
+SOLID: RGBA = (255, 255, 255, 255)
 
 
 def _erase(canvas: Canvas, points: Iterable[Point]) -> None:
@@ -69,7 +69,7 @@ def _band(canvas: Canvas, faction: Faction, paint: Painter, slot: int) -> None:
     """Paint one treatment band: its shape, flattened onto one rung of the
     army's ramp and clipped to the window."""
     layer = canvas.blank()
-    paint(layer, faction)
+    paint(layer)
     flat = layer.image.getchannel("A").point(lambda a: 255 if a >= CAST_CUTOFF else 0)
     window = Image.new("L", layer.image.size, 0)
     x0, y0, x1, y1 = (canvas.px(v) for v in WINDOW)
@@ -79,32 +79,30 @@ def _band(canvas: Canvas, faction: Faction, paint: Painter, slot: int) -> None:
     canvas.compose(layer)
 
 
-def _grid(canvas: Canvas, faction: Faction) -> None:
+def _grid(canvas: Canvas) -> None:
     """The strategist's lattice: a ruled grid over the whole window."""
-    tone = _tone(faction)
     for i in range(9):
-        canvas.rect((12.0 + i * 24.0, 76.0, 15.0 + i * 24.0, 268.0), tone)
-        canvas.rect((12.0, 76.0 + i * 24.0, 208.0, 79.0 + i * 24.0), tone)
+        canvas.rect((12.0 + i * 24.0, 76.0, 15.0 + i * 24.0, 268.0), SOLID)
+        canvas.rect((12.0, 76.0 + i * 24.0, 208.0, 79.0 + i * 24.0), SOLID)
 
 
-def _halftone(canvas: Canvas, faction: Faction) -> None:
+def _halftone(canvas: Canvas) -> None:
     """Dots on a staggered lattice, shrinking as they climb."""
-    tone = _tone(faction)
     for row in range(8):
         y = 84.0 + row * 24.0
         radius = 8.0 - row * 0.6
         for col in range(9):
             x = 12.0 + col * 24.0 + (12.0 if row % 2 else 0.0)
-            canvas.ellipse((x - radius, y - radius, x + radius, y + radius), tone)
+            canvas.ellipse((x - radius, y - radius, x + radius, y + radius), SOLID)
 
 
-def _bars_tall(canvas: Canvas, faction: Faction) -> None:
-    canvas.rect((34.0, 116.0, 60.0, 268.0), _tone(faction))
-    canvas.rect((96.0, 88.0, 122.0, 268.0), _tone(faction))
+def _bars_tall(canvas: Canvas) -> None:
+    canvas.rect((34.0, 116.0, 60.0, 268.0), SOLID)
+    canvas.rect((96.0, 88.0, 122.0, 268.0), SOLID)
 
 
-def _bars_short(canvas: Canvas, faction: Faction) -> None:
-    canvas.rect((158.0, 140.0, 184.0, 268.0), _tone(faction))
+def _bars_short(canvas: Canvas) -> None:
+    canvas.rect((158.0, 140.0, 184.0, 268.0), SOLID)
 
 
 def _star(scale: float) -> list[Point]:
@@ -122,22 +120,20 @@ def _star(scale: float) -> list[Point]:
     return points
 
 
-def _burst(canvas: Canvas, faction: Faction) -> None:
+def _burst(canvas: Canvas) -> None:
     """Three concentric hard stars: a rim, a punched gap, a core."""
-    tone = _tone(faction)
-    canvas.polygon(_star(1.0), tone)
+    canvas.polygon(_star(1.0), SOLID)
     _erase(canvas, _star(0.62))
-    canvas.polygon(_star(0.34), tone)
+    canvas.polygon(_star(0.34), SOLID)
 
 
-def _rays(canvas: Canvas, faction: Faction) -> None:
+def _rays(canvas: Canvas) -> None:
     """Four wedges wide enough to survive decimation.
 
     Seven eleven-degree spokes read as one grey smear at chip size, which is
     what the reviews measured; four twenty-degree wedges on an eighteen-degree
     gap carry the same radiance and stay two-valued all the way down.
     """
-    tone = _tone(faction)
     for degrees in (-162.0, -124.0, -86.0, -48.0):
         first, second = math.radians(degrees), math.radians(degrees + 20.0)
         canvas.polygon(
@@ -152,13 +148,12 @@ def _rays(canvas: Canvas, faction: Faction) -> None:
                     RAYS_AT[1] + 300.0 * math.sin(second),
                 ),
             ],
-            tone,
+            SOLID,
         )
 
 
-def _speed(canvas: Canvas, faction: Faction) -> None:
+def _speed(canvas: Canvas) -> None:
     """Level bands rather than a rotated comb: the hairline is what died."""
-    tone = _tone(faction)
     for left, top, height in (
         (12.0, 84.0, 10.0),
         (12.0, 98.0, 4.0),
@@ -167,19 +162,17 @@ def _speed(canvas: Canvas, faction: Faction) -> None:
         (12.0, 150.0, 4.0),
         (92.0, 166.0, 6.0),
     ):
-        canvas.rect((left, top, 208.0, top + height), tone)
+        canvas.rect((left, top, 208.0, top + height), SOLID)
 
 
-def _wedge_low(canvas: Canvas, faction: Faction) -> None:
-    tone = _tone(faction)
-    canvas.rect((12.0, 76.0, 208.0, 100.0), tone)
-    canvas.rect((110.0, 126.0, 208.0, 156.0), tone)
+def _wedge_low(canvas: Canvas) -> None:
+    canvas.rect((12.0, 76.0, 208.0, 100.0), SOLID)
+    canvas.rect((110.0, 126.0, 208.0, 156.0), SOLID)
 
 
-def _wedge_high(canvas: Canvas, faction: Faction) -> None:
-    tone = _tone(faction)
-    canvas.rect((61.0, 100.0, 208.0, 126.0), tone)
-    canvas.rect((159.0, 156.0, 208.0, 190.0), tone)
+def _wedge_high(canvas: Canvas) -> None:
+    canvas.rect((61.0, 100.0, 208.0, 126.0), SOLID)
+    canvas.rect((159.0, 156.0, 208.0, 190.0), SOLID)
 
 
 _TREATMENTS: dict[str, tuple[Band, ...]] = {
