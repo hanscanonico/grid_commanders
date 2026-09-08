@@ -51,6 +51,14 @@ silhouette distinctness. The light is read off the two shoulders rather than off
 a cheek: at sixteen tones a scar or a strap lands on the very rung a cheek is
 painted in, and the coat is the one surface every general wears unbroken.
 
+`tests/test_gauge.py` is the newest: the **minimum feature gauge**, measured.
+Its bar is that **no bust holds an orphan cluster** — an opaque run of one tone
+with no two-by-two square of its own and no more than two pixels in it. That is
+what a mark thinner than a texel comes back as once the raster is quantised, and
+it was the same defect under four names on the round-2 review: a dotted headset
+cable, a dotted monocle chain, a row of stitching that had become ticks, and
+opaque fleck halos strung along five silhouettes.
+
 `tests/test_face_region.py` is the hardest of them: `CommanderVisuals.FACE_REGION`
 parsed out of the game's own source, every general's chin measured against it,
 and every chip checked to be that rectangle of that general's own drawing. If a
@@ -125,7 +133,32 @@ already were.
   per-material budget itself (`ThePaletteIsSpentPerMaterial`). Buying hair its
   fourth rung means spending a seventeenth tone, which is the rule above.
 - **One light**, upper-left, fixed sheet-wide. A mirrored pose flips the
-  geometry, never the light; the cast shadow keeps its one offset too.
+  geometry, never the light; the cast shadow keeps its one offset too. **The
+  figure carries no rim band.** It did — the silhouette minus a copy of itself
+  stepped toward the key, in the army's own rim rung, walked one texel in under
+  the ink. On a 110px bust that is one texel of a colour the face does not own,
+  laid between a two-texel outline and the cheek: a near-white line down an Iron
+  jaw, a mint one down a Verdant neck. The coat keeps a kicker because two
+  texels of it fit (`uniform` draws it as a ribbon); a head does not.
+- **Two rungs of the sixteen are not the board's**, and each is named in
+  `palette.BUST_RUNGS` with the reason. Gold's three lit rungs come off the
+  funds gold, because the board's Gilded ramp is authored a band low on purpose
+  and a coat painted on it is olive — which cost two generals the colour they
+  are named for. Iron's field rung comes up to where every other army's sits,
+  because Iron's ramp is the inverted one and a window at L49 is under every
+  dark cap and every dark skin on the sheet. Both are spent **inside** the
+  sixteen: `bust_palette` reads this same function, so the allowed set moved and
+  the cap did not.
+- **Nothing thinner than two texels** (`portraitgen/gauge.py`). The board draws
+  no one-texel dotted line and neither does a bust. A run that has to read as a
+  line — a chain, a cable, a lanyard, a strand of bullion — is drawn
+  `Canvas.ribbon` rather than `Canvas.stroke`: two texels, a core against an
+  inked edge. Anything that cannot afford two is cut instead, which is what
+  happened to a scar's cross-ticks, a brow's deep hairline and two of the three
+  freckles a cheek used to wear. What the rasteriser leaves behind on top of
+  that, `gauge.despeckle` sweeps as the last step of `bust.paint` — an orphan
+  cluster takes the tone that borders it most, so the sweep invents no colour
+  and settles to a fixed point.
 - **Three ink weights and no others** (`INK_SILHOUETTE` 4 / `INK_FEATURE` 3 /
   `INK_DETAIL` 2, in design units), so a scar can never come out as heavy as a
   jaw. `Canvas.stroke` refuses any other width. On the bust's grid the
@@ -147,8 +180,9 @@ default.
 
 | Module | Owns | Entry points |
 | --- | --- | --- |
-| `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/rect`, `px`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
-| `portraitgen/light.py` | the key direction, the ramps, the rim, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `faction_ramp(key)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `rim_light(silhouette, ramp, weight=, inset=, scale=, mirrored=)`, `occlusion(occluder, target, depth=, scale=, mirrored=)` |
+| `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `texel`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
+| `portraitgen/gauge.py` | the smallest mark this grid holds, and the sweep | `GAUGE`, `MAX_ORPHAN`, `clusters`, `holds_gauge`, `is_orphan`, `despeckle` |
+| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `faction_ramp(key)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, scale=, mirrored=)` |
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
 | `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `accessory(…, tint=)`, `earring`, `freckles` |
 | `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |
@@ -166,8 +200,8 @@ light for a layer the pose is about to turn over.
 
 Draw order, all on one grid, in `bust.py`: backdrop, then the figure — prop
 behind, hair behind, uniform and collar, head, features, hair over, prop in
-front — then the pose over the whole figure, the hard cast shadow under it, and
-the snap onto the bust's sixteen tones. Each layer inks itself as it is laid
+front — then the pose over the whole figure, the hard cast shadow under it, the
+snap onto the bust's sixteen tones, and the gauge sweep. Each layer inks itself as it is laid
 down.
 
 `Face` carries nineteen columns — `skin`, `hair`, `style`, `brow`, `eyes`,

@@ -28,12 +28,16 @@ cool ambient, and hue rotates a little toward the sky in shadow and the sun in
 light. Six literal hexes drift into one hue at six brightnesses, which is the
 flattest a ramp can be — so a ramp is never typed out.
 
-The rim is the one rung that keeps its chroma. It is the faction's **light**
-tint re-keyed to the rim's value, so the band that separates a green bust from
-a green field costs the palette no new hue. `rim_light` lays it 2.5 portrait
-pixels wide along the shadow-side silhouette run, walked in under the
-silhouette ink so it reads as light on the form rather than as a second
-outline.
+The rim is the one rung that keeps its chroma, and **only the coat spends it.**
+It used to be the faction's light tint on every material, laid one texel wide
+along the shadow-side silhouette run of the head, walked in under the silhouette
+ink. On a 110-pixel bust that is one texel of a colour the face does not own,
+between a two-texel outline and the cheek: a near-white line down an Iron jaw, a
+mint one down a Verdant neck, both broken into specks by the quantiser. The
+round-2 review read them as fleck halos and it was right. The head's rim band is
+gone; `uniform` keeps a kicker along the lit run because two texels of it fit
+(`Canvas.ribbon`), and a material with no rim of its own now takes its own lit
+rung, so `Ramp.rim` is still a tone the bust already spends.
 
 Ramps are cached (`functools.lru_cache`): a bust asks for the same handful on
 every layer. One stand-in bust renders in about 15 ms on the dev machine —
@@ -81,8 +85,8 @@ the handoff's own 110x134, one pixel to two design units (`canvas.BUST_DIVISOR`)
 
 `head.draw` paints in the light's own order — neck and ears, the face, the two
 bands the key writes on it (both through the face's own mask, so a shade cannot
-run off the cheek onto the field), the occlusion band, the silhouette ink, then
-the rim inside it. An unknown jaw raises, as does an unknown shade kind and an
+run off the cheek onto the field), the occlusion band, then the silhouette ink.
+An unknown jaw raises, as does an unknown shade kind and an
 unknown band name: the vocabulary is the dispatch table.
 
 ## Two numbers this model does not meet head-on
