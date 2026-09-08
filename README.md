@@ -551,9 +551,10 @@ Four steps are the owner's, in a dashboard rather than in this repo:
    into the empty `google-site-verification` / `msvalidate.01` meta tags in
    `deploy/web/site/index.html` and redeploy.
 2. **Submit `https://gridcommanders.com/sitemap.xml`** in both consoles.
-3. **Cloudflare Web Analytics** — add the site, then replace the `CF_WEB_ANALYTICS_TOKEN`
-   placeholder in the beacon at the bottom of that same file. The beacon is cookie-free and stays
-   on the landing page only, never on `/play/`.
+3. **Cloudflare Web Analytics** — add the site, then **uncomment** the beacon at the bottom of that
+   same file and replace its `CF_WEB_ANALYTICS_TOKEN` placeholder. It ships commented out because a
+   placeholder token is a request every visit makes and no visit can complete. The beacon is
+   cookie-free and stays on the landing page only, never on `/play/`.
 4. Optionally, a Cloudflare **redirect rule** sending `www.gridcommanders.com` to the apex, so the
    host the canonical tags name is the only one indexed.
 
