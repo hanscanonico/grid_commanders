@@ -104,7 +104,7 @@ func test_the_whole_bust_field_is_the_art_s_own_size() -> void:
 
 ## Which fields may show one, exactly: the art's own shape and anything over it,
 ## and neither of the two ways to fall one pixel under. A field that fails this
-## shows the baked chip instead (`UiKit._crop_for`), which is the whole reason
+## shows the baked chip instead (`UiKit._place_bust`), which is the whole reason
 ## the chip is baked.
 func test_only_a_field_that_holds_the_art_shows_a_whole_bust() -> void:
 	var field := Vector2(CommanderVisuals.WHOLE_BUST_FIELD)

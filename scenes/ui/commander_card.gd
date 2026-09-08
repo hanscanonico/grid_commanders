@@ -49,9 +49,12 @@ const _NAME_SIZE := 12
 ## added here is a pixel of the Command Power block pushed out of it — and that
 ## same 119 is the ceiling the sheet's own layout check holds this constant
 ## under, which the drawing's own height does not fit beneath (measured on
-## commander_info, 2026-08-25). So this band is a chip surface: three screen
-## pixels to the texel, with the three left over as the band's own air.
-const PORTRAIT_H := CommanderVisuals.FACE_SIZE.x * 3 + 3
+## commander_info, 2026-08-25). So this band is a chip surface: the 31px face
+## chip at a whole-number rung, plus one texel of air under it — the band's own
+## padding on the same grid as the art in it, rather than a spare pixel or two.
+const _CHIP_ZOOM := 3
+const _BAND_AIR_TEXELS := 1
+const PORTRAIT_H := (CommanderVisuals.FACE_SIZE.y + _BAND_AIR_TEXELS) * _CHIP_ZOOM
 ## The faction badge pinned into the band's top-left corner, and the inset it sits
 ## at. Card-local like the geometry above it, not a missing shell token: the design
 ## system sizes widgets rather than pins on art, and its smallest icon

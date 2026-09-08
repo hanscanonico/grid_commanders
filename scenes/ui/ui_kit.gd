@@ -30,13 +30,6 @@ extends RefCounted
 ## on the lockup's own paper rather than on a faction colour.
 const NO_FIELD := Color(0, 0, 0, 0)
 
-## What a field shows of a general: the whole bust, or the face chip
-## `CommanderVisuals.face_for` bakes for the fields too small for one. Derived
-## from the field's drawn shape by `_crop_for` — never named by a caller. How
-## the art is *sized* is not a choice here any more: it is drawn at a
-## whole-number scale and clipped, which is `_place_bust`.
-enum BustCrop { WHOLE, FACE }
-
 const _BUST_ART := &"Bust"
 ## Which general a built field is showing, kept on the field itself: the crop is
 ## a function of the size a container hands over, which is known a frame after
@@ -621,8 +614,8 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 ## The tint stays the caller's, because the three in the tree are deliberate: the
 ## speech card's darkened field is a reading column, the HUD chip's `color_light`
 ## is chrome, and the victory lockup stands its bust on the panel's own paper
-## (`NO_FIELD`). The crop is not the caller's — it is a function of the field's
-## shape, decided by `_crop_for` and nowhere else.
+## (`NO_FIELD`). Which of the two drawings a field shows is not the caller's — it
+## is a function of the field's shape, decided by `_place_bust` and nowhere else.
 static func commander_bust(commander: CommanderType, size: Vector2, tint: Color) -> Panel:
 	var field := Panel.new()
 	field.custom_minimum_size = size
@@ -677,24 +670,17 @@ static func _send_action(action: StringName) -> void:
 		Input.parse_input_event(event)
 
 
-## What a field of this shape shows of a general, and the one statement of it:
-## the whole bust where the art fits at one texel to one pixel, and the baked
-## face chip everywhere else. `CommanderVisuals.fits_whole_bust` owns the
-## measurement, since it is a fact about the drawing rather than about the kit.
-##
-## The field a bust may not fit in is now the common case, not the exception: the
-## drawing is 110 px wide and a chip field is anything narrower than that or too
-## short to reach the jaw. A roster tile, a HUD chip and a victory lockup all
-## land there, and each of them showed a head cut off at the ears until the crop
-## was measured against the art instead of against a round number.
-static func _crop_for(size: Vector2) -> BustCrop:
-	return BustCrop.WHOLE if CommanderVisuals.fits_whole_bust(size) else BustCrop.FACE
-
-
 ## The general's drawing — whichever of the two this field's shape calls for — at
 ## a rung of `CommanderVisuals.art_scale`, centred, and hung from the top edge
 ## once it is taller than the field. Whole texels or nothing: this is pixel art
 ## now, and the one thing a field may not do is show it at a fraction of a pixel.
+##
+## Which of the two is `CommanderVisuals.fits_whole_bust`, and nobody else asks:
+## the whole bust where the art fits at one texel to one pixel, the baked face
+## chip everywhere else. A field too small for a bust is the common case — a
+## roster tile, a HUD chip and a victory lockup all land there, and each showed a
+## head cut off at the ears until the question was measured against the art
+## instead of against a round number.
 ##
 ## The shape is the field's own size, falling back to the size it was asked for
 ## while it is still unplaced — a field that states no minimum is the roster
@@ -706,7 +692,7 @@ static func _place_bust(field: Panel) -> void:
 		return
 	var shape := field.size.max(field.custom_minimum_size)
 	var commander := field.get_meta(_BUST_CO, null) as CommanderType
-	if _crop_for(shape) == BustCrop.WHOLE:
+	if CommanderVisuals.fits_whole_bust(shape):
 		art.texture = CommanderVisuals.portrait_for(commander)
 	else:
 		art.texture = CommanderVisuals.face_for(commander)
