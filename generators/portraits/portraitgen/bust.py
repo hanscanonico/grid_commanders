@@ -8,11 +8,12 @@ between the two.
 
 Two things are decided here and nowhere else.
 
-**The pose is an affine over the working raster, not a rotation of the finished
-one.** Tilt and zoom are one matrix whose coefficients are rounded before they
-are used, so no libm's cosine can move an edge by a pixel between two machines,
-and it is sampled nearest at 3x — the downsample is still the only place a tone
-is blended, which is what keeps a raster inside its colour budget.
+**The pose is an affine over the figure, not a rotation of the finished sheet.**
+Tilt and zoom are one matrix whose coefficients are rounded before they are
+used, so no libm's cosine can move an edge by a pixel between two machines, and
+it is sampled nearest on the grid the figure was drawn on. Nothing in this
+pipeline blends two tones: `palette.quantise` is the one place a pixel settles,
+and it settles onto a rung `palette.bust_palette` already handed this bust.
 
 **Nothing under the gauge survives the bake.** The last thing `paint` does is
 sweep the quantised raster for clusters too small to be marks (`gauge.despeckle`)
@@ -38,6 +39,7 @@ lands on the screen's shadow side once the group is turned over.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from PIL import Image
@@ -81,7 +83,7 @@ FACTION_OF: dict[str, str] = {
 ZOOM_AT = (110.0, 268.0)
 TILT_AT = (110.0, 168.0)
 # Where a matrix coefficient is cut off. Nine places is far finer than a
-# working pixel and far coarser than the last bit of a double, so two machines'
+# portrait pixel and far coarser than the last bit of a double, so two machines'
 # trigonometry agree exactly on the number the sampler is handed.
 _COEFF_PLACES = 9
 
@@ -167,10 +169,6 @@ def _flipped(layer: Canvas) -> Canvas:
     return turned
 
 
-def _layer(figure: Canvas) -> Canvas:
-    return figure.blank()
-
-
 def _corners(box: tuple[int, int, int, int]) -> tuple[tuple[float, float], ...]:
     x0, y0, x1, y1 = box
     return ((x0, y0), (x1, y0), (x0, y1), (x1, y1))
@@ -193,15 +191,15 @@ def _bleed_shift(
 
 
 def _prop_layers(
-    face: Face, army: Faction, cloth: light.Ramp, divisor: int
+    on: Canvas, face: Face, army: Faction, cloth: light.Ramp
 ) -> tuple[Canvas, Canvas]:
     """The prop behind the figure and its rig in front, both walked inboard."""
-    whole = Canvas(divisor=divisor)
+    whole = on.blank()
     props.draw(whole, face.prop, army, cloth, layer="all")
     shift = _bleed_shift(_design_box(whole), *face.pose[:2])
     layers = []
     for half in ("back", "front"):
-        art = Canvas(divisor=divisor)
+        art = on.blank()
         props.draw(art, face.prop, army, cloth, layer=half)
         layers.append(_walked(art, shift))
     return tuple(layers)
@@ -224,22 +222,15 @@ def _walked(layer: Canvas, by: int) -> Canvas:
 
 
 def _face_group(
-    face: Face, skin: light.Ramp, mane: light.Ramp, cloth: light.Ramp, divisor: int
+    on: Canvas, face: Face, skin: light.Ramp, mane: light.Ramp, cloth: light.Ramp
 ) -> Canvas:
     """Everything above the collar: the head, its features and its hair over."""
-    group = Canvas(divisor=divisor)
+    group = on.blank()
     head.draw(group, face.head, skin, mirrored=face.pose[2])
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
-    # Headwear cut out of uniform cloth wears the coat's own rung rather than
-    # the raw theme colour, which the quantiser had to round onto one anyway.
-    # On Iron the two rounded apart: the field rung and the theme colour landed
-    # on the same tone, and a dark cap over a dark head disappeared into the
-    # window behind it at chip size.
-    # A crown flat in one rung is a silhouette, not a cap: it takes the coat's
-    # lit rung along the edge the key lands on. Iron is what asked for it — its
-    # cloth and its window field round onto neighbouring rungs, and a flat
-    # fieldcap over a dark head was the darkest chip on the sheet.
+    # Headwear cut out of uniform cloth is painted in the coat's own rungs —
+    # its base, and its lit rung along the key's edge (`features._CAP_LIT`).
     for worn in (face.acc, face.acc2):
         features.accessory(group, face.head, worn, tint=cloth.base, kicker=cloth.lit)
     covered = features.covered_eye(face.acc)
@@ -258,27 +249,27 @@ def _faction(face: Face) -> Faction:
     return faction_by_key(FACTION_OF[face.id])
 
 
-def _general(face: Face, divisor: int) -> Canvas:
+def _general(on: Canvas, face: Face) -> Canvas:
     """One general's figure, unposed: the five layers and which of them turn."""
     army = _faction(face)
     cloth = _cloth(army)
     skin = light.build_ramp(head.SKIN_BASES[face.skin])
     mane = hair.ramp_for(face.hair)
 
-    behind_prop, front_prop = _prop_layers(face, army, cloth, divisor)
-    figure = Canvas(divisor=divisor)
+    behind_prop, front_prop = _prop_layers(on, face, army, cloth)
+    figure = on.blank()
     figure.compose(behind_prop)
 
-    behind = _layer(figure)
+    behind = on.blank()
     hair.back(behind, face.head, face.style, mane)
 
-    dress = _layer(figure)
+    dress = on.blank()
     uniform.draw(dress, army, face.collar, cloth)
     uniform.chest(dress, face.chest, army, cloth)
     if face.pip:
         uniform.pip(dress, cloth)
 
-    above = _face_group(face, skin, mane, cloth, divisor)
+    above = _face_group(on, face, skin, mane, cloth)
     if face.pose[2]:
         behind, above = _flipped(behind), _flipped(above)
 
@@ -289,7 +280,7 @@ def _general(face: Face, divisor: int) -> Canvas:
     return figure
 
 
-def _empty_seat(seat: EmptySeat, divisor: int) -> Canvas:
+def _empty_seat(on: Canvas, seat: EmptySeat) -> Canvas:
     """The seat nobody holds: the shared skull, in slate, with no face on it.
 
     Deliberately featureless — an empty seat has to read as a choice rather
@@ -298,7 +289,7 @@ def _empty_seat(seat: EmptySeat, divisor: int) -> Canvas:
     """
     army = faction_by_key("neutral")
     cloth = _cloth(army)
-    figure = Canvas(divisor=divisor)
+    figure = on.blank()
     uniform.draw(figure, army, uniform.COLLAR_DEFAULT, cloth)
     uniform.chest(figure, uniform.CHEST_DEFAULT, army, cloth)
     head.draw(figure, seat.head, cloth)
@@ -312,7 +303,7 @@ def _army_of(spec: Face | EmptySeat) -> Faction:
 def _cloth(army: Faction) -> light.Ramp:
     """The rungs an army's coat is painted in — the board's own, so a general
     and their armour are the same red."""
-    return light.faction_ramp(army.key)
+    return light.Ramp.of_faction(army.key)
 
 
 def palette_of(spec: Face | EmptySeat) -> tuple[tuple[int, int, int], ...]:
@@ -341,9 +332,7 @@ def paint(
     sheet = Canvas(divisor=divisor)
     backdrop.draw(sheet, spec.bg, _army_of(spec))
     figure = _posed(
-        _general(spec, divisor)
-        if isinstance(spec, Face)
-        else _empty_seat(spec, divisor),
+        _general(sheet, spec) if isinstance(spec, Face) else _empty_seat(sheet, spec),
         tilt,
         zoom,
     )
@@ -370,7 +359,7 @@ def prop_art(face: Face) -> Image.Image:
     army = _faction(face)
     cloth = _cloth(army)
     art = Canvas()
-    for half in _prop_layers(face, army, cloth, BUST_DIVISOR):
+    for half in _prop_layers(art, face, army, cloth):
         art.compose(half)
     return _posed(art, *face.pose[:2]).resolve()
 
@@ -382,13 +371,17 @@ def window(spec: Face | EmptySeat, *, divisor: int = BUST_DIVISOR) -> Image.Imag
     return quantise(sheet.resolve(), palette_of(spec), shadow=CAST_TONE)
 
 
+def _sheet(art: Callable[[Face | EmptySeat], Image.Image]) -> list[Painted]:
+    """Every seat the sheet carries, in roster order and the empty one last."""
+    rows = [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
+    return [Painted(key, art(spec)) for key, spec in rows]
+
+
 def busts() -> list[Painted]:
     """Every bust the sheet carries, the empty seat last."""
-    painted = [Painted(key, paint(face)) for key, face in sorted(roster.FACES.items())]
-    return [*painted, Painted(roster.NEUTRAL_ID, paint(roster.NEUTRAL))]
+    return _sheet(paint)
 
 
 def chips() -> list[Painted]:
     """Every face chip the sheet carries, the empty seat last."""
-    cut = [Painted(key, chip(face)) for key, face in sorted(roster.FACES.items())]
-    return [*cut, Painted(roster.NEUTRAL_ID, chip(roster.NEUTRAL))]
+    return _sheet(chip)

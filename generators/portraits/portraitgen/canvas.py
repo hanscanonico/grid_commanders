@@ -128,6 +128,8 @@ class Canvas:
     def __init__(
         self, size: tuple[int, int] = DESIGN_SIZE, divisor: int = BUST_DIVISOR
     ) -> None:
+        # `divisor` is design units per pixel on this grid, so it is also the
+        # width of one texel in the units every call site speaks in.
         self.size = size
         self.divisor = divisor
         self.image = Image.new("RGBA", native_size(size, divisor), (0, 0, 0, 0))
@@ -224,15 +226,6 @@ class Canvas:
                     fill=colour,
                 )
 
-    @property
-    def texel(self) -> float:
-        """One native pixel, in the design units every call site speaks in.
-
-        The one name derived from `divisor`: a painter walking a mark clear of
-        another by a texel has to be able to say so on whichever grid it draws.
-        """
-        return float(self.divisor)
-
     def ribbon(
         self,
         points: Iterable[Point],
@@ -252,7 +245,7 @@ class Canvas:
         rather than as dirt.
         """
         run = list(points)
-        shifted = [(x + self.texel, y + self.texel) for x, y in run]
+        shifted = [(x + self.divisor, y + self.divisor) for x, y in run]
         self.stroke(shifted, INK_DETAIL, edge, closed=closed)
         self.stroke(run, INK_DETAIL, core, closed=closed)
 

@@ -25,7 +25,7 @@ SKULL = Skull(1.0, "round", 0.0, 1.0)
 LEFT, TOP, RIGHT, BOTTOM = REFERENCE_BOX
 # How far a bound read off the raster may sit from the dial that drew it: a mass
 # carries half the silhouette's ink outside its own path on each side, plus the
-# supersampled canvas' own rounding step.
+# canvas' own design-unit-to-pixel rounding step.
 INK_SLACK = 5
 # Design units per raster pixel: `_silhouette` reads the raster and reports the
 # units the styles are authored in.
@@ -96,7 +96,7 @@ def _silhouette(cell: Canvas) -> list[tuple[float, float]]:
     pixels = cell.image.load()
     width, height = cell.image.size
     return [
-        (x * cell.texel, y * cell.texel)
+        (x * cell.divisor, y * cell.divisor)
         for y in range(height)
         for x in range(width)
         if pixels[x, y][3] > 0

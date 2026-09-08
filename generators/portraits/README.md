@@ -121,13 +121,13 @@ already were.
   hair and two of gunmetal. `palette.bust_palette` hands them out and
   `palette.quantise` snaps the finished raster onto them, so a blend has
   nowhere to come from.
-- **Four flat named tones per material** — deep, shade, base, lit — plus a rim.
-  A band is a tone taken from a ramp, never an alpha wash over a fill. The
-  window's own bands are rungs too: the field is the army's shadow rung and the
-  treatments step down from it. **Two materials cannot afford all four on a
-  sixteen-tone bust and do not get them**: hair ships three rungs and gunmetal
-  two (`palette.HAIR_SLOTS`, `METAL_SLOTS`), so their deep — and the metal's
-  shade — quantises onto the rung above. The four-tone model is what
+- **Four flat named tones per material** — deep, shade, base, lit — plus a
+  rim. A band is a tone taken from a ramp, never an alpha wash over a fill.
+  The window's own bands are rungs too: the field is the army's shadow rung
+  and the treatments step down from it. **Two materials cannot afford all four
+  on a sixteen-tone bust and do not get them**: hair ships three rungs and
+  gunmetal two (`palette.HAIR_SLOTS`, `METAL_SLOTS`), so their deep — and the
+  metal's shade — quantises onto the rung above. The four-tone model is what
   `light.Ramp` hands a painter; what a *bust* is measured on is four value
   bands over the whole figure (`tests/test_metrics.py FourValueBands`) and the
   per-material budget itself (`ThePaletteIsSpentPerMaterial`). Buying hair its
@@ -140,15 +140,15 @@ already were.
   laid between a two-texel outline and the cheek: a near-white line down an Iron
   jaw, a mint one down a Verdant neck. The coat keeps a kicker because two
   texels of it fit (`uniform` draws it as a ribbon); a head does not.
-- **Four rungs of the sixteen are not the board's** — three on the gold row and
-  one on the iron — and each is named in `palette.BUST_RUNGS` with the reason.
-  Gold's three lit rungs come off the funds gold, because the board's Gilded
-  ramp is authored a band low on purpose and a coat painted on it is olive —
-  which cost two generals the colour they are named for. Iron's field rung comes up to where every other army's sits,
-  because Iron's ramp is the inverted one and a window at L49 is under every
-  dark cap and every dark skin on the sheet. Both are spent **inside** the
-  sixteen: `bust_palette` reads this same function, so the allowed set moved and
-  the cap did not.
+- **Four rungs of the sixteen are not the board's** — three on the gold row
+  and one on the iron — and each is named in `palette.BUST_RUNGS` with the
+  reason. Gold's three lit rungs come off the funds gold, because the board's
+  Gilded ramp is authored a band low on purpose and a coat painted on it is
+  olive — which cost two generals the colour they are named for. Iron's field
+  rung comes up to where every other army's sits, because Iron's ramp is the
+  inverted one and a window at L49 is under every dark cap and every dark skin
+  on the sheet. Both are spent **inside** the sixteen: `bust_palette` reads
+  this same function, so the allowed set moved and the cap did not.
 - **Nothing thinner than two texels** (`portraitgen/gauge.py`). The board draws
   no one-texel dotted line and neither does a bust. A run that has to read as a
   line — a chain, a cable, a lanyard, a strand of bullion — is drawn
@@ -180,11 +180,11 @@ default.
 
 | Module | Owns | Entry points |
 | --- | --- | --- |
-| `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `texel`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
+| `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `divisor`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
 | `portraitgen/gauge.py` | the smallest mark this grid holds, and the sweep | `GAUGE`, `MAX_ORPHAN`, `clusters`, `holds_gauge`, `is_orphan`, `despeckle` |
-| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `build_ramp(base, rim_hue=)`, `faction_ramp(key)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
+| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `Ramp.of_faction(key)`, `build_ramp(base)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
-| `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `accessory(…, tint=)`, `earring`, `freckles` |
+| `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `Worn`, `accessory(…, tint=, kicker=)`, `covered_eye`, `earring`, `freckles` |
 | `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |
 | `portraitgen/uniform.py` | shoulders, collar cut, chest treatment, rank pip | `COLLAR_CUTS`, `CHEST_TREATMENTS`, `draw(canvas, faction, collar, ramp)`, `chest(canvas, treatment, faction, ramp)`, `pip(canvas, ramp)` |
 | `portraitgen/props.py` | the 22 signature props and their rigs | `PROPS`, `SHOULDERED`, `RIGHT_LIMIT`, `draw(canvas, key, faction, ramp, layer=)` |
@@ -195,14 +195,17 @@ default.
 The keyword-only arguments above are the seams the layers are composed through:
 `layer=` splits a prop into the half behind the figure and the rig in front,
 `skin=` is what the hair fringe casts its band in, `tint=` dresses a bandana or
-a headset cup in the general's own faction cloth, and `mirrored=` pre-flips the
-light for a layer the pose is about to turn over.
+a headset cup in the general's own faction cloth, `kicker=` is that cloth's lit
+rung, which only the two cap crowns spend, and `mirrored=` pre-flips the light
+for a layer the pose is about to turn over. `accessory` packs the first two
+into a `Worn`, so the nine painters that ignore the kicker never carry it down
+their signatures.
 
 Draw order, all on one grid, in `bust.py`: backdrop, then the figure — prop
 behind, hair behind, uniform and collar, head, features, hair over, prop in
-front — then the pose over the whole figure, the hard cast shadow under it, the
-snap onto the bust's sixteen tones, and the gauge sweep. Each layer inks itself as it is laid
-down.
+front — then the pose over the whole figure, the hard cast shadow under it,
+the snap onto the bust's sixteen tones, and the gauge sweep. Each layer inks
+itself as it is laid down.
 
 `Face` carries nineteen columns — `skin`, `hair`, `style`, `brow`, `eyes`,
 `mouth`, `eye`, `facial`, `acc`, `collar`, `chest`, `head`, `nose`, `pose`,

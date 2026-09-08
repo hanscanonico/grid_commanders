@@ -104,7 +104,7 @@ def bust(
     is how C1 is measured — the difference between the two is the shadow.
     """
     theme = faction_by_key(faction)
-    cloth = light.faction_ramp(theme.key)
+    cloth = light.Ramp.of_faction(theme.key)
     skin = light.build_ramp(SKIN)
 
     figure = Canvas()
@@ -139,7 +139,7 @@ def contact_sheet() -> Image.Image:
 def _dressed(
     faction: Faction, collar: str, treatment: str, prop: str, kind: str
 ) -> Image.Image:
-    ramp = light.faction_ramp(faction.key)
+    ramp = light.Ramp.of_faction(faction.key)
     canvas = Canvas()
     backdrop.draw(canvas, kind, faction)
     props.draw(canvas, prop, faction, ramp, layer="back")

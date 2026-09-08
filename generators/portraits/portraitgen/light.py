@@ -139,6 +139,13 @@ class Ramp:
 
     six: palette.Ramp6
 
+    @classmethod
+    def of_faction(cls, key: str) -> Ramp:
+        """An army's own rungs, straight off the board's palette — no ladder of
+        the portraits' own between a coat and the chassis it is painted to
+        match."""
+        return cls(palette.faction_ramp(key))
+
     @property
     def deep(self) -> RGB:
         return self.six[palette.S_UNDER]
@@ -168,7 +175,7 @@ class Ramp:
 
 
 @lru_cache(maxsize=None)
-def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
+def build_ramp(base: RGB) -> Ramp:
     """A material's rungs from its base colour, rim included.
 
     The ladder is this sheet's — a contour rung under four bands keyed off the
@@ -176,14 +183,13 @@ def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
     a general's coat is lit by the same sun and mixed toward the same sky as
     the tank outside the window.
 
-    **A material with no rim of its own kicks in its own lit rung.** Skin and
-    hair are given four and three rungs on a sixteen-tone bust and a rim is not
-    one of them, so the kicker along their shadow edge has to be a tone the
-    bust already spends. It used to be the army's: a near-white line down an
-    Iron general's jaw, a mint one down a Verdant general's neck — a hue the
-    face does not own, laid one texel from the ink that outlines the same edge,
-    which is the fleck halo the review read off five busts. `rim_hue` overrides
-    it where a material really does take a tint from elsewhere.
+    **A material built here has no rim of its own: it kicks in its own lit
+    rung.** Skin and hair are given four and three rungs on a sixteen-tone bust
+    and a rim is not one of them, so the kicker along their shadow edge has to
+    be a tone the bust already spends. It used to be the army's: a near-white
+    line down an Iron general's jaw, a mint one down a Verdant general's neck —
+    a hue the face does not own, laid one texel from the ink that outlines the
+    same edge, which is the fleck halo the review read off five busts.
 
     Cached because a bust asks for the same handful of ladders on every layer
     it paints.
@@ -192,14 +198,8 @@ def build_ramp(base: RGB, *, rim_hue: RGB | None = None) -> Ramp:
     rim_target = lum + (255.0 - lum) * _RIM_HEADROOM
     ladder = (*(min(lum * step, _LIT_CEILING) for step in _LADDER), rim_target)
     six = list(palette.build_ramp(base, ladder))
-    six[palette.S_RIM] = rim_hue if rim_hue is not None else six[palette.S_TOP]
+    six[palette.S_RIM] = six[palette.S_TOP]
     return Ramp(tuple(six))
-
-
-def faction_ramp(key: str) -> Ramp:
-    """An army's own rungs, straight off the board's palette — no ladder of the
-    portraits' own between a coat and the chassis it is painted to match."""
-    return Ramp(palette.faction_ramp(key))
 
 
 def shade_kind(crown: float, width: float) -> str:

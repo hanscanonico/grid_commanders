@@ -20,7 +20,7 @@ of 0.01, the rectangles and the floor
 
 ## Four tones, built rather than typed
 
-`build_ramp(base, rim_hue=…)` returns `deep`, `shade`, `base`, `lit` and `rim`.
+`build_ramp(base)` returns `deep`, `shade`, `base`, `lit` and `rim`.
 Values step on one authored ladder as multiples of the base's own luma; the
 chroma over it is ported from `generators/sprites/spritegen/palette.py`:
 saturation peaks in the middle and collapses toward the light, the two shadow rungs mix toward one
@@ -41,8 +41,8 @@ rung, so `Ramp.rim` is still a tone the bust already spends.
 
 Ramps are cached (`functools.lru_cache`): a bust asks for the same handful on
 every layer. One stand-in bust renders in about 15 ms on the dev machine —
-two orders under the 2 s the plan's runtime risk allows — so the supersample
-stays where it is.
+two orders under the 2 s the plan's runtime risk allows, so nothing here is
+traded away for speed.
 
 ## Occlusion is a hard band, not a blur
 

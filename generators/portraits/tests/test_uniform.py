@@ -71,7 +71,7 @@ class TheCutsAreToldApartAtChipSize(unittest.TestCase):
     def _chip(self, collar: str) -> Image.Image:
         canvas = _uniform(collar)
         crop = canvas.image.crop(
-            tuple(round(v / canvas.texel) for v in (56, 180, 164, 260))
+            tuple(round(v / canvas.divisor) for v in (56, 180, 164, 260))
         )
         return crop.resize((31, 23), Image.Resampling.BOX).convert("RGB")
 
@@ -128,7 +128,7 @@ class TheHarnessIsTheOneTreatmentWithNoPayload(unittest.TestCase):
 
     def test_the_harness_is_two_straps(self):
         canvas = self._webbing()
-        row = 240 / canvas.texel
+        row = 240 / canvas.divisor
         opaque = [
             canvas.image.getpixel((x, row))[3] > 0 for x in range(canvas.image.width)
         ]
@@ -164,13 +164,13 @@ class TheGoldIsTheRankPip(unittest.TestCase):
         canvas = Canvas()
         uniform.pip(canvas, RAMP)
         left, top, right, bottom = canvas.image.getbbox()
-        self.assertLess((right - left) * canvas.texel, 16)
-        self.assertLess((bottom - top) * canvas.texel, 16)
+        self.assertLess((right - left) * canvas.divisor, 16)
+        self.assertLess((bottom - top) * canvas.divisor, 16)
 
 
 class ThePaletteIsBounded(unittest.TestCase):
-    """Counted on the working canvas: the box downsample is this pipeline's
-    antialiasing, so the tones authored here are what the budget is about."""
+    """Counted on the canvas: nothing downsamples or blends, so the tones
+    authored here are the tones the finished raster carries."""
 
     def test_a_dressed_bust_is_painted_in_named_tones(self):
         for collar in sorted(uniform.COLLAR_CUTS):

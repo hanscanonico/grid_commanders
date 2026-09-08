@@ -68,7 +68,7 @@ def _area_of(cell: Canvas, tone: tuple[int, int, int]) -> int:
 
 
 def _box_of(cell: Canvas, tone: tuple[int, int, int]) -> tuple[int, int, int, int]:
-    """Where one flat tone sits on the working canvas, in supersampled pixels."""
+    """Where one flat tone sits on the canvas, in that canvas's own pixels."""
     bands = [
         band.point(lambda level, want=want: 255 if level == want else 0)
         for band, want in zip(cell.image.split(), tone, strict=False)
@@ -169,7 +169,7 @@ class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
         features.accessory(cell, SKULL, kind)
         box = cell.image.getbbox()
         assert box, f"{kind} drew nothing"
-        return tuple(value * cell.texel for value in box)
+        return tuple(value * cell.divisor for value in box)
 
     def test_the_service_cap_hangs_a_peak_the_field_cap_has_not_got(self):
         self.assertGreater(self._box("cap")[3] - self._box("fieldcap")[3], 8.0)
