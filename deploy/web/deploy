@@ -26,10 +26,16 @@ wait_healthy() {
   return 1
 }
 
-# The rollback target has to be taken before the build, because building the new
-# image moves the :latest tag off the copy that is currently serving.
-if docker image inspect "$image" >/dev/null 2>&1; then
-  docker image tag "$image" "$previous"
+# Tagged before the build, and taken from the container rather than from the
+# :latest tag: the build moves that tag, and an interrupted earlier deploy can
+# have left it on an image that never served.
+container=$($compose ps -q web 2>/dev/null || true)
+serving=""
+if [ -n "$container" ]; then
+  serving=$(docker inspect --format '{{.Image}}' "$container" 2>/dev/null || true)
+fi
+if [ -n "$serving" ]; then
+  docker image tag "$serving" "$previous"
   have_previous=1
 else
   have_previous=0
