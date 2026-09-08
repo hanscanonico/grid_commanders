@@ -236,11 +236,53 @@ GUNMETAL_RAMP: Ramp6 = build_ramp(
 )
 
 
+# --- where a board ramp does not serve a bust --------------------------------
+#
+# `RAMPS` above is the board's, rung for rung, and stays that way
+# (`tests/test_palette_mirror.py`). Two of the six rows are authored for a
+# surface a bust is not, and each is given exactly the rungs it is short of.
+#
+# **Gold.** The Gilded Concord's ramp sits a band under the other three
+# chromatic rows on purpose (`spritegen.palette`, `_GOLD_L`): its token is a
+# LIT plane, and a row anchored at L190 would put its own top plane over the
+# terrain ceiling on every roof it owns. The board reads gold off the hue and
+# the rim; the chrome wears the token whole. A coat is neither. Painted on that
+# ramp a general's cloth is body L104 and top L136 — olive — and two of the
+# three Gilded generals lost the colour they are named for. So the three rungs
+# the figure is lit in come off the funds gold, on a ladder of a bust's own.
+#
+# **Iron.** The Iron Dominion's ramp is the inverted one: near-black panels
+# jumping to light steel. The window field is the shadow rung on every army
+# (`backdrop.FIELD_SLOT`), which buys a chromatic row 30-50 luma of separation
+# from the coat in front of it and buys Iron 80 — from the wrong side. At L49
+# it is also under every dark cap and every dark skin on the sheet, which is
+# how three Iron faces came out as one black blob at chip size. Its field rung
+# alone comes up to where the others sit; the coat, the panels and the rim are
+# the board's.
+ACCENT_BASE: RGB = _hex("e9c928")
+ACCENT_RAMP: Ramp6 = build_ramp(ACCENT_BASE, (20.0, 46.0, 70.0, 150.0, 186.0, 225.0))
+IRON_FIELD: RGB = _shape(_hex("79838d"), S_SHADOW, 74.0)
+
+# Which rungs each of the two takes, and from where. Everything not named here
+# is the board's own.
+BUST_RUNGS: dict[str, dict[int, RGB]] = {
+    "gold": {slot: ACCENT_RAMP[slot] for slot in (S_BODY, S_TOP, S_RIM)},
+    "iron": {S_SHADOW: IRON_FIELD},
+}
+
+
 def faction_ramp(key: str) -> Ramp6:
-    """The six rungs an army is painted in. An unknown key raises."""
+    """The six rungs an army is painted on a bust in. An unknown key raises.
+
+    The overrides are spent INSIDE the sixteen rather than added to them:
+    `bust_palette` still hands out one ink, six army rungs and nine of the
+    three materials', and the membership bar (`ThePaletteIsBounded`) reads its
+    allowed set off this same function. The set moved; the cap did not.
+    """
     if key not in RAMPS:
         raise KeyError(f"no ramp for {key!r} (have {sorted(RAMPS)})")
-    return RAMPS[key]
+    taken = BUST_RUNGS.get(key, {})
+    return tuple(taken.get(slot, rung) for slot, rung in enumerate(RAMPS[key]))
 
 
 # --- what one bust may spend -------------------------------------------------

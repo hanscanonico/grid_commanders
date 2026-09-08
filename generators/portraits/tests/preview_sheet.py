@@ -105,7 +105,7 @@ def bust(
     """
     theme = faction_by_key(faction)
     cloth = light.faction_ramp(theme.key)
-    skin = light.build_ramp(SKIN, rim_hue=cloth.rim)
+    skin = light.build_ramp(SKIN)
 
     figure = Canvas()
     figure.polygon(SHOULDER, cloth.base)
@@ -267,10 +267,15 @@ def _grid(cells: list[Canvas]) -> Image.Image:
 
 
 def _sheet(out: Path) -> list[Path]:
-    """The roster itself: one row per faction, and the chip strip under it."""
+    """The roster itself: one row per faction, and the chip strip under it.
+
+    Every army, Iron last. Gold was missing from this list, which is how a
+    review of the sheet came back without having seen the three generals whose
+    colour the review then found had gone.
+    """
     rows = [
         [roster.FACES[key] for key in sorted(roster.FACES) if _army(key) == army]
-        for army in ("meridian", "iron", "aurora", "verdant")
+        for army in ("meridian", "aurora", "verdant", "gold", "iron")
     ]
     painted = [[painter.paint(face) for face in row] for row in rows]
     painted.append([painter.paint(roster.NEUTRAL)])
