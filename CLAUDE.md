@@ -221,3 +221,9 @@ The five canonical triage roles, each label string equal to its name (`needs-tri
 
 Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, both created lazily by
 `/domain-modeling`. See `docs/agents/domain.md`.
+
+### Model roles
+
+Fable orchestrates and does not implement, research or review a PR itself. Implementation goes
+to the `implementer` agent and every review to the `reviewer` agent, both in `.claude/agents/`,
+Opus at medium effort. `/improve` and `/orchestrate` carry the full loop.
