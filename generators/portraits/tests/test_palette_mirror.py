@@ -44,6 +44,16 @@ _ROW_ENTRY = re.compile(r'&"(\w+)"\s*:\s*(\d+)')
 
 _COLOURS = ("color", "color_dark", "color_light")
 
+# The only rungs a bust may not share with the board, one at a time: the three
+# the Gilded coat is lit in, off the funds gold, and the one Iron's window field
+# sits on. `palette.BUST_RUNGS` says why each is spent.
+BUST_OVERRIDES = {
+    ("gold", palette.S_BODY),
+    ("gold", palette.S_TOP),
+    ("gold", palette.S_RIM),
+    ("iron", palette.S_SHADOW),
+}
+
 
 def _floats(literal: str) -> tuple[float, ...]:
     return tuple(float(v) for v in literal.split(",")[:3])
@@ -142,6 +152,33 @@ class TheBoardSRampsAreTheSpriteGeneratorSOwn(unittest.TestCase):
         for key in sorted(palette.RAMPS):
             with self.subTest(ramp=key):
                 self.assertEqual(palette.RAMPS[key], self.board.RAMPS[key])
+
+    def test_every_bust_ramp_is_the_board_s_but_for_the_four_named_rungs(self):
+        """`faction_ramp` is what a bust is actually painted in, and it is the
+        board's `RAMPS` with four rungs taken off two other ladders. Mirroring
+        `RAMPS` alone left those four unpinned: a fifth could be added, or one
+        of them widened to a whole row, without a bar noticing."""
+        drifted = {
+            (key, slot)
+            for key in sorted(palette.RAMPS)
+            for slot, (mine, theirs) in enumerate(
+                zip(palette.faction_ramp(key), self.board.RAMPS[key], strict=True)
+            )
+            if mine != theirs
+        }
+        self.assertEqual(drifted, BUST_OVERRIDES)
+
+    def test_the_overrides_are_the_ones_bust_rungs_declares(self):
+        """The enumeration above against the table it is meant to describe, so
+        neither can be edited alone."""
+        self.assertEqual(
+            {
+                (key, slot)
+                for key, rungs in palette.BUST_RUNGS.items()
+                for slot in rungs
+            },
+            BUST_OVERRIDES,
+        )
 
     def test_the_metal_is_the_board_s_gunmetal(self):
         self.assertEqual(palette.GUNMETAL_RAMP, self.board.GUNMETAL_RAMP)
