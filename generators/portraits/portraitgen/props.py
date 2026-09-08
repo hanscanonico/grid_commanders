@@ -359,9 +359,11 @@ def _medal(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _drone(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    canvas.stroke(
-        [(164.0, 112.0), (176.0, 162.0), (168.0, 214.0)], INK_DETAIL, (*SLATE, 255)
-    )
+    """A quadcopter on its tether. The tether is a `_cord` like every other run
+    on the sheet that has to read as a line: stroked at the detail weight it was
+    one texel of slate falling fifty down a slope, which is the only continuous
+    one-texel mark the round-2 sweep left standing."""
+    _cord(canvas, [(164.0, 112.0), (176.0, 162.0), (168.0, 214.0)], SLATE)
     _shape(canvas, _box(142.0, 90.0, 160.0, 96.0), faction.body_lt, INK_DETAIL)
     _shape(canvas, _box(168.0, 90.0, 186.0, 96.0), faction.body_lt, INK_DETAIL)
     _shape(canvas, _box(150.0, 96.0, 178.0, 114.0), SLATE)

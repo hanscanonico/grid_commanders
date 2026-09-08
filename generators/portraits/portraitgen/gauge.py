@@ -11,8 +11,15 @@ row of stitching and a scatter of freckles all arrived that way.
 
 **Authored**: a run that has to read as a line is drawn `Canvas.ribbon` rather
 than `Canvas.stroke` — two texels, a lit core against an inked edge — or it is
-cut. There is no third option, and nothing in this package draws a detail tone
-one texel wide on purpose any more.
+cut. There is no third option, and the authored half is the whole of the rule:
+the measured half below cannot reach a continuous one-texel run, because
+quantising a band edge leaves such runs down every silhouette on the sheet and
+a bar that failed them would fail twenty-three busts drawn correctly. So a
+cable is kept off that list by being drawn as a ribbon, not by being measured
+— which is how the drone's tether stood as one texel of slate falling fifty
+down a slope until the round-2 review read it. What a stroke of a detail tone
+one texel wide is still allowed to be is a mark that is not a line: a lens
+glint, a ruled row of text on a ledger, the tick of an antenna.
 
 **Measured**: `despeckle` sweeps what the rasteriser left behind. Quantising a
 finished raster onto sixteen tones rounds an edge pixel by pixel, and a band
