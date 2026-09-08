@@ -521,15 +521,41 @@ so the desktop decision is repeated rather than reopened.
 
 ## Web build
 
-`make export-web` writes the browser build into `build/web/` — `index.html`, `index.js`,
-`index.wasm`, `index.pck`, the audio worklet and the icons. It imports first, the way the mobile
+`make export-web` writes the browser build into `build/web/` in the layout production serves: the
+crawlable **landing page at the root** (copied from `deploy/web/site/`) and the **game under
+`play/`** — `index.html`, `index.js`, `index.wasm`, `index.pck`, the audio worklet and the icons.
+It imports first, the way the mobile
 targets do, and the preset is committed as `export_presets.cfg` (`Web`). Machine setup is the 4.7.1
 export templates from the Android recipe above, nothing more. **Threads are off in the preset**: a
 single-threaded page needs no cross-origin-isolation headers, so any static server hosts it and iOS
 Safari runs it. **The PWA is off**, by measurement: Godot's service worker serves the engine and
 the pack cache-first once it holds them, so a returning player's first visit after a redeploy ran
 the old build — the preset's comment has the reading. `make serve-web` serves the folder at
-`http://127.0.0.1:8060/` for a local check.
+`http://127.0.0.1:8060/` for a local check, landing page and `/play/` both.
+
+### The public site
+
+`deploy/web/site/` is the whole of gridcommanders.com's front door: one hand-written `index.html`
+with inline CSS and no build step, the sharing card `og-battle.png` (1200x630, captured from a real
+battle), a favicon, `robots.txt` and `sitemap.xml`. The landing page carries the search and social
+metadata — title, description, canonical, Open Graph and Twitter tags, a JSON-LD `VideoGame` block
+— and the game page carries its own description and canonical through the Web preset's
+`html/head_include`. `tools/check_web_site.py` is the gate, run by `make check` over the sources and
+by `make export-web` over the built tree; it asserts what a crawler sees, including that "Advance
+Wars" appears only in body copy, never in a title, a heading or `og:title`. Copy for itch.io and
+community posts is `docs/off_site_copy.md`.
+
+Four steps are the owner's, in a dashboard rather than in this repo:
+
+1. **Google Search Console** and **Bing Webmaster Tools** — verify the site, then paste each code
+   into the empty `google-site-verification` / `msvalidate.01` meta tags in
+   `deploy/web/site/index.html` and redeploy.
+2. **Submit `https://gridcommanders.com/sitemap.xml`** in both consoles.
+3. **Cloudflare Web Analytics** — add the site, then replace the `CF_WEB_ANALYTICS_TOKEN`
+   placeholder in the beacon at the bottom of that same file. The beacon is cookie-free and stays
+   on the landing page only, never on `/play/`.
+4. Optionally, a Cloudflare **redirect rule** sending `www.gridcommanders.com` to the apex, so the
+   host the canonical tags name is the only one indexed.
 
 The mini PC runs it as a docker-compose stack under `deploy/web/`: an nginx container holding the
 export (`deploy/web/Dockerfile` exports inside the image, so the host needs Docker and nothing

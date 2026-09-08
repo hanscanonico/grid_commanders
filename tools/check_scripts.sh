@@ -517,6 +517,16 @@ if (($# == 0)); then
 		failed=$((failed + 1))
 	fi
 
+	# The public site is HTML and a preset key, so no engine gate reaches it
+	# either. What a crawler and a link preview see — title, description,
+	# canonical, the OG tags, the sitemap, the route into the game — is checked
+	# over the sources; `make export-web` hands the same script the built tree.
+	if ! site_check="$(tools/check_web_site.py 2>&1)"; then
+		echo "check: tools/check_web_site.py failed" >&2
+		printf '%s\n' "$site_check" >&2
+		failed=$((failed + 1))
+	fi
+
 	# A detector with no fixture is a detector nobody can trust: a false positive
 	# sends the reader looking at a doctrine that was playing correctly. Every
 	# finding kind the analyser can report is a key of ReplayAnalysis.SEVERITY, so

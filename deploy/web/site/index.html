@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Commanders — free turn-based tactics game in your browser</title>
+<meta name="description" content="A free turn-based tactics game you play in the browser, no download: grids, terrain, capture and income, commanders with powers. Inspired by Advance Wars.">
+<link rel="canonical" href="https://gridcommanders.com/">
+<link rel="icon" type="image/png" href="/favicon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Grid Commanders">
+<meta property="og:url" content="https://gridcommanders.com/">
+<meta property="og:title" content="Grid Commanders — free turn-based tactics in your browser">
+<meta property="og:description" content="Move squads over a grid, hold the high ground, capture the towns that pay for the next tank. Free, instant, no download.">
+<meta property="og:image" content="https://gridcommanders.com/og-battle.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A battle in Grid Commanders: tanks and infantry on a grid of plains, roads and mountains, with a damage forecast open.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Grid Commanders — free turn-based tactics in your browser">
+<meta name="twitter:description" content="Move squads over a grid, hold the high ground, capture the towns that pay for the next tank. Free, instant, no download.">
+<meta name="twitter:image" content="https://gridcommanders.com/og-battle.png">
+
+<!-- Owner steps, both blank until the consoles issue a code: paste it into content=""
+     and redeploy. See README's "Web build" section. -->
+<meta name="google-site-verification" content="">
+<meta name="msvalidate.01" content="">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Grid Commanders",
+  "url": "https://gridcommanders.com/",
+  "description": "A free turn-based tactics game played in the browser: grid maps, terrain that shapes movement and defense, a land/air/sea roster, property capture and income, commanders with powers, a campaign and a computer opponent.",
+  "genre": ["Turn-based tactics", "Strategy"],
+  "gamePlatform": ["Web browser", "PC", "Android", "iOS"],
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Any browser",
+  "playMode": ["SinglePlayer", "MultiPlayer"],
+  "isAccessibleForFree": true,
+  "inLanguage": "en",
+  "sameAs": "https://github.com/hanscanonico/grid_commanders",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "url": "https://gridcommanders.com/play/"
+  }
+}
+</script>
+
+<style>
+:root {
+	color-scheme: dark;
+	--slate-900: #23272b;
+	--slate-800: #2b2f34;
+	--slate-700: #3a3f45;
+	--paper: #eee7d6;
+	--ink-3: #8a9099;
+	--gold: #e8b33c;
+	--capture: #6cc24a;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+	margin: 0;
+	padding: 0 20px 64px;
+	background: var(--slate-900);
+	color: var(--paper);
+	font: 17px/1.6 ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	overflow-wrap: break-word;
+}
+main { max-width: 760px; margin: 0 auto; }
+header { padding: 48px 0 8px; }
+h1 { margin: 0 0 12px; font-size: 2.1rem; line-height: 1.15; letter-spacing: 0.01em; }
+h2 { margin: 40px 0 12px; font-size: 1.25rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
+p { margin: 0 0 16px; }
+.pitch { font-size: 1.15rem; color: var(--paper); margin-bottom: 24px; }
+.shot {
+	display: block;
+	width: 100%;
+	height: auto;
+	border: 2px solid var(--slate-700);
+	border-radius: 3px;
+	image-rendering: pixelated;
+	background: var(--slate-800);
+}
+.play {
+	display: inline-block;
+	margin: 24px 0 8px;
+	padding: 14px 34px;
+	background: var(--capture);
+	color: #111618;
+	font-size: 1.15rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	text-decoration: none;
+	border: 2px solid #111618;
+	border-radius: 3px;
+	box-shadow: 3px 3px 0 rgba(17, 22, 24, 0.9);
+}
+.play:hover, .play:focus { background: #7fd45c; }
+.note { color: var(--ink-3); font-size: 0.95rem; }
+ul { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 8px; }
+li b { color: var(--gold); font-weight: 700; }
+a { color: var(--gold); }
+footer {
+	margin-top: 48px;
+	padding-top: 20px;
+	border-top: 1px solid var(--slate-700);
+	color: var(--ink-3);
+	font-size: 0.92rem;
+}
+@media (max-width: 480px) {
+	body { padding: 0 14px 48px; font-size: 16px; }
+	header { padding-top: 32px; }
+	h1 { font-size: 1.6rem; }
+	.play { display: block; text-align: center; padding: 16px 20px; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<header>
+	<h1>Grid Commanders</h1>
+	<p class="pitch">A free turn-based tactics game you play in your browser. No download, no
+	account — open the page and the war starts.</p>
+</header>
+
+<img class="shot" src="/og-battle.png" width="1200" height="630"
+	alt="A Grid Commanders battle: red and blue units on a grid of plains, roads, woods and mountains, with a damage forecast open over the board.">
+
+<p><a class="play" href="/play/">Play now</a></p>
+<p class="note">Runs in any modern browser, on desktop or on a phone. First load is a big
+one — the whole game comes down at once — and then it plays offline-fast.</p>
+
+<h2>What it is</h2>
+<p>Grid Commanders is a turn-based tactics game on a square grid. Every unit spends a movement
+budget the terrain charges it for: a road is cheap, woods are slow, a mountain only takes foot
+soldiers, and whatever you end your turn standing on decides how much of an incoming shot you
+soak. The roster runs across land, air and sea in a rock-paper-scissors shape — anti-air eats
+helicopters, fighters eat anything that flies, a submarine hides until a cruiser hunts it down —
+so there is no single unit that wins.</p>
+<p>Money comes from the map, not from a build queue. Infantry walk into towns, factories and
+airports and take several turns to raise their flag; each property you hold pays you every
+morning, and that income is what buys the next tank. Commanders sit over all of it: each one bends
+the rules a little and charges a Command Power that fires once the meter is full. There is an
+authored campaign to fight through, and a computer opponent that plans its turn the same way you
+play yours — it issues the same commands, from the same rules, and it is never handed extra money
+or a look through your fog. It is <b>inspired by Advance Wars</b>, and it is its own game: original
+art, original units, original commanders.</p>
+
+<h2>What you get</h2>
+<ul>
+	<li><b>Campaign</b> — authored missions with objectives, briefings and a story between them.</li>
+	<li><b>Skirmish against the computer</b> — any board, four difficulty tiers, fog of war optional.</li>
+	<li><b>Up to four armies</b> — free-for-all, 2v2, 3v1 or a duel, any seat human or computer.</li>
+	<li><b>A map editor</b> — paint your own board and play it.</li>
+	<li><b>Touch support</b> — the whole game is playable with a finger on a phone or tablet.</li>
+</ul>
+
+<h2>Free, and open</h2>
+<p>Grid Commanders costs nothing and shows no ads. It is built in Godot with typed GDScript, and
+the source is on <a href="https://github.com/hanscanonico/grid_commanders">GitHub</a>.</p>
+
+<p><a class="play" href="/play/">Play now</a></p>
+
+<footer>
+	<p>Grid Commanders — a turn-based tactics game. Not affiliated with, or endorsed by, Nintendo
+	or Intelligent Systems.</p>
+</footer>
+
+</main>
+
+<!-- Cookie-free page-view counts, landing page only — never on /play/. Replace the placeholder
+     token with the one Cloudflare Web Analytics issues for gridcommanders.com. -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+	data-cf-beacon='{"token": "CF_WEB_ANALYTICS_TOKEN"}'></script>
+</body>
+</html>

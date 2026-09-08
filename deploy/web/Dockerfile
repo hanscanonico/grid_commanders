@@ -7,9 +7,14 @@
 FROM barichello/godot-ci:4.7.1 AS export
 WORKDIR /src
 COPY . .
+#
+# The export lands under play/ and the crawlable landing page is copied beside
+# it, which is the layout `make export-web` builds locally: `/` is a page a
+# search engine can read, `/play/` is the game.
 RUN godot --headless --path . --import \
-	&& mkdir -p /build/web \
-	&& godot --headless --path . --export-release "Web" /build/web/index.html
+	&& mkdir -p /build/web/play \
+	&& godot --headless --path . --export-release "Web" /build/web/play/index.html \
+	&& cp deploy/web/site/* /build/web/
 
 FROM nginx:1.27-alpine
 COPY --from=export /build/web /usr/share/nginx/html
