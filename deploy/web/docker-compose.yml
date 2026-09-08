@@ -8,7 +8,9 @@ services:
       # Host-local only, for curl checks and LAN debugging via SSH tunnel.
       - "127.0.0.1:8090:80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/healthz >/dev/null"]
+      # 127.0.0.1, not localhost: the alpine image resolves localhost to ::1
+      # first, and nginx listens on IPv4 only.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz >/dev/null"]
       interval: 15s
       timeout: 5s
       retries: 5
