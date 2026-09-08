@@ -570,7 +570,23 @@ cp deploy/web/.env.example deploy/web/.env   # paste the token in
 deploy/web/deploy                             # git pull, build, up, wait for /healthz
 ```
 
+After that first run the site deploys itself: every green push to `main` runs the `deploy` job in
+`.github/workflows/verify.yml` on the host's own GitHub Actions runner, which fast-forwards that
+checkout to the tested commit and runs the same script. It never runs for a pull request, and only
+after `verify`, `audio`, `sprites` and `portraits` are all green. To redeploy without a commit, press
+**Run workflow** on the verify workflow in the Actions tab. The runner is a one-time install on the
+host:
+
+```sh
+deploy/web/setup_runner "$(gh api -X POST \
+  repos/hanscanonico/grid_commanders/actions/runners/registration-token --jq .token)"
+sudo ~/actions-runner-grid/svc.sh install "$USER" && sudo ~/actions-runner-grid/svc.sh start
+```
+
+Running the script by hand stays the fallback when Actions is not an option.
+
 `deploy/web/deploy --no-pull` rebuilds the checkout as it stands; `DEPLOY_REF=<sha>` pins a commit.
+A build that never answers `/healthz` rolls back to the previous image and then fails loudly.
 `docker compose -f deploy/web/docker-compose.yml up -d web` brings up the server alone, without a
 token, on `127.0.0.1:8090`. If the existing stock_market tunnel should serve it instead, add a public
 hostname to that tunnel pointing at this stack's `web` service — the two only need to share a Docker

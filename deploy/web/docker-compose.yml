@@ -1,5 +1,8 @@
 services:
   web:
+    # Named rather than left to compose's project-derived default, so
+    # deploy/web/deploy can tag the running build :previous and roll back to it.
+    image: grid-commanders-web:latest
     build:
       context: ../..
       dockerfile: deploy/web/Dockerfile

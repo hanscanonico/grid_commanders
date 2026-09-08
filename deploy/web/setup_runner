@@ -1,0 +1,29 @@
+#!/bin/bash -e
+# Install this repository's GitHub Actions self-hosted runner on the web host.
+# Usage: deploy/web/setup_runner <registration-token>
+# The token is short-lived and comes from:
+#   gh api -X POST repos/hanscanonico/grid_commanders/actions/runners/registration-token --jq .token
+# Personal-account runners are repo-scoped, so this gets its own directory,
+# name and service beside any runner another repository already installed here.
+REPO_URL="https://github.com/hanscanonico/grid_commanders"
+RUNNER_DIR="$HOME/actions-runner-grid"
+TOKEN="${1:?usage: deploy/web/setup_runner <registration-token>}"
+
+release=$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest)
+version=$(jq -r '.tag_name | ltrimstr("v")' <<<"$release")
+archive="actions-runner-linux-x64-${version}.tar.gz"
+expected_sha=$(jq -r '.body' <<<"$release" | sed -n 's/.*<!-- BEGIN SHA linux-x64 -->\([0-9a-f]\{64\}\)<!-- END SHA linux-x64 -->.*/\1/p')
+[ -n "$expected_sha" ] || { echo "No linux-x64 checksum in the v${version} release notes" >&2; exit 1; }
+
+mkdir -p "$RUNNER_DIR"
+cd "$RUNNER_DIR"
+curl -fsSL -o "$archive" "https://github.com/actions/runner/releases/download/v${version}/${archive}"
+echo "${expected_sha}  ${archive}" | sha256sum -c -
+tar xzf "$archive"
+rm "$archive"
+
+./config.sh --unattended --replace --url "$REPO_URL" --token "$TOKEN" \
+  --name mini-pc-grid --labels grid-prod
+
+echo "Runner registered. Install and start it as a service (needs root):"
+echo "  sudo $RUNNER_DIR/svc.sh install $USER && sudo $RUNNER_DIR/svc.sh start"
