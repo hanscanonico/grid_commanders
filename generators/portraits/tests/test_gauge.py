@@ -1,0 +1,140 @@
+"""The minimum feature gauge, as a bar over the sheet the generator emits.
+
+The review this suite came out of read the same defect off eight busts under
+three names — a dotted headset cable, a dotted monocle chain, a row of
+stitching that had become ticks, and opaque fleck halos strung along five
+silhouettes. All four are one thing: a mark thinner than a texel. `portraitgen.
+gauge` is the rule, and this is where it stops being prose.
+
+The bar that matters is the last one: **no bust holds an orphan cluster.** It is
+measured off `bust.paint`, the call `pipeline.py` bakes the committed PNGs with,
+so a stroke authored under the gauge in some future edit fails here rather than
+shipping as noise.
+"""
+
+from __future__ import annotations
+
+import unittest
+from functools import lru_cache
+
+from PIL import Image
+
+from portraitgen import bust, gauge, roster
+from portraitgen.canvas import BUST_DIVISOR, CHIP_DIVISOR, Canvas
+
+INK = (19, 23, 27, 255)
+CORE = (224, 169, 46, 255)
+
+
+def _specs():
+    return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
+
+
+@lru_cache(maxsize=None)
+def _painted(key: str) -> Image.Image:
+    return bust.paint(dict(_specs())[key])
+
+
+def _orphans(image: Image.Image) -> list[list[tuple[int, int]]]:
+    pixels = list(image.get_flattened_data())
+    return [
+        cells
+        for cells in gauge.clusters(pixels, image.size)
+        if gauge.is_orphan(cells)
+        and pixels[cells[0][1] * image.size[0] + cells[0][0]][3]
+    ]
+
+
+class TheSweepKnowsWhatAMarkIs(unittest.TestCase):
+    def test_a_lone_pixel_is_an_orphan(self):
+        self.assertTrue(gauge.is_orphan([(4, 4)]))
+
+    def test_a_pair_is_an_orphan(self):
+        self.assertTrue(gauge.is_orphan([(4, 4), (5, 4)]))
+
+    def test_a_gauge_square_is_a_mark(self):
+        block = [(4, 4), (5, 4), (4, 5), (5, 5)]
+        self.assertTrue(gauge.holds_gauge(block))
+        self.assertFalse(gauge.is_orphan(block))
+
+    def test_a_run_longer_than_the_orphan_bound_is_a_mark(self):
+        run = [(x, 4) for x in range(6)]
+        self.assertFalse(gauge.holds_gauge(run))
+        self.assertFalse(gauge.is_orphan(run))
+
+    def test_a_diagonal_staircase_is_one_cluster_and_not_noise(self):
+        """Four-connectivity would call every step of an inked edge a speck."""
+        layer = Canvas((40, 40), 1)
+        layer.stroke([(4.0, 4.0), (30.0, 20.0)], 2.0, INK)
+        self.assertEqual(_orphans(layer.resolve()), [])
+
+
+class TheSweepRepaintsFromTheBorder(unittest.TestCase):
+    def test_a_speck_takes_the_tone_around_it(self):
+        layer = Canvas((40, 40), 1)
+        layer.fill(CORE)
+        layer.rect((10.0, 10.0, 11.0, 11.0), INK)
+        swept = gauge.despeckle(layer.resolve())
+        self.assertEqual(swept.getpixel((10, 10)), CORE)
+
+    def test_the_sweep_has_settled_when_it_returns(self):
+        for key, _ in _specs():
+            with self.subTest(commander=key):
+                once = _painted(key)
+                self.assertEqual(gauge.despeckle(once).tobytes(), once.tobytes())
+
+    def test_the_sweep_invents_no_tone(self):
+        for key, spec in _specs():
+            with self.subTest(commander=key):
+                allowed = {(*tone, 255) for tone in bust.palette_of(spec)}
+                painted = {
+                    colour
+                    for _, colour in _painted(key).getcolors(1 << 16)
+                    if colour[3] == 255
+                }
+                self.assertEqual(painted - allowed, set())
+
+
+class NothingUnderTheGaugeSurvivesTheBake(unittest.TestCase):
+    """The bar. An opaque cluster of one tone with no gauge-square of its own
+    and no more than `MAX_ORPHAN` pixels is not a mark this grid can draw."""
+
+    def test_no_bust_holds_an_orphan_cluster(self):
+        for key, _ in _specs():
+            with self.subTest(commander=key):
+                self.assertEqual(_orphans(_painted(key)), [])
+
+
+class ARibbonIsTwoTexelsOnEitherGrid(unittest.TestCase):
+    """The authored half of the gauge: what `stroke` cannot draw wide enough,
+    `ribbon` draws as a core against an edge."""
+
+    def _widths(self, divisor: int) -> set[int]:
+        layer = Canvas((80, 80), divisor)
+        layer.ribbon([(20.0, 10.0), (20.0, 70.0)], CORE, INK)
+        image = layer.resolve()
+        rows = range(layer.px(20.0), layer.px(60.0))
+        return {
+            sum(1 for x in range(image.width) if image.getpixel((x, y))[3])
+            for y in rows
+        }
+
+    def test_a_ribbon_covers_the_gauge_on_the_bust_grid(self):
+        self.assertEqual(self._widths(BUST_DIVISOR), {gauge.GAUGE})
+
+    def test_a_ribbon_covers_the_gauge_on_the_chip_grid(self):
+        self.assertEqual(self._widths(CHIP_DIVISOR), {gauge.GAUGE})
+
+    def test_a_stroke_at_the_detail_weight_does_not(self):
+        """Which is the whole reason the ribbon exists."""
+        layer = Canvas((80, 80), BUST_DIVISOR)
+        layer.stroke([(20.0, 10.0), (20.0, 70.0)], 2.0, CORE)
+        image = layer.resolve()
+        row = layer.px(40.0)
+        self.assertEqual(
+            sum(1 for x in range(image.width) if image.getpixel((x, row))[3]), 1
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

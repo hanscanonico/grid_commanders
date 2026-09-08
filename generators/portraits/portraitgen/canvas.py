@@ -25,6 +25,11 @@ out as heavy as a jaw; `stroke` refuses any other width rather than drawing it.
 At this grid the hierarchy is a ceiling rather than three distinct widths — a
 silhouette is two native pixels and both lighter weights are one, which is as
 many as a 110px-wide bust has room for.
+
+One texel is under the gauge (`gauge.GAUGE`), which is why `ribbon` sits beside
+`stroke`: a run that has to read as a line — a chain, a cable, a strip of
+stitching — is drawn two texels across, a core against an inked edge, because a
+one-texel diagonal comes out of the rasteriser as a dotted line of specks.
 """
 
 from __future__ import annotations
@@ -244,6 +249,39 @@ class Canvas:
                     ),
                     fill=colour,
                 )
+
+    @property
+    def texel(self) -> float:
+        """One native pixel, in the design units every call site speaks in.
+
+        The gauge is stated in texels because that is what the eye counts; a
+        painter walking a mark clear of another by one has to be able to say
+        so on whichever grid it is drawing.
+        """
+        return float(self.divisor)
+
+    def ribbon(
+        self,
+        points: Iterable[Point],
+        core: RGB | RGBA,
+        edge: RGB | RGBA,
+        *,
+        closed: bool = False,
+    ) -> None:
+        """A run two texels across: a lit core against an inked edge.
+
+        The gauge (`gauge.GAUGE`) is why this exists. A chain, a cable, a
+        lanyard and a strip of stitching are all a detail weight in design
+        units, and a detail weight is one texel here — which a diagonal breaks
+        into a dotted line of specks. Drawn as a ribbon the same run is two
+        texels: the edge laid one texel toward the shadow, the core over the
+        path itself, so it reads as rope lit from the sheet's one corner
+        rather than as dirt.
+        """
+        run = list(points)
+        shifted = [(x + self.texel, y + self.texel) for x, y in run]
+        self.stroke(shifted, INK_DETAIL, edge, closed=closed)
+        self.stroke(run, INK_DETAIL, core, closed=closed)
 
     def compose(self, other: Canvas) -> None:
         """Stack another layer of the same grid over this one."""
