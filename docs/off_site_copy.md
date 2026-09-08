@@ -61,12 +61,13 @@ want a comment with detail rather than a link-only post.
 
 ### For an Advance Wars community
 
-> **I built a free browser tactics game because I missed Advance Wars — Grid Commanders**
+> **I missed this genre, so I built one — Grid Commanders, free in your browser**
 >
-> It plays the way you remember: a grid, terrain that sets movement cost and defense, a
-> rock-paper-scissors roster over land, air and sea, infantry capturing towns for income, and
-> commanders with a power meter. There is a campaign, skirmish against the computer with four
-> difficulty tiers, up to four armies with free-for-all or team seating, and a map editor.
+> It is inspired by Advance Wars and plays the way you remember: a grid, terrain that sets
+> movement cost and defense, a rock-paper-scissors roster over land, air and sea, infantry
+> capturing towns for income, and commanders with a power meter. There is a campaign, skirmish
+> against the computer with four difficulty tiers, up to four armies with free-for-all or team
+> seating, and a map editor.
 >
 > It is not a ROM hack and it borrows no assets — original art, original units, original
 > commanders, its own damage numbers. Free, no ads, no account; it runs in a browser tab, phone
@@ -78,11 +79,12 @@ want a comment with detail rather than a link-only post.
 
 ### For a Godot community
 
-> **Grid Commanders — an Advance Wars-style tactics game in Godot 4.7, now playable on the web**
+> **Grid Commanders — a turn-based tactics game in Godot 4.7, now playable on the web**
 >
-> The whole simulation is Node-free typed GDScript: the game state, the rules and the AI live in
-> plain classes, every action is a command object that validates then applies and emits typed
-> events, and the scenes only render and animate them. Combat luck runs off a seeded RNG, so the
+> It is a grid-tactics game inspired by Advance Wars. The whole simulation is Node-free typed
+> GDScript: the game state, the rules and the AI live in plain classes, every action is a command
+> object that validates then applies and emits typed events, and the scenes only render and
+> animate them. Combat luck runs off a seeded RNG, so the
 > same seed and the same commands replay byte for byte — which is what makes the replay viewer and
 > the headless balance simulator possible at all.
 >
