@@ -44,13 +44,14 @@ const _MICRO_INK := Color(0.408, 0.443, 0.471)
 const _NAME_SIZE := 12
 ## The portrait band, public because a surface that frames this card checks its
 ## own layout against it — a card showing less than its face is showing nothing.
-## Deliberately not raised to fill the band's width with the bust: the four-army
-## info sheet frames a 242-256px card in 119px, so it already scrolls and every
-## pixel added here is a pixel of the Command Power block pushed out of it — and
-## that same 119 is the ceiling the sheet's own layout check holds this constant
-## under, which leaves too little to widen the fitted bust by anything worth the
-## room (measured on commander_info, 2026-08-25).
-const PORTRAIT_H := 96
+## Deliberately not raised to hold the whole 110x134 bust: the four-army info
+## sheet frames a 242-256px card in 119px, so it already scrolls and every pixel
+## added here is a pixel of the Command Power block pushed out of it — and that
+## same 119 is the ceiling the sheet's own layout check holds this constant
+## under, which the drawing's own height does not fit beneath (measured on
+## commander_info, 2026-08-25). So this band is a chip surface: three screen
+## pixels to the texel, with the three left over as the band's own air.
+const PORTRAIT_H := CommanderVisuals.FACE_SIZE.x * 3 + 3
 ## The faction badge pinned into the band's top-left corner, and the inset it sits
 ## at. Card-local like the geometry above it, not a missing shell token: the design
 ## system sizes widgets rather than pins on art, and its smallest icon
@@ -98,10 +99,9 @@ func _build() -> void:
 	# --- portrait stage: faction field, bust, emblem pin ---
 	# The kit's bust is a plain Panel, not a PanelContainer: the latter force-
 	# stretches every child to fill it, which would blow the little emblem pinned
-	# into the corner up over the whole portrait. The band is tall enough that the
-	# general is shown whole — the portrait carries its own ink-bordered window
-	# with the head breaking over its top edge, and a band this wide can only fill
-	# by cutting that composition in half.
+	# into the corner up over the whole portrait. The band names no width, so it
+	# takes the card's, and the kit reads the height against the art: too short
+	# for the drawing's jaw, so the card shows the baked face chip.
 	_field = UiKit.commander_bust(null, Vector2(0, PORTRAIT_H), UiKit.NO_FIELD)
 	rows.add_child(_field)
 

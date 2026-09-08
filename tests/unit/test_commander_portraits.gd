@@ -91,6 +91,50 @@ func test_a_field_too_small_still_draws_whole_texels() -> void:
 	assert_eq(CommanderVisuals.art_scale(Vector2(64, 64), Vector2i.ZERO), 1)
 
 
+## The field a whole bust needs is the art's own measurements and not a number
+## anyone chose: the drawing's full width, and every row down to the jaw. Pinned
+## here because a rebake on another grid moves both, and a stale copy of either
+## is invisible — it ships as a general cropped at the ears.
+func test_the_whole_bust_field_is_the_art_s_own_size() -> void:
+	var field := CommanderVisuals.WHOLE_BUST_FIELD
+	assert_eq(field.x, CommanderVisuals.PORTRAIT_SIZE.x, "a bust field is the drawing's width")
+	assert_eq(field.y, CommanderVisuals.FACE_REGION.end.y, "a bust field reaches the jaw")
+	assert_lt(field.y, CommanderVisuals.PORTRAIT_SIZE.y, "the chest is what a short field loses")
+
+
+## Which fields may show one, exactly: the art's own shape and anything over it,
+## and neither of the two ways to fall one pixel under. A field that fails this
+## shows the baked chip instead (`UiKit._crop_for`), which is the whole reason
+## the chip is baked.
+func test_only_a_field_that_holds_the_art_shows_a_whole_bust() -> void:
+	var field := Vector2(CommanderVisuals.WHOLE_BUST_FIELD)
+	assert_true(CommanderVisuals.fits_whole_bust(field), "the art's own shape holds it")
+	assert_true(CommanderVisuals.fits_whole_bust(Vector2(CommanderVisuals.PORTRAIT_SIZE)))
+	assert_false(CommanderVisuals.fits_whole_bust(field - Vector2(1, 0)), "a pixel too narrow")
+	assert_false(CommanderVisuals.fits_whole_bust(field - Vector2(0, 1)), "a pixel too short")
+	assert_false(CommanderVisuals.fits_whole_bust(Vector2.ZERO), "an unplaced field")
+
+
+## Every field the shell states out loud is one of the two shapes and nothing in
+## between: either it holds the whole drawing, or it is a whole multiple of the
+## chip, so no surface draws a general on a fraction of a texel. The three
+## private fields (the victory lockup, the power banner, the roster tile) are
+## read off the captured frames instead.
+func test_every_named_bust_field_is_whole_texels() -> void:
+	for named: Array in [
+		["CommanderCard.PORTRAIT_H", Vector2(CommanderCard.PORTRAIT_H, CommanderCard.PORTRAIT_H)],
+		["UiTheme.HUD_PORTRAIT", Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT)],
+		["MissionSpeech.BUST", Vector2(MissionSpeech.BUST, MissionSpeech.BUST)],
+	]:
+		var label: String = named[0]
+		var field: Vector2 = named[1]
+		if CommanderVisuals.fits_whole_bust(field):
+			continue
+		var chip := CommanderVisuals.FACE_SIZE
+		var drawn := CommanderVisuals.art_scale(field, chip) * chip.y
+		assert_lte(drawn, int(field.y), "%s cannot hold the chip it falls back to" % label)
+
+
 ## Every general has a chip beside their bust, at the size the small surfaces
 ## draw it one texel to one pixel. A new file's `.import` is the trap this
 ## catches: Godot has never seen it, so a bake that skipped the reimport ships a

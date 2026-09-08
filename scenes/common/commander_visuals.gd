@@ -87,6 +87,17 @@ const EMBLEM_PX := 64
 ## read the same square. Hair breaking over the top edge is deliberate and is the
 ## portrait's own composition.
 const FACE_REGION := Rect2i(9, 15, 93, 93)
+## The smallest field that can show a whole bust, in screen pixels, now that the
+## art is drawn at whole texels or not at all: the drawing's full width, and
+## every row down to the jaw. Both halves are read off the art itself rather
+## than guessed, so a rebake on another grid moves this with it.
+##
+## The width is exact — a narrower field clips the ears, and a bust is centred,
+## so it clips them on both sides. The height is the face region's bottom edge
+## rather than the drawing's, because a short field hangs the art from its top
+## and what it loses is chest; a field under this loses the chin instead, which
+## is the line between a cropped portrait and a decapitated one.
+const WHOLE_BUST_FIELD := Vector2i(PORTRAIT_SIZE.x, FACE_REGION.position.y + FACE_REGION.size.y)
 ## How a general's own art is sampled, everywhere it is drawn — the busts and the
 ## face chips. Nearest, the way the board and the units are: this art is pixelled
 ## on its own grid now, and a linear filter over pixel art is a blur whatever the
@@ -243,6 +254,14 @@ static func art_scale(field: Vector2, art: Vector2i) -> int:
 		return MIN_ART_SCALE
 	var rungs := mini(int(field.x) / art.x, int(field.y) / art.y)
 	return maxi(MIN_ART_SCALE, rungs)
+
+
+## Whether a field of this shape can show a whole bust at one texel to one
+## pixel — the one statement of it, so the six surfaces that draw a general all
+## ask the art the same question. `false` is a chip field: `face_for`'s baked
+## drawing, which says who a general is in a square no bust survives.
+static func fits_whole_bust(field: Vector2) -> bool:
+	return int(field.x) >= WHOLE_BUST_FIELD.x and int(field.y) >= WHOLE_BUST_FIELD.y
 
 
 ## The portrait for a commander. Resolves by id; a commander whose art has not

@@ -39,9 +39,12 @@ const _EYEBROW_INK := Color(0.431, 0.463, 0.482)
 ## Labels compute a sane min height instead of reporting the pathological "one
 ## word per line" height that would balloon the whole banner.
 const _COPY_WIDTH := Vector2(300, 0)
-## The portrait window: taller than it is wide, so a general is shown whole (see
-## `bind`'s note on the framed window) rather than cropped to a card's strip.
-const _PORTRAIT_FIELD := Vector2(104, 108)
+## The portrait window: the drawing's own grid, so the one surface a power
+## activation stops the board for shows the general whole, one screen pixel to
+## the texel. Anything narrower clips the ears of a centred bust, and anything
+## shorter cuts the jaw — the banner is where a general is *seen*, so it gives
+## the art its own size rather than the other way round.
+const _PORTRAIT_FIELD := Vector2(CommanderVisuals.PORTRAIT_SIZE)
 
 var _built := false
 ## Activations announced so far, per team — the rotation index for the next

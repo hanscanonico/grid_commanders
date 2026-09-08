@@ -38,9 +38,14 @@ forms named in the root index are in `docs/design_record.md`.
   art, and `EMBLEM_FILTER` is the one exception (a 64px badge drawn at 22 has no whole rung).
   **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
   and `UiKit._place_bust` draws it at exactly that, centred across the field and hung from its top,
-  so a field too short clips the chest rather than showing half a texel. A surface too small for a
-  bust draws the **baked face chip** (`assets/portraits/faces`, 31x31) — `FACE_REGION` rasterised
-  on the chip's own coarser grid, never the bust sampled down — and the empty seat has one like
+  so a field too short clips the chest rather than showing half a texel. **What "too small for a
+  bust" means is measured off the art and stated once**, in `CommanderVisuals.WHOLE_BUST_FIELD` /
+  `fits_whole_bust`: the drawing's full width, and every row down to `FACE_REGION`'s bottom edge —
+  a narrower field clips both ears of a centred bust and a shorter one takes the chin.
+  `UiKit._place_bust` asks it against the field's **drawn** size rather than the size a caller
+  named, because the roster tile names none and learns its band a frame later. A surface too
+  small for a bust draws the **baked face chip** (`assets/portraits/faces`, 31x31) —
+  `FACE_REGION` rasterised on the chip's own coarser grid, never the bust sampled down — and the empty seat has one like
   everybody else. `FACE_REGION` moved once, for the new grid; from here the rule is what it always
   was, the geometry moves and the rectangle does not.
 - `faction-identity-plan.html` — armies wear their commander's faction, FI1–FI3 shipped. D1:

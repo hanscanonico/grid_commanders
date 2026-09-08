@@ -14,7 +14,11 @@ extends PanelContainer
 
 const _PAD_X := 16
 const _PAD_Y := 10
-const _PORTRAIT := 76
+## The winner's face, three screen pixels to the texel. A square this size
+## cannot hold the 110px-wide bust at whole texels, so what stands here is the
+## baked face chip — and the side is a whole multiple of it, or the chip would
+## sit in the field with slack on two edges.
+const _PORTRAIT := CommanderVisuals.FACE_SIZE.x * 3
 ## A floor every action clears, so the stack is one column rather than centred
 ## buttons of whatever width their words happen to want — and so Rematch does not
 ## change size when a playback renames it Restart. Wide enough for the longest of

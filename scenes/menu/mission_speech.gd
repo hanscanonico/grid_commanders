@@ -18,7 +18,7 @@ const WIDTH := 420
 ## The square a speaker's bust is fitted into, beside their words: the face
 ## chip's own size (`CommanderVisuals.FACE_SIZE`), so the chip is drawn one
 ## screen pixel per texel, which is the whole point of baking one.
-const BUST := 31
+const BUST := CommanderVisuals.FACE_SIZE.x
 const _BUST_GAP := 6
 
 
