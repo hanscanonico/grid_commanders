@@ -18,7 +18,7 @@ per faction, and the face-chip strip under them, which is the diagnostic
 image — a bust that cannot be told from its neighbour at chip size has not been
 drawn yet. `board` is the reviewer's own question, "is this one style": every
 bust beside a strip of the board's own art — 16px terrain cells and 64x96 unit
-cells as the game draws them — at one shared zoom.
+cells — with both sheets at one shared zoom and neither of them resampled.
 
 Run it from the package root, the way the suite is run, so `portraitgen` is on
 the path.
@@ -308,13 +308,17 @@ def _features_hair(out: Path) -> list[Path]:
 
 # The board's own art, and the scale the game draws it at: a terrain cell is
 # baked at 64 and laid on a 16px world grid, a unit cell at 64x96 on the same
-# grid. Both are `assets/tiles`, so this part reads the game's shipped sheets
-# rather than drawing a stand-in of them.
+# grid at `UnitSprite.SPRITE_SCALE` (16/64). Both are `assets/tiles`, so this
+# part reads the game's shipped sheets rather than drawing a stand-in of them.
 GAME = Path(__file__).resolve().parents[3]
 TILE = 16
 TERRAIN_PX = 64
 UNIT_W, UNIT_H = 64, 96
 BOARD_COLUMNS = 7
+# A tile at the page's own ZOOM. Both atlases are baked at four times the world
+# grid, so at ZOOM 4 this is 64 and every board texel lands on one page pixel —
+# which is the only scale at which a strip of the board is an honest look at it.
+BOARD_CELL = TILE * ZOOM
 
 
 def _cells(sheet: Image.Image, size: tuple[int, int], wanted: int) -> list[Image.Image]:
@@ -330,25 +334,37 @@ def _cells(sheet: Image.Image, size: tuple[int, int], wanted: int) -> list[Image
 
 
 def _board_strip() -> Image.Image:
-    """A run of the board as the game lays it out: terrain cells on the world
-    grid with a rank of units standing on them, all at the game's own scale."""
+    """A run of the board as the game lays it out, at `BOARD_CELL` to a tile.
+
+    Nothing is resampled and nothing is blended: the game samples both atlases
+    `TEXTURE_FILTER_NEAREST`, so a box-filtered 64x96 unit cell squeezed into
+    16x24 would show a reviewer a softness the screen never has. At ZOOM 4 the
+    cells go down at their baked size, one atlas texel to one page pixel.
+    """
     terrain = Image.open(GAME / "assets/tiles/terrain_atlas.png").convert("RGBA")
     units = Image.open(GAME / "assets/tiles/units_atlas.png").convert("RGBA")
-    unit_h = UNIT_H * TILE // UNIT_W
-    strip = Image.new("RGBA", (BOARD_COLUMNS * TILE, TILE * 2 + unit_h), (0, 0, 0, 0))
+    unit_h = UNIT_H * BOARD_CELL // UNIT_W
+    strip = Image.new(
+        "RGBA", (BOARD_COLUMNS * BOARD_CELL, BOARD_CELL * 2 + unit_h), (0, 0, 0, 0)
+    )
     for index, cell in enumerate(
         _cells(terrain, (TERRAIN_PX, TERRAIN_PX), BOARD_COLUMNS * 2)
     ):
         spot = (
-            index % BOARD_COLUMNS * TILE,
-            unit_h - TILE + index // BOARD_COLUMNS * TILE,
+            index % BOARD_COLUMNS * BOARD_CELL,
+            unit_h - BOARD_CELL + index // BOARD_COLUMNS * BOARD_CELL,
         )
-        strip.alpha_composite(cell.resize((TILE, TILE), Image.Resampling.BOX), spot)
+        strip.alpha_composite(_at(cell, (BOARD_CELL, BOARD_CELL)), spot)
     for index, cell in enumerate(_cells(units, (UNIT_W, UNIT_H), BOARD_COLUMNS)):
-        strip.alpha_composite(
-            cell.resize((TILE, unit_h), Image.Resampling.BOX), (index * TILE, 0)
-        )
+        strip.alpha_composite(_at(cell, (BOARD_CELL, unit_h)), (index * BOARD_CELL, 0))
     return strip
+
+
+def _at(cell: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """One atlas cell at `size`, the way the game would sample it there."""
+    if cell.size == size:
+        return cell
+    return cell.resize(size, Image.Resampling.NEAREST)
 
 
 def _board(out: Path) -> list[Path]:
@@ -360,26 +376,28 @@ def _board(out: Path) -> list[Path]:
     width, height = BUST_SIZE
     columns = 8
     rows = -(-len(busts) // columns)
-    strip = _board_strip()
-    page = Image.new(
-        "RGBA",
-        (width * columns, height * rows + strip.height + TILE),
-        (35, 39, 43, 255),
-    )
+    page = Image.new("RGBA", (width * columns, height * rows), (35, 39, 43, 255))
     for index, drawn in enumerate(busts):
         page.alpha_composite(
             drawn, (index % columns * width, index // columns * height)
         )
-    for column in range(0, page.width, strip.width):
-        page.alpha_composite(strip, (column, height * rows + TILE // 2))
-    return [
-        _write(
-            out / "board_and_busts.png",
-            page.resize(
-                (page.width * ZOOM, page.height * ZOOM), Image.Resampling.NEAREST
-            ),
-        )
-    ]
+    # The busts are blown up nearest to the strip's scale rather than the strip
+    # being squeezed down to theirs: both sheets end up at ZOOM, and neither of
+    # them has been filtered on the way.
+    zoomed = page.resize(
+        (page.width * ZOOM, page.height * ZOOM), Image.Resampling.NEAREST
+    )
+    strip = _board_strip()
+    gap = BOARD_CELL // 2
+    sheet = Image.new(
+        "RGBA",
+        (zoomed.width, zoomed.height + gap * 2 + strip.height),
+        (35, 39, 43, 255),
+    )
+    sheet.alpha_composite(zoomed, (0, 0))
+    for column in range(0, sheet.width, strip.width):
+        sheet.alpha_composite(strip, (column, zoomed.height + gap))
+    return [_write(out / "board_and_busts.png", sheet)]
 
 
 def _write(path: Path, image: Image.Image) -> Path:
