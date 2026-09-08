@@ -72,7 +72,8 @@ glyphs rasterise on the same pixel grid the tile and unit art lives on.
 
 The portraits under `portraits/` are project-original and generated, not
 vendored: `generators/portraits` paints each general — pose, backdrop, prop,
-palette — and bakes the 220x268 raster the game loads. They are the "Heroic
+palette — and bakes the 110x134 pixel-art raster the game loads, plus the 31x31
+face chip cut from it. They are the "Heroic
 Commander Portraits" design handoff, drawn to its spec rather than exported from
 it, so no third-party pixels enter the tree. The only colours that are not the
 handoff's own are the faction hues, read from `CommanderVisuals`. Rebuild with
