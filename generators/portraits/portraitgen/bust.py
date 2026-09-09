@@ -382,10 +382,18 @@ def window(spec: Face | EmptySeat, *, divisor: int = BUST_DIVISOR) -> Image.Imag
     return quantise(sheet.resolve(), palette_of(spec), shadow=CAST_TONE)
 
 
+def sheet_rows() -> list[tuple[str, Face | EmptySeat]]:
+    """Every seat the sheet carries, in roster order and the empty one last.
+
+    The one statement of that order: the bake walks it and so do the suites
+    that measure the bake (`tests/painted.py`), so a general added to the
+    roster cannot reach one list and miss the other.
+    """
+    return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
+
+
 def _sheet(art: Callable[[Face | EmptySeat], Image.Image]) -> list[Painted]:
-    """Every seat the sheet carries, in roster order and the empty one last."""
-    rows = [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
-    return [Painted(key, art(spec)) for key, spec in rows]
+    return [Painted(key, art(spec)) for key, spec in sheet_rows()]
 
 
 def busts() -> list[Painted]:

@@ -59,7 +59,7 @@ def _tally(cell: Canvas) -> list[tuple[int, tuple[int, int, int, int]]]:
     return cell.image.getcolors(1 << 24)
 
 
-def _painted(cell: Canvas) -> int:
+def _opaque_count(cell: Canvas) -> int:
     return sum(count for count, pixel in _tally(cell) if pixel[3] > 0)
 
 
@@ -102,35 +102,35 @@ class EveryKindDraws(unittest.TestCase):
             with self.subTest(eyes=kind):
                 cell = _cell()
                 features.eyes(cell, SKULL, kind, scale=features.EYE_DEFAULT)
-                self.assertGreater(_painted(cell), 0)
+                self.assertGreater(_opaque_count(cell), 0)
 
     def test_every_brow_kind_draws(self):
         for kind in sorted(features.BROW_KINDS):
             with self.subTest(brow=kind):
                 cell = _cell()
                 features.brow(cell, SKULL, kind, HAIR)
-                self.assertGreater(_painted(cell), 0)
+                self.assertGreater(_opaque_count(cell), 0)
 
     def test_every_nose_kind_draws(self):
         for kind in sorted(features.NOSE_KINDS):
             with self.subTest(nose=kind):
                 cell = _cell()
                 features.nose(cell, SKULL, kind, SKIN)
-                self.assertGreater(_painted(cell), 0)
+                self.assertGreater(_opaque_count(cell), 0)
 
     def test_every_mouth_kind_draws(self):
         for kind in sorted(features.MOUTH_KINDS):
             with self.subTest(mouth=kind):
                 cell = _cell()
                 features.mouth(cell, SKULL, kind)
-                self.assertGreater(_painted(cell), 0)
+                self.assertGreater(_opaque_count(cell), 0)
 
     def test_every_facial_hair_but_none_draws(self):
         for kind in sorted(features.FACIAL_KINDS):
             with self.subTest(facial=kind):
                 cell = _cell()
                 features.facial_hair(cell, SKULL, kind, HAIR)
-                drawn = _painted(cell)
+                drawn = _opaque_count(cell)
                 if kind == "none":
                     self.assertEqual(drawn, 0)
                 else:
@@ -141,7 +141,7 @@ class EveryKindDraws(unittest.TestCase):
             with self.subTest(accessory=kind):
                 cell = _cell()
                 accessories.accessory(cell, SKULL, kind)
-                drawn = _painted(cell)
+                drawn = _opaque_count(cell)
                 if kind == "none":
                     self.assertEqual(drawn, 0)
                 else:
@@ -151,8 +151,8 @@ class EveryKindDraws(unittest.TestCase):
         ear, freckled = _cell(), _cell()
         features.earring(ear, SKULL)
         features.freckles(freckled, SKULL, SKIN)
-        self.assertGreater(_painted(ear), 0)
-        self.assertGreater(_painted(freckled), 0)
+        self.assertGreater(_opaque_count(ear), 0)
+        self.assertGreater(_opaque_count(freckled), 0)
 
     def test_headwear_hands_back_what_it_added_to_the_silhouette(self):
         cell = _cell()
@@ -244,7 +244,7 @@ class TheMouthCannotOutrankTheEyes(unittest.TestCase):
     def _both_eyes(self) -> int:
         cell = _cell()
         features.eyes(cell, SKULL, "m", scale=features.EYE_DEFAULT)
-        return _painted(cell)
+        return _opaque_count(cell)
 
     def test_every_mouth_is_darker_in_less_area_than_the_eyes(self):
         eyes = self._both_eyes()
@@ -422,7 +422,7 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
                 both, one = _cell(), _cell()
                 paint(both, None)
                 paint(one, covered)
-                self.assertLess(_painted(one), _painted(both))
+                self.assertLess(_opaque_count(one), _opaque_count(both))
 
     def test_no_tone_lighter_than_the_patch_is_drawn_inside_it(self):
         covered = accessories.covered_eye("eyepatch")
@@ -466,7 +466,7 @@ class TheEyeDialIsTheOneNumberThatSizesAnEye(unittest.TestCase):
         return cell
 
     def test_a_smaller_dial_draws_a_smaller_eye(self):
-        self.assertLess(_painted(self._at(0.82)), _painted(self._at(1.06)))
+        self.assertLess(_opaque_count(self._at(0.82)), _opaque_count(self._at(1.06)))
 
     def _white(self, scale: float) -> int:
         return _area_of(self._at(scale), features.SCLERA)

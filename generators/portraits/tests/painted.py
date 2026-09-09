@@ -23,13 +23,19 @@ Spec = roster.Face | roster.EmptySeat
 
 
 def specs() -> list[tuple[str, Spec]]:
-    """The whole sheet in the order the suites walk it: the roster by key, then
-    the empty seat."""
-    return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
+    """The whole sheet in the order the suites walk it — the bake's own order,
+    asked of the bake rather than rebuilt here."""
+    return bust.sheet_rows()
 
 
 @lru_cache(maxsize=None)
 def painted(key: str, *, cast: bool = True) -> Image.Image:
-    """One general's bust, by roster key or `roster.NEUTRAL_ID`."""
+    """One general's bust, by roster key or `roster.NEUTRAL_ID`.
+
+    `cast=False` is that same bust with the hard offset shadow left off, which
+    is how the shadow is measured (`test_metrics.TheShadowIsDrawn`): the
+    difference between the two is the shadow and nothing else. It is cached
+    beside the shadowed one rather than repainted per assertion.
+    """
     spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
     return bust.paint(spec, cast=cast)
