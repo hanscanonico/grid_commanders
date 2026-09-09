@@ -188,11 +188,12 @@ untouched model composes in the taller cell byte for byte
 footprint, so what a model draws above the tile hangs over the row behind it.
 
 The **armour family is the first to spend it** — tank, md tank, artillery and
-rockets, all grown upward with their footprints, contact shadows and waterline
-logic untouched. What the growth is, is **mass**: deeper running gear, a
-deeper hull and a turret raised on a full armour ring, plus the two guns that
-elevate (the howitzer one step longer, the rocket rack pitched at the
-howitzer's own two z per tile) which are what actually break the tile's line.
+rockets, all grown upward with their footprints and waterline logic untouched
+(and with the contact shadow they still carried then). What the growth is, is
+**mass**: deeper running gear, a deeper hull and a turret raised on a full
+armour ring, plus the two guns that elevate (the howitzer one step longer, the
+rocket rack pitched at the howitzer's own two z per tile) which are what
+actually break the tile's line.
 What it is **not** is fine detail. This projection puts one voxel of height at
 2px, so a turret tall enough to clear a whole tile is a silo rather than a
 tank — that was rendered on the md tank and rejected — and a mast thin enough

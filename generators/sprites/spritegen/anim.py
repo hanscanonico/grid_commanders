@@ -13,10 +13,10 @@ sizes come from `atlas.CELL_W/CELL_H`, the columns from `units.ATLAS_ORDER`,
 the rows from `palette.FACTIONS`, the phase counts from the terrain phase
 tables, and `ground_px` is the composer's own arithmetic — `GROUND_BOTTOM`
 less the one sun's `SHADOW_OFFSET` — rather than a restated number, a manifest
-that retypes one being just a third place to keep it in step. The cadences (`AMBIENT_MS`, `SEA_MS`,
-`MOVE_MS`) are the values with no Python table behind them, because a beat was
-only ever a game constant; the manifest is now their source, and the comment
-over each carries the reasoning.
+that retypes one being just a third place to keep it in step. The cadences
+(`AMBIENT_MS`, `SEA_MS`, `MOVE_MS`) are the values with no Python table behind
+them, because a beat was only ever a game constant; the manifest is now their
+source, and the comment over each carries the reasoning.
 
 The schema grows by ADDING, never by rewriting: `move` is the one clip carrying
 `facing` and `flip_x_for`, `fallback` is the shared key of the three clips a

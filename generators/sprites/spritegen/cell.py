@@ -77,8 +77,10 @@ def compose_cell(
     the same unit moving rather than a second composition. `origin` places the
     sprite's top-left corner outright, so a caller can pin two crops by their
     model origin (`sprite_origin`) instead of centring each one's own box.
-    `footprint_w` is the WIDTH an ellipse's radius is taken from — the unit's
-    footprint, which a raised rotor or a swung barrel does not change.
+    `footprint_w` is the WIDTH an ellipse's radius is taken from. `atlas`
+    hands it pose A's whole crop, for the aircraft that still casts and for
+    the displacement patch alike, so a swept rotor or a swung barrel cannot
+    pump the ellipse from one pose to the next.
     `ground` is the SURFACE the unit is over, which is
     not the row it rides at once it bobs: the displacement patch, the running
     wake and the waterline foam all stay here, so a ship that rises a board

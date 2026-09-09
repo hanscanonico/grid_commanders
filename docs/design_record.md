@@ -1518,8 +1518,9 @@ and which is given one back here. Reproduced otherwise verbatim.
   parked sprite faces forward stands on art consistency instead. **The rule itself lives in
   `UnitSprite`'s `moving` setter**, which clears `flip_h` on the way out of the clip and carries the
   reasoning; `facing_for`, the pure half, is what `test_move_frames.gd` still pins, the setter being
-  a Node property with no seam a Node-free suite could read. An aircraft still casts, and its move cells are still centred, so the mirror rule has lost
-  no subject it ever had.
+  a Node property with no seam a Node-free suite could read. An aircraft still
+  casts, and its move cells are still centred, so the mirror rule has lost no
+  subject it ever had.
   **An unauthored unit needs no fallback code**: the generator bakes each unauthored
   column's ambient cell into every move sheet, so the clip is valid for the whole roster and nothing
   here asks which families are authored. The clip is FOUR sheets since S6 (2026-09-02) and the
