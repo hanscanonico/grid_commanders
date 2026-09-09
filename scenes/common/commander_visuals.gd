@@ -113,6 +113,13 @@ const ART_FILTER := CanvasItem.TEXTURE_FILTER_NEAREST
 ## under one: half a pixel of a face is worse than a face that overflows the
 ## field it is centred in, which is what the field's own clipping is for.
 const MIN_ART_SCALE := 1
+## The rung a surface that frames a face chip draws it at, and the field that
+## comes out — stated here so the two surfaces that do (the card's chip band and
+## the victory lockup) cannot drift apart, and pinned against both by
+## `test_commander_portraits.gd`. A chip at 1x is a HUD glyph; where the eye is
+## meant to rest on the general it is zoomed, and only a whole rung will do.
+const CHIP_ZOOM := 3
+const CHIP_FIELD := FACE_SIZE * CHIP_ZOOM
 ## The emblems are the one piece of commander art not on that ladder, and they
 ## keep the mipmapped linear filter. They are a 64px badge drawn at 22 in the one
 ## corner that shows them — a ratio with no whole rung under it — and unlike a

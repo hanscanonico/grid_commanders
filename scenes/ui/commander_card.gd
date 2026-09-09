@@ -43,25 +43,14 @@ const _MICRO_INK := Color(0.408, 0.443, 0.471)
 ## under it. Named here like the two full-screen pages name their own titles.
 const _NAME_SIZE := 12
 ## The two portrait bands a card can be built with, public because a surface
-## that frames one checks its own layout against the band it asked for — a card
-## showing less than its face is showing nothing.
-##
-## `WHOLE_BUST_BAND` is the drawing's own height, and the default: every card is
-## at least `MIN_WIDTH` across, so the field holds `CommanderVisuals`'
-## `WHOLE_BUST_FIELD` and `UiKit._place_bust` draws the whole bust at one texel
-## to one pixel, centred and uncropped. This band is the card's face and it
-## shows the general as drawn.
-##
-## `CHIP_BAND` is for a surface with no room for that: the 31px face chip at a
-## whole-number rung, plus one texel of air — the band's own padding on the same
-## grid as the art in it, rather than a spare pixel or two. `UiKit._place_bust`
-## centres what it draws, so that texel lands as two pixels over the chip and one
-## under it. The commander info sheet is the one caller that asks for it, and
-## states there what its own page leaves a card.
+## that frames one checks its own layout against the band it asked for.
+## `WHOLE_BUST_BAND` is the drawing's own height and the default; `CHIP_BAND` is
+## `CommanderVisuals`' chip field plus one texel of air, which `UiKit._place_bust`
+## centres as two pixels over the chip and one under it. The commander info sheet
+## is the one caller that asks for the chip, and states there why.
 const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
-const _CHIP_ZOOM := 3
 const _BAND_AIR_TEXELS := 1
-const CHIP_BAND := (CommanderVisuals.FACE_SIZE.y + _BAND_AIR_TEXELS) * _CHIP_ZOOM
+const CHIP_BAND := CommanderVisuals.CHIP_FIELD.y + _BAND_AIR_TEXELS * CommanderVisuals.CHIP_ZOOM
 
 ## Which of the two this card shows. Set it before the card enters the tree; a
 ## card asked for nothing draws the general whole.

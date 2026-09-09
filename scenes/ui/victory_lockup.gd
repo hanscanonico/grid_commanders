@@ -14,11 +14,11 @@ extends PanelContainer
 
 const _PAD_X := 16
 const _PAD_Y := 10
-## The winner's face, three screen pixels to the texel. A square this size
-## cannot hold the 110px-wide bust at whole texels, so what stands here is the
-## baked face chip — and the side is a whole multiple of it, or the chip would
-## sit in the field with slack on two edges.
-const _PORTRAIT := CommanderVisuals.FACE_SIZE.x * 3
+## The winner's face. A square this size cannot hold the 110px-wide bust at
+## whole texels, so what stands here is the baked face chip at the rung
+## `CommanderVisuals` states for one. Public because the portrait suite measures
+## it against that authority.
+const PORTRAIT := CommanderVisuals.CHIP_FIELD.x
 ## A floor every action clears, so the stack is one column rather than centred
 ## buttons of whatever width their words happen to want — and so Rematch does not
 ## change size when a playback renames it Restart. Wide enough for the longest of
@@ -69,7 +69,7 @@ func _build() -> void:
 
 	# On no field: the winner stands on the lockup's own paper, under the faction
 	# band that already names them.
-	_portrait = UiKit.commander_bust(null, Vector2(_PORTRAIT, _PORTRAIT), UiKit.NO_FIELD)
+	_portrait = UiKit.commander_bust(null, Vector2(PORTRAIT, PORTRAIT), UiKit.NO_FIELD)
 	_portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	rows.add_child(_portrait)
 

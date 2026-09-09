@@ -117,14 +117,15 @@ func test_only_a_field_that_holds_the_art_shows_a_whole_bust() -> void:
 
 ## Every field the shell states out loud is one of the two shapes and nothing in
 ## between: either it holds the whole drawing, or it is a whole multiple of the
-## chip, so no surface draws a general on a fraction of a texel. The three
-## private fields (the victory lockup, the power banner, the roster tile) are
-## read off the captured frames instead.
+## chip, so no surface draws a general on a fraction of a texel. The two private
+## fields (the power banner and the roster tile) are read off the captured
+## frames instead.
 func test_every_named_bust_field_is_whole_texels() -> void:
 	var fields := {
 		"CommanderCard.WHOLE_BUST_BAND":
 		Vector2(CommanderVisuals.WHOLE_BUST_FIELD.x, CommanderCard.WHOLE_BUST_BAND),
 		"CommanderCard.CHIP_BAND": Vector2(CommanderCard.CHIP_BAND, CommanderCard.CHIP_BAND),
+		"VictoryLockup.PORTRAIT": Vector2(VictoryLockup.PORTRAIT, VictoryLockup.PORTRAIT),
 		"UiTheme.HUD_PORTRAIT": Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT),
 		"MissionSpeech.BUST": Vector2(MissionSpeech.BUST, MissionSpeech.BUST),
 	}
@@ -135,6 +136,27 @@ func test_every_named_bust_field_is_whole_texels() -> void:
 		var chip := CommanderVisuals.FACE_SIZE
 		var drawn := CommanderVisuals.art_scale(field, chip) * chip.y
 		assert_lte(drawn, int(field.y), "%s cannot hold the chip it falls back to" % label)
+
+
+## The chip rung has one owner. Both surfaces that frame a chip take their square
+## from `CHIP_FIELD` rather than writing the multiple down again, and the HUD
+## chip is the art's own size — a drifted copy of either is invisible until the
+## chip sits in its field with slack on two edges.
+func test_the_chip_surfaces_take_their_field_from_the_authority() -> void:
+	var chip := CommanderVisuals.CHIP_FIELD
+	assert_eq(chip, CommanderVisuals.FACE_SIZE * CommanderVisuals.CHIP_ZOOM)
+	assert_eq(
+		CommanderVisuals.art_scale(Vector2(chip), CommanderVisuals.FACE_SIZE),
+		CommanderVisuals.CHIP_ZOOM,
+		"the chip field is exactly one rung of the ladder"
+	)
+	assert_eq(VictoryLockup.PORTRAIT, chip.x, "the lockup is the chip field")
+	assert_eq(
+		CommanderCard.CHIP_BAND - chip.y,
+		CommanderVisuals.CHIP_ZOOM,
+		"the card's band is the chip field plus one texel of air"
+	)
+	assert_eq(UiTheme.HUD_PORTRAIT, CommanderVisuals.FACE_SIZE.x, "the HUD draws a chip at 1x")
 
 
 ## Every general has a chip beside their bust, at the size the small surfaces
