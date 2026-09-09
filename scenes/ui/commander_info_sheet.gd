@@ -250,9 +250,9 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	# The one surface that asks for the short band, and the one place the
 	# measurement behind it is stated: four headers, four economy strips, the
 	# charge line and the Close button leave a card 102px of this 360px screen
-	# (measured on `commander_info`, 2026-09-09), and a whole-bust band would have
-	# its chin cut off by the frame. The select page, which frames the same card with a page to itself,
-	# shows the general whole.
+	# (measured on `commander_info`, 2026-09-09), and a whole-bust band would
+	# have its chin cut off by the frame. The select page, which frames the same
+	# card with a page to itself, shows the general whole.
 	card.portrait_h = CommanderCard.CHIP_BAND
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
