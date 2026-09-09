@@ -72,7 +72,7 @@ var _fire_button: Button
 ## match, kept on the bar that is always up. Greyed rather than hidden off the
 ## player's turn, so the terrain chip beside it never slides.
 var _end_turn_button: Button
-var _portrait_field: Panel
+var _portrait_field: CommanderBust
 var _co_name: Label
 var _power_name: Label
 var _meter_fill: Panel

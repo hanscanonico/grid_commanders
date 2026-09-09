@@ -58,12 +58,13 @@ forms named in the root index are in `docs/design_record.md`.
   moving; `generators/portraits/tests/test_raster.py` measures all six so a change to the ladder
   or a divisor is caught.
   **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
-  and `UiKit._place_bust` draws it at exactly that, centred across the field and hung from its top,
-  so a field too short clips the chest rather than showing half a texel. **What "too small for a
+  and `CommanderBust` (`scenes/ui/commander_bust.gd`) draws it at exactly that, centred across the
+  field and hung from its top, so a field too short clips the chest rather than showing half a
+  texel. **What "too small for a
   bust" means is measured off the art and stated once**, in `CommanderVisuals.WHOLE_BUST_FIELD` /
   `fits_whole_bust`: the drawing's full width, and every row down to `FACE_REGION`'s bottom edge —
   a narrower field clips both ears of a centred bust and a shorter one takes the chin.
-  `UiKit._place_bust` asks it against **the larger of the field's drawn size and its minimum**
+  `CommanderBust` asks it against **the larger of the field's drawn size and its minimum**
   rather than the size a caller named, because the roster tile names none and learns its band a
   frame later. A surface too small for a bust draws the **baked face chip**
   (`assets/portraits/faces`, 31x31) — the same drawing repainted on the chip's own coarser grid,

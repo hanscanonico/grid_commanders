@@ -45,7 +45,7 @@ const _NAME_SIZE := 12
 ## The two portrait bands a card can be built with, public because a surface
 ## that frames one checks its own layout against the band it asked for.
 ## `WHOLE_BUST_BAND` is the drawing's own height and the default; `CHIP_BAND` is
-## `CommanderVisuals`' chip field plus one texel of air, which `UiKit._place_bust`
+## `CommanderVisuals`' chip field plus one texel of air, which `CommanderBust`
 ## centres as two pixels over the chip and one under it. The commander info sheet
 ## is the one caller that asks for the chip, and states there why.
 const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
@@ -66,7 +66,7 @@ const _EMBLEM_INSET := 6
 var _commander: CommanderType
 var _built := false
 
-var _field: Panel
+var _field: CommanderBust
 var _emblem: TextureRect
 var _name_band: PanelContainer
 var _name_label: Label
@@ -116,7 +116,7 @@ func _build() -> void:
 	add_child(rows)
 
 	# --- portrait stage: faction field, bust, emblem pin ---
-	# The kit's bust is a plain Panel, not a PanelContainer: the latter force-
+	# The kit's bust extends Panel, not PanelContainer: the latter force-
 	# stretches every child to fill it, which would blow the little emblem pinned
 	# into the corner up over the whole portrait. The band names no width, so it
 	# takes the card's, and the kit reads the height against the art: the whole

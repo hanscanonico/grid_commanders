@@ -51,7 +51,7 @@ var _built := false
 ## quote. Scene-lifetime state: a loaded save restarts the rotation, which is
 ## cosmetic by construction.
 var _spoken: Dictionary[int, int] = {}
-var _field: Panel
+var _field: CommanderBust
 var _eyebrow: Label
 var _quote: Label
 var _power_name: Label

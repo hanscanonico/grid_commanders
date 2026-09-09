@@ -80,7 +80,7 @@ func test_the_scale_ladder_is_whole_numbers_that_fit() -> void:
 
 ## A field smaller than the art still draws it at 1:1 and clips. Half a pixel of
 ## a face is worse than a chest cut off, which is what the field's clipping and
-## `UiKit._place_bust`'s top-hung placement are for.
+## `CommanderBust`'s top-hung placement are for.
 func test_a_field_too_small_still_draws_whole_texels() -> void:
 	var bust := CommanderVisuals.PORTRAIT_SIZE
 	assert_eq(CommanderVisuals.art_scale(Vector2(96, 96), bust), 1)
@@ -101,7 +101,7 @@ func test_the_whole_bust_field_is_the_art_s_own_size() -> void:
 
 ## Which fields may show one, exactly: the art's own shape and anything over it,
 ## and neither of the two ways to fall one pixel under. A field that fails this
-## shows the baked chip instead (`UiKit._place_bust`), which is the whole reason
+## shows the baked chip instead (`CommanderBust`), which is the whole reason
 ## the chip is baked.
 func test_only_a_field_that_holds_the_art_shows_a_whole_bust() -> void:
 	var field := Vector2(CommanderVisuals.WHOLE_BUST_FIELD)

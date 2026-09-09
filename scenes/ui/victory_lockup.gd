@@ -36,7 +36,7 @@ var menu_button: Button
 
 var _band: PanelContainer
 var _band_label: Label
-var _portrait: Panel
+var _portrait: CommanderBust
 var _title: Label
 var _sub: Label
 

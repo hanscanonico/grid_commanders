@@ -30,13 +30,6 @@ extends RefCounted
 ## on the lockup's own paper rather than on a faction colour.
 const NO_FIELD := Color(0, 0, 0, 0)
 
-const _BUST_ART := &"Bust"
-## Which general a built field is showing, kept on the field itself: which of the
-## two drawings it gets is a function of the size a container hands over, which is
-## known a frame after the bust is built, so the texture is chosen at placement
-## time.
-const _BUST_COMMANDER := &"bust_commander"
-
 ## A text field's height: one line of Silkscreen with the border either side of it.
 const FIELD_HEIGHT := 18
 
@@ -607,41 +600,19 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 	return chip
 
 
-## A general's art on a faction-tinted field, clipped to `size` — the one bust
-## every surface that shows a commander is built from. Six of them kept their own
-## TextureRect recipe and disagreed about the framing, which is the drift this kit
-## exists to prevent (menu-revamp D1).
-##
-## The tint stays the caller's, because the three in the tree are deliberate: the
-## speech card's darkened field is a reading column, the HUD chip's `color_light`
-## is chrome, and the victory lockup stands its bust on the panel's own paper
-## (`NO_FIELD`). Which of the two drawings a field shows is not the caller's — it
-## is a function of the field's shape, decided by `_place_bust` and nowhere else.
-static func commander_bust(commander: CommanderType, size: Vector2, tint: Color) -> Panel:
-	var field := Panel.new()
-	field.custom_minimum_size = size
-	field.clip_contents = true
-	var art := TextureRect.new()
-	art.name = _BUST_ART
-	art.texture_filter = CommanderVisuals.ART_FILTER
-	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	art.stretch_mode = TextureRect.STRETCH_SCALE
-	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	field.add_child(art)
-	field.resized.connect(func() -> void: _place_bust(field))
-	bind_bust(field, commander, tint)
+## The one bust every surface that shows a commander is built from: a
+## `CommanderBust` of `size`, already bound. Which of the two drawings a field
+## shows is not the caller's — it is the field's own answer over its shape.
+static func commander_bust(commander: CommanderType, size: Vector2, tint: Color) -> CommanderBust:
+	var field := CommanderBust.new(size)
+	field.bind(commander, tint)
 	return field
 
 
 ## Points a built bust at another general, for the four surfaces that outlive the
-## match's commanders. Which of the two drawings that general is shown as stays
-## `_place_bust`'s, so a rebind and a resize reach the same answer.
-static func bind_bust(bust: Panel, commander: CommanderType, tint: Color) -> void:
-	bust.add_theme_stylebox_override("panel", UiTheme.flat(tint))
-	# A null erases the entry rather than storing one, so an unbound field carries
-	# no general at all and `_place_bust` reads its default.
-	bust.set_meta(_BUST_COMMANDER, commander)
-	_place_bust(bust)
+## match's commanders.
+static func bind_bust(bust: CommanderBust, commander: CommanderType, tint: Color) -> void:
+	bust.bind(commander, tint)
 
 
 ## Waits a frame for a floating card to be laid out, then answers whether it is
@@ -671,38 +642,6 @@ static func _send_action(action: StringName) -> void:
 		event.action = action
 		event.pressed = pressed
 		Input.parse_input_event(event)
-
-
-## The general's drawing — whichever of the two this field's shape calls for — at
-## a rung of `CommanderVisuals.art_scale`, centred, and hung from the top edge
-## once it is taller than the field.
-##
-## Which of the two is `CommanderVisuals.fits_whole_bust`, and nobody else asks:
-## the whole bust where the art fits at one texel to one pixel, the baked face
-## chip everywhere else.
-##
-## The shape is the field's own size, falling back to the size it was asked for
-## while it is still unplaced — a field that states no minimum is the roster
-## tile's, which learns its band from the row a frame later and re-places itself
-## then.
-static func _place_bust(field: Panel) -> void:
-	var art := field.get_node_or_null(NodePath(_BUST_ART)) as TextureRect
-	if art == null:
-		return
-	var shape := field.size.max(field.custom_minimum_size)
-	# The card and the HUD chip are both built before their general and bound
-	# later; until then the field draws the empty seat, which is what
-	# `portrait_for`/`face_for` answer for a null.
-	var commander := field.get_meta(_BUST_COMMANDER, null) as CommanderType
-	if CommanderVisuals.fits_whole_bust(shape):
-		art.texture = CommanderVisuals.portrait_for(commander)
-	else:
-		art.texture = CommanderVisuals.face_for(commander)
-	var drawn := Vector2i(art.texture.get_size())
-	art.size = Vector2(drawn * CommanderVisuals.art_scale(shape, drawn))
-	art.position = Vector2(
-		roundf((shape.x - art.size.x) * 0.5), maxf(0.0, roundf((shape.y - art.size.y) * 0.5))
-	)
 
 
 ## A micro-label carrying its group's explanation, added to `into` in place: shrunk
