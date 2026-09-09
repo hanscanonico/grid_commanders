@@ -263,9 +263,7 @@ def _faction(face: Face) -> Faction:
 def _general(grid: Canvas, face: Face) -> Canvas:
     """One general's figure, unposed: the five layers and which of them turn."""
     army = _faction(face)
-    cloth = _cloth(army)
-    skin = light.Ramp.of_material(head.SKIN_BASES[face.skin])
-    mane = hair.ramp_for(face.hair)
+    skin, mane, cloth = _ramps_for(face)
 
     behind_prop, front_prop = _prop_layers(grid, face, army, cloth)
     figure = grid.blank()
@@ -317,15 +315,28 @@ def _cloth(army: Faction) -> light.Ramp:
     return light.Ramp.of_faction(army.key)
 
 
+def _ramps_for(spec: Face | EmptySeat) -> tuple[light.Ramp, light.Ramp, light.Ramp]:
+    """The skin, hair and cloth rungs one seat is painted in.
+
+    The single derivation: `palette_of` reserves the sixteen tones off these and
+    `_general` draws in them, and `quantise` snaps to the nearest tone — so two
+    derivations that drifted would shift a bust's colours rather than fail. An
+    empty seat has neither skin nor hair, and takes the slate coat for both.
+    """
+    cloth = _cloth(_army_of(spec))
+    if not isinstance(spec, Face):
+        return cloth, cloth, cloth
+    return (
+        light.Ramp.of_material(head.SKIN_BASES[spec.skin]),
+        hair.ramp_for(spec.hair),
+        cloth,
+    )
+
+
 def palette_of(spec: Face | EmptySeat) -> tuple[tuple[int, int, int], ...]:
     """The sixteen tones this bust is painted in, before a pixel is drawn."""
-    army = _army_of(spec)
-    if isinstance(spec, Face):
-        skin = light.Ramp.of_material(head.SKIN_BASES[spec.skin]).six
-        mane = hair.ramp_for(spec.hair).six
-    else:
-        skin = mane = _cloth(army).six
-    return bust_palette(army.key, skin, mane)
+    skin, mane, _ = _ramps_for(spec)
+    return bust_palette(_army_of(spec).key, skin.six, mane.six)
 
 
 def paint(
@@ -386,8 +397,8 @@ def sheet_rows() -> list[tuple[str, Face | EmptySeat]]:
     """Every seat the sheet carries, in roster order and the empty one last.
 
     The one statement of that order: the bake walks it and so do the suites
-    that measure the bake (`tests/painted.py`), so a general added to the
-    roster cannot reach one list and miss the other.
+    that measure the bake, so a general added to the roster cannot reach one
+    list and miss the other.
     """
     return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
 
