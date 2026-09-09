@@ -60,6 +60,10 @@ const MARKS := {
 		".#...#..",
 		"........",
 	],
+	## The filled star hollowed out, keeping its silhouette to the pixel — same
+	## arms, same chin, same feet. The chin stays solid because it is what closes
+	## the hollow: opened at the bottom, the hollow runs into the gap between the
+	## feet and the mark reads as two blobs rather than as a star.
 	"☆":
 	[
 		"........",
@@ -67,8 +71,8 @@ const MARKS := {
 		"..#.#...",
 		"###.###.",
 		".#...#..",
-		"..#.#...",
-		".##.##..",
+		"..###...",
+		".#...#..",
 		"........",
 	],
 	"→":
