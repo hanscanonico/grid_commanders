@@ -46,10 +46,7 @@ func test_the_baked_sheet_and_the_roster_are_the_same_set() -> void:
 func test_every_faction_has_an_emblem_at_the_pinned_size() -> void:
 	var square := Vector2(CommanderVisuals.EMBLEM_PX, CommanderVisuals.EMBLEM_PX)
 	for theme in CommanderVisuals.faction_themes():
-		var path := "%s/%s.png" % [CommanderVisuals.FACTION_DIR, theme.key]
-		_assert_baked(path, square)
-		var emblem: Texture2D = load(path)
-		assert_true(emblem.get_image().has_mipmaps(), "%s imported without mipmaps" % path)
+		_assert_baked("%s/%s.png" % [CommanderVisuals.FACTION_DIR, theme.key], square, true)
 
 
 ## Every fallback's last stop: a commander whose art is missing borrows this one,
@@ -115,11 +112,13 @@ func test_only_a_field_that_holds_the_art_shows_a_whole_bust() -> void:
 	assert_false(CommanderVisuals.fits_whole_bust(Vector2.ZERO), "an unplaced field")
 
 
-## Every field the shell states out loud is one of the two shapes and nothing in
-## between: either it holds the whole drawing, or it is a whole multiple of the
-## chip, so no surface draws a general on a fraction of a texel. The two private
-## fields (the power banner and the roster tile) are read off the captured
-## frames instead.
+## Every field the shell states out loud draws its art whole: the drawing it
+## falls to — the bust where the field holds one, the baked chip otherwise — at
+## a whole rung of the ladder, and that rung fits inside the field on both axes.
+## A field is allowed slack (`CommanderCard.CHIP_BAND` is the chip's 93 plus
+## three pixels of air), never a fraction of a texel and never a rung that
+## overflows. The two private fields (the power banner and the roster tile) are
+## read off the captured frames instead.
 func test_every_named_bust_field_is_whole_texels() -> void:
 	var fields := {
 		"CommanderCard.WHOLE_BUST_BAND":
@@ -131,11 +130,16 @@ func test_every_named_bust_field_is_whole_texels() -> void:
 	}
 	for label: String in fields:
 		var field: Vector2 = fields[label]
-		if CommanderVisuals.fits_whole_bust(field):
-			continue
-		var chip := CommanderVisuals.FACE_SIZE
-		var drawn := CommanderVisuals.art_scale(field, chip) * chip.y
-		assert_lte(drawn, int(field.y), "%s cannot hold the chip it falls back to" % label)
+		var drawing := (
+			CommanderVisuals.PORTRAIT_SIZE
+			if CommanderVisuals.fits_whole_bust(field)
+			else CommanderVisuals.FACE_SIZE
+		)
+		var rung := CommanderVisuals.art_scale(field, drawing)
+		assert_gte(rung, 1, "%s draws its art at no whole rung" % label)
+		var drawn := Vector2(drawing) * rung
+		assert_lte(drawn.x, field.x, "%s is narrower than the art it draws" % label)
+		assert_lte(drawn.y, field.y, "%s is shorter than the art it draws" % label)
 
 
 ## The chip rung has one owner. Both surfaces that frame a chip take their square
@@ -185,13 +189,22 @@ func test_the_chip_is_the_face_region_on_its_own_grid() -> void:
 ## Both doors, because they answer differently: ResourceLoader reads the import
 ## cache, so it alone would still say yes over a source file that has been
 ## deleted, and FileAccess alone would say yes over one that never imported.
-func _assert_baked(path: String, size: Vector2) -> void:
+##
+## The mip chain is read here rather than beside one caller because it is the
+## import setting a rebake silently resets: a bust or a chip that came back with
+## one is sampled between the rungs of the scale ladder and goes soft, and only
+## the emblems are meant to have it.
+func _assert_baked(path: String, size: Vector2, mipmapped: bool = false) -> void:
 	assert_true(FileAccess.file_exists(path), "nothing baked at %s" % path)
 	assert_true(ResourceLoader.exists(path), "%s has not been imported" % path)
 	if not ResourceLoader.exists(path):
 		return
 	var texture: Texture2D = load(path)
 	assert_eq(texture.get_size(), size, "%s is not the pinned size" % path)
+	if mipmapped:
+		assert_true(texture.get_image().has_mipmaps(), "%s imported without mipmaps" % path)
+	else:
+		assert_false(texture.get_image().has_mipmaps(), "%s imported with mipmaps" % path)
 
 
 ## The shade is drawn in the bust's own coordinates, and the five mirrored poses
