@@ -751,8 +751,8 @@ def _hood(worn: Worn) -> list[Point]:
 
 
 def _crown(worn: Worn, mass: tuple[Point, ...], lit: tuple[Point, ...]) -> list[Point]:
-    """A cap crown: faction cloth carrying the coat's lit rung along the edge
-    the key lands on (`_CAP_LIT`)."""
+    """A cap crown: `mass` in faction cloth, with `lit` — the part of it the key
+    lands on — carried in the coat's lit rung."""
     path = worn.path(mass)
     worn.fill(path, worn.tint)
     worn.fill(worn.path(lit), worn.kicker)
