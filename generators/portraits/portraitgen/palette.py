@@ -10,17 +10,28 @@ Colours are kept as the authored 0-1 floats and converted to bytes in one place
 (`rgb8`), which **truncates** — that is what Godot's `Color` to `FORMAT_RGBA8`
 conversion does, and the committed emblems carry those exact bytes.
 
-**A bust is painted out of the board's palette, not out of one of its own.** The
-six-slot ramps are `generators/sprites`' — its shaper, its ladders and its sky —
-so a commander and the army they command are lit by one sun. Four rungs are the
-exception, named with their reason in `BUST_RUNGS`; `tests/test_palette_mirror.py`
-holds them to being the only four.
+**A bust and the army it commands are lit by one sun**, and how far that goes
+is per material rather than sheet-wide:
 
-What a bust may spend is `PAINTED_TONES` of them: sixteen, chosen by
-`bust_palette` out of the ramps that bust actually wears, and every finished
-raster is snapped onto its own sixteen by `quantise`. That is the pixel-art
-discipline the old forty-eight-tone bar approximated — a band is a rung of a
-ramp, and an edge is one rung meeting another rather than a blend of the two.
+- the **army's six** rungs are the board's own faction ramp, four of them
+  overridden by `BUST_RUNGS` below with the reason named;
+- the **gunmetal's two** are the board's `GUNMETAL_RAMP`, rung for rung;
+- **skin's four and hair's three** are not off a board ramp at all — the bases
+  are the portraits' own (`head.SKIN_BASES`, `hair.HAIR_BASES`) and so is the
+  value ladder over them (`light`), because the board has no skin. What is
+  shared there is the **shaper**: `build_ramp`, the board's, with its chroma
+  curve, its hue rotation and its cool sky;
+- the **ink** is off no ladder — it is the design system's outline as bytes.
+
+`tests/test_palette_mirror.py` holds every clause of that: the four overrides
+being the only four, every skin and hair rung being the board's shape of its
+base, and each slice of the sixteen coming from where this says it does.
+
+What a bust may spend is `PAINTED_TONES`: sixteen, gathered by `bust_palette`
+out of the ramps that bust actually wears, and every finished raster is snapped
+onto its own sixteen by `quantise`. That is the pixel-art discipline the old
+forty-eight-tone bar approximated — a band is a rung of a ramp, and an edge is
+one rung meeting another rather than a blend of the two.
 """
 
 from __future__ import annotations

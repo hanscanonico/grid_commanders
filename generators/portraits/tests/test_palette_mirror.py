@@ -12,6 +12,12 @@ Parsing GDScript with a regex is narrow on purpose: it reads the
 so a rename in either file fails loudly rather than silently matching nothing.
 The floats are compared as floats — the byte conversion is `palette.rgb8`'s
 business, and it is checked where it matters, against the committed emblems.
+
+The suite's second job is where each of a bust's sixteen tones actually comes
+from, because that is easy to say loosely and easy to drift: the army's six
+rungs and the gunmetal's two are the board's ramps themselves, skin's four and
+hair's three are the board's SHAPER over bases and a value ladder that are this
+sheet's own, and the ink is off no ladder at all.
 """
 
 from __future__ import annotations
@@ -20,7 +26,7 @@ import re
 import unittest
 
 from game import GAME, VISUALS, scrape
-from portraitgen import palette
+from portraitgen import hair, head, light, palette
 
 IDENTITY = GAME / "scenes/common/side_identity.gd"
 
@@ -49,6 +55,26 @@ BUST_OVERRIDES = {
     ("gold", palette.S_RIM),
     ("iron", palette.S_SHADOW),
 }
+
+# The materials this sheet authors bases for, rather than taking a whole ramp
+# off the board: the five skins and the eight hair colours.
+SHEET_BASES: dict[str, palette.RGB] = {
+    **{f"skin {name}": base for name, base in head.SKIN_BASES.items()},
+    **{f"hair {name}": base for name, base in hair.HAIR_BASES.items()},
+}
+
+
+def board_shaped(base: palette.RGB) -> palette.Ramp6:
+    """`light.Ramp.of_material`'s six rungs, recomputed off `palette.BOARD`.
+
+    Written out here rather than called, so the bar is that the shaper the
+    portraits paint a face with IS the board's `build_ramp` — a shaper of this
+    package's own could not be slipped under `light` without failing.
+    """
+    lum = palette.BOARD.luminance(base)
+    rungs = tuple(min(lum * step, light._LIT_CEILING) for step in light._LADDER)
+    six = palette.BOARD.build_ramp(base, (*rungs, rungs[-1]))
+    return (*six[: palette.S_RIM], six[palette.S_TOP])
 
 
 def _floats(literal: str) -> tuple[float, ...]:
@@ -212,6 +238,68 @@ class TheBustRungsAreTheOnlyRungsNotTheBoardsOwn(unittest.TestCase):
                 for slot in rungs
             },
             BUST_OVERRIDES,
+        )
+
+
+class SkinAndHairAreTheBoardsShapeOfThisSheetsOwnBases(unittest.TestCase):
+    """Where the other seven of a bust's sixteen tones come from.
+
+    Not off a board ramp — `head.SKIN_BASES` and `hair.HAIR_BASES` are authored
+    here and `light`'s value ladder is this sheet's, because a face is not a
+    chassis and the board has no skin. What IS shared is the shaper: the same
+    chroma curve, the same hue rotation and the same cool sky, so a general and
+    the tank outside their window are lit by one sun. That is the whole of the
+    claim, so it is the whole of what is pinned.
+    """
+
+    def test_the_shaper_and_the_sky_are_the_boards_by_reference(self):
+        self.assertIs(palette.build_ramp, palette.BOARD.build_ramp)
+        self.assertIs(palette.luminance, palette.BOARD.luminance)
+        self.assertEqual(palette.AMBIENT, palette.BOARD.AMBIENT)
+
+    def test_every_skin_and_hair_rung_is_the_boards_shape_of_its_base(self):
+        for name, base in sorted(SHEET_BASES.items()):
+            with self.subTest(material=name):
+                self.assertEqual(light.Ramp.of_material(base).six, board_shaped(base))
+
+    def test_no_base_here_is_a_rung_of_a_board_ramp(self):
+        """The other half: these bases are authored, not lifted off a ladder."""
+        rungs = {rung for ramp in palette.RAMPS.values() for rung in ramp}
+        rungs |= set(palette.GUNMETAL_RAMP)
+        self.assertEqual(
+            [], sorted(name for name, base in SHEET_BASES.items() if base in rungs)
+        )
+
+
+class TheSixteenAreSourcedMaterialByMaterial(unittest.TestCase):
+    """Which of the sixteen comes off which ladder, in one statement.
+
+    `bust_palette` is the only place a bust's tones are gathered, so the
+    sourcing the README and `.claude/rules/presentation.md` describe is read
+    back off it here rather than trusted to prose.
+    """
+
+    def test_the_gunmetal_two_are_the_boards_own_ramp(self):
+        self.assertEqual(palette.GUNMETAL_RAMP, palette.BOARD.GUNMETAL_RAMP)
+
+    def test_the_ink_is_off_no_ladder_at_all(self):
+        """The design system's outline, as bytes — not a rung of anything."""
+        rungs = {rung for ramp in palette.RAMPS.values() for rung in ramp}
+        rungs |= set(palette.GUNMETAL_RAMP)
+        self.assertNotIn(palette.INK, rungs)
+        self.assertEqual(palette.INK, (19, 23, 27))
+
+    def test_each_slice_of_the_sixteen_comes_from_where_it_is_said_to(self):
+        skin = light.Ramp.of_material(head.SKIN_BASES["tan"]).six
+        mane = light.Ramp.of_material(hair.HAIR_BASES["black"]).six
+        tones = palette.bust_palette("aurora", skin, mane)
+        self.assertEqual(tones[0], palette.INK)
+        self.assertEqual(tones[1:7], palette.faction_ramp("aurora"))
+        self.assertEqual(tones[7:11], tuple(skin[slot] for slot in palette.SKIN_SLOTS))
+        self.assertEqual(tones[11:14], tuple(mane[slot] for slot in palette.HAIR_SLOTS))
+        self.assertEqual(
+            tones[14:],
+            tuple(palette.BOARD.GUNMETAL_RAMP[slot] for slot in palette.METAL_SLOTS),
         )
 
 

@@ -9,8 +9,8 @@ seat — and the **twenty-three 31x31 face chips** the surfaces too small for a 
 draw.
 
 The busts are **pixel art**: authored on their own small grid, painted in
-sixteen tones off the board's own ramps, and drawn by the game at a whole-number
-scale with nearest sampling. Nothing is supersampled and nothing is resampled —
+sixteen tones off the board's own ramps and its shaper, and drawn by the game at
+a whole-number scale with nearest sampling. Nothing is supersampled and nothing is resampled —
 what this tool rasterises is what the screen shows, texel for pixel.
 
 There are **no seeds and no randomness**. Every mark is authored, so every run
@@ -119,11 +119,22 @@ already were.
 
 ## Palette discipline
 
-- **Sixteen tones per bust**, and every one of them off the board's own ramps
-  (`generators/sprites`): the ink, the army's six rungs, four of skin, three of
-  hair and two of gunmetal. `palette.bust_palette` hands them out and
+- **Sixteen tones per bust**: the ink, the army's six rungs, four of skin,
+  three of hair and two of gunmetal. `palette.bust_palette` hands them out and
   `palette.quantise` snaps the finished raster onto them, so a blend has
-  nowhere to come from.
+  nowhere to come from. **How much of the board each of them is, is per
+  material** — the claim is one sun, not one set of ramps:
+  - the **army's six** are `generators/sprites`' own faction ramp, less the
+    four rungs `palette.BUST_RUNGS` names below;
+  - the **gunmetal's two** are its `GUNMETAL_RAMP`, rung for rung;
+  - **skin's four and hair's three** come off no board ramp: the bases are this
+    sheet's (`head.SKIN_BASES`, `hair.HAIR_BASES`) and so is the value ladder
+    over them (`light`), because the board has no skin. The **shaper** is the
+    board's `build_ramp` — its chroma curve, its hue rotation, its cool sky —
+    and that is the whole of what a face shares with a chassis;
+  - the **ink** is off no ladder at all: the design system's outline, as bytes.
+
+  `tests/test_palette_mirror.py` pins every line of that.
 - **Four flat named tones per material** — deep, shade, base, lit — plus a
   rim. A band is a tone taken from a ramp, never an alpha wash over a fill.
   The window's own bands are rungs too: the field is the army's shadow rung
@@ -176,10 +187,11 @@ already were.
   `scenes/common/commander_visuals.gd` by `tests/test_palette_mirror.py`, and
   the board's six-slot ramps are not copied at all: the module loads
   `generators/sprites/spritegen/palette.py` off its own file — the one
-  dependency this package has beyond Pillow — and paints out of that shaper,
-  those ladders and that sky. The four rungs a bust takes off another ladder
-  are the only difference, and the same suite holds them to being the only
-  four.
+  dependency this package has beyond Pillow — and takes the army ramps, the
+  gunmetal ramp, the sky and the shaper straight off it. The four rungs a bust
+  lifts onto another ladder are the only difference **inside those ramps**, and
+  the same suite holds them to being the only four; skin and hair are the
+  separate case above, where only the shaper is shared.
 
 ## Module contracts
 
