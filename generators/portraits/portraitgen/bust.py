@@ -207,7 +207,7 @@ def _prop_layers(
     """The prop behind the figure and its rig in front, both walked inboard."""
     whole = grid.blank()
     props.draw(whole, face.prop, army, cloth, layer="all")
-    shift = _bleed_shift(_design_box(whole), *face.pose[:2])
+    shift = _bleed_shift(_design_box(whole), face.pose.tilt, face.pose.zoom)
     layers = []
     for half in ("back", "front"):
         art = grid.blank()
@@ -237,7 +237,7 @@ def _face_group(
 ) -> Canvas:
     """Everything above the collar: the head, its features and its hair over."""
     group = grid.blank()
-    head.draw(group, face.head, skin, mirrored=face.pose[2])
+    head.draw(group, face.head, skin, mirrored=face.pose.mirrored)
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
     # Headwear cut out of uniform cloth is painted in the coat's own rungs: its
@@ -279,7 +279,7 @@ def _general(grid: Canvas, face: Face) -> Canvas:
         uniform.pip(dress, cloth)
 
     above = _face_group(grid, face, skin, mane, cloth)
-    if face.pose[2]:
+    if face.pose.mirrored:
         behind, above = _flipped(behind), _flipped(above)
 
     figure.compose(behind)
@@ -349,14 +349,12 @@ def paint(
     is the shadow and nothing else. `divisor` is which grid it lands on: the
     bust's, or the coarser one a face chip is repainted on.
     """
-    tilt, zoom, _ = spec.pose
-
     sheet = Canvas(divisor=divisor)
     backdrop.draw(sheet, spec.bg, _army_of(spec))
     figure = _posed(
         _general(sheet, spec) if isinstance(spec, Face) else _empty_seat(sheet, spec),
-        tilt,
-        zoom,
+        spec.pose.tilt,
+        spec.pose.zoom,
     )
     if cast:
         sheet.cast_shadow(figure)
@@ -383,7 +381,7 @@ def prop_art(face: Face) -> Image.Image:
     art = Canvas()
     for half in _prop_layers(art, face, army, cloth):
         art.compose(half)
-    return _posed(art, *face.pose[:2]).resolve()
+    return _posed(art, face.pose.tilt, face.pose.zoom).resolve()
 
 
 def window(spec: Face | EmptySeat, *, divisor: int = BUST_DIVISOR) -> Image.Image:

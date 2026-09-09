@@ -325,19 +325,18 @@ class ThePosesAreTiltedAndFiveAreMirrored(unittest.TestCase):
     def test_every_pose_is_a_tilt_a_zoom_and_a_mirror(self):
         for key, face in roster.FACES.items():
             with self.subTest(commander=key):
-                tilt, zoom, mirrored = face.pose
-                self.assertGreaterEqual(tilt, -9.0)
-                self.assertLessEqual(tilt, 9.0)
-                self.assertGreaterEqual(zoom, 1.1)
-                self.assertLessEqual(zoom, 1.3)
-                self.assertIsInstance(mirrored, bool)
+                self.assertGreaterEqual(face.pose.tilt, -9.0)
+                self.assertLessEqual(face.pose.tilt, 9.0)
+                self.assertGreaterEqual(face.pose.zoom, 1.1)
+                self.assertLessEqual(face.pose.zoom, 1.3)
+                self.assertIsInstance(face.pose.mirrored, bool)
 
     def test_five_generals_face_the_other_way(self):
-        mirrored = [f.id for f in roster.FACES.values() if f.pose[2]]
+        mirrored = [f.id for f in roster.FACES.values() if f.pose.mirrored]
         self.assertEqual(len(mirrored), self.MIRRORED, mirrored)
 
     def test_the_empty_seat_is_not_tilted(self):
-        self.assertEqual(roster.NEUTRAL.pose, (0.0, 1.18, False))
+        self.assertEqual(roster.NEUTRAL.pose, roster.Pose(0.0, 1.18, False))
 
 
 if __name__ == "__main__":
