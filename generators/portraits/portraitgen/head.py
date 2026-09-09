@@ -6,9 +6,10 @@ jaw names its lower half, the crown lifts the top of it, and the spread walks
 the eyes apart for the features layer to read.
 
 The numbers are the handoff's own, in portrait pixels. The handoff authored a
-110x134 viewBox with its origin at y -14, and the pinned raster is 220x268 —
-exactly two pixels per unit — so a handoff x is `2x` here and a handoff y is
-`2(y + 14)`. Nothing is re-authored in the move; the skull a general is drawn
+110x134 viewBox with its origin at y -14, and the design space every module
+here states its geometry in is that viewBox doubled — 220x268, two design units
+per handoff unit — so a handoff x is `2x` here and a handoff y is `2(y + 14)`.
+`canvas.py` divides that space back down to the grid a file is baked on. Nothing is re-authored in the move; the skull a general is drawn
 on is the skull they were drawn on.
 
 Curves are flattened here, at a fixed number of steps, because a quadratic is a
