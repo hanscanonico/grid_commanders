@@ -204,10 +204,10 @@ it comes from and no table names its own vocabulary twice.
 
 | Module | Owns | Entry points |
 | --- | --- | --- |
-| `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `divisor`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
+| `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `divisor`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen`, `Region`, `SkullBox` |
 | `portraitgen/vocab.py` | how a dispatch table answers an unknown key | `pick(table, key, what)`, `known(key, vocabulary, what)` |
 | `portraitgen/gauge.py` | the smallest mark this grid holds, and the sweep | `GAUGE`, `MAX_ORPHAN`, `clusters`, `holds_gauge`, `is_orphan`, `despeckle` |
-| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `Ramp.of_faction(key)`, `Ramp.of_material(base)`, `shade_kind`, `face_shade`, `face_light`, `LADDER`, `LIT_CEILING`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
+| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `Ramp.of_faction(key)`, `Ramp.of_material(base)`, `shade_kind`, `face_shade(kind, box)`, `face_light(box)`, `LADDER`, `LIT_CEILING`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
 | `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair | `eyes(…, scale=)`, `brow`, `nose`, `nose_shape`, `mouth`, `facial_hair`, `earring`, `freckles`, `Frame`, `eye_xs`, `ringed_ellipse` |
 | `portraitgen/accessories.py` | the worn accessories: headwear, eyewear, the scar | `ACCESSORY_KINDS`, `Worn`, `accessory(…, tint=, kicker=)`, `covered_eye` |

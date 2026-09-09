@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from PIL import Image, ImageChops
 
 from . import light
-from .canvas import INK_FEATURE, INK_SILHOUETTE, Canvas, Point
+from .canvas import INK_FEATURE, INK_SILHOUETTE, Canvas, Point, SkullBox
 from .light import Ramp
 from .palette import INK, RGB
 from .vocab import known, pick
@@ -169,11 +169,11 @@ def ears(skull: Skull) -> tuple[tuple[float, float, float, float], ...]:
     )
 
 
-def skull_box(skull: Skull) -> tuple[float, float, float, float]:
+def skull_box(skull: Skull) -> SkullBox:
     """Centre, half-width, crown and height — what a shade shape is placed on."""
     half = (_hx(SKULL_RIGHT, skull.width) - _hx(SKULL_LEFT, skull.width)) / 2.0
     top = CROWN_Y - skull.crown * CROWN_PX
-    return (HEAD_CX, half, top, CHIN_Y - top)
+    return SkullBox(HEAD_CX, half, top, CHIN_Y - top)
 
 
 def _mask_of(canvas: Canvas, points: list[Point]) -> Image.Image:
@@ -216,17 +216,12 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
     face = outline(skull)
     skin.polygon(face, ramp.base)
     face_mask = _mask_of(skin, face)
-    centre, half, top, height = skull_box(skull)
-    placement = {
-        "centre": centre,
-        "half": -half if mirrored else half,
-        "top": top,
-        "height": height,
-    }
+    box = skull_box(skull)
+    placement = box.flipped() if mirrored else box
     kind = light.shade_kind(skull.crown, skull.width)
     bands = (
-        (light.face_light(**placement), ramp.lit),
-        (light.face_shade(kind, **placement), ramp.shade),
+        (light.face_light(placement), ramp.lit),
+        (light.face_shade(kind, placement), ramp.shade),
     )
     for points, tone in bands:
         band = ImageChops.multiply(_mask_of(skin, points), face_mask)

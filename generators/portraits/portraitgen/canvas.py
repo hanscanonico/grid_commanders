@@ -71,6 +71,25 @@ class Region(NamedTuple):
     height: int
 
 
+class SkullBox(NamedTuple):
+    """Where a face's shapes are placed: the skull's centre line, its
+    half-width, its crown and its height, in portrait pixels.
+
+    `head.skull_box` measures one and `light` places the shade and the light
+    shapes on it, so the two never disagree about what a `half` was. A layer the
+    pose is about to mirror is placed on a `flipped` box.
+    """
+
+    centre: float
+    half: float
+    top: float
+    height: float
+
+    def flipped(self) -> "SkullBox":
+        """The same box mirrored about its centre line."""
+        return self._replace(half=-self.half)
+
+
 # The head's own rectangle, in design units, and the one statement of it on this
 # side of the pipeline: `CommanderVisuals.FACE_REGION` is the same square on the
 # bust's grid and `tests/test_face_region.py` reads it back out of the game's

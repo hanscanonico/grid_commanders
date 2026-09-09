@@ -36,7 +36,7 @@ from functools import lru_cache
 from PIL import Image, ImageChops
 
 from . import palette
-from .canvas import Point
+from .canvas import Point, SkullBox
 from .palette import RGB
 from .vocab import known, pick
 
@@ -216,32 +216,22 @@ def shade_kind(crown: float, width: float) -> str:
     return CHEEK_WEDGE
 
 
-def _placed(
-    shape: tuple[Point, ...], *, centre: float, half: float, top: float, height: float
-) -> list[Point]:
-    return [(centre + u * half, top + v * height) for u, v in shape]
+def _placed(shape: tuple[Point, ...], box: SkullBox) -> list[Point]:
+    return [(box.centre + u * box.half, box.top + v * box.height) for u, v in shape]
 
 
-def face_shade(
-    kind: str, *, centre: float, half: float, top: float, height: float
-) -> list[Point]:
+def face_shade(kind: str, box: SkullBox) -> list[Point]:
     """The shadow-side shade shape, in portrait pixels.
 
     `kind` is one of SHADE_KINDS; an unknown one raises rather than falling
     through to a default.
     """
-    return _placed(
-        pick(_SHADE_SHAPES, kind, "face shade"),
-        centre=centre,
-        half=half,
-        top=top,
-        height=height,
-    )
+    return _placed(pick(_SHADE_SHAPES, kind, "face shade"), box)
 
 
-def face_light(*, centre: float, half: float, top: float, height: float) -> list[Point]:
+def face_light(box: SkullBox) -> list[Point]:
     """The band the key catches: the forehead and cheekbone on the light side."""
-    return _placed(_LIGHT_SHAPE, centre=centre, half=half, top=top, height=height)
+    return _placed(_LIGHT_SHAPE, box)
 
 
 def _shifted(mask: Image.Image, dx: int, dy: int) -> Image.Image:

@@ -23,7 +23,7 @@ from PIL import Image, ImageChops
 from preview_sheet import FIELD, ROW, SKIN, bust
 
 from portraitgen import head, light, palette
-from portraitgen.canvas import BUST_DIVISOR, BUST_SIZE, Canvas
+from portraitgen.canvas import BUST_DIVISOR, BUST_SIZE, Canvas, SkullBox
 
 # tests/unit/test_commander_portraits.gd's own patches and floor: the widest
 # margin the shoulders offer, and a bar a sheet with no shade at all fails.
@@ -195,7 +195,7 @@ class TheVocabularyIsTheDispatchTable(unittest.TestCase):
 
     def test_a_face_shade_outside_the_vocabulary_raises(self):
         with self.assertRaises(KeyError):
-            light.face_shade("cheekbone", **_PLACEMENT)
+            light.face_shade("cheekbone", _PLACEMENT)
 
     def test_a_band_outside_the_ramp_raises(self):
         with self.assertRaises(KeyError):
@@ -207,7 +207,7 @@ class TheVocabularyIsTheDispatchTable(unittest.TestCase):
                 self.assertGreater(len(head.outline(head.Skull(1.0, jaw, 0.0, 1.0))), 3)
         for kind in light.SHADE_KINDS:
             with self.subTest(shade=kind):
-                self.assertGreater(len(light.face_shade(kind, **_PLACEMENT)), 3)
+                self.assertGreater(len(light.face_shade(kind, _PLACEMENT)), 3)
 
     def test_the_three_geometries_are_the_three_a_skull_can_ask_for(self):
         asked = {
@@ -218,7 +218,7 @@ class TheVocabularyIsTheDispatchTable(unittest.TestCase):
         self.assertEqual(asked, set(light.SHADE_KINDS))
 
 
-_PLACEMENT = {"centre": 110.0, "half": 46.0, "top": 82.0, "height": 124.0}
+_PLACEMENT = SkullBox(centre=110.0, half=46.0, top=82.0, height=124.0)
 
 
 class NoBoundaryDownTheNose(unittest.TestCase):
@@ -227,10 +227,10 @@ class NoBoundaryDownTheNose(unittest.TestCase):
     def test_every_shade_shape_clears_the_centre_line(self):
         for kind in light.SHADE_KINDS:
             with self.subTest(shade=kind):
-                shape = light.face_shade(kind, **_PLACEMENT)
+                shape = light.face_shade(kind, _PLACEMENT)
                 nearest = min(x for x, _ in shape)
-                clearance = light.NOSE_AXIS_CLEARANCE * _PLACEMENT["half"]
-                self.assertGreaterEqual(nearest, _PLACEMENT["centre"] + clearance)
+                clearance = light.NOSE_AXIS_CLEARANCE * _PLACEMENT.half
+                self.assertGreaterEqual(nearest, _PLACEMENT.centre + clearance)
 
 
 if __name__ == "__main__":

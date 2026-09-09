@@ -27,6 +27,7 @@ from portraitgen.canvas import (
     BUST_SIZE,
     CHIP_DIVISOR,
     Canvas,
+    SkullBox,
     face_box,
 )
 
@@ -347,7 +348,7 @@ class TheThreeShadesKeepOffTheNose(unittest.TestCase):
     review set is stated in the suite and a shape moved back onto the axis
     fails rather than moving the bar with it."""
 
-    PLACEMENT = {"centre": 110.0, "half": 46.0, "top": 82.0, "height": 124.0}
+    PLACEMENT = SkullBox(centre=110.0, half=46.0, top=82.0, height=124.0)
     # The terminator is a run, not a corner: this much of a half-width of it.
     MIN_RUN = 0.4
     # How far out from the centre line the nearest vertex of a shade may sit.
@@ -356,22 +357,18 @@ class TheThreeShadesKeepOffTheNose(unittest.TestCase):
     def test_every_shape_terminates_horizontally_at_its_own_height(self):
         for kind, v in light.TERMINATORS.items():
             with self.subTest(shade=kind):
-                y = self.PLACEMENT["top"] + v * self.PLACEMENT["height"]
-                run = [
-                    x for x, py in light.face_shade(kind, **self.PLACEMENT) if py == y
-                ]
+                y = self.PLACEMENT.top + v * self.PLACEMENT.height
+                run = [x for x, py in light.face_shade(kind, self.PLACEMENT) if py == y]
                 self.assertEqual(len(run), 2)
                 self.assertGreater(
-                    max(run) - min(run), self.MIN_RUN * self.PLACEMENT["half"]
+                    max(run) - min(run), self.MIN_RUN * self.PLACEMENT.half
                 )
 
     def test_no_shade_reaches_the_nose_mouth_axis(self):
-        clearance = (
-            self.PLACEMENT["centre"] + self.INNER_CLEARANCE * self.PLACEMENT["half"]
-        )
+        clearance = self.PLACEMENT.centre + self.INNER_CLEARANCE * self.PLACEMENT.half
         for kind in light.SHADE_KINDS:
             with self.subTest(shade=kind):
-                shape = light.face_shade(kind, **self.PLACEMENT)
+                shape = light.face_shade(kind, self.PLACEMENT)
                 self.assertGreaterEqual(min(x for x, _ in shape), clearance)
 
     def test_every_shape_names_a_terminator(self):
