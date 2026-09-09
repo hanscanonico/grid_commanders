@@ -42,10 +42,10 @@ BAND_COVERAGE = 0.02
 # coverage floor under it to be readable.
 MAX_TONES = palette.PAINTED_TONES
 
-# M1/C9: silhouettes of the face crop at chip size, over all 253 pairs. The
-# ceiling is a plain one — a measured failure is a roster retune, not a named
-# exception — and the pair that used to carry one, Orlov and Ferrow, was two
-# buzz-cut square jaws with no headwear between them until Ferrow took a cap.
+# M1/C9: silhouettes of the face chip, over all 253 pairs. The ceiling is a
+# plain one — a measured failure is a roster retune, not a named exception —
+# and the pair that used to carry one, Orlov and Ferrow, was two buzz-cut
+# square jaws with no headwear between them until Ferrow took a cap.
 # Read off the chip the generator bakes, which is what a small surface draws.
 MAX_IOU = 0.90
 MEAN_IOU = 0.78
@@ -376,8 +376,8 @@ class TheThreeShadesKeepOffTheNose(unittest.TestCase):
 
 
 class TheSilhouettesAreDistinct(unittest.TestCase):
-    """M1/C9: the squint test, as arithmetic — every pair of face crops at chip
-    size, which is where twenty-three identical outlines used to show."""
+    """M1/C9: the squint test, as arithmetic — every pair of face chips, which
+    is where twenty-three identical outlines used to show."""
 
     def _pairs(self) -> list[tuple[float, str, str]]:
         chips = {key: _chip(key) for key, _ in bust.sheet_rows()}
