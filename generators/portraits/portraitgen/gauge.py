@@ -36,8 +36,7 @@ from .palette import RGBA
 GAUGE = 2
 # A cluster of one tone at most this large is rasteriser residue rather than a
 # mark. Two, because two cells cannot hold a GAUGE-square and three would take
-# the eyes' small catchlight; raising it would need `holds_gauge` back in
-# `is_orphan`, a 2x2 block being a mark at any bound.
+# the eyes' small catchlight.
 MAX_ORPHAN = 2
 
 # How many times the sweep may run before the raster has to have settled.
@@ -75,15 +74,6 @@ def clusters(pixels: list[RGBA], size: tuple[int, int]) -> Iterator[list[Cell]]:
                 cells.append((nx, ny))
                 frontier.append((nx, ny))
         yield cells
-
-
-def holds_gauge(cells: list[Cell]) -> bool:
-    """Whether a cluster contains a whole `GAUGE` x `GAUGE` block of itself."""
-    filled = set(cells)
-    span = range(GAUGE)
-    return any(
-        all((x + dx, y + dy) in filled for dx in span for dy in span) for x, y in cells
-    )
 
 
 def is_orphan(cells: list[Cell]) -> bool:

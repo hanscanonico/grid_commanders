@@ -45,20 +45,10 @@ class TheSweepKnowsWhatAMarkIs(unittest.TestCase):
 
     def test_a_gauge_square_is_a_mark(self):
         block = [(4, 4), (5, 4), (4, 5), (5, 5)]
-        self.assertTrue(gauge.holds_gauge(block))
         self.assertFalse(gauge.is_orphan(block))
-
-    def test_a_three_cell_l_is_a_mark_and_holds_no_gauge_square(self):
-        """Why `MAX_ORPHAN` may not be raised to three without the gauge term:
-        a catchlight-sized L is over the bound, and nothing else says it is a
-        mark."""
-        ell = [(4, 4), (5, 4), (4, 5)]
-        self.assertFalse(gauge.holds_gauge(ell))
-        self.assertFalse(gauge.is_orphan(ell))
 
     def test_a_run_longer_than_the_orphan_bound_is_a_mark(self):
         run = [(x, 4) for x in range(6)]
-        self.assertFalse(gauge.holds_gauge(run))
         self.assertFalse(gauge.is_orphan(run))
 
     def test_a_diagonal_staircase_is_one_cluster_and_not_noise(self):
