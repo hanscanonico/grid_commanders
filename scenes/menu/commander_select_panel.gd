@@ -24,7 +24,19 @@ signal cancelled
 ## seat more, and what `begin` falls back to if it is handed nothing.
 const DUEL_SEATS := 2
 
-const _MINI_H := 82
+## A roster tile's face field: the tile without the name band beneath it. The
+## tile is the sum of the two (`_mini_height`), asked of the font rather than
+## typed in, so a face keeps its rung when the shell's body size moves — 82 was
+## the whole tile at the 8px body, and this was the field inside it.
+const _MINI_FACE_H := 67
+## The lines the name band reserves. Six tiles across this column leave a caption
+## about 46 pixels wide: no general's full name fits that at the body size (the
+## widest sets at 63) and every single word does (38), so the band is two lines,
+## the given name over the surname, rather than the strip clipping the roster it
+## exists to read (COM-271). Reserved on every tile, so the faces stay one row.
+const _NAME_LINES := 2
+## The band's padding over and under those lines.
+const _NAME_PAD := 1
 ## How far back a portrait an earlier seat already commands is faded, over the
 ## dead button it also becomes. A general commands one army (`CommanderPicks`),
 ## and the page says so by greying rather than by refusing a press — the same
@@ -408,11 +420,24 @@ func _find_mini_row() -> HBoxContainer:
 	return find_child("MiniRow", true, false) as HBoxContainer
 
 
+## The height the name band reserves: its lines at the body size, solid — the
+## caption zeroes `line_spacing`, so a name two words tall reads as one block and
+## a tile's height is known before any label has been laid out.
+func _name_text_height() -> float:
+	return _NAME_LINES * UiTheme.display().get_height(UiTheme.SIZE_BODY)
+
+
+## A roster tile: its face field and the name band under it. The row gives the
+## tile its width, so this is the one dimension the page states.
+func _mini_height() -> float:
+	return _MINI_FACE_H + _name_text_height() + 2 * _NAME_PAD
+
+
 func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	var theme := CommanderVisuals.theme_for(commander)
 	var button := Button.new()
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0, _MINI_H)
+	button.custom_minimum_size = Vector2(0, _mini_height())
 	button.clip_contents = true
 	button.add_theme_stylebox_override("normal", _hard(theme.color_dark, 2))
 	button.add_theme_stylebox_override("hover", _hard(theme.color, 2))
@@ -437,6 +462,10 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	name_label.text = commander.display_name
 	name_label.add_theme_color_override("font_color", theme.ink)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.add_theme_constant_override("line_spacing", 0)
+	name_label.custom_minimum_size.y = _name_text_height()
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var name_wrap := PanelContainer.new()
 	name_wrap.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_dark))
 	name_wrap.add_child(UiKit.pad(name_label, 2, 1))
