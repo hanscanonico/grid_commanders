@@ -1,4 +1,6 @@
-"""What the face wears: every vocabulary draws, an unknown key raises.
+"""The face's own features: every vocabulary draws, an unknown key raises.
+
+What is worn over them — headwear, eyewear, the scar — is `test_accessories.py`.
 
 The vocabulary *is* the dispatch table now, so these suites replace the three
 GUT lints that existed only to catch a silent fallback — a name outside the
@@ -16,8 +18,8 @@ from __future__ import annotations
 import unittest
 
 import preview_sheet
-from PIL import Image, ImageChops
-from portraitgen import accessories, features, light
+from PIL import ImageChops
+from portraitgen import features, light
 from portraitgen.canvas import BUST_DIVISOR, DESIGN_SIZE, INK_FEATURE, Canvas, pen
 from portraitgen.head import Skull
 from portraitgen.palette import INK
@@ -35,16 +37,13 @@ FRAME = features.Frame.of(SKULL)
 MOUTH_SPAN = 2.2
 HAIR = light.Ramp.of_material((90, 60, 40))
 SKIN = light.Ramp.of_material(preview_sheet.SKIN)
-# The tones a face may be painted in: the two ramps it is handed, plus the kit
-# colours the module owns. Nothing else may reach the canvas.
+# The tones a face may be painted in: the two ramps it is handed, plus the eye
+# colours this module owns. Nothing else may reach the canvas.
 NAMED = {
     INK,
     features.SCLERA,
     features.IRIS,
-    accessories.KIT,
-    accessories.GLASS,
     features.GOLD,
-    accessories.SCAR,
     *(HAIR.deep, HAIR.shade, HAIR.base, HAIR.lit, HAIR.rim),
     *(SKIN.deep, SKIN.shade, SKIN.base, SKIN.lit, SKIN.rim),
 }
@@ -77,17 +76,6 @@ def _box_of(cell: Canvas, tone: tuple[int, int, int]) -> tuple[int, int, int, in
     box = mask.getbbox()
     assert box is not None, f"no {tone} on the canvas"
     return box
-
-
-def _ink_run(cell: Canvas, y: int) -> int:
-    """How thick the first stroke along one row of the working canvas is."""
-    band = cell.image.crop((0, y, cell.image.width, y + 1)).get_flattened_data()
-    row = [pixel[:3] for pixel in band]
-    start = row.index(INK)
-    run = 0
-    while start + run < len(row) and row[start + run] == INK:
-        run += 1
-    return run
 
 
 def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
@@ -136,60 +124,12 @@ class EveryKindDraws(unittest.TestCase):
                 else:
                     self.assertGreater(drawn, 0)
 
-    def test_every_accessory_but_none_draws(self):
-        for kind in sorted(accessories.ACCESSORY_KINDS):
-            with self.subTest(accessory=kind):
-                cell = _cell()
-                accessories.accessory(cell, SKULL, kind)
-                drawn = _opaque_count(cell)
-                if kind == "none":
-                    self.assertEqual(drawn, 0)
-                else:
-                    self.assertGreater(drawn, 0)
-
     def test_the_earring_and_the_freckles_draw(self):
         ear, freckled = _cell(), _cell()
         features.earring(ear, SKULL)
         features.freckles(freckled, SKULL, SKIN)
         self.assertGreater(_opaque_count(ear), 0)
         self.assertGreater(_opaque_count(freckled), 0)
-
-    def test_headwear_hands_back_what_it_added_to_the_silhouette(self):
-        cell = _cell()
-        self.assertEqual(accessories.accessory(cell, SKULL, "glasses"), [])
-        self.assertGreater(len(accessories.accessory(cell, SKULL, "bandana")), 2)
-
-
-class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
-    """P13/P16: three hats over one skull, and each is the shape the two others
-    are not — a peak, a bare brow, a bare crown."""
-
-    def _box(self, kind: str) -> tuple[float, float, float, float]:
-        cell = _cell()
-        accessories.accessory(cell, SKULL, kind)
-        box = cell.image.getbbox()
-        assert box, f"{kind} drew nothing"
-        return tuple(value * cell.divisor for value in box)
-
-    def test_the_service_cap_hangs_a_peak_the_field_cap_has_not_got(self):
-        self.assertGreater(self._box("cap")[3] - self._box("fieldcap")[3], 8.0)
-
-    def test_the_service_cap_is_the_wider_hat(self):
-        cap, field = self._box("cap"), self._box("fieldcap")
-        self.assertLess(cap[0], field[0])
-        self.assertGreater(cap[2], field[2])
-
-    def test_the_field_cap_sits_lower_on_the_skull(self):
-        self.assertGreater(self._box("fieldcap")[1], self._box("cap")[1])
-
-    def test_the_visor_carries_no_crown(self):
-        self.assertGreater(self._box("visor")[1], self._box("cap")[1] + 20.0)
-
-    def test_no_hat_comes_down_over_the_eyes(self):
-        line = FRAME.at(0.0, features.EYE_LINE)[1]
-        for kind in ("cap", "fieldcap", "visor"):
-            with self.subTest(accessory=kind):
-                self.assertLess(self._box(kind)[3], line)
 
 
 class AnUnknownNameRaises(unittest.TestCase):
@@ -203,7 +143,6 @@ class AnUnknownNameRaises(unittest.TestCase):
             lambda: features.nose(cell, SKULL, "roman", SKIN),
             lambda: features.mouth(cell, SKULL, "pursed"),
             lambda: features.facial_hair(cell, SKULL, "muttonchops", HAIR),
-            lambda: accessories.accessory(cell, SKULL, "monocle"),
         )
         for call in calls:
             with self.subTest(call=call), self.assertRaises(KeyError):
@@ -349,94 +288,6 @@ class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
         )
 
 
-class TheGlassesAreTwoSquaresAndNoBridge(unittest.TestCase):
-    """P17: a bridge is the part of a pair of glasses the mip cannot hold — it
-    joined the two lenses into one grey smear at chip size. Two squares at the
-    feature weight survive it; the bridge is gone."""
-
-    def _worn(self) -> Canvas:
-        cell = _cell()
-        accessories.accessory(cell, SKULL, "glasses")
-        return cell
-
-    def test_nothing_is_drawn_between_the_two_lenses(self):
-        """Both rings are cropped off, so only a bridge can be left in it."""
-        worn = self._worn().image
-        left, top, right, bottom = worn.getbbox()
-        lens = round(self._lens_side() * PIXELS_PER_UNIT)
-        self.assertIsNone(worn.crop((left + lens, top, right - lens, bottom)).getbbox())
-
-    def _lens_side(self) -> float:
-        return 2 * accessories.LENS_HALF + INK_FEATURE
-
-    def test_each_lens_is_a_square_ring_at_the_feature_weight(self):
-        _, top, _, bottom = self._worn().image.getbbox()
-        self.assertAlmostEqual(
-            bottom - top, round(self._lens_side() * PIXELS_PER_UNIT), delta=1
-        )
-        self.assertEqual(_ink_run(self._worn(), (top + bottom) // 2), FEATURE_PEN)
-
-
-class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
-    """P4a: a plate with a lit eye showing inside it is a domino mask. The
-    patch is one flat tone, and the socket it covers is not drawn at all."""
-
-    def _patch(self) -> Canvas:
-        cell = _cell()
-        accessories.accessory(cell, SKULL, "eyepatch")
-        return cell
-
-    def test_the_patch_and_its_strap_are_one_tone(self):
-        self.assertEqual(_colours(self._patch()), {INK})
-
-    def test_the_strap_lands_on_the_ear(self):
-        """P4a: a plate with no strap is a sticker. It is anchored where it
-        would be worn, so the ear is where the stroke has to end — a pixel of
-        the strap's own ink inside the ear's own square, which at a one-pixel
-        pen is the whole of what "ends here" can mean."""
-        ear_x, ear_y, radius = features.EAR
-        x, y = (
-            round(value * PIXELS_PER_UNIT)
-            for value in FRAME.at(ear_x + radius, ear_y - radius)
-        )
-        anchor = self._patch().image.crop((x - 1, y - 1, x + 2, y + 2))
-        self.assertIn((*INK, 255), [colour for _, colour in anchor.getcolors()])
-
-    def test_the_eyepatch_is_the_one_accessory_that_covers_a_socket(self):
-        covering = {
-            kind
-            for kind in accessories.ACCESSORY_KINDS
-            if accessories.covered_eye(kind) is not None
-        }
-        self.assertEqual(covering, {"eyepatch"})
-
-    def test_a_covered_socket_draws_neither_eye_nor_brow(self):
-        covered = accessories.covered_eye("eyepatch")
-        for paint in (
-            lambda cell, hide: features.eyes(
-                cell, SKULL, "wide", scale=1.06, covered=hide
-            ),
-            lambda cell, hide: features.brow(cell, SKULL, "heavy", HAIR, covered=hide),
-        ):
-            with self.subTest(paint=paint):
-                both, one = _cell(), _cell()
-                paint(both, None)
-                paint(one, covered)
-                self.assertLess(_opaque_count(one), _opaque_count(both))
-
-    def test_no_tone_lighter_than_the_patch_is_drawn_inside_it(self):
-        covered = accessories.covered_eye("eyepatch")
-        face = self._patch()
-        features.brow(face, SKULL, "heavy", HAIR, covered=covered)
-        features.eyes(face, SKULL, "wide", scale=1.06, covered=covered)
-        inside = Image.new("RGBA", face.image.size, (0, 0, 0, 0))
-        inside.paste(face.image, mask=self._patch().image.getchannel("A"))
-        self.assertEqual(
-            {pixel[:3] for _, pixel in inside.getcolors(1 << 24) if pixel[3] > 0},
-            {INK},
-        )
-
-
 class TheFaceIsPaintedInNamedTones(unittest.TestCase):
     """A band is a tone off a ramp: no feature mixes one of its own."""
 
@@ -447,7 +298,6 @@ class TheFaceIsPaintedInNamedTones(unittest.TestCase):
         features.eyes(cell, SKULL, "m", scale=features.EYE_DEFAULT)
         features.nose(cell, SKULL, "hook", SKIN)
         features.mouth(cell, SKULL, "stern")
-        accessories.accessory(cell, SKULL, "goggles")
         features.earring(cell, SKULL)
         features.freckles(cell, SKULL, SKIN)
         return cell
