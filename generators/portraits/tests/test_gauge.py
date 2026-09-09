@@ -18,7 +18,7 @@ import unittest
 
 from PIL import Image
 
-from painted import painted, specs
+from painted import painted
 from portraitgen import bust, gauge
 from portraitgen.canvas import BUST_DIVISOR, CHIP_DIVISOR, Canvas
 
@@ -69,13 +69,13 @@ class TheSweepRepaintsFromTheBorder(unittest.TestCase):
         self.assertEqual(swept.getpixel((10, 10)), CORE)
 
     def test_the_sweep_has_settled_when_it_returns(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 once = painted(key)
                 self.assertEqual(gauge.despeckle(once).tobytes(), once.tobytes())
 
     def test_the_sweep_invents_no_tone(self):
-        for key, spec in specs():
+        for key, spec in bust.sheet_rows():
             with self.subTest(commander=key):
                 allowed = {(*tone, 255) for tone in bust.palette_of(spec)}
                 tones = {
@@ -110,7 +110,7 @@ class TheGroundVotesLikeAnyOtherTone(unittest.TestCase):
     def test_the_sweep_opens_no_hole_in_a_shipped_bust(self):
         """A transparent pixel with eight opaque neighbours would be a puncture,
         which is the failure a transparency vote could make and does not."""
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 image = painted(key)
                 width, height = image.size
@@ -135,7 +135,7 @@ class NothingUnderTheGaugeSurvivesTheBake(unittest.TestCase):
     and no more than `MAX_ORPHAN` pixels is not a mark this grid can draw."""
 
     def test_no_bust_holds_an_orphan_cluster(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 self.assertEqual(_orphans(painted(key)), [])
 

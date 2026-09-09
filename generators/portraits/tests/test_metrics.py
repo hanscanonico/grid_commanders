@@ -21,7 +21,7 @@ from functools import lru_cache
 from PIL import Image, ImageChops
 
 from portraitgen import bust, features, head, light, palette, props, roster, uniform
-from painted import painted, specs
+from painted import painted
 from portraitgen.canvas import (
     BUST_DIVISOR,
     BUST_SIZE,
@@ -122,7 +122,7 @@ class TheRasterIsWhatTheGamePins(unittest.TestCase):
     here before it can reach the engine."""
 
     def test_every_bust_is_the_pinned_raster(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 self.assertEqual(painted(key).size, BUST_SIZE)
 
@@ -132,7 +132,7 @@ class TheShadowIsDrawn(unittest.TestCase):
     on all twenty-three: what changes when it is switched off, and where."""
 
     def test_the_cast_shadow_lands_outside_every_silhouette(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 changed = ImageChops.difference(
                     painted(key), painted(key, cast=False)
@@ -149,7 +149,7 @@ class FourValueBands(unittest.TestCase):
     painted in four."""
 
     def test_every_bust_carries_four_bands_inside_its_silhouette(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 inside = Image.composite(
                     painted(key),
@@ -197,7 +197,7 @@ class ThePaletteIsBounded(unittest.TestCase):
     """M4/C4: the tones a raster is painted in, against the brief's forty-eight."""
 
     def test_no_bust_is_painted_in_more_than_sixteen_tones(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 self.assertLessEqual(len(_tones(painted(key))), MAX_TONES)
 
@@ -205,13 +205,13 @@ class ThePaletteIsBounded(unittest.TestCase):
         """The harder half: not "few colours" but "these colours". A pixel that
         is not a rung of this bust's own palette is a blend, and there is
         nowhere left in the pipeline for one to come from."""
-        for key, spec in specs():
+        for key, spec in bust.sheet_rows():
             with self.subTest(commander=key):
                 allowed = set(bust.palette_of(spec))
                 self.assertEqual(set(_tones(painted(key))) - allowed, set())
 
     def test_the_shadow_is_the_one_tone_that_is_neither_paint_nor_nothing(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 partial = {
                     colour
@@ -252,7 +252,7 @@ class OneLightOnEveryFace(unittest.TestCase):
         return 0.5 * (values[half - 1] + values[half])
 
     def test_the_key_side_of_every_bust_is_the_lighter_one(self):
-        for key, _ in specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 lit = self._patch(key, self.LIT_PATCH)
                 away = self._patch(key, self.SHADED_PATCH)
@@ -382,7 +382,7 @@ class TheSilhouettesAreDistinct(unittest.TestCase):
     size, which is where twenty-three identical outlines used to show."""
 
     def _pairs(self) -> list[tuple[float, str, str]]:
-        chips = {key: _chip(key) for key, _ in specs()}
+        chips = {key: _chip(key) for key, _ in bust.sheet_rows()}
         return [
             (_iou(chips[a], chips[b]), a, b)
             for a, b in itertools.combinations(sorted(chips), 2)

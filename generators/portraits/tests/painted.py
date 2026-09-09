@@ -19,15 +19,6 @@ from PIL import Image
 from portraitgen import bust, roster
 
 
-Spec = roster.Face | roster.EmptySeat
-
-
-def specs() -> list[tuple[str, Spec]]:
-    """The whole sheet in the order the suites walk it — the bake's own order,
-    asked of the bake rather than rebuilt here."""
-    return bust.sheet_rows()
-
-
 @lru_cache(maxsize=None)
 def painted(key: str, *, cast: bool = True) -> Image.Image:
     """One general's bust, by roster key or `roster.NEUTRAL_ID`.

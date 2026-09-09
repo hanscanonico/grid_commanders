@@ -202,7 +202,7 @@ default.
 | `portraitgen/props.py` | the 22 signature props and their rigs | `PROPS`, `SHOULDERED`, `RIGHT_LIMIT`, `draw(canvas, key, faction, ramp, layer=)` |
 | `portraitgen/backdrop.py` | the window field, the treatment, the ink frame | `KINDS`, `FIELD_SLOT`, `LATTICE`, `ACCENT`, `field`, `treatment`, `frame`, `draw(canvas, kind, faction)` |
 | `portraitgen/roster.py` | the FACES table | `Face`, `FACES`, `NEUTRAL`, `SKIN_TONES` |
-| `portraitgen/bust.py` | the draw order, the pose, the frame safety | `paint(spec, cast=, divisor=)`, `chip(spec)`, `palette_of(spec)`, `window(spec, divisor=)`, `prop_art(face)`, `busts()`, `chips()`, `FACTION_OF` |
+| `portraitgen/bust.py` | the draw order, the pose, the frame safety | `paint(spec, cast=, divisor=)`, `chip(spec)`, `palette_of(spec)`, `window(spec, divisor=)`, `prop_art(face)`, `sheet_rows()`, `busts()`, `chips()`, `FACTION_OF` |
 
 The keyword-only arguments above are the seams the layers are composed through:
 `layer=` splits a prop into the half behind the figure and the rig in front,
