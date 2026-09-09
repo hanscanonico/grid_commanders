@@ -43,6 +43,9 @@ func bind(commander: CommanderType, tint: Color) -> void:
 
 ## The shape falls back to the minimum while the field is still unplaced: the
 ## roster tile states none and learns its band from the row a frame later.
+##
+## The art is centred on both axes, except that a drawing taller than the field
+## falls to its top: a clipped bust should lose the chest, not the chin.
 func _place() -> void:
 	var shape := size.max(custom_minimum_size)
 	if CommanderVisuals.fits_whole_bust(shape):
