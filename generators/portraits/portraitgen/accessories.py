@@ -20,7 +20,7 @@ from .canvas import INK_DETAIL, INK_FEATURE, Canvas, Point
 from .features import EAR, EYE_LINE, Frame, eye_xs, ringed_ellipse
 from .head import Skull
 from .palette import INK, RGB
-from .vocab import pick
+from .vocab import known, pick
 
 # What headwear spends that a face does not: the design system's SLATE_800 kit
 # slate every strap and every frame is cut from, the handoff's goggle glass, and
@@ -358,8 +358,14 @@ _COVERS_EYE: dict[str, int] = {"eyepatch": 0}
 
 
 def covered_eye(kind: str) -> int | None:
-    """The socket the worn accessory hides — `eyes` and `brow` skip it."""
-    return _COVERS_EYE.get(kind)
+    """The socket the worn accessory hides — `eyes` and `brow` skip it.
+
+    `None` is the answer for the eleven kinds that hide nothing, so the table is
+    read with `.get`. The vocabulary is still the gate: an unknown kind raises
+    here as it does everywhere else, rather than passing for a crown that
+    happens to cover no eye.
+    """
+    return _COVERS_EYE.get(known(kind, ACCESSORY_KINDS, "accessory"))
 
 
 def accessory(
