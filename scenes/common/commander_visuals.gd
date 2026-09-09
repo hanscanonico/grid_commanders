@@ -65,8 +65,8 @@ const NEUTRAL_PORTRAIT_PATH := "res://assets/portraits/commanders/none.png"
 ## than filling one. The bake checks each rasterised image against this and fails
 ## loudly on a mismatch, so changing the drawing's grid cannot silently pass by.
 const PORTRAIT_SIZE := Vector2i(110, 134)
-## The face chip the generator cuts from that same drawing, rasterised on its own
-## coarser grid rather than sampled down off the bust (`face_for`).
+## The face chip: `FACE_REGION` of that same drawing, repainted by the generator
+## on the chip's own coarser grid rather than cut out of the bust (`face_for`).
 const FACE_SIZE := Vector2i(31, 31)
 const EMBLEM_PX := 64
 ## The square of a portrait that holds the head — hair, headwear, both ears and
@@ -282,14 +282,14 @@ static func portrait_for(commander: CommanderType) -> Texture2D:
 
 
 ## The face chip a surface too small to show a bust asks for: `FACE_REGION` of
-## the same drawing, rasterised on the chip's own grid by the bake rather than
-## sampled down off the bust here. A 98px head squeezed into a 28px chip is the
-## three-to-one minification this art stopped being able to survive once it
-## became pixels.
+## the same drawing, repainted on the chip's own grid by the bake rather than cut
+## out of the bust or sampled down off it here. That 93px square shown as a 31px
+## chip is the three-to-one minification this art stopped being able to survive
+## once it became pixels.
 ##
 ## The empty seat has one too. It used to be the exception that got its bust
-## back whole — a head crop of a featureless silhouette was a dark blob — but a
-## chip is a drawing of its own now rather than a crop, and the seat nobody
+## back whole — a head cut out of a featureless silhouette was a dark blob — but
+## a chip is a drawing of its own now rather than a crop, and the seat nobody
 ## holds reads as a blank face on the board's own khaki.
 ##
 ## One degradation, named because it is the one case where this does hand back a

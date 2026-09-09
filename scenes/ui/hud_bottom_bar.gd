@@ -117,8 +117,8 @@ func _build() -> void:
 
 
 func _build_commander(row: HBoxContainer) -> void:
-	# Neutral until `bind` puts the side's own general and faction on it. The chip
-	# is smaller than a bust, so the kit shows the face crop here.
+	# Neutral until `bind` puts the side's own general and faction on it. This
+	# field is smaller than a bust, so the kit shows the face chip here.
 	_portrait_field = UiKit.commander_bust(
 		null, Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT), UiKit.NO_FIELD
 	)

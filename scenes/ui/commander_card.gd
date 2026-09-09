@@ -55,9 +55,8 @@ const _NAME_SIZE := 12
 ## `CHIP_BAND` is for a surface with no room for that: the 31px face chip at a
 ## whole-number rung, plus one texel of air under it — the band's own padding on
 ## the same grid as the art in it, rather than a spare pixel or two. The
-## commander info sheet is the one caller that asks for it, because on a 360px
-## screen it shows a card 102px tall (measured on `commander_info`, 2026-09-09)
-## and a bust band there would have the chin cut off by the scroll frame.
+## commander info sheet is the one caller that asks for it, and states there what
+## its own page leaves a card.
 const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
 const _CHIP_ZOOM := 3
 const _BAND_AIR_TEXELS := 1
