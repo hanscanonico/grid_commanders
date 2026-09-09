@@ -462,29 +462,24 @@ _IRON_L = (7.0, 31.0, 49.0, 129.0, 151.0, 229.0)
 # what keeps the row a wide margin off Iron with less light in it.
 _NEUTRAL_L = (20.0, 60.0, 102.0, 137.0, 156.0, 219.0)
 
-# The anchor colour each ramp is shaped from, named rather than inlined below
-# so a sibling instrument painting off one of these rows can read the base it
-# was authored on instead of retyping the hex.
-RAMP_BASES: dict[str, RGB] = {
-    "meridian": _hex("db4a3b"),
-    "aurora": _hex("3c64d8"),
-    "verdant": _hex("2c8636"),
-    "gold": _hex("e9c928"),
-    "iron": _hex("79838d"),
-    "neutral": _hex("a4874f"),
+# Each faction's ramp in one entry: the anchor colour it is shaped from, and
+# the lightness ladder shaped on it. One table rather than two keyed the same
+# way, so a faction cannot gain a base without a ladder.
+_RAMP_SPECS: dict[str, tuple[RGB, tuple[float, ...]]] = {
+    "meridian": (_hex("db4a3b"), _MERIDIAN_L),
+    "aurora": (_hex("3c64d8"), _AURORA_L),
+    "verdant": (_hex("2c8636"), _VERDANT_L),
+    "gold": (_hex("e9c928"), _GOLD_L),
+    "iron": (_hex("79838d"), _IRON_L),
+    "neutral": (_hex("a4874f"), _NEUTRAL_L),
 }
 
-_LADDERS: dict[str, tuple[float, ...]] = {
-    "meridian": _MERIDIAN_L,
-    "aurora": _AURORA_L,
-    "verdant": _VERDANT_L,
-    "gold": _GOLD_L,
-    "iron": _IRON_L,
-    "neutral": _NEUTRAL_L,
-}
+# The anchors alone, so a sibling instrument painting off one of these rows can
+# read the base it was authored on instead of retyping the hex.
+RAMP_BASES: dict[str, RGB] = {key: base for key, (base, _) in _RAMP_SPECS.items()}
 
 RAMPS: dict[str, Ramp] = {
-    key: build_ramp(base, _LADDERS[key]) for key, base in RAMP_BASES.items()
+    key: build_ramp(base, ladder) for key, (base, ladder) in _RAMP_SPECS.items()
 }
 
 # Shared by every faction, and shaped by the same rules — a gunmetal that is
