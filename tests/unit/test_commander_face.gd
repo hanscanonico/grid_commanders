@@ -56,4 +56,11 @@ func test_a_face_is_cached_and_is_its_own_texture() -> void:
 	var commander := db.playable()[0]
 	var face := CommanderVisuals.face_for(commander)
 	assert_same(face, CommanderVisuals.face_for(commander))
-	assert_ne(face, CommanderVisuals.portrait_for(commander))
+	var bust := CommanderVisuals.portrait_for(commander)
+	assert_eq(face.get_size(), Vector2(CommanderVisuals.FACE_SIZE), "the chip is chip-sized")
+	assert_eq(bust.get_size(), Vector2(CommanderVisuals.PORTRAIT_SIZE), "the bust is bust-sized")
+	assert_ne(
+		face.resource_path,
+		bust.resource_path,
+		"the chip is its own baked file, not a window onto the bust"
+	)
