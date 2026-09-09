@@ -1,6 +1,9 @@
 # The light model
 
-One sun, four flat tones per material, and a rim. This is what
+One sun, flat tones, and no blur anywhere. What a bust actually carries is
+sixteen of those tones and not a seventeenth: four of skin, six of the army,
+three of hair, two of gunmetal and the ink — so only skin spends a full four
+bands, and the rim is a chroma rung the coat alone kicks with. This is what
 `portraitgen/light.py` owns and what every painted layer asks it for; the head
 in `portraitgen/head.py` is the first caller and the shape of the rest.
 
@@ -18,9 +21,12 @@ obeys the same rule from `portraitgen/canvas.py` — the figure's silhouette at
 of 0.01 — rectangles on the bust's own 110x134 grid, the ones
 `tests/unit/test_commander_portraits.gd` measures the shipped sheet with.
 
-## Four tones, built rather than typed
+## Ramps, built rather than typed
 
-`Ramp.of_material(base)` returns `deep`, `shade`, `base`, `lit` and `rim`.
+`Ramp.of_material(base)` returns `deep`, `shade`, `base`, `lit` and `rim` —
+more rungs than most materials are allowed to spend, so a material that cannot
+afford one quantises onto the rung above it (`palette.SKIN_SLOTS` /
+`HAIR_SLOTS` and the gunmetal's two are where that is decided).
 Values step on one authored ladder as multiples of the base's own luma; the
 chroma over it is ported from `generators/sprites/spritegen/palette.py`:
 saturation peaks in the middle and collapses toward the light, the two shadow rungs mix toward one
