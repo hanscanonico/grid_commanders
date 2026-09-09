@@ -32,8 +32,9 @@ KINDS = frozenset({"bars", "burst", "grid", "halftone", "rays", "speed", "wedge"
 # Which rung of the army's ramp each part of the window is painted in. A band
 # is a tone off the ramp, never an alpha wash over the field: a wash was what
 # the retired bake's soft edges hid, and at sixteen tones it is a colour the
-# bust does not have. The field is the shadow rung — a band under the coat that stands in
-# front of it on every army, Iron included — and the two treatments step DOWN
+# bust does not have. The field is the shadow rung — a band under the coat
+# that stands in front of it on every army, Iron included — and the two
+# treatments step DOWN
 # from it, so a window can only ever be darker than the general in it.
 FIELD_SLOT = S_SHADOW
 LATTICE, ACCENT = S_UNDER, S_CONTOUR

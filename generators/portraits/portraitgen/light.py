@@ -6,12 +6,12 @@ Every material is painted out of four named flat tones — deep, shade, base, li
 — plus a rim; no band is an alpha wash over a fill, which is what keeps a
 finished raster inside its colour budget.
 
-A ramp is BUILT rather than typed out, the way the sprite sheet's own
-palette builds a faction ramp: one authored value ladder, and one shared chroma shape over every
-rung of it — chroma peaking in the middle, hue rotating toward the sky in the
-shadow bands and toward the sun in the lit one, the shadow bands mixed toward a
-single cool ambient. Six literal hexes per material drift into the same hue at
-six brightnesses, which is the flattest a ramp can be.
+A ramp is BUILT rather than typed out, the way the sprite sheet's own palette
+builds a faction ramp: one authored value ladder, and one shared chroma shape
+over every rung of it — chroma peaking in the middle, hue rotating toward the
+sky in the shadow bands and toward the sun in the lit one, the shadow bands
+mixed toward a single cool ambient. Six literal hexes per material drift into
+the same hue at six brightnesses, which is the flattest a ramp can be.
 
 Nothing here blurs. The occlusion band is a hard offset of a mask, because the
 design system's shadows are `4px 4px 0` with zero blur and a gradient is the one
@@ -40,7 +40,8 @@ from .canvas import Point
 from .palette import RGB
 
 # The key, in portrait space: x right, y down, so the sun sits up and to the
-# left. The sprite sheet's own sun (generators/sprites) lights the board from the same corner.
+# left. The sprite sheet's own sun (generators/sprites) lights the board from
+# the same corner.
 KEY = (-0.64, -0.77)
 # Which way everything the key does not reach falls — away from it, so down and
 # to the right, on every bust, mirrored poses included. Derived from the key
