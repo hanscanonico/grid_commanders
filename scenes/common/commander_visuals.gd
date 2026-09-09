@@ -70,22 +70,23 @@ const PORTRAIT_SIZE := Vector2i(110, 134)
 const FACE_SIZE := Vector2i(31, 31)
 const EMBLEM_PX := 64
 ## The square of a portrait that holds the head — hair, headwear, both ears and
-## the jaw — for all twenty-two generals. A portrait is a framed window with the
-## bust breaking out of its top, so the head's centre sits well above the
-## image's: a square covering the whole portrait spends a third of itself on
-## chest, and one fitting the portrait whole leaves the head at half the field.
+## the jaw — for all twenty-two generals. Because the bust breaks out of the
+## frame's top, the head's centre sits well above the image's: a square covering
+## the whole portrait spends a third of itself on chest, and one fitting the
+## portrait whole leaves the head at half the field.
 ##
-## Restated once for the pixel grid the busts are drawn on: the same square as
-## before, on a raster half the size, with its origin and its side chosen so that
-## the chip grid divides it exactly too — the generator rasterises this rectangle
-## coarsely to bake `FACE_DIR`, and a rectangle that did not divide would put the
-## chip half a pixel off the bust's own head. `generators/portraits` reads this
-## constant out of this file and measures every general's chin against it.
+## The rectangle moved once, when the busts came onto `PORTRAIT_SIZE`'s grid. It
+## is not the old square rescaled: origin and side were chosen fresh so that both
+## the bust grid and the coarser chip grid divide it exactly — the generator
+## rasterises this rectangle coarsely to bake `FACE_DIR`, and a rectangle that
+## did not divide would put the chip half a pixel off the bust's own head.
+## `generators/portraits` reads this constant out of this file and measures every
+## general's chin against it.
 ##
-## Geometry moves, never the rectangle: a bust whose jaw crosses the bottom edge
-## is redrawn, because the HUD chip, the speech bust and the campaign brief all
-## read the same square. Hair breaking over the top edge is deliberate and is the
-## portrait's own composition.
+## From here the rule is what it always was — geometry moves, the rectangle does
+## not: a bust whose jaw crosses the bottom edge is redrawn, because the HUD chip,
+## the speech bust and the campaign brief all read the same square. Hair breaking
+## over the top edge is deliberate and is the portrait's own composition.
 const FACE_REGION := Rect2i(9, 15, 93, 93)
 ## The smallest field that can show a whole bust, in screen pixels, now that the
 ## art is drawn at whole texels or not at all: the drawing's full width, and
