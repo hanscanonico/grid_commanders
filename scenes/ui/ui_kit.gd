@@ -600,9 +600,10 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 	return chip
 
 
-## The one bust every surface that shows a commander is built from: a
-## `CommanderBust` of `size`, already bound. Which of the two drawings a field
-## shows is not the caller's — it is the field's own answer over its shape.
+## The kit's entry point to `CommanderBust`: one of `size`, already bound. What
+## the field draws from there — which of the two drawings, at which whole-number
+## rung, where in the band — is `scenes/ui/commander_bust.gd`'s answer, never a
+## caller's.
 static func commander_bust(commander: CommanderType, size: Vector2, tint: Color) -> CommanderBust:
 	var field := CommanderBust.new(size)
 	field.bind(commander, tint)
