@@ -1,17 +1,20 @@
 """The minimum feature gauge: the smallest mark this grid is allowed to hold.
 
-Nothing on a bust is thinner than two texels, because one texel of a detail
-tone laid diagonally is not a line — it is a dotted run of specks, which is how
-a monocle chain, a headset cable and a row of stitching all arrived.
+Not "nothing is thinner than two texels": the two lighter ink weights are one
+texel on this grid on purpose (`canvas.pen`), and quantising a band edge leaves
+one-texel runs down every silhouette on the sheet. What the gauge bars is the
+one-texel *speck* — a detail tone laid diagonally is not a line, it is a dotted
+run of them, which is how a monocle chain, a headset cable and a row of
+stitching all arrived.
 
 The rule has an authored half and a measured one. **Authored**: a run that has
 to read as a line is drawn `Canvas.ribbon` — two texels, a lit core against an
-inked edge — or it is cut. That is the whole of it; a bar cannot measure it,
-because quantising a band edge leaves one-texel runs down every silhouette on
-the sheet. **Measured**: `despeckle` sweeps what the rasteriser left behind — a
-cluster too small to hold a `GAUGE`-square and no bigger than `MAX_ORPHAN`
-takes whichever tone borders it most. It invents no colour and settles to a
-fixed point, so two runs of it are the same bytes.
+inked edge — or it is cut. No bar measures that half, for the two reasons
+above. **Measured**: no orphan cluster smaller than the gauge survives the
+bake. `despeckle` sweeps what the rasteriser left behind — a cluster too small
+to hold a `GAUGE`-square and no bigger than `MAX_ORPHAN` takes whichever tone
+borders it most. It invents no colour and settles to a fixed point, so two runs
+of it are the same bytes.
 
 **Nothing is a border tone, and that is the silhouette half of the sweep.** A
 speck sitting off the outline is bordered mostly by the transparent ground, so

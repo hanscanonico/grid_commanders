@@ -173,8 +173,11 @@ already were.
   inverted one and a window at L49 is under every dark cap and every dark skin
   on the sheet. Both are spent **inside** the sixteen: `bust_palette` reads
   this same function, so the allowed set moved and the cap did not.
-- **Nothing thinner than two texels** (`portraitgen/gauge.py`). The board draws
-  no one-texel dotted line and neither does a bust. A run that has to read as a
+- **No orphan smaller than the gauge** (`portraitgen/gauge.py`). Not "nothing
+  thinner than two texels": the two lighter ink weights are one texel on this
+  grid (the bullet below), and a quantised band edge leaves one-texel runs down
+  every silhouette. What is barred is the one-texel *speck* — the board draws
+  no dotted line and neither does a bust. A run that has to read as a
   line — a chain, a cable, a lanyard, a strand of bullion — is drawn
   `Canvas.ribbon` rather than `Canvas.stroke`: two texels, a core against an
   inked edge. Anything that cannot afford two is cut instead, which is what
@@ -221,7 +224,7 @@ it comes from and no table names its own vocabulary twice.
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
 | `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair | `eyes(…, scale=)`, `brow`, `nose`, `nose_shape`, `mouth`, `facial_hair`, `earring`, `freckles`, `Frame`, `eye_xs`, `ringed_ellipse` |
 | `portraitgen/accessories.py` | the worn accessories: headwear, eyewear, the scar | `ACCESSORY_KINDS`, `Worn`, `accessory(…, tint=, kicker=)`, `covered_eye` |
-| `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |
+| `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)` |
 | `portraitgen/uniform.py` | shoulders, collar cut, chest treatment, rank pip | `COLLAR_CUTS`, `CHEST_TREATMENTS`, `draw(canvas, faction, collar, ramp)`, `chest(canvas, treatment, faction, ramp)`, `pip(canvas, ramp)` |
 | `portraitgen/props.py` | the 22 signature props and their rigs | `PROPS`, `SHOULDERED`, `RIGHT_LIMIT`, `draw(canvas, key, faction, ramp, layer=)` |
 | `portraitgen/backdrop.py` | the window field, the treatment, the ink frame | `KINDS`, `FIELD_SLOT`, `LATTICE`, `ACCENT`, `field`, `treatment`, `frame`, `draw(canvas, kind, faction)` |
