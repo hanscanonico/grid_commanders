@@ -120,20 +120,52 @@ capture_args=(--path . scenes/battle/battle.tscn -- "--screenshot=$work/shots/fr
 sweep_args=(--path . scenes/battle/battle.tscn -- "--shots-dir=$work/shots")
 
 # 1. A human's launch: tty, so the engine runs here whatever else is true.
-# The terminal has to be fabricated — `make` gives this script pipes — and
-# python's pty is the one way to do that from inside a pipeline.
+# The terminal has to be fabricated — `make` gives this script pipes — so the
+# launch gets a pty on all three descriptors and is waited on by pid.
+# `pty.spawn` would be the short spelling and is not usable: on macOS's system
+# python it never returns from a child that exited without printing, which
+# hangs the gate rather than failing it.
+cat >"$work/tty_launch.py" <<'EOF'
+import os
+import pty
+import subprocess
+import sys
+import threading
+
+master, slave = pty.openpty()
+child = subprocess.Popen(sys.argv[1:], stdin=slave, stdout=slave, stderr=slave)
+os.close(slave)
+
+
+def drain() -> None:
+	try:
+		while os.read(master, 1024):
+			pass
+	except OSError:
+		pass
+
+
+threading.Thread(target=drain, daemon=True).start()
+try:
+	sys.exit(child.wait(60))
+except subprocess.TimeoutExpired:
+	child.kill()
+	sys.exit(124)
+EOF
+
 if [[ "$(uname)" == "Darwin" ]] && command -v python3 >/dev/null 2>&1; then
 	case_name="tty launch runs the engine directly"
 	case_failures=0
 	: >"$FAKE_ENGINE_ARGV"
 	: >"$FAKE_DOCKER_ARGV"
-	PATH="$fake_bin:$PATH" python3 -c \
-		'import pty,sys; pty.spawn(sys.argv[1:])' \
+	PATH="$fake_bin:$PATH" python3 "$work/tty_launch.py" \
 		"$launcher" "${capture_args[@]}" >/dev/null 2>&1
+	status=$?
 	engine_argv="$(cat "$FAKE_ENGINE_ARGV")"
 	docker_argv="$(cat "$FAKE_DOCKER_ARGV")"
 	expect_engine_ran
 	expect_no_docker
+	((status == 0)) || fail "the launcher exited $status instead of the engine's 0"
 	pass
 fi
 

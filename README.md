@@ -155,8 +155,8 @@ run asks for a new manifest instead of crying wolf.
 A capture launched by a script or an agent does not open that window at all: it renders inside a
 Linux container — a virtual display and a software Vulkan driver, with the official Linux arm64
 build of the same engine version — so nothing flashes across the desktop. Build the image once with
-`make capture-image` (Docker with a linux/arm64 daemon; the first capture after that imports the
-project into the container's own cache, which takes minutes and says so). Nothing else changes:
+`make capture-image` (Docker with a linux/arm64 daemon; the first capture after that spends one
+extra pass importing the project into the container's own cache, and says so). Nothing else changes:
 `make smoke`, `make screenshot` and their siblings keep their names, flags and outputs.
 `tools/godot_gui.sh` picks the renderer, and it never builds the image — with no Docker CLI, no
 daemon answering or no image built it prints one line saying which, and falls back to the windowed

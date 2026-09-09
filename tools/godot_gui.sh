@@ -106,7 +106,7 @@ exec_in_container() {
 	# and sound missing, which reads as a hang rather than as a cold cache.
 	if ! docker run --rm -v "$volume:/cache" --entrypoint test \
 		"$GODOT_CAPTURE_IMAGE" -d /cache/imported; then
-		echo "godot_gui: importing the project into the capture cache (first run, minutes)" >&2
+		echo "godot_gui: importing the project into the capture cache (first run on this checkout)" >&2
 		docker run --rm "${mounts[@]}" -w "$repo_dir" "$GODOT_CAPTURE_IMAGE" \
 			--headless --path "$repo_dir" --import >&2
 	fi
