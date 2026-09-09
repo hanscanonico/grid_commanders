@@ -68,8 +68,11 @@ const NEUTRAL_PORTRAIT_PATH := "res://assets/portraits/commanders/none.png"
 ## The grid the busts are pixelled on, not a canvas they are drawn large on and
 ## shrunk into. Taller than it is wide: a bust breaks out of the top of its
 ## frame, so it composes onto a faction-coloured field rather than filling one.
-## The bake checks each rasterised image against this and fails loudly on a
-## mismatch, so changing the drawing's grid cannot silently pass by.
+## This and `FACE_SIZE` are hand-written here and derived from a divisor in the
+## generator, so both are pinned from both ends: the generator's suite scrapes
+## them out of this file (`generators/portraits/tests/test_metrics.py`), and the
+## engine's suite measures the installed PNGs against them
+## (`tests/unit/test_commander_portraits.gd`).
 const PORTRAIT_SIZE := Vector2i(110, 134)
 ## The face chip's own grid: `FACE_REGION` repainted by the generator at the
 ## chip's coarser divisor rather than cut out of the bust (`face_for`).

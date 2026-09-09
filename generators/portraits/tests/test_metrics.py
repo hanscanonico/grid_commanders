@@ -14,6 +14,7 @@ twenty-three rasters.
 from __future__ import annotations
 
 import itertools
+import re
 import unittest
 from collections import Counter
 from functools import lru_cache
@@ -21,11 +22,13 @@ from functools import lru_cache
 from PIL import Image, ImageChops
 
 from portraitgen import bust, features, head, light, palette, props, roster, uniform
+from game import VISUALS, scrape
 from painted import painted
 from portraitgen.canvas import (
     BUST_DIVISOR,
     BUST_SIZE,
     CHIP_DIVISOR,
+    CHIP_SIZE,
     Canvas,
     SkullBox,
     face_box,
@@ -113,6 +116,13 @@ def _chip(key: str) -> list[int]:
     return [1 if level else 0 for level in mask.get_flattened_data()]
 
 
+def _game_size(name: str) -> tuple[int, int]:
+    """A `Vector2i` constant of `commander_visuals.gd`, as (width, height)."""
+    pattern = re.compile(rf"const {name} := Vector2i\((\d+),\s*(\d+)\)")
+    width, height = scrape(VISUALS, pattern).groups()
+    return (int(width), int(height))
+
+
 def _iou(first: list[int], second: list[int]) -> float:
     over = sum(1 for a, b in zip(first, second) if a and b)
     union = sum(1 for a, b in zip(first, second) if a or b)
@@ -120,13 +130,31 @@ def _iou(first: list[int], second: list[int]) -> float:
 
 
 class TheRasterIsWhatTheGamePins(unittest.TestCase):
-    """M8, first half: the bake fails loudly on a size mismatch, so it is held
-    here before it can reach the engine."""
+    """M8, first half: the grid the game hand-writes, read out of the game.
+
+    `CommanderVisuals.PORTRAIT_SIZE` and `FACE_SIZE` are typed on one side of
+    the pipeline and derived from a divisor on the other, so this is where the
+    two are compared — scraped out of `commander_visuals.gd` the way
+    `test_face_region.py` scrapes `FACE_REGION`, and measured on what
+    `bust.paint` and `bust.chip` emit. `test_installed_art.py` holds the other
+    end, on the PNGs under `assets/`.
+    """
+
+    def test_the_generator_paints_the_grid_the_game_names(self):
+        self.assertEqual(BUST_SIZE, _game_size("PORTRAIT_SIZE"))
+        self.assertEqual((CHIP_SIZE, CHIP_SIZE), _game_size("FACE_SIZE"))
 
     def test_every_bust_is_the_pinned_raster(self):
+        pinned = _game_size("PORTRAIT_SIZE")
         for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
-                self.assertEqual(painted(key).size, BUST_SIZE)
+                self.assertEqual(painted(key).size, pinned)
+
+    def test_every_chip_is_the_pinned_square(self):
+        pinned = _game_size("FACE_SIZE")
+        for key, spec in bust.sheet_rows():
+            with self.subTest(commander=key):
+                self.assertEqual(bust.chip(spec).size, pinned)
 
 
 class TheShadowIsDrawn(unittest.TestCase):
