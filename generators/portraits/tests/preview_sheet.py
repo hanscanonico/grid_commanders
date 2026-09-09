@@ -105,7 +105,7 @@ def bust(
     """
     theme = faction_by_key(faction)
     cloth = light.Ramp.of_faction(theme.key)
-    skin = light.build_ramp(SKIN)
+    skin = light.Ramp.of_material(SKIN)
 
     figure = Canvas()
     figure.polygon(SHOULDER, cloth.base)
@@ -301,7 +301,7 @@ def _army(key: str) -> str:
 
 def _features_hair(out: Path) -> list[Path]:
     """Every eye, brow, nose, mouth, beard, accessory and hairstyle, once."""
-    skin = light.build_ramp(SKIN)
+    skin = light.Ramp.of_material(SKIN)
     mane = hair.ramp_for("brown")
     return [_write(out / "features_hair.png", _grid(_worn(skin, mane)))]
 

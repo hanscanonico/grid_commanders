@@ -439,10 +439,10 @@ def ramp_for(colour: str) -> Ramp:
     """The tones a hair colour is painted in, its own lit rung as its kicker.
 
     Hair is given three rungs on a sixteen-tone bust and a rim is not one of
-    them, so `light.build_ramp` hands it back its own lit tone — see the rim
+    them, so `light.Ramp.of_material` hands it back its own lit tone — see the rim
     note there for why the army's rung is no longer what a mane kicks with.
     """
-    return light.build_ramp(HAIR_BASES[colour])
+    return light.Ramp.of_material(HAIR_BASES[colour])
 
 
 def _stands_off(tone: RGB, skin: Ramp) -> bool:

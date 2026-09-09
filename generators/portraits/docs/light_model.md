@@ -20,7 +20,7 @@ of 0.01, the rectangles and the floor
 
 ## Four tones, built rather than typed
 
-`build_ramp(base)` returns `deep`, `shade`, `base`, `lit` and `rim`.
+`Ramp.of_material(base)` returns `deep`, `shade`, `base`, `lit` and `rim`.
 Values step on one authored ladder as multiples of the base's own luma; the
 chroma over it is ported from `generators/sprites/spritegen/palette.py`:
 saturation peaks in the middle and collapses toward the light, the two shadow rungs mix toward one

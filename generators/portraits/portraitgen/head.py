@@ -32,7 +32,7 @@ from .palette import INK, RGB
 JAWS = frozenset({"round", "square", "tapered"})
 
 # The five skins the roster picks from, as the handoff wrote them. They live
-# beside the head because the head is what paints skin; `light.build_ramp`
+# beside the head because the head is what paints skin; `light.Ramp.of_material`
 # turns one into the four tones a face is painted in.
 SKIN_BASES: dict[str, RGB] = {
     "dark": (138, 90, 60),
@@ -186,7 +186,7 @@ def _flat(canvas: Canvas, tone: RGB) -> Image.Image:
 
 def ramp_for(skin: str) -> Ramp:
     """The four tones a skin tone is painted in."""
-    return light.build_ramp(SKIN_BASES[skin])
+    return light.Ramp.of_material(SKIN_BASES[skin])
 
 
 def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) -> None:

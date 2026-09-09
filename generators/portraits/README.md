@@ -182,7 +182,7 @@ default.
 | --- | --- | --- |
 | `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `divisor`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen` |
 | `portraitgen/gauge.py` | the smallest mark this grid holds, and the sweep | `GAUGE`, `MAX_ORPHAN`, `clusters`, `holds_gauge`, `is_orphan`, `despeckle` |
-| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `Ramp.of_faction(key)`, `build_ramp(base)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
+| `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `Ramp.of_faction(key)`, `Ramp.of_material(base)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
 | `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `Worn`, `accessory(…, tint=, kicker=)`, `covered_eye`, `earring`, `freckles` |
 | `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |

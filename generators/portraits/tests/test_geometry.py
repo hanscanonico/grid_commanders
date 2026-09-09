@@ -60,7 +60,7 @@ def _mean_luminance(image: Image.Image, patch: tuple[int, int, int, int]) -> flo
 
 
 def _skin_ramp() -> light.Ramp:
-    return light.build_ramp(SKIN)
+    return light.Ramp.of_material(SKIN)
 
 
 def _tones(ramp: light.Ramp) -> set[tuple[int, ...]]:

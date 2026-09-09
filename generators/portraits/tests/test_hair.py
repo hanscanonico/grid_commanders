@@ -32,8 +32,8 @@ INK_SLACK = 5
 PITCH = BUST_DIVISOR
 # How near the highest row a column has to reach to count as one of the curls.
 CREST_BAND = 2
-MANE = light.build_ramp((90, 60, 40))
-SKIN = light.build_ramp(preview_sheet.SKIN)
+MANE = light.Ramp.of_material((90, 60, 40))
+SKIN = light.Ramp.of_material(preview_sheet.SKIN)
 NAMED = {INK, MANE.deep, MANE.shade, MANE.base, MANE.lit, MANE.rim}
 # The styles that are a cap of hair rather than a scalp: `bald` has no mass for
 # a lobe to lie on, and nothing over the crown to cast a fringe.

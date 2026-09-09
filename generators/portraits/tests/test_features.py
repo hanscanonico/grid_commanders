@@ -33,8 +33,8 @@ SKULL = Skull(1.0, "round", 0.0, 1.0)
 FRAME = features.Frame.of(SKULL)
 # P3: the width an open mouth owes, in eye widths.
 MOUTH_SPAN = 2.2
-HAIR = light.build_ramp((90, 60, 40))
-SKIN = light.build_ramp(preview_sheet.SKIN)
+HAIR = light.Ramp.of_material((90, 60, 40))
+SKIN = light.Ramp.of_material(preview_sheet.SKIN)
 # The tones a face may be painted in: the two ramps it is handed, plus the kit
 # colours the module owns. Nothing else may reach the canvas.
 NAMED = {

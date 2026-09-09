@@ -253,7 +253,7 @@ def _general(on: Canvas, face: Face) -> Canvas:
     """One general's figure, unposed: the five layers and which of them turn."""
     army = _faction(face)
     cloth = _cloth(army)
-    skin = light.build_ramp(head.SKIN_BASES[face.skin])
+    skin = light.Ramp.of_material(head.SKIN_BASES[face.skin])
     mane = hair.ramp_for(face.hair)
 
     behind_prop, front_prop = _prop_layers(on, face, army, cloth)
@@ -310,7 +310,7 @@ def palette_of(spec: Face | EmptySeat) -> tuple[tuple[int, int, int], ...]:
     """The sixteen tones this bust is painted in, before a pixel is drawn."""
     army = _army_of(spec)
     if isinstance(spec, Face):
-        skin = light.build_ramp(head.SKIN_BASES[spec.skin]).six
+        skin = light.Ramp.of_material(head.SKIN_BASES[spec.skin]).six
         mane = hair.ramp_for(spec.hair).six
     else:
         skin = mane = _cloth(army).six

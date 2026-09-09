@@ -4,7 +4,7 @@ A collar is only worth having if it changes the outline at chip size, so the two
 checks here are the two the reviews asked for — the cuts differ at 31px, and no
 chest treatment need be worn by more than two of the twenty-two.
 
-The ramp is a stand-in: `light.build_ramp` lands with the light model, and this
+The ramp is a stand-in: `light.Ramp.of_material` lands with the light model, and this
 module only ever reads the four tones and the rim off whatever it is handed.
 """
 

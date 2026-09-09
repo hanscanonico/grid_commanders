@@ -147,6 +147,26 @@ class Ramp:
         match."""
         return cls(palette.faction_ramp(key))
 
+    @classmethod
+    def of_material(cls, base: RGB) -> Ramp:
+        """A material's four bands from its base colour.
+
+        The ladder is this sheet's — a contour rung under four bands keyed off
+        the base's own luma — and the shaper is the board's
+        (`palette.build_ramp`), so a general's coat is lit by the same sun and
+        mixed toward the same sky as the tank outside the window.
+
+        **A material built here has no rim of its own: it kicks in its own lit
+        rung.** Skin and hair are given four and three rungs on a sixteen-tone
+        bust and a rim is not one of them, so the kicker along their shadow edge
+        has to be a tone the bust already spends. It used to be the army's: a
+        near-white line down an Iron general's jaw, a mint one down a Verdant
+        general's neck — a hue the face does not own, laid one texel from the ink
+        that outlines the same edge, which is the fleck halo the review read off
+        five busts.
+        """
+        return cls(_material_rungs(base))
+
     @property
     def deep(self) -> RGB:
         return self.six[palette.S_UNDER]
@@ -176,31 +196,15 @@ class Ramp:
 
 
 @lru_cache(maxsize=None)
-def build_ramp(base: RGB) -> Ramp:
-    """A material's rungs from its base colour, rim included.
-
-    The ladder is this sheet's — a contour rung under four bands keyed off the
-    base's own luma — and the shaper is the board's (`palette.build_ramp`), so
-    a general's coat is lit by the same sun and mixed toward the same sky as
-    the tank outside the window.
-
-    **A material built here has no rim of its own: it kicks in its own lit
-    rung.** Skin and hair are given four and three rungs on a sixteen-tone bust
-    and a rim is not one of them, so the kicker along their shadow edge has to
-    be a tone the bust already spends. It used to be the army's: a near-white
-    line down an Iron general's jaw, a mint one down a Verdant general's neck —
-    a hue the face does not own, laid one texel from the ink that outlines the
-    same edge, which is the fleck halo the review read off five busts.
-
-    Cached because a bust asks for the same handful of ladders on every layer
-    it paints.
-    """
+def _material_rungs(base: RGB) -> palette.Ramp6:
+    """The six rungs `Ramp.of_material` is a view onto. Cached because a bust
+    asks for the same handful of ladders on every layer it paints."""
     lum = palette.luminance(base)
     rim_target = lum + (255.0 - lum) * _RIM_HEADROOM
     ladder = (*(min(lum * step, _LIT_CEILING) for step in _LADDER), rim_target)
     six = list(palette.build_ramp(base, ladder))
     six[palette.S_RIM] = six[palette.S_TOP]
-    return Ramp(tuple(six))
+    return tuple(six)
 
 
 def shade_kind(crown: float, width: float) -> str:
