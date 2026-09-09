@@ -101,9 +101,9 @@ Pillow alone, pinned at both ends (`requirements.txt`), drawing **at 1x** onto
 the grid the file is baked at. The only other thing this package needs is the
 sibling instrument it shares a palette with: `portraitgen/palette.py` loads
 `generators/sprites/spritegen/palette.py` — stdlib-only — straight off its
-path, so a bust and a tank come off one set of ramps. `ImageDraw` has no antialiasing of its own, and
-nothing here adds any: a bust is hard-edged because every mark is rasterised on
-the raster it ships as.
+path, so a bust and a tank come off one set of ramps. `ImageDraw` has no
+antialiasing of its own, and nothing here adds any: a bust is hard-edged
+because every mark is rasterised on the raster it ships as.
 
 Every module states its geometry in one **design space** — 220x268, the
 handoff's viewBox doubled — and `portraitgen/canvas.py` divides it onto a grid:
