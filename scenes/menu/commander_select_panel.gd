@@ -426,8 +426,9 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	button.add_child(content)
 
 	# The tile states no size of its own — the row gives it the width and what is
-	# left over under the name band — so the kit draws the general whole and
-	# covered here, filling whatever band the row hands over.
+	# left over under the name band — so the kit measures the band it is handed a
+	# frame late and, at a tile this small, draws the baked face chip at a whole
+	# rung rather than a bust nothing here could hold.
 	var stage := UiKit.commander_bust(commander, Vector2.ZERO, theme.color)
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(stage)

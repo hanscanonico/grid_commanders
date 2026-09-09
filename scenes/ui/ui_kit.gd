@@ -691,7 +691,13 @@ static func _place_bust(field: Panel) -> void:
 	if art == null:
 		return
 	var shape := field.size.max(field.custom_minimum_size)
-	var commander := field.get_meta(_BUST_COMMANDER, null) as CommanderType
+	# `set_meta(name, null)` erases the entry rather than storing a null, so a
+	# field bound to no general — the card and the HUD chip are both built that
+	# way and bound later — has no meta at all. It draws the empty seat until it
+	# is bound, which is what `portrait_for`/`face_for` answer for a null.
+	var commander: CommanderType = null
+	if field.has_meta(_BUST_COMMANDER):
+		commander = field.get_meta(_BUST_COMMANDER) as CommanderType
 	if CommanderVisuals.fits_whole_bust(shape):
 		art.texture = CommanderVisuals.portrait_for(commander)
 	else:

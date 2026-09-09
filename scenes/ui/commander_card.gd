@@ -42,19 +42,30 @@ const _MICRO_INK := Color(0.408, 0.443, 0.471)
 ## 18, and a name band is neither — it is the card's face, read before the rules
 ## under it. Named here like the two full-screen pages name their own titles.
 const _NAME_SIZE := 12
-## The portrait band, public because a surface that frames this card checks its
-## own layout against it — a card showing less than its face is showing nothing.
-## Deliberately not raised to hold the whole 110x134 bust: the four-army info
-## sheet frames a 242-256px card in 119px, so it already scrolls and every pixel
-## added here is a pixel of the Command Power block pushed out of it — and that
-## same 119 is the ceiling the sheet's own layout check holds this constant
-## under, which the drawing's own height does not fit beneath (measured on
-## commander_info, 2026-08-25). So this band is a chip surface: the 31px face
-## chip at a whole-number rung, plus one texel of air under it — the band's own
-## padding on the same grid as the art in it, rather than a spare pixel or two.
+## The two portrait bands a card can be built with, public because a surface
+## that frames one checks its own layout against the band it asked for — a card
+## showing less than its face is showing nothing.
+##
+## `WHOLE_BUST_BAND` is the drawing's own height, and the default: every card is
+## at least `MIN_WIDTH` across, so the field holds `CommanderVisuals`'
+## `WHOLE_BUST_FIELD` and `UiKit._place_bust` draws the whole bust at one texel
+## to one pixel, centred and uncropped. This band is the card's face and it
+## shows the general as drawn.
+##
+## `CHIP_BAND` is for a surface with no room for that: the 31px face chip at a
+## whole-number rung, plus one texel of air under it — the band's own padding on
+## the same grid as the art in it, rather than a spare pixel or two. The
+## commander info sheet is the one caller that asks for it, because on a 360px
+## screen it shows a card 102px tall (measured on `commander_info`, 2026-09-09)
+## and a bust band there would have the chin cut off by the scroll frame.
+const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
 const _CHIP_ZOOM := 3
 const _BAND_AIR_TEXELS := 1
-const PORTRAIT_H := (CommanderVisuals.FACE_SIZE.y + _BAND_AIR_TEXELS) * _CHIP_ZOOM
+const CHIP_BAND := (CommanderVisuals.FACE_SIZE.y + _BAND_AIR_TEXELS) * _CHIP_ZOOM
+
+## Which of the two this card shows. Set it before the card enters the tree; a
+## card asked for nothing draws the general whole.
+var portrait_h: int = WHOLE_BUST_BAND
 ## The faction badge pinned into the band's top-left corner, and the inset it sits
 ## at. Card-local like the geometry above it, not a missing shell token: the design
 ## system sizes widgets rather than pins on art, and its smallest icon
@@ -103,9 +114,9 @@ func _build() -> void:
 	# The kit's bust is a plain Panel, not a PanelContainer: the latter force-
 	# stretches every child to fill it, which would blow the little emblem pinned
 	# into the corner up over the whole portrait. The band names no width, so it
-	# takes the card's, and the kit reads the height against the art: too short
-	# for the drawing's jaw, so the card shows the baked face chip.
-	_field = UiKit.commander_bust(null, Vector2(0, PORTRAIT_H), UiKit.NO_FIELD)
+	# takes the card's, and the kit reads the height against the art: the whole
+	# bust at `WHOLE_BUST_BAND`, the baked face chip at `CHIP_BAND`.
+	_field = UiKit.commander_bust(null, Vector2(0, portrait_h), UiKit.NO_FIELD)
 	rows.add_child(_field)
 
 	_emblem = TextureRect.new()
