@@ -92,7 +92,8 @@ class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
         cell = blank_cell()
         accessories.accessory(cell, SKULL, kind)
         box = cell.image.getbbox()
-        assert box, f"{kind} drew nothing"
+        if box is None:
+            raise AssertionError(f"{kind} drew nothing")
         return tuple(value * cell.divisor for value in box)
 
     def test_the_service_cap_hangs_a_peak_the_field_cap_has_not_got(self):

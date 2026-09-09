@@ -42,7 +42,8 @@ _ALL_COLOURS = 1 << 20
 
 def _colours(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
     counted = image.getcolors(_ALL_COLOURS)
-    assert counted is not None, "the raster carries more colours than a sheet can"
+    if counted is None:
+        raise AssertionError("more colours than a sheet can carry")
     return counted
 
 

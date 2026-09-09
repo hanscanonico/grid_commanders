@@ -58,7 +58,8 @@ def _box_of(cell: Canvas, tone: tuple[int, int, int]) -> tuple[int, int, int, in
     ]
     mask = ImageChops.multiply(ImageChops.multiply(bands[0], bands[1]), bands[2])
     box = mask.getbbox()
-    assert box is not None, f"no {tone} on the canvas"
+    if box is None:
+        raise AssertionError(f"no {tone} on the canvas")
     return box
 
 

@@ -36,7 +36,8 @@ CHEEK_MOVED = {"iris_colt", "viktor_draeg"}
 
 def _tones(key: str) -> set[tuple[int, ...]]:
     counted = painted(key).convert("RGB").getcolors(1 << 16)
-    assert counted is not None
+    if counted is None:
+        raise AssertionError(f"more colours than {key}'s raster can carry")
     return {colour for _, colour in counted}
 
 

@@ -36,13 +36,15 @@ SPECS = {**roster.FACES, roster.NEUTRAL_ID: roster.NEUTRAL}
 
 
 def _opened(path: Path) -> Image.Image:
-    assert path.is_file(), f"{path} is not installed — run `make portraits`"
+    if not path.is_file():
+        raise AssertionError(f"{path} is not installed — run `make portraits`")
     return Image.open(path).convert("RGBA")
 
 
 def _counted(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
     counted = image.getcolors(1 << 16)
-    assert counted is not None, "more colours than a portrait can carry"
+    if counted is None:
+        raise AssertionError("more colours than a portrait can carry")
     return counted
 
 

@@ -66,7 +66,8 @@ def _hair_luminance(key: str) -> float:
         and pixels[x, y][3] >= OPAQUE
         and any(_is(pixels[x, y], tone) for tone in tones)
     ]
-    assert mass, f"{key} has no hair mass to measure"
+    if not mass:
+        raise AssertionError(f"{key} has no hair mass to measure")
     return statistics.median(mass)
 
 
