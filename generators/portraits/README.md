@@ -8,6 +8,10 @@ the **twenty-three 110x134 commander busts** — twenty-two generals and the emp
 seat — and the **twenty-three 31x31 face chips** the surfaces too small for a bust
 draw.
 
+The design of record for this art is the COM-269 entry in
+`.claude/rules/presentation.md` — read it before a decision about the grid, the
+palette or the ink.
+
 The busts are **pixel art**: authored on their own small grid, painted in
 sixteen tones, and drawn by the game at a whole-number scale with nearest
 sampling. Nothing is supersampled and nothing is resampled — what this tool

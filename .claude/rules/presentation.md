@@ -5,6 +5,7 @@ paths:
   - "assets/**"
   - "data/battle_anim/**"
   - "generators/sprites/**"
+  - "generators/portraits/**"
   - "export_presets.cfg"
   - "docs/sprite_legibility.md"
   - "docs/mobile_soak.md"
@@ -50,6 +51,12 @@ forms named in the root index are in `docs/design_record.md`.
   level between the rungs to sample. `EMBLEM_FILTER` is the one exception: a 64px badge drawn at 22
   has no whole rung under it, it is geometry rather than pixels, and its import keeps
   `mipmaps/generate=true`.
+  **The design system's three ink weights are two pens on this grid.** `canvas.INK_SILHOUETTE`
+  / `INK_FEATURE` / `INK_DETAIL` are 4/3/2 design units and `pen` floors them onto the bust at
+  2/1/1 pixels and onto the chip at 1/1/1, so feature and detail are the same single texel and
+  stay apart by tone rather than by width. The art was authored against those pens and is not
+  moving; `generators/portraits/tests/test_raster.py` measures all six so a change to the ladder
+  or a divisor is caught.
   **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
   and `UiKit._place_bust` draws it at exactly that, centred across the field and hung from its top,
   so a field too short clips the chest rather than showing half a texel. **What "too small for a
