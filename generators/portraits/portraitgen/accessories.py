@@ -169,6 +169,11 @@ _HEADSET_CUP: tuple[Point, ...] = (
     (68.0, 152.0),
     (52.0, 152.0),
 )
+# The cord out of the cup and the mic stud it ends on: the two marks that tell a
+# headset from a plain cup at chip size.
+_HEADSET_CORD: tuple[Point, ...] = ((56.0, 148.0), (48.0, 166.0), (80.0, 170.0))
+_HEADSET_STUD: Point = (82.0, 169.0)
+_HEADSET_STUD_RADII: Point = (4.8, 4.8)
 # The eyepatch: a plate over the eye it covers, in design units off that
 # eye's centre, and the strap that lands on the ear. The plate is one flat tone
 # all through: what the review read as a domino mask was the lit eye and the
@@ -225,8 +230,8 @@ class Worn:
         return path
 
 
-def _worn(points: tuple[Point, ...]) -> Callable[[Worn], list[Point]]:
-    """A piece of headwear that is nothing but one mass in faction cloth."""
+def _flat_piece(points: tuple[Point, ...]) -> Callable[[Worn], list[Point]]:
+    """A painter for headwear that is nothing but one mass in faction cloth."""
 
     def draw(worn: Worn) -> list[Point]:
         return worn.piece(points, worn.tint)
@@ -322,11 +327,14 @@ def _headset(worn: Worn) -> list[Point]:
     band = worn.path(_HEADSET_BAND)
     worn.ink(band, closed=False)
     cup = worn.piece(_HEADSET_CUP, worn.tint)
-    worn.canvas.ribbon(
-        worn.path([(56.0, 148.0), (48.0, 166.0), (80.0, 170.0)]), KIT, INK
-    )
+    worn.canvas.ribbon(worn.path(_HEADSET_CORD), KIT, INK)
     ringed_ellipse(
-        worn.canvas, worn.frame, (82.0, 169.0), (4.8, 4.8), worn.tint, INK_DETAIL
+        worn.canvas,
+        worn.frame,
+        _HEADSET_STUD,
+        _HEADSET_STUD_RADII,
+        worn.tint,
+        INK_DETAIL,
     )
     return [*band, *cup]
 
@@ -337,13 +345,13 @@ def _unworn(worn: Worn) -> list[Point]:
 
 
 _ACCESSORIES: dict[str, Callable[[Worn], list[Point]]] = {
-    "bandana": _worn(_BANDANA),
+    "bandana": _flat_piece(_BANDANA),
     "cap": _cap,
     "eyepatch": _eyepatch,
     "fieldcap": _fieldcap,
     "glasses": _glasses,
     "goggles": _goggles,
-    "headband": _worn(_HEADBAND),
+    "headband": _flat_piece(_HEADBAND),
     "headset": _headset,
     "hood": _hood,
     "none": _unworn,
