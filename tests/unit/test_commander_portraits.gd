@@ -1,6 +1,6 @@
 extends GutTest
 ## The commander art the game loads: that it is all there, at the pinned size,
-## imported with the mip chain, and lit from one side.
+## sampled the way the board is, drawn on whole texels, and lit from one side.
 ##
 ## Everything here reads a file under assets/portraits. The table the busts are
 ## drawn from lives in `generators/portraits` now and is linted by that
