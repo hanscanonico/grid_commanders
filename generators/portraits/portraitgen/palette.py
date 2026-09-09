@@ -74,9 +74,9 @@ class Faction:
 # carries the same six from the same source in bytes: the board ROUNDS the
 # floats and this module TRUNCATES them, the way Godot writes a `Color` into
 # `FORMAT_RGBA8`, so the two disagree by a unit on twenty-three of the
-# fifty-four channels. The committed emblems carry the truncated bytes — every one of the
-# five moves if this block is swapped for the board's — so the difference is
-# pinned by `tests/test_palette_mirror.py` rather than resolved.
+# fifty-four channels. The committed emblems carry the truncated bytes — every
+# one of the five moves if this block is swapped for the board's — so the
+# difference is pinned by `tests/test_palette_mirror.py` rather than resolved.
 FACTIONS: tuple[Faction, ...] = (
     Faction(
         "neutral",
