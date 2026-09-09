@@ -13,8 +13,9 @@ from __future__ import annotations
 import unittest
 
 import preview_sheet
+from cells import area_of, blank_cell, colours, opaque_count
 from portraitgen import hair, light, palette
-from portraitgen.canvas import BUST_DIVISOR, DESIGN_SIZE, Canvas
+from portraitgen.canvas import BUST_DIVISOR, Canvas
 from portraitgen.features import REFERENCE_BOX
 from portraitgen.head import Skull
 from portraitgen.palette import INK
@@ -45,22 +46,6 @@ PLATINUM = hair.ramp_for("platinum")
 # a whole pixel all the way round on the bust's own grid, which is a couple of
 # points on a small style like `short`.
 LOBE_SHARE = 0.27
-
-
-def _cell() -> Canvas:
-    return Canvas(DESIGN_SIZE)
-
-
-def _tally(cell: Canvas) -> list[tuple[int, tuple[int, int, int, int]]]:
-    return cell.image.getcolors(1 << 24)
-
-
-def _painted(cell: Canvas) -> int:
-    return sum(count for count, pixel in _tally(cell) if pixel[3] > 0)
-
-
-def _area_of(cell: Canvas, tone: tuple[int, int, int]) -> int:
-    return sum(count for count, pixel in _tally(cell) if pixel[:3] == tone)
 
 
 def _pixels_of(cell: Canvas, tone: tuple[int, int, int]) -> list[tuple[int, int]]:
@@ -118,15 +103,11 @@ def _crests(pixels: list[tuple[float, float]]) -> int:
     return 1 + sum(1 for near, far in zip(columns, columns[1:]) if far - near > PITCH)
 
 
-def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
-    return {pixel[:3] for _, pixel in _tally(cell) if pixel[3] > 0}
-
-
 class Combed(unittest.TestCase):
     """A style drawn on a bare canvas, which is where a tone is still itself."""
 
     def drawn(self, style: str, **kwargs) -> Canvas:
-        cell = _cell()
+        cell = blank_cell()
         hair.draw(cell, SKULL, style, MANE, **kwargs)
         return cell
 
@@ -135,22 +116,22 @@ class EveryStyleDraws(Combed):
     def test_every_combed_style_puts_hair_on_the_head(self):
         for style in COMBED:
             with self.subTest(style=style):
-                self.assertGreater(_painted(self.drawn(style)), 0)
+                self.assertGreater(opaque_count(self.drawn(style)), 0)
 
     def test_a_style_the_table_does_not_hold_raises(self):
         for call in (hair.draw, hair.back, hair.front):
             with self.subTest(call=call.__name__), self.assertRaises(KeyError):
-                call(_cell(), SKULL, "mohawk", MANE)
+                call(blank_cell(), SKULL, "mohawk", MANE)
 
     def test_the_mass_is_drawn_in_two_halves_that_add_up_to_the_whole(self):
-        behind, over = _cell(), _cell()
+        behind, over = blank_cell(), blank_cell()
         hair.back(behind, SKULL, "ponytail", MANE)
         hair.front(over, SKULL, "ponytail", MANE)
-        self.assertGreater(_painted(behind), 0)
-        self.assertGreater(_painted(over), 0)
+        self.assertGreater(opaque_count(behind), 0)
+        self.assertGreater(opaque_count(over), 0)
         self.assertEqual(
-            _painted(self.drawn("ponytail")),
-            _painted(_composed(behind, over)),
+            opaque_count(self.drawn("ponytail")),
+            opaque_count(_composed(behind, over)),
         )
 
 
@@ -165,13 +146,13 @@ class TheMassTakesOneLitLobe(Combed):
     def test_every_combed_style_carries_a_lit_lobe(self):
         for style in COMBED:
             with self.subTest(style=style):
-                self.assertGreater(_area_of(self.drawn(style), MANE.lit), 0)
+                self.assertGreater(area_of(self.drawn(style), MANE.lit), 0)
 
     def test_the_lobe_is_a_quarter_of_the_mass_at_most(self):
         for style in COMBED:
             with self.subTest(style=style):
                 cell = self.drawn(style)
-                share = _area_of(cell, MANE.lit) / _painted(cell)
+                share = area_of(cell, MANE.lit) / opaque_count(cell)
                 self.assertLessEqual(share, LOBE_SHARE)
 
     def test_the_lobe_is_one_shape_and_not_a_row_of_them(self):
@@ -185,10 +166,10 @@ class TheMassTakesOneLitLobe(Combed):
         # clusters took a band each, which is what striped every crown.
         for style in COMBED:
             with self.subTest(style=style):
-                cell = _cell()
+                cell = blank_cell()
                 hair.front(cell, SKULL, style, MANE)
                 mass = MANE.band(hair.declared_band(style))
-                self.assertEqual(_colours(cell) - {INK}, {mass, MANE.lit})
+                self.assertEqual(colours(cell) - {INK}, {mass, MANE.lit})
 
     def test_the_lobe_sits_on_the_side_the_key_is_fixed_to(self):
         # The light never moves, so the lobe belongs to the left of the mass on
@@ -203,10 +184,10 @@ class TheMassTakesOneLitLobe(Combed):
         self.assertGreater(palette.luminance(PLATINUM.base), hair.PALE_HAIR)
         for style in COMBED:
             with self.subTest(style=style):
-                cell = _cell()
+                cell = blank_cell()
                 hair.draw(cell, SKULL, style, PLATINUM)
-                self.assertGreater(_painted(cell), 0)
-                self.assertEqual(_area_of(cell, PLATINUM.lit), 0)
+                self.assertGreater(opaque_count(cell), 0)
+                self.assertEqual(area_of(cell, PLATINUM.lit), 0)
 
 
 class TheCloudSitsLowAndBroad(Combed):
@@ -255,8 +236,8 @@ class TheBobHemsInAnArc(Combed):
     def test_the_mass_takes_the_band_under_its_own_base(self):
         cell = self.drawn("bob")
         self.assertEqual(hair.declared_band("bob"), "shade")
-        self.assertGreater(_area_of(cell, MANE.shade), 0)
-        self.assertEqual(_area_of(cell, MANE.base), 0)
+        self.assertGreater(area_of(cell, MANE.shade), 0)
+        self.assertEqual(area_of(cell, MANE.base), 0)
 
     def test_the_hem_falls_to_the_chin(self):
         self.assertAlmostEqual(
@@ -277,28 +258,28 @@ class TheFringeShadesTheForehead(Combed):
     def test_the_band_is_painted_in_the_wearers_own_skin(self):
         lit = self.drawn("bob")
         shaded = self.drawn("bob", skin=SKIN)
-        self.assertEqual(_area_of(lit, SKIN.shade), 0)
-        self.assertGreater(_area_of(shaded, SKIN.shade), 0)
+        self.assertEqual(area_of(lit, SKIN.shade), 0)
+        self.assertGreater(area_of(shaded, SKIN.shade), 0)
 
     def test_a_scalp_has_no_fringe_to_cast_one(self):
-        self.assertEqual(_area_of(self.drawn("bald", skin=SKIN), SKIN.shade), 0)
+        self.assertEqual(area_of(self.drawn("bald", skin=SKIN), SKIN.shade), 0)
 
     def test_a_scalp_draws_no_fringe_pixels_of_its_own(self):
         # The two temple wisps this style used to carry read as horns on the
         # crown, so a bald head is a bald head.
-        self.assertEqual(_painted(self.drawn("bald", skin=SKIN)), 0)
+        self.assertEqual(opaque_count(self.drawn("bald", skin=SKIN)), 0)
 
 
 class HairIsPaintedInNamedTones(Combed):
     def test_no_tone_reaches_the_canvas_that_was_not_named(self):
         for style in sorted(hair.STYLES):
             with self.subTest(style=style):
-                self.assertEqual(_colours(self.drawn(style)) - NAMED, set())
+                self.assertEqual(colours(self.drawn(style)) - NAMED, set())
 
     def test_a_style_stays_inside_the_colour_budget(self):
         for style in sorted(hair.STYLES):
             with self.subTest(style=style):
-                self.assertLessEqual(len(_colours(self.drawn(style))), 48)
+                self.assertLessEqual(len(colours(self.drawn(style))), 48)
 
 
 class EveryColourHasItsFourTones(Combed):

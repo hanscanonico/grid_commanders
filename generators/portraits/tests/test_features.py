@@ -19,8 +19,9 @@ import unittest
 
 import preview_sheet
 from PIL import ImageChops
+from cells import area_of, blank_cell, colours, opaque_count
 from portraitgen import features, light
-from portraitgen.canvas import BUST_DIVISOR, DESIGN_SIZE, INK_FEATURE, Canvas, pen
+from portraitgen.canvas import BUST_DIVISOR, INK_FEATURE, Canvas, pen
 from portraitgen.head import Skull
 from portraitgen.palette import INK
 
@@ -49,23 +50,6 @@ NAMED = {
 }
 
 
-def _cell() -> Canvas:
-    return Canvas(DESIGN_SIZE)
-
-
-def _tally(cell: Canvas) -> list[tuple[int, tuple[int, int, int, int]]]:
-    """Every colour on the working canvas and how much of it there is."""
-    return cell.image.getcolors(1 << 24)
-
-
-def _opaque_count(cell: Canvas) -> int:
-    return sum(count for count, pixel in _tally(cell) if pixel[3] > 0)
-
-
-def _area_of(cell: Canvas, tone: tuple[int, int, int]) -> int:
-    return sum(count for count, pixel in _tally(cell) if pixel[:3] == tone)
-
-
 def _box_of(cell: Canvas, tone: tuple[int, int, int]) -> tuple[int, int, int, int]:
     """Where one flat tone sits on the canvas, in that canvas's own pixels."""
     bands = [
@@ -78,65 +62,61 @@ def _box_of(cell: Canvas, tone: tuple[int, int, int]) -> tuple[int, int, int, in
     return box
 
 
-def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
-    return {pixel[:3] for _, pixel in _tally(cell) if pixel[3] > 0}
-
-
 class EveryKindDraws(unittest.TestCase):
     """Not one member of a vocabulary is a name with no drawing behind it."""
 
     def test_every_eye_kind_draws(self):
         for kind in sorted(features.EYE_KINDS):
             with self.subTest(eyes=kind):
-                cell = _cell()
+                cell = blank_cell()
                 features.eyes(cell, SKULL, kind, scale=features.EYE_DEFAULT)
-                self.assertGreater(_opaque_count(cell), 0)
+                self.assertGreater(opaque_count(cell), 0)
 
     def test_every_brow_kind_draws(self):
         for kind in sorted(features.BROW_KINDS):
             with self.subTest(brow=kind):
-                cell = _cell()
+                cell = blank_cell()
                 features.brow(cell, SKULL, kind, HAIR)
-                self.assertGreater(_opaque_count(cell), 0)
+                self.assertGreater(opaque_count(cell), 0)
 
     def test_every_nose_kind_draws(self):
         for kind in sorted(features.NOSE_KINDS):
             with self.subTest(nose=kind):
-                cell = _cell()
+                cell = blank_cell()
                 features.nose(cell, SKULL, kind, SKIN)
-                self.assertGreater(_opaque_count(cell), 0)
+                self.assertGreater(opaque_count(cell), 0)
 
     def test_every_mouth_kind_draws(self):
         for kind in sorted(features.MOUTH_KINDS):
             with self.subTest(mouth=kind):
-                cell = _cell()
+                cell = blank_cell()
                 features.mouth(cell, SKULL, kind)
-                self.assertGreater(_opaque_count(cell), 0)
+                self.assertGreater(opaque_count(cell), 0)
 
     def test_every_facial_hair_but_none_draws(self):
         for kind in sorted(features.FACIAL_KINDS):
             with self.subTest(facial=kind):
-                cell = _cell()
+                cell = blank_cell()
                 features.facial_hair(cell, SKULL, kind, HAIR)
-                drawn = _opaque_count(cell)
+                drawn = opaque_count(cell)
                 if kind == "none":
                     self.assertEqual(drawn, 0)
                 else:
                     self.assertGreater(drawn, 0)
 
     def test_the_earring_and_the_freckles_draw(self):
-        ear, freckled = _cell(), _cell()
+        ear, freckled = blank_cell(), blank_cell()
         features.earring(ear, SKULL)
         features.freckles(freckled, SKULL, SKIN)
-        self.assertGreater(_opaque_count(ear), 0)
-        self.assertGreater(_opaque_count(freckled), 0)
+        self.assertGreater(opaque_count(ear), 0)
+        self.assertGreater(opaque_count(freckled), 0)
 
 
 class AnUnknownNameRaises(unittest.TestCase):
     """The vocabulary is the dispatch table; nothing falls through to a default."""
 
     def test_no_drawer_answers_for_a_name_it_does_not_hold(self):
-        cell = _cell()
+        cell = blank_cell()
         calls = (
             lambda: features.eyes(cell, SKULL, "smouldering", scale=1.0),
             lambda: features.brow(cell, SKULL, "waggled", HAIR),
@@ -181,17 +161,17 @@ class TheMouthCannotOutrankTheEyes(unittest.TestCase):
     here would have capped the *size* C13 explicitly does not cap."""
 
     def _both_eyes(self) -> int:
-        cell = _cell()
+        cell = blank_cell()
         features.eyes(cell, SKULL, "m", scale=features.EYE_DEFAULT)
-        return _opaque_count(cell)
+        return opaque_count(cell)
 
     def test_every_mouth_is_darker_in_less_area_than_the_eyes(self):
         eyes = self._both_eyes()
         for kind in sorted(features.MOUTH_KINDS):
             with self.subTest(mouth=kind):
-                cell = _cell()
+                cell = blank_cell()
                 features.mouth(cell, SKULL, kind)
-                self.assertLess(_area_of(cell, INK), eyes)
+                self.assertLess(area_of(cell, INK), eyes)
 
 
 class AnOpenMouthOutspansTheEyes(unittest.TestCase):
@@ -203,14 +183,14 @@ class AnOpenMouthOutspansTheEyes(unittest.TestCase):
     itself and an edge has not been averaged into the skin."""
 
     def _mouth_width(self, kind: str, dial: float) -> int:
-        cell = _cell()
+        cell = blank_cell()
         features.mouth(cell, SKULL, kind, eye=dial)
         left, _, right, _ = cell.image.getbbox()
         return right - left
 
     def _eye_width(self, dial: float) -> int:
         """One eye, measured across the line it is widest on."""
-        cell = _cell()
+        cell = blank_cell()
         features.eyes(cell, SKULL, "m", scale=dial)
         midline, line = (
             round(value * PIXELS_PER_UNIT)
@@ -233,9 +213,9 @@ class AnOpenMouthOutspansTheEyes(unittest.TestCase):
         open mouth may not be is a dark hole with nothing bright in it."""
         for kind in sorted(features.OPEN_MOUTH_KINDS):
             with self.subTest(mouth=kind):
-                cell = _cell()
+                cell = blank_cell()
                 features.mouth(cell, SKULL, kind)
-                self.assertGreater(_area_of(cell, features.SCLERA), 0)
+                self.assertGreater(area_of(cell, features.SCLERA), 0)
 
 
 class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
@@ -245,7 +225,7 @@ class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
     open mouth are four marks at chip size rather than one."""
 
     def _mouth(self, kind: str) -> Canvas:
-        cell = _cell()
+        cell = blank_cell()
         features.mouth(cell, SKULL, kind)
         return cell
 
@@ -292,7 +272,7 @@ class TheFaceIsPaintedInNamedTones(unittest.TestCase):
     """A band is a tone off a ramp: no feature mixes one of its own."""
 
     def _whole_face(self) -> Canvas:
-        cell = _cell()
+        cell = blank_cell()
         features.facial_hair(cell, SKULL, "beard", HAIR)
         features.brow(cell, SKULL, "heavy", HAIR)
         features.eyes(cell, SKULL, "m", scale=features.EYE_DEFAULT)
@@ -303,23 +283,23 @@ class TheFaceIsPaintedInNamedTones(unittest.TestCase):
         return cell
 
     def test_no_tone_reaches_the_canvas_that_was_not_named(self):
-        self.assertEqual(_colours(self._whole_face()) - NAMED, set())
+        self.assertEqual(colours(self._whole_face()) - NAMED, set())
 
     def test_a_whole_face_stays_inside_the_colour_budget(self):
-        self.assertLessEqual(len(_colours(self._whole_face())), 48)
+        self.assertLessEqual(len(colours(self._whole_face())), 48)
 
 
 class TheEyeDialIsTheOneNumberThatSizesAnEye(unittest.TestCase):
     def _at(self, scale: float) -> Canvas:
-        cell = _cell()
+        cell = blank_cell()
         features.eyes(cell, SKULL, "m", scale=scale)
         return cell
 
     def test_a_smaller_dial_draws_a_smaller_eye(self):
-        self.assertLess(_opaque_count(self._at(0.82)), _opaque_count(self._at(1.06)))
+        self.assertLess(opaque_count(self._at(0.82)), opaque_count(self._at(1.06)))
 
     def _white(self, scale: float) -> int:
-        return _area_of(self._at(scale), features.SCLERA)
+        return area_of(self._at(scale), features.SCLERA)
 
     def test_the_second_catchlight_goes_out_below_the_threshold(self):
         # A hair either side of the threshold: the eye is the same size, so the

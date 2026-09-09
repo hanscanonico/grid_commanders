@@ -13,8 +13,9 @@ from __future__ import annotations
 import unittest
 
 from PIL import Image
+from cells import blank_cell, colours, opaque_count
 from portraitgen import accessories, features, light
-from portraitgen.canvas import BUST_DIVISOR, DESIGN_SIZE, INK_FEATURE, Canvas, pen
+from portraitgen.canvas import BUST_DIVISOR, INK_FEATURE, Canvas, pen
 from portraitgen.head import Skull
 from portraitgen.palette import INK
 
@@ -40,23 +41,6 @@ NAMED = {
 }
 
 
-def _cell() -> Canvas:
-    return Canvas(DESIGN_SIZE)
-
-
-def _tally(cell: Canvas) -> list[tuple[int, tuple[int, int, int, int]]]:
-    """Every colour on the working canvas and how much of it there is."""
-    return cell.image.getcolors(1 << 24)
-
-
-def _opaque_count(cell: Canvas) -> int:
-    return sum(count for count, pixel in _tally(cell) if pixel[3] > 0)
-
-
-def _colours(cell: Canvas) -> set[tuple[int, int, int]]:
-    return {pixel[:3] for _, pixel in _tally(cell) if pixel[3] > 0}
-
-
 def _ink_run(cell: Canvas, y: int) -> int:
     """How thick the first stroke along one row of the working canvas is."""
     band = cell.image.crop((0, y, cell.image.width, y + 1)).get_flattened_data()
@@ -75,9 +59,9 @@ class EveryKindDraws(unittest.TestCase):
     def test_every_accessory_but_none_draws(self):
         for kind in sorted(accessories.ACCESSORY_KINDS):
             with self.subTest(accessory=kind):
-                cell = _cell()
+                cell = blank_cell()
                 accessories.accessory(cell, SKULL, kind)
-                drawn = _opaque_count(cell)
+                drawn = opaque_count(cell)
                 if kind == "none":
                     self.assertEqual(drawn, 0)
                 else:
@@ -85,19 +69,19 @@ class EveryKindDraws(unittest.TestCase):
 
     def test_no_accessory_answers_for_a_name_it_does_not_hold(self):
         with self.assertRaises(KeyError):
-            accessories.accessory(_cell(), SKULL, "monocle")
+            accessories.accessory(blank_cell(), SKULL, "monocle")
 
     def test_headwear_hands_back_what_it_added_to_the_silhouette(self):
-        cell = _cell()
+        cell = blank_cell()
         self.assertEqual(accessories.accessory(cell, SKULL, "glasses"), [])
         self.assertGreater(len(accessories.accessory(cell, SKULL, "bandana")), 2)
 
     def test_no_tone_reaches_the_canvas_that_was_not_named(self):
         for kind in sorted(accessories.ACCESSORY_KINDS):
             with self.subTest(accessory=kind):
-                cell = _cell()
+                cell = blank_cell()
                 accessories.accessory(cell, SKULL, kind)
-                self.assertEqual(_colours(cell) - NAMED, set())
+                self.assertEqual(colours(cell) - NAMED, set())
 
 
 class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
@@ -105,7 +89,7 @@ class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
     are not — a peak, a bare brow, a bare crown."""
 
     def _box(self, kind: str) -> tuple[float, float, float, float]:
-        cell = _cell()
+        cell = blank_cell()
         accessories.accessory(cell, SKULL, kind)
         box = cell.image.getbbox()
         assert box, f"{kind} drew nothing"
@@ -138,7 +122,7 @@ class TheGlassesAreTwoSquaresAndNoBridge(unittest.TestCase):
     feature weight survive it; the bridge is gone."""
 
     def _worn(self) -> Canvas:
-        cell = _cell()
+        cell = blank_cell()
         accessories.accessory(cell, SKULL, "glasses")
         return cell
 
@@ -165,12 +149,12 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
     patch is one flat tone, and the socket it covers is not drawn at all."""
 
     def _patch(self) -> Canvas:
-        cell = _cell()
+        cell = blank_cell()
         accessories.accessory(cell, SKULL, "eyepatch")
         return cell
 
     def test_the_patch_and_its_strap_are_one_tone(self):
-        self.assertEqual(_colours(self._patch()), {INK})
+        self.assertEqual(colours(self._patch()), {INK})
 
     def test_the_strap_lands_on_the_ear(self):
         """P4a: a plate with no strap is a sticker. It is anchored where it
@@ -202,10 +186,10 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
             lambda cell, hide: features.brow(cell, SKULL, "heavy", HAIR, covered=hide),
         ):
             with self.subTest(paint=paint):
-                both, one = _cell(), _cell()
+                both, one = blank_cell(), blank_cell()
                 paint(both, None)
                 paint(one, covered)
-                self.assertLess(_opaque_count(one), _opaque_count(both))
+                self.assertLess(opaque_count(one), opaque_count(both))
 
     def test_no_tone_lighter_than_the_patch_is_drawn_inside_it(self):
         covered = accessories.covered_eye("eyepatch")
