@@ -113,7 +113,7 @@ func bind(commander: CommanderType, team: int) -> void:
 	add_theme_stylebox_override(
 		"panel", UiTheme.bordered(CommanderVisuals.PAPER, theme.color_dark, 4)
 	)
-	UiKit.bind_bust(_field, commander, theme.color)
+	_field.bind(commander, theme.color)
 	_eyebrow.text = "%s · COMMAND POWER" % commander.display_name.to_upper()
 	var line := _next_quote(commander, team)
 	_quote.visible = not line.is_empty()

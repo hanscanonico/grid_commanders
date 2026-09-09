@@ -609,12 +609,6 @@ static func commander_bust(commander: CommanderType, size: Vector2, tint: Color)
 	return field
 
 
-## Points a built bust at another general, for the four surfaces that outlive the
-## match's commanders.
-static func bind_bust(bust: CommanderBust, commander: CommanderType, tint: Color) -> void:
-	bust.bind(commander, tint)
-
-
 ## Waits a frame for a floating card to be laid out, then answers whether it is
 ## still there to be placed. A `PanelContainer`'s size is only true once its labels
 ## have been laid out, so a card that positions itself off its own size has to

@@ -199,7 +199,7 @@ func _build() -> void:
 
 func _apply() -> void:
 	var theme := CommanderVisuals.theme_for(_commander)
-	UiKit.bind_bust(_field, _commander, theme.color)
+	_field.bind(_commander, theme.color)
 	if theme.key == CommanderVisuals.NEUTRAL_KEY:
 		_emblem.texture = null
 		_emblem.visible = false

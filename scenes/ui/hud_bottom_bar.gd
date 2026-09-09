@@ -267,7 +267,7 @@ func show_commander(
 	# chrome with a fixed footprint, so hiding the block would leave a hole rather
 	# than reclaim anything. Only the meter and its controls go.
 	var powered := commander.has_power()
-	UiKit.bind_bust(_portrait_field, commander, theme.color_light)
+	_portrait_field.bind(commander, theme.color_light)
 	_co_name.text = commander.display_name.to_upper()
 	_power_name.text = commander.power_name.to_upper() if powered else ""
 	_meter_frame.visible = powered

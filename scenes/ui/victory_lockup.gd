@@ -136,4 +136,4 @@ func front_with(commander: CommanderType) -> void:
 	_band.add_theme_stylebox_override("panel", UiTheme.header_box(theme.color))
 	_band_label.text = "%s · %s" % [commander.display_name, theme.display]
 	_band_label.add_theme_color_override("font_color", theme.ink)
-	UiKit.bind_bust(_portrait, commander, UiKit.NO_FIELD)
+	_portrait.bind(commander, UiKit.NO_FIELD)
