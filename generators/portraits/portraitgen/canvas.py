@@ -62,11 +62,6 @@ def native_size(size: tuple[int, int], divisor: int) -> tuple[int, int]:
 BUST_SIZE = native_size(DESIGN_SIZE, BUST_DIVISOR)
 
 
-# The head's own rectangle, in design units, and the one statement of it on this
-# side of the pipeline: `CommanderVisuals.FACE_REGION` is the same square on the
-# bust's grid and `tests/test_face_region.py` reads it back out of the game's
-# code. Its origin and its side are multiples of both divisors, so the chip a
-# small surface draws is this square rasterised coarser rather than resampled.
 class Region(NamedTuple):
     """A rectangle in design units, named so a reader of one number knows which."""
 
@@ -76,6 +71,11 @@ class Region(NamedTuple):
     height: int
 
 
+# The head's own rectangle, in design units, and the one statement of it on this
+# side of the pipeline: `CommanderVisuals.FACE_REGION` is the same square on the
+# bust's grid and `tests/test_face_region.py` reads it back out of the game's
+# code. Its origin and its side are multiples of both divisors, so the chip a
+# small surface draws is this square rasterised coarser rather than resampled.
 FACE_REGION = Region(18, 30, 186, 186)
 
 
