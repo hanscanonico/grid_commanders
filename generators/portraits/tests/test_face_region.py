@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from PIL import Image
@@ -137,23 +138,101 @@ class TheRectangleIsTheGameSOwn(unittest.TestCase):
         self.assertEqual(_as_rect(CHIP_DIVISOR)[2], CHIP_SIZE)
 
 
-class TheChipIsTheSameDrawing(unittest.TestCase):
-    """The face chip a small surface loads is this rectangle of the bust's own
-    drawing, rasterised on the chip grid — not the bust resampled, and not a
-    second drawing that could drift from it."""
+# The two bars `TheChipIsTheSameFace` holds the sheet to, argued there and
+# measured on the art as it ships.
+CHIP_AGREEMENT_FLOOR = 0.60
+CHIP_IDENTITY_MARGIN = 0.15
 
-    def test_every_chip_is_the_face_box_of_its_own_bust(self):
-        for key, face in sorted(roster.FACES.items()):
-            with self.subTest(commander=key):
-                cut = bust.paint(face, divisor=CHIP_DIVISOR).crop(
-                    _face_box(CHIP_DIVISOR)
-                )
-                self.assertEqual(bust.chip(face).tobytes(), cut.tobytes())
+
+def _dominant_tones(image: Image.Image, side: int) -> list[tuple[int, ...]]:
+    """The bust's face box read at chip resolution: per chip texel, the tone
+    that fills most of the 3x3 block of the bust that texel covers."""
+    region = image.crop(_face_box(BUST_DIVISOR))
+    block = region.size[0] // side
+    return [
+        Counter(
+            region.getpixel((x * block + dx, y * block + dy))
+            for dy in range(block)
+            for dx in range(block)
+        ).most_common(1)[0][0]
+        for y in range(side)
+        for x in range(side)
+    ]
+
+
+def agreement(chip: Image.Image, dominant: list[tuple[int, ...]]) -> float:
+    """What fraction of a chip's texels carry the tone that dominates the bust
+    block they stand for."""
+    return sum(
+        1
+        for texel, tone in zip(chip.get_flattened_data(), dominant, strict=True)
+        if texel == tone
+    ) / len(dominant)
+
+
+class TheChipIsTheSameFace(unittest.TestCase):
+    """The chip is the bust's own face, measured against the shipped bust.
+
+    A chip is not a crop of the bust — it is the whole drawing repainted on a
+    grid three times coarser, so the two cannot be compared byte for byte and a
+    test that recomputes `bust.chip`'s own definition measures nothing. What can
+    be compared is the picture: the face box is 93px on the bust's grid and 31px
+    on the chip's, so every chip texel stands for one 3x3 block of the bust, and
+    a chip that is the same face carries the tone that DOMINATES its block.
+
+    It cannot carry it everywhere. Every edge in the drawing falls somewhere
+    inside a block on one grid and on a block boundary on the other, an ink
+    weight that is two bust pixels is one chip texel, and the gauge sweep runs
+    against a different smallest mark on each — so a third of the texels sitting
+    on an edge disagreeing is the rasteriser, not a different face. Measured on
+    the sheet as it ships, agreement runs 63.7% (Rhea Sol, the busiest face) to
+    86.2% (the empty seat); the floor below is set at 60%, under the worst bust
+    with room for the rasteriser to move an edge and over anything that is not
+    this face.
+
+    The floor alone is loose, so the bar it is paired with is an identity one,
+    and that one is tight: a chip agrees with ITS OWN bust far better than with
+    any other general's. The narrowest such margin on the sheet is Halden Marr
+    against Gideon Holt — two Meridian faces in the same window — at 22.7
+    points, and the bar is 15. A painter that branched on the divisor and drew
+    another face on the chip grid loses the whole margin at once.
+    """
+
+    def setUp(self):
+        self.sheet = {
+            key: (bust.chip(spec), _dominant_tones(bust.paint(spec), CHIP_SIZE))
+            for key, spec in bust.sheet_rows()
+        }
 
     def test_every_chip_is_the_chip_square(self):
-        for key, face in sorted(roster.FACES.items()):
+        for key, (chip, _) in sorted(self.sheet.items()):
             with self.subTest(commander=key):
-                self.assertEqual(bust.chip(face).size, (CHIP_SIZE, CHIP_SIZE))
+                self.assertEqual(chip.size, (CHIP_SIZE, CHIP_SIZE))
+
+    def test_every_chip_carries_the_tones_its_own_bust_does(self):
+        for key, (chip, dominant) in sorted(self.sheet.items()):
+            with self.subTest(commander=key):
+                self.assertGreaterEqual(
+                    agreement(chip, dominant),
+                    CHIP_AGREEMENT_FLOOR,
+                    f"{key}'s chip is not the face its bust draws",
+                )
+
+    def test_every_chip_reads_as_its_own_general_and_no_other(self):
+        for key, (chip, dominant) in sorted(self.sheet.items()):
+            with self.subTest(commander=key):
+                own = agreement(chip, dominant)
+                stranger = max(
+                    agreement(chip, theirs)
+                    for other, (_, theirs) in self.sheet.items()
+                    if other != key
+                )
+                self.assertGreaterEqual(
+                    own - stranger,
+                    CHIP_IDENTITY_MARGIN,
+                    f"{key}'s chip reads no more like its own bust "
+                    f"({own:.3f}) than like another general's ({stranger:.3f})",
+                )
 
     def test_no_chip_spends_a_tone_its_bust_does_not(self):
         for key, face in sorted(roster.FACES.items()):

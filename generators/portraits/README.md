@@ -253,9 +253,14 @@ both halves together, before the pose.
 in design units, whose origin and side divide by **both** divisors so the chip
 is that same square rasterised coarser. **The chip is a repaint at the chip
 divisor, not a crop of the shipped bust**: the whole drawing is painted again on
-the coarser grid and that square of it is what ships, which is why the two are
-compared byte for byte (`TheChipIsTheSameDrawing`) rather than one being cut out
-of the other. The jaw must never clip it: the sheet clears it by 8 (Holt) to 32
+the coarser grid and that square of it is what ships. The two therefore have no
+bytes in common to compare, so `TheChipIsTheSameFace` measures the picture
+instead: every chip texel stands for one 3x3 block of the shipped bust's face
+box, and it must carry the tone that dominates that block. The sheet agrees on
+63.7% (Rhea Sol) to 86.2% (the empty seat) of its texels — a third of them sit
+on an edge that falls inside a block on one grid and on a boundary on the other
+— against a floor of 60%, and every chip agrees with its OWN bust by at least
+22.7 points more than with any other general's, against a bar of 15. The jaw must never clip it: the sheet clears it by 8 (Holt) to 32
 (Morn) pixels against a floor of 4, measured per bust by
 `tests/test_face_region.py`. It is the hardest acceptance criterion here — if one
 fails, the geometry moves, never the rectangle, because the HUD chip, the speech
