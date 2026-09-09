@@ -475,7 +475,8 @@ def _dagger(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 def _plane(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     """Landed on the shoulder, under a mounting strap, and clear of the jaw:
-    held up at the chin it cut the crop the HUD chip is taken from."""
+    held up at the chin it cut into the head's own square, which the HUD chip is
+    painted again on."""
     _shape(
         canvas,
         [(150.0, 219.0), (172.0, 253.0), (164.0, 259.0), (142.0, 225.0)],

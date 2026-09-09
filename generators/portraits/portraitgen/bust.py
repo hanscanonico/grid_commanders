@@ -369,9 +369,9 @@ def paint(
 def chip(spec: Face | EmptySeat) -> Image.Image:
     """The face a surface too small for a bust draws.
 
-    The same drawing, rasterised on the chip grid and cut to the head's own
-    square — never the bust resampled, which is the softness this bake exists
-    to end. `CommanderVisuals.face_for` loads exactly this file.
+    The same drawing, painted again on the chip's coarser grid and kept to the
+    head's own square — never the bust resampled, which is the softness this
+    bake exists to end. `CommanderVisuals.face_for` loads exactly this file.
     """
     return paint(spec, divisor=CHIP_DIVISOR).crop(face_box(CHIP_DIVISOR))
 
