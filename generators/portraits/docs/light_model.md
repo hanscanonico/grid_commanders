@@ -14,8 +14,8 @@ obeys the same rule from `portraitgen/canvas.py` — the figure's silhouette at
 +6 design units, `#000` at 0.30, one flat tone, zero blur.
 
 `tests/test_geometry.py` reads that back the way the game does: the lit patch
-`(22, 242, 12, 12)` against the shaded patch `(186, 242, 12, 12)` with a floor
-of 0.01, the rectangles and the floor
+`(11, 121, 6, 6)` against the shaded patch `(93, 121, 6, 6)` with a floor
+of 0.01 — rectangles on the bust's own 110x134 grid, the ones
 `tests/unit/test_commander_portraits.gd` measures the shipped sheet with.
 
 ## Four tones, built rather than typed

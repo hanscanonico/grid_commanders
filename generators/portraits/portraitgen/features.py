@@ -5,8 +5,8 @@ unknown key raises rather than drawing a default, which is what the GUT suite's
 three "is it one the file can draw?" lints existed to catch.
 
 The handoff drew every feature against one skull, in a 110x134 viewBox that
-doubles to the 220x268 design space. Its drawing is transcribed here in portrait
-pixels — its own units, doubled, over `REFERENCE_BOX`, which is where that one
+doubles to the 220x268 design space. Its drawing is transcribed here in design
+units — its own units, doubled, over `REFERENCE_BOX`, which is where that one
 skull sits on this raster — and `Frame` fits that one drawing to whatever
 skull `head.outline` actually cut, so a narrow face wears narrow features
 without any of them being authored twice.
