@@ -163,9 +163,9 @@ jobs:
         working-directory: generators/sprites
         run: ruff format --check .
 
-      # Includes the palette mirror, which reads the game's own
-      # scenes/common/*.gd — so this job checks out the whole repository rather
-      # than working inside the generator alone.
+      # The generator paints out of generators/sprites' palette module and its
+      # suites read the game's own scenes/common/*.gd, so this job checks out
+      # the whole repository rather than working inside the generator alone.
       - name: Generator contract tests
         working-directory: generators/sprites
         run: python -m unittest discover tests

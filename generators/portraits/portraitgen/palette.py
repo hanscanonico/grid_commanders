@@ -11,10 +11,12 @@ Colours are kept as the authored 0-1 floats and converted to bytes in one place
 conversion does, and the committed emblems carry those exact bytes.
 
 **A bust is painted out of the board's palette, not out of one of its own.** The
-six-slot ramps below are `generators/sprites`' — the same anchors, the same
-value ladders and the same shaper the unit sheet and the terrain are built from,
-so a commander and the army they command are lit by one sun. The mirror test
-loads the sprite generator's own module and compares them rung for rung.
+six-slot ramps are `generators/sprites`' and are not restated here: this module
+loads that instrument's own palette module off its file (`BOARD_PALETTE`) and
+paints out of its shaper, its ladders and its sky, so a commander and the army
+they command are lit by one sun. Four rungs are the exception, named with their
+reason in `BUST_RUNGS`; `tests/test_palette_mirror.py` holds them to being the
+only four.
 
 What a bust may spend is `PAINTED_TONES` of them: sixteen, chosen by
 `bust_palette` out of the ramps that bust actually wears, and every finished
@@ -25,8 +27,11 @@ ramp, and an edge is one rung meeting another rather than a blend of the two.
 
 from __future__ import annotations
 
-import colorsys
+import importlib.util
+import sys
 from dataclasses import dataclass
+from pathlib import Path
+from types import ModuleType
 
 from PIL import Image
 
@@ -127,113 +132,78 @@ def faction_by_key(key: str) -> Faction:
 # --- the board's ramps -------------------------------------------------------
 #
 # Six lighting bands, not six brightnesses: S0 contour, S1 under, S2 shadow,
-# S3 body, S4 top, S5 rim. Mirrored from `spritegen.palette` — the anchors, the
-# ladders, the sky and the per-slot chroma shape are that module's, and
-# `tests/test_palette_mirror.py` fails if either side moves.
+# S3 body, S4 top, S5 rim. They are not restated here. The sprite generator's
+# palette module is loaded off its own file and its shaper, its ladders, its
+# sky and its gunmetal are what a bust is painted out of, so a rung cannot
+# drift between a commander and the tank beside them.
 
-SLOTS = 6
-S_CONTOUR, S_UNDER, S_SHADOW, S_BODY, S_TOP, S_RIM = range(SLOTS)
+# The sibling instrument this module is painted out of. Derived from this
+# file's own path, so it holds wherever the checkout sits and whatever
+# directory a run is started from.
+BOARD_PALETTE = (
+    Path(__file__).resolve().parents[2] / "sprites" / "spritegen" / "palette.py"
+)
+_BOARD_MODULE = "portraitgen._board_palette"
+
+
+def _load_board() -> ModuleType:
+    """The sprite generator's palette module, executed off its own file.
+
+    `generators/sprites` is a sibling offline instrument rather than an
+    installed package, and its palette module is stdlib-only, so it is loaded
+    by path instead. It is registered in `sys.modules` before it runs because a
+    frozen dataclass inside it looks its own module up while its class body is
+    being built.
+    """
+    loaded = sys.modules.get(_BOARD_MODULE)
+    if loaded is not None:
+        return loaded
+    if not BOARD_PALETTE.is_file():
+        raise ModuleNotFoundError(
+            f"the board's palette is not at {BOARD_PALETTE}. A bust is painted "
+            "out of generators/sprites' own ramps, so that instrument has to be "
+            "checked out beside this one."
+        )
+    spec = importlib.util.spec_from_file_location(_BOARD_MODULE, BOARD_PALETTE)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"no importable module at {BOARD_PALETTE}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[_BOARD_MODULE] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_BOARD = _load_board()
+
+SLOTS: int = _BOARD.SLOTS
+S_CONTOUR: int = _BOARD.S_CONTOUR
+S_UNDER: int = _BOARD.S_UNDER
+S_SHADOW: int = _BOARD.S_SHADOW
+S_BODY: int = _BOARD.S_BODY
+S_TOP: int = _BOARD.S_TOP
+S_RIM: int = _BOARD.S_RIM
 
 Ramp6 = tuple[RGB, ...]
 
-# The sky every shadow on the board is lit by, and the two hues a rung rotates
-# toward.
-AMBIENT: RGB = (86, 112, 190)
-_SKY_HUE = 225.0
-_SUN_HUE = 45.0
-_HUE_ARC = 14.0
-_HUE_PULL = (-1.00, -0.72, -0.34, 0.0, 0.46, 1.00)
-_SAT_SCALE = (1.10, 1.22, 1.24, 1.0, 0.82, 0.42)
-_AMBIENT_MIX = (0.26, 0.16, 0.07, 0.0, 0.0, 0.0)
+# The sky every shadow on the board is lit by, the shaper that rotates a rung
+# toward it, and the authored ramps themselves — the board's, by reference.
+AMBIENT: RGB = _BOARD.AMBIENT
+luminance = _BOARD.luminance
+build_ramp = _BOARD.build_ramp
+RAMPS: dict[str, Ramp6] = _BOARD.RAMPS
+GUNMETAL_RAMP: Ramp6 = _BOARD.GUNMETAL_RAMP
 
 
-def _hex(value: str) -> RGB:
-    return (int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16))
+def _rung(base: RGB, slot: int, target: float) -> RGB:
+    """One rung off the board's shaper, for a bust that authors a single band.
 
-
-def clamp8(value: float) -> int:
-    return max(0, min(255, int(round(value))))
-
-
-def luminance(colour: RGB) -> float:
-    """Rec. 601 luma, the scale every ladder here is authored on."""
-    return 0.299 * colour[0] + 0.587 * colour[1] + 0.114 * colour[2]
-
-
-def mix(first: RGB, second: RGB, weight: float) -> RGB:
-    return tuple(clamp8(first[i] + (second[i] - first[i]) * weight) for i in range(3))
-
-
-def _full_chroma(hue: float, saturation: float) -> RGB:
-    red, green, blue = colorsys.hsv_to_rgb((hue % 360.0) / 360.0, saturation, 1.0)
-    return (clamp8(red * 255), clamp8(green * 255), clamp8(blue * 255))
-
-
-def _rotate(hue: float, pull: float) -> float:
-    if pull == 0.0:
-        return hue
-    target = _SKY_HUE if pull < 0 else _SUN_HUE
-    delta = ((target - hue + 180.0) % 360.0) - 180.0
-    step = min(abs(delta), abs(pull) * _HUE_ARC)
-    return hue + (step if delta >= 0 else -step)
-
-
-def _at_luminance(colour: RGB, target: float) -> RGB:
-    """Re-key a colour to an exact luma, keeping its chroma as long as it can:
-    scale first, and wash toward white only once a channel is pinned."""
-    lum = luminance(colour)
-    if lum <= 0.0:
-        return (clamp8(target), clamp8(target), clamp8(target))
-    ceiling = lum * 255.0 / max(colour)
-    if target <= ceiling:
-        return tuple(clamp8(c * target / lum) for c in colour)
-    pinned = mix((0, 0, 0), colour, 255.0 / max(colour))
-    return mix(pinned, (255, 255, 255), (target - ceiling) / (255.0 - ceiling))
-
-
-def _shape(base: RGB, slot: int, target: float) -> RGB:
-    """One rung: the base's hue and chroma shaped for `slot`, keyed to `target`
-    luma. Pure — one base always gives one rung."""
-    if _AMBIENT_MIX[slot] == 0.0 and _HUE_PULL[slot] == 0.0 and _SAT_SCALE[slot] == 1.0:
-        return _at_luminance(base, target)
-    hue, saturation, _ = colorsys.rgb_to_hsv(*(c / 255.0 for c in base))
-    chroma = _full_chroma(
-        _rotate(hue * 360.0, _HUE_PULL[slot]), min(1.0, saturation * _SAT_SCALE[slot])
-    )
-    if _AMBIENT_MIX[slot] > 0.0:
-        chroma = mix(
-            chroma, _at_luminance(AMBIENT, luminance(chroma)), _AMBIENT_MIX[slot]
-        )
-    return _at_luminance(chroma, target)
-
-
-def build_ramp(base: RGB, ladder: tuple[float, ...]) -> Ramp6:
-    """The six-slot ramp for one base colour and one authored value ladder."""
-    return tuple(_shape(base, slot, target) for slot, target in enumerate(ladder))
-
-
-# The board's authored ramps, anchor and ladder both.
-_MERIDIAN_L = (23.0, 56.0, 86.0, 114.9, 148.0, 208.0)
-_AURORA_L = (21.0, 50.0, 74.0, 101.3, 136.0, 205.0)
-_VERDANT_L = (25.0, 56.0, 76.0, 98.0, 140.0, 214.0)
-_GOLD_L = (20.0, 46.0, 70.0, 104.0, 136.0, 200.0)
-_IRON_L = (7.0, 31.0, 49.0, 129.0, 151.0, 229.0)
-_NEUTRAL_L = (20.0, 60.0, 102.0, 137.0, 156.0, 219.0)
-
-RAMPS: dict[str, Ramp6] = {
-    "meridian": build_ramp(_hex("db4a3b"), _MERIDIAN_L),
-    "aurora": build_ramp(_hex("3c64d8"), _AURORA_L),
-    "verdant": build_ramp(_hex("2c8636"), _VERDANT_L),
-    "gold": build_ramp(_hex("e9c928"), _GOLD_L),
-    "iron": build_ramp(_hex("79838d"), _IRON_L),
-    "neutral": build_ramp(_hex("a4874f"), _NEUTRAL_L),
-}
-
-# The metal every general's prop, buckle and pip is made of — the board's own
-# gunmetal, so a sabre on a bust is the steel a tank is plated in.
-GUNMETAL_RAMP: Ramp6 = build_ramp(
-    _hex("7a848f"), (22.0, 63.0, 97.0, 130.0, 175.0, 216.0)
-)
+    `build_ramp` is the only way in from outside that module, and a rung
+    depends on nothing but its own slot and target, so the ladder around it is
+    left at zero.
+    """
+    ladder = [0.0] * SLOTS
+    ladder[slot] = target
+    return build_ramp(base, tuple(ladder))[slot]
 
 
 # --- where a board ramp does not serve a bust --------------------------------
@@ -245,9 +215,10 @@ GUNMETAL_RAMP: Ramp6 = build_ramp(
 # coat painted on it is olive, and Iron's field rung comes up to where every
 # other army's sits, since Iron's ramp is the inverted one and a window at L49
 # is under every dark cap and every dark skin on the sheet.
-ACCENT_BASE: RGB = _hex("e9c928")
+ACCENT_BASE: RGB = (0xE9, 0xC9, 0x28)
 ACCENT_RAMP: Ramp6 = build_ramp(ACCENT_BASE, (20.0, 46.0, 70.0, 150.0, 186.0, 225.0))
-IRON_FIELD: RGB = _shape(_hex("79838d"), S_SHADOW, 74.0)
+IRON_BASE: RGB = (0x79, 0x83, 0x8D)
+IRON_FIELD: RGB = _rung(IRON_BASE, S_SHADOW, 74.0)
 
 # Which rungs each of the two takes, and from where. Everything not named here
 # is the board's own.

@@ -88,7 +88,10 @@ file the generator no longer emits.
 ## The rendering stack
 
 Pillow alone, pinned at both ends (`requirements.txt`), drawing **at 1x** onto
-the grid the file is baked at. `ImageDraw` has no antialiasing of its own, and
+the grid the file is baked at. The only other thing this package needs is the
+sibling instrument it shares a palette with: `portraitgen/palette.py` loads
+`generators/sprites/spritegen/palette.py` — stdlib-only — straight off its
+path, so a bust and a tank come off one set of ramps. `ImageDraw` has no antialiasing of its own, and
 nothing here adds any: a bust is hard-edged because every mark is rasterised on
 the raster it ships as.
 
@@ -168,11 +171,15 @@ already were.
   jaw. `Canvas.stroke` refuses any other width. On the bust's grid the
   hierarchy is a ceiling rather than three widths: a silhouette is two pixels
   and the two lighter weights are one, which is all a 110px bust has room for.
-- Faction colour comes from `portraitgen/palette.py`, which mirrors two sources
-  and is checked against both by `tests/test_palette_mirror.py`: the game's own
-  `FactionTheme`, read back out of `scenes/common/commander_visuals.gd`, and the
-  board's six-slot ramps, compared rung for rung against
-  `generators/sprites/spritegen/palette.py` itself.
+- Faction colour comes from `portraitgen/palette.py`, and it restates neither
+  of its two sources. The game's own `FactionTheme` is read back out of
+  `scenes/common/commander_visuals.gd` by `tests/test_palette_mirror.py`, and
+  the board's six-slot ramps are not copied at all: the module loads
+  `generators/sprites/spritegen/palette.py` off its own file — the one
+  dependency this package has beyond Pillow — and paints out of that shaper,
+  those ladders and that sky. The four rungs a bust takes off another ladder
+  are the only difference, and the same suite holds them to being the only
+  four.
 
 ## Module contracts
 

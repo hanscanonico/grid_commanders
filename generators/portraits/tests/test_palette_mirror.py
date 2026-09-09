@@ -16,9 +16,7 @@ business, and it is checked where it matters, against the committed emblems.
 
 from __future__ import annotations
 
-import importlib.util
 import re
-import sys
 import unittest
 from pathlib import Path
 
@@ -122,47 +120,30 @@ class RowOrderMirrorsSideIdentity(unittest.TestCase):
         )
 
 
-class TheBoardSRampsAreTheSpriteGeneratorSOwn(unittest.TestCase):
-    """The six-slot ramps a bust is painted out of, against the module that
-    paints the board.
+class TheBustRungsAreTheOnlyRungsThatAreNotTheBoardSOwn(unittest.TestCase):
+    """The four rungs a bust does not share with the board, and nothing else.
 
-    `palette` restates them so this package keeps its own dependencies, and a
-    restatement nobody checks is a copy that drifts — a commander whose coat is
-    a rung off the tank beside them is exactly the clash this bake exists to
-    end. The sprite generator's palette module is stdlib-only, so it is loaded
-    from its own file rather than installed.
+    `palette` no longer restates the board's ramps — it loads
+    `generators/sprites`' own palette module off its file and paints out of its
+    shaper and its ladders, so a rung cannot drift between a commander and the
+    tank beside them. What can still drift is the small set of rungs a bust
+    deliberately takes off another ladder: a fifth could be added, or one of
+    them widened to a whole row, and no bar would notice. This is that bar.
     """
 
-    def setUp(self):
-        source = GAME / "generators/sprites/spritegen/palette.py"
-        spec = importlib.util.spec_from_file_location("spritegen_palette", source)
-        assert spec and spec.loader, f"no module at {source}"
-        self.board = importlib.util.module_from_spec(spec)
-        # Registered before it runs: a frozen dataclass inside it looks its own
-        # module up in `sys.modules` while the class body is being built.
-        sys.modules[spec.name] = self.board
-        self.addCleanup(sys.modules.pop, spec.name, None)
-        spec.loader.exec_module(self.board)
-
-    def test_the_sky_is_the_board_s_sky(self):
-        self.assertEqual(palette.AMBIENT, self.board.AMBIENT)
-
-    def test_every_faction_ramp_matches_rung_for_rung(self):
-        self.assertEqual(sorted(palette.RAMPS), sorted(self.board.RAMPS))
-        for key in sorted(palette.RAMPS):
-            with self.subTest(ramp=key):
-                self.assertEqual(palette.RAMPS[key], self.board.RAMPS[key])
+    def test_the_board_s_palette_is_where_the_package_looks_for_it(self):
+        self.assertEqual(
+            palette.BOARD_PALETTE,
+            GAME / "generators/sprites/spritegen/palette.py",
+        )
+        self.assertTrue(palette.BOARD_PALETTE.is_file(), palette.BOARD_PALETTE)
 
     def test_every_bust_ramp_is_the_board_s_but_for_the_four_named_rungs(self):
-        """`faction_ramp` is what a bust is actually painted in, and it is the
-        board's `RAMPS` with four rungs taken off two other ladders. Mirroring
-        `RAMPS` alone left those four unpinned: a fifth could be added, or one
-        of them widened to a whole row, without a bar noticing."""
         drifted = {
             (key, slot)
             for key in sorted(palette.RAMPS)
             for slot, (mine, theirs) in enumerate(
-                zip(palette.faction_ramp(key), self.board.RAMPS[key], strict=True)
+                zip(palette.faction_ramp(key), palette.RAMPS[key], strict=True)
             )
             if mine != theirs
         }
@@ -179,26 +160,6 @@ class TheBoardSRampsAreTheSpriteGeneratorSOwn(unittest.TestCase):
             },
             BUST_OVERRIDES,
         )
-
-    def test_the_metal_is_the_board_s_gunmetal(self):
-        self.assertEqual(palette.GUNMETAL_RAMP, self.board.GUNMETAL_RAMP)
-
-    def test_the_shaper_itself_agrees_off_the_authored_ramps(self):
-        """Equal ramps could still be two shapers that agree on six anchors, so
-        the shaper is asked for a colour and a ladder neither module ships."""
-        ladder = (18.0, 44.0, 71.0, 108.0, 149.0, 212.0)
-        for base in ((201, 84, 137), (37, 176, 189), (128, 128, 128)):
-            with self.subTest(base=base):
-                self.assertEqual(
-                    palette.build_ramp(base, ladder),
-                    self.board.build_ramp(base, ladder),
-                )
-
-    def test_the_slot_names_line_up(self):
-        self.assertEqual(palette.SLOTS, self.board.SLOTS)
-        for name in ("S_CONTOUR", "S_UNDER", "S_SHADOW", "S_BODY", "S_TOP", "S_RIM"):
-            with self.subTest(slot=name):
-                self.assertEqual(getattr(palette, name), getattr(self.board, name))
 
 
 class EveryArmyWearsAnEmblem(unittest.TestCase):
