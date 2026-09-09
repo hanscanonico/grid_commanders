@@ -20,6 +20,7 @@ from .canvas import INK_DETAIL, INK_FEATURE, Canvas, Point
 from .features import EAR, EYE_LINE, Frame, eye_xs, ringed_ellipse
 from .head import Skull
 from .palette import INK, RGB
+from .vocab import pick
 
 # What headwear spends that a face does not: the design system's SLATE_800 kit
 # slate every strap and every frame is cut from, the handoff's goggle glass, and
@@ -372,6 +373,5 @@ def accessory(
     the kit slate — the module answers for every key on its own, and a crown
     handed no kicker is the flat one it was before.
     """
-    if kind not in _ACCESSORIES:
-        raise KeyError(f"no accessory {kind!r} (have {sorted(_ACCESSORIES)})")
-    return _ACCESSORIES[kind](Worn(canvas, Frame.of(skull), skull, tint, kicker))
+    worn = Worn(canvas, Frame.of(skull), skull, tint, kicker)
+    return pick(_ACCESSORIES, kind, "accessory")(worn)

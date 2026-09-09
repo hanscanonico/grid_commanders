@@ -30,6 +30,7 @@ from .canvas import INK_DETAIL, INK_FEATURE, Box, Canvas, Point
 from .head import Skull
 from .light import Ramp
 from .palette import INK, RGB
+from .vocab import known, pick
 
 # The handoff's skull at width 1.0: left, top, right, bottom in portrait pixels.
 REFERENCE_BOX: Box = (64.0, 82.0, 156.0, 206.0)
@@ -139,9 +140,7 @@ def eyes(
 
     `covered` is the socket a worn accessory hides, from `covered_eye`.
     """
-    if kind not in _EYES:
-        raise KeyError(f"no eyes {kind!r} (have {sorted(_EYES)})")
-    shape = _EYES[kind]
+    shape = pick(_EYES, kind, "eyes")
     frame = Frame.of(skull)
     for side, x in enumerate(eye_xs(skull)):
         if side == covered:
@@ -221,9 +220,7 @@ def brow(
     ink fragments the review read over Vale's and Draeg's sockets. The shade
     rung the mass is painted in is what the hairline was there to buy.
     """
-    if kind not in _BROWS:
-        raise KeyError(f"no brow {kind!r} (have {sorted(_BROWS)})")
-    shape = _BROWS[kind]
+    shape = pick(_BROWS, kind, "brow")
     frame = Frame.of(skull)
     for side, x in enumerate(eye_xs(skull)):
         if side == covered:
@@ -279,11 +276,15 @@ _NOSES: dict[str, NoseShape] = {
 NOSE_KINDS = frozenset(_NOSES)
 
 
+def nose_shape(kind: str) -> NoseShape:
+    """One nose's authored geometry — where the suite that holds every nose
+    under the eye line reads it, so the table itself stays this module's."""
+    return pick(_NOSES, kind, "nose")
+
+
 def nose(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
     """The shadow plane beside the bridge, and the bar under the tip."""
-    if kind not in _NOSES:
-        raise KeyError(f"no nose {kind!r} (have {sorted(_NOSES)})")
-    shape = _NOSES[kind]
+    shape = nose_shape(kind)
     frame = Frame.of(skull)
     # The light is fixed upper-left, so the plane the nose turns away from it is
     # the one to its right; it is a flat band of the skin's own shade tone.
@@ -449,9 +450,7 @@ def mouth(canvas: Canvas, skull: Skull, kind: str, *, eye: float = EYE_DEFAULT) 
     if kind in _OPEN:
         _opened(canvas, frame, _OPEN[kind], _mouth_half(eye))
         return
-    if kind not in _MOUTHS:
-        raise KeyError(f"no mouth {kind!r} (have {sorted(MOUTH_KINDS)})")
-    _MOUTHS[kind](canvas, frame)
+    _MOUTHS[known(kind, MOUTH_KINDS, "mouth")](canvas, frame)
 
 
 # --- facial hair -------------------------------------------------------------
@@ -541,9 +540,7 @@ FACIAL_KINDS = frozenset(_FACIAL)
 
 
 def facial_hair(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
-    if kind not in _FACIAL:
-        raise KeyError(f"no facial hair {kind!r} (have {sorted(_FACIAL)})")
-    _FACIAL[kind](canvas, Frame.of(skull), ramp)
+    pick(_FACIAL, kind, "facial hair")(canvas, Frame.of(skull), ramp)
 
 
 def earring(canvas: Canvas, skull: Skull) -> None:

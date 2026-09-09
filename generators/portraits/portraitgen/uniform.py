@@ -25,6 +25,7 @@ from collections.abc import Callable
 from .canvas import INK_DETAIL, INK_FEATURE, INK_SILHOUETTE, Canvas, Point
 from .light import Ramp
 from .palette import INK, RGB, Faction
+from .vocab import pick
 
 COLLAR_CUTS = frozenset({"double", "mandarin", "v"})
 COLLAR_DEFAULT = "v"
@@ -391,17 +392,14 @@ _CHESTS: dict[str, Callable[[Canvas, Faction, Ramp], None]] = {
 
 def chest(canvas: Canvas, treatment: str, faction: Faction, ramp: Ramp) -> None:
     """What the general carries on the chest. An unknown treatment raises."""
-    if treatment not in _CHESTS:
-        raise KeyError(f"no chest treatment {treatment!r} (have {sorted(_CHESTS)})")
-    _CHESTS[treatment](canvas, faction, ramp)
+    pick(_CHESTS, treatment, "chest treatment")(canvas, faction, ramp)
 
 
 def draw(canvas: Canvas, faction: Faction, collar: str, ramp: Ramp) -> None:
     """The uniform mass, cut at the collar. An unknown cut raises."""
-    if collar not in _COLLARS:
-        raise KeyError(f"no collar {collar!r} (have {sorted(_COLLARS)})")
+    cut = pick(_COLLARS, collar, "collar")
     _mass(canvas, ramp)
-    _COLLARS[collar](canvas, faction, ramp)
+    cut(canvas, faction, ramp)
 
 
 def pip(canvas: Canvas, ramp: Ramp) -> None:

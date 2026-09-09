@@ -28,6 +28,7 @@ from . import light
 from .canvas import INK_FEATURE, INK_SILHOUETTE, Canvas, Point
 from .light import Ramp
 from .palette import INK, RGB
+from .vocab import known
 
 # The jaw a skull is cut with. An unknown jaw raises: the vocabulary is the
 # dispatch table, so nothing falls through to a default.
@@ -82,8 +83,7 @@ class Skull:
     spread: float
 
     def __post_init__(self) -> None:
-        if self.jaw not in JAWS:
-            raise KeyError(f"no jaw {self.jaw!r} (have {sorted(JAWS)})")
+        known(self.jaw, JAWS, "jaw")
 
 
 def _hx(x: float, width: float) -> float:

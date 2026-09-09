@@ -30,6 +30,7 @@ from collections.abc import Callable, Iterable
 from .canvas import INK_DETAIL, INK_FEATURE, INK_SILHOUETTE, Canvas, Point
 from .light import Ramp
 from .palette import INK, RGB, Faction
+from .vocab import known
 
 PROPS = frozenset(
     {
@@ -608,10 +609,8 @@ def draw(
     `layer` is which half the painter wants: the bust is drawn between `back`
     and `front`, and `all` paints both onto one surface for a preview.
     """
-    if key not in PROPS:
-        raise KeyError(f"no prop {key!r} (have {sorted(PROPS)})")
-    if layer not in LAYERS:
-        raise KeyError(f"no prop layer {layer!r} (have {sorted(LAYERS)})")
+    known(key, PROPS, "prop")
+    known(layer, LAYERS, "prop layer")
     art = canvas.blank()
     if layer in ("all", "back") and key in _BACK:
         _BACK[key](art, faction, ramp)

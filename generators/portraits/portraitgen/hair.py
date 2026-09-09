@@ -27,6 +27,7 @@ from .features import REFERENCE_BOX, Frame
 from .head import Skull
 from .light import Ramp
 from .palette import INK, RGB
+from .vocab import known
 
 # The hair colours the roster picks from: the handoff's seven, plus `steel`.
 # Steel is grey a rung darker, and it exists because grey over a pale face is
@@ -433,8 +434,7 @@ _DARKENING = tuple(reversed(light.BANDS))
 
 def _fallback(band: str) -> tuple[str, ...]:
     """That rung and every darker one, darkest last. An unknown rung raises."""
-    if band not in _DARKENING:
-        raise KeyError(f"no band {band!r} (have {light.BANDS})")
+    known(band, _DARKENING, "band")
     return _DARKENING[_DARKENING.index(band) :]
 
 

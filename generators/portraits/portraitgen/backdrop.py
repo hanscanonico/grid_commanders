@@ -27,6 +27,7 @@ from PIL import Image, ImageChops, ImageDraw
 
 from .canvas import CAST_CUTOFF, INK_SILHOUETTE, Canvas, Point
 from .palette import INK, RGBA, Faction, S_CONTOUR, S_SHADOW, S_UNDER, faction_ramp
+from .vocab import pick
 
 KINDS = frozenset({"bars", "burst", "grid", "halftone", "rays", "speed", "wedge"})
 # Which rung of the army's ramp each part of the window is painted in. A band is
@@ -193,9 +194,7 @@ def field(canvas: Canvas, faction: Faction) -> None:
 
 def treatment(canvas: Canvas, kind: str, faction: Faction) -> None:
     """One dramatic treatment, clipped to the window. An unknown kind raises."""
-    if kind not in _TREATMENTS:
-        raise KeyError(f"no backdrop {kind!r} (have {sorted(_TREATMENTS)})")
-    for slot, paint in _TREATMENTS[kind]:
+    for slot, paint in pick(_TREATMENTS, kind, "backdrop"):
         _band(canvas, faction, paint, slot)
 
 

@@ -44,6 +44,8 @@ from types import ModuleType
 
 from PIL import Image
 
+from .vocab import pick
+
 RGB = tuple[int, int, int]
 RGBA = tuple[int, int, int, int]
 Float3 = tuple[float, float, float]
@@ -249,10 +251,9 @@ def faction_ramp(key: str) -> Ramp6:
     three materials', and the membership bar (`ThePaletteIsBounded`) reads its
     allowed set off this same function. The set moved; the cap did not.
     """
-    if key not in RAMPS:
-        raise KeyError(f"no ramp for {key!r} (have {sorted(RAMPS)})")
+    board = pick(RAMPS, key, "ramp")
     taken = BUST_RUNGS.get(key, {})
-    return tuple(taken.get(slot, rung) for slot, rung in enumerate(RAMPS[key]))
+    return tuple(taken.get(slot, rung) for slot, rung in enumerate(board))
 
 
 # --- what one bust may spend -------------------------------------------------
