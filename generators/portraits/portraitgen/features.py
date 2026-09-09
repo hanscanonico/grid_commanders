@@ -139,6 +139,8 @@ def eyes(
 
     `covered` is the socket a worn accessory hides, from `covered_eye`.
     """
+    if kind not in _EYES:
+        raise KeyError(f"no eyes {kind!r} (have {sorted(_EYES)})")
     shape = _EYES[kind]
     frame = Frame.of(skull)
     for side, x in enumerate(eye_xs(skull)):
@@ -219,6 +221,8 @@ def brow(
     ink fragments the review read over Vale's and Draeg's sockets. The shade
     rung the mass is painted in is what the hairline was there to buy.
     """
+    if kind not in _BROWS:
+        raise KeyError(f"no brow {kind!r} (have {sorted(_BROWS)})")
     shape = _BROWS[kind]
     frame = Frame.of(skull)
     for side, x in enumerate(eye_xs(skull)):
@@ -277,6 +281,8 @@ NOSE_KINDS = frozenset(_NOSES)
 
 def nose(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
     """The shadow plane beside the bridge, and the bar under the tip."""
+    if kind not in _NOSES:
+        raise KeyError(f"no nose {kind!r} (have {sorted(_NOSES)})")
     shape = _NOSES[kind]
     frame = Frame.of(skull)
     # The light is fixed upper-left, so the plane the nose turns away from it is
@@ -443,6 +449,8 @@ def mouth(canvas: Canvas, skull: Skull, kind: str, *, eye: float = EYE_DEFAULT) 
     if kind in _OPEN:
         _opened(canvas, frame, _OPEN[kind], _mouth_half(eye))
         return
+    if kind not in _MOUTHS:
+        raise KeyError(f"no mouth {kind!r} (have {sorted(MOUTH_KINDS)})")
     _MOUTHS[kind](canvas, frame)
 
 
@@ -533,6 +541,8 @@ FACIAL_KINDS = frozenset(_FACIAL)
 
 
 def facial_hair(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
+    if kind not in _FACIAL:
+        raise KeyError(f"no facial hair {kind!r} (have {sorted(_FACIAL)})")
     _FACIAL[kind](canvas, Frame.of(skull), ramp)
 
 

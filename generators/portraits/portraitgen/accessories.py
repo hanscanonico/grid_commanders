@@ -371,4 +371,6 @@ def accessory(
     the kit slate — the module answers for every key on its own, and a crown
     handed no kicker is the flat one it was before.
     """
+    if kind not in _ACCESSORIES:
+        raise KeyError(f"no accessory {kind!r} (have {sorted(_ACCESSORIES)})")
     return _ACCESSORIES[kind](Worn(canvas, Frame.of(skull), skull, tint, kicker))
