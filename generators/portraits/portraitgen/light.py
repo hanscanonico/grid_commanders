@@ -2,9 +2,12 @@
 
 The sheet is lit from the upper left and a mirrored pose flips geometry only, so
 the direction is stated once, here, and never taken from a face's own spec.
-Every material is painted out of four named flat tones — deep, shade, base, lit
-— plus a rim; no band is an alpha wash over a fill, which is what keeps a
-finished raster inside its colour budget.
+Four named flat bands — deep, shade, base, lit — are what a ramp offers; what a
+material spends is its slots in the bust's palette, and only skin can afford all
+four (`palette.SKIN_SLOTS`, `HAIR_SLOTS`, `METAL_SLOTS`). No band is an alpha
+wash over a fill, which is what keeps a finished raster inside its colour
+budget, and the only rim on the sheet is the coat's kicker, argued at the foot
+of this docstring.
 
 A ramp is BUILT rather than typed out, the way the sprite sheet's own palette
 builds a faction ramp: one authored value ladder, and one shared chroma shape
