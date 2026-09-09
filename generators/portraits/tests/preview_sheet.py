@@ -317,7 +317,8 @@ UNIT_W, UNIT_H = 64, 96
 BOARD_COLUMNS = 7
 # A tile at the page's own ZOOM. Both atlases are baked at four times the world
 # grid, so at ZOOM 4 this is 64 and every board texel lands on one page pixel —
-# which is the only scale at which a strip of the board is an honest look at it.
+# the busts are blown up by the same ZOOM, so the two sheets are comparable and
+# neither has been filtered.
 BOARD_CELL = TILE * ZOOM
 
 
@@ -334,12 +335,16 @@ def _cells(sheet: Image.Image, size: tuple[int, int], wanted: int) -> list[Image
 
 
 def _board_strip() -> Image.Image:
-    """A run of the board as the game lays it out, at `BOARD_CELL` to a tile.
+    """A run of the board's atlas cells at `BOARD_CELL` to a tile, unfiltered.
 
-    Nothing is resampled and nothing is blended: the game samples both atlases
-    `TEXTURE_FILTER_NEAREST`, so a box-filtered 64x96 unit cell squeezed into
-    16x24 would show a reviewer a softness the screen never has. At ZOOM 4 the
-    cells go down at their baked size, one atlas texel to one page pixel.
+    Not the board as a player sees it: at resting zoom a 64px terrain cell is
+    drawn on the 16px world grid, so the screen shows a quarter of this detail.
+    What the strip is for is the **relative** scale — a bust against a tile and
+    a unit, both sheets blown up by the same ZOOM — and for that the cells have
+    to go down at their baked size, one atlas texel to one page pixel: a
+    box-filtered 64x96 unit cell squeezed into 16x24 would show a reviewer a
+    softness the screen never has, since the game samples both atlases
+    `TEXTURE_FILTER_NEAREST`.
     """
     terrain = Image.open(GAME / "assets/tiles/terrain_atlas.png").convert("RGBA")
     units = Image.open(GAME / "assets/tiles/units_atlas.png").convert("RGBA")

@@ -34,6 +34,11 @@ forms named in the root index are in `docs/design_record.md`.
   110x134 grid by `generators/portraits`, painted in **sixteen tones per bust** taken from the
   board's own ramps (`generators/sprites`' faction and gunmetal ladders), and every finished
   raster is snapped onto them — there is no supersample and no downsample left in that pipeline.
+  **Four of the sixteen are not the board's**, and `palette.BUST_RUNGS` is the one place that is
+  said: gold's three lit rungs come off the funds gold, because the board's Gilded ramp is
+  authored a band low on purpose and a coat painted on it is olive; Iron's field rung comes up to
+  where every other army's sits, because Iron's is the inverted ramp and a window that dark puts
+  three Iron faces under one black blob at chip size. Both are spent inside the sixteen.
   Two rules follow on this side. **`CommanderVisuals.ART_FILTER` is nearest** for a general's own
   art, and `EMBLEM_FILTER` is the one exception (a 64px badge drawn at 22 has no whole rung).
   **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
@@ -44,10 +49,10 @@ forms named in the root index are in `docs/design_record.md`.
   a narrower field clips both ears of a centred bust and a shorter one takes the chin.
   `UiKit._place_bust` asks it against the field's **drawn** size rather than the size a caller
   named, because the roster tile names none and learns its band a frame later. A surface too
-  small for a bust draws the **baked face chip** (`assets/portraits/faces`, 31x31) —
-  `FACE_REGION` rasterised on the chip's own coarser grid, never the bust sampled down — and the empty seat has one like
-  everybody else. `FACE_REGION` moved once, for the new grid; from here the rule is what it always
-  was, the geometry moves and the rectangle does not.
+  small for a bust draws the **baked face chip** (`assets/portraits/faces`, 31x31) — the same
+  drawing repainted on the chip's own coarser grid, never the bust sampled down or cut up — and
+  the empty seat has one like everybody else. `FACE_REGION` moved once, for the new grid; from
+  here the rule is what it always was, the geometry moves and the rectangle does not.
 - `faction-identity-plan.html` — armies wear their commander's faction, FI1–FI3 shipped. D1:
   **identity is presentation-only** — the sim keeps its team ints; `scenes/common/side_identity.gd`
   (`SideIdentity`) resolves `team → {theme, display name, atlas row}` once per match from the
