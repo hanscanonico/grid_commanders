@@ -11,12 +11,10 @@ Colours are kept as the authored 0-1 floats and converted to bytes in one place
 conversion does, and the committed emblems carry those exact bytes.
 
 **A bust is painted out of the board's palette, not out of one of its own.** The
-six-slot ramps are `generators/sprites`' and are not restated here: this module
-loads that instrument's own palette module off its file (`BOARD_PALETTE`) and
-paints out of its shaper, its ladders and its sky, so a commander and the army
-they command are lit by one sun. Four rungs are the exception, named with their
-reason in `BUST_RUNGS`; `tests/test_palette_mirror.py` holds them to being the
-only four.
+six-slot ramps are `generators/sprites`' — its shaper, its ladders and its sky —
+so a commander and the army they command are lit by one sun. Four rungs are the
+exception, named with their reason in `BUST_RUNGS`; `tests/test_palette_mirror.py`
+holds them to being the only four.
 
 What a bust may spend is `PAINTED_TONES` of them: sixteen, chosen by
 `bust_palette` out of the ramps that bust actually wears, and every finished
@@ -139,14 +137,10 @@ def faction_by_key(key: str) -> Faction:
 # --- the board's ramps -------------------------------------------------------
 #
 # Six lighting bands, not six brightnesses: S0 contour, S1 under, S2 shadow,
-# S3 body, S4 top, S5 rim. They are not restated here. The sprite generator's
-# palette module is loaded off its own file and its shaper, its ladders, its
-# sky and its gunmetal are what a bust is painted out of, so a rung cannot
-# drift between a commander and the tank beside them.
+# S3 body, S4 top, S5 rim.
 
-# The sibling instrument this module is painted out of. Derived from this
-# file's own path, so it holds wherever the checkout sits and whatever
-# directory a run is started from.
+# Derived from this file's own path, so it holds wherever the checkout sits and
+# whatever directory a run is started from.
 BOARD_PALETTE = (
     Path(__file__).resolve().parents[2] / "sprites" / "spritegen" / "palette.py"
 )
@@ -157,10 +151,9 @@ def _load_board() -> ModuleType:
     """The sprite generator's palette module, executed off its own file.
 
     `generators/sprites` is a sibling offline instrument rather than an
-    installed package, and its palette module is stdlib-only, so it is loaded
-    by path instead. It is registered in `sys.modules` before it runs because a
-    frozen dataclass inside it looks its own module up while its class body is
-    being built.
+    installed package, so there is nothing to import it as. It is registered in
+    `sys.modules` before it runs because a frozen dataclass inside it looks its
+    own module up while its class body is being built.
     """
     if not BOARD_PALETTE.is_file():
         raise ModuleNotFoundError(

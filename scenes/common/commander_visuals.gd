@@ -288,23 +288,13 @@ static func portrait_for(commander: CommanderType) -> Texture2D:
 	)
 
 
-## The face chip a surface too small to show a bust asks for: `FACE_REGION` of
-## the same drawing, repainted on the chip's own grid by the bake rather than cut
-## out of the bust or sampled down off it here. That 93px square shown as a 31px
-## chip is the three-to-one minification this art stopped being able to survive
-## once it became pixels.
+## The face chip a surface too small to show a bust asks for, straight off the
+## bake — the empty seat's included.
 ##
-## The empty seat has one too. It used to be the exception that got its bust
-## back whole — a head cut out of a featureless silhouette was a dark blob — but
-## a chip is a drawing of its own now rather than a crop, and the seat nobody
-## holds reads as a blank face on the board's own khaki.
-##
-## One degradation, named because it is the one case where this does hand back a
-## bust: a general the tree holds no chip for falls through to their whole
-## drawing, which a chip field then draws at 1:1 and clips. That is a broken
-## bake rather than a state to run in — every chip ships from `make portraits`
-## and is pinned per general by `test_commander_face.gd` — so it errors where a
-## missing bust only warns.
+## One degradation, named because it is the one case that hands back a bust: a
+## general the tree holds no chip for falls through to their whole drawing,
+## which a chip field then draws at 1:1 and clips. That is a broken bake rather
+## than a state to run in, so it errors where a missing bust only warns.
 static func face_for(commander: CommanderType) -> Texture2D:
 	var id := commander.id if commander != null else CommanderType.NEUTRAL_ID
 	var path := "%s/%s.png" % [FACE_DIR, id]
