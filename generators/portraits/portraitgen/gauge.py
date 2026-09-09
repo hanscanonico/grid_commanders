@@ -37,8 +37,11 @@ from .palette import RGBA
 GAUGE = 2
 # A cluster of one tone at most this large, holding no GAUGE-square of its own,
 # is rasteriser residue rather than a mark — a speck of paint on the ground, or
-# a pinhole of ground inside the paint. Three would take the eyes' small
-# catchlight with it, which is authored and reads.
+# a pinhole of ground inside the paint. At two it decides `is_orphan` on its
+# own, because two cells cannot hold a GAUGE-square; the gauge term is kept as
+# the guard on raising it, since a 2x2 block is a mark at any bound. Three is
+# not that raise: it would take the eyes' small catchlight, which is authored
+# and reads.
 MAX_ORPHAN = 2
 
 # How many times the sweep may run before the raster has to have settled.
@@ -88,7 +91,11 @@ def holds_gauge(cells: list[Cell]) -> bool:
 
 
 def is_orphan(cells: list[Cell]) -> bool:
-    """Whether a cluster is under the gauge in both of its terms."""
+    """Whether a cluster is under the gauge in both of its terms.
+
+    At the constants as authored the size bound decides alone; see `MAX_ORPHAN`
+    for why the gauge term is kept anyway.
+    """
     return len(cells) <= MAX_ORPHAN and not holds_gauge(cells)
 
 

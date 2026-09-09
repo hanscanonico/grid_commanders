@@ -44,9 +44,17 @@ class TheSweepKnowsWhatAMarkIs(unittest.TestCase):
         self.assertTrue(gauge.is_orphan([(4, 4), (5, 4)]))
 
     def test_a_gauge_square_is_a_mark(self):
+        """The gauge term: four cells that do hold a GAUGE-square."""
         block = [(4, 4), (5, 4), (4, 5), (5, 5)]
         self.assertTrue(gauge.holds_gauge(block))
         self.assertFalse(gauge.is_orphan(block))
+
+    def test_a_three_cell_l_holds_no_gauge_square_and_is_still_a_mark(self):
+        """The size term, alone: an L that holds no GAUGE-square is over
+        `MAX_ORPHAN` all the same, which is why the two terms are not one."""
+        ell = [(4, 4), (5, 4), (4, 5)]
+        self.assertFalse(gauge.holds_gauge(ell))
+        self.assertFalse(gauge.is_orphan(ell))
 
     def test_a_run_longer_than_the_orphan_bound_is_a_mark(self):
         run = [(x, 4) for x in range(6)]
