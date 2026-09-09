@@ -280,17 +280,23 @@ static func _no_ligatures(face: FontFile) -> FontVariation:
 	var variation := FontVariation.new()
 	variation.base_font = face
 	variation.opentype_features = {_LIGA_TAG: 0}
+	variation.fallbacks = face.fallbacks
 	return variation
 
 
 ## Loads a face and switches off every source of blur: no antialiasing, no
 ## subpixel drift, no hinting — so the glyphs rasterise on the same pixel grid the
-## tile and unit art already lives on (plan D2, and R1's mitigation).
+## tile and unit art already lives on (plan D2, and R1's mitigation). Every face
+## carries `UiMarks` behind it: neither pixel font draws the tick, the cross, the
+## two stars, the arrow or the infinity the shell prints, and the fallback the
+## desktop was silently using — the machine's own system font — does not exist in
+## a browser, where each of them came back as a hex box.
 static func _tuned(path: String) -> FontFile:
 	var face: FontFile = load(path)
 	face.antialiasing = TextServer.FONT_ANTIALIASING_NONE
 	face.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
 	face.hinting = TextServer.HINTING_NONE
+	face.fallbacks = [UiMarks.font()] as Array[Font]
 	return face
 
 
