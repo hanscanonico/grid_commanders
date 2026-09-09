@@ -6,8 +6,7 @@ Four named flat bands — deep, shade, base, lit — are what a ramp offers; wha
 material spends is its slots in the bust's palette, and only skin can afford all
 four (`palette.SKIN_SLOTS`, `HAIR_SLOTS`, `METAL_SLOTS`). No band is an alpha
 wash over a fill, which is what keeps a finished raster inside its colour
-budget, and the only rim on the sheet is the coat's kicker, argued at the foot
-of this docstring.
+budget, and the only rim on the sheet is the coat's kicker.
 
 A ramp is BUILT rather than typed out, the way the sprite sheet's own palette
 builds a faction ramp: one authored value ladder, and one shared chroma shape
@@ -20,15 +19,9 @@ Nothing here blurs. The occlusion band is a hard offset of a mask, because the
 design system's shadows are `4px 4px 0` with zero blur and a gradient is the one
 thing this style does not own.
 
-**There is no rim band on the figure.** There was: the silhouette minus a copy
-of itself stepped toward the key, in the army's own rim rung, walked one texel
-in under the ink. On a 110-pixel bust that is a one-texel run of a colour the
-face does not own, laid between a two-texel outline and the cheek — under the
-gauge (`gauge.GAUGE`) in width and alien in hue, and what the review read as
-opaque fleck halos strung along five silhouettes. The form is carried by the
-four bands and the ink instead. The coat keeps a kicker because it can afford
-one: `uniform` draws it as a ribbon, two texels, in a rung the army already
-spends.
+**There is no rim band on the figure**: the form is carried by the four bands
+and the ink, and only `uniform` kicks, as a two-texel ribbon in a rung the army
+already spends — `docs/light_model.md` argues why the head's rim went.
 """
 
 from __future__ import annotations
@@ -160,13 +153,7 @@ class Ramp:
         mixed toward the same sky as the tank outside the window.
 
         **A material built here has no rim of its own: it kicks in its own lit
-        rung.** Skin and hair are given four and three rungs on a sixteen-tone
-        bust and a rim is not one of them, so the kicker along their shadow edge
-        has to be a tone the bust already spends. It used to be the army's: a
-        near-white line down an Iron general's jaw, a mint one down a Verdant
-        general's neck — a hue the face does not own, laid one texel from the ink
-        that outlines the same edge, which is the fleck halo the review read off
-        five busts.
+        rung** — the rim section of `docs/light_model.md` argues why.
         """
         return cls(_material_rungs(base))
 

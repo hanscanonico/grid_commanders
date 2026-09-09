@@ -447,9 +447,8 @@ def _fallback(band: str) -> tuple[str, ...]:
 def ramp_for(colour: str) -> Ramp:
     """The tones a hair colour is painted in, its own lit rung as its kicker.
 
-    Hair is given three rungs on a sixteen-tone bust and a rim is not one of
-    them, so `light.Ramp.of_material` hands it back its own lit tone — see the rim
-    note there for why the army's rung is no longer what a mane kicks with.
+    Hair has no rim rung of its own, so `light.Ramp.of_material` hands it back
+    its own lit tone — the rim section of `docs/light_model.md` argues why.
     """
     return light.Ramp.of_material(pick(HAIR_BASES, colour, "hair colour"))
 
