@@ -81,7 +81,7 @@ def _regions(pixels: list[tuple[int, int]]) -> int:
 
 
 def _silhouette(cell: Canvas) -> list[tuple[float, float]]:
-    """Every painted pixel, in the portrait pixels the styles are authored in."""
+    """Every painted pixel, in the design units the styles are authored in."""
     pixels = cell.image.load()
     width, height = cell.image.size
     return [

@@ -22,7 +22,7 @@ it has been rounded onto sixteen tones. What the sweep takes was never authored;
 what was authored is drawn to the gauge in the first place.
 
 **A prop stays inside the frame the pose would push it out of.** `props.py`
-states its bleed line in portrait pixels, and the zoom is applied after it, so
+states its bleed line in design units, and the zoom is applied after it, so
 the limit can only be kept here: a prop whose posed corner would cross the line
 is walked back inside it as a whole, both layers together, before the pose.
 Shoulders are meant to bleed off the sides; a signature prop cut in half by the
@@ -87,14 +87,14 @@ FACTION_OF: dict[str, str] = {
     "sable_wren": "gold",
 }
 
-# The pose's two anchors, in portrait pixels: the zoom is taken about the
+# The pose's two anchors, in design units: the zoom is taken about the
 # bottom centre, because the composition is anchored there and a chest-up crop
 # has to stay anchored there, and the tilt about the head, because a bust leans
 # from the neck rather than from the frame.
 ZOOM_AT = (110.0, 268.0)
 TILT_AT = (110.0, 168.0)
 # Where a matrix coefficient is cut off. Nine places is far finer than a
-# portrait pixel and far coarser than the last bit of a double, so two machines'
+# design unit and far coarser than the last bit of a double, so two machines'
 # trigonometry agree exactly on the number the sampler is handed.
 _COEFF_PLACES = 9
 
@@ -186,7 +186,7 @@ def _corners(box: tuple[int, int, int, int]) -> tuple[tuple[float, float], ...]:
 
 
 def _forward(tilt: float, zoom: float) -> Matrix:
-    """Where the pose sends a point, in portrait pixels."""
+    """Where the pose sends a point, in design units."""
     return _compose(_turned_about(tilt, TILT_AT), _scaled_about(zoom, ZOOM_AT))
 
 

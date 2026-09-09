@@ -64,18 +64,18 @@ SHOULDERED = frozenset({"anchor", "axe", "hammer", "sabre", "wrench"})
 # of it, or — for a preview or a test — both at once.
 LAYERS = frozenset({"all", "back", "front"})
 
-# The hard offset shadow every prop drops, in portrait pixels: pure black, no
+# The hard offset shadow every prop drops, in design units: pure black, no
 # blur, down and to the right, the same direction the bust's own cast runs.
 PROP_CAST = (2, 2)
 PROP_CAST_TONE = (0, 0, 0, 64)
 
-# The four pixels of bleed the raster needs on the right, and the x no prop may
-# cross because of it.
+# The four design units of bleed the raster needs on the right, and the x no
+# prop may cross because of it.
 RIGHT_BLEED = 4.0
 RIGHT_LIMIT = 220.0 - RIGHT_BLEED
 
 # The row a mouth is drawn on and the lip corner a smoked prop leaves from, in
-# portrait pixels: the reference mouth of `features.py` fitted to a skull lands
+# design units: the reference mouth of `features.py` fitted to a skull lands
 # here, and a prop is drawn in raster space rather than in that skull's frame,
 # so the one row the two layers share is stated once.
 MOUTH_LINE = 170.0

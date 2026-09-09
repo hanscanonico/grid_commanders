@@ -39,7 +39,7 @@ KINDS = frozenset({"bars", "burst", "grid", "halftone", "rays", "speed", "wedge"
 FIELD_SLOT = S_SHADOW
 LATTICE, ACCENT = S_UNDER, S_CONTOUR
 
-# The ink-bordered inner window, in portrait pixels — the handoff's 98x96 box at
+# The ink-bordered inner window, in design units — the handoff's 98x96 box at
 # (6, 24) of its 110x134 viewBox, at the pinned raster's scale.
 WINDOW = (12.0, 76.0, 208.0, 268.0)
 # The star and the rays are struck about these, not about the raster's centre:

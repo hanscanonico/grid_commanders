@@ -221,7 +221,7 @@ def _placed(shape: tuple[Point, ...], box: SkullBox) -> list[Point]:
 
 
 def face_shade(kind: str, box: SkullBox) -> list[Point]:
-    """The shadow-side shade shape, in portrait pixels.
+    """The shadow-side shade shape, in design units.
 
     `kind` is one of SHADE_KINDS; an unknown one raises rather than falling
     through to a default.
@@ -260,10 +260,10 @@ def occlusion(
 ) -> Image.Image:
     """The AO pass: where an occluder's own shape lands on what is under it.
 
-    A hard offset band, not a blur — the occluder's mask stepped `depth`
-    portrait pixels away from the key and intersected with the target, minus
-    the occluder itself. The caller paints the target's `deep` tone through the
-    mask this returns, so the band stays a named tone rather than a wash.
+    A hard offset band, not a blur — the occluder's mask stepped `depth` away
+    from the key and intersected with the target, minus the occluder itself.
+    The caller paints the target's `deep` tone through the mask this returns,
+    so the band stays a named tone rather than a wash.
 
     `depth` is stated in design units like every other geometry in this package;
     `divisor` is the grid the two masks were drawn on (`Canvas.divisor`), which

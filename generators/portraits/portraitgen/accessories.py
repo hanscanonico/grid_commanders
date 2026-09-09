@@ -169,7 +169,7 @@ _HEADSET_CUP: tuple[Point, ...] = (
     (68.0, 152.0),
     (52.0, 152.0),
 )
-# The eyepatch: a plate over the eye it covers, in reference pixels off that
+# The eyepatch: a plate over the eye it covers, in design units off that
 # eye's centre, and the strap that lands on the ear. The plate is one flat tone
 # all through: what the review read as a domino mask was the lit eye and the
 # brow showing inside it, and `covered_eye` is what keeps them off it.

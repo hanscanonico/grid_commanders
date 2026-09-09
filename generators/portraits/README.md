@@ -268,7 +268,7 @@ the flipped group the light is pre-flipped, so it lands on the screen's shadow
 side once the group is turned over.
 
 A shoulder is meant to bleed off the side of the raster; a signature prop is
-not. `props.RIGHT_LIMIT` is stated in portrait pixels and the zoom is applied
+not. `props.RIGHT_LIMIT` is stated in design units and the zoom is applied
 after it, so `bust.py` walks a prop that would cross the line back inside it,
 both halves together, before the pose.
 

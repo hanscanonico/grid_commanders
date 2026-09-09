@@ -5,7 +5,7 @@ A head is four dials, exactly the `head` column of the roster:
 jaw names its lower half, the crown lifts the top of it, and the spread walks
 the eyes apart for the features layer to read.
 
-The numbers are the handoff's own, in portrait pixels. The handoff authored a
+The numbers are the handoff's own, in design units. The handoff authored a
 110x134 viewBox with its origin at y -14, and the design space every module
 here states its geometry in is that viewBox doubled — 220x268, two design units
 per handoff unit — so a handoff x is `2x` here and a handoff y is `2(y + 14)`.
@@ -51,12 +51,12 @@ HEAD_DEFAULT: tuple[float, str, float, float] = (1.0, "round", 0.0, 1.0)
 # The centre of the skull: every head, ear and eye is placed against it, and a
 # general's width scales about it.
 HEAD_CX = 110.0
-# The skull, in portrait pixels: its sides, the cheekbone the top curve lands
+# The skull, in design units: its sides, the cheekbone the top curve lands
 # on, where the jaw takes over, the chin, and the unlifted crown.
 SKULL_LEFT, SKULL_RIGHT = 64.0, 156.0
 CHEEK_Y, JAW_Y, CHIN_Y, CROWN_Y = 132.0, 148.0, 206.0, 82.0
-# A crown dial is in handoff units and the raster is two pixels to one.
-CROWN_PX = 2.0
+# A crown dial is in handoff units and the design space is two units to one.
+CROWN_UNITS = 2.0
 
 # The neck the head sits on, and the ear set into its side.
 NECK_LEFT, NECK_RIGHT = 94.0, 126.0
@@ -64,11 +64,11 @@ NECK_TOP, NECK_BOTTOM, NECK_BULGE = 180.0, 208.0, 218.0
 EAR_LEFT, EAR_RIGHT, EAR_Y, EAR_R = 62.0, 158.0, 144.0, 10.0
 
 # How far the head's own shape falls onto what is under it — the jaw onto the
-# neck and the skull onto the ear behind it are one band — in portrait pixels.
+# neck and the skull onto the ear behind it are one band — in design units.
 # The hair fringe and the collar are the same pass at their own layers.
 JAW_DEPTH = 5.0
 
-# Steps a quadratic is flattened into. Twelve is under a portrait pixel per
+# Steps a quadratic is flattened into. Twelve is under a design unit per
 # step on the longest curve here.
 _CURVE_STEPS = 12
 
@@ -131,9 +131,9 @@ def _jaw_points(skull: Skull, left: float, right: float) -> list[Point]:
 
 
 def outline(skull: Skull) -> list[Point]:
-    """The skull's silhouette, in portrait pixels, before the pose transform."""
+    """The skull's silhouette, in design units, before the pose transform."""
     left, right = _hx(SKULL_LEFT, skull.width), _hx(SKULL_RIGHT, skull.width)
-    top = CROWN_Y - skull.crown * CROWN_PX
+    top = CROWN_Y - skull.crown * CROWN_UNITS
     start = (left, CHEEK_Y)
     crown = [
         start,
@@ -172,7 +172,7 @@ def ears(skull: Skull) -> tuple[tuple[float, float, float, float], ...]:
 def skull_box(skull: Skull) -> SkullBox:
     """Centre, half-width, crown and height — what a shade shape is placed on."""
     half = (_hx(SKULL_RIGHT, skull.width) - _hx(SKULL_LEFT, skull.width)) / 2.0
-    top = CROWN_Y - skull.crown * CROWN_PX
+    top = CROWN_Y - skull.crown * CROWN_UNITS
     return SkullBox(HEAD_CX, half, top, CHIN_Y - top)
 
 

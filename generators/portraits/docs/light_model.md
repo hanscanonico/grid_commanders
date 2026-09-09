@@ -11,7 +11,7 @@ own sun in `generators/sprites/spritegen/sun.py`. Everything the key does not
 reach falls **down and to the right** (`light.SHADOW_STEP`), on every bust,
 mirrored poses included: a pose flips geometry, never light. The cast shadow
 obeys the same rule from `portraitgen/canvas.py` — the figure's silhouette at
-+6 portrait pixels, `#000` at 0.30, one flat tone, zero blur.
++6 design units, `#000` at 0.30, one flat tone, zero blur.
 
 `tests/test_geometry.py` reads that back the way the game does: the lit patch
 `(22, 242, 12, 12)` against the shaded patch `(186, 242, 12, 12)` with a floor

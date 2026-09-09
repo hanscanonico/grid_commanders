@@ -38,7 +38,7 @@ RAMP = Ramp(
         (238, 150, 136),
     )
 )
-# The head the worn props reach for, in portrait pixels: a stand-in for the
+# The head the worn props reach for, in design units: a stand-in for the
 # skull the light model draws, so a pipe or a cigar can be measured against a
 # jaw before there is one.
 HEAD = (54.0, 84.0, 166.0, 196.0)

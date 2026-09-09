@@ -5,7 +5,7 @@ N alternating strand clusters, and at chip size a row of them read as a striped
 awning rather than as hair — so the mass now takes one lobe, on the lit side,
 and nothing else.
 
-The masses are the handoff's own, transcribed in portrait pixels (its units,
+The masses are the handoff's own, transcribed in design units (its units,
 doubled, over `features.REFERENCE_BOX` like every other feature) and fitted to
 the general's skull by `features.Frame`, so hair and the face it sits on can
 never be cut to two different heads. Where the lobe lies is decided by the

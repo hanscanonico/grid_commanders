@@ -62,7 +62,7 @@ GOLD: RGB = (224, 169, 46)
 # further out than this, at any zoom the roster poses at.
 PAYLOAD_INBOARD = 52.0
 
-# The uniform mass every bust rises out of, in portrait pixels: the handoff's
+# The uniform mass every bust rises out of, in design units: the handoff's
 # shoulder path, its two quadratics cut into chamfers so the whole outline is
 # one polygon the ink and the shade can both follow.
 MASS: tuple[Point, ...] = (

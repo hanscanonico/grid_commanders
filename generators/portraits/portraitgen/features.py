@@ -32,7 +32,7 @@ from .light import Ramp
 from .palette import INK, RGB
 from .vocab import known, pick
 
-# The handoff's skull at width 1.0: left, top, right, bottom in portrait pixels.
+# The handoff's skull at width 1.0: left, top, right, bottom in design units.
 REFERENCE_BOX: Box = (64.0, 82.0, 156.0, 206.0)
 # The face's own landmarks in that drawing: the line the eyes sit on, how far a
 # spread of 1.0 walks them apart, and the near ear's centre and radius.
@@ -85,7 +85,7 @@ class Frame:
 
 
 def eye_xs(skull: Skull) -> tuple[float, float]:
-    """The two eye centres, in reference pixels, walked apart by the spread."""
+    """The two eye centres, in design units, walked apart by the spread."""
     half = EYE_HALF * skull.spread
     centre = (REFERENCE_BOX[0] + REFERENCE_BOX[2]) / 2.0
     return (centre - half, centre + half)
@@ -380,7 +380,7 @@ MOUTH_CEILING = min(shape.top for shape in _OPEN.values())
 
 
 def _mouth_half(eye: float) -> float:
-    """Half an open mouth's width, in reference pixels, at one eye dial."""
+    """Half an open mouth's width, in design units, at one eye dial."""
     return MOUTH_EYE_SPAN * (EYE_RX * eye + INK_FEATURE / 2.0) - INK_FEATURE / 2.0
 
 
