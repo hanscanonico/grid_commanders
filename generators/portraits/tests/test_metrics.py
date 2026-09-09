@@ -21,6 +21,7 @@ from functools import lru_cache
 from PIL import Image, ImageChops
 
 from portraitgen import bust, features, head, light, palette, props, roster, uniform
+from painted import painted, specs
 from portraitgen.canvas import (
     BUST_DIVISOR,
     BUST_SIZE,
@@ -69,21 +70,11 @@ def _luminance(pixel: tuple[int, ...]) -> float:
     return 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
 
 
-def _specs() -> list[tuple[str, object]]:
-    return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
-
-
-@lru_cache(maxsize=None)
-def _painted(key: str, *, cast: bool = True) -> Image.Image:
-    spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
-    return bust.paint(spec, cast=cast)
-
-
 @lru_cache(maxsize=None)
 def _figure(key: str) -> Image.Image:
     """Where the bust differs from its own window: its silhouette."""
     spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
-    difference = ImageChops.difference(_painted(key, cast=False), bust.window(spec))
+    difference = ImageChops.difference(painted(key, cast=False), bust.window(spec))
     return difference.convert("L").point(lambda level: 255 if level else 0)
 
 
@@ -131,9 +122,9 @@ class TheRasterIsWhatTheGamePins(unittest.TestCase):
     here before it can reach the engine."""
 
     def test_every_bust_is_the_pinned_raster(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
-                self.assertEqual(_painted(key).size, BUST_SIZE)
+                self.assertEqual(painted(key).size, BUST_SIZE)
 
 
 class TheShadowIsDrawn(unittest.TestCase):
@@ -141,10 +132,10 @@ class TheShadowIsDrawn(unittest.TestCase):
     on all twenty-three: what changes when it is switched off, and where."""
 
     def test_the_cast_shadow_lands_outside_every_silhouette(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
                 changed = ImageChops.difference(
-                    _painted(key), _painted(key, cast=False)
+                    painted(key), painted(key, cast=False)
                 ).convert("L")
                 outside = ImageChops.multiply(
                     changed.point(lambda level: 255 if level else 0),
@@ -158,10 +149,10 @@ class FourValueBands(unittest.TestCase):
     painted in four."""
 
     def test_every_bust_carries_four_bands_inside_its_silhouette(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
                 inside = Image.composite(
-                    _painted(key),
+                    painted(key),
                     Image.new("RGBA", BUST_SIZE, (0, 0, 0, 0)),
                     _figure(key),
                 )
@@ -206,25 +197,25 @@ class ThePaletteIsBounded(unittest.TestCase):
     """M4/C4: the tones a raster is painted in, against the brief's forty-eight."""
 
     def test_no_bust_is_painted_in_more_than_sixteen_tones(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
-                self.assertLessEqual(len(_tones(_painted(key))), MAX_TONES)
+                self.assertLessEqual(len(_tones(painted(key))), MAX_TONES)
 
     def test_every_tone_is_one_the_bust_was_given(self):
         """The harder half: not "few colours" but "these colours". A pixel that
         is not a rung of this bust's own palette is a blend, and there is
         nowhere left in the pipeline for one to come from."""
-        for key, spec in _specs():
+        for key, spec in specs():
             with self.subTest(commander=key):
                 allowed = set(bust.palette_of(spec))
-                self.assertEqual(set(_tones(_painted(key))) - allowed, set())
+                self.assertEqual(set(_tones(painted(key))) - allowed, set())
 
     def test_the_shadow_is_the_one_tone_that_is_neither_paint_nor_nothing(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
                 partial = {
                     colour
-                    for _, colour in _colours(_painted(key))
+                    for _, colour in _colours(painted(key))
                     if 0 < colour[3] < 255
                 }
                 self.assertLessEqual(len(partial), 1)
@@ -251,7 +242,7 @@ class OneLightOnEveryFace(unittest.TestCase):
 
     def _patch(self, key: str, patch: tuple[int, int, int, int]) -> float:
         x, y, width, height = patch
-        pixels = _painted(key).load()
+        pixels = painted(key).load()
         values = sorted(
             _luminance(pixels[column, row])
             for row in range(y, y + height)
@@ -261,7 +252,7 @@ class OneLightOnEveryFace(unittest.TestCase):
         return 0.5 * (values[half - 1] + values[half])
 
     def test_the_key_side_of_every_bust_is_the_lighter_one(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
                 lit = self._patch(key, self.LIT_PATCH)
                 away = self._patch(key, self.SHADED_PATCH)
@@ -297,7 +288,7 @@ class NoFaceWearsAHalfMask(unittest.TestCase):
         ramp = head.ramp_for(face.skin)
         dark = (ramp.deep, ramp.shade)
         tones = (*dark, ramp.base, ramp.lit)
-        pixels = _painted(key).load()
+        pixels = painted(key).load()
         centre, half, top, height = (
             value / BUST_DIVISOR for value in head.skull_box(face.head)
         )
@@ -391,7 +382,7 @@ class TheSilhouettesAreDistinct(unittest.TestCase):
     size, which is where twenty-three identical outlines used to show."""
 
     def _pairs(self) -> list[tuple[float, str, str]]:
-        chips = {key: _chip(key) for key, _ in _specs()}
+        chips = {key: _chip(key) for key, _ in specs()}
         return [
             (_iou(chips[a], chips[b]), a, b)
             for a, b in itertools.combinations(sorted(chips), 2)

@@ -19,11 +19,12 @@ fringe pixel somewhere on the crown.
 from __future__ import annotations
 
 import unittest
-from functools import lru_cache
 
 from PIL import Image
 
+from painted import painted
 from portraitgen import bust, hair, head, palette, roster
+from portraitgen.canvas import CAST_TONE
 
 # The two busts the pale half of the rule moves, and the two the cheek half
 # moves on its own. Named rather than counted: the rule is worth exactly the
@@ -33,13 +34,8 @@ FRINGE_MOVED = {"konrad_vale", "lyra_quill"}
 CHEEK_MOVED = {"iris_colt", "viktor_draeg"}
 
 
-@lru_cache(maxsize=None)
-def _painted(key: str) -> Image.Image:
-    return bust.paint(roster.FACES[key]).convert("RGB")
-
-
 def _tones(key: str) -> set[tuple[int, ...]]:
-    counted = _painted(key).getcolors(1 << 16)
+    counted = painted(key).convert("RGB").getcolors(1 << 16)
     assert counted is not None
     return {colour for _, colour in counted}
 
@@ -51,7 +47,7 @@ def _mass_tone(key: str) -> tuple[int, ...]:
     ramp = hair.ramp_for(face.hair)
     picked = ramp.band(hair.mass_band(face.style, ramp, head.ramp_for(face.skin)))
     one = Image.new("RGBA", (1, 1), (*picked, 255))
-    snapped = palette.quantise(one, bust.palette_of(face), shadow=(0, 0, 0, 77))
+    snapped = palette.quantise(one, bust.palette_of(face), shadow=CAST_TONE)
     return snapped.getpixel((0, 0))[:3]
 
 

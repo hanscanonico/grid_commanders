@@ -18,6 +18,7 @@ from functools import lru_cache
 
 from PIL import Image, ImageChops
 
+from painted import painted
 from portraitgen import bust, hair, head, roster
 
 # The luminance the hair mass and the skin's base band must differ by. Below
@@ -39,11 +40,6 @@ def _is(pixel: tuple[int, ...], tone: tuple[int, ...]) -> bool:
 
 
 @lru_cache(maxsize=None)
-def _painted(key: str) -> Image.Image:
-    return bust.paint(roster.FACES[key])
-
-
-@lru_cache(maxsize=None)
 def _figure(key: str) -> Image.Image:
     """Where the bust differs from its own window: the general, without the
     backdrop behind them. The backdrops are flat grey fields over slate, so a
@@ -57,7 +53,7 @@ def _hair_luminance(key: str) -> float:
     """The median luminance of everything painted in the general's hair ramp."""
     ramp = hair.ramp_for(roster.FACES[key].hair)
     tones = (ramp.deep, ramp.shade, ramp.base, ramp.lit)
-    image = _painted(key)
+    image = painted(key)
     pixels = image.load()
     figure = _figure(key).load()
     width, height = image.size

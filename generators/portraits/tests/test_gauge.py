@@ -15,24 +15,15 @@ shipping as noise.
 from __future__ import annotations
 
 import unittest
-from functools import lru_cache
 
 from PIL import Image
 
-from portraitgen import bust, gauge, roster
+from painted import painted, specs
+from portraitgen import bust, gauge
 from portraitgen.canvas import BUST_DIVISOR, CHIP_DIVISOR, Canvas
 
 INK = (19, 23, 27, 255)
 CORE = (224, 169, 46, 255)
-
-
-def _specs():
-    return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
-
-
-@lru_cache(maxsize=None)
-def _painted(key: str) -> Image.Image:
-    return bust.paint(dict(_specs())[key])
 
 
 def _orphans(image: Image.Image) -> list[list[tuple[int, int]]]:
@@ -78,21 +69,21 @@ class TheSweepRepaintsFromTheBorder(unittest.TestCase):
         self.assertEqual(swept.getpixel((10, 10)), CORE)
 
     def test_the_sweep_has_settled_when_it_returns(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
-                once = _painted(key)
+                once = painted(key)
                 self.assertEqual(gauge.despeckle(once).tobytes(), once.tobytes())
 
     def test_the_sweep_invents_no_tone(self):
-        for key, spec in _specs():
+        for key, spec in specs():
             with self.subTest(commander=key):
                 allowed = {(*tone, 255) for tone in bust.palette_of(spec)}
-                painted = {
+                tones = {
                     colour
-                    for _, colour in _painted(key).getcolors(1 << 16)
+                    for _, colour in painted(key).getcolors(1 << 16)
                     if colour[3] == 255
                 }
-                self.assertEqual(painted - allowed, set())
+                self.assertEqual(tones - allowed, set())
 
 
 class NothingUnderTheGaugeSurvivesTheBake(unittest.TestCase):
@@ -100,9 +91,9 @@ class NothingUnderTheGaugeSurvivesTheBake(unittest.TestCase):
     and no more than `MAX_ORPHAN` pixels is not a mark this grid can draw."""
 
     def test_no_bust_holds_an_orphan_cluster(self):
-        for key, _ in _specs():
+        for key, _ in specs():
             with self.subTest(commander=key):
-                self.assertEqual(_orphans(_painted(key)), [])
+                self.assertEqual(_orphans(painted(key)), [])
 
 
 class ARibbonIsTwoTexelsOnEitherGrid(unittest.TestCase):
