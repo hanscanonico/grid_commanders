@@ -60,13 +60,12 @@ forms named in the root index are in `docs/design_record.md`.
   **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
   and `CommanderBust` (`scenes/ui/commander_bust.gd`) draws it at exactly that, centred across the
   field and hung from its top, so a field too short clips the chest rather than showing half a
-  texel. **What "too small for a
-  bust" means is measured off the art and stated once**, in `CommanderVisuals.WHOLE_BUST_FIELD` /
-  `fits_whole_bust`: the drawing's full width, and every row down to `FACE_REGION`'s bottom edge —
-  a narrower field clips both ears of a centred bust and a shorter one takes the chin.
-  `CommanderBust` asks it against **the larger of the field's drawn size and its minimum**
-  rather than the size a caller named, because the roster tile names none and learns its band a
-  frame later. A surface too small for a bust draws the **baked face chip**
+  texel. **What "too small for a bust" means is measured off the art and stated once**, in
+  `CommanderVisuals.WHOLE_BUST_FIELD` / `fits_whole_bust`: the drawing's full width, and every row
+  down to `FACE_REGION`'s bottom edge — a narrower field clips both ears of a centred bust and a
+  shorter one takes the chin. `CommanderBust` asks it against **the larger of the field's drawn size
+  and its minimum** rather than the size a caller named, because the roster tile names none and
+  learns its band a frame later. A surface too small for a bust draws the **baked face chip**
   (`assets/portraits/faces`, 31x31) — the same drawing repainted on the chip's own coarser grid,
   never the bust sampled down or cut up — and the empty seat has one like everybody else.
   `FACE_REGION` moved once, for the new grid; from here the rule is what it always was, the
