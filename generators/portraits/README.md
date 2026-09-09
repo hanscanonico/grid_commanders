@@ -9,9 +9,11 @@ seat — and the **twenty-three 31x31 face chips** the surfaces too small for a 
 draw.
 
 The busts are **pixel art**: authored on their own small grid, painted in
-sixteen tones off the board's own ramps and its shaper, and drawn by the game at
-a whole-number scale with nearest sampling. Nothing is supersampled and nothing is resampled —
-what this tool rasterises is what the screen shows, texel for pixel.
+sixteen tones, and drawn by the game at a whole-number scale with nearest
+sampling. Nothing is supersampled and nothing is resampled — what this tool
+rasterises is what the screen shows, texel for pixel. How much of the board each
+of those sixteen is, is per material, and [Palette
+discipline](#palette-discipline) is where that split is stated.
 
 There are **no seeds and no randomness**. Every mark is authored, so every run
 reproduces the same bytes, and regenerating after an edit changes exactly the
@@ -61,9 +63,13 @@ opaque fleck halos strung along five silhouettes.
 
 `tests/test_face_region.py` is the hardest of them: `CommanderVisuals.FACE_REGION`
 parsed out of the game's own source, every general's chin measured against it,
-and every chip checked to be that rectangle of that general's own drawing. If a
-bust fails it, **the geometry moves — never the rectangle**, which the HUD chip,
-the speech bust and the campaign brief all read.
+and every chip measured against the shipped bust. A chip is **that same drawing
+repainted on the chip's own coarser grid, not that rectangle cut out of the
+bust**, so the two share no bytes to diff: `TheChipIsTheSameFace` compares the
+picture instead, holding every chip texel to the tone that dominates the 3x3
+block of the bust it stands for. If a bust fails any of it, **the geometry moves
+— never the rectangle**, which the HUD chip, the speech bust and the campaign
+brief all read.
 
 `tests/preview_sheet.py --part sheet` is the reviewer's look: all twenty-three
 busts over one row per faction, and the face-chip strip under them.
