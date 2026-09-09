@@ -30,6 +30,7 @@ import argparse
 import sys
 import tempfile
 from pathlib import Path
+from typing import TypeVar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -256,13 +257,21 @@ def _worn(skin: light.Ramp, mane: light.Ramp) -> list[Canvas]:
     return cells
 
 
+T = TypeVar("T")
+
+
+def _in_rows(items: list[T], columns: int) -> list[list[T]]:
+    """A flat run of cells cut into rows of at most `columns`."""
+    return [items[start : start + columns] for start in range(0, len(items), columns)]
+
+
 def _grid(cells: list[Canvas]) -> Image.Image:
     width, height = BUST_SIZE
-    rows = -(-len(cells) // COLUMNS)
-    page = Image.new("RGBA", (width * COLUMNS, height * rows), (0, 0, 0, 255))
-    for index, cell in enumerate(cells):
-        spot = (index % COLUMNS * width, index // COLUMNS * height)
-        page.paste(cell.resolve(), spot)
+    rows = _in_rows(cells, COLUMNS)
+    page = Image.new("RGBA", (width * COLUMNS, height * len(rows)), (0, 0, 0, 255))
+    for down, row in enumerate(rows):
+        for across, cell in enumerate(row):
+            page.paste(cell.resolve(), (across * width, down * height))
     return page
 
 
@@ -328,8 +337,10 @@ def _cells(sheet: Image.Image, size: tuple[int, int], wanted: int) -> list[Image
     found: list[Image.Image] = []
     for top in range(0, sheet.height - height + 1, height):
         for left in range(0, sheet.width - width + 1, width):
+            if len(found) == wanted:
+                return found
             cell = sheet.crop((left, top, left + width, top + height))
-            if cell.getbbox() is not None and len(found) < wanted:
+            if cell.getbbox() is not None:
                 found.append(cell)
     return found
 
@@ -380,12 +391,10 @@ def _board(out: Path) -> list[Path]:
     busts.append(painter.paint(roster.NEUTRAL))
     width, height = BUST_SIZE
     columns = 8
-    rows = -(-len(busts) // columns)
-    page = Image.new("RGBA", (width * columns, height * rows), (35, 39, 43, 255))
-    for index, drawn in enumerate(busts):
-        page.alpha_composite(
-            drawn, (index % columns * width, index // columns * height)
-        )
+    rows = _in_rows(busts, columns)
+    page = Image.new("RGBA", (width * columns, height * len(rows)), (35, 39, 43, 255))
+    for index, row in enumerate(rows):
+        page.alpha_composite(_row(row), (0, index * height))
     # The busts are blown up nearest to the strip's scale rather than the strip
     # being squeezed down to theirs: both sheets end up at ZOOM, and neither of
     # them has been filtered on the way.

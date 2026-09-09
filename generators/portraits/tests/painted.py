@@ -19,7 +19,10 @@ from PIL import Image
 from portraitgen import bust, roster
 
 
-def specs() -> list[tuple[str, object]]:
+Spec = roster.Face | roster.EmptySeat
+
+
+def specs() -> list[tuple[str, Spec]]:
     """The whole sheet in the order the suites walk it: the roster by key, then
     the empty seat."""
     return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]

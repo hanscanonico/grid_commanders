@@ -43,7 +43,7 @@ def _opened(path: Path) -> Image.Image:
 def _counted(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
     counted = image.getcolors(1 << 16)
     assert counted is not None, "more colours than a portrait can carry"
-    return [(count, colour) for count, colour in counted]
+    return counted
 
 
 def _opaque(image: Image.Image) -> set[tuple[int, ...]]:
