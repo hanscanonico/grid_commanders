@@ -202,15 +202,15 @@ def _bleed_shift(
 
 
 def _prop_layers(
-    on: Canvas, face: Face, army: Faction, cloth: light.Ramp
+    grid: Canvas, face: Face, army: Faction, cloth: light.Ramp
 ) -> tuple[Canvas, Canvas]:
     """The prop behind the figure and its rig in front, both walked inboard."""
-    whole = on.blank()
+    whole = grid.blank()
     props.draw(whole, face.prop, army, cloth, layer="all")
     shift = _bleed_shift(_design_box(whole), *face.pose[:2])
     layers = []
     for half in ("back", "front"):
-        art = on.blank()
+        art = grid.blank()
         props.draw(art, face.prop, army, cloth, layer=half)
         layers.append(_walked(art, shift))
     return tuple(layers)
@@ -233,15 +233,15 @@ def _walked(layer: Canvas, by: int) -> Canvas:
 
 
 def _face_group(
-    on: Canvas, face: Face, skin: light.Ramp, mane: light.Ramp, cloth: light.Ramp
+    grid: Canvas, face: Face, skin: light.Ramp, mane: light.Ramp, cloth: light.Ramp
 ) -> Canvas:
     """Everything above the collar: the head, its features and its hair over."""
-    group = on.blank()
+    group = grid.blank()
     head.draw(group, face.head, skin, mirrored=face.pose[2])
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
-    # Headwear cut out of uniform cloth is painted in the coat's own rungs —
-    # its base, and its lit rung along the key's edge (`accessories._CAP_LIT`).
+    # Headwear cut out of uniform cloth is painted in the coat's own rungs: its
+    # base, and its lit rung along the crown's upper-left edge.
     for worn in (face.acc, face.acc2):
         accessories.accessory(group, face.head, worn, tint=cloth.base, kicker=cloth.lit)
     covered = accessories.covered_eye(face.acc)
@@ -260,27 +260,27 @@ def _faction(face: Face) -> Faction:
     return faction_by_key(FACTION_OF[face.id])
 
 
-def _general(on: Canvas, face: Face) -> Canvas:
+def _general(grid: Canvas, face: Face) -> Canvas:
     """One general's figure, unposed: the five layers and which of them turn."""
     army = _faction(face)
     cloth = _cloth(army)
     skin = light.Ramp.of_material(head.SKIN_BASES[face.skin])
     mane = hair.ramp_for(face.hair)
 
-    behind_prop, front_prop = _prop_layers(on, face, army, cloth)
-    figure = on.blank()
+    behind_prop, front_prop = _prop_layers(grid, face, army, cloth)
+    figure = grid.blank()
     figure.compose(behind_prop)
 
-    behind = on.blank()
+    behind = grid.blank()
     hair.back(behind, face.head, face.style, mane)
 
-    dress = on.blank()
+    dress = grid.blank()
     uniform.draw(dress, army, face.collar, cloth)
     uniform.chest(dress, face.chest, army, cloth)
     if face.pip:
         uniform.pip(dress, cloth)
 
-    above = _face_group(on, face, skin, mane, cloth)
+    above = _face_group(grid, face, skin, mane, cloth)
     if face.pose[2]:
         behind, above = _flipped(behind), _flipped(above)
 
@@ -291,7 +291,7 @@ def _general(on: Canvas, face: Face) -> Canvas:
     return figure
 
 
-def _empty_seat(on: Canvas, seat: EmptySeat) -> Canvas:
+def _empty_seat(grid: Canvas, seat: EmptySeat) -> Canvas:
     """The seat nobody holds: the shared skull, in slate, with no face on it.
 
     Deliberately featureless — an empty seat has to read as a choice rather
@@ -300,7 +300,7 @@ def _empty_seat(on: Canvas, seat: EmptySeat) -> Canvas:
     """
     army = faction_by_key("neutral")
     cloth = _cloth(army)
-    figure = on.blank()
+    figure = grid.blank()
     uniform.draw(figure, army, uniform.COLLAR_DEFAULT, cloth)
     uniform.chest(figure, uniform.CHEST_DEFAULT, army, cloth)
     head.draw(figure, seat.head, cloth)
