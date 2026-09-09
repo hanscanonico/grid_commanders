@@ -245,12 +245,9 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	# here is what makes this sheet and the select page set a general's copy
 	# identically.
 	# Stretched to fill this column instead, the same card reads as a second design.
-	# `for_chip`, and this is the one surface that asks for it and the one place
-	# the measurement behind it is stated: four headers, four economy strips, the
-	# charge line and the Close button leave a card 102px of this 360px screen
-	# (measured on `commander_info`, 2026-09-09), and a whole-bust band would
-	# have its chin cut off by the frame. The select page, which frames the same
-	# card with a page to itself, shows the general whole.
+	# `for_chip` because the headers, economy strips, charge line and Close button
+	# leave a card 102px of this 360px screen (measured on `commander_info`,
+	# 2026-09-09) — a whole-bust band would have its chin cut off by the frame.
 	var card := CommanderCard.for_chip()
 	card.custom_minimum_size.x = CommanderCard.READING_WIDTH
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

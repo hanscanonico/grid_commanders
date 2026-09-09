@@ -16,12 +16,8 @@ var _commander: CommanderType = null
 var _art: TextureRect = null
 
 
-## `size` is the square (or band) the caller asks for, kept as the minimum so an
-## unplaced field still knows its shape. It is set before the field can be
-## resized, which is why it is a constructor argument rather than a caller's
-## assignment.
-func _init(size: Vector2 = Vector2.ZERO) -> void:
-	custom_minimum_size = size
+func _init(field_size: Vector2 = Vector2.ZERO) -> void:
+	custom_minimum_size = field_size
 	clip_contents = true
 	_art = TextureRect.new()
 	_art.texture_filter = CommanderVisuals.ART_FILTER
@@ -45,18 +41,8 @@ func bind(commander: CommanderType, tint: Color) -> void:
 	_place()
 
 
-## The general's drawing — whichever of the two this field's shape calls for — at
-## a rung of `CommanderVisuals.art_scale`, centred, and hung from the top edge
-## once it is taller than the field.
-##
-## Which of the two is `CommanderVisuals.fits_whole_bust`, and nobody else asks:
-## the whole bust where the art fits at one texel to one pixel, the baked face
-## chip everywhere else.
-##
-## The shape is the field's own size, falling back to the size it was asked for
-## while it is still unplaced — a field that states no minimum is the roster
-## tile's, which learns its band from the row a frame later and re-places itself
-## then.
+## The shape falls back to the minimum while the field is still unplaced: the
+## roster tile states none and learns its band from the row a frame later.
 func _place() -> void:
 	var shape := size.max(custom_minimum_size)
 	if CommanderVisuals.fits_whole_bust(shape):
