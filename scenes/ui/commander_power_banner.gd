@@ -24,12 +24,12 @@ extends PanelContainer
 const _QUOTE_SIZE := 16
 const _POWER_NAME_SIZE := 22
 const _POWER_NAME_QUOTED_SIZE := 13
-## The overline above the quote ("GENERAL · COMMAND POWER"): one size past the
-## shell's SIZE_TIP (8), because it reads across a center-screen card rather than
-## at a tooltip's reading distance, and the shell has no token at this size.
+## The overline above the quote ("GENERAL · COMMAND POWER") and the power's
+## effect text. The banner is read across a centre-screen card rather than at a
+## panel's reading distance, so this card keeps a ladder of its own, sized to the
+## quote it is built around — the shell's tokens are the *page* rhythm and none
+## of them lands between the eyebrow and the name.
 const _EYEBROW_SIZE := 9
-## The power's effect text, one step past the shell's SIZE_BODY (8) for the same
-## reason as the eyebrow above.
 const _POWER_TEXT_SIZE := 11
 ## The eyebrow's own shade of de-emphasised ink on the banner's paper field:
 ## UiTheme.INK_3 is tuned for slate (HUD labels) and washes out on cream, the

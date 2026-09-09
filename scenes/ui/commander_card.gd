@@ -25,23 +25,20 @@ extends PanelContainer
 ## The hard floor: narrower than this and the doctrine copy shreds into two-word
 ## lines. The card claims it unless the caller has already asked for more.
 const MIN_WIDTH := 158
-## The width every line of shipped copy needs to stop wrapping further, measured
-## across the whole roster — and no page on a 640x360 screen can spare more than
-## that. Callers with the room ask for it by name rather than guessing a number —
-## narrower is legible but taller, and height is the dimension this screen has
-## none of.
-const READING_WIDTH := 250
+## The width the card needs before more of it stops helping, measured across the
+## whole roster: past this, widening the column wraps no line the select page's
+## frame was clipping. Callers with the room ask for it by name rather than
+## guessing a number — narrower is legible but taller, and height is the
+## dimension this screen has none of. Re-measured at the 10px body (COM-271):
+## 250 left every general's card taller than the frame, 280 puts the same two
+## back over it that were over it before the raise.
+const READING_WIDTH := 280
 
 ## De-emphasised copy on paper: the signature line, and the micro-label over each
 ## block under it. Card-local because the design system has no token for it — the
 ## shell's faint text (UiTheme.INK_3) is mixed for slate and washes out on cream.
 const _MICRO_INK := Color(0.408, 0.443, 0.471)
 
-## The one size this card states for itself: its headline. Every other line is a
-## UiTheme token, but the shell has no size between a button's 10 and a banner's
-## 18, and a name band is neither — it is the card's face, read before the rules
-## under it. Named here like the two full-screen pages name their own titles.
-const _NAME_SIZE := 12
 ## The two portrait bands a card can be built with, one of which `_init` takes.
 ## Public because a surface that frames a card names the band it built it with
 ## and checks its own layout against that same number.
@@ -137,15 +134,15 @@ func _build() -> void:
 	# name (a MarginContainer draws no background).
 	_name_label = Label.new()
 	_name_label.add_theme_font_override("font", UiTheme.display(true))
-	_name_label.add_theme_font_size_override("font_size", _NAME_SIZE)
+	_name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_SUBTITLE)
 	_name_band = PanelContainer.new()
 	_name_band.add_child(UiKit.pad(_name_label, 6, 2))
 	rows.add_child(_name_band)
 
 	# --- rules copy on paper ---
 	var copy := VBoxContainer.new()
-	copy.add_theme_constant_override("separation", 4)
-	var copy_wrap := _paper_panel(copy, 7, 5)
+	copy.add_theme_constant_override("separation", 3)
+	var copy_wrap := _paper_panel(copy, 7, 4)
 	rows.add_child(copy_wrap)
 
 	# The general's signature line — power_quotes[0], the same words the
@@ -165,7 +162,7 @@ func _build() -> void:
 	power_rows.add_theme_constant_override("separation", 1)
 	_power_box.add_child(power_rows)
 
-	var power_head := UiKit.pad(null, 5, 3)
+	var power_head := UiKit.pad(null, 5, 2)
 	var head_row := HBoxContainer.new()
 	head_row.add_theme_constant_override("separation", 6)
 	var head_label := _micro("COMMAND POWER", _MICRO_INK)
@@ -184,7 +181,7 @@ func _build() -> void:
 	power_rows.add_child(UiKit.pad(_power_name_label, 6, 0))
 
 	_power_text_label = _body(UiTheme.INK)
-	power_rows.add_child(UiKit.pad(_power_text_label, 6, 3))
+	power_rows.add_child(UiKit.pad(_power_text_label, 6, 2))
 
 	_built = true
 

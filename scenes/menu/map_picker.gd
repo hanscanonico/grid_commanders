@@ -116,11 +116,13 @@ func configure(db: TerrainDB) -> void:
 	# 126 before the seat strip took its lines of the panel's fixed height, and 80
 	# before COM-254 measured it against what the picker shows. COM-258 gave the
 	# ground back the other way: choosing a board is what this page is for, so the
-	# viewport is a whole row of cells and half of the next, which is the shape
-	# that says out loud there is more roster below. It is still the one control
+	# viewport is a whole cell and half of the next, which is the shape that says
+	# out loud there is more roster below. Half of the next *picture* since the
+	# body face rose to 10 (COM-271) — the peek is a board, not the top of a name,
+	# and this is where the taller names are paid for: it is still the one control
 	# here that scrolls by design, so it is still the one that gives ground when
 	# the panel runs out of height.
-	_map_scroll.custom_minimum_size = Vector2(0, 1.5 * _cell_height())
+	_map_scroll.custom_minimum_size = Vector2(0, _cell_height() + 0.5 * _picture_height())
 	_map_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(_map_scroll)
@@ -372,11 +374,16 @@ static func random_index(maps: Array[MapData], current: int, rng: RandomNumberGe
 # --- cells -------------------------------------------------------------------
 
 
-## A cell's height: its picture, the frame around it and the board's name beneath.
-## Asked of the font rather than typed in, so the viewport's row and a half stays
-## a row and a half if the face changes.
+## A cell's picture and the frame around it, without the name beneath — the part
+## of a cell that shows a board.
+func _picture_height() -> float:
+	return THUMB.y + 2 * CARD_PAD
+
+
+## A cell's height: its picture and the board's name beneath. Asked of the font
+## rather than typed in, so the viewport's shape follows the face.
 func _cell_height() -> float:
-	return THUMB.y + 2 * CARD_PAD + UiTheme.display().get_height(UiTheme.SIZE_BODY) + 1
+	return _picture_height() + UiTheme.display().get_height(UiTheme.SIZE_BODY) + 1
 
 
 ## One picker cell: a focusable button holding a live thumbnail and the board's

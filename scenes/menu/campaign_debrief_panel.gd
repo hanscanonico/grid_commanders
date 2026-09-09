@@ -17,9 +17,6 @@ signal continued
 ## A lost mission, asked for again from this page rather than through the hub.
 signal retried
 
-## Between body and banner: the stars are the payoff, so they read bigger than
-## the verdict's supporting copy.
-const _STAR_SIZE := 12
 const _STAR_STAGGER := 0.18
 const _STAR_FADE := 0.25
 const _DOT := "   ·   "
@@ -152,7 +149,7 @@ func _star_row(text: String, lit: bool) -> HBoxContainer:
 	var glyph := Label.new()
 	glyph.text = "★" if lit else "☆"
 	glyph.add_theme_font_override("font", UiTheme.display())
-	glyph.add_theme_font_size_override("font_size", _STAR_SIZE)
+	glyph.add_theme_font_size_override("font_size", UiTheme.SIZE_SUBTITLE)
 	glyph.add_theme_color_override("font_color", UiTheme.SELECT_GOLD if lit else UiTheme.INK_3)
 	row.add_child(glyph)
 	var label := Label.new()
