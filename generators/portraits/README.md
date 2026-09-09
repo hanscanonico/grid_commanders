@@ -218,16 +218,17 @@ it comes from and no table names its own vocabulary twice.
 | `portraitgen/roster.py` | the FACES table | `Face`, `FACES`, `NEUTRAL`, `SKIN_TONES` |
 | `portraitgen/bust.py` | the draw order, the pose, the frame safety | `paint(spec, cast=, divisor=)`, `chip(spec)`, `palette_of(spec)`, `window(spec, divisor=)`, `prop_art(face)`, `sheet_rows()`, `busts()`, `chips()`, `FACTION_OF` |
 
-The keyword-only arguments above are the seams the layers are composed through:
-`layer=` splits a prop into the half behind the figure and the rig in front,
-`skin=` is what the hair fringe casts its band in, `tint=` dresses a bandana or
-a headset cup in the general's own faction cloth, `kicker=` is that cloth's lit
-rung, which only the two cap crowns spend, and `mirrored=` pre-flips the light
-for a layer the pose is about to turn over. `accessory` packs the first two
-into a `Worn`, so the nine painters that ignore the kicker never carry it down
-their signatures. `accessories.py` fits to the same `Frame` and reads the same
-eye line as `features.py`, so it imports that module and nothing there imports
-it back.
+The keyword-only arguments above are the seams the layers are composed
+through: `layer=` splits a prop into the half behind the figure and the rig in
+front, `skin=` is the face the hair is drawn against — what its fringe casts a
+band in and what its mass steps down its ramp to stand off, so it is required
+rather than defaulted — `tint=` dresses a bandana or a headset cup in the
+general's own faction cloth, `kicker=` is that cloth's lit rung, which only the
+two cap crowns spend, and `mirrored=` pre-flips the light for a layer the pose
+is about to turn over. `accessory` packs the first two into a `Worn`, so the
+nine painters that ignore the kicker never carry it down their signatures.
+`accessories.py` fits to the same `Frame` and reads the same eye line as
+`features.py`, so it imports that module and nothing there imports it back.
 
 Draw order, all on one grid, in `bust.py`: backdrop, then the figure — prop
 behind, hair behind, uniform and collar, head, features, hair over, prop in

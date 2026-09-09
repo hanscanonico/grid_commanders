@@ -483,9 +483,7 @@ def mass_band(style: str, ramp: Ramp, skin: Ramp) -> str:
     return steps[-1]
 
 
-def draw(
-    canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
-) -> None:
+def draw(canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp) -> None:
     """The mass and the shape the key catches on it. An unknown style raises."""
     back(canvas, skull, style, ramp)
     front(canvas, skull, style, ramp, skin=skin)
@@ -498,19 +496,17 @@ def back(canvas: Canvas, skull: Skull, style: str, ramp: Ramp) -> None:
         _mass(canvas, frame, mass, ramp.shade)
 
 
-def front(
-    canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
-) -> None:
+def front(canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp) -> None:
     """The fringe, the crown and the lit lobe — painted over the head.
 
-    `skin` is the wearer's own ramp: the fringe casts a flat band of its shade
-    tone on the forehead, and a shadow on skin has to be a skin tone.
+    `skin` is the wearer's own ramp, and it is required: the fringe casts a flat
+    band of its shade tone on the forehead — a shadow on skin has to be a skin
+    tone — and the mass is only stood off the face against a face.
     """
     spec = _spec(style)
     frame = Frame.of(skull)
-    band = declared_band(style) if skin is None else mass_band(style, ramp, skin)
-    tone = ramp.band(band)
-    if skin is not None and spec.fringe:
+    tone = ramp.band(mass_band(style, ramp, skin))
+    if spec.fringe:
         canvas.polygon(frame.path(spec.fringe), skin.shade)
     for x, y, radius in spec.blobs:
         canvas.ellipse(frame.ellipse(x, y, radius, radius), tone)
