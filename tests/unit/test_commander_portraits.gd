@@ -147,19 +147,15 @@ func test_every_commander_has_a_baked_face_chip() -> void:
 		)
 
 
-## The chip is the face region rasterised on its own grid, so the region's side
-## is a whole number of chips across. A region that stopped dividing would put
-## the chip half a pixel off the head it is cut from.
+## The chip is the face region repainted on its own grid, so the region's side is
+## a whole number of chips across. A region that stopped dividing would put the
+## chip half a pixel off the head it draws again. That every general gets a chip
+## of that size back out of `face_for` is `test_commander_face.gd`'s roster loop,
+## not a second one here.
 func test_the_chip_is_the_face_region_on_its_own_grid() -> void:
 	var region := CommanderVisuals.FACE_REGION
 	assert_eq(region.size.x, region.size.y)
 	assert_eq(region.size.x % CommanderVisuals.FACE_SIZE.x, 0)
-	for commander in db.playable():
-		assert_eq(
-			CommanderVisuals.face_for(commander).get_size(),
-			Vector2(CommanderVisuals.FACE_SIZE),
-			"face chip for %s" % commander.id
-		)
 
 
 ## Both doors, because they answer differently: ResourceLoader reads the import

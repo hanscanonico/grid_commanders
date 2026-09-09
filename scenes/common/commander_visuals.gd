@@ -291,10 +291,23 @@ static func portrait_for(commander: CommanderType) -> Texture2D:
 ## back whole — a head crop of a featureless silhouette was a dark blob — but a
 ## chip is a drawing of its own now rather than a crop, and the seat nobody
 ## holds reads as a blank face on the board's own khaki.
+##
+## One degradation, named because it is the one case where this does hand back a
+## bust: a general the tree holds no chip for falls through to their whole
+## drawing, which a chip field then draws at 1:1 and clips. That is a broken
+## bake rather than a state to run in — every chip ships from `make portraits`
+## and is pinned per general by `test_commander_face.gd` — so it errors where a
+## missing bust only warns.
 static func face_for(commander: CommanderType) -> Texture2D:
 	var id := commander.id if commander != null else CommanderType.NEUTRAL_ID
 	var path := "%s/%s.png" % [FACE_DIR, id]
-	return _cached(path, func() -> Texture2D: return portrait_for(commander))
+	return _cached(
+		path,
+		func() -> Texture2D:
+			var missing := "Missing commander face chip %s - run `make portraits`." % path
+			push_error(missing + " The whole bust is standing in, and a chip field clips it.")
+			return portrait_for(commander)
+	)
 
 
 ## A faction's emblem. Neutral has none, so callers gate on the theme key; asked

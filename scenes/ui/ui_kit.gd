@@ -34,7 +34,7 @@ const _BUST_ART := &"Bust"
 ## Which general a built field is showing, kept on the field itself: the crop is
 ## a function of the size a container hands over, which is known a frame after
 ## the bust is built, so the texture has to be chosen at placement time.
-const _BUST_CO := &"bust_commander"
+const _BUST_COMMANDER := &"bust_commander"
 
 ## A text field's height: one line of Silkscreen with the border either side of it.
 const FIELD_HEIGHT := 18
@@ -637,7 +637,7 @@ static func commander_bust(commander: CommanderType, size: Vector2, tint: Color)
 ## `_place_bust`'s, so a rebind and a resize reach the same answer.
 static func bind_bust(bust: Panel, commander: CommanderType, tint: Color) -> void:
 	bust.add_theme_stylebox_override("panel", UiTheme.flat(tint))
-	bust.set_meta(_BUST_CO, commander)
+	bust.set_meta(_BUST_COMMANDER, commander)
 	_place_bust(bust)
 
 
@@ -691,7 +691,7 @@ static func _place_bust(field: Panel) -> void:
 	if art == null:
 		return
 	var shape := field.size.max(field.custom_minimum_size)
-	var commander := field.get_meta(_BUST_CO, null) as CommanderType
+	var commander := field.get_meta(_BUST_COMMANDER, null) as CommanderType
 	if CommanderVisuals.fits_whole_bust(shape):
 		art.texture = CommanderVisuals.portrait_for(commander)
 	else:
