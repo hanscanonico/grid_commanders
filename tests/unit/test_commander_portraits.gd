@@ -121,17 +121,15 @@ func test_only_a_field_that_holds_the_art_shows_a_whole_bust() -> void:
 ## private fields (the victory lockup, the power banner, the roster tile) are
 ## read off the captured frames instead.
 func test_every_named_bust_field_is_whole_texels() -> void:
-	for named: Array in [
-		[
-			"CommanderCard.WHOLE_BUST_BAND",
-			Vector2(CommanderVisuals.WHOLE_BUST_FIELD.x, CommanderCard.WHOLE_BUST_BAND)
-		],
-		["CommanderCard.CHIP_BAND", Vector2(CommanderCard.CHIP_BAND, CommanderCard.CHIP_BAND)],
-		["UiTheme.HUD_PORTRAIT", Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT)],
-		["MissionSpeech.BUST", Vector2(MissionSpeech.BUST, MissionSpeech.BUST)],
-	]:
-		var label: String = named[0]
-		var field: Vector2 = named[1]
+	var fields := {
+		"CommanderCard.WHOLE_BUST_BAND":
+		Vector2(CommanderVisuals.WHOLE_BUST_FIELD.x, CommanderCard.WHOLE_BUST_BAND),
+		"CommanderCard.CHIP_BAND": Vector2(CommanderCard.CHIP_BAND, CommanderCard.CHIP_BAND),
+		"UiTheme.HUD_PORTRAIT": Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT),
+		"MissionSpeech.BUST": Vector2(MissionSpeech.BUST, MissionSpeech.BUST),
+	}
+	for label: String in fields:
+		var field: Vector2 = fields[label]
 		if CommanderVisuals.fits_whole_bust(field):
 			continue
 		var chip := CommanderVisuals.FACE_SIZE

@@ -637,6 +637,8 @@ static func commander_bust(commander: CommanderType, size: Vector2, tint: Color)
 ## `_place_bust`'s, so a rebind and a resize reach the same answer.
 static func bind_bust(bust: Panel, commander: CommanderType, tint: Color) -> void:
 	bust.add_theme_stylebox_override("panel", UiTheme.flat(tint))
+	# A null erases the entry rather than storing one, so an unbound field carries
+	# no general at all and `_place_bust` reads its default.
 	bust.set_meta(_BUST_COMMANDER, commander)
 	_place_bust(bust)
 
@@ -691,13 +693,10 @@ static func _place_bust(field: Panel) -> void:
 	if art == null:
 		return
 	var shape := field.size.max(field.custom_minimum_size)
-	# `set_meta(name, null)` erases the entry rather than storing a null, so a
-	# field bound to no general — the card and the HUD chip are both built that
-	# way and bound later — has no meta at all. It draws the empty seat until it
-	# is bound, which is what `portrait_for`/`face_for` answer for a null.
-	var commander: CommanderType = null
-	if field.has_meta(_BUST_COMMANDER):
-		commander = field.get_meta(_BUST_COMMANDER) as CommanderType
+	# The card and the HUD chip are both built before their general and bound
+	# later; until then the field draws the empty seat, which is what
+	# `portrait_for`/`face_for` answer for a null.
+	var commander := field.get_meta(_BUST_COMMANDER, null) as CommanderType
 	if CommanderVisuals.fits_whole_bust(shape):
 		art.texture = CommanderVisuals.portrait_for(commander)
 	else:

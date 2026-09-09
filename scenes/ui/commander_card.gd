@@ -53,10 +53,11 @@ const _NAME_SIZE := 12
 ## shows the general as drawn.
 ##
 ## `CHIP_BAND` is for a surface with no room for that: the 31px face chip at a
-## whole-number rung, plus one texel of air under it — the band's own padding on
-## the same grid as the art in it, rather than a spare pixel or two. The
-## commander info sheet is the one caller that asks for it, and states there what
-## its own page leaves a card.
+## whole-number rung, plus one texel of air — the band's own padding on the same
+## grid as the art in it, rather than a spare pixel or two. `UiKit._place_bust`
+## centres what it draws, so that texel lands as two pixels over the chip and one
+## under it. The commander info sheet is the one caller that asks for it, and
+## states there what its own page leaves a card.
 const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
 const _CHIP_ZOOM := 3
 const _BAND_AIR_TEXELS := 1
