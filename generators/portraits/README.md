@@ -217,7 +217,9 @@ it comes from and no table names its own vocabulary twice.
 
 | Module | Owns | Entry points |
 | --- | --- | --- |
+| `portraitgen/palette.py` | the board's ramps, the faction themes, the ink, the bust's sixteen tones | `BOARD`, `INK`, `FACTIONS`, `faction_by_key`, `faction_ramp(key)`, `BUST_RUNGS`, `bust_palette(faction, skin, hair)`, `quantise`, `PAINTED_TONES`, `SKIN_SLOTS`/`HAIR_SLOTS`/`METAL_SLOTS` |
 | `portraitgen/canvas.py` | the two grids, the primitives, the hard cast shadow | `Canvas.polygon/ellipse/stroke/ribbon/rect`, `px`, `divisor`, `blank`, `compose`, `silhouette`, `cast_shadow`, `resolve`, `face_box`, `pen`, `Region`, `SkullBox` |
+| `portraitgen/raster.py` | which pixels a filled polygon covers, decided in integers | `spans(corners, size)` |
 | `portraitgen/vocab.py` | how a dispatch table answers an unknown key | `pick(table, key, what)`, `known(key, vocabulary, what)` |
 | `portraitgen/gauge.py` | the smallest mark this grid holds, and the sweep | `GAUGE`, `MAX_ORPHAN`, `clusters`, `holds_gauge`, `is_orphan`, `despeckle` |
 | `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `Ramp.of_faction(key)`, `Ramp.of_material(base)`, `shade_kind`, `face_shade(kind, box)`, `face_light(box)`, `LADDER`, `LIT_CEILING`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
@@ -228,8 +230,10 @@ it comes from and no table names its own vocabulary twice.
 | `portraitgen/uniform.py` | shoulders, collar cut, chest treatment, rank pip | `COLLAR_CUTS`, `CHEST_TREATMENTS`, `draw(canvas, faction, collar, ramp)`, `chest(canvas, treatment, faction, ramp)`, `pip(canvas, ramp)` |
 | `portraitgen/props.py` | the 22 signature props and their rigs | `PROPS`, `SHOULDERED`, `RIGHT_LIMIT`, `draw(canvas, key, faction, ramp, layer=)` |
 | `portraitgen/backdrop.py` | the window field, the treatment, the ink frame | `KINDS`, `FIELD_SLOT`, `LATTICE`, `ACCENT`, `field`, `treatment`, `frame`, `draw(canvas, kind, faction)` |
+| `portraitgen/emblem.py` | the five 64px faction emblems, drawn straight onto the raster | `SIZE`, `draw(key)` |
 | `portraitgen/roster.py` | the FACES table | `Face`, `FACES`, `NEUTRAL`, `SKIN_TONES` |
 | `portraitgen/bust.py` | the draw order, the pose, the frame safety | `paint(spec, cast=, divisor=)`, `chip(spec)`, `palette_of(spec)`, `window(spec, divisor=)`, `prop_art(face)`, `sheet_rows()`, `busts()`, `chips()`, `FACTION_OF` |
+| `portraitgen/pipeline.py` | what a run produces, and where it installs | `Output`, `OUTPUTS`, `generate(out, log=)`, `install(src, dest)`, `main()` |
 
 The keyword-only arguments above are the seams the layers are composed
 through: `layer=` splits a prop into the half behind the figure and the rig in
