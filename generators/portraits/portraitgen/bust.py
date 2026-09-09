@@ -325,7 +325,7 @@ def paint(
     `cast=False` is the same bust with the hard offset shadow left off, which
     is how "the shadow was drawn" is measured: the difference between the two
     is the shadow and nothing else. `divisor` is which grid it lands on: the
-    bust's, or the coarser one a face chip is cut from.
+    bust's, or the coarser one a face chip is repainted on.
     """
     tilt, zoom, _ = spec.pose
 

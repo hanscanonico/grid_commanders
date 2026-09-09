@@ -10,7 +10,7 @@ composed against.
 Meeting it is the floor, not the bar. A prop that reaches the bust through a
 shape detached from the object it carries still reads as a float, so the
 connector is measured too: unbroken drawing from the object down to the
-contact, a plane held clear of the crop the HUD chip is cut from, and an anchor
+contact, a plane held clear of the square the HUD chip repaints, and an anchor
 the shoulder really passes in front of.
 """
 
@@ -117,8 +117,8 @@ class TheConnectorIsDrawn(unittest.TestCase):
 
 
 class ThePlaneRidesTheShoulder(unittest.TestCase):
-    """Perrin Ash's model plane, held up beside the jaw, crossed the crop the
-    HUD chip and the speech bust are cut from."""
+    """Perrin Ash's model plane, held up beside the jaw, crossed the square the
+    HUD chip and the speech bust repaint."""
 
     def test_the_prop_clears_the_face_crop_s_chin_row(self):
         face = roster.FACES["perrin_ash"]
