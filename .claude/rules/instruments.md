@@ -62,6 +62,31 @@ root index are in `docs/design_record.md`.
   it names and the comparison refuses to cross it. D6: fewer windows beats faster restores — the
   wrapper is the safety net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep
   exists.
+  D7 (COM-279): **a scripted capture renders off the desktop entirely.** `tools/godot_gui.sh` gains
+  exactly one branch — a launch with no tty, whose engine arguments after `--` carry a
+  `--screenshot=` or `--shots-dir=`, runs inside the Linux container image
+  (`tools/capture/Dockerfile`: Xvfb, lavapipe, and the **official Linux arm64 build of the version
+  the macOS binary is**, the tag carrying that version so a bump cannot be answered from cache).
+  Measured with the instrument over the default queue (89 scenarios — `after_build_menu` fails on
+  `main` for its own reasons and was left out): **0 steals**, and 88 of those 89 frames are
+  byte-identical across two container runs. The one that moves, `capture_power`, is the scenario
+  that un-pins Instant on purpose so a cut-in really plays, and it moves on the desktop too — three
+  runs, three hashes — so it is a scenario that photographs a moving cut-in, not a renderer
+  difference. Everything else is untouched, and that
+  is the decision: D3 stands (a tty launch still execs the engine), D1 and D6 stand (the wrapper
+  stays as the safety net for every launch the container cannot take, and the sweep still boots
+  once). "Available" is the docker CLI, a daemon that answers and the image already built — any
+  one missing is **one notice line and the windowed path**, never an implicit ten-minute build;
+  `GODOT_CAPTURE_RENDERER=container|desktop|auto` forces the choice. The checkout and the capture
+  directory are bound at their own absolute paths so every path on the command line means the same
+  thing on both sides, and the import cache is a **named volume per checkout and engine version**,
+  so a worktree keeps its own and the macOS `.godot/` is never written by Linux — a cold volume
+  gets the headless import first, because a scene with every texture missing reads as a hang. The
+  launcher `exec`s docker, so pid, exit status and stdio stay the run's own, and a watcher that
+  outlives the exec kills the container when the launcher is killed. Under D1 a manifest now names
+  its renderer as well as its queue and the comparison refuses to cross either: two rasterisers are
+  two sets of bytes. `tools/test_godot_gui.sh` (`make capture-test`, in `make verify`) holds all of
+  it on a fake engine and a fake `docker`, so the gate needs no Docker at all.
 - `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
   one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
   offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command

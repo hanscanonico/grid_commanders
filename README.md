@@ -152,6 +152,19 @@ so the same scenario writes different bytes under `MODES="cutin"` than in the fu
 manifest names the queue it was recorded from and the comparison refuses to cross it, so a narrowed
 run asks for a new manifest instead of crying wolf.
 
+A capture launched by a script or an agent does not open that window at all: it renders inside a
+Linux container — a virtual display and a software Vulkan driver, with the official Linux arm64
+build of the same engine version — so nothing flashes across the desktop. Build the image once with
+`make capture-image` (Docker with a linux/arm64 daemon; the first capture after that imports the
+project into the container's own cache, which takes minutes and says so). Nothing else changes:
+`make smoke`, `make screenshot` and their siblings keep their names, flags and outputs.
+`tools/godot_gui.sh` picks the renderer, and it never builds the image — with no Docker CLI, no
+daemon answering or no image built it prints one line saying which, and falls back to the windowed
+path below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container` forces the container
+one, and the default `auto` is the rule above. A `SMOKE_HASHES` manifest records which renderer
+drew it and the comparison refuses to cross renderers, exactly as it refuses to cross queues: two
+rasterisers, two sets of bytes.
+
 The one window is still activated as it opens and again on each scene change, so a sweep briefly
 takes the front app away from you. `tools/focus_timeline.sh make smoke` measures that instead of
 guessing: it wraps any command, samples the frontmost app for its whole lifetime, and prints the

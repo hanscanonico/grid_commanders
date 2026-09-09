@@ -391,6 +391,10 @@ if ((${#modes[@]} == 0)); then
 fi
 
 out_dir="$(mktemp -d "${TMPDIR:-/tmp}/battle-smoke.XXXXXX")"
+# The launcher decides whether a capture renders on the desktop or inside the
+# container image, and writes the answer here; the manifest records it rather
+# than deriving it a second time.
+export GODOT_CAPTURE_RENDERER_OUT="$out_dir/renderer"
 # Non-empty when the one-boot sweep failed as a batch and had to be re-run one
 # process per scenario; the entry names the log the batch left behind.
 batch_fallbacks=()
@@ -641,9 +645,19 @@ run_batched_sweep() {
 # therefore only read against a run of the same modes, which its first line
 # records and the comparison refuses to cross: a narrowed run is a different
 # picture of the same scene, not a regression.
+#
+# A frame is also the renderer that drew it, so the manifest names that too and
+# the comparison refuses to cross it, exactly as it refuses to cross a queue.
+renderer_used() {
+	local name="desktop"
+	[[ -s "$GODOT_CAPTURE_RENDERER_OUT" ]] && name="$(cat "$GODOT_CAPTURE_RENDERER_OUT")"
+	printf '%s\n' "$name"
+}
+
 capture_manifest() {
 	local m shot
 	echo "# queue: ${modes[*]}"
+	echo "# renderer: $(renderer_used)"
 	for m in "${modes[@]}"; do
 		shot="$out_dir/${m//:/-}.png"
 		printf '%s  %s\n' "$(shasum -a 256 <"$shot" | cut -d ' ' -f1)" "$m"
@@ -663,6 +677,15 @@ compare_capture_hashes() {
 	if [[ "$(head -1 "$manifest")" != "# queue: ${modes[*]}" ]]; then
 		echo "smoke: $manifest was recorded from a different queue, so its bytes" >&2
 		echo "smoke: answer for a different font atlas — record a new one to compare" >&2
+		return 1
+	fi
+	# A manifest from before the header existed was recorded on the desktop.
+	local recorded_renderer now_renderer
+	recorded_renderer="$(sed -n 's/^# renderer: //p' "$manifest")"
+	now_renderer="$(renderer_used)"
+	if [[ "${recorded_renderer:-desktop}" != "$now_renderer" ]]; then
+		echo "smoke: $manifest was recorded on the ${recorded_renderer:-desktop} renderer and this" >&2
+		echo "smoke: run drew on $now_renderer — two rasterisers, so record a new one to compare" >&2
 		return 1
 	fi
 	local m shot want got moved=0
