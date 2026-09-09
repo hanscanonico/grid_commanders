@@ -30,7 +30,8 @@ from game import GAME
 
 # Where each generated relpath directory is installed in the game. Restated
 # rather than imported: this script is run as a file, not as part of the
-# package, so it stands on Pillow alone.
+# package, so it reaches for nothing under `portraitgen` — only Pillow and the
+# test helpers' own `game`, which is where the repository root comes from.
 INSTALL_MAP = {
     "commanders": "assets/portraits/commanders",
     "faces": "assets/portraits/faces",
