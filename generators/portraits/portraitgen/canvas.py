@@ -32,7 +32,10 @@ DESIGN_SIZE = (220, 268)
 BUST_DIVISOR = 2
 CHIP_DIVISOR = 6
 
-# The design system's three stroke weights, in design units.
+# The design system's three stroke weights, in design units. `pen` floors them
+# onto a grid, and on the two this package rasterises they do not stay three:
+# the bust draws 2/1/1 pixels and the chip 1/1/1, so feature and detail are one
+# stroke apart only by tone. `tests/test_raster.py` measures it.
 INK_SILHOUETTE, INK_FEATURE, INK_DETAIL = 4.0, 3.0, 2.0
 INK_WEIGHTS: tuple[float, ...] = (INK_SILHOUETTE, INK_FEATURE, INK_DETAIL)
 
@@ -73,7 +76,7 @@ class Region(NamedTuple):
 
 class SkullBox(NamedTuple):
     """Where a face's shapes are placed: the skull's centre line, its
-    half-width, its crown and its height, in portrait pixels.
+    half-width, its crown and its height, in design units.
 
     `head.skull_box` measures one and `light` places the shade and the light
     shapes on it, so the two never disagree about what a `half` was. A layer the

@@ -106,6 +106,21 @@ class AStrokeWalksItsOwnPixels(unittest.TestCase):
             canvas.pen(canvas.INK_DETAIL, canvas.BUST_DIVISOR),
         )
 
+    def test_the_shipped_ladder_is_two_weights_on_the_bust_and_one_on_the_chip(self):
+        """Three authored weights, but not three pens: 4/3/2 design units floor
+        to 2/1/1 on the bust's grid and to 1/1/1 on the chip's, so a feature
+        line and a detail line are the same single texel and only the
+        silhouette reads heavier. What keeps them apart is tone, not width.
+        Pinned because the shipped art was authored against these pens — a
+        divisor or a weight moved without a rebake changes the drawing."""
+        weights = (canvas.INK_SILHOUETTE, canvas.INK_FEATURE, canvas.INK_DETAIL)
+        self.assertEqual(
+            [canvas.pen(w, canvas.BUST_DIVISOR) for w in weights], [2, 1, 1]
+        )
+        self.assertEqual(
+            [canvas.pen(w, canvas.CHIP_DIVISOR) for w in weights], [1, 1, 1]
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
