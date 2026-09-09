@@ -491,7 +491,7 @@ class MoveFrames(unittest.TestCase):
 
     MIN_SILHOUETTE_TEXELS = 6
     MAX_SHIMMER = 5.0
-    MAX_MASS_DRIFT = 0.15
+    MAX_MASS_DRIFT = 0.11
 
     def _movers(self) -> list[str]:
         """The units under gate, or a skip that says the gate saw nothing."""
