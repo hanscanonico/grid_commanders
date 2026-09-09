@@ -1,4 +1,4 @@
-# Sheet census — 2026-09-03
+# Sheet census — 2026-09-09
 
 What the art installed under `assets/tiles/` costs, and how much of it is the same cell twice.
 A reading of one run of `make sheet-census`
@@ -14,17 +14,17 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `overlay.png` | 0.1 KiB | 1.0 KiB | 1 | 0 | 0% | yes |
 | `terrain_atlas.png` | 81.0 KiB | 1344.0 KiB | 84 | 45 | 54% | yes |
-| `units_atlas.png` | 79.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_b.png` | 80.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas.png` | 77.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_b.png` | 78.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures.png` | 76.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures_b.png` | 77.8 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures_fire.png` | 78.5 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures_fire_b.png` | 80.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `units_atlas_figures_ko.png` | 87.2 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move.png` | 83.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move_b.png` | 86.1 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move_c.png` | 83.3 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
-| `units_atlas_move_d.png` | 86.5 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move.png` | 81.5 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move_b.png` | 84.5 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move_c.png` | 81.7 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
+| `units_atlas_move_d.png` | 84.9 KiB | 2592.0 KiB | 108 | 0 | 0% | yes |
 | `autotiles/bridges.png` | 1.5 KiB | 35.6 KiB | 2 | 0 | 0% | yes |
 | `autotiles/coast.png` | 5.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 | `autotiles/mountain.png` | 3.7 KiB | 53.1 KiB | 3 | 0 | 0% | yes |
@@ -38,9 +38,11 @@ the sheet decodes to at 4 bytes a pixel, before whatever the engine does with it
 | `autotiles/shoals_b.png` | 5.5 KiB | 276.4 KiB | 16 | 1 | 6% | yes |
 | `autotiles/woods.png` | 16.9 KiB | 276.4 KiB | 16 | 0 | 0% | yes |
 
-**Totals: 1,044.7 KiB of PNG, 32,127.5 KiB of decoded RGBA, over 25 sheets — every one of which
-the battle scene loads.** S9's two new frame-B sheets are the whole of the growth since the last
-reading: `autotiles/rivers_b.png` and `autotiles/shoals_b.png`, the sea's own idiom (a second frame,
+**Totals: 1,034.2 KiB of PNG, 32,127.5 KiB of decoded RGBA, over 25 sheets — every one of which
+the battle scene loads.** The 10.5 KiB of PNG less than the last reading is COM-270 taking the cast
+shadow off every land and sea cell: six board sheets have that many fewer opaque pixels to encode,
+and nothing decodes any smaller, a transparent pixel costing what a dark one did. Before that, S9's
+two new frame-B sheets were the whole of the growth since the reading before: `autotiles/rivers_b.png` and `autotiles/shoals_b.png`, the sea's own idiom (a second frame,
 only the moving tone changed) extended to the other two water families — 552.8 KiB of decoded RGBA,
 the cost of a beat rather than a new tile. The instrument reads that last column off the game rather
 than off a list:

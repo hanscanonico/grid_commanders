@@ -66,12 +66,14 @@ class KoSheet(unittest.TestCase):
         )
         self.assertEqual(ko.mode, "RGBA")
 
-    def test_the_shipped_sheet_leaves_the_tile_shadow_off(self):
+    def test_the_shipped_sheet_leaves_the_cast_shadow_off(self):
         """Asked of the row `pipeline.SHEETS` actually writes, not of a
         composition this test picked: the cut-in draws its own contact shadow
-        under the figure, so a tile shadow baked into this sheet would be a
-        second one. Flip that row to `shadow=True` and the two sheets become
-        the same picture — `removed` falls to zero and this fails."""
+        under the figure, so a cast shadow baked into this sheet would be a
+        second one. Flip that row to `shadow=True` and the aircraft's columns
+        — the only ones that cast since COM-270, and the only ones drawn
+        standing here at all — come back shadowed: `removed` falls to zero and
+        this fails."""
         shipped = _shipped_ko_sheet().convert("RGBA").load()
         shadowed = units_sheet(Pose.KO).convert("RGBA").load()
         removed = 0

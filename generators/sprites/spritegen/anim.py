@@ -11,12 +11,12 @@ one.
 So nothing here may be a literal that some other table already answers. The
 sizes come from `atlas.CELL_W/CELL_H`, the columns from `units.ATLAS_ORDER`,
 the rows from `palette.FACTIONS`, the phase counts from the terrain phase
-tables, and `ground_px` is MEASURED off a rendered cell (see
-`measure_ground_px`) rather than restated — a manifest that retypes a number is
-just a third place to keep it in step. The cadences (`AMBIENT_MS`, `SEA_MS`,
-`MOVE_MS`) are the values with no Python table behind them, because a beat was
-only ever a game constant; the manifest is now their source, and the comment
-over each carries the reasoning.
+tables, and `ground_px` is the composer's own arithmetic — `GROUND_BOTTOM`
+less the one sun's `SHADOW_OFFSET` — rather than a restated number, a manifest
+that retypes one being just a third place to keep it in step. The cadences
+(`AMBIENT_MS`, `SEA_MS`, `MOVE_MS`) are the values with no Python table behind
+them, because a beat was only ever a game constant; the manifest is now their
+source, and the comment over each carries the reasoning.
 
 The schema grows by ADDING, never by rewriting: `move` is the one clip carrying
 `facing` and `flip_x_for`, `fallback` is the shared key of the three clips a
@@ -38,9 +38,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from . import atlas, terrain
+from . import atlas, terrain, voxel
 from .palette import FACTIONS
-from .units import ATLAS_ORDER, UNITS
+from .units import ATLAS_ORDER
 
 # The manifest's own filename and the sheets the ambient clip plays, in frame
 # order. `sprite_generator` writes its atlases under these names, so the clip
@@ -210,38 +210,21 @@ def _clips() -> dict[str, dict]:
     }
 
 
-def measure_ground_px() -> int:
-    """The cell's ground line, as a height above its BOTTOM edge, measured.
+def ground_px() -> int:
+    """The cell's ground line, as a height above its BOTTOM edge.
 
-    The ground line is the row a land unit's contact shadow is centred on —
-    the row its tracks or its feet rest on, and so the row a surface drawing
-    the shadowless figure sheet has to put a contact ellipse of its own on.
-    `voxel.GROUND_BOTTOM` is the sprite's own footing and the shadow sits
-    `voxel.SHADOW_OFFSET` below it, so the answer is a subtraction between two
-    constants — which is exactly why this measures instead: the manifest reads
-    it off the art, the way the game's own test reads it off the shipped
-    sheets.
+    The ground line is the row a unit's feet or tracks rest on — the row a
+    surface drawing the shadowless figure sheet has to put a contact ellipse
+    of its own on. `compose_cell` puts the sprite's footing at
+    `voxel.GROUND_BOTTOM` and lays its surface work `voxel.SHADOW_OFFSET`
+    below it, so the answer is that subtraction and nothing else.
 
-    The method is that same subtraction: a composed cell minus the same cell
-    with the tile shadow left off is the cast shadow alone, and an ellipse is
-    widest on the row it is centred on. Every land column agrees on the answer,
-    so the first one settles it.
+    It used to be read off the pixels, by subtracting a shadowless land cell
+    from a lit one and taking the ellipse's widest row. Since COM-270 a land
+    unit casts nothing, so there is no ellipse to measure and the composer's
+    own arithmetic is the only statement left.
     """
-    uid = next(u for u in ATLAS_ORDER if UNITS[u][1] == "land")
-    fac = FACTIONS[0]
-    cell = atlas.unit_cell(uid, fac)
-    lit = cell.load()
-    bare = atlas.unit_cell(uid, fac, shadow=False).load()
-    widest, ground = 0, -1
-    for y in range(cell.height):
-        span = sum(
-            1 for x in range(cell.width) if lit[x, y][3] != 0 and bare[x, y][3] == 0
-        )
-        if span > widest:
-            widest, ground = span, y
-    if ground < 0:
-        raise ValueError(f"no cast shadow under '{uid}' to measure the ground line on")
-    return cell.height - 1 - ground
+    return voxel.GROUND_BOTTOM - voxel.SHADOW_OFFSET[1]
 
 
 def build() -> dict:
@@ -251,7 +234,7 @@ def build() -> dict:
         "cell": {
             "w": atlas.CELL_W,
             "h": atlas.CELL_H,
-            "ground_px": measure_ground_px(),
+            "ground_px": ground_px(),
             # What a cell taller than it is wide has over its footprint: the
             # sprite is scaled by its width, so this rides up over the row
             # above rather than shrinking the unit inside its tile.

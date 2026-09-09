@@ -4,9 +4,10 @@ The manifest exists so the game stops retyping this pipeline's numbers, which
 only helps if the manifest is not retyping them either. These tests hold every
 field against the table it is supposed to come from — column order against
 `ATLAS_ORDER`, rows against `FACTIONS`, phase counts against the terrain phase
-tables, the cell against `atlas`, and `ground_px` against a cell actually
-rendered — plus the determinism the rest of the pipeline promises and the
-install step that has to carry the file to the game beside its sheets.
+tables, the cell against `atlas`, and `ground_px` against the two voxel
+constants the composer subtracts — plus the determinism the rest of the
+pipeline promises and the install step that has to carry the file to the game
+beside its sheets.
 
 Run with `.venv/bin/python -m unittest discover tests`.
 """
@@ -25,7 +26,7 @@ from spritegen import anim, atlas, pipeline, terrain, units, voxel
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, MOVES, UNITS, Pose
 
-from pixel_helpers import pose_cell, units_sheet
+from pixel_helpers import units_sheet
 
 
 class Columns(unittest.TestCase):
@@ -60,36 +61,16 @@ class Cell(unittest.TestCase):
         self.assertEqual((cell["w"], cell["h"]), (atlas.CELL_W, atlas.CELL_H))
         self.assertEqual(cell["overflow"], atlas.CELL_H - atlas.CELL_W)
 
-    def test_ground_px_is_where_every_land_cell_puts_its_shadow(self):
-        """The measured row is not one column's accident: the contact ellipse
-        is centred on the same row under every land unit on the sheet."""
-        ground = anim.MANIFEST["cell"]["ground_px"]
-        fac = FACTIONS[1]
-        for uid in ATLAS_ORDER:
-            if UNITS[uid][1] != "land":
-                continue
-            cell = pose_cell(uid, fac)
-            lit = cell.load()
-            bare = pose_cell(uid, fac, shadow=False).load()
-            spans = [
-                sum(
-                    1
-                    for x in range(cell.width)
-                    if lit[x, y][3] != 0 and bare[x, y][3] == 0
-                )
-                for y in range(cell.height)
-            ]
-            widest = max(range(len(spans)), key=lambda y: spans[y])
-            self.assertEqual(
-                cell.height - 1 - widest, ground, f"{uid}'s shadow is centred elsewhere"
-            )
-
     def test_ground_px_is_the_composer_s_own_arithmetic(self):
-        """A second, independent derivation, so the two readings cannot share
-        an off-by-one: `compose_cell` centres a land unit's ellipse on
-        `bottom - 1 + SHADOW_OFFSET.y` with `bottom = h - GROUND_BOTTOM`, so
-        the height of that row above the bottom edge is a subtraction of two
-        voxel constants. If the pixel scan drifts a row, this disagrees."""
+        """The one pin on the ground line, and the manifest's own derivation.
+
+        `compose_cell` puts a unit's footing at `GROUND_BOTTOM` and lays its
+        surface work `SHADOW_OFFSET.y` below it, so the height of that row
+        above the cell's bottom edge is a subtraction of two voxel constants.
+        It used to be read a second way, off the widest row of a land unit's
+        contact ellipse; since COM-270 the ground casts nothing, and this is
+        what is left. The other reading of it is the game's, against the
+        shipped sheets (`tests/unit/test_anim_manifest.gd`)."""
         self.assertEqual(
             anim.MANIFEST["cell"]["ground_px"],
             voxel.GROUND_BOTTOM - voxel.SHADOW_OFFSET[1],

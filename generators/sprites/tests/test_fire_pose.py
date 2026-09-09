@@ -71,10 +71,12 @@ class FireSheets(unittest.TestCase):
             )
             self.assertEqual(sheet.mode, "RGBA")
 
-    def test_the_shipped_sheets_leave_the_tile_shadow_off(self):
+    def test_the_shipped_sheets_leave_the_cast_shadow_off(self):
         """Asked of the row `pipeline.SHEETS` actually writes, not of a
         composition this test picked — see `test_ko_pose.KoSheet`'s sibling
-        for why: flip either row to `shadow=True` and this fails."""
+        for why: flip either row to `shadow=True` and the aircraft's columns
+        come back shadowed, which is what this fails on. They are the only
+        units that cast since COM-270."""
         for shipped, shadowed_pose in zip(
             _shipped_fire_sheets(), (Pose.FIRE_A, Pose.FIRE_B)
         ):

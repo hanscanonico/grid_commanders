@@ -30,6 +30,14 @@ and redraws the one artifact it publishes, the worst-twenty gallery below.
 
 ## The ratchet
 
+**One fix to the instrument itself landed with COM-270** (2026-09-09): `LegibilityArt._acted_scrim`
+scrapes the acted checkerboard's darkening factor out of `UnitSprite`'s shader, and the S7 change
+that wrapped that factor in `mix(1.0, x, fade)` so the scrim could tween in left the pattern
+matching nothing. The ruler had been reading every acted cell UNDARKENED since, pushing an error to
+a log nobody watches and answering 1.0, which on its own read 1,998 previously-passing cells as
+regressed. Re-pointed at the mix, the ratchet reads 0 regressed against the committed digest again.
+Every number on this page from that date on is the fixed ruler's.
+
 `make legibility-ratchet` runs the same sweep and diffs its verdicts against
 `tests/fixtures/legibility_baseline.csv`, the committed PASS/FAIL per cell. **It fails only where a
 cell that passed in the baseline fails now.** A cell that newly passes is printed and nothing more:
@@ -684,6 +692,59 @@ column's six cells of it, and every table above still stands: the ratchet reads 
 no frame's percentage moved. The mech's own gait readings are unchanged too — the
 `MOVE_C`-to-`MOVE_D` step measures the same 13 changed / 6 silhouette rung-1 texels it did
 before the bridge.
+
+## Re-read 2026-09-09, after the units stopped casting (COM-270) — A REGRESSION
+
+Ground and sea units lost their baked cast shadow; only the aircraft still cast, on a small
+ellipse (`sun.casts_shadow`). This section supersedes every headline number above it. **The board
+reads materially worse for it, and nothing was tuned in response** — the rule this page is written
+under is unchanged, and the shadow is not coming back: the ticket's decision is that a dark ellipse
+baked under every hull reads as a hole in a tile that already carries its own shading.
+
+The control is this tree, this ruler, the previous art: **clear 27,376 failing (50.7%), fogged
+4,426 (34.2%)**, and `make legibility-ratchet` reads 0 regressed against the committed digest.
+**After: clear 38,086 failing (70.5%), fogged 7,109 (54.9%)** — **13,604 PASS → FAIL and 211
+FAIL → PASS**, a net +13,393 over 54,000 clear cells.
+
+| view | clear cells | failing (before → after) |
+| --- | --- | --- |
+| board | 51,840 | 52.6% → **73.3%** |
+| cutin | 2,160 | 4.3% → **4.3%** |
+
+| frame | clear cells | failing (before → after) |
+| --- | --- | --- |
+| board `idle_a` | 9,720 | 43.0% → **64.6%** |
+| board `idle_b` | 9,720 | 46.1% → **68.3%** |
+| board `walk_a` | 8,640 | 55.5% → **75.2%** |
+| board `walk_b` | 8,640 | 55.6% → **73.4%** |
+| board `walk_c` | 8,640 | 50.8% → **70.5%** |
+| board `walk_d` | 8,640 | 54.8% → **72.2%** |
+
+**The cut-in view does not move at all**, which is the mechanism named: the figure sheets were
+always the board's art with the cast shadow subtracted, so a board cell that no longer has one is
+its figure cell, and `units_atlas_figures*`, `_ko` and the `_fire` pair are byte-identical across
+this change. What moved is the board, and only the board.
+
+What the ruler was reading is the shadow itself. The measure runs along the figure's contour
+against the ground three pixels outside it, and on the down-right sides that ground WAS the
+ellipse — near-black against grass, sand or water, the strongest pair on the cell — so a unit
+whose own ramp sits close to its tile passed on the shade beside it rather than on its own edge.
+Take the ellipse away and the reading falls back to the contour band, which is what it was always
+supposed to be. The hue-carried share rises with the failures (69.0% → 74.3%), so the residual is
+still mostly value-blind rather than newly illegible.
+
+**The contour lever was measured and not shipped.** `voxel.CONTOUR_DEPTH`'s ground-facing pair
+taken from 2 to 3 (`{UP: 4, LEFT: 4, DOWN: 3, RIGHT: 3}`), re-baked and re-read, gives clear 32,672
+failing (60.5%) and fogged 5,805 (44.8%): **8,652 regressed and 1,977 recovered**, so a single
+logical pixel of band buys back a little over half of what the shadow was doing. It is not in this
+change because that pass is shared — the same bake moved `terrain_atlas.png` and
+`autotiles/mountain.png` and every figure, KO and fire sheet with it — and a board-wide contour
+retune is a slice of its own with its own re-read, not a rider on a shadow decision. It is the
+named follow-up.
+
+The baseline digest was re-baked from the run above, so `make legibility-ratchet` reads clean
+against the shipped art from here (`tests/fixtures/legibility_baseline.csv`), and
+`docs/images/legibility_worst20.png` was redrawn with it.
 
 ## What the grounds are
 

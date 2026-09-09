@@ -28,12 +28,12 @@ from PIL import Image
 
 from . import aa, terrain, units
 from .palette import FACTIONS, RAMPS, Faction
+from .sun import casts_shadow
 from .units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from .voxel import (
     AIR_BOTTOM,
     GROUND_BOTTOM,
     compose_cell,
-    footprint_width,
     place_in_cell,
     render_indexed,
     sprite_origin,
@@ -84,7 +84,7 @@ CELL_H = 96
 BOB_PX = 4
 _BOBBING = frozenset({"air", "sea"})
 
-# Pose A's crop, per unit id, as (minx, miny, width, height, footprint width):
+# Pose A's crop, per unit id, as (minx, miny, width, height):
 # the placement reference every other pose is pinned to. Poses differ in
 # extent — t_copter's pose B was 4px wider than its A when the rotor swept 45
 # degrees, and is a pixel taller than it now that the rotor ticks instead —
@@ -92,20 +92,15 @@ _BOBBING = frozenset({"air", "sea"})
 # sideways every beat and pumped its cast shadow by 9% (159px to 173px) with
 # it. Cached because the sheet composes each unit 20 times (5 rows x 2 poses
 # x 2 shadow variants) and this costs a model build, not a render:
-# `sprite_origin`, `sprite_size` and `footprint_width` all read the crop off
-# the voxels.
-_POSE_A_BOX: dict[str, tuple[int, int, int, int, int]] = {}
+# `sprite_origin` and `sprite_size` both read the crop off the voxels.
+_POSE_A_BOX: dict[str, tuple[int, int, int, int]] = {}
 
 
-def _pose_a_box(uid: str) -> tuple[int, int, int, int, int]:
+def _pose_a_box(uid: str) -> tuple[int, int, int, int]:
     box = _POSE_A_BOX.get(uid)
     if box is None:
         model = build_model(uid, Pose.A)
-        box = _POSE_A_BOX[uid] = (
-            *sprite_origin(model),
-            *sprite_size(model),
-            footprint_width(model),
-        )
+        box = _POSE_A_BOX[uid] = (*sprite_origin(model), *sprite_size(model))
     return box
 
 
@@ -119,27 +114,18 @@ class Placement(NamedTuple):
     higher for pose B of an air or sea one.
 
     `footprint_w` and `ground` are pose-invariant by construction — the width
-    every cast shadow is sized from and the surface row it sits on — so the
-    origin is the only one of the three a beat may move.
-
-    `silhouette_w` is `footprint_w`'s pre-S3 value, the whole pose-A crop —
-    still what the ellipse's DEPTH (`ry`) is read off. Feeding the narrower
-    footprint into both axes shrank a land ellipse's area, not just its
-    width, and cost tank/recon/md_tank/anti_air 27-38% of it: the legibility
-    ratchet regressed 429 previously-passing cells. Depth was never this
-    slice's question, so it keeps answering off the measurement it always
-    has.
+    an ellipse is sized from and the surface row it sits on — so the origin is
+    the only one of the three a beat may move.
     """
 
     origin: tuple[int, int]
     footprint_w: int
-    silhouette_w: int
     ground: int
 
 
 def cell_placement(uid: str, pose: Pose) -> Placement:
     kind = UNITS[uid][1]
-    minx_a, miny_a, w_a, h_a, fw_a = _pose_a_box(uid)
+    minx_a, miny_a, w_a, h_a = _pose_a_box(uid)
     ground = CELL_H - (AIR_BOTTOM if kind == "air" else GROUND_BOTTOM)
     # The bob belongs to the FRAME, not to the clip (`units.off_beat`): the
     # cut-in swaps the fire pair in and out mid-window on the same clock the
@@ -150,16 +136,13 @@ def cell_placement(uid: str, pose: Pose) -> Placement:
     # the key it falls back to does, and KO's is the rest key.
     resolved = units.resolved_pose(uid, pose)
     bob = BOB_PX if units.off_beat(resolved) and kind in _BOBBING else 0
-    # Only a land unit's shadow WIDTH is sized off the base plane rather than
-    # the whole silhouette — air and sea keep the sprite's own width, an
-    # aircraft having no ground contact to measure and a hull's displacement
-    # being already close to its full beam.
-    footprint = fw_a if kind == "land" else w_a
     # Pose A's own placement — centred on the cell, anchored to the ground row
-    # — with every other pose hung off that same origin.
+    # — with every other pose hung off that same origin. The width an ellipse
+    # is sized from is pose A's whole crop: since COM-270 only the aircraft
+    # and a ship's displacement patch read it, and an aircraft has no ground
+    # contact to measure while a hull's patch is already close to its beam.
     return Placement(
         ((CELL_W - w_a) // 2 - minx_a, ground - h_a - miny_a - bob),
-        footprint,
         w_a,
         ground,
     )
@@ -194,20 +177,17 @@ def unit_cell(
         cell=(CELL_W, CELL_H),
         origin=(place.origin[0] + minx, place.origin[1] + miny),
         footprint_w=place.footprint_w,
-        silhouette_w=place.silhouette_w,
         ground=place.ground,
         wake=uid in WAKE,
         shadow=shadow,
-        # The move clip is the one the consumer MIRRORS, so its shadow gives
-        # up the sun's x and is drawn symmetric about the cell's flip axis.
-        # Not a ship's: that ellipse is the water the hull displaces, and
-        # `voxel._waterline_foam` breaks around the composed cell's own
-        # spans, so recentring it would drag the foam line off the water,
-        # which is the one thing a move frame may not do (the foam-line test
-        # in `MoveFrames`). A displacement patch is also not read as a cast
-        # shadow, so its handedness is not what a mirrored sprite is caught
-        # on: the hard ellipse a tank lays on grass is.
-        centred_shadow=units.moving(pose) and kind != "sea",
+        # The move clip is the one the consumer MIRRORS, so the one shadow
+        # the sheet still draws — an aircraft's — gives up the sun's x and is
+        # drawn symmetric about the cell's flip axis. Not a ship's patch: it
+        # is the water the hull displaces, `voxel._waterline_foam` breaks
+        # around the composed cell's own spans, and recentring it would drag
+        # the foam line off the water, which is the one thing a move frame
+        # may not do (the foam-line test in `MoveFrames`).
+        centred_shadow=units.moving(pose) and casts_shadow(kind),
         # What a ship's move frames get instead of a recentred shadow: white
         # water at the bow. It is repainted DISPLACEMENT (`voxel._bow_wave`),
         # so it lands on the water plane by construction, cannot heave with
