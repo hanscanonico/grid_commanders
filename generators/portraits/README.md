@@ -23,7 +23,7 @@ art you edited.
 | --- | --- | --- |
 | `factions/<key>.png` | `assets/portraits/factions` | 64x64 RGBA emblem, one per army |
 | `commanders/<id>.png` | `assets/portraits/commanders` | 110x134 RGBA bust, one per general plus `none` |
-| `faces/<id>.png` | `assets/portraits/faces` | 31x31 RGBA face chip, cut from that same drawing |
+| `faces/<id>.png` | `assets/portraits/faces` | 31x31 RGBA face chip, that same drawing repainted on the chip grid |
 
 `portraitgen/pipeline.py`'s `OUTPUTS` table is the one statement of what a run
 produces; `install` derives its copy list from that same table, so there is no
@@ -104,10 +104,10 @@ multiply-and-add per scan line, a libm `hypot` for a line's corners — and arm
 compilers fold a multiply and an add into one instruction where x86-64 ones do
 not. A crossing that lands exactly on a pixel boundary then falls either side of
 it, which is how two busts came out a pixel apart on CI while every local
-regeneration was clean. So neither is used: `portraitgen/raster.py` says which
-whole pixels a polygon covers, in whole numbers, and `canvas.segment_quad`
-builds a stroke's rectangles itself. The art is identical on macOS/arm64,
-Linux/arm64 and Linux/x86-64.
+regeneration was clean. So neither is used: `portraitgen/raster.py`'s `spans`
+says which whole pixels a polygon covers, in whole numbers, and `Canvas.stroke`
+walks a segment's own pixels by Bresenham instead of handing Pillow a width.
+The art is identical on macOS/arm64, Linux/arm64 and Linux/x86-64.
 
 The emblems are the deliberate exception: every shape there is decided by an
 integer distance test, so `portraitgen/emblem.py` draws them at 1x with integer
@@ -158,7 +158,11 @@ already were.
   freckles a cheek used to wear. What the rasteriser leaves behind on top of
   that, `gauge.despeckle` sweeps as the last step of `bust.paint` — an orphan
   cluster takes the tone that borders it most, so the sweep invents no colour
-  and settles to a fixed point.
+  and settles to a fixed point. **The transparent ground is one of those
+  tones**: a speck sitting off the outline is bordered mostly by nothing and is
+  trimmed rather than recoloured, which is the silhouette half of the same
+  rule. It cannot puncture a figure — an orphan inside the silhouette borders
+  no transparency to vote — and `tests/test_gauge.py` pins both halves.
 - **Three ink weights and no others** (`INK_SILHOUETTE` 4 / `INK_FEATURE` 3 /
   `INK_DETAIL` 2, in design units), so a scar can never come out as heavy as a
   jaw. `Canvas.stroke` refuses any other width. On the bust's grid the

@@ -95,9 +95,11 @@ def pen(weight: float, divisor: int) -> int:
 def _walk(start: Corner, end: Corner) -> Iterator[Corner]:
     """The whole pixels a segment passes through, in whole numbers.
 
-    Bresenham, so the line is the same line on every machine: `segment_quad`'s
-    rectangle is a fair stroke at three times the size and a smear at one, and
-    a float slope is the platform difference this package was bitten by.
+    Bresenham: every step is an integer compare against an integer error term,
+    so the run is decided without a float slope, a `hypot` or a rounding mode —
+    the same pixels on every machine, which is the platform difference this
+    package was bitten by. The run is contiguous under eight-connectivity and
+    includes both endpoints, so a stroke built off it never breaks.
     """
     x0, y0 = start
     x1, y1 = end
