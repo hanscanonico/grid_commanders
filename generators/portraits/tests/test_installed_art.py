@@ -20,6 +20,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from cells import tally
 from game import GAME
 from portraitgen import bust, emblem, palette, roster
 from portraitgen.canvas import BUST_SIZE, CAST_TONE, CHIP_SIZE
@@ -41,20 +42,13 @@ def _opened(path: Path) -> Image.Image:
     return Image.open(path).convert("RGBA")
 
 
-def _counted(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
-    counted = image.getcolors(1 << 16)
-    if counted is None:
-        raise AssertionError("more colours than a portrait can carry")
-    return counted
-
-
 def _opaque(image: Image.Image) -> set[tuple[int, ...]]:
-    return {colour[:3] for _, colour in _counted(image) if colour[3] == 255}
+    return {colour[:3] for _, colour in tally(image) if colour[3] == 255}
 
 
 def _partial(image: Image.Image) -> set[tuple[int, ...]]:
     """Every tone that is neither paint nor nothing."""
-    return {colour for _, colour in _counted(image) if 0 < colour[3] < 255}
+    return {colour for _, colour in tally(image) if 0 < colour[3] < 255}
 
 
 class TheInstalledSheetIsTheWholeRoster(unittest.TestCase):

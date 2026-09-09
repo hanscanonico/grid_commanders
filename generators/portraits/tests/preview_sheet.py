@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PIL import Image  # noqa: E402
 
+from cells import SKIN_MATERIAL  # noqa: E402
 from game import GAME  # noqa: E402
 from portraitgen import bust as painter  # noqa: E402
 from portraitgen import (  # noqa: E402
@@ -64,9 +65,8 @@ from portraitgen.roster import EmptySeat, Face  # noqa: E402
 
 ZOOM = 4
 
-# A skin base to build a ramp off, and the flat field the light part poses on.
-# The skin is a stand-in: the roster's five skins arrive with slice D.
-SKIN: tuple[int, int, int] = (217, 160, 102)
+# The flat field the light part poses on. The skin the ramp is built off is
+# `cells.SKIN_MATERIAL`, shared with the suites that measure the same layers.
 FIELD: tuple[int, int, int] = (43, 47, 52)
 
 # The shoulder mass the handoff draws, as a block, and the plane of it the key
@@ -109,7 +109,7 @@ def bust(
     """
     theme = faction_by_key(faction)
     cloth = light.Ramp.of_faction(theme.key)
-    skin = light.Ramp.of_material(SKIN)
+    skin = light.Ramp.of_material(SKIN_MATERIAL)
 
     figure = Canvas()
     figure.polygon(SHOULDER, cloth.base)
@@ -326,7 +326,7 @@ def _rows() -> list[list[Face | EmptySeat]]:
 
 def _features_hair(out: Path) -> list[Path]:
     """Every eye, brow, nose, mouth, beard, accessory and hairstyle, once."""
-    skin = light.Ramp.of_material(SKIN)
+    skin = light.Ramp.of_material(SKIN_MATERIAL)
     mane = hair.ramp_for("brown")
     return [_write(out / "features_hair.png", _grid(_worn(skin, mane)))]
 

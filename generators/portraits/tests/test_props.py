@@ -19,6 +19,8 @@ from __future__ import annotations
 import unittest
 
 from PIL import Image, ImageChops
+from cells import tally
+from painted import painted
 from test_face_region import chin_row, skin_tones
 
 from portraitgen import bust, props, roster, uniform
@@ -111,9 +113,9 @@ class TheConnectorIsDrawn(unittest.TestCase):
     def test_no_prop_skips_a_row_of_its_own_span(self):
         for key in sorted(props.PROPS):
             with self.subTest(prop=key):
-                painted = _painted_rows(_prop(key))
-                span = range(min(painted), max(painted) + 1)
-                self.assertEqual([], [row for row in span if row not in painted])
+                rows = _painted_rows(_prop(key))
+                span = range(min(rows), max(rows) + 1)
+                self.assertEqual([], [row for row in span if row not in rows])
 
 
 class ThePlaneRidesTheShoulder(unittest.TestCase):
@@ -122,7 +124,7 @@ class ThePlaneRidesTheShoulder(unittest.TestCase):
 
     def test_the_prop_clears_the_face_crop_s_chin_row(self):
         face = roster.FACES["perrin_ash"]
-        chin = chin_row(bust.paint(face), skin_tones(face.skin))
+        chin = chin_row(painted("perrin_ash"), skin_tones(face.skin))
         top = bust.prop_art(face).getbbox()[1]
         self.assertGreater(top, chin)
 
@@ -165,7 +167,7 @@ class TheCigarClearsTheMouth(unittest.TestCase):
         self.assertGreater(top, props.MOUTH_LINE)
 
     def test_the_tip_carries_an_ember(self):
-        colours = {colour for _, colour in _prop("cigar").image.getcolors(1 << 16)}
+        colours = {colour for _, colour in tally(_prop("cigar").image)}
         self.assertIn((*props.GOLD, 255), colours)
 
 
@@ -186,13 +188,13 @@ class EveryPropCasts(unittest.TestCase):
         for key in sorted(props.PROPS):
             with self.subTest(prop=key):
                 canvas = _prop(key)
-                painted = canvas.image.getchannel("A")
-                without = ImageChops.subtract(painted, canvas.silhouette())
+                alpha = canvas.image.getchannel("A")
+                without = ImageChops.subtract(alpha, canvas.silhouette())
                 self.assertIsNotNone(without.getbbox(), "nothing changed off the prop")
 
     def test_the_shadow_is_one_flat_tone(self):
         canvas = _prop("book")
-        colours = {colour for _, colour in canvas.image.getcolors(maxcolors=1 << 16)}
+        colours = {colour for _, colour in tally(canvas.image)}
         self.assertIn(props.PROP_CAST_TONE, colours)
 
 

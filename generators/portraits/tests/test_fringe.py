@@ -22,6 +22,7 @@ import unittest
 
 from PIL import Image
 
+from cells import tally
 from painted import painted
 from portraitgen import bust, hair, head, palette, roster
 from portraitgen.canvas import CAST_TONE
@@ -35,10 +36,7 @@ CHEEK_MOVED = {"iris_colt", "viktor_draeg"}
 
 
 def _tones(key: str) -> set[tuple[int, ...]]:
-    counted = painted(key).convert("RGB").getcolors(1 << 16)
-    if counted is None:
-        raise AssertionError(f"more colours than {key}'s raster can carry")
-    return {colour for _, colour in counted}
+    return {colour for _, colour in tally(painted(key).convert("RGB"))}
 
 
 def _mass_tone(key: str) -> tuple[int, ...]:

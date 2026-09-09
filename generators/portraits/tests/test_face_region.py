@@ -27,7 +27,9 @@ from collections import Counter
 
 from PIL import Image
 
+from cells import tally
 from game import VISUALS, scrape
+from painted import painted
 from portraitgen import bust, head, roster
 from portraitgen.canvas import BUST_DIVISOR, BUST_SIZE, CHIP_DIVISOR, CHIP_SIZE
 from portraitgen.canvas import face_box as _face_box
@@ -202,7 +204,7 @@ class TheChipIsTheSameFace(unittest.TestCase):
 
     def setUp(self):
         self.sheet = {
-            key: (bust.chip(spec), _dominant_tones(bust.paint(spec), CHIP_SIZE))
+            key: (bust.chip(spec), _dominant_tones(painted(key), CHIP_SIZE))
             for key, spec in bust.sheet_rows()
         }
 
@@ -239,12 +241,12 @@ class TheChipIsTheSameFace(unittest.TestCase):
     def test_no_chip_spends_a_tone_its_bust_does_not(self):
         for key, face in sorted(roster.FACES.items()):
             with self.subTest(commander=key):
-                painted = {
+                tones = {
                     colour[:3]
-                    for _, colour in bust.chip(face).getcolors(1 << 16)
+                    for _, colour in tally(bust.chip(face))
                     if colour[3] == 255
                 }
-                self.assertEqual(painted - set(bust.palette_of(face)), set())
+                self.assertEqual(tones - set(bust.palette_of(face)), set())
 
 
 class TheCropClearsEveryJaw(unittest.TestCase):
@@ -253,14 +255,14 @@ class TheCropClearsEveryJaw(unittest.TestCase):
     def test_every_general_s_chin_sits_above_the_crop_s_bottom_edge(self):
         for key, face in sorted(roster.FACES.items()):
             with self.subTest(commander=key):
-                image = bust.paint(face)
+                image = painted(key)
                 tones = skin_tones(face.skin)
                 self.assertGreater(chin_row(image, tones), 0, "no face on the column")
                 self.assertGreaterEqual(_clearance(image, tones), CHIN_CLEARANCE_PX)
 
     def test_the_sheet_holds_the_band_the_shipped_busts_held(self):
         thin = {
-            key: _clearance(bust.paint(face), skin_tones(face.skin))
+            key: _clearance(painted(key), skin_tones(face.skin))
             for key, face in sorted(roster.FACES.items())
         }
         self.assertEqual(

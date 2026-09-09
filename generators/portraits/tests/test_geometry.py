@@ -20,8 +20,8 @@ from __future__ import annotations
 import unittest
 
 from PIL import Image, ImageChops
-from cells import tally
-from preview_sheet import FIELD, ROW, SKIN, bust
+from cells import SKIN_MATERIAL, tally
+from preview_sheet import FIELD, ROW, bust
 
 from portraitgen import head, light, palette
 from portraitgen.canvas import BUST_DIVISOR, BUST_SIZE, Canvas, SkullBox
@@ -53,7 +53,7 @@ def _mean_luminance(image: Image.Image, patch: tuple[int, int, int, int]) -> flo
 
 
 def _skin_ramp() -> light.Ramp:
-    return light.Ramp.of_material(SKIN)
+    return light.Ramp.of_material(SKIN_MATERIAL)
 
 
 def _tones(ramp: light.Ramp) -> set[tuple[int, ...]]:

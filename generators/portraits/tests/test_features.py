@@ -17,9 +17,8 @@ from __future__ import annotations
 
 import unittest
 
-import preview_sheet
 from PIL import ImageChops
-from cells import area_of, blank_cell, colours, opaque_count
+from cells import SKIN_MATERIAL, area_of, colours, opaque_count
 from portraitgen import features, light
 from portraitgen.canvas import BUST_DIVISOR, INK_FEATURE, Canvas, pen
 from portraitgen.head import Skull
@@ -37,7 +36,7 @@ FRAME = features.Frame.of(SKULL)
 # P3: the width an open mouth owes, in eye widths.
 MOUTH_SPAN = 2.2
 HAIR = light.Ramp.of_material((90, 60, 40))
-SKIN = light.Ramp.of_material(preview_sheet.SKIN)
+SKIN = light.Ramp.of_material(SKIN_MATERIAL)
 # The tones a face may be painted in: the two ramps it is handed, plus the eye
 # colours this module owns. Nothing else may reach the canvas.
 NAMED = {
@@ -69,35 +68,35 @@ class EveryKindDraws(unittest.TestCase):
     def test_every_eye_kind_draws(self):
         for kind in sorted(features.EYE_KINDS):
             with self.subTest(eyes=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 features.eyes(cell, SKULL, kind, scale=features.EYE_DEFAULT)
                 self.assertGreater(opaque_count(cell), 0)
 
     def test_every_brow_kind_draws(self):
         for kind in sorted(features.BROW_KINDS):
             with self.subTest(brow=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 features.brow(cell, SKULL, kind, HAIR)
                 self.assertGreater(opaque_count(cell), 0)
 
     def test_every_nose_kind_draws(self):
         for kind in sorted(features.NOSE_KINDS):
             with self.subTest(nose=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 features.nose(cell, SKULL, kind, SKIN)
                 self.assertGreater(opaque_count(cell), 0)
 
     def test_every_mouth_kind_draws(self):
         for kind in sorted(features.MOUTH_KINDS):
             with self.subTest(mouth=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 features.mouth(cell, SKULL, kind)
                 self.assertGreater(opaque_count(cell), 0)
 
     def test_every_facial_hair_but_none_draws(self):
         for kind in sorted(features.FACIAL_KINDS):
             with self.subTest(facial=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 features.facial_hair(cell, SKULL, kind, HAIR)
                 drawn = opaque_count(cell)
                 if kind == "none":
@@ -106,7 +105,7 @@ class EveryKindDraws(unittest.TestCase):
                     self.assertGreater(drawn, 0)
 
     def test_the_earring_and_the_freckles_draw(self):
-        ear, freckled = blank_cell(), blank_cell()
+        ear, freckled = Canvas(), Canvas()
         features.earring(ear, SKULL)
         features.freckles(freckled, SKULL, SKIN)
         self.assertGreater(opaque_count(ear), 0)
@@ -117,7 +116,7 @@ class AnUnknownNameRaises(unittest.TestCase):
     """The vocabulary is the dispatch table; nothing falls through to a default."""
 
     def test_no_drawer_answers_for_a_name_it_does_not_hold(self):
-        cell = blank_cell()
+        cell = Canvas()
         calls = (
             lambda: features.eyes(cell, SKULL, "smouldering", scale=1.0),
             lambda: features.brow(cell, SKULL, "waggled", HAIR),
@@ -164,7 +163,7 @@ class TheMouthCannotOutrankTheEyes(unittest.TestCase):
     here would have capped the *size* C13 explicitly does not cap."""
 
     def _both_eyes(self) -> int:
-        cell = blank_cell()
+        cell = Canvas()
         features.eyes(cell, SKULL, "m", scale=features.EYE_DEFAULT)
         return opaque_count(cell)
 
@@ -172,7 +171,7 @@ class TheMouthCannotOutrankTheEyes(unittest.TestCase):
         eyes = self._both_eyes()
         for kind in sorted(features.MOUTH_KINDS):
             with self.subTest(mouth=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 features.mouth(cell, SKULL, kind)
                 self.assertLess(area_of(cell, INK), eyes)
 
@@ -186,14 +185,14 @@ class AnOpenMouthOutspansTheEyes(unittest.TestCase):
     itself and an edge has not been averaged into the skin."""
 
     def _mouth_width(self, kind: str, dial: float) -> int:
-        cell = blank_cell()
+        cell = Canvas()
         features.mouth(cell, SKULL, kind, eye=dial)
         left, _, right, _ = cell.image.getbbox()
         return right - left
 
     def _eye_width(self, dial: float) -> int:
         """One eye, measured across the line it is widest on."""
-        cell = blank_cell()
+        cell = Canvas()
         features.eyes(cell, SKULL, "m", scale=dial)
         midline, line = (
             round(value * PIXELS_PER_UNIT)
@@ -216,7 +215,7 @@ class AnOpenMouthOutspansTheEyes(unittest.TestCase):
         open mouth may not be is a dark hole with nothing bright in it."""
         for kind in sorted(features.OPEN_MOUTH_KINDS):
             with self.subTest(mouth=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 features.mouth(cell, SKULL, kind)
                 self.assertGreater(area_of(cell, features.SCLERA), 0)
 
@@ -228,7 +227,7 @@ class TheBaredTeethAreFourGlyphsAndNotOne(unittest.TestCase):
     open mouth are four marks at chip size rather than one."""
 
     def _mouth(self, kind: str) -> Canvas:
-        cell = blank_cell()
+        cell = Canvas()
         features.mouth(cell, SKULL, kind)
         return cell
 
@@ -275,7 +274,7 @@ class TheFaceIsPaintedInNamedTones(unittest.TestCase):
     """A band is a tone off a ramp: no feature mixes one of its own."""
 
     def _whole_face(self) -> Canvas:
-        cell = blank_cell()
+        cell = Canvas()
         features.facial_hair(cell, SKULL, "beard", HAIR)
         features.brow(cell, SKULL, "heavy", HAIR)
         features.eyes(cell, SKULL, "m", scale=features.EYE_DEFAULT)
@@ -294,7 +293,7 @@ class TheFaceIsPaintedInNamedTones(unittest.TestCase):
 
 class TheEyeDialIsTheOneNumberThatSizesAnEye(unittest.TestCase):
     def _at(self, scale: float) -> Canvas:
-        cell = blank_cell()
+        cell = Canvas()
         features.eyes(cell, SKULL, "m", scale=scale)
         return cell
 

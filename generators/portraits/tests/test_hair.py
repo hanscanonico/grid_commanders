@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import unittest
 
-import preview_sheet
-from cells import area_of, blank_cell, colours, opaque_count
+from cells import SKIN_MATERIAL, area_of, colours, opaque_count
 from portraitgen import hair, light, palette
 from portraitgen.canvas import BUST_DIVISOR, Canvas
 from portraitgen.features import REFERENCE_BOX
@@ -37,7 +36,7 @@ CREST_BAND = 2
 MANE = light.Ramp.of_material((90, 60, 40))
 # The wearer the styles are measured on, and a second, darker one: the fringe
 # band is the skin's own shade tone, so two skins tell whose it is.
-SKIN = light.Ramp.of_material(preview_sheet.SKIN)
+SKIN = light.Ramp.of_material(SKIN_MATERIAL)
 DARK_SKIN = head.ramp_for("dark")
 NAMED = {INK, MANE.deep, MANE.shade, MANE.base, MANE.lit, MANE.rim, SKIN.shade}
 # The styles that are a cap of hair rather than a scalp: `bald` has no mass for
@@ -115,7 +114,7 @@ class Combed(unittest.TestCase):
     ) -> Canvas:
         """Both halves on one canvas — the bust composes them around the head,
         and a bare cell has no head to put between them."""
-        cell = blank_cell()
+        cell = Canvas()
         hair.back(cell, SKULL, style, ramp)
         hair.front(cell, SKULL, style, ramp, skin=skin)
         return cell
@@ -129,12 +128,12 @@ class EveryStyleDraws(Combed):
 
     def test_a_style_the_table_does_not_hold_raises(self):
         with self.assertRaises(KeyError):
-            hair.front(blank_cell(), SKULL, "mohawk", MANE, skin=SKIN)
+            hair.front(Canvas(), SKULL, "mohawk", MANE, skin=SKIN)
         with self.assertRaises(KeyError):
-            hair.back(blank_cell(), SKULL, "mohawk", MANE)
+            hair.back(Canvas(), SKULL, "mohawk", MANE)
 
     def test_the_mass_is_drawn_in_two_halves_that_add_up_to_the_whole(self):
-        behind, over = blank_cell(), blank_cell()
+        behind, over = Canvas(), Canvas()
         hair.back(behind, SKULL, "ponytail", MANE)
         hair.front(over, SKULL, "ponytail", MANE, skin=SKIN)
         self.assertGreater(opaque_count(behind), 0)
@@ -177,7 +176,7 @@ class TheMassTakesOneLitLobe(Combed):
         # fringe's own band is the wearer's skin, not a third hair tone.
         for style in COMBED:
             with self.subTest(style=style):
-                cell = blank_cell()
+                cell = Canvas()
                 hair.front(cell, SKULL, style, MANE, skin=SKIN)
                 mass = MANE.band(hair.mass_band(style, MANE, SKIN))
                 self.assertEqual(colours(cell) - {INK, SKIN.shade}, {mass, MANE.lit})

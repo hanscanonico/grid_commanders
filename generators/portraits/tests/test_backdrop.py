@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import unittest
 
+from cells import colours, tally
 from portraitgen import backdrop
 from portraitgen.canvas import Canvas
 from portraitgen.palette import faction_by_key, faction_ramp, luminance
@@ -37,9 +38,9 @@ class EveryKindDraws(unittest.TestCase):
     def test_the_field_is_one_flat_tone(self):
         canvas = Canvas()
         backdrop.field(canvas, FACTION)
-        colours = {colour for _, colour in canvas.image.getcolors(maxcolors=1 << 16)}
+        tones = {colour for _, colour in tally(canvas.image)}
         rung = faction_ramp(FACTION.key)[backdrop.FIELD_SLOT]
-        self.assertEqual(colours, {(0, 0, 0, 0), (*rung, 255)})
+        self.assertEqual(tones, {(0, 0, 0, 0), (*rung, 255)})
 
 
 class EveryTreatmentIsABand(unittest.TestCase):
@@ -55,13 +56,7 @@ class EveryTreatmentIsABand(unittest.TestCase):
         }
         for kind in sorted(backdrop.KINDS):
             with self.subTest(kind=kind):
-                painted = {
-                    colour[:3]
-                    for _, colour in self._treatment(kind).image.getcolors(
-                        maxcolors=1 << 16
-                    )
-                    if colour[3]
-                }
+                painted = colours(self._treatment(kind))
                 self.assertTrue(painted, "the treatment drew nothing")
                 self.assertEqual(painted - allowed, set())
 
@@ -75,12 +70,7 @@ class EveryTreatmentIsABand(unittest.TestCase):
                 self.assertLess(luminance(ramp[slot]), field)
         for kind in sorted(backdrop.KINDS):
             with self.subTest(kind=kind):
-                alphas = {
-                    colour[3]
-                    for _, colour in self._treatment(kind).image.getcolors(
-                        maxcolors=1 << 16
-                    )
-                }
+                alphas = {colour[3] for _, colour in tally(self._treatment(kind).image)}
                 self.assertEqual(alphas - {0}, {255})
 
     def test_nothing_is_painted_outside_the_window(self):
@@ -100,8 +90,7 @@ class ThePaletteIsBounded(unittest.TestCase):
     def test_a_backdrop_is_painted_in_a_handful_of_named_tones(self):
         for kind in sorted(backdrop.KINDS):
             with self.subTest(kind=kind):
-                colours = _painted(kind).image.getcolors(maxcolors=1 << 16)
-                self.assertLessEqual(len(colours), 8)
+                self.assertLessEqual(len(tally(_painted(kind).image)), 8)
 
 
 if __name__ == "__main__":

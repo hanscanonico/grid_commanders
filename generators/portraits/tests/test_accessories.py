@@ -13,7 +13,7 @@ from __future__ import annotations
 import unittest
 
 from PIL import Image
-from cells import blank_cell, colours, opaque_count
+from cells import colours, opaque_count, tally
 from portraitgen import accessories, features, light
 from portraitgen.canvas import BUST_DIVISOR, INK_FEATURE, Canvas, pen
 from portraitgen.head import Skull
@@ -59,7 +59,7 @@ class EveryKindDraws(unittest.TestCase):
     def test_every_accessory_but_none_draws(self):
         for kind in sorted(accessories.ACCESSORY_KINDS):
             with self.subTest(accessory=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 accessories.accessory(cell, SKULL, kind)
                 drawn = opaque_count(cell)
                 if kind == "none":
@@ -69,17 +69,17 @@ class EveryKindDraws(unittest.TestCase):
 
     def test_no_accessory_answers_for_a_name_it_does_not_hold(self):
         with self.assertRaises(KeyError):
-            accessories.accessory(blank_cell(), SKULL, "monocle")
+            accessories.accessory(Canvas(), SKULL, "monocle")
 
     def test_headwear_hands_back_what_it_added_to_the_silhouette(self):
-        cell = blank_cell()
+        cell = Canvas()
         self.assertEqual(accessories.accessory(cell, SKULL, "glasses"), [])
         self.assertGreater(len(accessories.accessory(cell, SKULL, "bandana")), 2)
 
     def test_no_tone_reaches_the_canvas_that_was_not_named(self):
         for kind in sorted(accessories.ACCESSORY_KINDS):
             with self.subTest(accessory=kind):
-                cell = blank_cell()
+                cell = Canvas()
                 accessories.accessory(cell, SKULL, kind)
                 self.assertEqual(colours(cell) - NAMED, set())
 
@@ -89,7 +89,7 @@ class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
     are not — a peak, a bare brow, a bare crown."""
 
     def _box(self, kind: str) -> tuple[float, float, float, float]:
-        cell = blank_cell()
+        cell = Canvas()
         accessories.accessory(cell, SKULL, kind)
         box = cell.image.getbbox()
         if box is None:
@@ -124,7 +124,7 @@ class TheGlassesAreTwoSquaresAndNoBridge(unittest.TestCase):
     bridge is gone."""
 
     def _worn(self) -> Canvas:
-        cell = blank_cell()
+        cell = Canvas()
         accessories.accessory(cell, SKULL, "glasses")
         return cell
 
@@ -151,7 +151,7 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
     patch is one flat tone, and the socket it covers is not drawn at all."""
 
     def _patch(self) -> Canvas:
-        cell = blank_cell()
+        cell = Canvas()
         accessories.accessory(cell, SKULL, "eyepatch")
         return cell
 
@@ -169,7 +169,7 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
             for value in FRAME.at(ear_x + radius, ear_y - radius)
         )
         anchor = self._patch().image.crop((x - 1, y - 1, x + 2, y + 2))
-        self.assertIn((*INK, 255), [colour for _, colour in anchor.getcolors()])
+        self.assertIn((*INK, 255), [colour for _, colour in tally(anchor)])
 
     def test_the_eyepatch_is_the_one_accessory_that_covers_a_socket(self):
         covering = {
@@ -188,7 +188,7 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
             lambda cell, hide: features.brow(cell, SKULL, "heavy", HAIR, covered=hide),
         ):
             with self.subTest(paint=paint):
-                both, one = blank_cell(), blank_cell()
+                both, one = Canvas(), Canvas()
                 paint(both, None)
                 paint(one, covered)
                 self.assertLess(opaque_count(one), opaque_count(both))
@@ -201,7 +201,7 @@ class TheEyepatchIsAPatchAndNotAMask(unittest.TestCase):
         inside = Image.new("RGBA", face.image.size, (0, 0, 0, 0))
         inside.paste(face.image, mask=self._patch().image.getchannel("A"))
         self.assertEqual(
-            {pixel[:3] for _, pixel in inside.getcolors(1 << 24) if pixel[3] > 0},
+            {pixel[:3] for _, pixel in tally(inside) if pixel[3] > 0},
             {INK},
         )
 

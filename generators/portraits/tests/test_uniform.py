@@ -15,6 +15,7 @@ import unittest
 
 from PIL import Image, ImageChops
 
+from cells import colours, tally
 from game import GAME, scrape
 from portraitgen import uniform
 from portraitgen.canvas import Canvas
@@ -118,11 +119,7 @@ class TheHarnessIsTheOneTreatmentWithNoPayload(unittest.TestCase):
         return canvas
 
     def test_the_harness_carries_nothing(self):
-        painted = {
-            colour[:3]
-            for _, colour in self._webbing().image.getcolors(maxcolors=1 << 16)
-            if colour[3] > 0
-        }
+        painted = colours(self._webbing())
         self.assertNotIn(uniform.GOLD, painted)
 
     def test_the_harness_is_two_straps(self):
@@ -153,9 +150,9 @@ class TheGoldIsTheRankPip(unittest.TestCase):
     def test_the_pip_is_gold_over_ink_and_nothing_else(self):
         canvas = Canvas()
         uniform.pip(canvas, RAMP)
-        colours = {colour for _, colour in canvas.image.getcolors(maxcolors=1 << 16)}
-        self.assertEqual(len(colours), 3, colours)
-        self.assertIn((*uniform.GOLD, 255), colours)
+        tones = {colour for _, colour in tally(canvas.image)}
+        self.assertEqual(len(tones), 3, tones)
+        self.assertIn((*uniform.GOLD, 255), tones)
 
     def test_the_pip_is_a_stud_rather_than_a_badge(self):
         canvas = Canvas()
@@ -176,9 +173,7 @@ class ThePaletteIsBounded(unittest.TestCase):
                     canvas = _uniform(collar)
                     uniform.chest(canvas, treatment, FACTION, RAMP)
                     uniform.pip(canvas, RAMP)
-                    self.assertLessEqual(
-                        len(canvas.image.getcolors(maxcolors=1 << 16)), 16
-                    )
+                    self.assertLessEqual(len(tally(canvas.image)), 16)
 
 
 if __name__ == "__main__":

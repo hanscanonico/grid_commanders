@@ -18,6 +18,7 @@ import unittest
 
 from PIL import Image
 
+from cells import tally
 from painted import painted
 from portraitgen import bust, gauge
 from portraitgen.canvas import BUST_DIVISOR, CHIP_DIVISOR, Canvas
@@ -77,9 +78,7 @@ class TheSweepRepaintsFromTheBorder(unittest.TestCase):
             with self.subTest(commander=key):
                 allowed = {(*tone, 255) for tone in bust.palette_of(spec)}
                 tones = {
-                    colour
-                    for _, colour in painted(key).getcolors(1 << 16)
-                    if colour[3] == 255
+                    colour for _, colour in tally(painted(key)) if colour[3] == 255
                 }
                 self.assertEqual(tones - allowed, set())
 
