@@ -1144,7 +1144,7 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   drops the shadow its 2 px `SHADOW_OFFSET` below the feet row rather than centring it on them), the
   same on every land and sea column, with air's cast displaced lower by height. **Since COM-270 that
   row is arithmetic rather than a measurement**: the ground casts nothing to measure, so
-  `anim.measure_ground_px` returns `GROUND_BOTTOM - SHADOW_OFFSET.y` and the manifest's `ground_px`
+  `anim.ground_px` returns `GROUND_BOTTOM - SHADOW_OFFSET.y` and the manifest's `ground_px`
   is unchanged at 7. The constant's own value did not move; what moved is how the generator answers
   for it, and `tests/unit/test_anim_manifest.gd` is the game-side pin. The figure sheet is
   a **pair** now, frame B beside frame A, and both are read — the cut-ins beat between them (the
@@ -1515,8 +1515,10 @@ and which is given one back here. Reproduced otherwise verbatim.
   generator ever centred the ambient shadow. **COM-270 met the condition the other way** (2026-09-09):
   the ambient shadow was not centred, it was removed — a land or sea column now draws nothing at all
   below the ground line — so the pin is **retired** rather than re-measured, and the rule that a
-  parked sprite faces forward stands on art consistency instead. `facing_for` is what the file still
-  pins. An aircraft still casts, and its move cells are still centred, so the mirror rule has lost
+  parked sprite faces forward stands on art consistency instead. **The rule itself lives in
+  `UnitSprite`'s `moving` setter**, which clears `flip_h` on the way out of the clip and carries the
+  reasoning; `facing_for`, the pure half, is what `test_move_frames.gd` still pins, the setter being
+  a Node property with no seam a Node-free suite could read. An aircraft still casts, and its move cells are still centred, so the mirror rule has lost
   no subject it ever had.
   **An unauthored unit needs no fallback code**: the generator bakes each unauthored
   column's ambient cell into every move sheet, so the clip is valid for the whole roster and nothing

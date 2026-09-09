@@ -145,7 +145,9 @@ line at rung 2, and a **solid core with a dithered fringe** reads as debris.
 to it. The sub's **wake** followed: it ran on the shadow's own parity so that
 it showed exactly where the checkerboard did not reach, so it is now drawn
 solid and over the shadow — foam is what the surface does over the
-displacement shading, not a stipple interleaved with it.
+displacement shading, not a stipple interleaved with it. COM-270 erases that
+displacement patch before the sheet is written; the wake is unchanged, being
+solid foam on the water rather than a stipple keyed to anything under it.
 
 The **buildings' drop shadow** (`terrain._drop_shadow`, a different drawer)
 was left on the checkerboard by that pass, which is why a city still wore a
@@ -297,8 +299,12 @@ floor. `MoveFrames.MIN_SILHOUETTE_TEXELS` is **6** at rung 1, double the idle's
 3, for every unit of every livery — an idle shifts one named assembly and three
 texels is the quietest of those anyone can see, where a gait is the whole
 running gear and a board that cannot see six texels of it move is watching a
-unit slide. `MAX_SHIMMER` (5.0) and `MAX_MASS_DRIFT` (0.08) carry over from
-`AmbientFrames` unchanged, the drift measured against pose A for every one of
+unit slide. `MAX_SHIMMER` (5.0) carries over from `AmbientFrames` unchanged.
+`MAX_MASS_DRIFT` does not: the move clip reads the drift on the HULL, leaving
+the foam and the bow wave out (a running hull's white water is the sea's, and
+weighed as the ship's it says a battleship gains a fifth of itself under way),
+and holds it two steps looser than the ambient pair's 0.09 — **0.11** against a
+measured worst of 0.103. The drift is measured against pose A for every one of
 the four move frames so a stride may not grow the unit either — and the shimmer
 ceiling reads the NOISIEST of the clip's four adjacent steps while the
 silhouette floor reads its quietest, so neither hides behind a calm frame.
@@ -413,7 +419,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | File | Contract |
 | --- | --- |
 | `units_atlas.png` | 1152x576 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
-| `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
+| `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) — an aircraft over its shadow, a hull over a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
 | `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the cast shadow subtracted, for the cut-ins (see below) |
 | `units_atlas_figures_ko.png` | one AUTHORED casualty frame per unit — a crumpled figure, a burnt-out hull, a hull settled by the stern — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; air carries no frame in v1 and draws its own rest key instead (`units.KOS`), which the cut-in never asks for |
 | `units_atlas_figures_fire.png`, `units_atlas_figures_fire_b.png` | one AUTHORED muzzle-lit frame per ARMED unit — a barrel at full recoil, a rack at launch elevation, bay doors open — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; a unit outside `units.FIRES` draws its own rest key instead (`units.pose._FALLBACK`), which the cut-in DOES ask for — an attacker's fire window opens whatever it carries — and gets a column byte-identical to its idle pair, bob included, which is what makes the fallback need no domain gate. The second sheet is a real second key only for the sustained weapon families (`units.pose.FIRE_PAIRS`) — everything else draws the same model into both, so the pair reads as a held muzzle flash rather than a cycle |

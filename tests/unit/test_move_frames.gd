@@ -209,16 +209,6 @@ func test_a_step_turns_the_sprite_only_when_it_has_a_side() -> void:
 	assert_false(UnitSprite.facing_for(Vector2i(0, -1), false), "an upward step turned the sprite")
 
 
-## Why the mirror ends with the clip. It used to be measurable: the ambient pair
-## was drawn over a cast shadow the generator did not centre in the cell, so a
-## sprite left mirrored after a walk dropped that shadow on the other side of
-## itself from an unmirrored neighbour. COM-270 took the ground's shadow away
-## and the measurement with it — every land and sea column now draws nothing at
-## all below the ground line — so the rule stands on art consistency instead: a
-## parked unit faces the way the sheets are drawn, and `UnitSprite`'s `moving`
-## setter is where that is said. `facing_for` above is what remains pinned.
-
-
 ## True when any faction row of `column` is *drawn* differently between two
 ## sheets. Bytes alone are not the reading, for test_ambient_frames.gd's reason:
 ## the atlases import with `fix_alpha_border`, which bleeds each figure's colours

@@ -175,10 +175,12 @@ var atlas_row: int = -1:
 ##
 ## Leaving the clip also faces the sprite forward again, here rather than at the
 ## animator's clear site so the clip and its mirror can never be let go of
-## separately. The board's sun is the generator's: a unit parked mirrored over
-## the ambient pair, whose shadow is not cell-centred, drops that shadow on the
-## other side from an unmirrored neighbour of the same type, which reads as two
-## suns on one board.
+## separately. This is where the rest-facing rule lives: the sheets are drawn
+## facing screen-left, so a parked army all faces one way. It used to be
+## measurable — the ambient pair's cast shadow was not cell-centred, and a unit
+## left mirrored dropped it on the other side from an unmirrored neighbour, two
+## suns on one board — but since COM-270 nothing on the ground casts, and what
+## asks for the rule now is that consistency alone.
 var moving: bool = false:
 	set(value):
 		if moving == value:

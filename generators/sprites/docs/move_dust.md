@@ -47,14 +47,17 @@ logical-pixel checker that reads as a chequered flag, a dithered fringe that
 reads as debris.
 
 Spreading those sixteen pixels into a cloud that reads as a cloud is what the
-cell has no room for. The contact ellipse is
-`min(int(silhouette_w * 0.34), int(footprint_w * 0.41))` wide from the cell
-centre, and the widest hulls leave almost nothing behind it:
+cell has no room for. The readings below were taken while a land vehicle still
+sat on a contact ellipse, whose radius from the cell centre was the lesser of
+0.34 of its whole crop and 0.41 of its footprint, and the widest hulls left
+almost nothing behind it:
 
-*Amended 2026-09-01: S3 fitted the ellipse to the footprint, so the radius is
-now that pair rather than the single `0.34` term this was written against.
-Every vehicle below is capped at its old radius, so the readings stand; the
-column is the whole crop, which is what `silhouette_w` is now called.*
+*Amended 2026-09-09: COM-270 took the contact ellipse off every land unit —
+`sun.casts_shadow` says only what is airborne casts — so neither that pair nor
+the `voxel.footprint_width` measure behind it is in the code any more. The
+verdict is unchanged and the room is tighter without them: what a puff now has
+to clear is the hull's own crop, which is WIDER than the ellipse it used to
+hide behind — 63 columns of a 64px cell for md_tank against the ellipse's 55.*
 
 | unit | silhouette | ellipse right tip | columns to the cell edge |
 | --- | --- | --- | --- |
@@ -84,6 +87,9 @@ first:
   foam.
 
 Both are cheap to satisfy; neither buys back section 1.
+
+*Amended 2026-09-09: with the land ellipse gone, neither gate has a shadow left
+to trip on — a future attempt meets section 1 first and alone.*
 
 ## 4. What would carry the cue instead
 

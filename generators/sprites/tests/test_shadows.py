@@ -25,7 +25,7 @@ from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, MOVE_POSES, UNITS, Pose
 from spritegen import cell as cell_mod
 from spritegen import voxel
 
-from pixel_helpers import opaque_pixels, pose_cell
+from pixel_helpers import opaque_pixels, pose_cell, units_sheet
 
 
 class OneSun(unittest.TestCase):
@@ -115,19 +115,38 @@ class OneSun(unittest.TestCase):
                     self.assertGreater(sx - hx, self.MIN_UNIT_LATERAL)
                     self.assertGreater(sy - hy, 0.0)
 
+    def _shadow_tones(self, sheet, uid: str, fac) -> set:
+        """The shadow-tone colours one unit's faction cell draws.
+
+        A colour census rather than a pixel walk, so the reading is cheap
+        enough to take on every army: the claim is that the tone is absent,
+        and where it would have been is `_split`'s question, not this one.
+        """
+        cell = sheet.crop(atlas.cell_box(uid, fac))
+        return {
+            colour
+            for _, colour in cell.getcolors(cell.width * cell.height)
+            if colour[3] > 0 and colour[:3] == voxel.SHADOW
+        }
+
     def test_nothing_on_the_surface_casts_a_shadow(self):
         """The other half: a unit standing on the tile, and a hull in the
-        water, hold not one pixel of the shadow tone — in any pose, on any
-        faction row. The tile carries its own shading and a second ellipse
-        baked under the unit read as a hole in it (COM-270)."""
-        fac = FACTIONS[1]
-        for uid in ATLAS_ORDER:
-            if UNITS[uid][1] == "air":
-                continue
-            for pose in Pose:
-                shade, _ = self._split(pose_cell(uid, fac, pose), voxel.SHADOW)
-                with self.subTest(unit=uid, pose=pose.name):
-                    self.assertEqual(shade, [])
+        water, hold not one pixel of the shadow tone — in any pose, on EVERY
+        faction row, COM-270 having changed every army the same way. The tile
+        carries its own shading and a second ellipse baked under the unit read
+        as a hole in it.
+
+        Read off the built sheets, which the rest of the suite renders anyway,
+        rather than composing a cell per army.
+        """
+        for pose in Pose:
+            sheet = units_sheet(pose)
+            for uid in ATLAS_ORDER:
+                if UNITS[uid][1] == "air":
+                    continue
+                for fac in FACTIONS:
+                    with self.subTest(unit=uid, pose=pose.name, faction=fac.key):
+                        self.assertEqual(self._shadow_tones(sheet, uid, fac), set())
 
     def test_a_unit_cell_lays_its_ellipse_by_the_sheet_offset(self):
         """The hull-relative reading above only fixes the SIGN — a unit whose
@@ -326,13 +345,19 @@ class SurfaceContact(unittest.TestCase):
         A ship still lays its displacement patch down to place the waterline
         foam and the bow wave, so this reads the finished cell rather than the
         composer, and what it says is that the patch never survives to the
-        sheet.
+        sheet. Taken on EVERY faction row — COM-270 changed every army the same
+        way — off the pair of sheets the suite already builds, where the
+        difference between them IS the cast shadow.
         """
+        board = units_sheet(Pose.A)
+        figures = units_sheet(Pose.A, shadow=False)
         for uid in self._kind("land") + self._kind("sea"):
-            with self.subTest(unit=uid):
-                cast, body = self._cast_and_body(uid)
-                self.assertTrue(body, f"{uid} composed no sprite")
-                self.assertFalse(cast)
+            for fac in FACTIONS:
+                box = atlas.cell_box(uid, fac)
+                cell = board.crop(box)
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertIsNotNone(cell.getbbox(), f"{uid} composed no sprite")
+                    self.assertEqual(cell.tobytes(), figures.crop(box).tobytes())
 
     def test_the_reading_sees_the_gap_an_aircraft_keeps(self):
         # worth asserting only if it catches a detached shadow, and the sheet

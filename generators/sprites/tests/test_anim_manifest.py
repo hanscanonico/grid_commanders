@@ -4,8 +4,8 @@ The manifest exists so the game stops retyping this pipeline's numbers, which
 only helps if the manifest is not retyping them either. These tests hold every
 field against the table it is supposed to come from — column order against
 `ATLAS_ORDER`, rows against `FACTIONS`, phase counts against the terrain phase
-tables, the cell against `atlas`, and `ground_px` against a cell actually
-rendered — plus the determinism the rest of the pipeline promises and the
+tables, the cell against `atlas`, and `ground_px` against the two voxel
+constants the composer subtracts — plus the determinism the rest of the pipeline promises and the
 install step that has to carry the file to the game beside its sheets.
 
 Run with `.venv/bin/python -m unittest discover tests`.

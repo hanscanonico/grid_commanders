@@ -139,9 +139,11 @@ def compose_cell(
             max(2, rx // 5),
             mirrored=centred_shadow,
         )
-    elif kind == "air":
+    elif casts_shadow(kind):
         # The one ellipse the sheet still shows, and the only one left to
-        # size: an altitude cue read off the gap between unit and shadow, so
+        # size — asked of `sun.casts_shadow` rather than of the kind, so the
+        # policy has one statement and this is a reading of it: an altitude
+        # cue read off the gap between unit and shadow, so
         # it has to be there and does not have to be broad. 0.26 rather than
         # the 0.30 it shipped at is the whole of the shrink COM-270 asks for,
         # and the floor under it is the rung reading, not taste — a solid

@@ -470,13 +470,15 @@ class MoveFrames(unittest.TestCase):
     for the same reason: a frame that repaints its interior instead of moving
     its outline reads as boiling. `MAX_MASS_DRIFT` is the same claim — a unit
     that walks is still the same mass of metal — and it is read on the metal:
-    this class's `_mass` leaves the FOAM out, because a running hull's bow
-    wave is water the parked pose has none of, and weighed as the ship's it
-    says a battleship gains a fifth of itself under way. Held two steps looser
-    than the ambient pair's all the same, at a measured worst of 0.103 (the
-    battleship's bow-up trim): COM-270 took a displacement patch that was a
-    third of a hull's drawn pixels out of the denominator, so the same trim is
-    a larger share of what is left. The drift is
+    `_hull_mass` leaves the FOAM out, because a running hull's bow wave is
+    water the parked pose has none of, and weighed as the ship's it says a
+    battleship gains a fifth of itself under way. It is held two steps looser
+    than the ambient pair's 0.09 all the same: COM-270 took a displacement
+    patch that was a third of a hull's drawn pixels out of the denominator, so
+    the same trim is a larger share of what is left, and the worst reading is
+    now 0.103 — the battleship's bow-up trim on MOVE_B. 0.11 is that worst
+    plus the slack a bar needs; set AT its worst reading it would fail on the
+    next legal pixel of anything. The drift is
     measured against pose A for EVERY one of the four move frames, so a gait
     may not grow the unit across the clip either; the silhouette floor reads
     the clip's quietest adjacent step and the shimmer ceiling its noisiest,
@@ -697,10 +699,10 @@ class MoveFrames(unittest.TestCase):
     def test_the_gait_keeps_the_units_mass(self):
         for uid in self._movers():
             for fac in FACTIONS:
-                a = self._mass(pose_cell(uid, fac, Pose.A))
+                a = self._hull_mass(pose_cell(uid, fac, Pose.A))
                 for pose in MOVE_POSES:
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
-                        m = self._mass(pose_cell(uid, fac, pose))
+                        m = self._hull_mass(pose_cell(uid, fac, pose))
                         self.assertLessEqual(abs(m - a) / a, self.MAX_MASS_DRIFT)
 
     def test_the_move_clip_moves_no_cell(self):
@@ -1047,11 +1049,12 @@ class MoveFrames(unittest.TestCase):
                         with self.subTest(steps=(i, j)):
                             self.assertNotEqual(lowers[i], lowers[j])
 
-    def _mass(self, cell: Image.Image) -> int:
+    def _hull_mass(self, cell: Image.Image) -> int:
         """The unit's own drawn pixels: everything but the water's marks.
 
-        The foam and the bow wave belong to the sea (`voxel._wake`), so a hull
-        is not heavier for running — see `MAX_MASS_DRIFT`."""
+        Named apart from `AmbientFrames._mass`, which counts every opaque
+        pixel: the foam and the bow wave belong to the sea (`voxel._wake`), so
+        a hull is not heavier for running — see `MAX_MASS_DRIFT`."""
         px = cell.convert("RGBA").load()
         w, h = cell.size
         return sum(

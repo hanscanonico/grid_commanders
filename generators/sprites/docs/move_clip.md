@@ -280,7 +280,7 @@ and the sim — no file under `core/` or `ai/` sees any of this.
 - **Same grid.** 1152x480, the same 18 columns and 5 rows in the same order.
   The move sheets are further frames of the same atlas, not a new atlas.
 - **Same ground line.** `cell.ground_px` is the composer's own arithmetic
-  (`anim.measure_ground_px`, `GROUND_BOTTOM - SHADOW_OFFSET.y`) and stays 7 for
+  (`anim.ground_px`, `GROUND_BOTTOM - SHADOW_OFFSET.y`) and stays 7 for
   every pose, which is what the shared pose-A crop and the pose-invariant
   `ground` buy.
 - **Mirror-safe silhouettes.** Nothing that reads as left- or right-handed on

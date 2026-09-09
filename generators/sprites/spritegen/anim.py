@@ -11,9 +11,9 @@ one.
 So nothing here may be a literal that some other table already answers. The
 sizes come from `atlas.CELL_W/CELL_H`, the columns from `units.ATLAS_ORDER`,
 the rows from `palette.FACTIONS`, the phase counts from the terrain phase
-tables, and `ground_px` is the composer's own arithmetic (see
-`measure_ground_px`) rather than a restated number — a manifest that retypes
-one is just a third place to keep it in step. The cadences (`AMBIENT_MS`, `SEA_MS`,
+tables, and `ground_px` is the composer's own arithmetic — `GROUND_BOTTOM`
+less the one sun's `SHADOW_OFFSET` — rather than a restated number, a manifest
+that retypes one being just a third place to keep it in step. The cadences (`AMBIENT_MS`, `SEA_MS`,
 `MOVE_MS`) are the values with no Python table behind them, because a beat was
 only ever a game constant; the manifest is now their source, and the comment
 over each carries the reasoning.
@@ -210,7 +210,7 @@ def _clips() -> dict[str, dict]:
     }
 
 
-def measure_ground_px() -> int:
+def ground_px() -> int:
     """The cell's ground line, as a height above its BOTTOM edge.
 
     The ground line is the row a unit's feet or tracks rest on — the row a
@@ -234,7 +234,7 @@ def build() -> dict:
         "cell": {
             "w": atlas.CELL_W,
             "h": atlas.CELL_H,
-            "ground_px": measure_ground_px(),
+            "ground_px": ground_px(),
             # What a cell taller than it is wide has over its footprint: the
             # sprite is scaled by its width, so this rides up over the row
             # above rather than shrinking the unit inside its tile.
