@@ -27,7 +27,14 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Iterable
 
-from .canvas import INK_DETAIL, INK_FEATURE, INK_SILHOUETTE, Canvas, Point
+from .canvas import (
+    DESIGN_SIZE,
+    INK_DETAIL,
+    INK_FEATURE,
+    INK_SILHOUETTE,
+    Canvas,
+    Point,
+)
 from .light import Ramp
 from .palette import INK, RGB, Faction
 from .vocab import known
@@ -72,7 +79,7 @@ PROP_CAST_TONE = (0, 0, 0, 64)
 # The four design units of bleed the raster needs on the right, and the x no
 # prop may cross because of it.
 RIGHT_BLEED = 4.0
-RIGHT_LIMIT = 220.0 - RIGHT_BLEED
+RIGHT_LIMIT = DESIGN_SIZE[0] - RIGHT_BLEED
 
 # The row a mouth is drawn on and the lip corner a smoked prop leaves from, in
 # design units: the reference mouth of `features.py` fitted to a skull lands

@@ -25,7 +25,7 @@ from collections.abc import Callable, Iterable
 
 from PIL import Image, ImageChops, ImageDraw
 
-from .canvas import CAST_CUTOFF, INK_SILHOUETTE, Canvas, Point
+from .canvas import CAST_CUTOFF, DESIGN_SIZE, INK_SILHOUETTE, Canvas, Point
 from .palette import INK, RGBA, Faction, S_CONTOUR, S_SHADOW, S_UNDER, faction_ramp
 from .vocab import pick
 
@@ -45,8 +45,8 @@ WINDOW = (12.0, 76.0, 208.0, 268.0)
 # The star and the rays are struck about these, not about the raster's centre:
 # the bust stands bottom-centre, so the burst sits behind the head and the rays
 # rise out of the shoulders.
-BURST_AT = (110.0, 166.0)
-RAYS_AT = (110.0, 268.0)
+BURST_AT = (DESIGN_SIZE[0] / 2, 166.0)
+RAYS_AT = (BURST_AT[0], float(DESIGN_SIZE[1]))
 
 Painter = Callable[[Canvas], None]
 Band = tuple[int, Painter]

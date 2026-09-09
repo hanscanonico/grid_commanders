@@ -56,7 +56,14 @@ from . import (
     roster,
     uniform,
 )
-from .canvas import BUST_DIVISOR, CAST_TONE, CHIP_DIVISOR, Canvas, face_box
+from .canvas import (
+    BUST_DIVISOR,
+    CAST_TONE,
+    CHIP_DIVISOR,
+    DESIGN_SIZE,
+    Canvas,
+    face_box,
+)
 from .palette import Faction, bust_palette, faction_by_key, quantise
 from .roster import EmptySeat, Face
 
@@ -91,8 +98,8 @@ FACTION_OF: dict[str, str] = {
 # bottom centre, because the composition is anchored there and a chest-up crop
 # has to stay anchored there, and the tilt about the head, because a bust leans
 # from the neck rather than from the frame.
-ZOOM_AT = (110.0, 268.0)
-TILT_AT = (110.0, 168.0)
+ZOOM_AT = (DESIGN_SIZE[0] / 2, float(DESIGN_SIZE[1]))
+TILT_AT = (ZOOM_AT[0], 168.0)
 # Where a matrix coefficient is cut off. Nine places is far finer than a
 # design unit and far coarser than the last bit of a double, so two machines'
 # trigonometry agree exactly on the number the sampler is handed.
