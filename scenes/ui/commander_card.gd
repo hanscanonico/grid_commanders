@@ -42,8 +42,9 @@ const _MICRO_INK := Color(0.408, 0.443, 0.471)
 ## 18, and a name band is neither — it is the card's face, read before the rules
 ## under it. Named here like the two full-screen pages name their own titles.
 const _NAME_SIZE := 12
-## The two portrait bands a card can be built with, public because a surface
-## that frames one checks its own layout against the band it asked for.
+## The two portrait bands a card can be built with, one of which `_init` takes.
+## Public because a surface that frames a card names the band it built it with
+## and checks its own layout against that same number.
 ## `WHOLE_BUST_BAND` is the drawing's own height and the default; `CHIP_BAND` is
 ## `CommanderVisuals`' chip field plus one texel of air, which `CommanderBust`
 ## centres as two pixels over the chip and one under it. The commander info sheet
@@ -52,10 +53,10 @@ const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
 const _BAND_AIR_TEXELS := 1
 const CHIP_BAND := CommanderVisuals.CHIP_FIELD.y + _BAND_AIR_TEXELS * CommanderVisuals.CHIP_ZOOM
 
-## Which of the two bands this card was built with. Read-only: a band is chosen
-## at construction, by `new()` for the whole general or `for_chip()` for the
-## short one, so there is no order a caller has to get right.
-var _portrait_h: int = WHOLE_BUST_BAND
+## Which of the two bands this card was built with. Written once, by `_init`, so
+## there is no order a caller has to get right and no later reader sees a card
+## framed for one band drawing the other.
+var _portrait_h: int
 ## The faction badge pinned into the band's top-left corner, and the inset it sits
 ## at. Card-local like the geometry above it, not a missing shell token: the design
 ## system sizes widgets rather than pins on art, and its smallest icon
@@ -78,6 +79,12 @@ var _power_name_label: Label
 var _power_text_label: Label
 
 
+## `band` is one of the two constants above; the whole general is the default and
+## `CHIP_BAND` is the commander info sheet's, which states there why.
+func _init(band: int = WHOLE_BUST_BAND) -> void:
+	_portrait_h = band
+
+
 func _ready() -> void:
 	_build()
 	if _commander != null:
@@ -90,21 +97,6 @@ func bind(commander: CommanderType) -> void:
 	_commander = commander
 	if _built:
 		_apply()
-
-
-## A card that shows the baked face chip instead of the whole general. The
-## commander info sheet is the one caller, and states there why its screen has
-## no room for a bust band.
-static func for_chip() -> CommanderCard:
-	var card := CommanderCard.new()
-	card._portrait_h = CHIP_BAND
-	return card
-
-
-## The band this card frames its art in, for a surface checking its own layout
-## against what it asked for.
-func portrait_band() -> int:
-	return _portrait_h
 
 
 func _build() -> void:
