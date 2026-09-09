@@ -424,15 +424,18 @@ SKIN_CONTRAST = 34.0
 # a lit forehead, and dropping it further is what turned a blonde brown.
 _CHEEK_BAND = "base"
 _FRINGE_BANDS = (_CHEEK_BAND, FRINGE_BAND)
-# Where a rung falls back to when it ties, in order. A mane drops as far as it
-# has to: one rung is enough for almost every wearer, and where it is not, the
+# Where a rung falls back to when it ties: down `light.BANDS`, which already
+# states the order, from the rung the style named. A mane drops as far as it has
+# to — one rung is enough for almost every wearer, and where it is not, the
 # alternative is a mass that reads as part of the head.
-_FALLBACK: dict[str, tuple[str, ...]] = {
-    "lit": ("lit", "base", "shade", "deep"),
-    "base": ("base", "shade", "deep"),
-    "shade": ("shade", "deep"),
-    "deep": ("deep",),
-}
+_DARKENING = tuple(reversed(light.BANDS))
+
+
+def _fallback(band: str) -> tuple[str, ...]:
+    """That rung and every darker one, darkest last. An unknown rung raises."""
+    if band not in _DARKENING:
+        raise KeyError(f"no band {band!r} (have {light.BANDS})")
+    return _DARKENING[_DARKENING.index(band) :]
 
 
 def ramp_for(colour: str) -> Ramp:
@@ -463,11 +466,11 @@ def declared_band(style: str) -> str:
 
 def mass_band(style: str, ramp: Ramp, skin: Ramp) -> str:
     """The rung the mass actually takes against a face: `declared_band` stepped
-    down `_FALLBACK` until it stands off both skin bands it can border.
+    down `_fallback` until it stands off both skin bands it can border.
 
     `tests/test_fringe.py` is the measurement, on the finished busts.
     """
-    steps = _FALLBACK[declared_band(style)]
+    steps = _fallback(declared_band(style))
     for candidate in steps:
         if _stands_off(ramp.band(candidate), skin):
             return candidate

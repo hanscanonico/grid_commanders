@@ -1,6 +1,6 @@
 """The fringe rule: what a mane has to stand off, and who it moves.
 
-`hair.mass_band` steps a style's declared rung down `hair._FALLBACK` until the
+`hair.mass_band` steps a style's declared rung down `hair._fallback` until the
 mass stands `hair.SKIN_CONTRAST` off the skin bands it can border — the cheek in
 the skin's base rung always, and the forehead the fringe lays its shade rung
 across (`hair.FRINGE_BAND`) wherever the mass itself is pale. `test_contrast.py`
