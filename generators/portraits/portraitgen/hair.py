@@ -483,12 +483,6 @@ def mass_band(style: str, ramp: Ramp, skin: Ramp) -> str:
     return steps[-1]
 
 
-def draw(canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp) -> None:
-    """The mass and the shape the key catches on it. An unknown style raises."""
-    back(canvas, skull, style, ramp)
-    front(canvas, skull, style, ramp, skin=skin)
-
-
 def back(canvas: Canvas, skull: Skull, style: str, ramp: Ramp) -> None:
     """What falls behind the head — painted before the skull is."""
     frame = Frame.of(skull)

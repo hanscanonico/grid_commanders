@@ -110,10 +110,14 @@ def _crests(pixels: list[tuple[float, float]]) -> int:
 class Combed(unittest.TestCase):
     """A style drawn on a bare canvas, which is where a tone is still itself."""
 
-    def drawn(self, style: str, **kwargs) -> Canvas:
+    def drawn(
+        self, style: str, ramp: light.Ramp = MANE, skin: light.Ramp = SKIN
+    ) -> Canvas:
+        """Both halves on one canvas — the bust composes them around the head,
+        and a bare cell has no head to put between them."""
         cell = blank_cell()
-        kwargs.setdefault("skin", SKIN)
-        hair.draw(cell, SKULL, style, MANE, **kwargs)
+        hair.back(cell, SKULL, style, ramp)
+        hair.front(cell, SKULL, style, ramp, skin=skin)
         return cell
 
 
@@ -124,9 +128,8 @@ class EveryStyleDraws(Combed):
                 self.assertGreater(opaque_count(self.drawn(style)), 0)
 
     def test_a_style_the_table_does_not_hold_raises(self):
-        for call in (hair.draw, hair.front):
-            with self.subTest(call=call.__name__), self.assertRaises(KeyError):
-                call(blank_cell(), SKULL, "mohawk", MANE, skin=SKIN)
+        with self.assertRaises(KeyError):
+            hair.front(blank_cell(), SKULL, "mohawk", MANE, skin=SKIN)
         with self.assertRaises(KeyError):
             hair.back(blank_cell(), SKULL, "mohawk", MANE)
 
@@ -192,8 +195,7 @@ class TheMassTakesOneLitLobe(Combed):
         self.assertGreater(palette.luminance(PLATINUM.base), hair.PALE_HAIR)
         for style in COMBED:
             with self.subTest(style=style):
-                cell = blank_cell()
-                hair.draw(cell, SKULL, style, PLATINUM, skin=SKIN)
+                cell = self.drawn(style, PLATINUM)
                 self.assertGreater(opaque_count(cell), 0)
                 self.assertEqual(area_of(cell, PLATINUM.lit), 0)
 
