@@ -44,8 +44,8 @@ KEY = (-0.64, -0.77)
 # to the right, on every bust, mirrored poses included. Derived from the key
 # rather than typed beside it: one statement of where the sun is.
 SHADOW_STEP: tuple[int, int] = (-1 if KEY[0] > 0 else 1, -1 if KEY[1] > 0 else 1)
-# The four bands every material is painted in, plus the rim. Naming them is the
-# palette discipline: a tone is chosen from a ramp, never mixed at the call.
+# The four bands every material is painted in. Naming them is the palette
+# discipline: a tone is chosen from a ramp, never mixed at the call.
 BANDS = ("deep", "shade", "base", "lit")
 
 # The value ladder, as multiples of the base colour's own luminance. The first
