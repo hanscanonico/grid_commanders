@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable, Iterator
+from typing import NamedTuple
 
 from PIL import Image, ImageDraw
 
@@ -60,12 +61,22 @@ def native_size(size: tuple[int, int], divisor: int) -> tuple[int, int]:
 
 BUST_SIZE = native_size(DESIGN_SIZE, BUST_DIVISOR)
 
+
 # The head's own rectangle, in design units, and the one statement of it on this
 # side of the pipeline: `CommanderVisuals.FACE_REGION` is the same square on the
 # bust's grid and `tests/test_face_region.py` reads it back out of the game's
 # code. Its origin and its side are multiples of both divisors, so the chip a
 # small surface draws is this square rasterised coarser rather than resampled.
-FACE_REGION = (18, 30, 186, 186)
+class Region(NamedTuple):
+    """A rectangle in design units, named so a reader of one number knows which."""
+
+    left: int
+    top: int
+    width: int
+    height: int
+
+
+FACE_REGION = Region(18, 30, 186, 186)
 
 
 def face_box(divisor: int) -> tuple[int, int, int, int]:
@@ -75,11 +86,16 @@ def face_box(divisor: int) -> tuple[int, int, int, int]:
     for value in FACE_REGION:
         if value % divisor:
             raise ValueError(f"face region {FACE_REGION} does not divide by {divisor}")
-    left, top, width, height = (value // divisor for value in FACE_REGION)
-    return (left, top, left + width, top + height)
+    region = Region(*(value // divisor for value in FACE_REGION))
+    return (
+        region.left,
+        region.top,
+        region.left + region.width,
+        region.top + region.height,
+    )
 
 
-CHIP_SIZE = FACE_REGION[2] // CHIP_DIVISOR
+CHIP_SIZE = FACE_REGION.width // CHIP_DIVISOR
 
 
 def pen(weight: float, divisor: int) -> int:
