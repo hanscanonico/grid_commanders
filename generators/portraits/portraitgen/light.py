@@ -53,17 +53,14 @@ BANDS = ("deep", "shade", "base", "lit")
 
 # The value ladder, as multiples of the base colour's own luminance. The first
 # rung is the contour the board's own ramps open on; the four after it are
-# BANDS, and the rim closes the ladder at its own headroom.
+# BANDS. There is no rung past them: a material built here has no rim of its
+# own and closes on its lit one (see `Ramp.of_material`).
 _LADDER = (0.22, 0.40, 0.68, 1.00, 1.34)
 # Where the lit band stops. A pale skin's own luminance is already 223, and a
 # third over it is white — a forehead painted in pure white is a hole in the
 # sheet rather than a plane the sun is on, and at sixteen tones it also spends
 # the rung the steel wants.
 _LIT_CEILING = 236.0
-# The rim is the one rung that keeps most of its chroma: it is the faction's
-# light tint doing the separating, so washing it toward the sun would spend
-# exactly the colour it is there for.
-_RIM_HEADROOM = 0.55  # of the room between the base's value and white
 # How far off the face's own centre line the shade may come. C8: a boundary
 # down the nose-mouth axis reads as a two-tone mask rather than as a lit head,
 # so every shade shape starts this fraction of a half-width out from centre —
@@ -200,11 +197,9 @@ def _material_rungs(base: RGB) -> palette.Ramp6:
     """The six rungs `Ramp.of_material` is a view onto. Cached because a bust
     asks for the same handful of ladders on every layer it paints."""
     lum = palette.luminance(base)
-    rim_target = lum + (255.0 - lum) * _RIM_HEADROOM
-    ladder = (*(min(lum * step, _LIT_CEILING) for step in _LADDER), rim_target)
-    six = list(palette.build_ramp(base, ladder))
-    six[palette.S_RIM] = six[palette.S_TOP]
-    return tuple(six)
+    rungs = tuple(min(lum * step, _LIT_CEILING) for step in _LADDER)
+    six = palette.build_ramp(base, (*rungs, rungs[-1]))
+    return (*six[: palette.S_RIM], six[palette.S_TOP])
 
 
 def shade_kind(crown: float, width: float) -> str:
