@@ -27,7 +27,7 @@ from .features import REFERENCE_BOX, Frame
 from .head import Skull
 from .light import Ramp
 from .palette import INK, RGB
-from .vocab import known
+from .vocab import known, pick
 
 # The hair colours the roster picks from: the handoff's seven, plus `steel`.
 # Steel is grey a rung darker, and it exists because grey over a pale face is
@@ -397,6 +397,12 @@ _STYLES: dict[str, Style] = {
 }
 STYLES = frozenset(_STYLES)
 
+
+def _spec(style: str) -> Style:
+    """The dials one style is drawn from. An unknown style raises."""
+    return pick(_STYLES, style, "hair style")
+
+
 # How deep the fringe's own shadow sits on the forehead: one flat band of the
 # skin's shade tone, hard-edged like every other band on the sheet. The design
 # system takes no blur, so this is a painted band rather than a softened alpha.
@@ -445,7 +451,7 @@ def ramp_for(colour: str) -> Ramp:
     them, so `light.Ramp.of_material` hands it back its own lit tone — see the rim
     note there for why the army's rung is no longer what a mane kicks with.
     """
-    return light.Ramp.of_material(HAIR_BASES[colour])
+    return light.Ramp.of_material(pick(HAIR_BASES, colour, "hair colour"))
 
 
 def _stands_off(tone: RGB, skin: Ramp) -> bool:
@@ -461,7 +467,7 @@ def _stands_off(tone: RGB, skin: Ramp) -> bool:
 
 def declared_band(style: str) -> str:
     """The rung a style names for its mass. An unknown style raises."""
-    return _STYLES[style].band
+    return _spec(style).band
 
 
 def mass_band(style: str, ramp: Ramp, skin: Ramp) -> str:
@@ -488,7 +494,7 @@ def draw(
 def back(canvas: Canvas, skull: Skull, style: str, ramp: Ramp) -> None:
     """What falls behind the head — painted before the skull is."""
     frame = Frame.of(skull)
-    for mass in _STYLES[style].back:
+    for mass in _spec(style).back:
         _mass(canvas, frame, mass, ramp.shade)
 
 
@@ -500,7 +506,7 @@ def front(
     `skin` is the wearer's own ramp: the fringe casts a flat band of its shade
     tone on the forehead, and a shadow on skin has to be a skin tone.
     """
-    spec = _STYLES[style]
+    spec = _spec(style)
     frame = Frame.of(skull)
     band = declared_band(style) if skin is None else mass_band(style, ramp, skin)
     tone = ramp.band(band)

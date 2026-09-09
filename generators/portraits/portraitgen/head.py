@@ -28,7 +28,7 @@ from . import light
 from .canvas import INK_FEATURE, INK_SILHOUETTE, Canvas, Point
 from .light import Ramp
 from .palette import INK, RGB
-from .vocab import known
+from .vocab import known, pick
 
 # The jaw a skull is cut with. An unknown jaw raises: the vocabulary is the
 # dispatch table, so nothing falls through to a default.
@@ -188,7 +188,7 @@ def _flat(canvas: Canvas, tone: RGB) -> Image.Image:
 
 def ramp_for(skin: str) -> Ramp:
     """The four tones a skin tone is painted in."""
-    return light.Ramp.of_material(SKIN_BASES[skin])
+    return light.Ramp.of_material(pick(SKIN_BASES, skin, "skin tone"))
 
 
 def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) -> None:

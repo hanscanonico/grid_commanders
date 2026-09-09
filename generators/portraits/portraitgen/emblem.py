@@ -15,6 +15,7 @@ from __future__ import annotations
 from PIL import Image
 
 from .palette import INK, RGB, faction_by_key
+from .vocab import pick
 
 SIZE = 64  # CommanderVisuals.EMBLEM_PX
 _CENTRE = SIZE // 2
@@ -24,7 +25,7 @@ def draw(key: str) -> Image.Image:
     """One faction's emblem, on a transparent field."""
     faction = faction_by_key(key)
     img = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    _SHAPES[key](img, faction.body)
+    pick(_SHAPES, key, "emblem")(img, faction.body)
     return img
 
 
