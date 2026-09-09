@@ -327,7 +327,7 @@ def _ramps_for(spec: Face | EmptySeat) -> tuple[light.Ramp, light.Ramp, light.Ra
     if not isinstance(spec, Face):
         return cloth, cloth, cloth
     return (
-        light.Ramp.of_material(head.SKIN_BASES[spec.skin]),
+        head.ramp_for(spec.skin),
         hair.ramp_for(spec.hair),
         cloth,
     )
