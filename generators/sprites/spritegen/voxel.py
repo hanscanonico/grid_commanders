@@ -227,16 +227,17 @@ def footprint_width(model: Model, k: int = 1) -> int:
 
     `sprite_size`'s width is the model's full extent, which a raised rifle or
     a swung barrel widens well past the footprint it stands on — that is what
-    put a lozenge under 4px legs. A land unit's cast shadow is CONTACT, not a
-    drop shadow of the whole silhouette (`compose_cell`'s shadow policy), so
-    it is sized off the base plane the projection actually puts on the
-    ground, read the same way `_bounds` reads any voxel's screen span.
+    put a lozenge under 4px legs. A cast shadow was CONTACT rather than a drop
+    shadow of the whole silhouette, so it is sized off the base plane the
+    projection actually puts on the ground, read the same way `_bounds` reads
+    any voxel's screen span. Only the aircraft cast at all since COM-270
+    (`sun.casts_shadow`), and they size off their own crop, so what this still
+    answers for is the land placement `atlas.cell_placement` keeps recording.
 
     It is the INK's extent and nothing else, so the two measures are 3k apart
     in basis before either model is consulted: this returns `span + 4k`,
     while `sprite_size`'s width adds `_bounds`' 2px crop margin on each side
-    for `span + 7k`. `compose_cell` compares the two inside one expression,
-    so whoever retunes either coefficient is tuning against that offset too.
+    for `span + 7k`.
     """
     z0 = min(z for _, _, z in model.vox)
     diag = [x - y for x, y, z in model.vox if z == z0]

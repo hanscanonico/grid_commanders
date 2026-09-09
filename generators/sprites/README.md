@@ -88,34 +88,41 @@ indexed renderer too, one band lower than an army (`BUILDING_TOP_SLOT`).
 board drops its shadow down-right by the same `voxel.SHADOW_OFFSET`, which
 terrain re-exports rather than keeping a second copy of. What encodes
 altitude is the shadow's SIZE and how far it falls along that one diagonal,
-never its direction — land units get a tight contact shadow, air units a
-larger one dropped much further with ground showing between, ships a
-displacement shadow with waterline foam, and a wood or a mountain the same
-displacement — the wood of its own fringe, the massif of its whole
-silhouette, the way a building drops one. Three of those four used to lay
-their shade straight down or straight under, lit from nowhere and
-disagreeing with the building in the next cell; `OneSun` holds all four drawers to the one offset,
+never its direction — an aircraft gets a small ellipse dropped far down the
+cell with ground showing between, and a wood or a mountain a stamped
+displacement of its own shape — the wood of its fringe, the massif of its
+whole silhouette, the way a building drops one. Those used to lay their shade
+straight down or straight under, lit from nowhere and disagreeing with the
+building in the next cell; `OneSun` holds every drawer to the one offset,
 pixel by pixel where the shadow is a stamped silhouette. It was a 1px
-checkerboard until the board was measured through it — see "The shadow is drawn for every rung" below. The sub carries a
-**wake** on top of that — running foam down its own underside and trailing off
-the stern — because a hull with no freeboard has nothing else to separate it
-from open sea. Its hull and awash deck also sit two bands under every other
-keel (both in the under slot, so their lit faces land on shadow), so the sneak
-boat is the darkest ship in the line and separates as a contrast pair — dark
-hull against mid water, under a lit sail and a light wake edge — rather than
-by out-valuing the sea, which is a contest a boat awash cannot win. Nothing a
-unit emits is semi-transparent — every shadow and every fleck of foam is opaque,
-because partial alpha is a blurred halo at cut-in scale.
+checkerboard until the board was measured through it — see "The shadow is
+drawn for every rung" below.
 
-**A land unit's ellipse is CONTACT**, so its width is read off the footprint
-the model plants on the ground (`voxel.footprint_width`, the lowest-z plane)
-rather than off the whole crop a barrel or a raised rifle widens, and it
-touches the unit's own lowest row instead of hanging two rows under it. Only
-the WIDTH is the footprint's — the ellipse's depth still reads the crop,
-narrowing both axes having taken area off a vehicle rather than fitting it —
-and the fit may only ever take width away, the pre-fit radius being a ceiling
-every vehicle still lands on. `tests/test_shadows.py::FootprintContact` holds
-both halves, and asserts the rows of daylight an aircraft keeps on purpose.
+**Units cast only when airborne** (COM-270, and `sun.casts_shadow` is the one
+statement of it). A land unit and a ship are drawn flat on the tile: the tile
+already carries its own shading, and a dark ellipse baked under every hull
+read as a hole punched in the board rather than as shade on it. What separates
+a unit from its ground is the contour band, not a shadow. That took the ships'
+**displacement shading** with it — the flat ellipse under a hull is gone from
+every sheet, and a hull now reads by its waterline foam, its wake and its bow
+wave alone. The patch itself is still composed and then erased, because the
+foam is placed against it and the bow wave crests along its leading rim; what
+changed is that no pixel of it survives onto the sheet.
+
+The sub carries a **wake** on top of that — running foam down its own
+underside and trailing off the stern — because a hull with no freeboard has
+nothing else to separate it from open sea. Its hull and awash deck also sit two
+bands under every other keel (both in the under slot, so their lit faces land
+on shadow), so the sneak boat is the darkest ship in the line and separates as
+a contrast pair — dark hull against mid water, under a lit sail and a light
+wake edge — rather than by out-valuing the sea, which is a contest a boat
+awash cannot win. Nothing a unit emits is semi-transparent — every shadow and
+every fleck of foam is opaque, because partial alpha is a blurred halo at
+cut-in scale.
+
+`tests/test_shadows.py::SurfaceContact` holds both halves of that: no land or
+sea cell keeps a single cast pixel, and an aircraft keeps its rows of daylight
+on purpose.
 
 ### The shadow is drawn for every rung
 
@@ -407,7 +414,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | --- | --- |
 | `units_atlas.png` | 1152x576 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
 | `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
-| `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the tile's cast shadow subtracted, for the cut-ins (see below) |
+| `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the cast shadow subtracted, for the cut-ins (see below) |
 | `units_atlas_figures_ko.png` | one AUTHORED casualty frame per unit — a crumpled figure, a burnt-out hull, a hull settled by the stern — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; air carries no frame in v1 and draws its own rest key instead (`units.KOS`), which the cut-in never asks for |
 | `units_atlas_figures_fire.png`, `units_atlas_figures_fire_b.png` | one AUTHORED muzzle-lit frame per ARMED unit — a barrel at full recoil, a rack at launch elevation, bay doors open — shadowless like the figure pair. The board never draws it, so there is no board-sheet sibling; a unit outside `units.FIRES` draws its own rest key instead (`units.pose._FALLBACK`), which the cut-in DOES ask for — an attacker's fire window opens whatever it carries — and gets a column byte-identical to its idle pair, bob included, which is what makes the fallback need no domain gate. The second sheet is a real second key only for the sustained weapon families (`units.pose.FIRE_PAIRS`) — everything else draws the same model into both, so the pair reads as a held muzzle flash rather than a cycle |
 | `units_atlas_move.png` | 1152x576 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 6 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
@@ -441,10 +448,10 @@ plays instead, the move clip's own idiom restated), the units atlas's column
 and row order, and how many
 phase variants each terrain family ships. Every field is derived from the live tables in `spritegen/` —
 `atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
-phase tables — and `ground_px` is **measured** off a rendered cell (a composed
-cell minus the shadowless one is the cast shadow alone; an ellipse is widest on
-the row it is centred on) rather than restated, so the manifest cannot become
-one more place the number drifts. It is written deterministically like
+phase tables — and `ground_px` is the composer's **own arithmetic**
+(`GROUND_BOTTOM - SHADOW_OFFSET.y`; it was measured off a land unit's ellipse
+until COM-270 left the ground casting nothing to measure) rather than
+restated, so the manifest cannot become one more place the number drifts. It is written deterministically like
 everything else here: sorted keys, two-space indent, trailing newline. See
 `spritegen/anim.py`.
 
@@ -471,10 +478,10 @@ at once. `docs/move_clip.md` is the full contract the game implements against �
 region maths, flip policy, clip lifetime, and what the generator owes it.
 
 The figure sheets exist because a figure standing on a drawn ground
-already has a shadow. The tile shadow grounds the cell against the board's
-tile; the game's cut-ins draw the same 64px cell over a ground plane and a
-contact shadow **of their own**, so the tile's would be a second shadow rather
-than the same one. (It was first cut for a sharper reason — the shadow was a
+already has a shadow. The game's cut-ins draw the same 64px cell over a
+ground plane and a contact shadow **of their own**, so an aircraft's cast
+would be a second shadow rather than the same one — and a ship's displacement
+patch, likewise never on a cut-in's water. (It was first cut for a sharper reason — the shadow was a
 checkerboard then, and at 1:1 the cut-in resolved its dots one by one. The
 shadow is solid now and that half of the argument has retired; the doubling
 has not.) Each sheet **subtracts** that shadow
@@ -482,7 +489,10 @@ from the composed cell rather than composing a cell without one, so it is the
 board's art and can never drift from it: the waterline foam is placed against
 the composed cell's own spans, so a shadow that was never drawn would have
 moved the foam. Everything else — every hull pixel, every fleck of foam — is
-identical, which is what the `FigureSheet` tests hold it to.
+identical, which is what the `FigureSheet` tests hold it to. Since COM-270 the
+subtraction takes nothing at all from a land or sea column: those board cells
+are already shadowless, so a figure sheet's ground and sea columns are their
+board columns byte for byte, and only the four aircraft still differ.
 
 There are two SUBTRACTED ones, one per ambient key pose, because a frozen figure is
 the closest look a player ever gets at this art and the cut-in should breathe

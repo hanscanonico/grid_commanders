@@ -154,8 +154,11 @@ forms named in the root index are in `docs/design_record.md`.
   `generators/sprites/docs/move_clip.md` owns the manifest side of that split.
   **`UnitSprite.CELL_GROUND_PX` (7) is the cell's ground line, and it is not the cell's bottom
   edge** — it is where a cut-in centres its own contact
-  ellipse. **The board's cast shadow and the buildings' drop shadow are both SOLID**, measured
-  through the board's own sampling rather than argued, and the tone and the parity are the
+  ellipse. **Only what is AIRBORNE casts** (COM-270, 2026-09-09): the generator's
+  `sun.casts_shadow` is the one statement of it, a unit standing on the tile and a hull in the water
+  are drawn flat — the ships' displacement ellipse went with it, a hull reading by waterline foam,
+  wake and bow wave — and **the air units' cast shadow and the buildings' drop shadow are SOLID**,
+  measured through the board's own sampling rather than argued. The tone and the parity are the
   generator's alone: there is no shadow tone and no parity anywhere in `scenes/`, which is what
   keeps the figure sheet's subtraction exact.
   **The beat sheet is `CombatBeats` and it is Node-free** (2026-08-31):
@@ -405,9 +408,10 @@ forms named in the root index are in `docs/design_record.md`.
   ambient beat and the sea's swell stay authored. **The sheets face screen-left and a rightward
   step mirrors them** — `UnitSprite.facing_for(delta, was)`
   is that policy, a purely vertical leg holds the previous facing, and facing is never set in
-  `refresh()`. **The mirror is the CLIP'S and ends with it**, because the ambient pair's cast shadow
-  is not cell-centred and a unit left mirrored at rest drops its shadow to the other side of itself.
-  An unauthored unit needs no fallback code; `tests/unit/test_move_frames.gd` pins all of it.
+  `refresh()`. **The mirror is the CLIP'S and ends with it**: it was the ambient pair's off-centre
+  cast shadow that bought that rule, and since COM-270 the ground casts nothing to swing, so what
+  keeps it is art consistency — a parked unit faces the way the sheets are drawn. An unauthored unit
+  needs no fallback code; `tests/unit/test_move_frames.gd` pins the rest of it.
   **The move clip grew from two frames to four (animation-frames S6, 2026-09-02)**, the plan's one
   structural slice: **`BoardBeat.frame_at`/`frame` took a defaulted `frames := 2` parameter**, so
   every ambient/sea call site reads unchanged, and **`UnitSprite._sheet_path(frame)` indexes a

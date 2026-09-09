@@ -29,21 +29,19 @@ const SPRITE_OVERFLOW := SPRITE_H - SPRITE_W
 ## row is over ground the viewer cannot see, so having it clipped is correct.
 const ART_OFFSET := Vector2(0, -float(SPRITE_OVERFLOW) / 2.0)
 ## Where the ground line sits inside the cell, measured up from its bottom edge:
-## the row the generator centres the tile's cast shadow on, and so the row a
-## figure's tracks or feet rest on. The rows below it are that shadow's own
-## spread, which is why a surface drawing the shadowless figure sheet over a
-## contact ellipse of its own must put the ellipse here rather than on the box's
-## bottom edge — the two cut-ins do, and an armour cell, whose shadow is the
-## widest, floated furthest above it. test_figure_sheet.gd measures it off the
-## shipped sheets, the subtraction between them being the shadow itself.
-## The generator lights the board with one sun, which drops the shadow
-## SHADOW_OFFSET (2px) below the feet row rather than centring it on them.
+## the row a figure's tracks or feet rest on. A surface drawing the shadowless
+## figure sheet over a contact ellipse of its own must put the ellipse here
+## rather than on the box's bottom edge — the two cut-ins do, and an armour
+## cell floated furthest above it. The generator states the same number as
+## `ground_px` in anim.json (its own GROUND_BOTTOM less the one sun's 2px
+## SHADOW_OFFSET), and test_anim_manifest.gd holds the two together.
 const CELL_GROUND_PX := 7
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Ambient animation frame B: the same army one beat later — rotors swept,
-## air and sea units riding a pixel higher while their shadows stay put, land
-## cells on an idle key pose. Every column differs, so every sprite processes;
-## tests/unit/test_ambient_frames.gd pins that against the shipped art.
+## air and sea units riding a pixel higher while an aircraft's shadow and a
+## hull's foam line stay put, land cells on an idle key pose. Every column
+## differs, so every sprite processes; tests/unit/test_ambient_frames.gd pins
+## that against the shipped art.
 const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
 ## The ambient clip's sheets in frame order — what `_sheet_path` indexes when
 ## the sprite is parked. Ambient stays two frames (S6): at 500 ms the A/B
@@ -59,10 +57,11 @@ const UNITS_ATLAS_SHEETS: Array[String] = [UNITS_ATLAS_PATH, UNITS_ATLAS_B_PATH]
 ## authored no gait for carries its ambient cell in all four move sheets, so
 ## nothing here ever asks which units are authored — the clip is valid for the
 ## whole roster from the day it ships. The art faces screen-left and a rightward
-## step mirrors it: the generator draws this clip's land and air cells over a
+## step mirrors it: the generator draws this clip's air cells over a
 ## cell-centred cast shadow, so the mirror leaves the shadow where it was. The
-## *ambient* pair's is not centred (34-36 px of 64, measured off the shipped
-## sheets), so the mirror is the clip's and ends with it — see `moving`.
+## mirror is still the clip's and ends with it — since COM-270 nothing on the
+## ground casts, so what asks for that is art consistency: a parked unit faces
+## the way the sheets are drawn — see `moving`.
 ## tests/unit/test_move_frames.gd pins the grid, the pairing, the cadence, the
 ## stills and the flip policy.
 const UNITS_ATLAS_MOVE_PATH := "res://assets/tiles/units_atlas_move.png"
@@ -75,7 +74,7 @@ const UNITS_ATLAS_MOVE_D_PATH := "res://assets/tiles/units_atlas_move_d.png"
 const UNITS_ATLAS_MOVE_SHEETS: Array[String] = [
 	UNITS_ATLAS_MOVE_PATH, UNITS_ATLAS_MOVE_B_PATH, UNITS_ATLAS_MOVE_C_PATH, UNITS_ATLAS_MOVE_D_PATH
 ]
-## The same army with the tile's cast shadow subtracted, for a surface that
+## The same army with the cast shadow subtracted, for a surface that
 ## draws the art at 1:1 over ground and a shadow of its own — see
 ## `figure_texture_for`.
 const UNITS_ATLAS_FIGURES_PATH := "res://assets/tiles/units_atlas_figures.png"
@@ -282,13 +281,13 @@ static func tile_texture_for(type: UnitType, row: int) -> AtlasTexture:
 	return art
 
 
-## The same cell without the contact shadow the tile needs. The shadow is an
-## opaque checkerboard, which reads as half-tone at the board's 4:1 decimation
-## and as loose dots wherever the art is drawn at 1:1 — so the cut-ins, which
-## blow a figure up over a ground plane and a contact shadow they draw
-## themselves, ask for this one instead. The sheet is the board's own cell with
-## those pixels subtracted (the generator's `compose_cell`), never a redraw,
-## which is what keeps "board art, blown up" true of it.
+## The same cell without the cast shadow the board draws. The cut-ins blow a
+## figure up over a ground plane and a contact shadow they draw themselves, so
+## a second one baked into the cell would double it. The sheet is the board's
+## own cell with those pixels subtracted (the generator's `compose_cell`),
+## never a redraw, which is what keeps "board art, blown up" true of it — and
+## since COM-270 only an aircraft has anything to subtract, every other column
+## being its board cell byte for byte.
 ##
 ## `frame` is the idle clip's, the ambient beat's two poses with the shadow gone
 ## from both. It defaults to the resting frame, so a caller that wants a still

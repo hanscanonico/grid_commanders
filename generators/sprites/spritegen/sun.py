@@ -29,8 +29,25 @@ from .palette import RGB
 SHADOW: RGB = (16, 18, 24)
 
 # One sun, one shadow direction: the light is top-left, so every shadow the
-# sheet drops falls DOWN-RIGHT by this much — a land hull, a ship's
-# displacement and a building's silhouette alike. An airborne caster drops
-# further, because the gap between unit and shadow is the altitude cue, but
-# never in another direction.
+# sheet drops falls DOWN-RIGHT by this much — an aircraft's ellipse and a
+# building's silhouette alike. An airborne caster drops further, because the
+# gap between unit and shadow is the altitude cue, but never in another
+# direction.
 SHADOW_OFFSET = (2, 2)
+
+
+def casts_shadow(kind: str) -> bool:
+    """Who casts, of the things the unit sheet draws: only what is airborne.
+
+    A tile already carries its own ground — grass clumps, a road's crown, the
+    water's swell — and a dark ellipse baked under every hull read as a hole
+    in it rather than as shade, doubling up with the terrain's own shading at
+    every zoom rung. So a unit standing on the board casts nothing: the
+    contour is what separates it from the tile, and a hull reads by its
+    waterline foam and its wake. An aircraft keeps a small ellipse, because
+    the gap between unit and shadow is the only altitude cue the sheet has.
+
+    Buildings and scenery are not asked: they stamp their own drop shadow
+    (`terrain._drop_shadow`) and keep it.
+    """
+    return kind == "air"

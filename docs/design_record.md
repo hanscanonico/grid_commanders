@@ -1142,15 +1142,20 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   **Where that shadow was centred is the cell's ground line, and it is not the cell's bottom edge**
   — `UnitSprite.CELL_GROUND_PX`, **7** px up (9 until the animation install; the generator's one sun
   drops the shadow its 2 px `SHADOW_OFFSET` below the feet row rather than centring it on them), the
-  same on every land and sea column, with air's cast displaced lower by height. The figure sheet is
+  same on every land and sea column, with air's cast displaced lower by height. **Since COM-270 that
+  row is arithmetic rather than a measurement**: the ground casts nothing to measure, so
+  `anim.measure_ground_px` returns `GROUND_BOTTOM - SHADOW_OFFSET.y` and the manifest's `ground_px`
+  is unchanged at 7. The constant's own value did not move; what moved is how the generator answers
+  for it, and `tests/unit/test_anim_manifest.gd` is the game-side pin. The figure sheet is
   a **pair** now, frame B beside frame A, and both are read — the cut-ins beat between them (the
   ninth slice below). The
-  rows below it are the shadow's own spread, so a cut-in drawing the
+  rows below it were the shadow's own spread while the ground still cast, so a cut-in drawing the
   shadowless sheet over a contact ellipse of *its* own has to centre that ellipse on the ground line;
   both did it on the box's bottom edge, which put the ellipse below the tracks it was under and left
   armour — whose shadow is the widest, so whose gap is the largest — reading as a separate blob on
-  the grass. One constant, both cut-ins' `_draw_shadow`, and `test_figure_sheet.gd` measures it off
-  the shipped sheets rather than asserting it, the subtraction between them being the shadow itself.
+  the grass. One constant, both cut-ins' `_draw_shadow`; since COM-270 the subtraction between the
+  two sheets is an aircraft's shadow and nothing else, so the row is pinned against the generator's
+  own `ground_px` (`test_anim_manifest.gd`) rather than measured off a land column.
   Not a 64x96 regression: the pre-#336 64 cell carries the same 9 px margin (measured on that
   atlas) and the `-2.0` offset is BA3's, so the gap is as old as the cut-in and #336 only made it
   easier to see. All seventeen combat cut-in frames and all four capture ones moved; every board and
@@ -1169,7 +1174,17 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   The sub's wake followed, being drawn on the shadow's own parity; it is solid and drawn *over* the
   shadow now. The generator owns all of it (`_shadow_ellipse`, `tests/…::CastShadow`) — there is no
   shadow tone and no parity anywhere in `scenes/`, which is what keeps the figure sheet's
-  subtraction exact. 54 of the 85 smoke frames moved and the set is exactly the
+  subtraction exact. **COM-270 (2026-09-09) narrowed the subject of that clause to the aircraft and
+  the buildings**: a unit on the ground and a hull in the water cast nothing at all now, so "solid"
+  is a claim about an aircraft's ellipse and a building's drop shadow and about nothing else. The
+  reasoning above is unchanged for what is left — `sun.casts_shadow` is the one statement of who
+  casts, and the ellipse is measured through the same rungs, which is what fixed its width
+  coefficient at 0.26 (it swings 0.147 of its own density at rung 1 there, and 0.378 if shrunk to
+  0.22, against `CastShadow`'s 0.15 bar). **The ships lost their displacement ellipse with it**,
+  which the ticket decided outright rather than by narrowing: the flat patch under a hull is drawn
+  and then erased, kept only because `_waterline_foam` is placed against it and `_bow_wave` crests
+  along its leading rim, so a hull now reads by foam, wake and bow wave alone and the sub's wake is
+  untouched. 54 of the 85 smoke frames moved and the set is exactly the
   predicted one: every board frame, plus the three cut-ins that stage the sub against the cruiser —
   a hull places its waterline foam against the composed cell's own spans, so a solid displacement
   shadow moved a few flecks of it, and those flecks are the only pixels the figure sheet carries
@@ -1496,8 +1511,13 @@ and which is given one back here. Reproduced otherwise verbatim.
   nudge — this supersedes the slice's own "about a board pixel, the accepted price of a facing
   that survives a repaint", which under-measured it against the cell centre instead of against a
   parked neighbour.
-  `test_move_frames.gd` carries that measurement, so if the generator ever centres the ambient
-  shadow the rule can be revisited out loud.
+  `test_move_frames.gd` carried that measurement, with a note to revisit the rule out loud if the
+  generator ever centred the ambient shadow. **COM-270 met the condition the other way** (2026-09-09):
+  the ambient shadow was not centred, it was removed — a land or sea column now draws nothing at all
+  below the ground line — so the pin is **retired** rather than re-measured, and the rule that a
+  parked sprite faces forward stands on art consistency instead. `facing_for` is what the file still
+  pins. An aircraft still casts, and its move cells are still centred, so the mirror rule has lost
+  no subject it ever had.
   **An unauthored unit needs no fallback code**: the generator bakes each unauthored
   column's ambient cell into every move sheet, so the clip is valid for the whole roster and nothing
   here asks which families are authored. The clip is FOUR sheets since S6 (2026-09-02) and the

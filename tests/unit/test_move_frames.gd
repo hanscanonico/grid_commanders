@@ -209,44 +209,14 @@ func test_a_step_turns_the_sprite_only_when_it_has_a_side() -> void:
 	assert_false(UnitSprite.facing_for(Vector2i(0, -1), false), "an upward step turned the sprite")
 
 
-## Why the mirror ends with the clip. The ambient pair is drawn over a cast
-## shadow the generator does not centre in the cell, so a sprite left mirrored
-## after a walk drops that shadow on the other side of the unit from an
-## unmirrored neighbour of the same type — two suns on one board. `UnitSprite`'s
-## `moving` setter faces a parked sprite forward again, and this is the
-## measurement that says it has to.
-func test_a_mirrored_park_would_move_the_ambient_shadow() -> void:
-	var centre := float(SPRITE_W - 1) / 2.0
-	for type in units.all():
-		for sheet: Image in [ambient_a, ambient_b]:
-			var shadow := _shadow_centre(sheet, type.atlas_col)
-			assert_gt(shadow, 0.0, "%s: no cast shadow under the parked cell" % type.id)
-			assert_ne(
-				shadow,
-				centre,
-				(
-					(
-						"%s parks over a cell-centred shadow — the ambient art has moved,"
-						+ " so UnitSprite's rest-facing rule can be revisited"
-					)
-					% type.id
-				)
-			)
-
-
-## The horizontal middle of what a column draws below the ground line, which on
-## these sheets is the cast shadow and nothing else.
-func _shadow_centre(sheet: Image, column: int) -> float:
-	var left := SPRITE_W
-	var right := -1
-	for row in int(sheet.get_height() / SPRITE_H):
-		for y in range(SPRITE_H - UnitSprite.CELL_GROUND_PX, SPRITE_H):
-			for x in SPRITE_W:
-				if sheet.get_pixel(column * SPRITE_W + x, row * SPRITE_H + y).a == 0.0:
-					continue
-				left = mini(left, x)
-				right = maxi(right, x)
-	return -1.0 if right < 0 else float(left + right) / 2.0
+## Why the mirror ends with the clip. It used to be measurable: the ambient pair
+## was drawn over a cast shadow the generator did not centre in the cell, so a
+## sprite left mirrored after a walk dropped that shadow on the other side of
+## itself from an unmirrored neighbour. COM-270 took the ground's shadow away
+## and the measurement with it — every land and sea column now draws nothing at
+## all below the ground line — so the rule stands on art consistency instead: a
+## parked unit faces the way the sheets are drawn, and `UnitSprite`'s `moving`
+## setter is where that is said. `facing_for` above is what remains pinned.
 
 
 ## True when any faction row of `column` is *drawn* differently between two
