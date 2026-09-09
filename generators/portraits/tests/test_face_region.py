@@ -1,12 +1,18 @@
-"""The crop the small surfaces draw, and the jaw it must never cut.
+"""The square the small surfaces repaint, and the jaw it must never cut.
 
 `CommanderVisuals.FACE_REGION` is one rectangle over twenty-three poses, and the
-thing that goes quiet when it breaks is a chin crossing its bottom edge: a crop
-that cuts a jaw cuts it off the HUD chip, the speech bust and the campaign brief
-at once. This is `tests/unit/test_commander_face.gd::test_the_crop_clears_every_jaw`,
-rehosted here because the roster and the skin ramps live in this package now —
-and because a failure is fixed by moving geometry, never by moving the
-rectangle, which is what a gate beside the generator makes easy.
+chip drawn from it is that square painted again on a coarser grid rather than
+cut out of the bust. The thing that goes quiet when the rectangle breaks is a
+chin crossing its bottom edge: a square that cuts a jaw cuts it off the HUD
+chip, the speech bust and the campaign brief at once.
+
+The engine's suite holds what it can see without the ramps —
+`tests/unit/test_commander_face.gd::test_face_region_fits_inside_a_portrait`
+and `::test_every_general_hands_back_that_square`, plus
+`test_commander_portraits.gd::test_the_whole_bust_field_is_the_art_s_own_size`
+for the field measured off the rectangle. The chin is measured here, where the
+roster and the skin ramps are — and where a failure is fixed by moving
+geometry, never by moving the rectangle.
 
 The rectangle is read out of the game's own source rather than typed here, the
 way `test_palette_mirror.py` reads the faction themes: a rename in
