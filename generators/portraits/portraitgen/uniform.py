@@ -4,7 +4,8 @@ The mass is painted in the faction ramp's four flat tones — deep under the
 collar, shade on the side away from the light, base across the chest, lit along
 the upper-left run — plus the rim along that same run. No band is an alpha wash
 over a fill and there is no texture fill: cloth reads by *cut*, and a single 2px
-seam beats any weave, which mips into mud and spends colours.
+seam beats any weave, which the chip grid takes to mud and spends colours to
+do it.
 
 Two vocabularies live here. The three collar cuts are silhouettes rather than
 decorations — the V notches the mass, the mandarin stands a band above the

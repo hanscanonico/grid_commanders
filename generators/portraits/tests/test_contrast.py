@@ -1,10 +1,10 @@
 """P9: hair has to be a different value from the face it sits on.
 
 The review's own reading — pale hair over pale skin reads as one mass at chip
-size, where the ink outline between them is the first thing the mip eats. It is
-measured off the finished bust rather than off the two ramps, because what a
-general's hair is *painted* in is the ramp clipped by a style, a fringe and a
-piece of headwear, and that is what a player sees.
+size, where the ink outline between them is the first thing the coarser grid
+drops. It is measured off the finished bust rather than off the two ramps,
+because what a general's hair is *painted* in is the ramp clipped by a style, a
+fringe and a piece of headwear, and that is what a player sees.
 
 A floor with no exceptions list: a bust that cannot clear it is a roster retune
 (a skin rung, a hair colour) and not a name in a tuple here.
@@ -22,7 +22,8 @@ from painted import painted
 from portraitgen import bust, hair, head, roster
 
 # The luminance the hair mass and the skin's base band must differ by. Below
-# this the two read as one shape once the outline between them mips away.
+# this the two read as one shape once the chip grid drops the outline between
+# them.
 MIN_CONTRAST = 30.0
 # How near a painted pixel must be to a named tone to count as that tone, and
 # how opaque it must be to count at all — the same tolerances the other

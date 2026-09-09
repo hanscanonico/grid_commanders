@@ -65,8 +65,8 @@ class Style:
 
     `band` is the rung of the hair ramp the mass is painted in. It is `base`
     everywhere but on a style whose own colour sits so near the skin under it
-    that the two read as one shape once the ink between them mips away — there
-    the mass drops a rung rather than the colour being renamed.
+    that the two read as one shape once the chip grid drops the ink between
+    them — there the mass drops a rung rather than the colour being renamed.
     """
 
     front: tuple[Mass, ...] = ()

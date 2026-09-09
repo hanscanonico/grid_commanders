@@ -117,9 +117,10 @@ class TheHeadwearIsToldApartByWhatItLeavesOff(unittest.TestCase):
 
 
 class TheGlassesAreTwoSquaresAndNoBridge(unittest.TestCase):
-    """P17: a bridge is the part of a pair of glasses the mip cannot hold — it
-    joined the two lenses into one grey smear at chip size. Two squares at the
-    feature weight survive it; the bridge is gone."""
+    """P17: a bridge is the part of a pair of glasses the chip grid cannot hold
+    — it is thinner than one of its texels, and it joined the two lenses into one
+    grey smear at chip size. Two squares at the feature weight survive it; the
+    bridge is gone."""
 
     def _worn(self) -> Canvas:
         cell = blank_cell()

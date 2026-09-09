@@ -31,8 +31,8 @@ SCAR: RGB = (181, 107, 90)
 # edge a tone a shade under its core.
 SCAR_DEEP: RGB = (126, 72, 62)
 
-# Half a lens, squared on the eye line: what survives the mip is the square,
-# not the frame drawn around it.
+# Half a lens, squared on the eye line: what survives the 31px chip is the
+# square, not the frame drawn around it.
 LENS_HALF = 14.0
 
 _BANDANA: tuple[Point, ...] = (
@@ -288,8 +288,9 @@ def _goggles(worn: Worn) -> list[Point]:
 def _glasses(worn: Worn) -> list[Point]:
     """P17: two squares at the feature weight, and no bridge between them.
 
-    A bridge is the one part of a pair of glasses the mip cannot hold, and it
-    was what joined the two lenses into a single grey smear at chip size."""
+    A bridge is the one part of a pair of glasses the chip grid cannot hold —
+    it is thinner than one of its texels — and it was what joined the two lenses
+    into a single grey smear at chip size."""
     for x in eye_xs(worn.skull):
         lens = (
             (x - LENS_HALF, EYE_LINE - LENS_HALF),
