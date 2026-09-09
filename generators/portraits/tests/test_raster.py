@@ -8,7 +8,8 @@ but not on x86-64. A crossing that lands exactly on a pixel boundary then falls
 either side of it.
 
 So the bar here is stated over the arithmetic instead: every shape is decided in
-whole numbers before Pillow sees it, and the two rows that flipped are pinned.
+whole numbers before Pillow sees it, and a crossing that lands exactly on a
+pixel boundary is pinned on the grid the busts ship on.
 """
 
 from __future__ import annotations
@@ -20,10 +21,12 @@ from portraitgen import canvas, raster
 
 PACKAGE = Path(canvas.__file__).parent
 
-# The working-resolution quad of Cass Orlov's right-shoulder crossbelt: the one
-# shape in the sheet whose edges cross a scan line at exactly half a pixel.
-CROSSBELT = [(464, 621), (158, 801), (154, 807), (460, 627)]
-SHEET = (660, 804)
+# A synthetic belt on the bust's own grid, falling five pixels for every six
+# rows so that its edges land on a scan line at exactly half a pixel. It is no
+# general's crossbelt: the boundary case lives in the arithmetic, not in any one
+# shape, so it is stated as the smallest quad that exercises it.
+BELT = [(80, 40), (30, 100), (28, 102), (78, 42)]
+BUST_GRID = canvas.native_size(canvas.DESIGN_SIZE, canvas.BUST_DIVISOR)
 
 
 class PillowIsNeverAskedToWorkOutAShape(unittest.TestCase):
@@ -36,16 +39,17 @@ class PillowIsNeverAskedToWorkOutAShape(unittest.TestCase):
 
 
 class ACrossingOnAPixelBoundaryIsDecidedInWholeNumbers(unittest.TestCase):
-    def test_the_crossbelt_rows_that_flipped_are_pinned(self):
+    def test_a_boundary_crossing_falls_inward_on_both_ends_of_a_run(self):
         rows = {
-            row: (first, last) for row, first, last in raster.spans(CROSSBELT, SHEET)
+            row: (first, last) for row, first, last in raster.spans(BELT, BUST_GRID)
         }
-        # 183.5 and 166.5 exactly: the run starts at the next whole pixel.
-        self.assertEqual(rows[786], (184, 190))
-        self.assertEqual(rows[796], (167, 173))
+        # Row 43 ends on 77.5 exactly and row 45 starts on 75.5 exactly: a run
+        # stops at the pixel before the boundary and starts at the one after.
+        self.assertEqual(rows[43], (77, 77))
+        self.assertEqual(rows[45], (76, 76))
 
     def test_a_crossing_is_never_a_float(self):
-        for row, first, last in raster.spans(CROSSBELT, SHEET):
+        for row, first, last in raster.spans(BELT, BUST_GRID):
             with self.subTest(row=row):
                 self.assertIsInstance(first, int)
                 self.assertIsInstance(last, int)
