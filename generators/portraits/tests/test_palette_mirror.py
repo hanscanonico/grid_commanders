@@ -120,7 +120,64 @@ class RowOrderMirrorsSideIdentity(unittest.TestCase):
         )
 
 
-class TheBustRungsAreTheOnlyRungsThatAreNotTheBoardSOwn(unittest.TestCase):
+class TheThemesAreTruncatedWhereTheBoardRoundsThem(unittest.TestCase):
+    """Why this package keeps its own copy of the six themes.
+
+    `generators/sprites` carries the same six, from the same `FactionTheme`
+    literals, already converted to bytes — and converted by ROUNDING, where
+    this module truncates the way Godot writes a `Color` into `FORMAT_RGBA8`.
+    The two therefore land a unit apart on some channels. The committed
+    emblems are drawn straight off `Faction.body` at 1x with nothing to
+    quantise them, so all five move if this block is swapped for the board's,
+    which is why the copy stays and the disagreement is pinned here instead.
+    """
+
+    def test_the_same_six_themes_in_the_same_order(self):
+        board = palette.BOARD
+        self.assertEqual(
+            [f.key for f in palette.FACTIONS], [f.key for f in board.FACTIONS]
+        )
+
+    def test_no_channel_is_more_than_a_rounding_apart(self):
+        board = palette.BOARD
+        for faction in palette.FACTIONS:
+            theirs = board.faction_by_key(faction.key)
+            with self.subTest(faction=faction.key):
+                for field in ("body", "body_dk", "body_lt"):
+                    mine, other = getattr(faction, field), getattr(theirs, field)
+                    self.assertEqual(
+                        [],
+                        [
+                            (index, a, b)
+                            for index, (a, b) in enumerate(zip(mine, other))
+                            if abs(a - b) > 1
+                        ],
+                        f"{faction.key}.{field} is further from the board than "
+                        "a truncation can explain",
+                    )
+
+    def test_this_module_truncates_where_the_board_rounds(self):
+        """The disagreement itself, so neither converter can change alone."""
+        board = palette.BOARD
+        truncated = {
+            faction.key: faction.body
+            for faction in palette.FACTIONS
+            if faction.body != board.faction_by_key(faction.key).body
+        }
+        self.assertEqual(
+            truncated,
+            {
+                "neutral": (95, 106, 112),
+                "meridian": (219, 73, 58),
+                "aurora": (56, 100, 215),
+                "iron": (73, 82, 87),
+                "verdant": (44, 133, 54),
+                "gold": (233, 200, 40),
+            },
+        )
+
+
+class TheBustRungsAreTheOnlyRungsNotTheBoardsOwn(unittest.TestCase):
     """The four rungs a bust does not share with the board, and nothing else.
 
     `palette` no longer restates the board's ramps — it loads
@@ -131,14 +188,14 @@ class TheBustRungsAreTheOnlyRungsThatAreNotTheBoardSOwn(unittest.TestCase):
     them widened to a whole row, and no bar would notice. This is that bar.
     """
 
-    def test_the_board_s_palette_is_where_the_package_looks_for_it(self):
+    def test_the_boards_palette_is_where_the_package_looks_for_it(self):
         self.assertEqual(
             palette.BOARD_PALETTE,
             GAME / "generators/sprites/spritegen/palette.py",
         )
         self.assertTrue(palette.BOARD_PALETTE.is_file(), palette.BOARD_PALETTE)
 
-    def test_every_bust_ramp_is_the_board_s_but_for_the_four_named_rungs(self):
+    def test_every_bust_ramp_is_the_boards_but_for_the_four_named_rungs(self):
         drifted = {
             (key, slot)
             for key in sorted(palette.RAMPS)

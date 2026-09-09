@@ -72,6 +72,13 @@ class Faction:
         return rgb8(self.color_light)
 
 
+# The six themes, as the game authors them. Not the board's `FACTIONS`, which
+# carries the same six from the same source in bytes: the board ROUNDS the
+# floats and this module TRUNCATES them, the way Godot writes a `Color` into
+# `FORMAT_RGBA8`, so the two disagree by a unit on twenty-three of the
+# fifty-four channels. The committed emblems carry the truncated bytes — every one of the
+# five moves if this block is swapped for the board's — so the difference is
+# pinned by `tests/test_palette_mirror.py` rather than resolved.
 FACTIONS: tuple[Faction, ...] = (
     Faction(
         "neutral",
@@ -155,9 +162,6 @@ def _load_board() -> ModuleType:
     frozen dataclass inside it looks its own module up while its class body is
     being built.
     """
-    loaded = sys.modules.get(_BOARD_MODULE)
-    if loaded is not None:
-        return loaded
     if not BOARD_PALETTE.is_file():
         raise ModuleNotFoundError(
             f"the board's palette is not at {BOARD_PALETTE}. A bust is painted "
@@ -173,25 +177,25 @@ def _load_board() -> ModuleType:
     return module
 
 
-_BOARD = _load_board()
+BOARD = _load_board()
 
-SLOTS: int = _BOARD.SLOTS
-S_CONTOUR: int = _BOARD.S_CONTOUR
-S_UNDER: int = _BOARD.S_UNDER
-S_SHADOW: int = _BOARD.S_SHADOW
-S_BODY: int = _BOARD.S_BODY
-S_TOP: int = _BOARD.S_TOP
-S_RIM: int = _BOARD.S_RIM
+SLOTS: int = BOARD.SLOTS
+S_CONTOUR: int = BOARD.S_CONTOUR
+S_UNDER: int = BOARD.S_UNDER
+S_SHADOW: int = BOARD.S_SHADOW
+S_BODY: int = BOARD.S_BODY
+S_TOP: int = BOARD.S_TOP
+S_RIM: int = BOARD.S_RIM
 
 Ramp6 = tuple[RGB, ...]
 
 # The sky every shadow on the board is lit by, the shaper that rotates a rung
 # toward it, and the authored ramps themselves — the board's, by reference.
-AMBIENT: RGB = _BOARD.AMBIENT
-luminance = _BOARD.luminance
-build_ramp = _BOARD.build_ramp
-RAMPS: dict[str, Ramp6] = _BOARD.RAMPS
-GUNMETAL_RAMP: Ramp6 = _BOARD.GUNMETAL_RAMP
+AMBIENT: RGB = BOARD.AMBIENT
+luminance = BOARD.luminance
+build_ramp = BOARD.build_ramp
+RAMPS: dict[str, Ramp6] = BOARD.RAMPS
+GUNMETAL_RAMP: Ramp6 = BOARD.GUNMETAL_RAMP
 
 
 def _rung(base: RGB, slot: int, target: float) -> RGB:
@@ -215,9 +219,14 @@ def _rung(base: RGB, slot: int, target: float) -> RGB:
 # coat painted on it is olive, and Iron's field rung comes up to where every
 # other army's sits, since Iron's ramp is the inverted one and a window at L49
 # is under every dark cap and every dark skin on the sheet.
-ACCENT_BASE: RGB = (0xE9, 0xC9, 0x28)
+#
+# Neither base is retyped: the accent IS the funds gold — the Gilded army's own
+# `FactionTheme` colour, as the board reads it — and the iron base is the anchor
+# the board's own Iron ramp is shaped from, so a rung this module lifts stays
+# tied to the row it was lifted off.
+ACCENT_BASE: RGB = BOARD.faction_by_key("gold").body
 ACCENT_RAMP: Ramp6 = build_ramp(ACCENT_BASE, (20.0, 46.0, 70.0, 150.0, 186.0, 225.0))
-IRON_BASE: RGB = (0x79, 0x83, 0x8D)
+IRON_BASE: RGB = BOARD.RAMP_BASES["iron"]
 IRON_FIELD: RGB = _rung(IRON_BASE, S_SHADOW, 74.0)
 
 # Which rungs each of the two takes, and from where. Everything not named here
