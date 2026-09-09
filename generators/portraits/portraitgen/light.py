@@ -38,6 +38,7 @@ from PIL import Image, ImageChops
 from . import palette
 from .canvas import Point
 from .palette import RGB
+from .vocab import known, pick
 
 # The key, in portrait space: x right, y down, so the sun sits up and to the
 # left. The sprite sheet's own sun (generators/sprites) lights the board from
@@ -54,13 +55,15 @@ BANDS = ("deep", "shade", "base", "lit")
 # The value ladder, as multiples of the base colour's own luminance. The first
 # rung is the contour the board's own ramps open on; the four after it are
 # BANDS. There is no rung past them: a material built here has no rim of its
-# own and closes on its lit one (see `Ramp.of_material`).
-_LADDER = (0.22, 0.40, 0.68, 1.00, 1.34)
+# own and closes on its lit one (see `Ramp.of_material`). Public because it is
+# the half of a material's ramp this sheet authors — the board owns the shaper
+# over it — and `tests/test_palette_mirror.py` states that split by name.
+LADDER = (0.22, 0.40, 0.68, 1.00, 1.34)
 # Where the lit band stops. A pale skin's own luminance is already 223, and a
 # third over it is white — a forehead painted in pure white is a hole in the
 # sheet rather than a plane the sun is on, and at sixteen tones it also spends
 # the rung the steel wants.
-_LIT_CEILING = 236.0
+LIT_CEILING = 236.0
 # How far off the face's own centre line the shade may come. C8: a boundary
 # down the nose-mouth axis reads as a two-tone mask rather than as a lit head,
 # so every shade shape starts this fraction of a half-width out from centre —
@@ -187,9 +190,7 @@ class Ramp:
     def band(self, name: str) -> RGB:
         """A band by name. An unknown name raises: the vocabulary is the
         dispatch table here as everywhere else in this package."""
-        if name not in BANDS:
-            raise KeyError(f"no band {name!r} (have {BANDS})")
-        return getattr(self, name)
+        return getattr(self, known(name, BANDS, "band"))
 
 
 @lru_cache(maxsize=None)
@@ -197,7 +198,7 @@ def _material_rungs(base: RGB) -> palette.Ramp6:
     """The six rungs `Ramp.of_material` is a view onto. Cached because a bust
     asks for the same handful of ladders on every layer it paints."""
     lum = palette.luminance(base)
-    rungs = tuple(min(lum * step, _LIT_CEILING) for step in _LADDER)
+    rungs = tuple(min(lum * step, LIT_CEILING) for step in LADDER)
     six = palette.build_ramp(base, (*rungs, rungs[-1]))
     return (*six[: palette.S_RIM], six[palette.S_TOP])
 
@@ -229,10 +230,12 @@ def face_shade(
     `kind` is one of SHADE_KINDS; an unknown one raises rather than falling
     through to a default.
     """
-    if kind not in _SHADE_SHAPES:
-        raise KeyError(f"no face shade {kind!r} (have {SHADE_KINDS})")
     return _placed(
-        _SHADE_SHAPES[kind], centre=centre, half=half, top=top, height=height
+        pick(_SHADE_SHAPES, kind, "face shade"),
+        centre=centre,
+        half=half,
+        top=top,
+        height=height,
     )
 
 

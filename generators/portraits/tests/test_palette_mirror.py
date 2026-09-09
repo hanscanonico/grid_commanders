@@ -69,10 +69,13 @@ def board_shaped(base: palette.RGB) -> palette.Ramp6:
 
     Written out here rather than called, so the bar is that the shaper the
     portraits paint a face with IS the board's `build_ramp` — a shaper of this
-    package's own could not be slipped under `light` without failing.
+    package's own could not be slipped under `light` without failing. The ladder
+    and the ceiling are read off `light` by their public names: they are the
+    half of a material's ramp this sheet authors, and restating them here would
+    only pin the copy.
     """
     lum = palette.BOARD.luminance(base)
-    rungs = tuple(min(lum * step, light._LIT_CEILING) for step in light._LADDER)
+    rungs = tuple(min(lum * step, light.LIT_CEILING) for step in light.LADDER)
     six = palette.BOARD.build_ramp(base, (*rungs, rungs[-1]))
     return (*six[: palette.S_RIM], six[palette.S_TOP])
 

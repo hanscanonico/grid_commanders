@@ -139,13 +139,15 @@ class TheNoseSitsUnderTheEyes(unittest.TestCase):
     """
 
     def test_no_nose_starts_at_or_above_the_eye_line(self):
-        for kind, shape in sorted(features._NOSES.items()):
+        for kind in sorted(features.NOSE_KINDS):
+            shape = features.nose_shape(kind)
             with self.subTest(nose=kind):
                 self.assertGreaterEqual(shape.top, features.NOSE_TOP_FLOOR)
                 self.assertGreater(shape.base, shape.top)
 
     def test_every_nose_clears_the_mouth_it_sits_over(self):
-        for kind, shape in sorted(features._NOSES.items()):
+        for kind in sorted(features.NOSE_KINDS):
+            shape = features.nose_shape(kind)
             with self.subTest(nose=kind):
                 self.assertLess(
                     shape.base + features.NOSE_UNDERSIDE, features.MOUTH_CEILING
