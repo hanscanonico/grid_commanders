@@ -44,14 +44,14 @@ class TheSweepKnowsWhatAMarkIs(unittest.TestCase):
         self.assertTrue(gauge.is_orphan([(4, 4), (5, 4)]))
 
     def test_a_gauge_square_is_a_mark(self):
-        """The gauge term: four cells that do hold a GAUGE-square."""
         block = [(4, 4), (5, 4), (4, 5), (5, 5)]
         self.assertTrue(gauge.holds_gauge(block))
         self.assertFalse(gauge.is_orphan(block))
 
-    def test_a_three_cell_l_holds_no_gauge_square_and_is_still_a_mark(self):
-        """The size term, alone: an L that holds no GAUGE-square is over
-        `MAX_ORPHAN` all the same, which is why the two terms are not one."""
+    def test_a_three_cell_l_is_a_mark_and_holds_no_gauge_square(self):
+        """Why `MAX_ORPHAN` may not be raised to three without the gauge term:
+        a catchlight-sized L is over the bound, and nothing else says it is a
+        mark."""
         ell = [(4, 4), (5, 4), (4, 5)]
         self.assertFalse(gauge.holds_gauge(ell))
         self.assertFalse(gauge.is_orphan(ell))
@@ -139,8 +139,8 @@ class TheGroundVotesLikeAnyOtherTone(unittest.TestCase):
 
 
 class NothingUnderTheGaugeSurvivesTheBake(unittest.TestCase):
-    """The bar. An opaque cluster of one tone with no gauge-square of its own
-    and no more than `MAX_ORPHAN` pixels is not a mark this grid can draw."""
+    """The bar. An opaque cluster of one tone no bigger than `MAX_ORPHAN` is
+    not a mark this grid can draw."""
 
     def test_no_bust_holds_an_orphan_cluster(self):
         for key, _ in bust.sheet_rows():

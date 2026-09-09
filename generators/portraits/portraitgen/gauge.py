@@ -11,10 +11,9 @@ The rule has an authored half and a measured one. **Authored**: a run that has
 to read as a line is drawn `Canvas.ribbon` — two texels, a lit core against an
 inked edge — or it is cut. No bar measures that half, for the two reasons
 above. **Measured**: no orphan cluster smaller than the gauge survives the
-bake. `despeckle` sweeps what the rasteriser left behind — a cluster too small
-to hold a `GAUGE`-square and no bigger than `MAX_ORPHAN` takes whichever tone
-borders it most. It invents no colour and settles to a fixed point, so two runs
-of it are the same bytes.
+bake. `despeckle` sweeps what the rasteriser left behind — a cluster no bigger
+than `MAX_ORPHAN` takes whichever tone borders it most. It invents no colour and
+settles to a fixed point, so two runs of it are the same bytes.
 
 **Nothing is a border tone, and that is the silhouette half of the sweep.** A
 speck sitting off the outline is bordered mostly by the transparent ground, so
@@ -35,13 +34,10 @@ from .palette import RGBA
 
 # The smallest mark this grid holds, in native texels, square.
 GAUGE = 2
-# A cluster of one tone at most this large, holding no GAUGE-square of its own,
-# is rasteriser residue rather than a mark — a speck of paint on the ground, or
-# a pinhole of ground inside the paint. At two it decides `is_orphan` on its
-# own, because two cells cannot hold a GAUGE-square; the gauge term is kept as
-# the guard on raising it, since a 2x2 block is a mark at any bound. Three is
-# not that raise: it would take the eyes' small catchlight, which is authored
-# and reads.
+# A cluster of one tone at most this large is rasteriser residue rather than a
+# mark. Two, because two cells cannot hold a GAUGE-square and three would take
+# the eyes' small catchlight; raising it would need `holds_gauge` back in
+# `is_orphan`, a 2x2 block being a mark at any bound.
 MAX_ORPHAN = 2
 
 # How many times the sweep may run before the raster has to have settled.
@@ -91,12 +87,8 @@ def holds_gauge(cells: list[Cell]) -> bool:
 
 
 def is_orphan(cells: list[Cell]) -> bool:
-    """Whether a cluster is under the gauge in both of its terms.
-
-    At the constants as authored the size bound decides alone; see `MAX_ORPHAN`
-    for why the gauge term is kept anyway.
-    """
-    return len(cells) <= MAX_ORPHAN and not holds_gauge(cells)
+    """Whether a cluster is too small to be a mark this grid can draw."""
+    return len(cells) <= MAX_ORPHAN
 
 
 def _border_tone(
