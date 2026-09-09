@@ -195,7 +195,8 @@ default.
 | `portraitgen/gauge.py` | the smallest mark this grid holds, and the sweep | `GAUGE`, `MAX_ORPHAN`, `clusters`, `holds_gauge`, `is_orphan`, `despeckle` |
 | `portraitgen/light.py` | the key direction, the ramps, the AO | `KEY`, `Ramp`, `Ramp.of_faction(key)`, `Ramp.of_material(base)`, `shade_kind`, `face_shade`, `face_light`, `TERMINATORS`, `occlusion(occluder, target, depth=, divisor=, mirrored=)` |
 | `portraitgen/head.py` | skull, neck, ear, the skin ramps | `Skull(width, jaw, crown, spread)`, `JAWS`, `SKIN_BASES`, `ramp_for(skin)`, `outline(skull)`, `skull_box(skull)`, `draw(canvas, skull, ramp, mirrored=)` |
-| `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair, worn accessories | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `Worn`, `accessory(…, tint=, kicker=)`, `covered_eye`, `earring`, `freckles` |
+| `portraitgen/features.py` | eyes, brows, nose, mouth, facial hair | `eyes(…, scale=)`, `brow`, `nose`, `mouth`, `facial_hair`, `earring`, `freckles`, `Frame`, `eye_xs`, `ringed_ellipse` |
+| `portraitgen/accessories.py` | the worn accessories: headwear, eyewear, the scar | `ACCESSORY_KINDS`, `Worn`, `accessory(…, tint=, kicker=)`, `covered_eye` |
 | `portraitgen/hair.py` | the hair mass and its strand clusters | `STYLES`, `HAIR_COLOURS`, `ramp_for(colour)`, `back`, `front(…, skin=)`, `draw(…, skin=)` |
 | `portraitgen/uniform.py` | shoulders, collar cut, chest treatment, rank pip | `COLLAR_CUTS`, `CHEST_TREATMENTS`, `draw(canvas, faction, collar, ramp)`, `chest(canvas, treatment, faction, ramp)`, `pip(canvas, ramp)` |
 | `portraitgen/props.py` | the 22 signature props and their rigs | `PROPS`, `SHOULDERED`, `RIGHT_LIMIT`, `draw(canvas, key, faction, ramp, layer=)` |
@@ -210,7 +211,9 @@ a headset cup in the general's own faction cloth, `kicker=` is that cloth's lit
 rung, which only the two cap crowns spend, and `mirrored=` pre-flips the light
 for a layer the pose is about to turn over. `accessory` packs the first two
 into a `Worn`, so the nine painters that ignore the kicker never carry it down
-their signatures.
+their signatures. `accessories.py` fits to the same `Frame` and reads the same
+eye line as `features.py`, so it imports that module and nothing there imports
+it back.
 
 Draw order, all on one grid, in `bust.py`: backdrop, then the figure — prop
 behind, hair behind, uniform and collar, head, features, hair over, prop in

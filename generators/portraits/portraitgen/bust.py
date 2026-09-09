@@ -44,7 +44,18 @@ from dataclasses import dataclass
 
 from PIL import Image
 
-from . import backdrop, features, gauge, hair, head, light, props, roster, uniform
+from . import (
+    accessories,
+    backdrop,
+    features,
+    gauge,
+    hair,
+    head,
+    light,
+    props,
+    roster,
+    uniform,
+)
 from .canvas import BUST_DIVISOR, CAST_TONE, CHIP_DIVISOR, Canvas, face_box
 from .palette import Faction, bust_palette, faction_by_key, quantise
 from .roster import EmptySeat, Face
@@ -230,10 +241,10 @@ def _face_group(
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
     # Headwear cut out of uniform cloth is painted in the coat's own rungs —
-    # its base, and its lit rung along the key's edge (`features._CAP_LIT`).
+    # its base, and its lit rung along the key's edge (`accessories._CAP_LIT`).
     for worn in (face.acc, face.acc2):
-        features.accessory(group, face.head, worn, tint=cloth.base, kicker=cloth.lit)
-    covered = features.covered_eye(face.acc)
+        accessories.accessory(group, face.head, worn, tint=cloth.base, kicker=cloth.lit)
+    covered = accessories.covered_eye(face.acc)
     features.brow(group, face.head, face.brow, mane, covered=covered)
     features.eyes(group, face.head, face.eyes, scale=face.eye, covered=covered)
     features.nose(group, face.head, face.nose, skin)

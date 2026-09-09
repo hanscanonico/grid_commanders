@@ -38,6 +38,7 @@ from PIL import Image  # noqa: E402
 
 from portraitgen import bust as painter  # noqa: E402
 from portraitgen import (  # noqa: E402
+    accessories,
     backdrop,
     features,
     hair,
@@ -246,9 +247,9 @@ def _worn(skin: light.Ramp, mane: light.Ramp) -> list[Canvas]:
         cell = _face(skin)
         features.facial_hair(cell, SKULL, kind, mane)
         cells.append(cell)
-    for kind in sorted(features.ACCESSORY_KINDS):
+    for kind in sorted(accessories.ACCESSORY_KINDS):
         cell = _face(skin)
-        features.accessory(cell, SKULL, kind)
+        accessories.accessory(cell, SKULL, kind)
         cells.append(cell)
     for style in sorted(hair.STYLES):
         cell = _face(skin)

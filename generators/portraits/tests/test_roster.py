@@ -19,7 +19,17 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from portraitgen import backdrop, bust, features, hair, head, props, roster, uniform
+from portraitgen import (
+    accessories,
+    backdrop,
+    bust,
+    features,
+    hair,
+    head,
+    props,
+    roster,
+    uniform,
+)
 from portraitgen.canvas import Canvas
 
 GAME = Path(__file__).resolve().parents[3]
@@ -158,13 +168,13 @@ class EveryColumnNamesSomethingDrawable(unittest.TestCase):
         for key, face in roster.FACES.items():
             with self.subTest(commander=key):
                 self.assertIn(face.facial, features.FACIAL_KINDS)
-                self.assertIn(face.acc, features.ACCESSORY_KINDS)
-                self.assertIn(face.acc2, features.ACCESSORY_KINDS)
+                self.assertIn(face.acc, accessories.ACCESSORY_KINDS)
+                self.assertIn(face.acc2, accessories.ACCESSORY_KINDS)
 
     def test_only_the_first_slot_may_cover_a_socket(self):
         for key, face in roster.FACES.items():
             with self.subTest(commander=key):
-                self.assertIsNone(features.covered_eye(face.acc2))
+                self.assertIsNone(accessories.covered_eye(face.acc2))
 
     def test_every_collar_is_one_the_uniform_can_cut(self):
         for key, face in roster.FACES.items():
@@ -250,7 +260,7 @@ class TheIdentitiesTheReviewPinned(unittest.TestCase):
         for key in self.EMPTY_ABOVE_THE_COLLAR:
             with self.subTest(commander=key):
                 face = roster.FACES[key]
-                worn = features.accessory(Canvas(), face.head, face.acc)
+                worn = accessories.accessory(Canvas(), face.head, face.acc)
                 self.assertGreater(len(worn), 2, "an accessory that is not headwear")
 
     def test_the_two_bare_heads_do_not_wear_the_same_hat(self):
