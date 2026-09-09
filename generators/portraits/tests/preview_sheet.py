@@ -60,6 +60,7 @@ from portraitgen.palette import (  # noqa: E402
     Faction,
     faction_by_key,
 )
+from portraitgen.roster import EmptySeat, Face  # noqa: E402
 
 ZOOM = 4
 
@@ -254,7 +255,10 @@ def _worn(skin: light.Ramp, mane: light.Ramp) -> list[Canvas]:
         cells.append(cell)
     for style in sorted(hair.STYLES):
         cell = _face(skin)
-        hair.draw(cell, SKULL, style, mane, skin=skin)
+        # The bust composes these two halves around the head; a preview cell
+        # has nothing behind the skull, so both go onto the one canvas.
+        hair.back(cell, SKULL, style, mane)
+        hair.front(cell, SKULL, style, mane, skin=skin)
         cells.append(cell)
     return cells
 
@@ -280,16 +284,13 @@ def _grid(cells: list[Canvas]) -> Image.Image:
 def _sheet(out: Path) -> list[Path]:
     """The roster itself: one row per faction, and the chip strip under it.
 
-    Every army, Iron last. Gold was missing from this list, which is how a
-    review of the sheet came back without having seen the three generals whose
-    colour the review then found had gone.
+    Cut out of `bust.sheet_rows` rather than out of a list of armies typed
+    here: Gold was missing from that list once, which is how a review of the
+    sheet came back without having seen the three generals whose colour the
+    review then found had gone.
     """
-    rows = [
-        [roster.FACES[key] for key in sorted(roster.FACES) if _army(key) == army]
-        for army in ("meridian", "aurora", "verdant", "gold", "iron")
-    ]
-    painted = [[painter.paint(face) for face in row] for row in rows]
-    painted.append([painter.paint(roster.NEUTRAL)])
+    rows = _rows()
+    painted = [[painter.paint(spec) for spec in row] for row in rows]
     width, height = BUST_SIZE
     page = Image.new(
         "RGBA",
@@ -298,16 +299,29 @@ def _sheet(out: Path) -> list[Path]:
     )
     for index, row in enumerate(painted):
         page.alpha_composite(_row(row), (0, index * height))
-    chips = [painter.chip(face) for row in rows for face in row]
-    chips.append(painter.chip(roster.NEUTRAL))
+    chips = [painter.chip(spec) for row in rows for spec in row]
     return [
         _write(out / "contact_sheet.png", page),
         _write(out / "face_crops.png", _chip_strip(chips)),
     ]
 
 
-def _army(key: str) -> str:
-    return painter.FACTION_OF[key]
+def _rows() -> list[list[Face | EmptySeat]]:
+    """Every seat the bake carries, in rows: one per army, the empty seat last.
+
+    The armies come out in the palette's own order with Iron pushed to the end,
+    which is where the repo puts it in any list; the seats come out of
+    `bust.sheet_rows`, so a general added to the roster lands on this sheet
+    without anything here being edited.
+    """
+    seats = painter.sheet_rows()
+    order = [faction.key for faction in FACTIONS if faction.key != "iron"] + ["iron"]
+    rows = [
+        [spec for key, spec in seats if painter.FACTION_OF.get(key) == army]
+        for army in order
+    ]
+    rows.append([spec for key, spec in seats if key not in painter.FACTION_OF])
+    return [row for row in rows if row]
 
 
 def _features_hair(out: Path) -> list[Path]:
