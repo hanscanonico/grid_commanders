@@ -542,22 +542,24 @@ def earring(canvas: Canvas, skull: Skull) -> None:
     ringed_ellipse(canvas, frame, (x, y + radius + 3.0), (3.8, 3.8), GOLD, INK_DETAIL)
 
 
-# A freckle at the gauge: a square of skin shade, one per cheek, out where the
-# cheekbone turns. Three dots of a texel and a half apiece — what this drew —
-# quantise into a scatter of specks rather than into freckles.
-FRECKLE_AT = (-3.0, 159.0)
+# A freckle at the gauge: a square of skin shade, one per cheek, on the cheek
+# proper — three design units in from the eye centre, toward the nose, and well
+# below it. Three dots of a texel and a half apiece — what this drew — quantise
+# into a scatter of specks rather than into freckles.
+FRECKLE_INSET = 3.0
+FRECKLE_Y = 159.0
 FRECKLE_HALF = 2.2
 
 
 def freckles(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
     frame = Frame.of(skull)
-    dx, dy = FRECKLE_AT
     for side, x in enumerate(eye_xs(skull)):
-        outward = -1.0 if side == 0 else 1.0
+        inward = 1.0 if side == 0 else -1.0
+        centre = x + inward * FRECKLE_INSET
         canvas.rect(
             (
-                *frame.at(x + outward * dx - FRECKLE_HALF, dy - FRECKLE_HALF),
-                *frame.at(x + outward * dx + FRECKLE_HALF, dy + FRECKLE_HALF),
+                *frame.at(centre - FRECKLE_HALF, FRECKLE_Y - FRECKLE_HALF),
+                *frame.at(centre + FRECKLE_HALF, FRECKLE_Y + FRECKLE_HALF),
             ),
             ramp.shade,
         )
