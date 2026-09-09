@@ -40,10 +40,11 @@ forms named in the root index are in `docs/design_record.md`.
   **shaper** is shared, the board's `build_ramp` with its chroma curve, its hue rotation and its
   cool sky; the ink is off no ladder. Each of those clauses is pinned by
   `generators/portraits/tests/test_palette_mirror.py`. **Four of the army rungs are not the
-  board's**, and `palette.BUST_RUNGS` is the one place that is said: gold's three lit rungs come off the funds gold, because the board's Gilded ramp is
-  authored a band low on purpose and a coat painted on it is olive; Iron's field rung comes up to
-  where every other army's sits, because Iron's is the inverted ramp and a window that dark puts
-  three Iron faces under one black blob at chip size. Both are spent inside the sixteen.
+  board's**, and `palette.BUST_RUNGS` is the one place that is said: gold's three lit rungs come
+  off the funds gold, because the board's Gilded ramp is authored a band low on purpose and a coat
+  painted on it is olive; Iron's field rung comes up to where every other army's sits, because
+  Iron's is the inverted ramp and a window that dark puts three Iron faces under one black blob at
+  chip size. Both are spent inside the sixteen.
   Two rules follow on this side. **`CommanderVisuals.ART_FILTER` is nearest** for a general's own
   art, and `EMBLEM_FILTER` is the one exception (a 64px badge drawn at 22 has no whole rung).
   **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
