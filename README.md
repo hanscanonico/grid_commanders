@@ -51,7 +51,7 @@ make generators-test # all three generator suites
 make sprites-snapshot     # a fresh generation against the board art installed under assets/
 make audio-snapshot       # a fresh render against the sound installed under assets/
 make portraits-snapshot   # a fresh generation against the commander art installed under assets/
-make portraits       # rebake the busts and emblems from generators/portraits + import
+make portraits       # rebake the busts, face chips and emblems from generators/portraits + import
 make import          # (re)import assets headless
 make export-android  # package a debug APK -> build/android/ (setup below)
 make export-ios      # package an Xcode project -> build/ios/ (setup below)

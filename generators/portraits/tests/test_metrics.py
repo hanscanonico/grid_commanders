@@ -17,13 +17,13 @@ import itertools
 import re
 import unittest
 from collections import Counter
-from functools import lru_cache
 
 from PIL import Image, ImageChops
 
+from cells import luminance, tally
 from portraitgen import bust, features, head, light, palette, props, roster, uniform
 from game import VISUALS, scrape
-from painted import painted
+from painted import figure, painted
 from portraitgen.canvas import (
     BUST_DIVISOR,
     BUST_SIZE,
@@ -70,29 +70,10 @@ OPAQUE = 128
 FACE_CROP = face_box(BUST_DIVISOR)
 
 
-def _luminance(pixel: tuple[int, ...]) -> float:
-    return 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
-
-
-@lru_cache(maxsize=None)
-def _figure(key: str) -> Image.Image:
-    """Where the bust differs from its own window: its silhouette."""
-    spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
-    difference = ImageChops.difference(painted(key, cast=False), bust.window(spec))
-    return difference.convert("L").point(lambda level: 255 if level else 0)
-
-
-def _colours(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
-    counted = image.getcolors(1 << 20)
-    if counted is None:
-        raise AssertionError("more colours than a sheet can carry")
-    return counted
-
-
 def _tones(image: Image.Image) -> list[tuple[int, ...]]:
     """The opaque tones a raster is painted in. What is not opaque is the one
     cast-shadow tone, which is a shadow rather than paint."""
-    return [colour[:3] for _, colour in _colours(image) if colour[3] == 255]
+    return [colour[:3] for _, colour in tally(image) if colour[3] == 255]
 
 
 def _dark_area(paint) -> int:
@@ -100,19 +81,19 @@ def _dark_area(paint) -> int:
     paint(layer)
     return sum(
         count
-        for count, colour in _colours(layer.resolve())
-        if colour[3] >= OPAQUE and _luminance(colour) <= DARK_LUMINANCE
+        for count, colour in tally(layer.resolve())
+        if colour[3] >= OPAQUE and luminance(colour) <= DARK_LUMINANCE
     )
 
 
 def _chip(key: str) -> list[int]:
     """One general's silhouette at chip size, off the chip's own grid."""
     spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
-    figure = ImageChops.difference(
+    silhouette = ImageChops.difference(
         bust.paint(spec, cast=False, divisor=CHIP_DIVISOR),
         bust.window(spec, divisor=CHIP_DIVISOR),
     )
-    mask = figure.convert("L").crop(face_box(CHIP_DIVISOR))
+    mask = silhouette.convert("L").crop(face_box(CHIP_DIVISOR))
     return [1 if level else 0 for level in mask.get_flattened_data()]
 
 
@@ -169,7 +150,7 @@ class TheShadowIsDrawn(unittest.TestCase):
                 ).convert("L")
                 outside = ImageChops.multiply(
                     changed.point(lambda level: 255 if level else 0),
-                    _figure(key).point(lambda level: 255 - level),
+                    figure(key).point(lambda level: 255 - level),
                 )
                 self.assertIsNotNone(outside.getbbox())
 
@@ -184,12 +165,12 @@ class FourValueBands(unittest.TestCase):
                 inside = Image.composite(
                     painted(key),
                     Image.new("RGBA", BUST_SIZE, (0, 0, 0, 0)),
-                    _figure(key),
+                    figure(key),
                 )
                 histogram: Counter[int] = Counter()
-                for count, colour in _colours(inside):
+                for count, colour in tally(inside):
                     if colour[3]:
-                        histogram[round(_luminance(colour))] += count
+                        histogram[round(luminance(colour))] += count
                 total = sum(histogram.values())
                 bands = [v for v in histogram.values() if v >= BAND_COVERAGE * total]
                 self.assertGreaterEqual(len(bands), VALUE_BANDS)
@@ -244,9 +225,7 @@ class ThePaletteIsBounded(unittest.TestCase):
         for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 partial = {
-                    colour
-                    for _, colour in _colours(painted(key))
-                    if 0 < colour[3] < 255
+                    colour for _, colour in tally(painted(key)) if 0 < colour[3] < 255
                 }
                 self.assertLessEqual(len(partial), 1)
 
@@ -274,7 +253,7 @@ class OneLightOnEveryFace(unittest.TestCase):
         x, y, width, height = patch
         pixels = painted(key).load()
         values = sorted(
-            _luminance(pixels[column, row])
+            luminance(pixels[column, row])
             for row in range(y, y + height)
             for column in range(x, x + width)
         )

@@ -20,6 +20,7 @@ from __future__ import annotations
 import unittest
 
 from PIL import Image, ImageChops
+from cells import tally
 from preview_sheet import FIELD, ROW, SKIN, bust
 
 from portraitgen import head, light, palette
@@ -37,17 +38,8 @@ SHADE_FLOOR = 0.01
 # with no coverage floor under it.
 MAX_TONES = palette.PAINTED_TONES
 
-_ALL_COLOURS = 1 << 20
 
-
-def _colours(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
-    counted = image.getcolors(_ALL_COLOURS)
-    if counted is None:
-        raise AssertionError("more colours than a sheet can carry")
-    return counted
-
-
-def _luminance(pixel: tuple[int, ...]) -> float:
+def _godot_luminance(pixel: tuple[int, ...]) -> float:
     """Godot's `Color.get_luminance`, which is what the GUT test reads."""
     red, green, blue = (channel / 255.0 for channel in pixel[:3])
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue
@@ -55,8 +47,8 @@ def _luminance(pixel: tuple[int, ...]) -> float:
 
 def _mean_luminance(image: Image.Image, patch: tuple[int, int, int, int]) -> float:
     x, y, width, height = patch
-    counted = _colours(image.crop((x, y, x + width, y + height)))
-    total = sum(count * _luminance(colour) for count, colour in counted)
+    counted = tally(image.crop((x, y, x + width, y + height)))
+    total = sum(count * _godot_luminance(colour) for count, colour in counted)
     return total / float(sum(count for count, _ in counted))
 
 
@@ -88,7 +80,7 @@ class TheRasterIsThePinnedOne(unittest.TestCase):
                 layer = Canvas()
                 head.draw(layer, skull, _skin_ramp())
                 opaque = sum(
-                    count for count, level in _colours(layer.silhouette()) if level
+                    count for count, level in tally(layer.silhouette()) if level
                 )
                 share = opaque / float(BUST_SIZE[0] * BUST_SIZE[1])
                 self.assertGreater(share, 0.05)
@@ -158,8 +150,8 @@ def _nonzero(image: Image.Image, *, invert: bool = False) -> Image.Image:
 
 
 def _skin_luminance(patch: Image.Image, tones: set[tuple[int, ...]]) -> float:
-    counted = [(n, c) for n, c in _colours(patch) if c in tones]
-    return sum(n * _luminance(c) for n, c in counted) / float(
+    counted = [(n, c) for n, c in tally(patch) if c in tones]
+    return sum(n * _godot_luminance(c) for n, c in counted) / float(
         sum(n for n, _ in counted)
     )
 
@@ -170,7 +162,7 @@ class FourFlatBands(unittest.TestCase):
         band any more (see `light`), so a fifth tone on a head would be one
         this file cannot account for."""
         ramp = _skin_ramp()
-        painted = {colour: count for count, colour in _colours(bust(ROW[0][1]))}
+        painted = {colour: count for count, colour in tally(bust(ROW[0][1]))}
         for band in light.BANDS:
             with self.subTest(band=band):
                 self.assertIn((*getattr(ramp, band), 255), painted)
@@ -184,7 +176,7 @@ class FourFlatBands(unittest.TestCase):
     def test_a_raster_is_painted_in_at_most_sixteen_tones(self):
         for name, skull in ROW:
             with self.subTest(skull=name):
-                opaque = {c for _, c in _colours(bust(skull)) if c[3] == 255}
+                opaque = {c for _, c in tally(bust(skull)) if c[3] == 255}
                 self.assertLessEqual(len(opaque), MAX_TONES)
 
 
