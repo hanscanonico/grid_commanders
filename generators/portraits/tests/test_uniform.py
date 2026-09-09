@@ -12,16 +12,15 @@ from __future__ import annotations
 
 import re
 import unittest
-from pathlib import Path
 
 from PIL import Image, ImageChops
 
+from game import GAME, scrape
 from portraitgen import uniform
 from portraitgen.canvas import Canvas
 from portraitgen.light import Ramp
 from portraitgen.palette import faction_by_key
 
-GAME = Path(__file__).resolve().parents[3]
 UI_THEME = GAME / "scenes/common/ui_theme.gd"
 # `const AMMO := Color(r, g, b)` — the one gold the portraits borrow, read back
 # out of the game the way the faction themes are.
@@ -145,9 +144,7 @@ class TheGoldIsTheGame(unittest.TestCase):
     """
 
     def test_the_gold_is_ui_themes_ammo(self):
-        self.assertTrue(UI_THEME.is_file(), UI_THEME)
-        found = _AMMO.search(UI_THEME.read_text())
-        self.assertIsNotNone(found, f"no AMMO constant in {UI_THEME}")
+        found = scrape(UI_THEME, _AMMO)
         channels = tuple(float(v) for v in found.group(1).split(",")[:3])
         self.assertEqual(uniform.GOLD, tuple(round(v * 255.0) for v in channels))
 

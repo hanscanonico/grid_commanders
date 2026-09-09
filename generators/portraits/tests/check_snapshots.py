@@ -26,7 +26,7 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from game import GAME
 
 # Where each generated relpath directory is installed in the game. Restated
 # rather than imported: this script is run as a file, not as part of the
@@ -43,7 +43,7 @@ def _installed() -> dict[Path, Path]:
     return {
         Path(rel_dir) / p.name: p
         for rel_dir, install_dir in INSTALL_MAP.items()
-        for p in sorted((REPO_ROOT / install_dir).glob("*.png"))
+        for p in sorted((GAME / install_dir).glob("*.png"))
     }
 
 

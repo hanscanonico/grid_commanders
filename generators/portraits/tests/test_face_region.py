@@ -18,16 +18,14 @@ from __future__ import annotations
 import re
 import unittest
 from collections import Counter
-from pathlib import Path
 
 from PIL import Image
 
+from game import VISUALS, scrape
 from portraitgen import bust, head, roster
 from portraitgen.canvas import BUST_DIVISOR, BUST_SIZE, CHIP_DIVISOR, CHIP_SIZE
 from portraitgen.canvas import face_box as _face_box
 
-GAME = Path(__file__).resolve().parents[3]
-VISUALS = GAME / "scenes/common/commander_visuals.gd"
 
 # The floor and the band the sheet holds, on the bust's own grid — half the
 # raster the eight-pixel floor was set on, so the floor comes down with it. The
@@ -51,9 +49,7 @@ def _as_rect(divisor: int) -> tuple[int, int, int, int]:
 
 def face_region() -> tuple[int, int, int, int]:
     """`CommanderVisuals.FACE_REGION` as (x, y, width, height)."""
-    found = _REGION.search(VISUALS.read_text())
-    assert found is not None, "FACE_REGION is not where this test looks for it"
-    return tuple(int(group) for group in found.groups())
+    return tuple(int(group) for group in scrape(VISUALS, _REGION).groups())
 
 
 def is_skin(pixel: tuple[int, ...], tones: list[tuple[int, int, int]]) -> bool:

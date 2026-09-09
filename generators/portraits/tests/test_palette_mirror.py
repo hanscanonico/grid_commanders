@@ -18,12 +18,10 @@ from __future__ import annotations
 
 import re
 import unittest
-from pathlib import Path
 
+from game import GAME, VISUALS, scrape
 from portraitgen import palette
 
-GAME = Path(__file__).resolve().parents[3]
-VISUALS = GAME / "scenes/common/commander_visuals.gd"
 IDENTITY = GAME / "scenes/common/side_identity.gd"
 
 # FactionTheme.new(<key>, "<display>", Color(r, g, b), Color(...), Color(...), ...)
@@ -59,8 +57,7 @@ def _floats(literal: str) -> tuple[float, ...]:
 
 def game_themes() -> dict[str, dict[str, object]]:
     src = VISUALS.read_text()
-    neutral = _NEUTRAL_KEY.search(src)
-    assert neutral, f"no NEUTRAL_KEY constant in {VISUALS}"
+    neutral = scrape(VISUALS, _NEUTRAL_KEY)
     themes: dict[str, dict[str, object]] = {}
     for m in _THEME.finditer(src):
         key = m.group("key") or neutral.group(1)
@@ -74,8 +71,7 @@ def game_themes() -> dict[str, dict[str, object]]:
 
 
 def game_rows() -> list[str]:
-    body = _ROW_FOR_KEY.search(IDENTITY.read_text())
-    assert body, f"no _ROW_FOR_KEY dictionary in {IDENTITY}"
+    body = scrape(IDENTITY, _ROW_FOR_KEY)
     entries = _ROW_ENTRY.findall(body.group(1))
     return [key for key, _ in sorted(entries, key=lambda e: int(e[1]))]
 
@@ -223,8 +219,7 @@ class EveryArmyWearsAnEmblem(unittest.TestCase):
     """Five emblems, one per army — the seat nobody holds has none."""
 
     def test_emblem_keys_are_the_factions_less_the_neutral_one(self):
-        neutral = _NEUTRAL_KEY.search(VISUALS.read_text())
-        assert neutral
+        neutral = scrape(VISUALS, _NEUTRAL_KEY)
         self.assertEqual(
             sorted(palette.EMBLEM_KEYS),
             sorted(f.key for f in palette.FACTIONS if f.key != neutral.group(1)),

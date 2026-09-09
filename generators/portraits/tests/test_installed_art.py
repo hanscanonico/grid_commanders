@@ -20,10 +20,10 @@ from pathlib import Path
 
 from PIL import Image
 
+from game import GAME
 from portraitgen import bust, emblem, palette, roster
 from portraitgen.canvas import BUST_SIZE, CAST_TONE, CHIP_SIZE
 
-GAME = Path(__file__).resolve().parents[3]
 INSTALLED = GAME / "assets/portraits"
 
 BUSTS = INSTALLED / "commanders"

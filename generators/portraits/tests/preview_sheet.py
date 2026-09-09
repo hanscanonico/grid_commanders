@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PIL import Image  # noqa: E402
 
+from game import GAME  # noqa: E402
 from portraitgen import bust as painter  # noqa: E402
 from portraitgen import (  # noqa: E402
     accessories,
@@ -320,7 +321,6 @@ def _features_hair(out: Path) -> list[Path]:
 # baked at 64 and laid on a 16px world grid, a unit cell at 64x96 on the same
 # grid at `UnitSprite.SPRITE_SCALE` (16/64). Both are `assets/tiles`, so this
 # part reads the game's shipped sheets rather than drawing a stand-in of them.
-GAME = Path(__file__).resolve().parents[3]
 TILE = 16
 TERRAIN_PX = 64
 UNIT_W, UNIT_H = 64, 96

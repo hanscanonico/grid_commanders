@@ -17,8 +17,8 @@ from __future__ import annotations
 import re
 import unittest
 from collections import Counter
-from pathlib import Path
 
+from game import GAME, VISUALS, scrape
 from portraitgen import (
     accessories,
     backdrop,
@@ -32,9 +32,7 @@ from portraitgen import (
 )
 from portraitgen.canvas import Canvas
 
-GAME = Path(__file__).resolve().parents[3]
 COMMANDERS = GAME / "data/commanders"
-VISUALS = GAME / "scenes/common/commander_visuals.gd"
 
 _ID = re.compile(r'^id = &"(\w+)"', re.M)
 _POWER_COST = re.compile(r"^power_cost = (\d+)", re.M)
@@ -57,8 +55,7 @@ def _army_of_each_general() -> dict[str, str]:
     `CommanderVisuals`, so both are read rather than restated — the same mirror
     idiom `test_palette_mirror.py` uses on the colours themselves.
     """
-    body = _FACTION_KEYS.search(VISUALS.read_text())
-    assert body, f"no _FACTION_KEYS dictionary in {VISUALS}"
+    body = scrape(VISUALS, _FACTION_KEYS)
     keys = dict(_FACTION_ENTRY.findall(body.group(1)))
     armies = {}
     for path in COMMANDERS.glob("*.tres"):
