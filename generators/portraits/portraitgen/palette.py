@@ -140,11 +140,13 @@ FACTIONS: tuple[Faction, ...] = (
 EMBLEM_KEYS: tuple[str, ...] = ("aurora", "gold", "iron", "meridian", "verdant")
 
 
+# Built once off the tuple above, so the lookup below is a table like every
+# other vocabulary in this package rather than a scan with its own raise.
+_BY_KEY: dict[str, Faction] = {faction.key: faction for faction in FACTIONS}
+
+
 def faction_by_key(key: str) -> Faction:
-    for faction in FACTIONS:
-        if faction.key == key:
-            return faction
-    raise KeyError(f"no faction {key!r} (have {[f.key for f in FACTIONS]})")
+    return pick(_BY_KEY, key, "faction")
 
 
 # --- the board's ramps -------------------------------------------------------

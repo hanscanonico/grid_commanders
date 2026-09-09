@@ -1,11 +1,11 @@
 """How every vocabulary in this package answers an unknown key.
 
 Each layer owns a dispatch table — the eye shapes, the collar cuts, the props,
-the backdrop treatments — and the rule across all of them is the same: an
-unknown key raises rather than falling through to a default, and the error names
-what was asked for and what there is. Written out at each table that rule was
-seventeen copies of one f-string, which is seventeen chances for one of them to
-say `have {_EYES}` and dump a table of shapes at a caller.
+the backdrop treatments, the factions — and the rule across all of them is the
+same: an unknown key raises rather than falling through to a default, and the
+error names what was asked for and what there is. Written out at each table
+that rule was twenty-two copies of one f-string, which is twenty-two chances
+for one of them to say `have {_EYES}` and dump a table of shapes at a caller.
 
 `pick` is for a table whose value the caller wants; `known` for a vocabulary the
 caller only has to be in, because what it reaches for afterwards is an attribute
