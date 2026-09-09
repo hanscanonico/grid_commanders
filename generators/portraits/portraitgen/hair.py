@@ -171,7 +171,7 @@ _CAP: Mass = (
     (110.0, 108.0),
     (60.0, 112.0),
 )
-_FRINGE_BAND: Mass = ((66.0, 116.0), (110.0, 110.0), (154.0, 116.0), (110.0, 126.0))
+_FRINGE_SHAPE: Mass = ((66.0, 116.0), (110.0, 110.0), (154.0, 116.0), (110.0, 126.0))
 
 _STYLES: dict[str, Style] = {
     # A scalp, and nothing else: the two temple wisps this style used to carry
@@ -192,7 +192,7 @@ _STYLES: dict[str, Style] = {
         ),
         back=(_bob_fall(),),
         lobe=Lobe(66.0, 104.0, 84.0, 24.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
         band="shade",
     ),
     "braid": Style(
@@ -222,7 +222,7 @@ _STYLES: dict[str, Style] = {
         ),
         blobs=((56.0, 170.0, 9.0), (60.0, 194.0, 9.0)),
         lobe=Lobe(68.0, 104.0, 86.0, 20.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "bun": Style(
         front=(
@@ -239,7 +239,7 @@ _STYLES: dict[str, Style] = {
         ),
         blobs=((110.0, 74.0, 18.0),),
         lobe=Lobe(70.0, 106.0, 90.0, 18.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "buzz": Style(
         front=(
@@ -259,7 +259,7 @@ _STYLES: dict[str, Style] = {
     "curly": Style(
         front=(_cloud(),),
         lobe=Lobe(74.0, 100.0, 96.0, 14.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "hood": Style(
         front=(
@@ -275,7 +275,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(68.0, 106.0, 90.0, 22.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "long": Style(
         front=(
@@ -310,7 +310,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(64.0, 106.0, 80.0, 32.0, lean=3.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "ponytail": Style(
         front=(
@@ -339,7 +339,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(68.0, 106.0, 84.0, 22.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "short": Style(
         front=(
@@ -355,7 +355,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(70.0, 108.0, 86.0, 18.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "sidepart": Style(
         front=(
@@ -372,7 +372,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(64.0, 100.0, 86.0, 18.0, lean=4.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "spiky": Style(
         front=(
@@ -430,7 +430,7 @@ SKIN_CONTRAST = 34.0
 # `PALE_HAIR` is not asked to clear the fringe: it is already the dark shape on
 # a lit forehead, and dropping it further is what turned a blonde brown.
 _CHEEK_BAND = "base"
-_FRINGE_BANDS = (_CHEEK_BAND, FRINGE_BAND)
+_PALE_MASS_BANDS = (_CHEEK_BAND, FRINGE_BAND)
 # Where a rung falls back to when it ties: down `light.BANDS`, which already
 # states the order, from the rung the style named. A mane drops as far as it has
 # to — one rung is enough for almost every wearer, and where it is not, the
@@ -457,7 +457,7 @@ def ramp_for(colour: str) -> Ramp:
 def _stands_off(tone: RGB, skin: Ramp) -> bool:
     """Whether a tone clears `SKIN_CONTRAST` of every skin band it can meet."""
     pale = palette.luminance(tone) > PALE_HAIR
-    bands = _FRINGE_BANDS if pale else (_CHEEK_BAND,)
+    bands = _PALE_MASS_BANDS if pale else (_CHEEK_BAND,)
     return all(
         abs(palette.luminance(tone) - palette.luminance(skin.band(band)))
         >= SKIN_CONTRAST
