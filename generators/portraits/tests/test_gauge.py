@@ -86,6 +86,50 @@ class TheSweepRepaintsFromTheBorder(unittest.TestCase):
                 self.assertEqual(tones - allowed, set())
 
 
+class TheGroundVotesLikeAnyOtherTone(unittest.TestCase):
+    """The silhouette half of the sweep: a speck off the outline is trimmed
+    rather than recoloured, and no orphan inside a figure can be."""
+
+    def test_a_nub_off_the_outline_is_trimmed(self):
+        layer = Canvas((40, 40), 1)
+        layer.rect((10.0, 10.0, 20.0, 20.0), CORE)
+        # One inked pixel hanging off the right edge, so five of its eight
+        # neighbours are the transparent ground and three are the block.
+        layer.rect((20.0, 15.0, 21.0, 16.0), INK)
+        swept = gauge.despeckle(layer.resolve())
+        self.assertEqual(swept.getpixel((20, 15))[3], 0)
+        self.assertEqual(swept.getpixel((19, 15)), CORE)
+
+    def test_an_orphan_inside_the_paint_is_recoloured_and_not_erased(self):
+        layer = Canvas((40, 40), 1)
+        layer.rect((10.0, 10.0, 20.0, 20.0), CORE)
+        layer.rect((15.0, 15.0, 16.0, 16.0), INK)
+        swept = gauge.despeckle(layer.resolve())
+        self.assertEqual(swept.getpixel((15, 15)), CORE)
+
+    def test_the_sweep_opens_no_hole_in_a_shipped_bust(self):
+        """A transparent pixel with eight opaque neighbours would be a puncture,
+        which is the failure a transparency vote could make and does not."""
+        for key, _ in specs():
+            with self.subTest(commander=key):
+                image = painted(key)
+                width, height = image.size
+                pixels = list(image.get_flattened_data())
+                holes = [
+                    (x, y)
+                    for y in range(1, height - 1)
+                    for x in range(1, width - 1)
+                    if pixels[y * width + x][3] == 0
+                    and all(
+                        pixels[(y + dy) * width + x + dx][3] == 255
+                        for dx in (-1, 0, 1)
+                        for dy in (-1, 0, 1)
+                        if (dx, dy) != (0, 0)
+                    )
+                ]
+                self.assertEqual(holes, [])
+
+
 class NothingUnderTheGaugeSurvivesTheBake(unittest.TestCase):
     """The bar. An opaque cluster of one tone with no gauge-square of its own
     and no more than `MAX_ORPHAN` pixels is not a mark this grid can draw."""
