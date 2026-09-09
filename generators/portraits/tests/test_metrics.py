@@ -14,33 +14,42 @@ twenty-three rasters.
 from __future__ import annotations
 
 import itertools
+import re
 import unittest
 from collections import Counter
-from functools import lru_cache
 
 from PIL import Image, ImageChops
 
-from portraitgen import bust, features, hair, head, light, roster, uniform
-from portraitgen.canvas import PORTRAIT_SIZE, Canvas
+from cells import luminance, tally
+from portraitgen import bust, features, head, light, palette, props, roster, uniform
+from game import VISUALS, scrape
+from painted import figure, painted
+from portraitgen.canvas import (
+    BUST_DIVISOR,
+    BUST_SIZE,
+    CHIP_DIVISOR,
+    CHIP_SIZE,
+    Canvas,
+    SkullBox,
+    face_box,
+)
 
 # M2/C5: a value band is a luminance covering this much of the figure, and a
 # bust owes four of them — base, shade, deep and lit.
 VALUE_BANDS = 4
 BAND_COVERAGE = 0.02
 
-# M4/C4: the flat tones a raster is painted in, which is what the bar was
-# written for. The 3x box downsample blends across every edge it smooths, so a
-# raster carries a few hundred values whatever it is painted in; a tone is a
-# colour that covers at least a thousandth of it. Raw uniques are reported by
-# `test_the_raw_unique_count_is_recorded`, never gated.
-MAX_TONES = 48
-TONE_COVERAGE = 0.001
+# M4/C4: what a bust may be painted in. Sixteen, and every one of them a rung
+# `palette.bust_palette` handed out — there is no downsample any more, so a
+# raster carries exactly the tones it was painted in and the bar needs no
+# coverage floor under it to be readable.
+MAX_TONES = palette.PAINTED_TONES
 
-# M1/C9: silhouettes of the face crop at chip size, over all 253 pairs. The
-# ceiling is a plain one — a measured failure is a roster retune, not a named
-# exception — and the pair that used to carry one, Orlov and Ferrow, was two
-# buzz-cut square jaws with no headwear between them until Ferrow took a cap.
-CHIP = 28
+# M1/C9: silhouettes of the face chip, over all 253 pairs. The ceiling is a
+# plain one — a measured failure is a roster retune, not a named exception —
+# and the pair that used to carry one, Orlov and Ferrow, was two buzz-cut
+# square jaws with no headwear between them until Ferrow took a cap.
+# Read off the chip the generator bakes, which is what a small surface draws.
 MAX_IOU = 0.90
 MEAN_IOU = 0.78
 
@@ -51,48 +60,20 @@ V_COLLAR_CAP = 11
 # C11: no chest treatment on more than two of twenty-two.
 CHEST_CAP = 2
 
-# M8/C15: what a prop may not cross, and the raster it may not leave.
-BLEED_PX = 4
+# M8/C15: the raster a prop may not leave, on the bust's own grid — the bleed
+# line `props` states in design units, where the rasteriser puts it.
 
 # A pixel this dark is ink or something drawn in it (C13 counts dark area).
 DARK_LUMINANCE = 100
 OPAQUE = 128
 
-FACE_CROP = (16, 25, 206, 215)
-
-
-def _luminance(pixel: tuple[int, ...]) -> float:
-    return 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
-
-
-def _specs() -> list[tuple[str, object]]:
-    return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
-
-
-@lru_cache(maxsize=None)
-def _painted(key: str, *, cast: bool = True) -> Image.Image:
-    spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
-    return bust.paint(spec, cast=cast)
-
-
-@lru_cache(maxsize=None)
-def _figure(key: str) -> Image.Image:
-    """Where the bust differs from its own window: its silhouette."""
-    spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
-    difference = ImageChops.difference(_painted(key, cast=False), bust.window(spec))
-    return difference.convert("L").point(lambda level: 255 if level else 0)
-
-
-def _colours(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
-    counted = image.getcolors(1 << 20)
-    assert counted is not None, "the raster carries more colours than a sheet can"
-    return counted
+FACE_CROP = face_box(BUST_DIVISOR)
 
 
 def _tones(image: Image.Image) -> list[tuple[int, ...]]:
-    counted = _colours(image)
-    floor = TONE_COVERAGE * sum(count for count, _ in counted)
-    return [colour for count, colour in counted if count >= floor]
+    """The opaque tones a raster is painted in. What is not opaque is the one
+    cast-shadow tone, which is a shadow rather than paint."""
+    return [colour[:3] for _, colour in tally(image) if colour[3] == 255]
 
 
 def _dark_area(paint) -> int:
@@ -100,14 +81,27 @@ def _dark_area(paint) -> int:
     paint(layer)
     return sum(
         count
-        for count, colour in _colours(layer.resolve())
-        if colour[3] >= OPAQUE and _luminance(colour) <= DARK_LUMINANCE
+        for count, colour in tally(layer.resolve())
+        if colour[3] >= OPAQUE and luminance(colour) <= DARK_LUMINANCE
     )
 
 
 def _chip(key: str) -> list[int]:
-    mask = _figure(key).crop(FACE_CROP).resize((CHIP, CHIP), Image.Resampling.BOX)
-    return [1 if level >= 128 else 0 for level in mask.get_flattened_data()]
+    """One general's silhouette at chip size, off the chip's own grid."""
+    spec = roster.NEUTRAL if key == roster.NEUTRAL_ID else roster.FACES[key]
+    silhouette = ImageChops.difference(
+        bust.paint(spec, cast=False, divisor=CHIP_DIVISOR),
+        bust.window(spec, divisor=CHIP_DIVISOR),
+    )
+    mask = silhouette.convert("L").crop(face_box(CHIP_DIVISOR))
+    return [1 if level else 0 for level in mask.get_flattened_data()]
+
+
+def _game_size(name: str) -> tuple[int, int]:
+    """A `Vector2i` constant of `commander_visuals.gd`, as (width, height)."""
+    pattern = re.compile(rf"const {name} := Vector2i\((\d+),\s*(\d+)\)")
+    width, height = scrape(VISUALS, pattern).groups()
+    return (int(width), int(height))
 
 
 def _iou(first: list[int], second: list[int]) -> float:
@@ -117,13 +111,31 @@ def _iou(first: list[int], second: list[int]) -> float:
 
 
 class TheRasterIsWhatTheGamePins(unittest.TestCase):
-    """M8, first half: the bake fails loudly on a size mismatch, so it is held
-    here before it can reach the engine."""
+    """M8, first half: the grid the game hand-writes, read out of the game.
+
+    `CommanderVisuals.PORTRAIT_SIZE` and `FACE_SIZE` are typed on one side of
+    the pipeline and derived from a divisor on the other, so this is where the
+    two are compared — scraped out of `commander_visuals.gd` the way
+    `test_face_region.py` scrapes `FACE_REGION`, and measured on what
+    `bust.paint` and `bust.chip` emit. `test_installed_art.py` holds the other
+    end, on the PNGs under `assets/`.
+    """
+
+    def test_the_generator_paints_the_grid_the_game_names(self):
+        self.assertEqual(BUST_SIZE, _game_size("PORTRAIT_SIZE"))
+        self.assertEqual((CHIP_SIZE, CHIP_SIZE), _game_size("FACE_SIZE"))
 
     def test_every_bust_is_the_pinned_raster(self):
-        for key, _ in _specs():
+        pinned = _game_size("PORTRAIT_SIZE")
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
-                self.assertEqual(_painted(key).size, PORTRAIT_SIZE)
+                self.assertEqual(painted(key).size, pinned)
+
+    def test_every_chip_is_the_pinned_square(self):
+        pinned = _game_size("FACE_SIZE")
+        for key, spec in bust.sheet_rows():
+            with self.subTest(commander=key):
+                self.assertEqual(bust.chip(spec).size, pinned)
 
 
 class TheShadowIsDrawn(unittest.TestCase):
@@ -131,14 +143,14 @@ class TheShadowIsDrawn(unittest.TestCase):
     on all twenty-three: what changes when it is switched off, and where."""
 
     def test_the_cast_shadow_lands_outside_every_silhouette(self):
-        for key, _ in _specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 changed = ImageChops.difference(
-                    _painted(key), _painted(key, cast=False)
+                    painted(key), painted(key, cast=False)
                 ).convert("L")
                 outside = ImageChops.multiply(
                     changed.point(lambda level: 255 if level else 0),
-                    _figure(key).point(lambda level: 255 - level),
+                    figure(key).point(lambda level: 255 - level),
                 )
                 self.assertIsNotNone(outside.getbbox())
 
@@ -148,101 +160,112 @@ class FourValueBands(unittest.TestCase):
     painted in four."""
 
     def test_every_bust_carries_four_bands_inside_its_silhouette(self):
-        for key, _ in _specs():
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
                 inside = Image.composite(
-                    _painted(key),
-                    Image.new("RGBA", PORTRAIT_SIZE, (0, 0, 0, 0)),
-                    _figure(key),
+                    painted(key),
+                    Image.new("RGBA", BUST_SIZE, (0, 0, 0, 0)),
+                    figure(key),
                 )
                 histogram: Counter[int] = Counter()
-                for count, colour in _colours(inside):
+                for count, colour in tally(inside):
                     if colour[3]:
-                        histogram[round(_luminance(colour))] += count
+                        histogram[round(luminance(colour))] += count
                 total = sum(histogram.values())
                 bands = [v for v in histogram.values() if v >= BAND_COVERAGE * total]
                 self.assertGreaterEqual(len(bands), VALUE_BANDS)
 
 
+class ThePaletteIsSpentPerMaterial(unittest.TestCase):
+    """What the sixteen buy, material by material — the measured half of the
+    README's style bar.
+
+    The light model hands every material four bands (`light.Ramp`), but a bust
+    cannot afford four of each: skin takes four rungs and the army six, which
+    leaves three for hair and two for gunmetal. So the four-tone rule is the
+    model's, not the emitted PNG's, and this is where that is stated in numbers
+    rather than in prose — a slot added to one material has to come out of
+    another, and `bust_palette` raises if the sixteen stop adding up.
+    """
+
+    BUDGET = {"skin": 4, "hair": 3, "metal": 2}
+
+    def test_the_sixteen_are_the_ink_the_army_and_the_three_materials(self):
+        spent = 1 + len(palette.faction_ramp("meridian")) + sum(self.BUDGET.values())
+        self.assertEqual(spent, palette.PAINTED_TONES)
+
+    def test_each_material_gets_the_rungs_the_budget_names(self):
+        for material, slots in (
+            ("skin", palette.SKIN_SLOTS),
+            ("hair", palette.HAIR_SLOTS),
+            ("metal", palette.METAL_SLOTS),
+        ):
+            with self.subTest(material=material):
+                self.assertEqual(len(set(slots)), self.BUDGET[material])
+
+
 class ThePaletteIsBounded(unittest.TestCase):
     """M4/C4: the tones a raster is painted in, against the brief's forty-eight."""
 
-    def test_no_bust_is_painted_in_more_than_forty_eight_tones(self):
-        for key, _ in _specs():
+    def test_no_bust_is_painted_in_more_than_sixteen_tones(self):
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
-                self.assertLessEqual(len(_tones(_painted(key))), MAX_TONES)
+                self.assertLessEqual(len(_tones(painted(key))), MAX_TONES)
 
-    def test_the_raw_unique_count_is_recorded(self):
-        """Not a bar — the shipped sheet ran 528 to 2,877 and the number is
-        worth having in the log, so it is printed. What is gated is the tone
-        count above."""
-        counts = {key: len(_colours(_painted(key))) for key, _ in _specs()}
-        self.assertEqual(len(counts), len(roster.FACES) + 1)
-        low, high = min(counts, key=counts.get), max(counts, key=counts.get)
-        print(
-            f"raw unique RGBA per raster: {counts[low]} ({low}) "
-            f"to {counts[high]} ({high})"
-        )
+    def test_every_tone_is_one_the_bust_was_given(self):
+        """The harder half: not "few colours" but "these colours". A pixel that
+        is not a rung of this bust's own palette is a blend, and there is
+        nowhere left in the pipeline for one to come from."""
+        for key, spec in bust.sheet_rows():
+            with self.subTest(commander=key):
+                allowed = set(bust.palette_of(spec))
+                self.assertEqual(set(_tones(painted(key))) - allowed, set())
+
+    def test_the_shadow_is_the_one_tone_that_is_neither_paint_nor_nothing(self):
+        for key, _ in bust.sheet_rows():
+            with self.subTest(commander=key):
+                partial = {
+                    colour for _, colour in tally(painted(key)) if 0 < colour[3] < 255
+                }
+                self.assertLessEqual(len(partial), 1)
 
 
 class OneLightOnEveryFace(unittest.TestCase):
-    """M7/C6: the key side of a face outreads the shadow side on all twenty-two,
-    including the five the pose mirrors — a mirror turns geometry, not light.
+    """M7/C6: the sheet is lit from one corner on all twenty-three, the five
+    the pose mirrors included — a mirror turns geometry, not light.
 
-    The eye band is left out for the reason the brief gives: an eyepatch is a
-    black rectangle over one third and it broke this gate before."""
+    Read off the COAT rather than off the cheek, which is where this used to
+    read it. A bust is snapped onto sixteen tones now, so a scar, a strap or a
+    prop lands on the very rung a cheek is painted in and a face-wide average
+    measures the general's accessories as much as the sun. The two shoulders
+    are the one surface every general wears unbroken, they are exact mirrors of
+    each other about the bust's centre line, and they are the patches
+    `tests/unit/test_commander_portraits.gd` reads off the shipped PNGs — so
+    this is that gate, per run, before the art is installed.
+    """
 
-    EYE_BAND = (0.35, 0.62)
-    TOLERANCE = 14
+    # The GUT suite's own two patches and floor, on the bust's own grid.
+    LIT_PATCH = (11, 121, 6, 6)
+    SHADED_PATCH = (93, 121, 6, 6)
+    FLOOR = 2.55
 
-    def _skin(self, key: str, face) -> list[tuple[int, int, tuple[int, ...]]]:
-        skin = head.ramp_for(face.skin)
-        mane = hair.ramp_for(face.hair)
-        crop = _painted(key).crop(FACE_CROP)
-        pixels = crop.load()
-        width, height = crop.size
-        return [
-            (x, y, pixels[x, y])
-            for y in range(height)
-            for x in range(width)
-            if pixels[x, y][3] >= 204 and self._is_skin(pixels[x, y], skin, mane)
-        ]
+    def _patch(self, key: str, patch: tuple[int, int, int, int]) -> float:
+        x, y, width, height = patch
+        pixels = painted(key).load()
+        values = sorted(
+            luminance(pixels[column, row])
+            for row in range(y, y + height)
+            for column in range(x, x + width)
+        )
+        half = len(values) // 2
+        return 0.5 * (values[half - 1] + values[half])
 
-    def _is_skin(self, pixel, skin, mane) -> bool:
-        """Skin only, as the metric's name says: a tone a hair ramp owns more
-        closely than the skin ramp does is hair, however near the tolerance it
-        lands. Platinum on pale skin sits inside it, and reading a crown as a
-        cheek is how a flat mass fails a light gate it never lit."""
-        near = self._nearest(pixel, (skin.deep, skin.shade, skin.base, skin.lit))
-        if near > self.TOLERANCE:
-            return False
-        return near < self._nearest(pixel, (mane.deep, mane.shade, mane.base, mane.lit))
-
-    @staticmethod
-    def _nearest(pixel, tones) -> int:
-        return min(max(abs(pixel[i] - tone[i]) for i in range(3)) for tone in tones)
-
-    def test_the_key_side_of_every_face_is_the_lighter_one(self):
-        for key, face in sorted(roster.FACES.items()):
+    def test_the_key_side_of_every_bust_is_the_lighter_one(self):
+        for key, _ in bust.sheet_rows():
             with self.subTest(commander=key):
-                skin = self._skin(key, face)
-                xs = [x for x, _, _ in skin]
-                ys = [y for _, y, _ in skin]
-                third = (max(xs) - min(xs)) // 3
-                low = min(ys) + self.EYE_BAND[0] * (max(ys) - min(ys))
-                high = min(ys) + self.EYE_BAND[1] * (max(ys) - min(ys))
-
-                def mean(x0: float, x1: float) -> float:
-                    band = [
-                        _luminance(pixel)
-                        for x, y, pixel in skin
-                        if x0 <= x < x1 and not low <= y <= high
-                    ]
-                    return sum(band) / len(band)
-
-                key_side = mean(min(xs), min(xs) + third)
-                away = mean(max(xs) - third, max(xs))
-                self.assertGreater(key_side, away)
+                lit = self._patch(key, self.LIT_PATCH)
+                away = self._patch(key, self.SHADED_PATCH)
+                self.assertGreater(lit - away, self.FLOOR)
 
 
 class NoFaceWearsAHalfMask(unittest.TestCase):
@@ -274,8 +297,10 @@ class NoFaceWearsAHalfMask(unittest.TestCase):
         ramp = head.ramp_for(face.skin)
         dark = (ramp.deep, ramp.shade)
         tones = (*dark, ramp.base, ramp.lit)
-        pixels = _painted(key).load()
-        centre, half, top, height = head.skull_box(face.head)
+        pixels = painted(key).load()
+        centre, half, top, height = (
+            value / BUST_DIVISOR for value in head.skull_box(face.head)
+        )
         low = top + self.EYE_BAND[0] * height
         high = top + self.EYE_BAND[1] * height
         shares: dict[int, float] = {}
@@ -330,7 +355,7 @@ class TheThreeShadesKeepOffTheNose(unittest.TestCase):
     review set is stated in the suite and a shape moved back onto the axis
     fails rather than moving the bar with it."""
 
-    PLACEMENT = {"centre": 110.0, "half": 46.0, "top": 82.0, "height": 124.0}
+    PLACEMENT = SkullBox(centre=110.0, half=46.0, top=82.0, height=124.0)
     # The terminator is a run, not a corner: this much of a half-width of it.
     MIN_RUN = 0.4
     # How far out from the centre line the nearest vertex of a shade may sit.
@@ -339,22 +364,18 @@ class TheThreeShadesKeepOffTheNose(unittest.TestCase):
     def test_every_shape_terminates_horizontally_at_its_own_height(self):
         for kind, v in light.TERMINATORS.items():
             with self.subTest(shade=kind):
-                y = self.PLACEMENT["top"] + v * self.PLACEMENT["height"]
-                run = [
-                    x for x, py in light.face_shade(kind, **self.PLACEMENT) if py == y
-                ]
+                y = self.PLACEMENT.top + v * self.PLACEMENT.height
+                run = [x for x, py in light.face_shade(kind, self.PLACEMENT) if py == y]
                 self.assertEqual(len(run), 2)
                 self.assertGreater(
-                    max(run) - min(run), self.MIN_RUN * self.PLACEMENT["half"]
+                    max(run) - min(run), self.MIN_RUN * self.PLACEMENT.half
                 )
 
     def test_no_shade_reaches_the_nose_mouth_axis(self):
-        clearance = (
-            self.PLACEMENT["centre"] + self.INNER_CLEARANCE * self.PLACEMENT["half"]
-        )
+        clearance = self.PLACEMENT.centre + self.INNER_CLEARANCE * self.PLACEMENT.half
         for kind in light.SHADE_KINDS:
             with self.subTest(shade=kind):
-                shape = light.face_shade(kind, **self.PLACEMENT)
+                shape = light.face_shade(kind, self.PLACEMENT)
                 self.assertGreaterEqual(min(x for x, _ in shape), clearance)
 
     def test_every_shape_names_a_terminator(self):
@@ -362,11 +383,11 @@ class TheThreeShadesKeepOffTheNose(unittest.TestCase):
 
 
 class TheSilhouettesAreDistinct(unittest.TestCase):
-    """M1/C9: the squint test, as arithmetic — every pair of face crops at chip
-    size, which is where twenty-three identical outlines used to show."""
+    """M1/C9: the squint test, as arithmetic — every pair of face chips, which
+    is where twenty-three identical outlines used to show."""
 
     def _pairs(self) -> list[tuple[float, str, str]]:
-        chips = {key: _chip(key) for key, _ in _specs()}
+        chips = {key: _chip(key) for key, _ in bust.sheet_rows()}
         return [
             (_iou(chips[a], chips[b]), a, b)
             for a, b in itertools.combinations(sorted(chips), 2)
@@ -388,7 +409,7 @@ class ThePropsStayInTheFrame(unittest.TestCase):
     may not be cut in half by the raster edge."""
 
     def test_every_prop_keeps_the_bleed_inside_the_raster(self):
-        limit = PORTRAIT_SIZE[0] - BLEED_PX
+        limit = props.RIGHT_LIMIT / BUST_DIVISOR
         for key, face in sorted(roster.FACES.items()):
             with self.subTest(commander=key, prop=face.prop):
                 box = bust.prop_art(face).getbbox()

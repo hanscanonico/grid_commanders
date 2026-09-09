@@ -5,11 +5,13 @@ A head is four dials, exactly the `head` column of the roster:
 jaw names its lower half, the crown lifts the top of it, and the spread walks
 the eyes apart for the features layer to read.
 
-The numbers are the handoff's own, in portrait pixels. The handoff authored a
-110x134 viewBox with its origin at y -14, and the pinned raster is 220x268 —
-exactly two pixels per unit — so a handoff x is `2x` here and a handoff y is
-`2(y + 14)`. Nothing is re-authored in the move; the skull a general is drawn
-on is the skull they were drawn on.
+The numbers are the handoff's own, in design units. The handoff authored a
+110x134 viewBox with its origin at y -14, and the design space every module
+here states its geometry in is that viewBox doubled — 220x268, two design units
+per handoff unit — so a handoff x is `2x` here and a handoff y is `2(y + 14)`.
+`canvas.py` divides that space back down to the grid a file is baked on.
+Nothing is re-authored in the move; the skull a general is drawn on is the
+skull they were drawn on.
 
 Curves are flattened here, at a fixed number of steps, because a quadratic is a
 polynomial and a polynomial is the same on every machine. `canvas.py` is still
@@ -23,16 +25,17 @@ from dataclasses import dataclass
 from PIL import Image, ImageChops
 
 from . import light
-from .canvas import INK_FEATURE, INK_SILHOUETTE, Canvas, Point
+from .canvas import INK_FEATURE, INK_SILHOUETTE, Canvas, Point, SkullBox
 from .light import Ramp
 from .palette import INK, RGB
+from .vocab import known, pick
 
 # The jaw a skull is cut with. An unknown jaw raises: the vocabulary is the
 # dispatch table, so nothing falls through to a default.
 JAWS = frozenset({"round", "square", "tapered"})
 
 # The five skins the roster picks from, as the handoff wrote them. They live
-# beside the head because the head is what paints skin; `light.build_ramp`
+# beside the head because the head is what paints skin; `light.Ramp.of_material`
 # turns one into the four tones a face is painted in.
 SKIN_BASES: dict[str, RGB] = {
     "dark": (138, 90, 60),
@@ -48,12 +51,12 @@ HEAD_DEFAULT: tuple[float, str, float, float] = (1.0, "round", 0.0, 1.0)
 # The centre of the skull: every head, ear and eye is placed against it, and a
 # general's width scales about it.
 HEAD_CX = 110.0
-# The skull, in portrait pixels: its sides, the cheekbone the top curve lands
+# The skull, in design units: its sides, the cheekbone the top curve lands
 # on, where the jaw takes over, the chin, and the unlifted crown.
 SKULL_LEFT, SKULL_RIGHT = 64.0, 156.0
 CHEEK_Y, JAW_Y, CHIN_Y, CROWN_Y = 132.0, 148.0, 206.0, 82.0
-# A crown dial is in handoff units and the raster is two pixels to one.
-CROWN_PX = 2.0
+# A crown dial is in handoff units and the design space is two units to one.
+CROWN_UNITS = 2.0
 
 # The neck the head sits on, and the ear set into its side.
 NECK_LEFT, NECK_RIGHT = 94.0, 126.0
@@ -61,15 +64,12 @@ NECK_TOP, NECK_BOTTOM, NECK_BULGE = 180.0, 208.0, 218.0
 EAR_LEFT, EAR_RIGHT, EAR_Y, EAR_R = 62.0, 158.0, 144.0, 10.0
 
 # How far the head's own shape falls onto what is under it — the jaw onto the
-# neck and the skull onto the ear behind it are one band — in portrait pixels.
+# neck and the skull onto the ear behind it are one band — in design units.
 # The hair fringe and the collar are the same pass at their own layers.
 JAW_DEPTH = 5.0
-# The rim band, and how far in under the silhouette ink it sits.
-RIM_WEIGHT = 2.5
-RIM_INSET = INK_SILHOUETTE / 2.0
 
-# Steps a quadratic is flattened into. Twelve is under a portrait pixel per
-# step on the longest curve here at the working supersample.
+# Steps a quadratic is flattened into. Twelve is under a design unit per
+# step on the longest curve here.
 _CURVE_STEPS = 12
 
 
@@ -83,8 +83,7 @@ class Skull:
     spread: float
 
     def __post_init__(self) -> None:
-        if self.jaw not in JAWS:
-            raise KeyError(f"no jaw {self.jaw!r} (have {sorted(JAWS)})")
+        known(self.jaw, JAWS, "jaw")
 
 
 def _hx(x: float, width: float) -> float:
@@ -132,9 +131,9 @@ def _jaw_points(skull: Skull, left: float, right: float) -> list[Point]:
 
 
 def outline(skull: Skull) -> list[Point]:
-    """The skull's silhouette, in portrait pixels, before the pose transform."""
+    """The skull's silhouette, in design units, before the pose transform."""
     left, right = _hx(SKULL_LEFT, skull.width), _hx(SKULL_RIGHT, skull.width)
-    top = CROWN_Y - skull.crown * CROWN_PX
+    top = CROWN_Y - skull.crown * CROWN_UNITS
     start = (left, CHEEK_Y)
     crown = [
         start,
@@ -170,15 +169,15 @@ def ears(skull: Skull) -> tuple[tuple[float, float, float, float], ...]:
     )
 
 
-def skull_box(skull: Skull) -> tuple[float, float, float, float]:
+def skull_box(skull: Skull) -> SkullBox:
     """Centre, half-width, crown and height — what a shade shape is placed on."""
     half = (_hx(SKULL_RIGHT, skull.width) - _hx(SKULL_LEFT, skull.width)) / 2.0
-    top = CROWN_Y - skull.crown * CROWN_PX
-    return (HEAD_CX, half, top, CHIN_Y - top)
+    top = CROWN_Y - skull.crown * CROWN_UNITS
+    return SkullBox(HEAD_CX, half, top, CHIN_Y - top)
 
 
 def _mask_of(canvas: Canvas, points: list[Point]) -> Image.Image:
-    layer = Canvas(canvas.size, canvas.scale)
+    layer = canvas.blank()
     layer.polygon(points, (255, 255, 255, 255))
     return layer.silhouette()
 
@@ -189,7 +188,7 @@ def _flat(canvas: Canvas, tone: RGB) -> Image.Image:
 
 def ramp_for(skin: str) -> Ramp:
     """The four tones a skin tone is painted in."""
-    return light.build_ramp(SKIN_BASES[skin])
+    return light.Ramp.of_material(pick(SKIN_BASES, skin, "skin tone"))
 
 
 def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) -> None:
@@ -197,17 +196,17 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
 
     Order is the light's: the parts behind the face first, each inked as it is
     laid down, then the face, then the two bands the key writes on it, then
-    what the head occludes, then the rim inside the ink. The two bands and the
-    occlusion are painted through the face's own mask, so a shade can never
-    run off the cheek onto the field. Nothing here is a wash over a fill —
-    every mark is one of the ramp's named tones.
+    what the head occludes. The two bands and the occlusion are painted through
+    the face's own mask, so a shade can never run off the cheek onto the field.
+    Nothing here is a wash over a fill — every mark is one of the ramp's named
+    tones, and there is no kicker inside the ink (see `light`).
 
     `mirrored` pre-flips the light for a layer the pose is about to turn over:
     the two bands are placed on the other side of the face and the occlusion
-    and the rim step the other way in x, so that once the group is flipped they
-    land on the screen's shadow side like every unmirrored bust's.
+    steps the other way in x, so that once the group is flipped they land on
+    the screen's shadow side like every unmirrored bust's.
     """
-    skin = Canvas(canvas.size, canvas.scale)
+    skin = canvas.blank()
     skin.polygon(neck(skull), ramp.shade)
     skin.stroke(neck(skull), INK_FEATURE, (*INK, 255))
     for box in ears(skull):
@@ -217,17 +216,12 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
     face = outline(skull)
     skin.polygon(face, ramp.base)
     face_mask = _mask_of(skin, face)
-    centre, half, top, height = skull_box(skull)
-    placement = {
-        "centre": centre,
-        "half": -half if mirrored else half,
-        "top": top,
-        "height": height,
-    }
+    box = skull_box(skull)
+    placement = box.flipped() if mirrored else box
     kind = light.shade_kind(skull.crown, skull.width)
     bands = (
-        (light.face_light(**placement), ramp.lit),
-        (light.face_shade(kind, **placement), ramp.shade),
+        (light.face_light(placement), ramp.lit),
+        (light.face_shade(kind, placement), ramp.shade),
     )
     for points, tone in bands:
         band = ImageChops.multiply(_mask_of(skin, points), face_mask)
@@ -237,22 +231,12 @@ def draw(canvas: Canvas, skull: Skull, ramp: Ramp, *, mirrored: bool = False) ->
         face_mask,
         skin.silhouette(),
         depth=JAW_DEPTH,
-        scale=canvas.scale,
+        divisor=canvas.divisor,
         mirrored=mirrored,
     )
     skin.image.paste(_flat(skin, ramp.deep), (0, 0), under_jaw)
 
     skin.stroke(face, INK_SILHOUETTE, (*INK, 255), closed=True)
-    skin.image.alpha_composite(
-        light.rim_light(
-            skin.silhouette(),
-            ramp,
-            weight=RIM_WEIGHT,
-            inset=RIM_INSET,
-            scale=canvas.scale,
-            mirrored=mirrored,
-        )
-    )
     canvas.compose(skin)
 
 

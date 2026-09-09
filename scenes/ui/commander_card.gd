@@ -42,15 +42,21 @@ const _MICRO_INK := Color(0.408, 0.443, 0.471)
 ## 18, and a name band is neither — it is the card's face, read before the rules
 ## under it. Named here like the two full-screen pages name their own titles.
 const _NAME_SIZE := 12
-## The portrait band, public because a surface that frames this card checks its
-## own layout against it — a card showing less than its face is showing nothing.
-## Deliberately not raised to fill the band's width with the bust: the four-army
-## info sheet frames a 242-256px card in 119px, so it already scrolls and every
-## pixel added here is a pixel of the Command Power block pushed out of it — and
-## that same 119 is the ceiling the sheet's own layout check holds this constant
-## under, which leaves too little to widen the fitted bust by anything worth the
-## room (measured on commander_info, 2026-08-25).
-const PORTRAIT_H := 96
+## The two portrait bands a card can be built with, one of which `_init` takes.
+## Public because a surface that frames a card names the band it built it with
+## and checks its own layout against that same number.
+## `WHOLE_BUST_BAND` is the drawing's own height and the default; `CHIP_BAND` is
+## `CommanderVisuals`' chip field plus one texel of air, which `CommanderBust`
+## centres as two pixels over the chip and one under it. The commander info sheet
+## is the one caller that asks for the chip, and states there why.
+const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
+const _BAND_AIR_TEXELS := 1
+const CHIP_BAND := CommanderVisuals.CHIP_FIELD.y + _BAND_AIR_TEXELS * CommanderVisuals.CHIP_ZOOM
+
+## Which of the two bands this card was built with. Written once, by `_init`, so
+## there is no order a caller has to get right and no later reader sees a card
+## framed for one band drawing the other.
+var _portrait_h: int
 ## The faction badge pinned into the band's top-left corner, and the inset it sits
 ## at. Card-local like the geometry above it, not a missing shell token: the design
 ## system sizes widgets rather than pins on art, and its smallest icon
@@ -61,7 +67,7 @@ const _EMBLEM_INSET := 6
 var _commander: CommanderType
 var _built := false
 
-var _field: Panel
+var _field: CommanderBust
 var _emblem: TextureRect
 var _name_band: PanelContainer
 var _name_label: Label
@@ -71,6 +77,12 @@ var _power_box: PanelContainer
 var _power_cost_label: Label
 var _power_name_label: Label
 var _power_text_label: Label
+
+
+## `band` is one of the two constants above; the whole general is the default and
+## `CHIP_BAND` is the commander info sheet's, which states there why.
+func _init(band: int = WHOLE_BUST_BAND) -> void:
+	_portrait_h = band
 
 
 func _ready() -> void:
@@ -96,17 +108,16 @@ func _build() -> void:
 	add_child(rows)
 
 	# --- portrait stage: faction field, bust, emblem pin ---
-	# The kit's bust is a plain Panel, not a PanelContainer: the latter force-
+	# The kit's bust extends Panel, not PanelContainer: the latter force-
 	# stretches every child to fill it, which would blow the little emblem pinned
-	# into the corner up over the whole portrait. The band is tall enough that the
-	# general is shown whole — the portrait carries its own ink-bordered window
-	# with the head breaking over its top edge, and a band this wide can only fill
-	# by cutting that composition in half.
-	_field = UiKit.commander_bust(null, Vector2(0, PORTRAIT_H), UiKit.NO_FIELD)
+	# into the corner up over the whole portrait. The band names no width, so it
+	# takes the card's, and the kit reads the height against the art: the whole
+	# bust at `WHOLE_BUST_BAND`, the baked face chip at `CHIP_BAND`.
+	_field = UiKit.commander_bust(null, Vector2(0, _portrait_h), UiKit.NO_FIELD)
 	rows.add_child(_field)
 
 	_emblem = TextureRect.new()
-	_emblem.texture_filter = CommanderVisuals.ART_FILTER
+	_emblem.texture_filter = CommanderVisuals.EMBLEM_FILTER
 	# IGNORE_SIZE, or the 64px source becomes the control's minimum and _EMBLEM_PX
 	# is clamped straight back up to it — which is how the badge has been drawing at
 	# three times its size, unnoticed while an opaque bust filled the field behind it.
@@ -180,7 +191,7 @@ func _build() -> void:
 
 func _apply() -> void:
 	var theme := CommanderVisuals.theme_for(_commander)
-	UiKit.bind_bust(_field, _commander, theme.color)
+	_field.bind(_commander, theme.color)
 	if theme.key == CommanderVisuals.NEUTRAL_KEY:
 		_emblem.texture = null
 		_emblem.visible = false

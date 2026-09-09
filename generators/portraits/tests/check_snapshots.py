@@ -26,13 +26,15 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from game import GAME
 
 # Where each generated relpath directory is installed in the game. Restated
 # rather than imported: this script is run as a file, not as part of the
-# package, so it stands on Pillow alone.
+# package, so it reaches for nothing under `portraitgen` — only Pillow and the
+# test helpers' own `game`, which is where the repository root comes from.
 INSTALL_MAP = {
     "commanders": "assets/portraits/commanders",
+    "faces": "assets/portraits/faces",
     "factions": "assets/portraits/factions",
 }
 
@@ -42,7 +44,7 @@ def _installed() -> dict[Path, Path]:
     return {
         Path(rel_dir) / p.name: p
         for rel_dir, install_dir in INSTALL_MAP.items()
-        for p in sorted((REPO_ROOT / install_dir).glob("*.png"))
+        for p in sorted((GAME / install_dir).glob("*.png"))
     }
 
 

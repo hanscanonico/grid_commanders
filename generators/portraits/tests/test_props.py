@@ -10,7 +10,7 @@ composed against.
 Meeting it is the floor, not the bar. A prop that reaches the bust through a
 shape detached from the object it carries still reads as a float, so the
 connector is measured too: unbroken drawing from the object down to the
-contact, a plane held clear of the crop the HUD chip is cut from, and an anchor
+contact, a plane held clear of the square the HUD chip repaints, and an anchor
 the shoulder really passes in front of.
 """
 
@@ -19,6 +19,8 @@ from __future__ import annotations
 import unittest
 
 from PIL import Image, ImageChops
+from cells import tally
+from painted import painted
 from test_face_region import chin_row, skin_tones
 
 from portraitgen import bust, props, roster, uniform
@@ -29,13 +31,16 @@ from portraitgen.palette import faction_by_key
 
 FACTION = faction_by_key("meridian")
 RAMP = Ramp(
-    deep=(74, 24, 20),
-    shade=(112, 38, 32),
-    base=(158, 58, 48),
-    lit=(206, 92, 76),
-    rim=(238, 150, 136),
+    (
+        (38, 14, 12),
+        (74, 24, 20),
+        (112, 38, 32),
+        (158, 58, 48),
+        (206, 92, 76),
+        (238, 150, 136),
+    )
 )
-# The head the worn props reach for, in portrait pixels: a stand-in for the
+# The head the worn props reach for, in design units: a stand-in for the
 # skull the light model draws, so a pipe or a cigar can be measured against a
 # jaw before there is one.
 HEAD = (54.0, 84.0, 166.0, 196.0)
@@ -61,16 +66,16 @@ def _prop(key: str, *, layer: str = "all") -> Canvas:
 
 
 def _painted_rows(canvas: Canvas) -> set[int]:
-    """Which portrait rows a layer puts ink on."""
+    """Which rows of the raster a layer puts ink on."""
     mask = canvas.silhouette()
     width = mask.width
     lit = mask.get_flattened_data()
-    return {index // width // canvas.scale for index, value in enumerate(lit) if value}
+    return {index // width for index, value in enumerate(lit) if value}
 
 
 def _area(mask: Image.Image) -> int:
-    """A one-bit mask's painted area, in portrait pixels."""
-    return sum(1 for value in mask.get_flattened_data() if value) // Canvas().scale ** 2
+    """A one-bit mask's painted area, in raster pixels."""
+    return sum(1 for value in mask.get_flattened_data() if value)
 
 
 class EveryPropDraws(unittest.TestCase):
@@ -108,18 +113,18 @@ class TheConnectorIsDrawn(unittest.TestCase):
     def test_no_prop_skips_a_row_of_its_own_span(self):
         for key in sorted(props.PROPS):
             with self.subTest(prop=key):
-                painted = _painted_rows(_prop(key))
-                span = range(min(painted), max(painted) + 1)
-                self.assertEqual([], [row for row in span if row not in painted])
+                rows = _painted_rows(_prop(key))
+                span = range(min(rows), max(rows) + 1)
+                self.assertEqual([], [row for row in span if row not in rows])
 
 
 class ThePlaneRidesTheShoulder(unittest.TestCase):
-    """Perrin Ash's model plane, held up beside the jaw, crossed the crop the
-    HUD chip and the speech bust are cut from."""
+    """Perrin Ash's model plane, held up beside the jaw, crossed the square the
+    HUD chip and the speech bust repaint."""
 
     def test_the_prop_clears_the_face_crop_s_chin_row(self):
         face = roster.FACES["perrin_ash"]
-        chin = chin_row(bust.paint(face), skin_tones(face.skin))
+        chin = chin_row(painted("perrin_ash"), skin_tones(face.skin))
         top = bust.prop_art(face).getbbox()[1]
         self.assertGreater(top, chin)
 
@@ -129,7 +134,7 @@ class TheAnchorHangsBehindTheShoulder(unittest.TestCase):
     object the figure passes in front of has depth, one laid on the chest is a
     decal."""
 
-    HIDDEN_PX = 500
+    HIDDEN_PX = 125
 
     def test_the_shank_runs_behind_the_shoulder(self):
         behind = _prop("anchor", layer="back").silhouette()
@@ -147,9 +152,8 @@ class TheScalesHangPlumb(unittest.TestCase):
 
     def test_the_beam_is_centred_on_the_bust_midline(self):
         left, _, right, _ = _prop("scales").silhouette().getbbox()
-        scale = Canvas().scale
-        centre = (left + right) / 2 / scale
-        midline = canvas_module.PORTRAIT_SIZE[0] / 2
+        centre = (left + right) / 2 * Canvas().divisor
+        midline = canvas_module.DESIGN_SIZE[0] / 2
         self.assertLessEqual(abs(centre - midline), self.OFF_MIDLINE_PX)
 
 
@@ -159,11 +163,11 @@ class TheCigarClearsTheMouth(unittest.TestCase):
     lit tip has to be the sheet's one gold."""
 
     def test_the_stem_starts_below_the_mouth_line(self):
-        top = _prop("cigar").image.getbbox()[1] / Canvas().scale
+        top = _prop("cigar").image.getbbox()[1] * Canvas().divisor
         self.assertGreater(top, props.MOUTH_LINE)
 
     def test_the_tip_carries_an_ember(self):
-        colours = {colour for _, colour in _prop("cigar").image.getcolors(1 << 16)}
+        colours = {colour for _, colour in tally(_prop("cigar").image)}
         self.assertIn((*props.GOLD, 255), colours)
 
 
@@ -184,13 +188,13 @@ class EveryPropCasts(unittest.TestCase):
         for key in sorted(props.PROPS):
             with self.subTest(prop=key):
                 canvas = _prop(key)
-                painted = canvas.image.getchannel("A")
-                without = ImageChops.subtract(painted, canvas.silhouette())
+                alpha = canvas.image.getchannel("A")
+                without = ImageChops.subtract(alpha, canvas.silhouette())
                 self.assertIsNotNone(without.getbbox(), "nothing changed off the prop")
 
     def test_the_shadow_is_one_flat_tone(self):
         canvas = _prop("book")
-        colours = {colour for _, colour in canvas.image.getcolors(maxcolors=1 << 16)}
+        colours = {colour for _, colour in tally(canvas.image)}
         self.assertIn(props.PROP_CAST_TONE, colours)
 
 
@@ -204,7 +208,7 @@ class TheFrameIsRespected(unittest.TestCase):
         for key in sorted(props.PROPS):
             with self.subTest(prop=key):
                 canvas = _prop(key)
-                right = canvas.image.getbbox()[2] / canvas.scale
+                right = canvas.image.getbbox()[2] * canvas.divisor
                 self.assertLessEqual(right, props.RIGHT_LIMIT)
 
 

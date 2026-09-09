@@ -17,14 +17,22 @@ from __future__ import annotations
 import re
 import unittest
 from collections import Counter
-from pathlib import Path
 
-from portraitgen import backdrop, bust, features, hair, head, props, roster, uniform
+from game import GAME, VISUALS, scrape
+from portraitgen import (
+    accessories,
+    backdrop,
+    bust,
+    features,
+    hair,
+    head,
+    props,
+    roster,
+    uniform,
+)
 from portraitgen.canvas import Canvas
 
-GAME = Path(__file__).resolve().parents[3]
 COMMANDERS = GAME / "data/commanders"
-VISUALS = GAME / "scenes/common/commander_visuals.gd"
 
 _ID = re.compile(r'^id = &"(\w+)"', re.M)
 _POWER_COST = re.compile(r"^power_cost = (\d+)", re.M)
@@ -47,8 +55,7 @@ def _army_of_each_general() -> dict[str, str]:
     `CommanderVisuals`, so both are read rather than restated — the same mirror
     idiom `test_palette_mirror.py` uses on the colours themselves.
     """
-    body = _FACTION_KEYS.search(VISUALS.read_text())
-    assert body, f"no _FACTION_KEYS dictionary in {VISUALS}"
+    body = scrape(VISUALS, _FACTION_KEYS)
     keys = dict(_FACTION_ENTRY.findall(body.group(1)))
     armies = {}
     for path in COMMANDERS.glob("*.tres"):
@@ -158,13 +165,13 @@ class EveryColumnNamesSomethingDrawable(unittest.TestCase):
         for key, face in roster.FACES.items():
             with self.subTest(commander=key):
                 self.assertIn(face.facial, features.FACIAL_KINDS)
-                self.assertIn(face.acc, features.ACCESSORY_KINDS)
-                self.assertIn(face.acc2, features.ACCESSORY_KINDS)
+                self.assertIn(face.acc, accessories.ACCESSORY_KINDS)
+                self.assertIn(face.acc2, accessories.ACCESSORY_KINDS)
 
     def test_only_the_first_slot_may_cover_a_socket(self):
         for key, face in roster.FACES.items():
             with self.subTest(commander=key):
-                self.assertIsNone(features.covered_eye(face.acc2))
+                self.assertIsNone(accessories.covered_eye(face.acc2))
 
     def test_every_collar_is_one_the_uniform_can_cut(self):
         for key, face in roster.FACES.items():
@@ -250,7 +257,7 @@ class TheIdentitiesTheReviewPinned(unittest.TestCase):
         for key in self.EMPTY_ABOVE_THE_COLLAR:
             with self.subTest(commander=key):
                 face = roster.FACES[key]
-                worn = features.accessory(Canvas(), face.head, face.acc)
+                worn = accessories.accessory(Canvas(), face.head, face.acc)
                 self.assertGreater(len(worn), 2, "an accessory that is not headwear")
 
     def test_the_two_bare_heads_do_not_wear_the_same_hat(self):
@@ -318,19 +325,18 @@ class ThePosesAreTiltedAndFiveAreMirrored(unittest.TestCase):
     def test_every_pose_is_a_tilt_a_zoom_and_a_mirror(self):
         for key, face in roster.FACES.items():
             with self.subTest(commander=key):
-                tilt, zoom, mirrored = face.pose
-                self.assertGreaterEqual(tilt, -9.0)
-                self.assertLessEqual(tilt, 9.0)
-                self.assertGreaterEqual(zoom, 1.1)
-                self.assertLessEqual(zoom, 1.3)
-                self.assertIsInstance(mirrored, bool)
+                self.assertGreaterEqual(face.pose.tilt, -9.0)
+                self.assertLessEqual(face.pose.tilt, 9.0)
+                self.assertGreaterEqual(face.pose.zoom, 1.1)
+                self.assertLessEqual(face.pose.zoom, 1.3)
+                self.assertIsInstance(face.pose.mirrored, bool)
 
     def test_five_generals_face_the_other_way(self):
-        mirrored = [f.id for f in roster.FACES.values() if f.pose[2]]
+        mirrored = [f.id for f in roster.FACES.values() if f.pose.mirrored]
         self.assertEqual(len(mirrored), self.MIRRORED, mirrored)
 
     def test_the_empty_seat_is_not_tilted(self):
-        self.assertEqual(roster.NEUTRAL.pose, (0.0, 1.18, False))
+        self.assertEqual(roster.NEUTRAL.pose, roster.Pose(0.0, 1.18, False))
 
 
 if __name__ == "__main__":

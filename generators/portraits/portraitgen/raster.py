@@ -13,9 +13,8 @@ unit square centred on its integer coordinate, a scan line is a row of those
 centres, and a run covers the pixels its two crossings land in, one exactly on a
 boundary counting inward. It is not Pillow's fill to the last pixel — Pillow
 also paints a shallow edge's own row whole — so the re-bake moved a few percent
-of every bust: a stroke edge one working pixel over, a third of a portrait pixel
-after the downsample. A crossing outside the raster is clipped, which is also
-why the rounding needs no rule for a negative one.
+of every bust, a stroke edge one pixel over. A crossing outside the raster is
+clipped, which is also why the rounding needs no rule for a negative one.
 """
 
 from __future__ import annotations

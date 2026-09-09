@@ -55,51 +55,64 @@ const PAPER_INK := Color(0.145, 0.169, 0.188)
 const HARD_BORDER := Color(0.067, 0.086, 0.098)
 
 const PORTRAIT_DIR := "res://assets/portraits/commanders"
+const FACE_DIR := "res://assets/portraits/faces"
 const FACTION_DIR := "res://assets/portraits/factions"
 const NEUTRAL_PORTRAIT_PATH := "res://assets/portraits/commanders/none.png"
-## Master portrait size the generator writes and the fallbacks match. Taller than
-## it is wide: a portrait is a framed window with the bust breaking out of its
-## top, so it composes onto a faction-coloured field rather than filling one.
-## The bake checks each rasterised image against this and fails loudly on a
-## mismatch, so changing the drawing's viewBox or scale cannot silently pass it by.
-const PORTRAIT_SIZE := Vector2i(220, 268)
+
+# Commander art is pixel art, and `.claude/rules/presentation.md` ("Commander art
+# is pixel art") is the one statement of that rule — the grid, the sixteen tones,
+# the nearest filter and its emblem exception, the whole-number scale ladder, and
+# the chip being a repaint rather than a crop. What follows is only why each
+# constant below holds the value it does.
+
+## The grid the busts are pixelled on, not a canvas they are drawn large on and
+## shrunk into. Taller than it is wide: a bust breaks out of the top of its
+## frame, so it composes onto a faction-coloured field rather than filling one.
+## This and `FACE_SIZE` are hand-written here and derived from a divisor in the
+## generator, so both are pinned from both ends: the generator's suite scrapes
+## them out of this file (`generators/portraits/tests/test_metrics.py`), and the
+## engine's suite measures the installed PNGs against them
+## (`tests/unit/test_commander_portraits.gd`).
+const PORTRAIT_SIZE := Vector2i(110, 134)
+## The face chip's own grid: `FACE_REGION` repainted by the generator at the
+## chip's coarser divisor rather than cut out of the bust (`face_for`).
+const FACE_SIZE := Vector2i(31, 31)
 const EMBLEM_PX := 64
 ## The square of a portrait that holds the head — hair, headwear, both ears and
-## the jaw — for all twenty-two generals. A portrait is a framed window with the
-## bust breaking out of its top, so the head's centre sits well above the
-## image's: a square covering the whole portrait spends a third of itself on
-## chest, and one fitting the portrait whole leaves the head at half the field.
-##
-## Measured over the twenty-two shipped busts rather than eyeballed, because the
-## poses are per-general (tilt, zoom and mirror) and the skulls are not one
-## width. Their ear-to-ear span runs x 22.3 (Draeg) to 199.7 (Morn), centred on
-## 111.0; the deepest chin ends at y 202 (Quill), while the highest skull starts
-## at y 30.8 (Morn). One square holds every one of them: the head centres spread
-## only 15.5px, which a 190 square absorbs with at least 6px of margin on either
-## side and 12px under that deepest chin — the clearance
-## tests/unit/test_commander_face.gd pins, 12 to 21 across the roster. So the
-## crop is a fixed rect and no per-pose anchor is needed — re-measure it if the
-## bake's viewBox, scale, skull widths or pose range move.
-##
-## Hair breaking over the top edge is deliberate and is the portrait's own
-## composition: what may never be cut is the jaw, which
-## tests/unit/test_commander_face.gd measures on every shipped bust.
-const FACE_REGION := Rect2i(16, 25, 190, 190)
-## How commander art is sampled, everywhere it is drawn — the busts and the
-## faction emblems alike. Linear, alone in a game whose art is otherwise
-## nearest-neighbour: both are baked larger than any field that shows them, and
-## every surface lands on its own fractional scale (a 31px HUD chip, a 96px card
-## band, a 104px banner, a 22px emblem badge off a 64px source). Nearest at those
-## ratios drops whole rows and frays the ink outlines the style rests on.
-## Every surface that draws a bust asks for this by name rather than setting a
-## filter of its own, so none of them can drift from the others.
-## With mipmaps, because the two smallest fields minify hardest — 220x268 into a
-## 31px chip and into a 28px speech bust — and plain linear samples four texels
-## out of the sixty each output pixel covers there, so the ink outlines shimmer
-## and thin features drop in and out. Every portrait and emblem import therefore
-## carries `mipmaps/generate=true`; a texture built in code without them (the
-## flat-colour fallback) is simply drawn at its one level.
-const ART_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+## the jaw — for all twenty-two generals. Because the bust breaks out of the
+## frame's top, the head's centre sits well above the image's, so neither the
+## whole portrait nor a square fitted to it would do. Origin and side divide by
+## both the bust grid and the coarser chip grid, because a rectangle that did not
+## would put the chip half a pixel off the bust's own head. Hair breaking over
+## the top edge is the portrait's own composition, not a miss.
+const FACE_REGION := Rect2i(9, 15, 93, 93)
+## The smallest field that can show a whole bust, in screen pixels: the drawing's
+## full width, because a bust is centred and a narrower field clips both ears,
+## and every row down to the jaw, because a short field hangs the art from its
+## top and what it loses below that line is the chin. Both halves are read off
+## the art itself, so a rebake on another grid moves this with it.
+const WHOLE_BUST_FIELD := Vector2i(PORTRAIT_SIZE.x, FACE_REGION.position.y + FACE_REGION.size.y)
+## How a general's own art is sampled, everywhere it is drawn — the busts and the
+## face chips. Every surface that draws a bust asks for this by name rather than
+## setting a filter of its own, so none of them can drift from the others.
+const ART_FILTER := CanvasItem.TEXTURE_FILTER_NEAREST
+## The scale ladder every bust surface draws on. Whole numbers only, and never
+## under one: half a pixel of a face is worse than a face that overflows the
+## field it is centred in, which is what the field's own clipping is for.
+const MIN_ART_SCALE := 1
+## The rung a surface that frames a face chip draws it at, and the field that
+## comes out — stated here so the two surfaces that do (the card's chip band and
+## the victory lockup) cannot drift apart, and pinned against both by
+## `test_commander_portraits.gd`. A chip at 1x is a HUD glyph; where the eye is
+## meant to rest on the general it is zoomed, and only a whole rung will do.
+const CHIP_ZOOM := 3
+const CHIP_FIELD := FACE_SIZE * CHIP_ZOOM
+## The emblems are the one exception to `ART_FILTER`: a 64px badge drawn at 22 in
+## the one corner that shows them has no whole rung under it, and unlike a bust
+## an emblem is geometry rather than pixels — a disc and a chevron, authored at
+## the size they are baked. Their imports keep `mipmaps/generate=true` where the
+## busts' and the chips' carry no mip chain.
+const EMBLEM_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
 ## The neutral commander has no faction; it renders in this iron-grey so "No
 ## Commander" still reads as a deliberate, styled choice rather than a blank.
@@ -226,6 +239,25 @@ static func faction_themes() -> Array[FactionTheme]:
 # --- textures ----------------------------------------------------------------
 
 
+## The largest whole scale `art` fits into `field` at, and the one statement of
+## the ladder. A field shorter than the art it shows still draws it at 1:1 and
+## clips — the alternative is a fractional scale, which is the softness this art
+## was rebaked to be rid of.
+static func art_scale(field: Vector2, art: Vector2i) -> int:
+	if art.x <= 0 or art.y <= 0:
+		return MIN_ART_SCALE
+	var rungs := mini(int(field.x) / art.x, int(field.y) / art.y)
+	return maxi(MIN_ART_SCALE, rungs)
+
+
+## Whether a field of this shape can show a whole bust at one texel to one
+## pixel — the one statement of it, so the six surfaces that draw a general all
+## ask the art the same question. `false` is a chip field: `face_for`'s baked
+## drawing, which says who a general is in a square no bust survives.
+static func fits_whole_bust(field: Vector2) -> bool:
+	return int(field.x) >= WHOLE_BUST_FIELD.x and int(field.y) >= WHOLE_BUST_FIELD.y
+
+
 ## The portrait for a commander. Resolves by id; a commander whose art has not
 ## been produced yet falls back to the neutral silhouette, and if even that is
 ## missing (a truly fresh tree before `make portraits`) returns a generated
@@ -243,26 +275,23 @@ static func portrait_for(commander: CommanderType) -> Texture2D:
 	)
 
 
-## The same portrait cropped to `FACE_REGION` — what a surface too small to show
-## a bust asks for. The atlas shares the portrait's own texture, so a face costs
-## no second load, and it is cached under a key of its own beside the portraits.
+## The face chip a surface too small to show a bust asks for, straight off the
+## bake — the empty seat's included.
 ##
-## The empty seat is the one exception and gets its bust back whole: the neutral
-## art is a featureless silhouette, so cropped to the head it is a dark blob on
-## near-black, and "no commander" reads as an empty seat only head-and-shoulders.
+## One degradation, named because it is the one case that hands back a bust: a
+## general the tree holds no chip for falls through to their whole drawing,
+## which a chip field then draws at 1:1 and clips. That is a broken bake rather
+## than a state to run in, so it errors where a missing bust only warns.
 static func face_for(commander: CommanderType) -> Texture2D:
 	var id := commander.id if commander != null else CommanderType.NEUTRAL_ID
-	if id == CommanderType.NEUTRAL_ID:
-		return portrait_for(commander)
-	var key := "face:%s" % id
-	if _texture_cache.has(key):
-		return _texture_cache[key]
-	var portrait := portrait_for(commander)
-	var face := AtlasTexture.new()
-	face.atlas = portrait
-	face.region = Rect2(FACE_REGION).intersection(Rect2(Vector2.ZERO, portrait.get_size()))
-	_texture_cache[key] = face
-	return face
+	var path := "%s/%s.png" % [FACE_DIR, id]
+	return _cached(
+		path,
+		func() -> Texture2D:
+			var missing := "Missing commander face chip %s - run `make portraits`." % path
+			push_error(missing + " The whole bust is standing in, and a chip field clips it.")
+			return portrait_for(commander)
+	)
 
 
 ## A faction's emblem. Neutral has none, so callers gate on the theme key; asked

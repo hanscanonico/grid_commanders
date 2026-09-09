@@ -5,6 +5,7 @@ paths:
   - "assets/**"
   - "data/battle_anim/**"
   - "generators/sprites/**"
+  - "generators/portraits/**"
   - "export_presets.cfg"
   - "docs/sprite_legibility.md"
   - "docs/mobile_soak.md"
@@ -30,6 +31,47 @@ forms named in the root index are in `docs/design_record.md`.
   default tier, and `GameSpeed.cutscene_rate()` states a tier as a *rate* on that clock rather than
   as `anim_scale` on the sheet, which would stretch a two-second exchange to six. Skip stays
   `t = total` at any rate, and Instant never reaches a cut-in at all.
+- **Commander art is pixel art** (COM-269, 2026-09-08). The busts are authored on their own
+  110x134 grid by `generators/portraits`, painted in **sixteen tones per bust**, and every
+  finished raster is snapped onto them — there is no supersample and no downsample left in that
+  pipeline. **How much of the board a tone is, is per material**: the army's six rungs are
+  `generators/sprites`' own faction ramp and the gunmetal's two are its gunmetal ramp, rung for
+  rung; skin's four and hair's three are off no board ramp at all — those bases and their value
+  ladder are the portraits' own (`head.SKIN_BASES`, `hair.HAIR_BASES`, `light`), and only the
+  **shaper** is shared, the board's `build_ramp` with its chroma curve, its hue rotation and its
+  cool sky; the ink is off no ladder. Each of those clauses is pinned by
+  `generators/portraits/tests/test_palette_mirror.py`. **Four of the army rungs are not the
+  board's**, and `palette.BUST_RUNGS` is the one place that is said: gold's three lit rungs come
+  off the funds gold, because the board's Gilded ramp is authored a band low on purpose and a coat
+  painted on it is olive; Iron's field rung comes up to where every other army's sits, because
+  Iron's is the inverted ramp and a window that dark puts three Iron faces under one black blob at
+  chip size. Both are spent inside the sixteen.
+  Two rules follow on this side. **`CommanderVisuals.ART_FILTER` is nearest** for a general's own
+  art, and the bust and chip imports carry **no mip chain** — at a whole-number scale there is no
+  level between the rungs to sample. `EMBLEM_FILTER` is the one exception: a 64px badge drawn at 22
+  has no whole rung under it, it is geometry rather than pixels, and its import keeps
+  `mipmaps/generate=true`.
+  **The design system's three ink weights are two pens on this grid.** `canvas.INK_SILHOUETTE`
+  / `INK_FEATURE` / `INK_DETAIL` are 4/3/2 design units and `pen` floors them onto the bust at
+  2/1/1 pixels and onto the chip at 1/1/1, so feature and detail are the same single texel and
+  stay apart by tone rather than by width. The art was authored against those pens and is not
+  moving; `generators/portraits/tests/test_raster.py` measures all six so a change to the ladder
+  or a divisor is caught.
+  **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
+  and `CommanderBust` (`scenes/ui/commander_bust.gd`) draws it at exactly that, centred on both
+  axes and falling to the field's top only when the art is taller than the field, so a field too
+  short clips the chest rather than the chin or half a texel.
+  **What "too small for a bust" means is measured off the art and stated once**, in
+  `CommanderVisuals.WHOLE_BUST_FIELD` / `fits_whole_bust`: the drawing's full width, and every row
+  down to `FACE_REGION`'s bottom edge — a narrower field clips both ears of a centred bust and a
+  shorter one takes the chin. `CommanderBust` asks it against **the larger of the field's drawn size
+  and its minimum** rather than the size a caller named, because the roster tile names none and
+  learns its band a frame later. A surface too small for a bust draws the **baked face chip**
+  (`assets/portraits/faces`, 31x31) — the same drawing repainted on the chip's own coarser grid,
+  never the bust sampled down or cut up — and the empty seat has one like everybody else.
+  `FACE_REGION` moved once, for the new grid; from here the rule is what it always was, the
+  geometry moves and the rectangle does not — `generators/portraits` scrapes that rectangle out of
+  `commander_visuals.gd` and measures every general's chin against it, so a rename fails loudly.
 - `faction-identity-plan.html` — armies wear their commander's faction, FI1–FI3 shipped. D1:
   **identity is presentation-only** — the sim keeps its team ints; `scenes/common/side_identity.gd`
   (`SideIdentity`) resolves `team → {theme, display name, atlas row}` once per match from the

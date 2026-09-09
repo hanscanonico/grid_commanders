@@ -8,47 +8,38 @@ stand-in is a skull, a neck, a shoulder block and a flat field.
 The light checks are the shipped sheet's own. `test_commander_portraits.gd`
 measures one patch on the lit shoulder against one on the shaded shoulder and
 demands a floor between them; the same two rectangles and the same floor are
-read here, in Python, off the same 220x268 raster — which is what keeps "every
+read here, in Python, off the same 110x134 raster — which is what keeps "every
 bust is lit from the sheet's side" one claim rather than two.
 
-Colours are counted with `getcolors`, never `getdata`: the dependency pin's
-ceiling is the release that removes `getdata`.
+Colours are counted with `getcolors`, never `getdata`, which Pillow 14 removes:
+this package calls neither, and a suite is the easiest place to reintroduce one.
 """
 
 from __future__ import annotations
 
-import dataclasses
 import unittest
 
 from PIL import Image, ImageChops
-from preview_sheet import FIELD, ROW, SKIN, bust
+from cells import SKIN_MATERIAL, tally
+from preview_sheet import FIELD, ROW, bust
 
-from portraitgen import head, light
-from portraitgen.canvas import PORTRAIT_SIZE, Canvas
-from portraitgen.palette import faction_by_key
+from portraitgen import head, light, palette
+from portraitgen.canvas import BUST_DIVISOR, BUST_SIZE, Canvas, SkullBox
 
 # tests/unit/test_commander_portraits.gd's own patches and floor: the widest
 # margin the shoulders offer, and a bar a sheet with no shade at all fails.
-LIT_PATCH = (22, 242, 12, 12)
-SHADED_PATCH = (186, 242, 12, 12)
+LIT_PATCH = (11, 121, 6, 6)
+SHADED_PATCH = (93, 121, 6, 6)
 SHADE_FLOOR = 0.01
 
-# The style brief's palette bar (M4/C4). It counts the flat tones a raster is
-# painted in, so the measure is a colour's coverage: the 3x box downsample
-# blends across every edge it smooths, and an edge blend is not a tone.
-MAX_TONES = 48
-TONE_COVERAGE = 0.001
-
-_ALL_COLOURS = 1 << 20
+# The palette bar (M4/C4): what a bust may be painted in, which is now the
+# sixteen `palette.bust_palette` hands out. Nothing blends any more — there is
+# no downsample — so this is a count of the raster's own colours, opaque ones,
+# with no coverage floor under it.
+MAX_TONES = palette.PAINTED_TONES
 
 
-def _colours(image: Image.Image) -> list[tuple[int, tuple[int, ...]]]:
-    counted = image.getcolors(_ALL_COLOURS)
-    assert counted is not None, "the raster carries more colours than a sheet can"
-    return counted
-
-
-def _luminance(pixel: tuple[int, ...]) -> float:
+def _godot_luminance(pixel: tuple[int, ...]) -> float:
     """Godot's `Color.get_luminance`, which is what the GUT test reads."""
     red, green, blue = (channel / 255.0 for channel in pixel[:3])
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue
@@ -56,29 +47,32 @@ def _luminance(pixel: tuple[int, ...]) -> float:
 
 def _mean_luminance(image: Image.Image, patch: tuple[int, int, int, int]) -> float:
     x, y, width, height = patch
-    counted = _colours(image.crop((x, y, x + width, y + height)))
-    total = sum(count * _luminance(colour) for count, colour in counted)
+    counted = tally(image.crop((x, y, x + width, y + height)))
+    total = sum(count * _godot_luminance(colour) for count, colour in counted)
     return total / float(sum(count for count, _ in counted))
 
 
 def _skin_ramp() -> light.Ramp:
-    return light.build_ramp(SKIN, rim_hue=faction_by_key("meridian").body_lt)
+    return light.Ramp.of_material(SKIN_MATERIAL)
 
 
 def _tones(ramp: light.Ramp) -> set[tuple[int, ...]]:
-    return {(*tone, 255) for tone in dataclasses.astuple(ramp)}
+    return {(*tone, 255) for tone in ramp.six}
 
 
 def _skull_box(skull: head.Skull) -> tuple[int, int, int, int]:
+    """The skull's own box, in the raster's pixels: `head` states its geometry
+    in design units and the bust is drawn at one pixel to two of them."""
     points = head.outline(skull)
     xs, ys = [x for x, _ in points], [y for _, y in points]
-    return (int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys)))
+    edges = (min(xs), min(ys), max(xs), max(ys))
+    return tuple(int(edge) // BUST_DIVISOR for edge in edges)
 
 
 class TheRasterIsThePinnedOne(unittest.TestCase):
     def test_a_bust_resolves_to_the_portrait_size(self):
-        self.assertEqual(bust(ROW[0][1]).size, PORTRAIT_SIZE)
-        self.assertEqual(PORTRAIT_SIZE, (220, 268))
+        self.assertEqual(bust(ROW[0][1]).size, BUST_SIZE)
+        self.assertEqual(BUST_SIZE, (110, 134))
 
     def test_a_head_covers_a_head_s_worth_of_the_frame(self):
         for name, skull in ROW:
@@ -86,9 +80,9 @@ class TheRasterIsThePinnedOne(unittest.TestCase):
                 layer = Canvas()
                 head.draw(layer, skull, _skin_ramp())
                 opaque = sum(
-                    count for count, level in _colours(layer.silhouette()) if level
+                    count for count, level in tally(layer.silhouette()) if level
                 )
-                share = opaque / float(PORTRAIT_SIZE[0] * PORTRAIT_SIZE[1] * 9)
+                share = opaque / float(BUST_SIZE[0] * BUST_SIZE[1])
                 self.assertGreater(share, 0.05)
                 self.assertLess(share, 0.30)
 
@@ -132,8 +126,8 @@ class OneSun(unittest.TestCase):
 
 
 class TheShadowFallsOneWay(unittest.TestCase):
-    """The two bands that read the key read it the same way round: away from
-    the sun. A block is enough to say which side of a shape each landed on."""
+    """The occlusion band reads the key the one way round: away from the sun.
+    A block is enough to say which side of a shape it landed on."""
 
     def _block(self) -> Image.Image:
         layer = Canvas((60, 60), 1)
@@ -147,13 +141,6 @@ class TheShadowFallsOneWay(unittest.TestCase):
         self.assertEqual(band.getpixel((8, 30)), 0)
         self.assertEqual(band.getpixel((30, 8)), 0)
 
-    def test_the_rim_runs_along_the_shadow_side_edge(self):
-        alpha = light.rim_light(self._block(), _skin_ramp(), weight=2.0).getchannel("A")
-        self.assertEqual(alpha.getpixel((48, 30)), 255)
-        self.assertEqual(alpha.getpixel((30, 48)), 255)
-        self.assertEqual(alpha.getpixel((10, 30)), 0)
-        self.assertEqual(alpha.getpixel((30, 10)), 0)
-
 
 def _nonzero(image: Image.Image, *, invert: bool = False) -> Image.Image:
     """A difference image as a one-bit mask — where it differs, or where it
@@ -163,33 +150,34 @@ def _nonzero(image: Image.Image, *, invert: bool = False) -> Image.Image:
 
 
 def _skin_luminance(patch: Image.Image, tones: set[tuple[int, ...]]) -> float:
-    counted = [(n, c) for n, c in _colours(patch) if c in tones]
-    return sum(n * _luminance(c) for n, c in counted) / float(
+    counted = [(n, c) for n, c in tally(patch) if c in tones]
+    return sum(n * _godot_luminance(c) for n, c in counted) / float(
         sum(n for n, _ in counted)
     )
 
 
 class FourFlatBands(unittest.TestCase):
     def test_every_band_of_the_ramp_is_painted(self):
+        """The four the model names, and only those: the figure carries no rim
+        band any more (see `light`), so a fifth tone on a head would be one
+        this file cannot account for."""
         ramp = _skin_ramp()
-        painted = {colour: count for count, colour in _colours(bust(ROW[0][1]))}
-        for band in (*light.BANDS, "rim"):
+        painted = {colour: count for count, colour in tally(bust(ROW[0][1]))}
+        for band in light.BANDS:
             with self.subTest(band=band):
                 self.assertIn((*getattr(ramp, band), 255), painted)
 
     def test_the_bands_climb_in_value_and_none_of_them_repeats(self):
         ramp = _skin_ramp()
-        values = [light.luminance(ramp.band(band)) for band in light.BANDS]
+        values = [palette.luminance(ramp.band(band)) for band in light.BANDS]
         self.assertEqual(values, sorted(values))
         self.assertEqual(len(set(values)), len(light.BANDS))
 
-    def test_a_raster_is_painted_in_at_most_forty_eight_tones(self):
+    def test_a_raster_is_painted_in_at_most_sixteen_tones(self):
         for name, skull in ROW:
             with self.subTest(skull=name):
-                counted = _colours(bust(skull))
-                floor = TONE_COVERAGE * sum(count for count, _ in counted)
-                tones = [colour for count, colour in counted if count >= floor]
-                self.assertLessEqual(len(tones), MAX_TONES)
+                opaque = {c for _, c in tally(bust(skull)) if c[3] == 255}
+                self.assertLessEqual(len(opaque), MAX_TONES)
 
 
 class TheVocabularyIsTheDispatchTable(unittest.TestCase):
@@ -199,7 +187,7 @@ class TheVocabularyIsTheDispatchTable(unittest.TestCase):
 
     def test_a_face_shade_outside_the_vocabulary_raises(self):
         with self.assertRaises(KeyError):
-            light.face_shade("cheekbone", **_PLACEMENT)
+            light.face_shade("cheekbone", _PLACEMENT)
 
     def test_a_band_outside_the_ramp_raises(self):
         with self.assertRaises(KeyError):
@@ -211,7 +199,7 @@ class TheVocabularyIsTheDispatchTable(unittest.TestCase):
                 self.assertGreater(len(head.outline(head.Skull(1.0, jaw, 0.0, 1.0))), 3)
         for kind in light.SHADE_KINDS:
             with self.subTest(shade=kind):
-                self.assertGreater(len(light.face_shade(kind, **_PLACEMENT)), 3)
+                self.assertGreater(len(light.face_shade(kind, _PLACEMENT)), 3)
 
     def test_the_three_geometries_are_the_three_a_skull_can_ask_for(self):
         asked = {
@@ -222,7 +210,7 @@ class TheVocabularyIsTheDispatchTable(unittest.TestCase):
         self.assertEqual(asked, set(light.SHADE_KINDS))
 
 
-_PLACEMENT = {"centre": 110.0, "half": 46.0, "top": 82.0, "height": 124.0}
+_PLACEMENT = SkullBox(centre=110.0, half=46.0, top=82.0, height=124.0)
 
 
 class NoBoundaryDownTheNose(unittest.TestCase):
@@ -231,10 +219,10 @@ class NoBoundaryDownTheNose(unittest.TestCase):
     def test_every_shade_shape_clears_the_centre_line(self):
         for kind in light.SHADE_KINDS:
             with self.subTest(shade=kind):
-                shape = light.face_shade(kind, **_PLACEMENT)
+                shape = light.face_shade(kind, _PLACEMENT)
                 nearest = min(x for x, _ in shape)
-                clearance = light.NOSE_AXIS_CLEARANCE * _PLACEMENT["half"]
-                self.assertGreaterEqual(nearest, _PLACEMENT["centre"] + clearance)
+                clearance = light.NOSE_AXIS_CLEARANCE * _PLACEMENT.half
+                self.assertGreaterEqual(nearest, _PLACEMENT.centre + clearance)
 
 
 if __name__ == "__main__":

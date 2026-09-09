@@ -8,14 +8,21 @@ between the two.
 
 Two things are decided here and nowhere else.
 
-**The pose is an affine over the working raster, not a rotation of the finished
-one.** Tilt and zoom are one matrix whose coefficients are rounded before they
-are used, so no libm's cosine can move an edge by a pixel between two machines,
-and it is sampled nearest at 3x — the downsample is still the only place a tone
-is blended, which is what keeps a raster inside its colour budget.
+**The pose is an affine over the figure, not a rotation of the finished sheet.**
+Tilt and zoom are one matrix whose coefficients are rounded before they are
+used, so no libm's cosine can move an edge by a pixel between two machines, and
+it is sampled nearest on the grid the figure was drawn on. Nothing in this
+pipeline blends two tones: `palette.quantise` is the one place a pixel settles,
+and it settles onto a rung `palette.bust_palette` already handed this bust.
+
+**Nothing under the gauge survives the bake.** The last thing `paint` does is
+sweep the quantised raster for clusters too small to be marks (`gauge.despeckle`)
+— the opaque flecks a band leaves strung along a silhouette once every pixel of
+it has been rounded onto sixteen tones. What the sweep takes was never authored;
+what was authored is drawn to the gauge in the first place.
 
 **A prop stays inside the frame the pose would push it out of.** `props.py`
-states its bleed line in portrait pixels, and the zoom is applied after it, so
+states its bleed line in design units, and the zoom is applied after it, so
 the limit can only be kept here: a prop whose posed corner would cross the line
 is walked back inside it as a whole, both layers together, before the pose.
 Shoulders are meant to bleed off the sides; a signature prop cut in half by the
@@ -32,13 +39,32 @@ lands on the screen's shadow side once the group is turned over.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from PIL import Image
 
-from . import backdrop, features, hair, head, light, props, roster, uniform
-from .canvas import SUPERSAMPLE, Canvas
-from .palette import Faction, faction_by_key
+from . import (
+    accessories,
+    backdrop,
+    features,
+    gauge,
+    hair,
+    head,
+    light,
+    props,
+    roster,
+    uniform,
+)
+from .canvas import (
+    BUST_DIVISOR,
+    CAST_TONE,
+    CHIP_DIVISOR,
+    DESIGN_SIZE,
+    Canvas,
+    face_box,
+)
+from .palette import Faction, bust_palette, faction_by_key, quantise
 from .roster import EmptySeat, Face
 
 # Which army a general wears. The faction is presentation only, and this is the
@@ -68,14 +94,14 @@ FACTION_OF: dict[str, str] = {
     "sable_wren": "gold",
 }
 
-# The pose's two anchors, in portrait pixels: the zoom is taken about the
+# The pose's two anchors, in design units: the zoom is taken about the
 # bottom centre, because the composition is anchored there and a chest-up crop
 # has to stay anchored there, and the tilt about the head, because a bust leans
 # from the neck rather than from the frame.
-ZOOM_AT = (110.0, 268.0)
-TILT_AT = (110.0, 168.0)
+ZOOM_AT = (DESIGN_SIZE[0] / 2, float(DESIGN_SIZE[1]))
+TILT_AT = (ZOOM_AT[0], 168.0)
 # Where a matrix coefficient is cut off. Nine places is far finer than a
-# working pixel and far coarser than the last bit of a double, so two machines'
+# design unit and far coarser than the last bit of a double, so two machines'
 # trigonometry agree exactly on the number the sampler is handed.
 _COEFF_PLACES = 9
 
@@ -123,8 +149,11 @@ def _turned_about(degrees: float, at: tuple[float, float]) -> Matrix:
     )
 
 
-def pose_matrix(tilt: float, zoom: float, *, scale: int = SUPERSAMPLE) -> Matrix:
-    """The inverse map a pose is sampled through, in working pixels.
+def pose_matrix(tilt: float, zoom: float, *, divisor: int = BUST_DIVISOR) -> Matrix:
+    """The inverse map a pose is sampled through, in native pixels.
+
+    `divisor` is the grid the figure was drawn on: the rotation terms are
+    scale-free, the two translations are design units and divide onto it.
 
     Pillow's affine transform reads its matrix backwards — it asks, for each
     output pixel, which input pixel to take — so what is built here is the
@@ -135,17 +164,17 @@ def pose_matrix(tilt: float, zoom: float, *, scale: int = SUPERSAMPLE) -> Matrix
     )
     a, b, c, d, e, f = inverse
     return tuple(
-        round(value, _COEFF_PLACES) for value in (a, b, c * scale, d, e, f * scale)
+        round(value, _COEFF_PLACES) for value in (a, b, c / divisor, d, e, f / divisor)
     )
 
 
 def _posed(figure: Canvas, tilt: float, zoom: float) -> Canvas:
     """The figure leaned and zoomed, sampled nearest at the working scale."""
-    posed = Canvas(figure.size, figure.scale)
+    posed = figure.blank()
     posed.image = figure.image.transform(
         figure.image.size,
         Image.Transform.AFFINE,
-        pose_matrix(tilt, zoom, scale=figure.scale),
+        pose_matrix(tilt, zoom, divisor=figure.divisor),
         resample=Image.Resampling.NEAREST,
     )
     return posed
@@ -153,13 +182,9 @@ def _posed(figure: Canvas, tilt: float, zoom: float) -> Canvas:
 
 def _flipped(layer: Canvas) -> Canvas:
     """A layer turned about the raster's centre line — geometry only."""
-    turned = Canvas(layer.size, layer.scale)
+    turned = layer.blank()
     turned.image = layer.image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     return turned
-
-
-def _layer(figure: Canvas) -> Canvas:
-    return Canvas(figure.size, figure.scale)
 
 
 def _corners(box: tuple[int, int, int, int]) -> tuple[tuple[float, float], ...]:
@@ -168,7 +193,7 @@ def _corners(box: tuple[int, int, int, int]) -> tuple[tuple[float, float], ...]:
 
 
 def _forward(tilt: float, zoom: float) -> Matrix:
-    """Where the pose sends a point, in portrait pixels."""
+    """Where the pose sends a point, in design units."""
     return _compose(_turned_about(tilt, TILT_AT), _scaled_about(zoom, ZOOM_AT))
 
 
@@ -183,38 +208,50 @@ def _bleed_shift(
     return max(0, math.ceil((reach - props.RIGHT_LIMIT) / zoom))
 
 
-def _prop_layers(face: Face, army: Faction, cloth: light.Ramp) -> tuple[Canvas, Canvas]:
+def _prop_layers(
+    grid: Canvas, face: Face, army: Faction, cloth: light.Ramp
+) -> tuple[Canvas, Canvas]:
     """The prop behind the figure and its rig in front, both walked inboard."""
-    whole = Canvas()
+    whole = grid.blank()
     props.draw(whole, face.prop, army, cloth, layer="all")
-    shift = _bleed_shift(whole.resolve().getbbox(), *face.pose[:2])
+    shift = _bleed_shift(_design_box(whole), face.pose.tilt, face.pose.zoom)
     layers = []
     for half in ("back", "front"):
-        art = Canvas()
+        art = grid.blank()
         props.draw(art, face.prop, army, cloth, layer=half)
         layers.append(_walked(art, shift))
     return tuple(layers)
 
 
+def _design_box(layer: Canvas) -> tuple[int, int, int, int] | None:
+    """What a layer covers, back in design units — the space the bleed line and
+    the pose are both stated in."""
+    box = layer.resolve().getbbox()
+    return None if box is None else tuple(edge * layer.divisor for edge in box)
+
+
 def _walked(layer: Canvas, by: int) -> Canvas:
-    """A layer moved left a whole number of portrait pixels."""
+    """A layer moved left a whole number of design units."""
     if by == 0:
         return layer
-    moved = Canvas(layer.size, layer.scale)
-    moved.image.paste(layer.image, (-by * layer.scale, 0))
+    moved = layer.blank()
+    moved.image.paste(layer.image, (-layer.px(by), 0))
     return moved
 
 
-def _face_group(face: Face, skin: light.Ramp, mane: light.Ramp) -> Canvas:
+def _face_group(
+    grid: Canvas, face: Face, skin: light.Ramp, mane: light.Ramp, cloth: light.Ramp
+) -> Canvas:
     """Everything above the collar: the head, its features and its hair over."""
-    group = Canvas()
-    head.draw(group, face.head, skin, mirrored=face.pose[2])
+    group = grid.blank()
+    head.draw(group, face.head, skin, mirrored=face.pose.mirrored)
     features.facial_hair(group, face.head, face.facial, mane)
     hair.front(group, face.head, face.style, mane, skin=skin)
-    tint = _faction(face).body
+    # Headwear cut out of uniform cloth is painted in the coat's own rungs: its
+    # base, and its lit rung along the crown's upper-left edge.
     for worn in (face.acc, face.acc2):
-        features.accessory(group, face.head, worn, tint=tint)
-    covered = features.covered_eye(face.acc)
+        accessories.accessory(group, face.head, worn, tint=cloth.base, kicker=cloth.lit)
+    covered = accessories.covered_eye(face.acc)
     features.brow(group, face.head, face.brow, mane, covered=covered)
     features.eyes(group, face.head, face.eyes, scale=face.eye, covered=covered)
     features.nose(group, face.head, face.nose, skin)
@@ -230,28 +267,26 @@ def _faction(face: Face) -> Faction:
     return faction_by_key(FACTION_OF[face.id])
 
 
-def _general(face: Face) -> Canvas:
+def _general(grid: Canvas, face: Face) -> Canvas:
     """One general's figure, unposed: the five layers and which of them turn."""
     army = _faction(face)
-    cloth = light.build_ramp(army.body, rim_hue=army.body_lt)
-    skin = light.build_ramp(head.SKIN_BASES[face.skin], rim_hue=army.body_lt)
-    mane = hair.ramp_for(face.hair)
+    skin, mane, cloth = _ramps_for(face)
 
-    behind_prop, front_prop = _prop_layers(face, army, cloth)
-    figure = Canvas()
+    behind_prop, front_prop = _prop_layers(grid, face, army, cloth)
+    figure = grid.blank()
     figure.compose(behind_prop)
 
-    behind = _layer(figure)
+    behind = grid.blank()
     hair.back(behind, face.head, face.style, mane)
 
-    dress = _layer(figure)
+    dress = grid.blank()
     uniform.draw(dress, army, face.collar, cloth)
     uniform.chest(dress, face.chest, army, cloth)
     if face.pip:
         uniform.pip(dress, cloth)
 
-    above = _face_group(face, skin, mane)
-    if face.pose[2]:
+    above = _face_group(grid, face, skin, mane, cloth)
+    if face.pose.mirrored:
         behind, above = _flipped(behind), _flipped(above)
 
     figure.compose(behind)
@@ -261,7 +296,7 @@ def _general(face: Face) -> Canvas:
     return figure
 
 
-def _empty_seat(seat: EmptySeat) -> Canvas:
+def _empty_seat(grid: Canvas, seat: EmptySeat) -> Canvas:
     """The seat nobody holds: the shared skull, in slate, with no face on it.
 
     Deliberately featureless — an empty seat has to read as a choice rather
@@ -269,8 +304,8 @@ def _empty_seat(seat: EmptySeat) -> Canvas:
     no hair, no expression and no prop.
     """
     army = faction_by_key("neutral")
-    cloth = light.build_ramp(army.body, rim_hue=army.body_lt)
-    figure = Canvas()
+    cloth = _cloth(army)
+    figure = grid.blank()
     uniform.draw(figure, army, uniform.COLLAR_DEFAULT, cloth)
     uniform.chest(figure, uniform.CHEST_DEFAULT, army, cloth)
     head.draw(figure, seat.head, cloth)
@@ -281,44 +316,107 @@ def _army_of(spec: Face | EmptySeat) -> Faction:
     return _faction(spec) if isinstance(spec, Face) else faction_by_key("neutral")
 
 
-def paint(spec: Face | EmptySeat, *, cast: bool = True) -> Image.Image:
-    """One finished bust at the pinned raster.
+def _cloth(army: Faction) -> light.Ramp:
+    """The rungs an army's coat is painted in — the board's own, so a general
+    and their armour are the same red."""
+    return light.Ramp.of_faction(army.key)
+
+
+def _ramps_for(spec: Face | EmptySeat) -> tuple[light.Ramp, light.Ramp, light.Ramp]:
+    """The skin, hair and cloth rungs one seat is painted in.
+
+    The single derivation: `palette_of` reserves the sixteen tones off these and
+    `_general` draws in them, and `quantise` snaps to the nearest tone — so two
+    derivations that drifted would shift a bust's colours rather than fail. An
+    empty seat has neither skin nor hair, and takes the slate coat for both.
+    """
+    cloth = _cloth(_army_of(spec))
+    if not isinstance(spec, Face):
+        return cloth, cloth, cloth
+    return (
+        head.ramp_for(spec.skin),
+        hair.ramp_for(spec.hair),
+        cloth,
+    )
+
+
+def palette_of(spec: Face | EmptySeat) -> tuple[tuple[int, int, int], ...]:
+    """The sixteen tones this bust is painted in, before a pixel is drawn."""
+    skin, mane, _ = _ramps_for(spec)
+    return bust_palette(_army_of(spec).key, skin.six, mane.six)
+
+
+def paint(
+    spec: Face | EmptySeat, *, cast: bool = True, divisor: int = BUST_DIVISOR
+) -> Image.Image:
+    """One finished bust, on its own grid and in its own sixteen tones.
 
     `cast=False` is the same bust with the hard offset shadow left off, which
     is how "the shadow was drawn" is measured: the difference between the two
-    is the shadow and nothing else.
+    is the shadow and nothing else. `divisor` is which grid it lands on: the
+    bust's, or the coarser one a face chip is repainted on.
     """
-    tilt, zoom, _ = spec.pose
-
-    sheet = Canvas()
+    sheet = Canvas(divisor=divisor)
     backdrop.draw(sheet, spec.bg, _army_of(spec))
     figure = _posed(
-        _general(spec) if isinstance(spec, Face) else _empty_seat(spec), tilt, zoom
+        _general(sheet, spec) if isinstance(spec, Face) else _empty_seat(sheet, spec),
+        spec.pose.tilt,
+        spec.pose.zoom,
     )
     if cast:
         sheet.cast_shadow(figure)
     sheet.compose(figure)
-    return sheet.resolve()
+    return gauge.despeckle(
+        quantise(sheet.resolve(), palette_of(spec), shadow=CAST_TONE)
+    )
+
+
+def chip(spec: Face | EmptySeat) -> Image.Image:
+    """The face a surface too small for a bust draws.
+
+    The same drawing, painted again on the chip's coarser grid and kept to the
+    head's own square — never the bust resampled, which is the softness this
+    bake exists to end. `CommanderVisuals.face_for` loads exactly this file.
+    """
+    return paint(spec, divisor=CHIP_DIVISOR).crop(face_box(CHIP_DIVISOR))
 
 
 def prop_art(face: Face) -> Image.Image:
     """A general's prop alone, posed — what the frame-safety bleed is read off."""
     army = _faction(face)
-    cloth = light.build_ramp(army.body, rim_hue=army.body_lt)
+    cloth = _cloth(army)
     art = Canvas()
-    for half in _prop_layers(face, army, cloth):
+    for half in _prop_layers(art, face, army, cloth):
         art.compose(half)
-    return _posed(art, *face.pose[:2]).resolve()
+    return _posed(art, face.pose.tilt, face.pose.zoom).resolve()
 
 
-def window(spec: Face | EmptySeat) -> Image.Image:
+def window(spec: Face | EmptySeat, *, divisor: int = BUST_DIVISOR) -> Image.Image:
     """The bust's backdrop alone — the field the figure is measured against."""
-    sheet = Canvas()
+    sheet = Canvas(divisor=divisor)
     backdrop.draw(sheet, spec.bg, _army_of(spec))
-    return sheet.resolve()
+    return quantise(sheet.resolve(), palette_of(spec), shadow=CAST_TONE)
+
+
+def sheet_rows() -> list[tuple[str, Face | EmptySeat]]:
+    """Every seat the sheet carries, in roster order and the empty one last.
+
+    The one statement of that order: the bake walks it and so do the suites
+    that measure the bake, so a general added to the roster cannot reach one
+    list and miss the other.
+    """
+    return [*sorted(roster.FACES.items()), (roster.NEUTRAL_ID, roster.NEUTRAL)]
+
+
+def _sheet(art: Callable[[Face | EmptySeat], Image.Image]) -> list[Painted]:
+    return [Painted(key, art(spec)) for key, spec in sheet_rows()]
 
 
 def busts() -> list[Painted]:
     """Every bust the sheet carries, the empty seat last."""
-    painted = [Painted(key, paint(face)) for key, face in sorted(roster.FACES.items())]
-    return [*painted, Painted(roster.NEUTRAL_ID, paint(roster.NEUTRAL))]
+    return _sheet(paint)
+
+
+def chips() -> list[Painted]:
+    """Every face chip the sheet carries, the empty seat last."""
+    return _sheet(chip)

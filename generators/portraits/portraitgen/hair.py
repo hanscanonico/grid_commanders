@@ -5,7 +5,7 @@ N alternating strand clusters, and at chip size a row of them read as a striped
 awning rather than as hair — so the mass now takes one lobe, on the lit side,
 and nothing else.
 
-The masses are the handoff's own, transcribed in portrait pixels (its units,
+The masses are the handoff's own, transcribed in design units (its units,
 doubled, over `features.REFERENCE_BOX` like every other feature) and fitted to
 the general's skull by `features.Frame`, so hair and the face it sits on can
 never be cut to two different heads. Where the lobe lies is decided by the
@@ -21,12 +21,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import light
+from . import light, palette
 from .canvas import INK_SILHOUETTE, Canvas, Point
 from .features import REFERENCE_BOX, Frame
 from .head import Skull
 from .light import Ramp
 from .palette import INK, RGB
+from .vocab import known, pick
 
 # The hair colours the roster picks from: the handoff's seven, plus `steel`.
 # Steel is grey a rung darker, and it exists because grey over a pale face is
@@ -65,8 +66,8 @@ class Style:
 
     `band` is the rung of the hair ramp the mass is painted in. It is `base`
     everywhere but on a style whose own colour sits so near the skin under it
-    that the two read as one shape once the ink between them mips away — there
-    the mass drops a rung rather than the colour being renamed.
+    that the two read as one shape once the chip grid drops the ink between
+    them — there the mass drops a rung rather than the colour being renamed.
     """
 
     front: tuple[Mass, ...] = ()
@@ -170,7 +171,7 @@ _CAP: Mass = (
     (110.0, 108.0),
     (60.0, 112.0),
 )
-_FRINGE_BAND: Mass = ((66.0, 116.0), (110.0, 110.0), (154.0, 116.0), (110.0, 126.0))
+_FRINGE_SHAPE: Mass = ((66.0, 116.0), (110.0, 110.0), (154.0, 116.0), (110.0, 126.0))
 
 _STYLES: dict[str, Style] = {
     # A scalp, and nothing else: the two temple wisps this style used to carry
@@ -191,7 +192,7 @@ _STYLES: dict[str, Style] = {
         ),
         back=(_bob_fall(),),
         lobe=Lobe(66.0, 104.0, 84.0, 24.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
         band="shade",
     ),
     "braid": Style(
@@ -221,7 +222,7 @@ _STYLES: dict[str, Style] = {
         ),
         blobs=((56.0, 170.0, 9.0), (60.0, 194.0, 9.0)),
         lobe=Lobe(68.0, 104.0, 86.0, 20.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "bun": Style(
         front=(
@@ -238,7 +239,7 @@ _STYLES: dict[str, Style] = {
         ),
         blobs=((110.0, 74.0, 18.0),),
         lobe=Lobe(70.0, 106.0, 90.0, 18.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "buzz": Style(
         front=(
@@ -258,7 +259,7 @@ _STYLES: dict[str, Style] = {
     "curly": Style(
         front=(_cloud(),),
         lobe=Lobe(74.0, 100.0, 96.0, 14.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "hood": Style(
         front=(
@@ -274,7 +275,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(68.0, 106.0, 90.0, 22.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "long": Style(
         front=(
@@ -309,7 +310,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(64.0, 106.0, 80.0, 32.0, lean=3.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "ponytail": Style(
         front=(
@@ -338,7 +339,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(68.0, 106.0, 84.0, 22.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "short": Style(
         front=(
@@ -354,7 +355,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(70.0, 108.0, 86.0, 18.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "sidepart": Style(
         front=(
@@ -371,7 +372,7 @@ _STYLES: dict[str, Style] = {
             ),
         ),
         lobe=Lobe(64.0, 100.0, 86.0, 18.0, lean=4.0),
-        fringe=_FRINGE_BAND,
+        fringe=_FRINGE_SHAPE,
     ),
     "spiky": Style(
         front=(
@@ -396,6 +397,12 @@ _STYLES: dict[str, Style] = {
 }
 STYLES = frozenset(_STYLES)
 
+
+def _spec(style: str) -> Style:
+    """The dials one style is drawn from. An unknown style raises."""
+    return pick(_STYLES, style, "hair style")
+
+
 # How deep the fringe's own shadow sits on the forehead: one flat band of the
 # skin's shade tone, hard-edged like every other band on the sheet. The design
 # system takes no blur, so this is a painted band rather than a softened alpha.
@@ -410,51 +417,96 @@ PALE_HAIR = 150.0
 # is a crown highlight tapering down the mass, not a rectangle on it.
 _LOBE_TAPER = 0.22
 
+# How near a hair mass may sit to the skin under it before it drops a rung. Two
+# shapes of one value are one shape, and the ink between them is a single pixel
+# at this size — so the rule the `bob` was given by hand is asked of every
+# wearer instead: a style names the rung it wants, and a mass that would tie
+# with its own face takes the one below whatever it named.
+SKIN_CONTRAST = 34.0
+# The face a mass meets: the cheek in the skin's base rung always, and — for a
+# pale mass only — the forehead the fringe lays its shade rung across. Quill's
+# mane cleared the cheek by seventy and tied with her own fringe to within one,
+# which is the pale-on-pale the round-2 review read. A mass darker than
+# `PALE_HAIR` is not asked to clear the fringe: it is already the dark shape on
+# a lit forehead, and dropping it further is what turned a blonde brown.
+_CHEEK_BAND = "base"
+_PALE_MASS_BANDS = (_CHEEK_BAND, FRINGE_BAND)
+# Where a rung falls back to when it ties: down `light.BANDS`, which already
+# states the order, from the rung the style named. A mane drops as far as it has
+# to — one rung is enough for almost every wearer, and where it is not, the
+# alternative is a mass that reads as part of the head.
+_DARKENING = tuple(reversed(light.BANDS))
+
+
+def _fallback(band: str) -> tuple[str, ...]:
+    """That rung and every darker one, darkest last. An unknown rung raises."""
+    known(band, _DARKENING, "band")
+    return _DARKENING[_DARKENING.index(band) :]
+
 
 def ramp_for(colour: str) -> Ramp:
-    """The four tones a hair colour is painted in."""
-    return light.build_ramp(HAIR_BASES[colour])
+    """The tones a hair colour is painted in, its own lit rung as its kicker.
+
+    Hair has no rim rung of its own, so `light.Ramp.of_material` hands it back
+    its own lit tone — the rim section of `docs/light_model.md` argues why.
+    """
+    return light.Ramp.of_material(pick(HAIR_BASES, colour, "hair colour"))
 
 
-def mass_band(style: str) -> str:
-    """Which band of the ramp a style's mass takes. An unknown style raises."""
-    return _STYLES[style].band
+def _stands_off(tone: RGB, skin: Ramp) -> bool:
+    """Whether a tone clears `SKIN_CONTRAST` of every skin band it can meet."""
+    pale = palette.luminance(tone) > PALE_HAIR
+    bands = _PALE_MASS_BANDS if pale else (_CHEEK_BAND,)
+    return all(
+        abs(palette.luminance(tone) - palette.luminance(skin.band(band)))
+        >= SKIN_CONTRAST
+        for band in bands
+    )
 
 
-def draw(
-    canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
-) -> None:
-    """The mass and the shape the key catches on it. An unknown style raises."""
-    back(canvas, skull, style, ramp)
-    front(canvas, skull, style, ramp, skin=skin)
+def declared_band(style: str) -> str:
+    """The rung a style names for its mass. An unknown style raises."""
+    return _spec(style).band
+
+
+def mass_band(style: str, ramp: Ramp, skin: Ramp) -> str:
+    """The rung the mass actually takes against a face: `declared_band` stepped
+    down `_fallback` until it stands off both skin bands it can border.
+
+    `tests/test_fringe.py` is the measurement, on the finished busts.
+    """
+    steps = _fallback(declared_band(style))
+    for candidate in steps:
+        if _stands_off(ramp.band(candidate), skin):
+            return candidate
+    return steps[-1]
 
 
 def back(canvas: Canvas, skull: Skull, style: str, ramp: Ramp) -> None:
     """What falls behind the head — painted before the skull is."""
     frame = Frame.of(skull)
-    for mass in _STYLES[style].back:
+    for mass in _spec(style).back:
         _mass(canvas, frame, mass, ramp.shade)
 
 
-def front(
-    canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp | None = None
-) -> None:
+def front(canvas: Canvas, skull: Skull, style: str, ramp: Ramp, *, skin: Ramp) -> None:
     """The fringe, the crown and the lit lobe — painted over the head.
 
-    `skin` is the wearer's own ramp: the fringe casts a flat band of its shade
-    tone on the forehead, and a shadow on skin has to be a skin tone.
+    `skin` is the wearer's own ramp, and it is required: the fringe casts a flat
+    band of its shade tone on the forehead — a shadow on skin has to be a skin
+    tone — and the mass is only stood off the face against a face.
     """
-    spec = _STYLES[style]
+    spec = _spec(style)
     frame = Frame.of(skull)
-    tone = ramp.band(spec.band)
-    if skin is not None and spec.fringe:
+    tone = ramp.band(mass_band(style, ramp, skin))
+    if spec.fringe:
         canvas.polygon(frame.path(spec.fringe), skin.shade)
     for x, y, radius in spec.blobs:
         canvas.ellipse(frame.ellipse(x, y, radius, radius), tone)
         canvas.stroke(_ring(frame, x, y, radius), INK_SILHOUETTE, INK, closed=True)
     for mass in spec.front:
         _mass(canvas, frame, mass, tone)
-    if spec.lobe is not None and light.luminance(ramp.base) <= PALE_HAIR:
+    if spec.lobe is not None and palette.luminance(ramp.base) <= PALE_HAIR:
         canvas.polygon(frame.path(_lobe(spec.lobe)), ramp.lit)
 
 

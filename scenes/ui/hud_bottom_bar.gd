@@ -72,7 +72,7 @@ var _fire_button: Button
 ## match, kept on the bar that is always up. Greyed rather than hidden off the
 ## player's turn, so the terrain chip beside it never slides.
 var _end_turn_button: Button
-var _portrait_field: Panel
+var _portrait_field: CommanderBust
 var _co_name: Label
 var _power_name: Label
 var _meter_fill: Panel
@@ -117,8 +117,8 @@ func _build() -> void:
 
 
 func _build_commander(row: HBoxContainer) -> void:
-	# Neutral until `bind` puts the side's own general and faction on it. The chip
-	# is smaller than a bust, so the kit shows the face crop here.
+	# Neutral until `bind` puts the side's own general and faction on it. This
+	# field is smaller than a bust, so the kit shows the face chip here.
 	_portrait_field = UiKit.commander_bust(
 		null, Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT), UiKit.NO_FIELD
 	)
@@ -267,7 +267,7 @@ func show_commander(
 	# chrome with a fixed footprint, so hiding the block would leave a hole rather
 	# than reclaim anything. Only the meter and its controls go.
 	var powered := commander.has_power()
-	UiKit.bind_bust(_portrait_field, commander, theme.color_light)
+	_portrait_field.bind(commander, theme.color_light)
 	_co_name.text = commander.display_name.to_upper()
 	_power_name.text = commander.power_name.to_upper() if powered else ""
 	_meter_frame.visible = powered

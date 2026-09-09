@@ -8,7 +8,8 @@ but not on x86-64. A crossing that lands exactly on a pixel boundary then falls
 either side of it.
 
 So the bar here is stated over the arithmetic instead: every shape is decided in
-whole numbers before Pillow sees it, and the two rows that flipped are pinned.
+whole numbers before Pillow sees it, and a crossing that lands exactly on a
+pixel boundary is pinned on the grid the busts ship on.
 """
 
 from __future__ import annotations
@@ -20,10 +21,12 @@ from portraitgen import canvas, raster
 
 PACKAGE = Path(canvas.__file__).parent
 
-# The working-resolution quad of Cass Orlov's right-shoulder crossbelt: the one
-# shape in the sheet whose edges cross a scan line at exactly half a pixel.
-CROSSBELT = [(464, 621), (158, 801), (154, 807), (460, 627)]
-SHEET = (660, 804)
+# A synthetic belt on the bust's own grid, falling five pixels for every six
+# rows so that its edges land on a scan line at exactly half a pixel. It is no
+# general's crossbelt: the boundary case lives in the arithmetic, not in any one
+# shape, so it is stated as the smallest quad that exercises it.
+BELT = [(80, 40), (30, 100), (28, 102), (78, 42)]
+BUST_GRID = canvas.native_size(canvas.DESIGN_SIZE, canvas.BUST_DIVISOR)
 
 
 class PillowIsNeverAskedToWorkOutAShape(unittest.TestCase):
@@ -36,16 +39,17 @@ class PillowIsNeverAskedToWorkOutAShape(unittest.TestCase):
 
 
 class ACrossingOnAPixelBoundaryIsDecidedInWholeNumbers(unittest.TestCase):
-    def test_the_crossbelt_rows_that_flipped_are_pinned(self):
+    def test_a_boundary_crossing_falls_inward_on_both_ends_of_a_run(self):
         rows = {
-            row: (first, last) for row, first, last in raster.spans(CROSSBELT, SHEET)
+            row: (first, last) for row, first, last in raster.spans(BELT, BUST_GRID)
         }
-        # 183.5 and 166.5 exactly: the run starts at the next whole pixel.
-        self.assertEqual(rows[786], (184, 190))
-        self.assertEqual(rows[796], (167, 173))
+        # Row 43 ends on 77.5 exactly and row 45 starts on 75.5 exactly: a run
+        # stops at the pixel before the boundary and starts at the one after.
+        self.assertEqual(rows[43], (77, 77))
+        self.assertEqual(rows[45], (76, 76))
 
     def test_a_crossing_is_never_a_float(self):
-        for row, first, last in raster.spans(CROSSBELT, SHEET):
+        for row, first, last in raster.spans(BELT, BUST_GRID):
             with self.subTest(row=row):
                 self.assertIsInstance(first, int)
                 self.assertIsInstance(last, int)
@@ -64,13 +68,62 @@ class TheSpansCoverWhatThePolygonCovers(unittest.TestCase):
         self.assertEqual(list(raster.spans([(5, 5)], (32, 32))), [])
 
 
-class AStrokeBuildsItsOwnRectangles(unittest.TestCase):
-    def test_a_segment_quad_lands_on_whole_numbers(self):
-        quad = canvas.segment_quad((198, 624), (504, 804), 4)
-        self.assertEqual(quad, [(196, 627), (502, 807), (506, 801), (200, 621)])
+class AStrokeWalksItsOwnPixels(unittest.TestCase):
+    """A stroke is stamped along the whole pixels its path passes through.
 
-    def test_a_segment_of_no_length_has_no_quad(self):
-        self.assertIsNone(canvas.segment_quad((10, 10), (10, 10), 4))
+    A rectangle per segment was a fair stroke at three times this raster and a
+    smear at one, and its corners came off a libm `hypot` — so the pen is a
+    block walked in whole numbers instead, which is the same block on every
+    machine.
+    """
+
+    def _drawn(self, weight: float) -> set[tuple[int, int]]:
+        layer = canvas.Canvas((64, 64), canvas.BUST_DIVISOR)
+        layer.stroke([(4.0, 4.0), (40.0, 40.0)], weight, (19, 23, 27, 255))
+        pixels = layer.image.load()
+        return {
+            (x, y)
+            for y in range(layer.image.height)
+            for x in range(layer.image.width)
+            if pixels[x, y][3]
+        }
+
+    def test_a_diagonal_at_the_detail_weight_is_one_pixel_per_step(self):
+        drawn = self._drawn(canvas.INK_DETAIL)
+        self.assertEqual(drawn, {(step, step) for step in range(2, 21)})
+
+    def test_a_heavier_weight_stamps_a_wider_block(self):
+        detail, silhouette = (
+            self._drawn(canvas.INK_DETAIL),
+            self._drawn(canvas.INK_SILHOUETTE),
+        )
+        self.assertLess(len(detail), len(silhouette))
+        self.assertEqual(detail - silhouette, set())
+
+    def test_the_pen_is_whole_pixels_and_never_none(self):
+        for weight in canvas.INK_WEIGHTS:
+            with self.subTest(weight=weight):
+                self.assertGreaterEqual(canvas.pen(weight, canvas.BUST_DIVISOR), 1)
+                self.assertGreaterEqual(canvas.pen(weight, canvas.CHIP_DIVISOR), 1)
+        self.assertGreater(
+            canvas.pen(canvas.INK_SILHOUETTE, canvas.BUST_DIVISOR),
+            canvas.pen(canvas.INK_DETAIL, canvas.BUST_DIVISOR),
+        )
+
+    def test_the_shipped_ladder_is_two_weights_on_the_bust_and_one_on_the_chip(self):
+        """Three authored weights, but not three pens: 4/3/2 design units floor
+        to 2/1/1 on the bust's grid and to 1/1/1 on the chip's, so a feature
+        line and a detail line are the same single texel and only the
+        silhouette reads heavier. What keeps them apart is tone, not width.
+        Pinned because the shipped art was authored against these pens — a
+        divisor or a weight moved without a rebake changes the drawing."""
+        weights = (canvas.INK_SILHOUETTE, canvas.INK_FEATURE, canvas.INK_DETAIL)
+        self.assertEqual(
+            [canvas.pen(w, canvas.BUST_DIVISOR) for w in weights], [2, 1, 1]
+        )
+        self.assertEqual(
+            [canvas.pen(w, canvas.CHIP_DIVISOR) for w in weights], [1, 1, 1]
+        )
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ A collar is only worth having if it changes the outline at chip size, so the two
 checks here are the two the reviews asked for — the cuts differ at 31px, and no
 chest treatment need be worn by more than two of the twenty-two.
 
-The ramp is a stand-in: `light.build_ramp` lands with the light model, and this
+The ramp is a stand-in: `light.Ramp.of_material` lands with the light model, and this
 module only ever reads the four tones and the rim off whatever it is handed.
 """
 
@@ -12,16 +12,16 @@ from __future__ import annotations
 
 import re
 import unittest
-from pathlib import Path
 
 from PIL import Image, ImageChops
 
+from cells import colours, tally
+from game import GAME, scrape
 from portraitgen import uniform
 from portraitgen.canvas import Canvas
 from portraitgen.light import Ramp
 from portraitgen.palette import faction_by_key
 
-GAME = Path(__file__).resolve().parents[3]
 UI_THEME = GAME / "scenes/common/ui_theme.gd"
 # `const AMMO := Color(r, g, b)` — the one gold the portraits borrow, read back
 # out of the game the way the faction themes are.
@@ -29,11 +29,14 @@ _AMMO = re.compile(r"const AMMO := Color\(([^)]*)\)")
 
 FACTION = faction_by_key("aurora")
 RAMP = Ramp(
-    deep=(24, 34, 58),
-    shade=(38, 54, 92),
-    base=(56, 78, 132),
-    lit=(84, 110, 172),
-    rim=(150, 176, 226),
+    (
+        (14, 20, 34),
+        (24, 34, 58),
+        (38, 54, 92),
+        (56, 78, 132),
+        (84, 110, 172),
+        (150, 176, 226),
+    )
 )
 # The roster is twenty-two generals and no chest treatment may be worn by more
 # than two of them.
@@ -68,7 +71,7 @@ class TheCutsAreToldApartAtChipSize(unittest.TestCase):
     def _chip(self, collar: str) -> Image.Image:
         canvas = _uniform(collar)
         crop = canvas.image.crop(
-            tuple(round(v * canvas.scale) for v in (56, 180, 164, 260))
+            tuple(round(v / canvas.divisor) for v in (56, 180, 164, 260))
         )
         return crop.resize((31, 23), Image.Resampling.BOX).convert("RGB")
 
@@ -116,16 +119,12 @@ class TheHarnessIsTheOneTreatmentWithNoPayload(unittest.TestCase):
         return canvas
 
     def test_the_harness_carries_nothing(self):
-        painted = {
-            colour[:3]
-            for _, colour in self._webbing().image.getcolors(maxcolors=1 << 16)
-            if colour[3] > 0
-        }
+        painted = colours(self._webbing())
         self.assertNotIn(uniform.GOLD, painted)
 
     def test_the_harness_is_two_straps(self):
         canvas = self._webbing()
-        row = canvas.scale * 240
+        row = 240 / canvas.divisor
         opaque = [
             canvas.image.getpixel((x, row))[3] > 0 for x in range(canvas.image.width)
         ]
@@ -142,9 +141,7 @@ class TheGoldIsTheGame(unittest.TestCase):
     """
 
     def test_the_gold_is_ui_themes_ammo(self):
-        self.assertTrue(UI_THEME.is_file(), UI_THEME)
-        found = _AMMO.search(UI_THEME.read_text())
-        self.assertIsNotNone(found, f"no AMMO constant in {UI_THEME}")
+        found = scrape(UI_THEME, _AMMO)
         channels = tuple(float(v) for v in found.group(1).split(",")[:3])
         self.assertEqual(uniform.GOLD, tuple(round(v * 255.0) for v in channels))
 
@@ -153,21 +150,21 @@ class TheGoldIsTheRankPip(unittest.TestCase):
     def test_the_pip_is_gold_over_ink_and_nothing_else(self):
         canvas = Canvas()
         uniform.pip(canvas, RAMP)
-        colours = {colour for _, colour in canvas.image.getcolors(maxcolors=1 << 16)}
-        self.assertEqual(len(colours), 3, colours)
-        self.assertIn((*uniform.GOLD, 255), colours)
+        tones = {colour for _, colour in tally(canvas.image)}
+        self.assertEqual(len(tones), 3, tones)
+        self.assertIn((*uniform.GOLD, 255), tones)
 
     def test_the_pip_is_a_stud_rather_than_a_badge(self):
         canvas = Canvas()
         uniform.pip(canvas, RAMP)
         left, top, right, bottom = canvas.image.getbbox()
-        self.assertLess((right - left) / canvas.scale, 16)
-        self.assertLess((bottom - top) / canvas.scale, 16)
+        self.assertLess((right - left) * canvas.divisor, 16)
+        self.assertLess((bottom - top) * canvas.divisor, 16)
 
 
 class ThePaletteIsBounded(unittest.TestCase):
-    """Counted on the working canvas: the box downsample is this pipeline's
-    antialiasing, so the tones authored here are what the budget is about."""
+    """Counted on the canvas: nothing downsamples or blends, so the tones
+    authored here are the tones the finished raster carries."""
 
     def test_a_dressed_bust_is_painted_in_named_tones(self):
         for collar in sorted(uniform.COLLAR_CUTS):
@@ -176,9 +173,7 @@ class ThePaletteIsBounded(unittest.TestCase):
                     canvas = _uniform(collar)
                     uniform.chest(canvas, treatment, FACTION, RAMP)
                     uniform.pip(canvas, RAMP)
-                    self.assertLessEqual(
-                        len(canvas.image.getcolors(maxcolors=1 << 16)), 16
-                    )
+                    self.assertLessEqual(len(tally(canvas.image)), 16)
 
 
 if __name__ == "__main__":

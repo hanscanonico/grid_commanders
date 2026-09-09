@@ -9,11 +9,24 @@ own order so the two read side by side.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import NamedTuple
 
 from .head import HEAD_DEFAULT, SKIN_BASES, Skull
 from .uniform import CHEST_DEFAULT
 
-Pose = tuple[float, float, bool]
+
+class Pose(NamedTuple):
+    """How a bust is set on the sheet: a lean, a crop and which way it faces.
+
+    `tilt` is degrees about the head, `zoom` is taken about the bottom centre,
+    and `mirrored` turns the layers that carry a face's asymmetry. Named fields
+    rather than a bare triple: three anonymous numbers at every call site is how
+    a tilt and a zoom get read the wrong way round.
+    """
+
+    tilt: float
+    zoom: float
+    mirrored: bool
 
 
 @dataclass(frozen=True)
@@ -23,8 +36,8 @@ class Face:
     `skin` and `hair` name a ramp, `style` a hair mass, `brow`/`eyes`/`mouth`/
     `nose`/`facial`/`acc` a feature glyph, `collar` a cut, `chest` what is worn
     under it, `bg` a backdrop and `prop` a signature prop; `eye` scales the eyes
-    (0.82-1.06), `head` is the skull's four dials and `pose` is
-    [tilt degrees, zoom, mirrored].
+    (0.82-1.06), `head` is the skull's four dials and `pose` how the bust is set
+    on the sheet.
 
     `acc2` is a second worn glyph, drawn over the first. It exists because a
     general who takes headwear was paying for it with a face mark: the review's
@@ -79,7 +92,7 @@ class EmptySeat:
 SKIN_TONES = frozenset(SKIN_BASES)
 
 NEUTRAL_ID = "none"
-NEUTRAL = EmptySeat(head=Skull(*HEAD_DEFAULT), pose=(0.0, 1.18, False), bg="bars")
+NEUTRAL = EmptySeat(head=Skull(*HEAD_DEFAULT), pose=Pose(0.0, 1.18, False), bg="bars")
 
 FACES: dict[str, Face] = {
     face.id: face
@@ -100,7 +113,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(0.96, "round", 0.5, 1.0),
             nose="tick",
-            pose=(-5.0, 1.2, False),
+            pose=Pose(-5.0, 1.2, False),
             bg="rays",
             prop="sabre",
         ),
@@ -119,7 +132,7 @@ FACES: dict[str, Face] = {
             collar="double",
             head=Skull(1.08, "square", -2.0, 1.0),
             nose="broad",
-            pose=(3.0, 1.14, False),
+            pose=Pose(3.0, 1.14, False),
             bg="halftone",
             prop="pipe",
         ),
@@ -138,7 +151,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(0.92, "tapered", 0.0, 1.05),
             nose="tick",
-            pose=(-8.0, 1.24, True),
+            pose=Pose(-8.0, 1.24, True),
             bg="speed",
             prop="wrench",
         ),
@@ -157,7 +170,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(1.1, "square", 1.0, 0.94),
             nose="hook",
-            pose=(6.0, 1.22, False),
+            pose=Pose(6.0, 1.22, False),
             bg="wedge",
             prop="cigar",
         ),
@@ -176,7 +189,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(0.94, "tapered", 1.0, 1.0),
             nose="hook",
-            pose=(0.0, 1.18, False),
+            pose=Pose(0.0, 1.18, False),
             bg="bars",
             prop="baton",
         ),
@@ -195,7 +208,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(1.12, "square", -1.0, 0.94),
             nose="broad",
-            pose=(-3.0, 1.26, False),
+            pose=Pose(-3.0, 1.26, False),
             bg="burst",
             prop="medal",
         ),
@@ -214,7 +227,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(0.92, "tapered", 1.0, 1.0),
             nose="hook",
-            pose=(8.0, 1.18, True),
+            pose=Pose(8.0, 1.18, True),
             bg="halftone",
             prop="card",
         ),
@@ -233,7 +246,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(0.88, "tapered", 2.0, 0.94),
             nose="hook",
-            pose=(-4.0, 1.12, False),
+            pose=Pose(-4.0, 1.12, False),
             bg="grid",
             prop="book",
         ),
@@ -252,7 +265,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(0.9, "round", 1.0, 1.08),
             nose="tick",
-            pose=(-9.0, 1.22, False),
+            pose=Pose(-9.0, 1.22, False),
             bg="speed",
             prop="drone",
         ),
@@ -272,7 +285,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(0.92, "round", 0.5, 1.06),
             nose="broad",
-            pose=(4.0, 1.16, False),
+            pose=Pose(4.0, 1.16, False),
             bg="rays",
             prop="monocle",
         ),
@@ -291,7 +304,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(0.88, "tapered", 0.5, 0.96),
             nose="tick",
-            pose=(0.0, 1.24, False),
+            pose=Pose(0.0, 1.24, False),
             bg="wedge",
             prop="dagger",
         ),
@@ -310,7 +323,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(1.06, "round", 0.0, 1.0),
             nose="broad",
-            pose=(-6.0, 1.2, False),
+            pose=Pose(-6.0, 1.2, False),
             bg="burst",
             prop="radio",
         ),
@@ -330,7 +343,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(0.94, "round", 0.5, 1.02),
             nose="tick",
-            pose=(-4.0, 1.18, False),
+            pose=Pose(-4.0, 1.18, False),
             bg="grid",
             prop="ledger",
         ),
@@ -349,7 +362,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(1.04, "tapered", -3.0, 0.98),
             nose="hook",
-            pose=(5.0, 1.25, False),
+            pose=Pose(5.0, 1.25, False),
             bg="wedge",
             prop="helm",
         ),
@@ -368,7 +381,7 @@ FACES: dict[str, Face] = {
             collar="v",
             head=Skull(0.98, "round", 0.0, 1.06),
             nose="hook",
-            pose=(-7.0, 1.2, True),
+            pose=Pose(-7.0, 1.2, True),
             bg="speed",
             prop="plane",
         ),
@@ -387,7 +400,7 @@ FACES: dict[str, Face] = {
             collar="double",
             head=Skull(1.08, "round", -2.0, 1.0),
             nose="hook",
-            pose=(3.0, 1.16, False),
+            pose=Pose(3.0, 1.16, False),
             bg="rays",
             prop="anchor",
         ),
@@ -407,7 +420,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(1.08, "square", 0.0, 0.96),
             nose="broad",
-            pose=(7.0, 1.24, False),
+            pose=Pose(7.0, 1.24, False),
             bg="bars",
             prop="coins",
         ),
@@ -427,7 +440,7 @@ FACES: dict[str, Face] = {
             pip=True,
             head=Skull(0.9, "tapered", 0.5, 1.08),
             nose="tick",
-            pose=(-6.0, 1.22, False),
+            pose=Pose(-6.0, 1.22, False),
             bg="halftone",
             prop="whistle",
         ),
@@ -446,7 +459,7 @@ FACES: dict[str, Face] = {
             collar="mandarin",
             head=Skull(0.9, "round", 1.0, 1.04),
             nose="tick",
-            pose=(5.0, 1.2, True),
+            pose=Pose(5.0, 1.2, True),
             bg="wedge",
             prop="compass",
         ),
@@ -466,7 +479,7 @@ FACES: dict[str, Face] = {
             pip=True,
             head=Skull(1.0, "square", 0.0, 0.98),
             nose="tick",
-            pose=(0.0, 1.16, False),
+            pose=Pose(0.0, 1.16, False),
             bg="grid",
             prop="scales",
         ),
@@ -486,7 +499,7 @@ FACES: dict[str, Face] = {
             pip=True,
             head=Skull(1.1, "square", -0.5, 0.96),
             nose="broad",
-            pose=(-5.0, 1.26, True),
+            pose=Pose(-5.0, 1.26, True),
             bg="burst",
             prop="axe",
         ),
@@ -506,7 +519,7 @@ FACES: dict[str, Face] = {
             pip=True,
             head=Skull(1.14, "square", -1.5, 0.94),
             nose="hook",
-            pose=(2.0, 1.28, False),
+            pose=Pose(2.0, 1.28, False),
             bg="halftone",
             prop="hammer",
         ),

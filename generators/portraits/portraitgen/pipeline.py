@@ -1,8 +1,9 @@
 """Deterministic portrait pipeline for grid_commanders.
 
-Bakes the art `CommanderVisuals` loads: the five 64x64 faction emblems and the
-twenty-three 220x268 commander busts. There are no seeds and no randomness —
-every mark is authored, so every run reproduces the same bytes.
+Bakes the art `CommanderVisuals` loads: the five 64x64 faction emblems, the
+twenty-three 110x134 commander busts and the 31x31 face chip each bust's own
+drawing is repainted as. There are no seeds and no randomness — every mark is
+authored, so every run reproduces the same bytes.
 
 `OUTPUTS` is the one statement of what a run produces. Each `Output` carries
 the directory of a game checkout it installs into, so `install` derives its copy
@@ -11,7 +12,8 @@ that has to be kept in step.
 
 Outputs (under --out, default ./out):
   factions/<key>.png     64x64 RGBA emblem — drop-in for assets/portraits/factions
-  commanders/<id>.png    220x268 RGBA bust — drop-in for assets/portraits/commanders
+  commanders/<id>.png    110x134 RGBA bust — drop-in for assets/portraits/commanders
+  faces/<id>.png         31x31 RGBA chip — drop-in for assets/portraits/faces
 """
 
 from __future__ import annotations
@@ -27,12 +29,14 @@ from pathlib import Path
 from PIL import Image
 
 from .bust import busts as painted_busts
+from .bust import chips as face_chips
 from .emblem import draw as draw_emblem
 from .palette import EMBLEM_KEYS
 
 # Where each kind of output lands in a grid_commanders checkout.
 EMBLEMS, EMBLEMS_DIR = "factions", "assets/portraits/factions"
 BUSTS, BUSTS_DIR = "commanders", "assets/portraits/commanders"
+FACES, FACES_DIR = "faces", "assets/portraits/faces"
 
 
 @dataclass(frozen=True)
@@ -63,8 +67,19 @@ def busts() -> Iterator[Output]:
         yield Output(f"{BUSTS}/{painted.id}.png", lambda p=painted: p.image, BUSTS_DIR)
 
 
+def faces() -> Iterator[Output]:
+    """One face chip per general, and the empty seat.
+
+    Its own pass rather than a crop of the bust above: a chip is the same
+    drawing rasterised on the chip grid, so the head a HUD shows is as
+    hard-edged as the bust a card shows.
+    """
+    for chip in face_chips():
+        yield Output(f"{FACES}/{chip.id}.png", lambda c=chip: c.image, FACES_DIR)
+
+
 # Every file a full run writes, in the order it writes them.
-OUTPUTS: tuple[Output, ...] = (*emblems(), *busts())
+OUTPUTS: tuple[Output, ...] = (*emblems(), *busts(), *faces())
 
 
 def generate(out: Path, *, log: Callable[[str], None] = print) -> None:

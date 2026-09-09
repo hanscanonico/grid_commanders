@@ -581,10 +581,11 @@ grind-status:
 	tools/grind/status.sh $(STATUS)
 
 # Regenerates the art under assets/portraits with generators/portraits and
-# re-imports so the new PNGs register: the five faction emblems and the
-# twenty-three commander busts, which is the whole of it — nothing else bakes
-# this art. Committed art, so this only needs rerunning when the generator
-# changes or a commander is added. `make portraits-snapshot` is its gate.
+# re-imports so the new PNGs register: the five faction emblems, the
+# twenty-three commander busts and the twenty-three face chips beside them,
+# which is the whole of it — nothing else bakes this art. Committed art, so
+# this only needs rerunning when the generator changes or a commander is added.
+# `make portraits-snapshot` is its gate.
 portraits:
 	$(call require-portraitgen)
 	"$(PORTRAITGEN_PY)" "$(PORTRAITGEN)/portrait_generator.py" \

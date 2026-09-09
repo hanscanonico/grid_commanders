@@ -166,9 +166,11 @@ const HUD_CLIP_GAP := 5
 ## fixed height, which is why there are two and not one.
 const HUD_TOP_RULE_H := HUD_TOP_H - 10
 const HUD_BOTTOM_RULE_H := HUD_BOTTOM_H - 18
-## The bottom bar's three pictures: the commander's portrait field (handoff 62px),
-## the unit icon (64) and the terrain chip's tile (40).
-const HUD_PORTRAIT := 31
+## The bottom bar's three pictures: the commander's portrait field, the unit icon
+## (handoff 64) and the terrain chip's tile (40). The portrait is the baked face
+## chip at one texel to one pixel, so it is the chip's own size rather than a
+## metric of this bar's — a bar that named its own number would crop the art.
+const HUD_PORTRAIT := CommanderVisuals.FACE_SIZE.x
 const HUD_UNIT_ICON := 32
 const HUD_TILE_ICON := 20
 ## The charge meter's trough (handoff 132x12), and the floor width of the

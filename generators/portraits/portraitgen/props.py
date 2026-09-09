@@ -27,9 +27,17 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Iterable
 
-from .canvas import INK_DETAIL, INK_FEATURE, INK_SILHOUETTE, Canvas, Point
+from .canvas import (
+    DESIGN_SIZE,
+    INK_DETAIL,
+    INK_FEATURE,
+    INK_SILHOUETTE,
+    Canvas,
+    Point,
+)
 from .light import Ramp
 from .palette import INK, RGB, Faction
+from .vocab import known
 
 PROPS = frozenset(
     {
@@ -63,18 +71,18 @@ SHOULDERED = frozenset({"anchor", "axe", "hammer", "sabre", "wrench"})
 # of it, or — for a preview or a test — both at once.
 LAYERS = frozenset({"all", "back", "front"})
 
-# The hard offset shadow every prop drops, in portrait pixels: pure black, no
+# The hard offset shadow every prop drops, in design units: pure black, no
 # blur, down and to the right, the same direction the bust's own cast runs.
 PROP_CAST = (2, 2)
 PROP_CAST_TONE = (0, 0, 0, 64)
 
-# The four pixels of bleed the raster needs on the right, and the x no prop may
-# cross because of it.
+# The four design units of bleed the raster needs on the right, and the x no
+# prop may cross because of it.
 RIGHT_BLEED = 4.0
-RIGHT_LIMIT = 220.0 - RIGHT_BLEED
+RIGHT_LIMIT = DESIGN_SIZE[0] - RIGHT_BLEED
 
 # The row a mouth is drawn on and the lip corner a smoked prop leaves from, in
-# portrait pixels: the reference mouth of `features.py` fitted to a skull lands
+# design units: the reference mouth of `features.py` fitted to a skull lands
 # here, and a prop is drawn in raster space rather than in that skull's frame,
 # so the one row the two layers share is stated once.
 MOUTH_LINE = 170.0
@@ -154,11 +162,14 @@ def _sleeve(canvas: Canvas, cuff: Point, faction: Faction, ramp: Ramp) -> None:
 
 
 def _cord(canvas: Canvas, path: Iterable[Point], colour: RGB) -> None:
-    """One rope of a lanyard, a cable or a sling: ink under a lighter core, so a
-    cord thin enough to read as rope still carries the sheet's outline."""
-    run = list(path)
-    canvas.stroke(run, INK_FEATURE, (*INK, 255))
-    canvas.stroke(run, INK_DETAIL, (*colour, 255))
+    """One rope of a lanyard, a cable or a sling, drawn to the gauge.
+
+    Two texels: the core over the path, the ink one texel toward the shadow.
+    Stroking both weights down the same path — what this did — put the core
+    over every pixel of the ink and left a bare one-texel run, which is the
+    dotted chain the review read off Rowan's monocle and Flux's headset.
+    """
+    canvas.ribbon(list(path), (*colour, 255), (*INK, 255))
 
 
 # --- the five shouldered objects, drawn behind the figure ---------------------
@@ -356,9 +367,11 @@ def _medal(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 
 def _drone(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
-    canvas.stroke(
-        [(164.0, 112.0), (176.0, 162.0), (168.0, 214.0)], INK_DETAIL, (*SLATE, 255)
-    )
+    """A quadcopter on its tether. The tether is a `_cord` like every other run
+    on the sheet that has to read as a line: stroked at the detail weight it was
+    one texel of slate falling fifty down a slope, which is the only continuous
+    one-texel mark the round-2 sweep left standing."""
+    _cord(canvas, [(164.0, 112.0), (176.0, 162.0), (168.0, 214.0)], SLATE)
     _shape(canvas, _box(142.0, 90.0, 160.0, 96.0), faction.body_lt, INK_DETAIL)
     _shape(canvas, _box(168.0, 90.0, 186.0, 96.0), faction.body_lt, INK_DETAIL)
     _shape(canvas, _box(150.0, 96.0, 178.0, 114.0), SLATE)
@@ -469,7 +482,8 @@ def _dagger(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
 
 def _plane(canvas: Canvas, faction: Faction, ramp: Ramp) -> None:
     """Landed on the shoulder, under a mounting strap, and clear of the jaw:
-    held up at the chin it cut the crop the HUD chip is taken from."""
+    held up at the chin it cut into the head's own square, which the HUD chip is
+    painted again on."""
     _shape(
         canvas,
         [(150.0, 219.0), (172.0, 253.0), (164.0, 259.0), (142.0, 225.0)],
@@ -603,11 +617,9 @@ def draw(
     `layer` is which half the painter wants: the bust is drawn between `back`
     and `front`, and `all` paints both onto one surface for a preview.
     """
-    if key not in PROPS:
-        raise KeyError(f"no prop {key!r} (have {sorted(PROPS)})")
-    if layer not in LAYERS:
-        raise KeyError(f"no prop layer {layer!r} (have {sorted(LAYERS)})")
-    art = Canvas(canvas.size, canvas.scale)
+    known(key, PROPS, "prop")
+    known(layer, LAYERS, "prop layer")
+    art = canvas.blank()
     if layer in ("all", "back") and key in _BACK:
         _BACK[key](art, faction, ramp)
     if layer in ("all", "front"):

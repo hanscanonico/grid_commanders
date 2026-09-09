@@ -1,12 +1,12 @@
-"""Eyes, brows, nose, mouth, facial hair and the worn accessories.
+"""Eyes, brows, nose, mouth and facial hair.
 
 Every vocabulary here is the roster's own, and every one is a dispatch table: an
 unknown key raises rather than drawing a default, which is what the GUT suite's
 three "is it one the file can draw?" lints existed to catch.
 
 The handoff drew every feature against one skull, in a 110x134 viewBox that
-bakes to the pinned 220x268 raster. Its drawing is transcribed here in portrait
-pixels — its own units, doubled, over `REFERENCE_BOX`, which is where that one
+doubles to the 220x268 design space. Its drawing is transcribed here in design
+units — its own units, doubled, over `REFERENCE_BOX`, which is where that one
 skull sits on this raster — and `Frame` fits that one drawing to whatever
 skull `head.outline` actually cut, so a narrow face wears narrow features
 without any of them being authored twice.
@@ -14,6 +14,10 @@ without any of them being authored twice.
 Tones are flat and named: a band comes off a ramp, never off an alpha wash, and
 ink is the feature and detail weights only. The silhouette weight belongs to the
 outline of the bust, which is `head`'s and `hair`'s to draw.
+
+The worn accessories are the neighbouring module's: they fit to the same `Frame`
+and read the same eye line, so `accessories.py` imports this one and nothing
+here imports it back.
 """
 
 from __future__ import annotations
@@ -26,8 +30,9 @@ from .canvas import INK_DETAIL, INK_FEATURE, Box, Canvas, Point
 from .head import Skull
 from .light import Ramp
 from .palette import INK, RGB
+from .vocab import known, pick
 
-# The handoff's skull at width 1.0: left, top, right, bottom in portrait pixels.
+# The handoff's skull at width 1.0: left, top, right, bottom in design units.
 REFERENCE_BOX: Box = (64.0, 82.0, 156.0, 206.0)
 # The face's own landmarks in that drawing: the line the eyes sit on, how far a
 # spread of 1.0 walks them apart, and the near ear's centre and radius.
@@ -41,19 +46,12 @@ EYE_DEFAULT = 1.0
 # what reads as a child's avatar rather than as a general.
 EYE_SINGLE_CATCHLIGHT = 0.92
 
-# The tones features carry that are neither skin nor hair: the design system's
-# own kit colours (UiTheme SLATE_700, SLATE_800 and AMMO), the handoff's goggle
-# glass, and the one flesh tone a scar is cut in.
+# The tones a feature carries that are neither skin nor hair: two of the design
+# system's own kit colours (UiTheme SLATE_700 and AMMO). What headwear spends
+# beyond these is `accessories.py`'s.
 SCLERA: RGB = (255, 255, 255)
 IRIS: RGB = (58, 63, 69)
-KIT: RGB = (43, 47, 52)
-GLASS: RGB = (188, 214, 224)
 GOLD: RGB = (224, 169, 46)
-SCAR: RGB = (181, 107, 90)
-
-# Half a lens, squared on the eye line: what survives the mip is the square,
-# not the frame drawn around it.
-LENS_HALF = 14.0
 
 
 @dataclass(frozen=True)
@@ -86,14 +84,14 @@ class Frame:
         return (*self.at(cx - rx, cy - ry), *self.at(cx + rx, cy + ry))
 
 
-def _eye_xs(skull: Skull) -> tuple[float, float]:
-    """The two eye centres, in reference pixels, walked apart by the spread."""
+def eye_xs(skull: Skull) -> tuple[float, float]:
+    """The two eye centres, in design units, walked apart by the spread."""
     half = EYE_HALF * skull.spread
     centre = (REFERENCE_BOX[0] + REFERENCE_BOX[2]) / 2.0
     return (centre - half, centre + half)
 
 
-def _ringed_ellipse(
+def ringed_ellipse(
     canvas: Canvas,
     frame: Frame,
     centre: tuple[float, float],
@@ -142,9 +140,9 @@ def eyes(
 
     `covered` is the socket a worn accessory hides, from `covered_eye`.
     """
-    shape = _EYES[kind]
+    shape = pick(_EYES, kind, "eyes")
     frame = Frame.of(skull)
-    for side, x in enumerate(_eye_xs(skull)):
+    for side, x in enumerate(eye_xs(skull)):
         if side == covered:
             continue
         if shape.closed:
@@ -156,7 +154,7 @@ def eyes(
             canvas.stroke(frame.path(shut), INK_FEATURE, INK)
             continue
         rx, ry = EYE_RX * scale, shape.ry * scale
-        _ringed_ellipse(canvas, frame, (x, EYE_LINE), (rx, ry), SCLERA, INK_FEATURE)
+        ringed_ellipse(canvas, frame, (x, EYE_LINE), (rx, ry), SCLERA, INK_FEATURE)
         iris = min(shape.pupil * 1.8 * scale, ry * 0.95)
         canvas.ellipse(frame.ellipse(x, EYE_LINE + 0.4 * scale, iris, iris), IRIS)
         pupil = shape.pupil * scale
@@ -198,12 +196,15 @@ class BrowShape:
     thickness: float
 
 
+# Thickness is in design units and a brow tapers to 40% of it at the outer end,
+# so anything under five came off the grid as a one-texel line that broke where
+# it leaned. Five is the floor here for that reason, not for a drawing one.
 _BROWS: dict[str, BrowShape] = {
-    "angled": BrowShape(125.0, 128.5, 132.0, 11.0, 4.0),
-    "cocked": BrowShape(124.0, 119.0, 124.0, 10.0, 3.5),
-    "heavy": BrowShape(128.0, 131.0, 134.0, 11.0, 6.0),
-    "raised": BrowShape(124.0, 119.0, 124.0, 10.0, 3.5),
-    "soft": BrowShape(127.0, 123.0, 127.0, 10.0, 3.5),
+    "angled": BrowShape(125.0, 128.5, 132.0, 11.0, 5.5),
+    "cocked": BrowShape(124.0, 119.0, 124.0, 10.0, 5.0),
+    "heavy": BrowShape(128.0, 131.0, 134.0, 11.0, 6.5),
+    "raised": BrowShape(124.0, 119.0, 124.0, 10.0, 5.0),
+    "soft": BrowShape(127.0, 123.0, 127.0, 10.0, 5.0),
 }
 BROW_KINDS = frozenset(_BROWS)
 
@@ -211,10 +212,17 @@ BROW_KINDS = frozenset(_BROWS)
 def brow(
     canvas: Canvas, skull: Skull, kind: str, ramp: Ramp, *, covered: int | None = None
 ) -> None:
-    """A tapered mass per eye, in the hair ramp, under a deep-tone edge."""
-    shape = _BROWS[kind]
+    """A tapered mass per eye, in one rung of the hair ramp and no more.
+
+    The mass used to carry a deep-tone hairline along its own top edge. A brow
+    is between two and three texels thick here, so that line was one texel of a
+    detail tone over a taper — and it came off the rasteriser as the string of
+    ink fragments the review read over Vale's and Draeg's sockets. The shade
+    rung the mass is painted in is what the hairline was there to buy.
+    """
+    shape = pick(_BROWS, kind, "brow")
     frame = Frame.of(skull)
-    for side, x in enumerate(_eye_xs(skull)):
+    for side, x in enumerate(eye_xs(skull)):
         if side == covered:
             continue
         # `cocked` is the one brow whose halves differ: one raised, one level.
@@ -228,29 +236,75 @@ def brow(
             (x, worn.middle + worn.thickness),
             (outer, worn.outer + worn.thickness * 0.4),
         ]
-        canvas.polygon(frame.path([*top, *bottom]), ramp.base)
-        canvas.stroke(frame.path(top), INK_DETAIL, ramp.deep)
+        canvas.polygon(frame.path([*top, *bottom]), ramp.shade)
 
 
 # --- nose --------------------------------------------------------------------
 
-_NOSES: dict[str, tuple[Point, ...]] = {
-    "broad": ((110.0, 121.0), (103.6, 130.0), (110.0, 136.0), (116.4, 130.0)),
-    "hook": ((111.2, 116.0), (116.4, 126.8), (112.8, 132.8), (106.0, 132.0)),
-    "tick": ((110.0, 120.0), (107.0, 130.0), (110.0, 133.0), (114.0, 130.4)),
+# The midline every nose is built on, and how deep its underside runs: two
+# texels, so the darkest mark on the face holds the gauge on its own.
+NOSE_X = 110.0
+NOSE_UNDERSIDE = 4.0
+# Where a nose may start. It used to be drawn between 116 and 136 — the band the
+# brows occupy, a good ten texels above the eye line — and what that put on
+# twenty-two foreheads was a wrinkle, or a bindi, rather than a nose. It begins
+# below the eyes now, and this is the floor the suite holds it to.
+NOSE_TOP_FLOOR = EYE_LINE + 2.0
+
+
+@dataclass(frozen=True)
+class NoseShape:
+    """A nose as two marks under the eye line, and no line of its own.
+
+    A stroke down the bridge is one texel of a deep tone laid on a slope, which
+    is the mark the gauge exists to refuse. What is left is what a nose is at
+    this size: the plane the key does not reach, in the skin's shade rung, and
+    the bar of the tip's own underside in its deep one.
+    """
+
+    top: float
+    base: float
+    flank: float
+    wing: float
+
+
+_NOSES: dict[str, NoseShape] = {
+    "broad": NoseShape(top=147.0, base=156.0, flank=8.0, wing=7.0),
+    "hook": NoseShape(top=145.0, base=157.0, flank=7.0, wing=5.0),
+    "tick": NoseShape(top=149.0, base=155.0, flank=5.0, wing=5.0),
 }
 NOSE_KINDS = frozenset(_NOSES)
 
 
+def nose_shape(kind: str) -> NoseShape:
+    """One nose's authored geometry — where the suite that holds every nose
+    under the eye line reads it, so the table itself stays this module's."""
+    return pick(_NOSES, kind, "nose")
+
+
 def nose(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
-    """The nose's own line, over the flat plane the light leaves beside it."""
-    line = _NOSES[kind]
+    """The shadow plane beside the bridge, and the bar under the tip."""
+    shape = nose_shape(kind)
     frame = Frame.of(skull)
     # The light is fixed upper-left, so the plane the nose turns away from it is
     # the one to its right; it is a flat band of the skin's own shade tone.
-    plane = [line[0], line[-1], (line[0][0] + 4.0, line[0][1] + 3.0)]
+    plane = [
+        (NOSE_X, shape.top),
+        (NOSE_X + shape.flank, shape.base),
+        (NOSE_X, shape.base),
+    ]
     canvas.polygon(frame.path(plane), ramp.shade)
-    canvas.stroke(frame.path(line), INK_FEATURE, ramp.deep)
+    canvas.polygon(
+        frame.path(
+            [
+                (NOSE_X - shape.wing, shape.base),
+                (NOSE_X + shape.wing, shape.base),
+                (NOSE_X + shape.wing, shape.base + NOSE_UNDERSIDE),
+                (NOSE_X - shape.wing, shape.base + NOSE_UNDERSIDE),
+            ]
+        ),
+        ramp.deep,
+    )
 
 
 # --- mouth -------------------------------------------------------------------
@@ -320,10 +374,13 @@ _OPEN: dict[str, OpenMouth] = {
 }
 OPEN_MOUTH_KINDS = frozenset(_OPEN)
 MOUTH_KINDS = frozenset(_MOUTHS) | OPEN_MOUTH_KINDS
+# The highest row a mouth reaches, an open one's lip line: the ceiling a nose's
+# own underside has to end above, so the two never run into one mass.
+MOUTH_CEILING = min(shape.top for shape in _OPEN.values())
 
 
 def _mouth_half(eye: float) -> float:
-    """Half an open mouth's width, in reference pixels, at one eye dial."""
+    """Half an open mouth's width, in design units, at one eye dial."""
     return MOUTH_EYE_SPAN * (EYE_RX * eye + INK_FEATURE / 2.0) - INK_FEATURE / 2.0
 
 
@@ -393,7 +450,7 @@ def mouth(canvas: Canvas, skull: Skull, kind: str, *, eye: float = EYE_DEFAULT) 
     if kind in _OPEN:
         _opened(canvas, frame, _OPEN[kind], _mouth_half(eye))
         return
-    _MOUTHS[kind](canvas, frame)
+    _MOUTHS[known(kind, MOUTH_KINDS, "mouth")](canvas, frame)
 
 
 # --- facial hair -------------------------------------------------------------
@@ -419,12 +476,23 @@ _STUBBLE: tuple[Point, ...] = (
     (80.0, 184.0),
 )
 _MUSTACHE: tuple[Point, ...] = (
-    (92.0, 160.0),
-    (110.0, 156.0),
-    (128.0, 160.0),
-    (120.0, 168.0),
-    (110.0, 166.0),
-    (100.0, 168.0),
+    (92.0, 158.0),
+    (110.0, 154.0),
+    (128.0, 158.0),
+    (128.0, 166.0),
+    (110.0, 164.0),
+    (92.0, 166.0),
+)
+# The band the light leaves under it, as a band rather than as a line: the
+# lower edge used to be a one-texel run of the deep tone along a shallow
+# diagonal, which is the smudge the review read on Vale's lip.
+_MUSTACHE_SHADE: tuple[Point, ...] = (
+    (92.0, 162.0),
+    (110.0, 160.0),
+    (128.0, 162.0),
+    (128.0, 166.0),
+    (110.0, 164.0),
+    (92.0, 166.0),
 )
 # The band the light leaves along a beard's shadow side, and the one it lights.
 _BEARD_DEEP: tuple[Point, ...] = (
@@ -455,7 +523,7 @@ def _stubble(canvas: Canvas, frame: Frame, ramp: Ramp) -> None:
 
 def _mustache(canvas: Canvas, frame: Frame, ramp: Ramp) -> None:
     canvas.polygon(frame.path(_MUSTACHE), ramp.base)
-    canvas.stroke(frame.path(_MUSTACHE[3:]), INK_DETAIL, ramp.deep)
+    canvas.polygon(frame.path(_MUSTACHE_SHADE), ramp.shade)
 
 
 def _bare(canvas: Canvas, frame: Frame, ramp: Ramp) -> None:
@@ -472,306 +540,33 @@ FACIAL_KINDS = frozenset(_FACIAL)
 
 
 def facial_hair(canvas: Canvas, skull: Skull, kind: str, ramp: Ramp) -> None:
-    _FACIAL[kind](canvas, Frame.of(skull), ramp)
-
-
-# --- accessories -------------------------------------------------------------
-
-_BANDANA: tuple[Point, ...] = (
-    (60.0, 88.0),
-    (76.0, 78.0),
-    (110.0, 76.0),
-    (144.0, 78.0),
-    (160.0, 88.0),
-    (152.0, 94.0),
-    (68.0, 94.0),
-)
-_HEADBAND: tuple[Point, ...] = (
-    (60.0, 82.0),
-    (160.0, 82.0),
-    (160.0, 94.0),
-    (60.0, 94.0),
-)
-_HOOD: tuple[Point, ...] = (
-    (48.0, 156.0),
-    (44.0, 96.0),
-    (110.0, 74.0),
-    (176.0, 96.0),
-    (172.0, 156.0),
-    (160.0, 116.0),
-    (110.0, 110.0),
-    (60.0, 116.0),
-)
-_HOOD_LINING: tuple[Point, ...] = (
-    (48.0, 156.0),
-    (56.0, 122.0),
-    (110.0, 112.0),
-    (164.0, 122.0),
-    (172.0, 156.0),
-    (160.0, 116.0),
-    (110.0, 110.0),
-    (60.0, 116.0),
-)
-# The service cap: a saucer crown that overhangs its band on both sides, and a
-# peak wider than either. Both are the silhouette — this is the dress cap, and
-# the field cap below it is the same head with all of that taken off.
-_CAP_CROWN: tuple[Point, ...] = (
-    (50.0, 88.0),
-    (54.0, 56.0),
-    (98.0, 44.0),
-    (124.0, 44.0),
-    (166.0, 56.0),
-    (170.0, 88.0),
-)
-_CAP_BAND: tuple[Point, ...] = (
-    (54.0, 86.0),
-    (166.0, 86.0),
-    (166.0, 100.0),
-    (54.0, 100.0),
-)
-_CAP_PEAK: tuple[Point, ...] = (
-    (44.0, 98.0),
-    (176.0, 98.0),
-    (162.0, 114.0),
-    (58.0, 114.0),
-)
-# The soft field cap: the same band, a lower crown that slouches away from the
-# key, and no peak at all. The peak is the service cap's whole silhouette, so
-# leaving it off is what tells the two caps apart at chip size.
-_FIELD_CROWN: tuple[Point, ...] = (
-    (56.0, 92.0),
-    (60.0, 76.0),
-    (92.0, 66.0),
-    (140.0, 68.0),
-    (168.0, 78.0),
-    (170.0, 92.0),
-)
-_FIELD_BAND: tuple[Point, ...] = (
-    (56.0, 88.0),
-    (168.0, 88.0),
-    (168.0, 102.0),
-    (56.0, 102.0),
-)
-# The eyeshade: a strap and a wide brim over the brow, and no crown — so the
-# hair above it stays part of the outline, which is what separates it from a
-# cap. The brim stops above the brow line the eyes are read against.
-_VISOR_STRAP: tuple[Point, ...] = (
-    (60.0, 90.0),
-    (160.0, 90.0),
-    (160.0, 104.0),
-    (60.0, 104.0),
-)
-_VISOR_BRIM: tuple[Point, ...] = (
-    (42.0, 102.0),
-    (178.0, 102.0),
-    (158.0, 118.0),
-    (62.0, 118.0),
-)
-_GOGGLE_STRAP: tuple[Point, ...] = (
-    (60.0, 100.0),
-    (160.0, 100.0),
-    (160.0, 112.0),
-    (60.0, 112.0),
-)
-_HEADSET_BAND: tuple[Point, ...] = (
-    (60.0, 128.0),
-    (72.0, 92.0),
-    (110.0, 86.0),
-    (148.0, 92.0),
-    (160.0, 128.0),
-)
-_HEADSET_CUP: tuple[Point, ...] = (
-    (52.0, 128.0),
-    (68.0, 128.0),
-    (68.0, 152.0),
-    (52.0, 152.0),
-)
-# The eyepatch: a plate over the eye it covers, in reference pixels off that
-# eye's centre, and the strap that lands on the ear. The plate is one flat tone
-# all through: what the review read as a domino mask was the lit eye and the
-# brow showing inside it, and `covered_eye` is what keeps them off it.
-_PATCH_PLATE: tuple[Point, ...] = (
-    (-15.0, 130.0),
-    (13.0, 127.0),
-    (14.0, 148.0),
-    (0.0, 158.0),
-    (-14.0, 151.0),
-)
-_SCAR_CUTS: tuple[tuple[Point, ...], ...] = (
-    ((134.0, 126.0), (142.0, 148.0)),
-    ((130.0, 132.0), (136.0, 134.0)),
-    ((134.0, 140.0), (140.0, 142.0)),
-)
-
-
-def _worn(points: tuple[Point, ...]) -> Callable[..., list[Point]]:
-    """A piece of headwear: one flat mass of cloth, outlined."""
-
-    def draw(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-        path = frame.path(points)
-        canvas.polygon(path, tint)
-        canvas.stroke(path, INK_FEATURE, INK, closed=True)
-        return path
-
-    return draw
-
-
-def _hood(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    path = frame.path(_HOOD)
-    canvas.polygon(path, tint)
-    canvas.polygon(frame.path(_HOOD_LINING), KIT)
-    canvas.stroke(path, INK_FEATURE, INK, closed=True)
-    return path
-
-
-def _cap(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    """A service cap: a crown in faction cloth over a kit band and a peak.
-
-    The peak is what makes it a cap rather than a hat at chip size — a straight
-    dark bar over the brow, wider than the band it hangs off.
-    """
-    crown = frame.path(_CAP_CROWN)
-    canvas.polygon(crown, tint)
-    canvas.stroke(crown, INK_FEATURE, INK, closed=True)
-    for piece in (_CAP_BAND, _CAP_PEAK):
-        path = frame.path(piece)
-        canvas.polygon(path, KIT)
-        canvas.stroke(path, INK_FEATURE, INK, closed=True)
-    return crown
-
-
-def _fieldcap(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    """A soft field cap: a slouched crown over a kit band, and nothing else."""
-    crown = frame.path(_FIELD_CROWN)
-    canvas.polygon(crown, tint)
-    canvas.stroke(crown, INK_FEATURE, INK, closed=True)
-    band = frame.path(_FIELD_BAND)
-    canvas.polygon(band, KIT)
-    canvas.stroke(band, INK_FEATURE, INK, closed=True)
-    return crown
-
-
-def _visor(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    """An eyeshade: a kit strap carrying a brim in the general's own cloth."""
-    strap = frame.path(_VISOR_STRAP)
-    canvas.polygon(strap, KIT)
-    canvas.stroke(strap, INK_FEATURE, INK, closed=True)
-    brim = frame.path(_VISOR_BRIM)
-    canvas.polygon(brim, tint)
-    canvas.stroke(brim, INK_FEATURE, INK, closed=True)
-    return brim
-
-
-def _goggles(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    path = frame.path(_GOGGLE_STRAP)
-    canvas.polygon(path, KIT)
-    canvas.stroke(path, INK_FEATURE, INK, closed=True)
-    for x in _eye_xs(skull):
-        _ringed_ellipse(canvas, frame, (x, 106.0), (13.0, 13.0), GLASS, INK_FEATURE)
-    return path
-
-
-def _glasses(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    """P17: two squares at the feature weight, and no bridge between them.
-
-    A bridge is the one part of a pair of glasses the mip cannot hold, and it
-    was what joined the two lenses into a single grey smear at chip size."""
-    for x in _eye_xs(skull):
-        lens = (
-            (x - LENS_HALF, EYE_LINE - LENS_HALF),
-            (x + LENS_HALF, EYE_LINE - LENS_HALF),
-            (x + LENS_HALF, EYE_LINE + LENS_HALF),
-            (x - LENS_HALF, EYE_LINE + LENS_HALF),
-        )
-        canvas.stroke(frame.path(lens), INK_FEATURE, INK, closed=True)
-    return []
-
-
-def _eyepatch(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    x = _eye_xs(skull)[0]
-    ear_x, ear_y, radius = EAR
-    outer_x, outer_y = _PATCH_PLATE[0]
-    canvas.stroke(
-        frame.path(
-            [(x + outer_x + 2.0, outer_y + 3.0), (ear_x + radius, ear_y - radius)]
-        ),
-        INK_FEATURE,
-        INK,
-    )
-    canvas.polygon(frame.path([(x + dx, y) for dx, y in _PATCH_PLATE]), INK)
-    return []
-
-
-def _scar(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    for cut in _SCAR_CUTS:
-        canvas.stroke(frame.path(cut), INK_DETAIL, SCAR)
-    return []
-
-
-def _headset(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    band = frame.path(_HEADSET_BAND)
-    canvas.stroke(band, INK_FEATURE, INK)
-    cup = frame.path(_HEADSET_CUP)
-    canvas.polygon(cup, tint)
-    canvas.stroke(cup, INK_FEATURE, INK, closed=True)
-    canvas.stroke(
-        frame.path([(56.0, 148.0), (48.0, 164.0), (80.0, 168.0)]), INK_DETAIL, INK
-    )
-    _ringed_ellipse(canvas, frame, (82.0, 169.0), (4.8, 4.8), tint, INK_DETAIL)
-    return [*band, *cup]
-
-
-def _unworn(canvas: Canvas, frame: Frame, skull: Skull, tint: RGB) -> list[Point]:
-    """A general who wears nothing: the one kind that draws nothing."""
-    return []
-
-
-_ACCESSORIES: dict[str, Callable[[Canvas, Frame, Skull, RGB], list[Point]]] = {
-    "bandana": _worn(_BANDANA),
-    "cap": _cap,
-    "eyepatch": _eyepatch,
-    "fieldcap": _fieldcap,
-    "glasses": _glasses,
-    "goggles": _goggles,
-    "headband": _worn(_HEADBAND),
-    "headset": _headset,
-    "hood": _hood,
-    "none": _unworn,
-    "scar": _scar,
-    "visor": _visor,
-}
-ACCESSORY_KINDS = frozenset(_ACCESSORIES)
-# Which of the two sockets a worn accessory hides. An eyepatch is the only one
-# that hides anything, and it covers the eye and the brow over it: a patch with
-# either drawn on top of it is the mask the review named, not a patch.
-_COVERS_EYE: dict[str, int] = {"eyepatch": 0}
-
-
-def covered_eye(kind: str) -> int | None:
-    """The socket the worn accessory hides — `eyes` and `brow` skip it."""
-    return _COVERS_EYE.get(kind)
-
-
-def accessory(
-    canvas: Canvas, skull: Skull, kind: str, *, tint: RGB = KIT
-) -> list[Point]:
-    """Draw the worn accessory; returns what it added to the silhouette.
-
-    `tint` is the general's faction colour for the pieces the handoff cut out of
-    uniform cloth — a bandana, a headband, a hood, a headset cup. It defaults to
-    the kit slate so the module answers for every key on its own.
-    """
-    return _ACCESSORIES[kind](canvas, Frame.of(skull), skull, tint)
+    pick(_FACIAL, kind, "facial hair")(canvas, Frame.of(skull), ramp)
 
 
 def earring(canvas: Canvas, skull: Skull) -> None:
     x, y, radius = EAR
     frame = Frame.of(skull)
-    _ringed_ellipse(canvas, frame, (x, y + radius + 3.0), (3.8, 3.8), GOLD, INK_DETAIL)
+    ringed_ellipse(canvas, frame, (x, y + radius + 3.0), (3.8, 3.8), GOLD, INK_DETAIL)
+
+
+# A freckle at the gauge: a square of skin shade, one per cheek, on the cheek
+# proper — three design units in from the eye centre, toward the nose, and well
+# below it. Three dots of a texel and a half apiece — what this drew — quantise
+# into a scatter of specks rather than into freckles.
+FRECKLE_INSET = 3.0
+FRECKLE_Y = 159.0
+FRECKLE_HALF = 2.2
 
 
 def freckles(canvas: Canvas, skull: Skull, ramp: Ramp) -> None:
     frame = Frame.of(skull)
-    for x in _eye_xs(skull):
-        for dx, dy in ((-6.0, 158.0), (0.0, 162.0), (6.0, 158.0)):
-            canvas.ellipse(frame.ellipse(x + dx, dy, 1.8, 1.8), ramp.shade)
+    for side, x in enumerate(eye_xs(skull)):
+        inward = 1.0 if side == 0 else -1.0
+        centre = x + inward * FRECKLE_INSET
+        canvas.rect(
+            (
+                *frame.at(centre - FRECKLE_HALF, FRECKLE_Y - FRECKLE_HALF),
+                *frame.at(centre + FRECKLE_HALF, FRECKLE_Y + FRECKLE_HALF),
+            ),
+            ramp.shade,
+        )

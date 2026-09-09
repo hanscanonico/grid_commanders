@@ -1,6 +1,9 @@
 # The light model
 
-One sun, four flat tones per material, and a rim. This is what
+One sun, flat tones, and no blur anywhere. What a bust actually carries is
+sixteen of those tones and not a seventeenth: four of skin, six of the army,
+three of hair, two of gunmetal and the ink — so only skin spends a full four
+bands, and the rim is a chroma rung the coat alone kicks with. This is what
 `portraitgen/light.py` owns and what every painted layer asks it for; the head
 in `portraitgen/head.py` is the first caller and the shape of the rest.
 
@@ -11,16 +14,19 @@ own sun in `generators/sprites/spritegen/sun.py`. Everything the key does not
 reach falls **down and to the right** (`light.SHADOW_STEP`), on every bust,
 mirrored poses included: a pose flips geometry, never light. The cast shadow
 obeys the same rule from `portraitgen/canvas.py` — the figure's silhouette at
-+6 portrait pixels, `#000` at 0.30, one flat tone, zero blur.
++6 design units, `#000` at 0.30, one flat tone, zero blur.
 
 `tests/test_geometry.py` reads that back the way the game does: the lit patch
-`(22, 242, 12, 12)` against the shaded patch `(186, 242, 12, 12)` with a floor
-of 0.01, the rectangles and the floor
+`(11, 121, 6, 6)` against the shaded patch `(93, 121, 6, 6)` with a floor
+of 0.01 — rectangles on the bust's own 110x134 grid, the ones
 `tests/unit/test_commander_portraits.gd` measures the shipped sheet with.
 
-## Four tones, built rather than typed
+## Ramps, built rather than typed
 
-`build_ramp(base, rim_hue=…)` returns `deep`, `shade`, `base`, `lit` and `rim`.
+`Ramp.of_material(base)` returns `deep`, `shade`, `base`, `lit` and `rim` —
+more rungs than most materials are allowed to spend, so a material that cannot
+afford one quantises onto the rung above it (`palette.SKIN_SLOTS` /
+`HAIR_SLOTS` and the gunmetal's two are where that is decided).
 Values step on one authored ladder as multiples of the base's own luma; the
 chroma over it is ported from `generators/sprites/spritegen/palette.py`:
 saturation peaks in the middle and collapses toward the light, the two shadow rungs mix toward one
@@ -28,17 +34,21 @@ cool ambient, and hue rotates a little toward the sky in shadow and the sun in
 light. Six literal hexes drift into one hue at six brightnesses, which is the
 flattest a ramp can be — so a ramp is never typed out.
 
-The rim is the one rung that keeps its chroma. It is the faction's **light**
-tint re-keyed to the rim's value, so the band that separates a green bust from
-a green field costs the palette no new hue. `rim_light` lays it 2.5 portrait
-pixels wide along the shadow-side silhouette run, walked in under the
-silhouette ink so it reads as light on the form rather than as a second
-outline.
+The rim is the one rung that keeps its chroma, and **only the coat spends it.**
+It used to be the faction's light tint on every material, laid one texel wide
+along the shadow-side silhouette run of the head, walked in under the silhouette
+ink. On a 110-pixel bust that is one texel of a colour the face does not own,
+between a two-texel outline and the cheek: a near-white line down an Iron jaw, a
+mint one down a Verdant neck, both broken into specks by the quantiser. The
+round-2 review read them as fleck halos and it was right. The head's rim band is
+gone; `uniform` keeps a kicker along the lit run because two texels of it fit
+(`Canvas.ribbon`), and a material with no rim of its own now takes its own lit
+rung, so `Ramp.rim` is still a tone the bust already spends.
 
 Ramps are cached (`functools.lru_cache`): a bust asks for the same handful on
 every layer. One stand-in bust renders in about 15 ms on the dev machine —
-two orders under the 2 s the plan's runtime risk allows — so the supersample
-stays where it is.
+two orders under the 2 s the plan's runtime risk allows, so nothing here is
+traded away for speed.
 
 ## Occlusion is a hard band, not a blur
 
@@ -73,26 +83,26 @@ the shade, so the two sides of a face are never the same drawing.
 ## What the head module hangs on it
 
 `head.Skull(width, jaw, crown, spread)` is the roster's `head` column exactly.
-The geometry is the handoff's own, moved into portrait pixels: the handoff drew
-a 110x134 viewBox with its origin at y -14 and the pinned raster is 220x268, so
-a handoff x is `2x` and a handoff y is `2(y + 14)`. Nothing was re-authored in
-the move.
+The geometry is the handoff's own, moved into the design space every module
+states its coordinates in: the handoff drew a 110x134 viewBox with its origin at
+y -14 and the design space is 220x268, so a handoff x is `2x` and a handoff y is
+`2(y + 14)`. Nothing was re-authored in the move — and the bust is baked back at
+the handoff's own 110x134, one pixel to two design units (`canvas.BUST_DIVISOR`).
 
 `head.draw` paints in the light's own order — neck and ears, the face, the two
 bands the key writes on it (both through the face's own mask, so a shade cannot
-run off the cheek onto the field), the occlusion band, the silhouette ink, then
-the rim inside it. An unknown jaw raises, as does an unknown shade kind and an
+run off the cheek onto the field), the occlusion band, then the silhouette ink.
+An unknown jaw raises, as does an unknown shade kind and an
 unknown band name: the vocabulary is the dispatch table.
 
 ## Two numbers this model does not meet head-on
 
-- **Unique colours.** The brief's bar is 48 RGBA per raster. A 3x box
-  downsample blends across every edge it smooths, so a finished raster carries
-  a few hundred values whatever it is painted in — the stand-in row measures 202 to 213
-  against the shipped sheet's 528 to 2,877. The bar is therefore read as what
-  it was written for: `tests/test_geometry.py` counts the tones a raster is
-  *painted* in — colours covering at least a thousandth of it — and holds that
-  to 48.
+- **Unique colours.** The bar is sixteen opaque tones per raster, and every one
+  of them a rung `palette.bust_palette` handed this bust. There is no
+  downsample left to blend an edge, so the count is a plain count:
+  `tests/test_geometry.py` and `tests/test_metrics.py` both read it straight off
+  the raster. A ramp built here that a bust does not spend a slot on is snapped
+  onto one that it does, so this model may not invent a material.
 - **Jaw clearance.** The skull sits where the handoff put it, so a bust's chin
   clears `FACE_REGION` by the pose's own zoom. That measurement is the busts'
   slice, not this one; nothing here may move `FACE_REGION`.
