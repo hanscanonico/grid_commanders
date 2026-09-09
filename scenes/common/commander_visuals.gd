@@ -58,57 +58,40 @@ const PORTRAIT_DIR := "res://assets/portraits/commanders"
 const FACE_DIR := "res://assets/portraits/faces"
 const FACTION_DIR := "res://assets/portraits/factions"
 const NEUTRAL_PORTRAIT_PATH := "res://assets/portraits/commanders/none.png"
-## Master portrait size the generator writes and the fallbacks match — the grid
-## the busts are pixelled on, not a canvas they are drawn large on and shrunk
-## into. Taller than it is wide: a portrait is a framed window with the bust
-## breaking out of its top, so it composes onto a faction-coloured field rather
-## than filling one. The bake checks each rasterised image against this and fails
-## loudly on a mismatch, so changing the drawing's grid cannot silently pass by.
+
+# Commander art is pixel art, and `.claude/rules/presentation.md` ("Commander art
+# is pixel art") is the one statement of that rule — the grid, the sixteen tones,
+# the nearest filter and its emblem exception, the whole-number scale ladder, and
+# the chip being a repaint rather than a crop. What follows is only why each
+# constant below holds the value it does.
+
+## The grid the busts are pixelled on, not a canvas they are drawn large on and
+## shrunk into. Taller than it is wide: a bust breaks out of the top of its
+## frame, so it composes onto a faction-coloured field rather than filling one.
+## The bake checks each rasterised image against this and fails loudly on a
+## mismatch, so changing the drawing's grid cannot silently pass by.
 const PORTRAIT_SIZE := Vector2i(110, 134)
-## The face chip: `FACE_REGION` of that same drawing, repainted by the generator
-## on the chip's own coarser grid rather than cut out of the bust (`face_for`).
+## The face chip's own grid: `FACE_REGION` repainted by the generator at the
+## chip's coarser divisor rather than cut out of the bust (`face_for`).
 const FACE_SIZE := Vector2i(31, 31)
 const EMBLEM_PX := 64
 ## The square of a portrait that holds the head — hair, headwear, both ears and
 ## the jaw — for all twenty-two generals. Because the bust breaks out of the
-## frame's top, the head's centre sits well above the image's: a square covering
-## the whole portrait spends a third of itself on chest, and one fitting the
-## portrait whole leaves the head at half the field.
-##
-## The rectangle moved once, when the busts came onto `PORTRAIT_SIZE`'s grid. It
-## is not the old square rescaled: origin and side were chosen fresh so that both
-## the bust grid and the coarser chip grid divide it exactly — the generator
-## rasterises this rectangle coarsely to bake `FACE_DIR`, and a rectangle that
-## did not divide would put the chip half a pixel off the bust's own head.
-## `generators/portraits` reads this constant out of this file and measures every
-## general's chin against it.
-##
-## From here the rule is what it always was — geometry moves, the rectangle does
-## not: a bust whose jaw crosses the bottom edge is redrawn, because the HUD chip,
-## the speech bust and the campaign brief all read the same square. Hair breaking
-## over the top edge is deliberate and is the portrait's own composition.
+## frame's top, the head's centre sits well above the image's, so neither the
+## whole portrait nor a square fitted to it would do. Origin and side divide by
+## both the bust grid and the coarser chip grid, because a rectangle that did not
+## would put the chip half a pixel off the bust's own head. Hair breaking over
+## the top edge is the portrait's own composition, not a miss.
 const FACE_REGION := Rect2i(9, 15, 93, 93)
-## The smallest field that can show a whole bust, in screen pixels, now that the
-## art is drawn at whole texels or not at all: the drawing's full width, and
-## every row down to the jaw. Both halves are read off the art itself rather
-## than guessed, so a rebake on another grid moves this with it.
-##
-## The width is exact — a narrower field clips the ears, and a bust is centred,
-## so it clips them on both sides. The height is the face region's bottom edge
-## rather than the drawing's, because a short field hangs the art from its top
-## and what it loses is chest; a field under this loses the chin instead, which
-## is the line between a cropped portrait and a decapitated one.
+## The smallest field that can show a whole bust, in screen pixels: the drawing's
+## full width, because a bust is centred and a narrower field clips both ears,
+## and every row down to the jaw, because a short field hangs the art from its
+## top and what it loses below that line is the chin. Both halves are read off
+## the art itself, so a rebake on another grid moves this with it.
 const WHOLE_BUST_FIELD := Vector2i(PORTRAIT_SIZE.x, FACE_REGION.position.y + FACE_REGION.size.y)
 ## How a general's own art is sampled, everywhere it is drawn — the busts and the
-## face chips. Nearest, the way the board and the units are: this art is pixelled
-## on its own grid now, and a linear filter over pixel art is a blur whatever the
-## ratio. Every surface that draws a bust asks for this by name rather than
+## face chips. Every surface that draws a bust asks for this by name rather than
 ## setting a filter of its own, so none of them can drift from the others.
-##
-## Nearest is only crisp on a WHOLE-number scale, so no surface fits a bust
-## freely any more: it asks `art_scale` for a rung of the ladder and draws the
-## art at exactly that multiple. The imports carry no mip chain — there is no
-## level between the rungs to sample.
 const ART_FILTER := CanvasItem.TEXTURE_FILTER_NEAREST
 ## The scale ladder every bust surface draws on. Whole numbers only, and never
 ## under one: half a pixel of a face is worse than a face that overflows the
@@ -121,11 +104,11 @@ const MIN_ART_SCALE := 1
 ## meant to rest on the general it is zoomed, and only a whole rung will do.
 const CHIP_ZOOM := 3
 const CHIP_FIELD := FACE_SIZE * CHIP_ZOOM
-## The emblems are the one piece of commander art not on that ladder, and they
-## keep the mipmapped linear filter. They are a 64px badge drawn at 22 in the one
-## corner that shows them — a ratio with no whole rung under it — and unlike a
-## bust they are geometry rather than pixels: a disc and a chevron, authored at
-## the size they are baked. Their imports therefore keep `mipmaps/generate=true`.
+## The emblems are the one exception to `ART_FILTER`: a 64px badge drawn at 22 in
+## the one corner that shows them has no whole rung under it, and unlike a bust
+## an emblem is geometry rather than pixels — a disc and a chevron, authored at
+## the size they are baked. Their imports keep `mipmaps/generate=true` where the
+## busts' and the chips' carry no mip chain.
 const EMBLEM_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
 ## The neutral commander has no faction; it renders in this iron-grey so "No

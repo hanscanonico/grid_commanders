@@ -46,7 +46,10 @@ forms named in the root index are in `docs/design_record.md`.
   Iron's is the inverted ramp and a window that dark puts three Iron faces under one black blob at
   chip size. Both are spent inside the sixteen.
   Two rules follow on this side. **`CommanderVisuals.ART_FILTER` is nearest** for a general's own
-  art, and `EMBLEM_FILTER` is the one exception (a 64px badge drawn at 22 has no whole rung).
+  art, and the bust and chip imports carry **no mip chain** — at a whole-number scale there is no
+  level between the rungs to sample. `EMBLEM_FILTER` is the one exception: a 64px badge drawn at 22
+  has no whole rung under it, it is geometry rather than pixels, and its import keeps
+  `mipmaps/generate=true`.
   **No surface fits a bust freely**: it asks `CommanderVisuals.art_scale` for a whole-number rung
   and `UiKit._place_bust` draws it at exactly that, centred across the field and hung from its top,
   so a field too short clips the chest rather than showing half a texel. **What "too small for a
@@ -59,7 +62,8 @@ forms named in the root index are in `docs/design_record.md`.
   (`assets/portraits/faces`, 31x31) — the same drawing repainted on the chip's own coarser grid,
   never the bust sampled down or cut up — and the empty seat has one like everybody else.
   `FACE_REGION` moved once, for the new grid; from here the rule is what it always was, the
-  geometry moves and the rectangle does not.
+  geometry moves and the rectangle does not — `generators/portraits` scrapes that rectangle out of
+  `commander_visuals.gd` and measures every general's chin against it, so a rename fails loudly.
 - `faction-identity-plan.html` — armies wear their commander's faction, FI1–FI3 shipped. D1:
   **identity is presentation-only** — the sim keeps its team ints; `scenes/common/side_identity.gd`
   (`SideIdentity`) resolves `team → {theme, display name, atlas row}` once per match from the

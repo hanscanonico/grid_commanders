@@ -31,9 +31,10 @@ extends RefCounted
 const NO_FIELD := Color(0, 0, 0, 0)
 
 const _BUST_ART := &"Bust"
-## Which general a built field is showing, kept on the field itself: the crop is
-## a function of the size a container hands over, which is known a frame after
-## the bust is built, so the texture has to be chosen at placement time.
+## Which general a built field is showing, kept on the field itself: which of the
+## two drawings it gets is a function of the size a container hands over, which is
+## known a frame after the bust is built, so the texture is chosen at placement
+## time.
 const _BUST_COMMANDER := &"bust_commander"
 
 ## A text field's height: one line of Silkscreen with the border either side of it.
@@ -608,7 +609,7 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 
 ## A general's art on a faction-tinted field, clipped to `size` — the one bust
 ## every surface that shows a commander is built from. Six of them kept their own
-## TextureRect recipe and disagreed about the crop, which is the drift this kit
+## TextureRect recipe and disagreed about the framing, which is the drift this kit
 ## exists to prevent (menu-revamp D1).
 ##
 ## The tint stays the caller's, because the three in the tree are deliberate: the
@@ -674,15 +675,11 @@ static func _send_action(action: StringName) -> void:
 
 ## The general's drawing — whichever of the two this field's shape calls for — at
 ## a rung of `CommanderVisuals.art_scale`, centred, and hung from the top edge
-## once it is taller than the field. Whole texels or nothing: this is pixel art
-## now, and the one thing a field may not do is show it at a fraction of a pixel.
+## once it is taller than the field.
 ##
 ## Which of the two is `CommanderVisuals.fits_whole_bust`, and nobody else asks:
 ## the whole bust where the art fits at one texel to one pixel, the baked face
-## chip everywhere else. A field too small for a bust is the common case — a
-## roster tile, a HUD chip and a victory lockup all land there, and each showed a
-## head cut off at the ears until the question was measured against the art
-## instead of against a round number.
+## chip everywhere else.
 ##
 ## The shape is the field's own size, falling back to the size it was asked for
 ## while it is still unplaced — a field that states no minimum is the roster
