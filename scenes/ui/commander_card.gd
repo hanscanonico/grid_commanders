@@ -52,9 +52,10 @@ const WHOLE_BUST_BAND := CommanderVisuals.PORTRAIT_SIZE.y
 const _BAND_AIR_TEXELS := 1
 const CHIP_BAND := CommanderVisuals.CHIP_FIELD.y + _BAND_AIR_TEXELS * CommanderVisuals.CHIP_ZOOM
 
-## Which of the two this card shows. Set it before the card enters the tree; a
-## card asked for nothing draws the general whole.
-var portrait_h: int = WHOLE_BUST_BAND
+## Which of the two bands this card was built with. Read-only: a band is chosen
+## at construction, by `new()` for the whole general or `for_chip()` for the
+## short one, so there is no order a caller has to get right.
+var _portrait_h: int = WHOLE_BUST_BAND
 ## The faction badge pinned into the band's top-left corner, and the inset it sits
 ## at. Card-local like the geometry above it, not a missing shell token: the design
 ## system sizes widgets rather than pins on art, and its smallest icon
@@ -91,6 +92,21 @@ func bind(commander: CommanderType) -> void:
 		_apply()
 
 
+## A card that shows the baked face chip instead of the whole general. The
+## commander info sheet is the one caller, and states there why its screen has
+## no room for a bust band.
+static func for_chip() -> CommanderCard:
+	var card := CommanderCard.new()
+	card._portrait_h = CHIP_BAND
+	return card
+
+
+## The band this card frames its art in, for a surface checking its own layout
+## against what it asked for.
+func portrait_band() -> int:
+	return _portrait_h
+
+
 func _build() -> void:
 	custom_minimum_size.x = maxf(custom_minimum_size.x, MIN_WIDTH)
 	add_theme_stylebox_override("panel", UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, 3))
@@ -105,7 +121,7 @@ func _build() -> void:
 	# into the corner up over the whole portrait. The band names no width, so it
 	# takes the card's, and the kit reads the height against the art: the whole
 	# bust at `WHOLE_BUST_BAND`, the baked face chip at `CHIP_BAND`.
-	_field = UiKit.commander_bust(null, Vector2(0, portrait_h), UiKit.NO_FIELD)
+	_field = UiKit.commander_bust(null, Vector2(0, _portrait_h), UiKit.NO_FIELD)
 	rows.add_child(_field)
 
 	_emblem = TextureRect.new()

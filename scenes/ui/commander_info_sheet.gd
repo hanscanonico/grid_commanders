@@ -245,15 +245,14 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	# here is what makes this sheet and the select page set a general's copy
 	# identically.
 	# Stretched to fill this column instead, the same card reads as a second design.
-	var card := CommanderCard.new()
-	card.custom_minimum_size.x = CommanderCard.READING_WIDTH
-	# The one surface that asks for the short band, and the one place the
-	# measurement behind it is stated: four headers, four economy strips, the
+	# `for_chip`, and this is the one surface that asks for it and the one place
+	# the measurement behind it is stated: four headers, four economy strips, the
 	# charge line and the Close button leave a card 102px of this 360px screen
 	# (measured on `commander_info`, 2026-09-09), and a whole-bust band would
 	# have its chin cut off by the frame. The select page, which frames the same
 	# card with a page to itself, shows the general whole.
-	card.portrait_h = CommanderCard.CHIP_BAND
+	var card := CommanderCard.for_chip()
+	card.custom_minimum_size.x = CommanderCard.READING_WIDTH
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	frame.add_child(card)
@@ -319,10 +318,10 @@ func layout_error(expected_cards: int) -> String:
 	for frame in _frames:
 		var card: CommanderCard = frame.get_child(0)
 		var shown := card.get_global_rect().intersection(frame.get_global_rect()).size.y
-		if shown < card.portrait_h:
+		if shown < card.portrait_band():
 			return (
 				"a commander card is shown %.0fpx tall, less than its %dpx portrait band"
-				% [shown, card.portrait_h]
+				% [shown, card.portrait_band()]
 			)
 	for strip in _strips:
 		var needed := strip.get_combined_minimum_size().x
