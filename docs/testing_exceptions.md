@@ -154,3 +154,13 @@ and `UiKit.toggle` widgets under a pinned `MobileProfile`, because the failure i
 *wiring* failure no pure call can see — a hit area that flips `button_pressed` and stops there is
 silent to every control that reads `pressed`, and a segmented control reads `pressed`. Same terms
 as `test_page_dismissal.gd`: its own viewport rather than a booted scene.
+
+## Not a GUT suite at all
+
+`tools/test_godot_gui.sh` (`make capture-test`, in `make verify`) tests a shell script, so GUT was
+never an option. It earns its place because `tools/godot_gui.sh` is what **every** capture is
+launched through — which renderer draws a frame, and what it says when the container one is
+unavailable, are decisions no `.gd` test can reach and no captured frame can show. It runs on a
+fake engine and a fake `docker`, both tiny scripts that record their argv, so the gate needs
+neither a display nor a Docker install, and it asserts only external behaviour: the argv a fake
+recorded, the text on stderr, the exit status.

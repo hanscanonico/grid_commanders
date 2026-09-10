@@ -62,6 +62,47 @@ root index are in `docs/design_record.md`.
   it names and the comparison refuses to cross it. D6: fewer windows beats faster restores — the
   wrapper is the safety net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep
   exists.
+  D7 (COM-279): **a scripted capture renders off the desktop entirely.** `tools/godot_gui.sh` gains
+  exactly one branch — a launch with no tty, whose engine arguments after `--` carry a
+  `--screenshot=` or `--shots-dir=`, runs inside the Linux container image
+  (`tools/capture/Dockerfile`: Xvfb, Mesa's **llvmpipe** — the project renders with
+  `gl_compatibility`, so that is what draws, and lavapipe is installed only for a future Vulkan
+  switch — and the **official Linux arm64 build of the version the macOS binary is**, the tag
+  carrying that version so a bump cannot be answered from cache; `tools/check_scripts.sh` holds that
+  version equal to the workflow's and the README's). The branch is taken **on macOS only**: nowhere
+  else does a windowed launch steal a desktop's focus, so another host falls back and the notice
+  says that is why. Measured with the instrument over the default queue (89 scenarios —
+  `after_build_menu` fails on `main` for its own reasons and was left out): **0 steals**, and 88 of
+  those 89 frames are byte-identical across two container runs. The one that moves, `capture_power`,
+  is the scenario that un-pins Instant on purpose so a cut-in really plays, and it moves on the
+  desktop too — three runs, three hashes — so it is a scenario that photographs a moving cut-in, not
+  a renderer difference. Because it moves, a full default-queue `SMOKE_HASHES` cannot be green on
+  either renderer; that predates this change rather than following from it, and pinning or dropping
+  that one scenario from a hashed queue is a follow-up. The same frame drawn either way is the
+  recorded pair `docs/images/capture_renderer_desktop.png` and
+  `docs/images/capture_renderer_container.png`.
+  Everything else is untouched, and that is the decision. D3 stands — a tty launch still execs the
+  engine — and so do D1 and D6: the wrapper stays as the safety net for every launch the container
+  cannot take, and the sweep still boots once. "Available" is the docker CLI, a daemon that answers
+  and the image already built — under `auto` any one missing is **one notice line and the windowed
+  path**, never an implicit ten-minute build, while `GODOT_CAPTURE_RENDERER=container` **fails
+  instead of falling back**, because a caller who named the container did not ask for a frame this
+  desktop drew. A **relative** capture path blocks it the same way, under `auto` and forced alike,
+  because there is no directory to bind by name.
+  `GODOT_CAPTURE_RENDERER=container|desktop|auto` forces the choice. The checkout and the capture
+  directory are bound at their own absolute paths so every path on the command line means the same
+  thing on both sides, and the import cache is a **named volume per checkout and engine version**,
+  so a worktree keeps its own and the macOS `.godot/` is never written by Linux — a cold volume
+  gets the headless import first, because a scene with every texture missing reads as a hang. The
+  launcher `exec`s docker, so pid, exit status and stdio stay the run's own, and a watcher that
+  outlives the exec kills the container when the launcher is killed: **TERM and KILL on the launcher
+  both leave `docker ps` clean**, measured, and the watcher's `docker kill` is held by a test case.
+  The import runs under that same name, and the watcher is installed before it, so a cold run's
+  extra pass is as killable as the capture it precedes.
+  Under D1 a manifest now names its renderer as well as its queue and the comparison refuses to
+  cross either: two rasterisers are two sets of bytes. `tools/test_godot_gui.sh`
+  (`make capture-test`) holds all of it on a fake engine and a fake `docker`. `make verify` gained
+  that one target and nothing else, and it needs no Docker, so the gate stays Docker-free.
 - `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
   one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
   offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command

@@ -121,9 +121,10 @@ Follow the official Godot GDScript style guide. Key points:
   `state.rng.seed` only when the test wants a different stream.
 
 `make test` runs the suite headless (README.md has its two-engine split). Before a change is done,
-run `make verify` — it chains `check` (`tools/check_scripts.sh`), `lint` (`gdlint`), `format-check`
-(`gdformat --check`), the GUT suite, then `determinism` (the ~1s pinned-match replay, byte-diffed
-against its golden), in that order. `make format` satisfies `format-check`, and any gate runs alone.
+run `make verify` — it chains `check` (`tools/check_scripts.sh`), `capture-test`
+(`tools/test_godot_gui.sh`), `lint` (`gdlint`), `format-check` (`gdformat --check`), the GUT suite,
+then `determinism` (the ~1s pinned-match replay, byte-diffed against its golden), in that order.
+`make format` satisfies `format-check`, and any gate runs alone.
 Let `gdformat` settle whitespace rather than hand-aligning; a green `make verify` is the bar.
 
 `check` enforces the repository invariants rather than only stating them: the Node-free, RNG-free

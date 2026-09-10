@@ -17,7 +17,13 @@
 # starts the game wants it focused. Agent and script launches (no tty) get
 # the restore behavior.
 #
-# Usage: [GODOT=<binary>] tools/godot_gui.sh <godot args...>
+# A scripted *capture* has no business on this desktop at all, so it renders
+# off it instead: same arguments, same engine version, inside the Linux
+# container image (COM-279). The restore watcher below stays as the safety net
+# for every launch that container cannot answer.
+#
+# Usage: [GODOT=<binary>] [GODOT_CAPTURE_RENDERER=auto|container|desktop]
+#        tools/godot_gui.sh <godot args...>
 #
 # The wrapper ends in `exec`, so its pid, exit status, and stdio are Godot's
 # own — timeout-and-kill callers (smoke_scenarios.sh) need no special casing.
@@ -25,8 +31,153 @@
 set -u
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
+repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$repo_dir/tools/capture/image.env"
 
-if [[ -t 0 || -t 1 || -t 2 ]] || [[ "$(uname)" != "Darwin" ]]; then
+readonly DESKTOP_RENDERER="$GODOT_DESKTOP_RENDERER"
+readonly CONTAINER_RENDERER="$GODOT_CONTAINER_RENDERER"
+# The shell test turns this down rather than waiting half a second per case.
+readonly WATCH_INTERVAL="${GODOT_CAPTURE_WATCH_INTERVAL:-0.5}"
+
+# A tty means a human is watching this launch, on either path below.
+is_interactive() {
+	[[ -t 0 || -t 1 || -t 2 ]]
+}
+
+# Which renderer actually ran, for a caller that has to record it —
+# SMOKE_HASHES writes it into its manifest, because a container frame and a
+# desktop frame are two rasterisers and their bytes may not be compared.
+record_renderer() {
+	[[ -n "${GODOT_CAPTURE_RENDERER_OUT:-}" ]] &&
+		printf '%s\n' "$1" >"$GODOT_CAPTURE_RENDERER_OUT"
+	return 0
+}
+
+# Where this launch writes its frames — the directory of a `--screenshot=`
+# file, or a `--shots-dir=` — read only from the engine arguments after the
+# `--` separator, which is where the game's own flags start. Empty output
+# means this launch captures nothing.
+capture_dir() {
+	local arg separated=""
+	for arg in "$@"; do
+		if [[ -z "$separated" ]]; then
+			[[ "$arg" == "--" ]] && separated=1
+			continue
+		fi
+		case "$arg" in
+			--screenshot=*)
+				dirname "${arg#--screenshot=}"
+				return
+				;;
+			--shots-dir=*)
+				printf '%s\n' "${arg#--shots-dir=}"
+				return
+				;;
+		esac
+	done
+}
+
+# Why the container cannot take this run, or nothing when it can. Available
+# means all three: the CLI, a daemon that answers, and the image already
+# built — the launcher never builds it, since a capture that silently spent
+# ten minutes fetching Debian is a hung capture.
+container_blocker() {
+	local shots="$1"
+	# A relative capture path means one thing on this side of the boundary and
+	# another on the other, and there is no directory to bind by name.
+	if [[ "$shots" != /* ]]; then
+		echo "the capture path $shots is relative"
+	elif ! command -v docker >/dev/null 2>&1; then
+		echo "docker is not on PATH"
+	elif ! docker info >/dev/null 2>&1; then
+		echo "the docker daemon is not answering"
+	elif ! docker image inspect "$GODOT_CAPTURE_IMAGE" >/dev/null 2>&1; then
+		echo "the image $GODOT_CAPTURE_IMAGE is missing — build it with 'make capture-image'"
+	else
+		return 1
+	fi
+}
+
+# Hand the run to the container and never come back. The checkout and the
+# capture directory are bound at their own absolute paths, so every path on
+# the command line means the same thing on both sides of the boundary; the
+# import cache is a named volume per checkout and engine version, so a
+# worktree keeps its own and the macOS `.godot/` is never written by Linux.
+exec_in_container() {
+	local shots="$1"
+	shift
+	local volume name mounts=()
+	volume="gc-capture-$(printf '%s %s' "$repo_dir" "$GODOT_CAPTURE_VERSION" |
+		shasum -a 256 | cut -c1-12)"
+	name="gc-capture-$$"
+	mounts+=(-v "$repo_dir:$repo_dir" -v "$volume:$repo_dir/.godot")
+	[[ "$shots" == "$repo_dir"/* ]] || mounts+=(-v "$shots:$shots")
+	record_renderer "$CONTAINER_RENDERER"
+	# A caller that kills this launcher outright (the sweep's timeout uses
+	# SIGKILL) leaves no trap to run, so the container is stopped by a watcher
+	# that outlives us — `$$` still names this process after the exec below.
+	# The import below and the capture run one after the other under the same
+	# name, so this one kill reaches whichever is current.
+	local launcher_pid=$$
+	(
+		while kill -0 "$launcher_pid" 2>/dev/null; do sleep "$WATCH_INTERVAL"; done
+		docker kill "$name"
+	) >/dev/null 2>&1 &
+	# A capture reads imported assets, never source ones, and this cache starts
+	# empty — so a new volume gets the one-off headless import the macOS tree
+	# gets from `make import`. Without it the scene comes up with every texture
+	# and sound missing, which reads as a hang rather than as a cold cache.
+	if ! docker run --rm -v "$volume:/cache" --entrypoint test \
+		"$GODOT_CAPTURE_IMAGE" -d /cache/imported; then
+		echo "godot_gui: importing the project into the capture cache (first run on this checkout)" >&2
+		docker run --rm --init --name "$name" "${mounts[@]}" -w "$repo_dir" \
+			"$GODOT_CAPTURE_IMAGE" --headless --path "$repo_dir" --import >&2
+	fi
+	exec docker run --rm --init --name "$name" "${mounts[@]}" -w "$repo_dir" \
+		"$GODOT_CAPTURE_IMAGE" "$@"
+}
+
+capture_shots="$(capture_dir "$@")"
+capture_renderer="${GODOT_CAPTURE_RENDERER:-auto}"
+forced_container=0
+[[ "$capture_renderer" == "$CONTAINER_RENDERER" ]] && forced_container=1
+# `auto` containerises exactly the launches that would otherwise flash a window
+# across a developer's desktop: a capture, from a script, on macOS. A tty launch
+# is the human's own (D3) and stays silent; on another host a windowed launch
+# never stole anyone's focus, and that is the one auto case worth naming. The
+# renderer says where a *frame* is drawn, so a launch that takes none stays
+# here whichever one was named.
+consider_container=0
+if [[ -n "$capture_shots" ]]; then
+	if ((forced_container)); then
+		consider_container=1
+	elif [[ "$capture_renderer" == "auto" ]] && ! is_interactive; then
+		if [[ "$(uname)" == "Darwin" ]]; then
+			consider_container=1
+		else
+			echo "godot_gui: capturing on the desktop — the container renderer is" \
+				"chosen automatically on macOS only" >&2
+		fi
+	fi
+fi
+
+if ((consider_container)); then
+	if blocker="$(container_blocker "$capture_shots")"; then
+		# A caller who named the container asked for a frame that is not drawn
+		# on this desktop, so drawing it here anyway answers a different
+		# question. Say what is missing and take nothing.
+		if ((forced_container)); then
+			echo "godot_gui: GODOT_CAPTURE_RENDERER=container, but $blocker" >&2
+			exit 1
+		fi
+		echo "godot_gui: capturing on the desktop — $blocker" >&2
+	else
+		exec_in_container "$capture_shots" "$@"
+	fi
+fi
+record_renderer "$DESKTOP_RENDERER"
+
+if is_interactive || [[ "$(uname)" != "Darwin" ]]; then
 	exec "$GODOT" "$@"
 fi
 
@@ -34,7 +185,6 @@ fi
 # why pid). Compiled once into the gitignored .godot/ cache. Without a Swift
 # toolchain, fall back to LaunchServices by bundle id — over the same targets
 # `restorable` below allows, and only while that app is still running.
-repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
 activate_bin="$repo_dir/.godot/activate_pid"
 activate_src="$repo_dir/tools/activate_pid.swift"
 if command -v swiftc >/dev/null 2>&1; then
