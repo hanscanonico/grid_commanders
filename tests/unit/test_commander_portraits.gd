@@ -117,8 +117,8 @@ func test_only_a_field_that_holds_the_art_shows_a_whole_bust() -> void:
 ## a whole rung of the ladder, and that rung fits inside the field on both axes.
 ## A field is allowed slack (`CommanderCard.CHIP_BAND` is the chip's 93 plus
 ## three pixels of air), never a fraction of a texel and never a rung that
-## overflows. The two private fields (the power banner and the roster tile) are
-## read off the captured frames instead.
+## overflows. The power banner's field stays private and is read off the
+## captured frames instead.
 func test_every_named_bust_field_is_whole_texels() -> void:
 	var fields := {
 		"CommanderCard.WHOLE_BUST_BAND":
@@ -127,6 +127,7 @@ func test_every_named_bust_field_is_whole_texels() -> void:
 		"VictoryLockup.PORTRAIT": Vector2(VictoryLockup.PORTRAIT, VictoryLockup.PORTRAIT),
 		"UiTheme.HUD_PORTRAIT": Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT),
 		"MissionSpeech.BUST": Vector2(MissionSpeech.BUST, MissionSpeech.BUST),
+		"CommanderSelectPanel.MINI_FACE": Vector2(CommanderSelectPanel.MINI_FACE),
 	}
 	for label: String in fields:
 		var field: Vector2 = fields[label]
@@ -140,6 +141,23 @@ func test_every_named_bust_field_is_whole_texels() -> void:
 		var drawn := Vector2(drawing) * rung
 		assert_lte(drawn.x, field.x, "%s is narrower than the art it draws" % label)
 		assert_lte(drawn.y, field.y, "%s is shorter than the art it draws" % label)
+
+
+## The roster tile is a whole bust, not a chip blown up: the picker's face field
+## is the drawing's own size, so a general reads there the way they read on the
+## card beside it. Stated here because the tile names no size at build time — it
+## is handed one — and a field a texel under either bound silently falls back to
+## the baked chip at a whole rung, which is exactly what it did before COM-280.
+func test_the_roster_tile_holds_a_whole_bust() -> void:
+	assert_true(
+		CommanderVisuals.fits_whole_bust(Vector2(CommanderSelectPanel.MINI_FACE)),
+		"the picker's roster tile falls back to the face chip"
+	)
+	assert_eq(
+		CommanderSelectPanel.MINI_FACE,
+		CommanderVisuals.PORTRAIT_SIZE,
+		"the tile's face field is the art's own size, never a literal beside it"
+	)
 
 
 ## The chip rung has one owner. Both surfaces that frame a chip take their square

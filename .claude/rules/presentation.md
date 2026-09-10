@@ -557,10 +557,16 @@ forms named in the root index are in `docs/design_record.md`.
   110 to 138 by the same 10/8 the face grew by, because inside the old frame the longest board
   blurb wrapped to six lines where it had wrapped to five; the map picker's viewport peeks half of
   the next cell's *picture* rather than half a whole cell; and the select page's roster strip
-  reserves two caption lines under every face — six tiles across that column leave about 46 pixels
-  of caption, which no name in that six-general roster fits at 10 and every single word does, so
-  the given name sits over the surname rather than the strip clipping the roster it exists to
-  read. **Whole-pixel text on the web was not decided here**: `project.godot` stretches
+  reserves two caption lines under every face. **That strip is a fixed-width scrolling bust row
+  since COM-280**: a tile is `CommanderVisuals.PORTRAIT_SIZE` wide and tall
+  (`CommanderSelectPanel.MINI_FACE`, never a literal), so it clears `fits_whole_bust` and the
+  picker draws the same bust the card, the cut-in and the info sheet draw, where dividing the
+  column between a faction's members left a 61px tile that fell back to the face chip at 2x. The
+  row scrolls sideways inside a `ScrollContainer` with `follow_focus` on, and the cut-off third
+  tile plus the thin bar under the row are the whole scroll cue — no arrows, no paging, and the
+  card column keeps `CommanderCard.READING_WIDTH`. The two-line band is kept at the wider tile:
+  a name still sets at up to 63 pixels at the body size, the band is what stops a long one
+  clipping, and one reserved height on every tile is what keeps the faces one row. **Whole-pixel text on the web was not decided here**: `project.godot` stretches
   `canvas_items` with `aspect="keep"` and no `scale_mode`, so a fractional window scale does reach
   text today — but the only lever is the root stretch, which letterboxes every platform at once, so
   it is a project-wide window decision and the `improve/web-font-oversampling` branch owns it, not a
