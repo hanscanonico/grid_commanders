@@ -34,6 +34,7 @@ for arg in "$@"; do
 			;;
 	esac
 done
+exit "${FAKE_ENGINE_STATUS:-0}"
 EOF
 cat >"$fake_bin/docker" <<'EOF'
 #!/usr/bin/env bash
@@ -76,18 +77,27 @@ status=0
 # back is left in the four variables the checks read. The launch runs from the
 # scratch directory, so a case that hands the engine a relative capture path
 # cannot write into the checkout.
-run_launcher() {
+reset_fakes() {
 	case_name="$1"
 	case_failures=0
-	shift
 	: >"$FAKE_ENGINE_ARGV"
 	: >"$FAKE_DOCKER_ARGV"
-	(cd "$work" && PATH="$fake_bin:$PATH" "$launcher" "$@") \
-		</dev/null >"$work/out" 2>"$work/err"
-	status=$?
+	: >"$FAKE_DOCKER_KILL_ARGV"
+}
+
+read_fakes() {
 	engine_argv="$(cat "$FAKE_ENGINE_ARGV")"
 	docker_argv="$(cat "$FAKE_DOCKER_ARGV")"
 	stderr_text="$(cat "$work/err")"
+}
+
+run_launcher() {
+	reset_fakes "$1"
+	shift
+	(cd "$work" && PATH="$fake_bin:$PATH" "$launcher" "$@") \
+		</dev/null >"$work/out" 2>"$work/err"
+	status=$?
+	read_fakes
 }
 
 fail() {
@@ -142,15 +152,11 @@ relative_args=(--path . scenes/battle/battle.tscn -- "--screenshot=shots/frame.p
 # A human's launch: tty, so the engine runs here whatever else is true. The
 # terminal has to be fabricated, since `make` gives this script pipes.
 if [[ "$(uname)" == "Darwin" ]] && command -v python3 >/dev/null 2>&1; then
-	case_name="tty launch runs the engine directly"
-	case_failures=0
-	: >"$FAKE_ENGINE_ARGV"
-	: >"$FAKE_DOCKER_ARGV"
+	reset_fakes "tty launch runs the engine directly"
 	PATH="$fake_bin:$PATH" python3 "$repo_dir/tools/capture/run_on_tty.py" \
-		"$launcher" "${capture_args[@]}" >/dev/null 2>&1
+		"$launcher" "${capture_args[@]}" >"$work/out" 2>"$work/err"
 	status=$?
-	engine_argv="$(cat "$FAKE_ENGINE_ARGV")"
-	docker_argv="$(cat "$FAKE_DOCKER_ARGV")"
+	read_fakes
 	expect_engine_ran
 	expect_no_docker
 	((status == 0)) || fail "the launcher exited $status instead of the engine's 0"
@@ -226,6 +232,16 @@ expect_no_engine
 expect_docker_run_has "--screenshot=$work/shots/frame.png"
 pass
 
+# Naming the container says where a frame is drawn; a launch that draws none
+# has nothing to move off this desktop, so it runs here and hands back the
+# engine's own status.
+GODOT_CAPTURE_RENDERER=container FAKE_ENGINE_STATUS=3 \
+	run_launcher "GODOT_CAPTURE_RENDERER=container without a capture stays here" --path .
+expect_engine_ran
+expect_no_docker
+((status == 3)) || fail "the launcher exited $status instead of the engine's 3"
+pass
+
 # Forced and unavailable is a failure, not a fallback: the caller asked for a
 # frame this desktop does not draw, so an unasked-for desktop frame would answer
 # a different question.
@@ -248,9 +264,7 @@ pass
 # A caller that kills the launcher outright leaves no trap to run, so the
 # container is stopped by a watcher that outlives the exec — measured here on
 # the fake docker's argv, with the poll turned down so the case is quick.
-case_name="the watcher kills the container when the launcher goes away"
-case_failures=0
-: >"$FAKE_DOCKER_KILL_ARGV"
+reset_fakes "the watcher kills the container when the launcher goes away"
 GODOT_CAPTURE_RENDERER=container GODOT_CAPTURE_WATCH_INTERVAL=0.05 PATH="$fake_bin:$PATH" \
 	"$launcher" "${capture_args[@]}" </dev/null >/dev/null 2>&1 &
 launcher_pid=$!
@@ -265,8 +279,7 @@ pass
 
 # The sweep's manifest carries the renderer, and a comparison refuses to
 # cross it — the same refusal a manifest from another queue gets.
-case_name="a manifest from the other renderer is refused"
-case_failures=0
+reset_fakes "a manifest from the other renderer is refused"
 manifest="$work/hashes.txt"
 sweep_env=(GODOT_CAPTURE_RENDERER=desktop SMOKE_HASHES="$manifest" SMOKE_ISOLATE=1)
 env "${sweep_env[@]}" "$sweep" attack </dev/null >"$work/out" 2>&1 || fail "recording run failed"

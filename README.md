@@ -27,7 +27,7 @@ Then:
 ```sh
 make run             # boot the game — the menu (map, seats, difficulty, speed, commanders, fog, Start / Continue / Campaign)
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
-make verify          # the merge gate: check + lint + format-check + test + determinism, in one command
+make verify          # the merge gate: check + capture-test + lint + format-check + test + determinism, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless, two engines; TEST_JOBS=1 for one)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check (parallel; CHECK_JOBS=1 for one)
@@ -165,7 +165,8 @@ with no Docker CLI, no daemon answering, no image built, or a capture path given
 no directory to bind by name) it prints one line saying which, and falls back to the windowed path
 below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container` forces the container one
 and *fails* rather than falling back when it cannot have it, and the default `auto` is the rule
-above. A `SMOKE_HASHES` manifest records which renderer drew it and the comparison refuses to cross
+above. All three govern where a *frame* is drawn, so a launch that takes none runs here whichever
+is set. A `SMOKE_HASHES` manifest records which renderer drew it and the comparison refuses to cross
 renderers, exactly as it refuses to cross queues: two rasterisers, two sets of bytes.
 
 The one window is still activated as it opens and again on each scene change, so a sweep briefly

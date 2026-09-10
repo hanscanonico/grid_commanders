@@ -42,6 +42,8 @@ set -uo pipefail
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 source "$(dirname "$0")/lib/require_godot.sh" || exit 1
+# The renderer names the launcher records and this sweep compares against.
+source "$(dirname "$0")/capture/image.env"
 BATTLE="${BATTLE:-scenes/battle/battle.tscn}"
 # Every boot opens a window — one per group, not one per scenario. Launching
 # through the wrapper keeps a scripted/agent run (no tty) from stealing the
@@ -395,7 +397,7 @@ out_dir="$(mktemp -d "${TMPDIR:-/tmp}/battle-smoke.XXXXXX")"
 # container image, and writes the answer here; the manifest records it rather
 # than deriving it a second time.
 export GODOT_CAPTURE_RENDERER_OUT="$out_dir/renderer"
-readonly DEFAULT_RENDERER=desktop
+readonly DEFAULT_RENDERER="$GODOT_DESKTOP_RENDERER"
 # Non-empty when the one-boot sweep failed as a batch and had to be re-run one
 # process per scenario; the entry names the log the batch left behind.
 batch_fallbacks=()

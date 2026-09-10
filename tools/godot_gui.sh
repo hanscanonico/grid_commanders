@@ -34,8 +34,8 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
 source "$repo_dir/tools/capture/image.env"
 
-readonly DESKTOP_RENDERER=desktop
-readonly CONTAINER_RENDERER=container
+readonly DESKTOP_RENDERER="$GODOT_DESKTOP_RENDERER"
+readonly CONTAINER_RENDERER="$GODOT_CONTAINER_RENDERER"
 # The shell test turns this down rather than waiting half a second per case.
 readonly WATCH_INTERVAL="${GODOT_CAPTURE_WATCH_INTERVAL:-0.5}"
 
@@ -104,8 +104,8 @@ container_blocker() {
 # import cache is a named volume per checkout and engine version, so a
 # worktree keeps its own and the macOS `.godot/` is never written by Linux.
 exec_in_container() {
-	local repo_dir="$1" shots="$2"
-	shift 2
+	local shots="$1"
+	shift
 	local volume name mounts=()
 	volume="gc-capture-$(printf '%s %s' "$repo_dir" "$GODOT_CAPTURE_VERSION" |
 		shasum -a 256 | cut -c1-12)"
@@ -144,18 +144,24 @@ forced_container=0
 # `auto` containerises exactly the launches that would otherwise flash a window
 # across a developer's desktop: a capture, from a script, on macOS. A tty launch
 # is the human's own (D3) and stays silent; on another host a windowed launch
-# never stole anyone's focus, and that is the one auto case worth naming.
-consider_container=$forced_container
-if [[ "$capture_renderer" == "auto" && -n "$capture_shots" ]] && ! is_interactive; then
-	if [[ "$(uname)" == "Darwin" ]]; then
+# never stole anyone's focus, and that is the one auto case worth naming. The
+# renderer says where a *frame* is drawn, so a launch that takes none stays
+# here whichever one was named.
+consider_container=0
+if [[ -n "$capture_shots" ]]; then
+	if ((forced_container)); then
 		consider_container=1
-	else
-		echo "godot_gui: capturing on the desktop — the container renderer is" \
-			"chosen automatically on macOS only" >&2
+	elif [[ "$capture_renderer" == "auto" ]] && ! is_interactive; then
+		if [[ "$(uname)" == "Darwin" ]]; then
+			consider_container=1
+		else
+			echo "godot_gui: capturing on the desktop — the container renderer is" \
+				"chosen automatically on macOS only" >&2
+		fi
 	fi
 fi
 
-if ((consider_container)) && [[ -n "$capture_shots" ]]; then
+if ((consider_container)); then
 	if blocker="$(container_blocker "$capture_shots")"; then
 		# A caller who named the container asked for a frame that is not drawn
 		# on this desktop, so drawing it here anyway answers a different
@@ -166,7 +172,7 @@ if ((consider_container)) && [[ -n "$capture_shots" ]]; then
 		fi
 		echo "godot_gui: capturing on the desktop — $blocker" >&2
 	else
-		exec_in_container "$repo_dir" "$capture_shots" "$@"
+		exec_in_container "$capture_shots" "$@"
 	fi
 fi
 record_renderer "$DESKTOP_RENDERER"
