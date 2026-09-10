@@ -561,7 +561,8 @@ forms named in the root index are in `docs/design_record.md`.
   since COM-280**: a tile is `CommanderVisuals.PORTRAIT_SIZE` wide and tall
   (`CommanderSelectPanel.MINI_FACE`, never a literal), so it clears `fits_whole_bust` and the
   picker draws the same bust the card, the cut-in and the info sheet draw, where dividing the
-  column between a faction's members left a 61px tile that fell back to the face chip at 2x. The
+  column between a faction's members left a tile 61px wide over a 69px face field — both under
+  `WHOLE_BUST_FIELD`'s 110×108 — so it fell back to the face chip at 2x. The
   row scrolls sideways inside a `ScrollContainer` with `follow_focus` on, and the cut-off third
   tile plus the thin bar under the row are the whole scroll cue — no arrows, no paging, and the
   card column keeps `CommanderCard.READING_WIDTH`. The two-line band is kept at the wider tile:

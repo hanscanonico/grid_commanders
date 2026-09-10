@@ -148,6 +148,12 @@ func test_every_named_bust_field_is_whole_texels() -> void:
 ## card beside it. Stated here because the tile names no size at build time — it
 ## is handed one — and a field a texel under either bound silently falls back to
 ## the baked chip at a whole rung, which is exactly what it did before COM-280.
+##
+## What the built tile actually hands the bust is the button's rect less the name
+## band, which comes to this field because `_mini_height` reserves the band's own
+## padding (`_NAME_PAD`) and the band pads by the same. That sum needs a font, a
+## theme and a laid-out page, so it is read off the captured frame
+## (`docs/images/picker_bust_row_after.png`) rather than measured here.
 func test_the_roster_tile_holds_a_whole_bust() -> void:
 	assert_true(
 		CommanderVisuals.fits_whole_bust(Vector2(CommanderSelectPanel.MINI_FACE)),

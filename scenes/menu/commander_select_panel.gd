@@ -270,13 +270,8 @@ func _build_right_column() -> VBoxContainer:
 		_tab_buttons.append(tab)
 	col.add_child(tabs)
 
-	# The roster scrolls sideways rather than dividing the column between its
-	# members: a tile is the bust's own width, so about three of them stand in the
-	# space beside a card at READING_WIDTH and the rest are one arrow key away.
-	# The bar is always shown and the third tile is cut off — between them they are
-	# the whole cue, this page having no room for arrows it would also have to
-	# explain. `follow_focus` carries the keyboard walk; the drag a finger makes is
-	# ScrollContainer's own.
+	# The cut-off tile and the always-shown bar are the whole scroll cue, and why
+	# there are no arrows is in `.claude/rules/presentation.md` (COM-280).
 	_mini_frame = ScrollContainer.new()
 	_mini_frame.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_mini_frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
@@ -403,6 +398,25 @@ func _members() -> Array[CommanderType]:
 	return _by_faction.get(_faction_keys[_faction_index], [] as Array[CommanderType])
 
 
+## Where a general stands in the row on show, or -1 when this faction's row does
+## not hold them — neutral never does, and nor does a general of another faction.
+## Both lengths are walked, so a row asked for before it is built answers -1
+## rather than reaching past its buttons.
+func _tile_index_for(id: StringName) -> int:
+	var members := _members()
+	for i in mini(members.size(), _mini_buttons.size()):
+		if members[i].id == id:
+			return i
+	return -1
+
+
+## Puts the gold mark on one tile and takes it off the rest; -1 clears the row,
+## which is what previewing No Commander leaves behind.
+func _mark_tile(index: int) -> void:
+	for i in _mini_marks.size():
+		_mini_marks[i].visible = i == index
+
+
 ## Deferred: freshly-created buttons are not in the focus system until the frame
 ## settles, so an immediate grab_focus is a no-op and the viewport falls back to
 ## focusing the first tab. Deferring lands focus on the portrait, as intended.
@@ -436,6 +450,7 @@ func _rebuild_minis() -> void:
 	for commander: CommanderType in _members():
 		var mini := _make_mini(commander, row)
 		_mini_buttons.append(mini)
+	_reveal_previewed.call_deferred()
 
 
 ## The row itself, inside the frame that scrolls it — one child, so the cast is
@@ -472,10 +487,10 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	content.add_theme_constant_override("separation", 0)
 	button.add_child(content)
 
-	# The tile states no size of its own — it is the tile's width, and what is left
-	# over under the name band — so the kit measures the field it is handed a frame
-	# late. That field holds a whole bust, which is what the tile's fixed width is
-	# for.
+	# The stage states no size of its own — it is the tile's width, and what is
+	# left over under the name band — so the kit measures the field it is handed a
+	# frame late. That field holds a whole bust, which is what the tile's fixed
+	# width is for.
 	var stage := UiKit.commander_bust(commander, Vector2.ZERO, theme.color)
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(stage)
@@ -490,7 +505,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var name_wrap := PanelContainer.new()
 	name_wrap.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_dark))
-	name_wrap.add_child(UiKit.pad(name_label, 2, 1))
+	name_wrap.add_child(UiKit.pad(name_label, 2, _NAME_PAD))
 	content.add_child(name_wrap)
 	UiTheme.make_decoration(content)
 
@@ -513,28 +528,26 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	return button
 
 
-## Scrolls the row until the previewed general's tile is whole. Every path onto
-## this page previews somebody — a tab, a seat, Back restoring a pick, Random's
-## draw — so the row opens on the pick rather than on wherever it was left, and
-## the keyboard walk is `follow_focus`'s to carry from there.
+## Scrolls the row until the previewed general's tile is whole. Called once per
+## rebuild — opening the page, a tab, a seat change, Back and Random all rebuild
+## the row — so the row opens on the seat's pick rather than on wherever the
+## previous faction left it. Not called on a preview: a preview is also what a
+## mouse click on a half-cut tile does, and scrolling the row out from under the
+## cursor there is the worse answer. The keyboard walk is `follow_focus`'s.
 ##
-## Deferred, because a rebuilt row has no sizes until the frame settles and
-## `ensure_control_visible` on an unplaced tile scrolls to nothing.
-func _reveal_current() -> void:
-	_reveal_previewed.call_deferred()
-
-
-## Which tile that is, resolved when the deferred call runs rather than when it
-## was queued: two previews can land in one frame — the seat walk confirms and
-## re-opens the roster without a frame between — and the tile the first one named
-## is out of the row by then, which `ensure_control_visible` refuses out loud.
+## Queued rather than run, because a rebuilt row has no sizes until the frame
+## settles and `ensure_control_visible` on an unplaced tile scrolls to nothing.
+## Which tile is resolved when the call runs rather than when it was queued: the
+## preview that names it lands after the rebuild, and two rebuilds can share one
+## frame — the seat walk confirms and re-opens the roster without a frame between
+## — so the tile named at queue time is out of the row by then, which
+## `ensure_control_visible` refuses out loud.
 func _reveal_previewed() -> void:
 	if _current == null:
 		return
-	for i in mini(_members().size(), _mini_buttons.size()):
-		if _members()[i].id == _current.id:
-			_mini_frame.ensure_control_visible(_mini_buttons[i])
-			return
+	var index := _tile_index_for(_current.id)
+	if index >= 0:
+		_mini_frame.ensure_control_visible(_mini_buttons[index])
 
 
 ## Greys the portrait of a general an earlier seat already commands, and says
@@ -555,9 +568,7 @@ func _mark_taken(button: Button, commander: CommanderType) -> void:
 func _preview(commander: CommanderType) -> void:
 	_current = commander
 	_card.bind(commander)
-	for i in _mini_buttons.size():
-		_mini_marks[i].visible = _members()[i].id == commander.id
-	_reveal_current()
+	_mark_tile(_tile_index_for(commander.id))
 	_refresh_summary()
 	_refresh_chips()  # the active side's chip tracks the browse, mirror fallback and all
 
@@ -668,10 +679,10 @@ func _focus_commander(id: StringName) -> void:
 	var key := CommanderVisuals.key_for_faction(commander.faction)
 	var index := _faction_keys.find(key)
 	_set_faction(index if index >= 0 else 0)
-	for i in mini(_members().size(), _mini_buttons.size()):
-		if _members()[i].id == id and not _mini_buttons[i].disabled:
-			_grab(_mini_buttons[i])
-			return
+	var tile := _tile_index_for(id)
+	if tile >= 0 and not _mini_buttons[tile].disabled:
+		_grab(_mini_buttons[tile])
+		return
 	_grab_first_mini()
 
 
