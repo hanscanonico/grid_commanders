@@ -521,11 +521,19 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 ## Deferred, because a rebuilt row has no sizes until the frame settles and
 ## `ensure_control_visible` on an unplaced tile scrolls to nothing.
 func _reveal_current() -> void:
+	_reveal_previewed.call_deferred()
+
+
+## Which tile that is, resolved when the deferred call runs rather than when it
+## was queued: two previews can land in one frame — the seat walk confirms and
+## re-opens the roster without a frame between — and the tile the first one named
+## is out of the row by then, which `ensure_control_visible` refuses out loud.
+func _reveal_previewed() -> void:
 	if _current == null:
 		return
 	for i in mini(_members().size(), _mini_buttons.size()):
 		if _members()[i].id == _current.id:
-			_mini_frame.ensure_control_visible.call_deferred(_mini_buttons[i])
+			_mini_frame.ensure_control_visible(_mini_buttons[i])
 			return
 
 

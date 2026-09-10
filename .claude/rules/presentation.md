@@ -566,7 +566,8 @@ forms named in the root index are in `docs/design_record.md`.
   tile plus the thin bar under the row are the whole scroll cue — no arrows, no paging, and the
   card column keeps `CommanderCard.READING_WIDTH`. The two-line band is kept at the wider tile:
   a name still sets at up to 63 pixels at the body size, the band is what stops a long one
-  clipping, and one reserved height on every tile is what keeps the faces one row. **Whole-pixel text on the web was not decided here**: `project.godot` stretches
+  clipping, and one reserved height on every tile is what keeps the faces one row.
+  **Whole-pixel text on the web was not decided here**: `project.godot` stretches
   `canvas_items` with `aspect="keep"` and no `scale_mode`, so a fractional window scale does reach
   text today — but the only lever is the root stretch, which letterboxes every platform at once, so
   it is a project-wide window decision and the `improve/web-font-oversampling` branch owns it, not a
