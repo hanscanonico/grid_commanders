@@ -400,8 +400,8 @@ func _members() -> Array[CommanderType]:
 
 ## Where a general stands in the row on show, or -1 when this faction's row does
 ## not hold them — neutral never does, and nor does a general of another faction.
-## Both lengths are walked, so a row asked for before it is built answers -1
-## rather than reaching past its buttons.
+## The walk stops at the shorter of the two, so a row asked for before it is
+## built answers -1 rather than reaching past its buttons.
 func _tile_index_for(id: StringName) -> int:
 	var members := _members()
 	for i in mini(members.size(), _mini_buttons.size()):
@@ -531,9 +531,10 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 ## Scrolls the row until the previewed general's tile is whole. Called once per
 ## rebuild — opening the page, a tab, a seat change, Back and Random all rebuild
 ## the row — so the row opens on the seat's pick rather than on wherever the
-## previous faction left it. Not called on a preview: a preview is also what a
-## mouse click on a half-cut tile does, and scrolling the row out from under the
-## cursor there is the worse answer. The keyboard walk is `follow_focus`'s.
+## previous faction left it. Random is why the rebuild owns it rather than the
+## focus: the draw previews a general nothing focused, and may be the sixth of a
+## faction the row shows three of. A tile the player *does* focus, by key or by
+## click, is `follow_focus`'s to bring into view.
 ##
 ## Queued rather than run, because a rebuilt row has no sizes until the frame
 ## settles and `ensure_control_visible` on an unplaced tile scrolls to nothing.
