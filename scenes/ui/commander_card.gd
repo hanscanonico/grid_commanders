@@ -30,8 +30,8 @@ const MIN_WIDTH := 158
 ## frame was clipping. Callers with the room ask for it by name rather than
 ## guessing a number — narrower is legible but taller, and height is the
 ## dimension this screen has none of. Re-measured at the 10px body (COM-271):
-## 250 left every general's card taller than the frame, 280 puts the same two
-## back over it that were over it before the raise.
+## 250 pushed nine of the twenty-two cards past the select page's frame, and 280
+## leaves over it only the two that were over it before the raise.
 const READING_WIDTH := 280
 
 ## De-emphasised copy on paper: the signature line, and the micro-label over each

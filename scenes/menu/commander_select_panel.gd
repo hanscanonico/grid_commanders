@@ -27,13 +27,15 @@ const DUEL_SEATS := 2
 ## A roster tile's face field: the tile without the name band beneath it. The
 ## tile is the sum of the two (`_mini_height`), asked of the font rather than
 ## typed in, so a face keeps its rung when the shell's body size moves — 82 was
-## the whole tile at the 8px body, and this was the field inside it.
-const _MINI_FACE_H := 67
+## the whole tile at the 8px body, over a band of one line and its padding, and
+## this is the field that was left inside it.
+const _MINI_FACE_H := 69
 ## The lines the name band reserves. Six tiles across this column leave a caption
-## about 46 pixels wide: no general's full name fits that at the body size (the
-## widest sets at 63) and every single word does (38), so the band is two lines,
-## the given name over the surname, rather than the strip clipping the roster it
-## exists to read (COM-271). Reserved on every tile, so the faces stay one row.
+## about 46 pixels wide: no name in that six-general roster fits it at the body
+## size (the widest sets at 63) and every single word does (38), so the band is
+## two lines, the given name over the surname, rather than the strip clipping the
+## roster it exists to read (COM-271). Reserved on every tile, so the faces stay
+## one row.
 const _NAME_LINES := 2
 ## The band's padding over and under those lines.
 const _NAME_PAD := 1
@@ -201,8 +203,8 @@ func _build() -> void:
 	# carrying the Confirm button off-screen with it (COM-31). A ScrollContainer
 	# stops the card's minimum height propagating up, so the actions row and the
 	# footer legend hold their place whatever a general's copy says. At
-	# READING_WIDTH the whole shipped roster fits, so the bar never appears — the
-	# scroll is the guarantee, not the mechanism.
+	# READING_WIDTH the bar appears for the two longest cards and for nobody else,
+	# so the scroll is the roster's exception rather than the page's shape.
 	var card_frame := UiKit.vscroll()
 	body.add_child(card_frame)
 
