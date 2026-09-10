@@ -20,9 +20,9 @@ extends RefCounted
 ## `legend_for` and `chip_for` are the two ways to ask, and which table they read
 ## is `MobileProfile`'s answer rather than a caller's.
 ##
-## ASCII only, deliberately. Silkscreen carries no arrow glyphs, so a "↑↓" would
-## fall through to whatever system face the machine happens to have and print at
-## a different size than the rest of the line.
+## ASCII only, deliberately. Silkscreen carries no arrow glyphs and `UiMarks`
+## draws only the six the shell prints, so a "↑↓" would print as Godot's
+## missing-glyph box in a browser and at a size of its own on a desktop.
 
 ## The width past which the legend starts pushing the top bar's doctrine label
 ## out of the frame. An editorial ruler like TutorialHints.MAX_BODY_CHARS, held
