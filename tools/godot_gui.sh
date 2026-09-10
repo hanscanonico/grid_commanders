@@ -31,7 +31,8 @@
 set -u
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
-source "$(dirname "$0")/capture/image.env"
+repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$repo_dir/tools/capture/image.env"
 
 readonly DESKTOP_RENDERER=desktop
 readonly CONTAINER_RENDERER=container
@@ -165,7 +166,7 @@ if ((consider_container)) && [[ -n "$capture_shots" ]]; then
 		fi
 		echo "godot_gui: capturing on the desktop — $blocker" >&2
 	else
-		exec_in_container "$(cd "$(dirname "$0")/.." && pwd)" "$capture_shots" "$@"
+		exec_in_container "$repo_dir" "$capture_shots" "$@"
 	fi
 fi
 record_renderer "$DESKTOP_RENDERER"

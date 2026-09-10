@@ -76,14 +76,20 @@ root index are in `docs/design_record.md`.
   those 89 frames are byte-identical across two container runs. The one that moves, `capture_power`,
   is the scenario that un-pins Instant on purpose so a cut-in really plays, and it moves on the
   desktop too — three runs, three hashes — so it is a scenario that photographs a moving cut-in, not
-  a renderer difference. The same frame drawn either way is the recorded pair
-  `docs/images/capture_renderer_desktop.png` and `docs/images/capture_renderer_container.png`.
-  Everything else is untouched, and that is the decision: D3 stands (a tty launch still execs the engine), D1 and D6 stand (the wrapper
-  stays as the safety net for every launch the container cannot take, and the sweep still boots
-  once). "Available" is the docker CLI, a daemon that answers and the image already built — under
-  `auto` any one missing is **one notice line and the windowed path**, never an implicit ten-minute
-  build, while `GODOT_CAPTURE_RENDERER=container` **fails instead of falling back**, because a
-  caller who named the container did not ask for a frame this desktop drew.
+  a renderer difference. Because it moves, a full default-queue `SMOKE_HASHES` cannot be green on
+  either renderer; that predates this change rather than following from it, and pinning or dropping
+  that one scenario from a hashed queue is a follow-up. The same frame drawn either way is the
+  recorded pair `docs/images/capture_renderer_desktop.png` and
+  `docs/images/capture_renderer_container.png`.
+  Everything else is untouched, and that is the decision. D3 stands — a tty launch still execs the
+  engine — and so do D1 and D6: the wrapper stays as the safety net for every launch the container
+  cannot take, and the sweep still boots once. "Available" is the docker CLI, a daemon that answers
+  and the image already built — under `auto` any one missing is **one notice line and the windowed
+  path**, never an implicit ten-minute build, while `GODOT_CAPTURE_RENDERER=container` **fails
+  instead of falling back**, because a caller who named the container did not ask for a frame this
+  desktop drew. A **relative** capture
+  path blocks it the same way, under `auto` and forced alike, because there is no directory to bind
+  by name.
   `GODOT_CAPTURE_RENDERER=container|desktop|auto` forces the choice. The checkout and the capture
   directory are bound at their own absolute paths so every path on the command line means the same
   thing on both sides, and the import cache is a **named volume per checkout and engine version**,
@@ -96,8 +102,8 @@ root index are in `docs/design_record.md`.
   extra pass is as killable as the capture it precedes.
   Under D1 a manifest now names its renderer as well as its queue and the comparison refuses to
   cross either: two rasterisers are two sets of bytes. `tools/test_godot_gui.sh`
-  (`make capture-test`, in `make verify`) holds all of it on a fake engine and a fake `docker`, so the gate
-  needs no Docker at all.
+  (`make capture-test`) holds all of it on a fake engine and a fake `docker`. `make verify` gained
+  that one target and nothing else, and it needs no Docker, so the gate stays Docker-free.
 - `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
   one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
   offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command

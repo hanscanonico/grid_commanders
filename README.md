@@ -161,8 +161,9 @@ always did. Build the image once with `make capture-image` (Docker with a linux/
 first capture after that spends one extra pass importing the project into the container's own cache,
 and says so). Nothing else changes: `make smoke`, `make screenshot` and their siblings keep their
 names, flags and outputs. `tools/godot_gui.sh` picks the renderer, and it never builds the image —
-with no Docker CLI, no daemon answering or no image built it prints one line saying which, and falls
-back to the windowed path below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container`
+with no Docker CLI, no daemon answering, no image built, or a capture path given relative (there is
+no directory to bind by name) it prints one line saying which, and falls back to the windowed path
+below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container`
 forces the container one and *fails* rather than falling back when it cannot have it, and the
 default `auto` is the rule above. A `SMOKE_HASHES` manifest records which renderer
 drew it and the comparison refuses to cross renderers, exactly as it refuses to cross queues: two

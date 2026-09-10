@@ -393,8 +393,7 @@ fi
 out_dir="$(mktemp -d "${TMPDIR:-/tmp}/battle-smoke.XXXXXX")"
 # The launcher decides whether a capture renders on the desktop or inside the
 # container image, and writes the answer here; the manifest records it rather
-# than deriving it a second time. Said once: a run the launcher never reached,
-# and a manifest older than the header, drew on the desktop.
+# than deriving it a second time.
 export GODOT_CAPTURE_RENDERER_OUT="$out_dir/renderer"
 readonly DEFAULT_RENDERER=desktop
 # Non-empty when the one-boot sweep failed as a batch and had to be re-run one

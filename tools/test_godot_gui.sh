@@ -73,14 +73,16 @@ status=0
 
 # One launch with a clean slate: the fakes' records are truncated, the engine
 # runs with no tty (which is what an agent or a script gives it), and what came
-# back is left in the four variables the checks read.
+# back is left in the four variables the checks read. The launch runs from the
+# scratch directory, so a case that hands the engine a relative capture path
+# cannot write into the checkout.
 run_launcher() {
 	case_name="$1"
 	case_failures=0
 	shift
 	: >"$FAKE_ENGINE_ARGV"
 	: >"$FAKE_DOCKER_ARGV"
-	PATH="$fake_bin:$PATH" "$launcher" "$@" \
+	(cd "$work" && PATH="$fake_bin:$PATH" "$launcher" "$@") \
 		</dev/null >"$work/out" 2>"$work/err"
 	status=$?
 	engine_argv="$(cat "$FAKE_ENGINE_ARGV")"
@@ -133,8 +135,11 @@ expect_stderr_has() {
 
 capture_args=(--path . scenes/battle/battle.tscn -- "--screenshot=$work/shots/frame.png")
 sweep_args=(--path . scenes/battle/battle.tscn -- "--shots-dir=$work/shots")
+# Relative to the launch's own directory, which is $work: the container has no
+# directory of that name to bind, so this path never reaches it.
+relative_args=(--path . scenes/battle/battle.tscn -- "--screenshot=shots/frame.png")
 
-# 1. A human's launch: tty, so the engine runs here whatever else is true. The
+# A human's launch: tty, so the engine runs here whatever else is true. The
 # terminal has to be fabricated, since `make` gives this script pipes.
 if [[ "$(uname)" == "Darwin" ]] && command -v python3 >/dev/null 2>&1; then
 	case_name="tty launch runs the engine directly"
@@ -152,8 +157,8 @@ if [[ "$(uname)" == "Darwin" ]] && command -v python3 >/dev/null 2>&1; then
 	pass
 fi
 
-# 2-4 and 7 are the automatic choice, which is macOS-only: elsewhere a windowed
-# launch never stole anyone's focus in the first place.
+# The automatic choice is macOS-only: elsewhere a windowed launch never stole
+# anyone's focus in the first place.
 if [[ "$(uname)" == "Darwin" ]]; then
 	run_launcher "capture with the container available goes to docker" "${capture_args[@]}"
 	expect_no_engine
@@ -173,8 +178,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	# A cold volume's import is a second container, so it needs the same name
 	# the watcher kills — killed mid-import, a launcher would otherwise leave
 	# it running.
-	export FAKE_CAPTURE_CACHE=cold
-	run_launcher "a cold cache imports under the killable name" "${capture_args[@]}"
+	FAKE_CAPTURE_CACHE=cold \
+		run_launcher "a cold cache imports under the killable name" "${capture_args[@]}"
 	expect_no_engine
 	expect_stderr_has "importing the project into the capture cache"
 	import_run="$(grep '^run ' "$FAKE_DOCKER_ARGV" | grep -- '--import' | tail -1)"
@@ -182,21 +187,26 @@ if [[ "$(uname)" == "Darwin" ]]; then
 		fail "the import runs unnamed, so a killed launcher cannot stop it: $import_run"
 	expect_docker_run_has "--name gc-capture-"
 	pass
-	unset FAKE_CAPTURE_CACHE
 
-	export FAKE_DOCKER_DAEMON=down
-	run_launcher "a daemon that is down falls back" "${capture_args[@]}"
+	FAKE_DOCKER_DAEMON=down \
+		run_launcher "a daemon that is down falls back" "${capture_args[@]}"
 	expect_engine_ran
 	expect_stderr_has "daemon is not answering"
 	pass
-	unset FAKE_DOCKER_DAEMON
 
-	export FAKE_DOCKER_IMAGE=missing
-	run_launcher "a missing image falls back" "${capture_args[@]}"
+	FAKE_DOCKER_IMAGE=missing \
+		run_launcher "a missing image falls back" "${capture_args[@]}"
 	expect_engine_ran
 	expect_stderr_has "make capture-image"
 	pass
-	unset FAKE_DOCKER_IMAGE
+
+	# A relative capture path means one thing on this side of the boundary and
+	# another on the other, and there is no directory to bind by name, so it
+	# blocks the container exactly as a missing daemon does.
+	run_launcher "a relative capture path falls back" "${relative_args[@]}"
+	expect_engine_ran
+	expect_stderr_has "the capture path shots is relative"
+	pass
 
 	run_launcher "a launch that captures nothing stays on the desktop" --path .
 	expect_engine_ran
@@ -204,38 +214,44 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	pass
 fi
 
-export GODOT_CAPTURE_RENDERER=desktop
-run_launcher "GODOT_CAPTURE_RENDERER=desktop never probes docker" "${capture_args[@]}"
+GODOT_CAPTURE_RENDERER=desktop \
+	run_launcher "GODOT_CAPTURE_RENDERER=desktop never probes docker" "${capture_args[@]}"
 expect_engine_ran
 expect_no_docker
 pass
 
-GODOT_CAPTURE_RENDERER=container
-run_launcher "GODOT_CAPTURE_RENDERER=container goes to docker" "${capture_args[@]}"
+GODOT_CAPTURE_RENDERER=container \
+	run_launcher "GODOT_CAPTURE_RENDERER=container goes to docker" "${capture_args[@]}"
 expect_no_engine
 expect_docker_run_has "--screenshot=$work/shots/frame.png"
 pass
-unset GODOT_CAPTURE_RENDERER
 
-# 8. Forced and unavailable is a failure, not a fallback: the caller asked for a
+# Forced and unavailable is a failure, not a fallback: the caller asked for a
 # frame this desktop does not draw, so an unasked-for desktop frame would answer
 # a different question.
-export GODOT_CAPTURE_RENDERER=container FAKE_DOCKER_DAEMON=down
-run_launcher "GODOT_CAPTURE_RENDERER=container with a blocker fails" "${capture_args[@]}"
+GODOT_CAPTURE_RENDERER=container FAKE_DOCKER_DAEMON=down \
+	run_launcher "GODOT_CAPTURE_RENDERER=container with a blocker fails" "${capture_args[@]}"
 expect_no_engine
 expect_no_docker_run
 expect_stderr_has "GODOT_CAPTURE_RENDERER=container, but the docker daemon is not answering"
 ((status != 0)) || fail "the launcher exited 0 with the container unavailable"
 pass
-unset FAKE_DOCKER_DAEMON
 
-# 9. A caller that kills the launcher outright leaves no trap to run, so the
+GODOT_CAPTURE_RENDERER=container \
+	run_launcher "GODOT_CAPTURE_RENDERER=container with a relative path fails" "${relative_args[@]}"
+expect_no_engine
+expect_no_docker_run
+expect_stderr_has "GODOT_CAPTURE_RENDERER=container, but the capture path shots is relative"
+((status != 0)) || fail "the launcher exited 0 with a path the container cannot be given"
+pass
+
+# A caller that kills the launcher outright leaves no trap to run, so the
 # container is stopped by a watcher that outlives the exec — measured here on
 # the fake docker's argv, with the poll turned down so the case is quick.
 case_name="the watcher kills the container when the launcher goes away"
 case_failures=0
 : >"$FAKE_DOCKER_KILL_ARGV"
-GODOT_CAPTURE_WATCH_INTERVAL=0.05 PATH="$fake_bin:$PATH" \
+GODOT_CAPTURE_RENDERER=container GODOT_CAPTURE_WATCH_INTERVAL=0.05 PATH="$fake_bin:$PATH" \
 	"$launcher" "${capture_args[@]}" </dev/null >/dev/null 2>&1 &
 launcher_pid=$!
 wait "$launcher_pid"
@@ -246,9 +262,8 @@ done
 grep -q "^kill gc-capture-$launcher_pid\$" "$FAKE_DOCKER_KILL_ARGV" ||
 	fail "no 'docker kill gc-capture-$launcher_pid': $(cat "$FAKE_DOCKER_KILL_ARGV")"
 pass
-unset GODOT_CAPTURE_RENDERER
 
-# 10. The sweep's manifest carries the renderer, and a comparison refuses to
+# The sweep's manifest carries the renderer, and a comparison refuses to
 # cross it — the same refusal a manifest from another queue gets.
 case_name="a manifest from the other renderer is refused"
 case_failures=0
