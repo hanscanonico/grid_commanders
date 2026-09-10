@@ -103,6 +103,9 @@ static func font() -> FontFile:
 
 static func _bake() -> FontFile:
 	var face := FontFile.new()
+	# A mark is drawn at its grid or at a whole multiple of it, never between:
+	# beside a 10px word it sets 8 wide rather than being resampled off its own
+	# pixels, which is the rule STAT_DESIGN_PX states for the face it sits in.
 	face.fixed_size = GRID
 	face.fixed_size_scale_mode = TextServer.FIXED_SIZE_SCALE_INTEGER_ONLY
 	face.antialiasing = TextServer.FONT_ANTIALIASING_NONE
