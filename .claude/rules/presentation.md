@@ -542,12 +542,29 @@ forms named in the root index are in `docs/design_record.md`.
   and Silkscreen for its micro-labels and its cost, at `UiTheme` sizes and off `UiTheme.flat` —
   and because the card is also the in-battle info sheet, that one edit re-dressed commander
   select, the sheet and the gallery together, which is why it was one pass. What stays card-local
-  is one size and one colour, each named and each with its reason on the constant: `_NAME_SIZE`,
-  the card's headline, because the shell has no size between a button's and a banner's; and
-  `_MICRO_INK`, faint ink on *cream*, where the shell's `INK_3` is mixed for slate. A page
+  is one colour, named and with its reason on the constant: `_MICRO_INK`, faint ink on *cream*,
+  where the shell's `INK_3` is mixed for slate. The headline was card-local too (`_NAME_SIZE`,
+  because the shell had no size between a button's and a banner's) and is not any more: COM-271
+  added the missing rung, `UiTheme.SIZE_SUBTITLE` at 12, and the card's name band, the campaign
+  hub's briefing title and the debrief's stars all read it. A page
   title, by contrast, *is* a shell token — `UiKit.page_title` off `UiTheme.SIZE_PAGE_TITLE`, built
   by every full-screen page rather than sized page by page. Fonts (Pixelify Sans, Silkscreen) are
   vendored, OFL, recorded in `assets/LICENSES.md`.
+  **Body copy is `SIZE_BODY` at 10 and a tip is body copy** (COM-271): at 8 a rules paragraph was
+  set at the size of the micro-labels captioning it, so `SIZE_TIP` is now `SIZE_BODY` rather than
+  a size of its own and `tests/unit/test_ui_theme_sizes.gd` gates the ladder. Three surfaces pay
+  for the taller line: the tooltip slab, which never sizes to its text, widens from the handoff's
+  110 to 138 by the same 10/8 the face grew by, because inside the old frame the longest board
+  blurb wrapped to six lines where it had wrapped to five; the map picker's viewport peeks half of
+  the next cell's *picture* rather than half a whole cell; and the select page's roster strip
+  reserves two caption lines under every face — six tiles across that column leave about 46 pixels
+  of caption, which no name in that six-general roster fits at 10 and every single word does, so
+  the given name sits over the surname rather than the strip clipping the roster it exists to
+  read. **Whole-pixel text on the web was not decided here**: `project.godot` stretches
+  `canvas_items` with `aspect="keep"` and no `scale_mode`, so a fractional window scale does reach
+  text today — but the only lever is the root stretch, which letterboxes every platform at once, so
+  it is a project-wide window decision and the `improve/web-font-oversampling` branch owns it, not a
+  size ladder.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
   slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
   end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`), the transition-input

@@ -46,7 +46,7 @@ extends Control
 ## Above or below, and deliberately nothing else: every tip in the game opens
 ## downward into the panel it belongs to (the callers all pass BOTTOM), and a
 ## left/right pair bought two more arms in four places for a placement nobody
-## asks for. A slab is 110px wide on a 640px canvas — it goes beside a control
+## asks for. A slab is 138px wide on a 640px canvas — it goes beside a control
 ## far less comfortably than it goes under one.
 ##
 ## Spelled `Tooltip.Side` wherever it is written as a *type* — in a script that
@@ -56,8 +56,11 @@ enum Side { TOP, BOTTOM }
 
 ## Canvas pixels, so every metric is half the handoff's and doubles on screen
 ## (UiTheme's div-2 rule). The slab never sizes to its text: a long string wraps
-## inside WIDTH instead of stretching across the board.
-const WIDTH := 110  # handoff 220
+## inside WIDTH instead of stretching across the board, so the frame has to move
+## with the size the copy is set at. The handoff's 220 was drawn against an 8px
+## tip, and at SIZE_TIP's 10 the longest board blurb wrapped to six lines inside
+## the old 110. Scaled by the same 10/8, it wraps to the five it wrapped to at 8.
+const WIDTH := 138  # handoff 220, scaled from its 8px tip to SIZE_TIP's 10
 const DELAY_SECONDS := 0.35
 const GAP := 5  # handoff 10 — trigger edge to slab
 const MARGIN := 4  # handoff 8 — the viewport edge a clamped slab keeps off

@@ -296,7 +296,7 @@ func _build_list(parent: VBoxContainer) -> void:
 func _build_briefing(parent: VBoxContainer) -> void:
 	_brief_title = Label.new()
 	_brief_title.add_theme_font_override("font", UiTheme.display(true))
-	_brief_title.add_theme_font_size_override("font_size", 12)
+	_brief_title.add_theme_font_size_override("font_size", UiTheme.SIZE_SUBTITLE)
 	_brief_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	parent.add_child(_brief_title)
 

@@ -201,19 +201,29 @@ const SIZE_TITLE := 8
 ## The title of every full-screen page.
 const SIZE_PAGE_TITLE := 15
 const SIZE_BUTTON := 10
+## The step between a button and a page title: a card's headline, a briefing's
+## name, a commander's name — the words that head a block without being the
+## title of the screen. Without it the shell jumped from copy straight to a page
+## title, and every surface that wanted the missing rung typed its own number.
+const SIZE_SUBTITLE := 12
 ## The one announcement size: the beat that stops the board (the day banner) and
 ## the lockup that ends it. Between the wordmark and a panel title, because both
 ## are read across the room rather than at reading distance — and one token, so
 ## the two surfaces that speak to the whole table cannot drift apart.
 const SIZE_BANNER := 18
-const SIZE_BODY := 8
+## Every sentence a player reads: rules copy, a tip, a dialog line. The button's
+## size, which the menu pages have printed legibly since the shell was drawn. It
+## was 8 — the same size as the micro-labels captioning it, and a third of the
+## banner over it, with nothing in between either way (COM-271).
+const SIZE_BODY := 10
 const SIZE_SEGMENT := 7
 ## A tooltip's label line. The handoff sets it at --text-sm, which the div-2 rule
 ## puts at SIZE_SEGMENT's 7 — but a segment holds one word and a tip holds a
 ## sentence, and Pixelify's space advance rounds away at 7 with subpixel
-## positioning off ("How fast moves" sets as "Howfast moves"). One step up is the
-## smallest size that keeps the words apart.
-const SIZE_TIP := 8
+## positioning off ("How fast moves" sets as "Howfast moves"). A tip is body copy
+## at a shorter reading distance, so it reads at SIZE_BODY rather than at a size
+## of its own.
+const SIZE_TIP := SIZE_BODY
 ## Silkscreen is drawn on an 8-pixel grid, and a pixel face only rasterises whole
 ## at a whole multiple of the grid it was drawn on: below it the renderer drops
 ## rows out of every glyph, which is not a blur but a different letter — at 6 the
