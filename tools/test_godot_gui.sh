@@ -37,9 +37,13 @@ done
 EOF
 cat >"$fake_bin/docker" <<'EOF'
 #!/usr/bin/env bash
-# The `docker kill` a finished launcher's watcher fires is not recorded: it
-# lands half a second after the run, which is inside whichever case comes next.
-[[ "${1:-}" == "kill" ]] && exit 0
+# A watcher's `docker kill` lands after its own launcher exited, so it is
+# recorded apart from the run's argv rather than inside whichever case is
+# current by then.
+if [[ "${1:-}" == "kill" ]]; then
+	printf '%s\n' "$*" >>"$FAKE_DOCKER_KILL_ARGV"
+	exit 0
+fi
 printf '%s\n' "$*" >>"$FAKE_DOCKER_ARGV"
 case "${1:-}" in
 	info) [[ "${FAKE_DOCKER_DAEMON:-up}" == "up" ]] || exit 1 ;;
@@ -51,6 +55,7 @@ chmod +x "$work/godot" "$fake_bin/docker"
 export GODOT="$work/godot"
 export FAKE_ENGINE_ARGV="$work/engine.argv"
 export FAKE_DOCKER_ARGV="$work/docker.argv"
+export FAKE_DOCKER_KILL_ARGV="$work/docker.kill.argv"
 
 failures=0
 case_failures=0
@@ -112,6 +117,10 @@ expect_docker_run_has() {
 	[[ "$line" == *"$needle"* ]] || fail "'docker run' lacks $needle: $line"
 }
 
+expect_no_docker_run() {
+	! grep -q '^run ' "$FAKE_DOCKER_ARGV" || fail "a container was started: $docker_argv"
+}
+
 expect_stderr_has() {
 	[[ "$stderr_text" == *"$1"* ]] || fail "stderr lacks '$1': $stderr_text"
 }
@@ -119,46 +128,14 @@ expect_stderr_has() {
 capture_args=(--path . scenes/battle/battle.tscn -- "--screenshot=$work/shots/frame.png")
 sweep_args=(--path . scenes/battle/battle.tscn -- "--shots-dir=$work/shots")
 
-# 1. A human's launch: tty, so the engine runs here whatever else is true.
-# The terminal has to be fabricated — `make` gives this script pipes — so the
-# launch gets a pty on all three descriptors and is waited on by pid.
-# `pty.spawn` would be the short spelling and is not usable: on macOS's system
-# python it never returns from a child that exited without printing, which
-# hangs the gate rather than failing it.
-cat >"$work/tty_launch.py" <<'EOF'
-import os
-import pty
-import subprocess
-import sys
-import threading
-
-master, slave = pty.openpty()
-child = subprocess.Popen(sys.argv[1:], stdin=slave, stdout=slave, stderr=slave)
-os.close(slave)
-
-
-def drain() -> None:
-	try:
-		while os.read(master, 1024):
-			pass
-	except OSError:
-		pass
-
-
-threading.Thread(target=drain, daemon=True).start()
-try:
-	sys.exit(child.wait(60))
-except subprocess.TimeoutExpired:
-	child.kill()
-	sys.exit(124)
-EOF
-
+# 1. A human's launch: tty, so the engine runs here whatever else is true. The
+# terminal has to be fabricated, since `make` gives this script pipes.
 if [[ "$(uname)" == "Darwin" ]] && command -v python3 >/dev/null 2>&1; then
 	case_name="tty launch runs the engine directly"
 	case_failures=0
 	: >"$FAKE_ENGINE_ARGV"
 	: >"$FAKE_DOCKER_ARGV"
-	PATH="$fake_bin:$PATH" python3 "$work/tty_launch.py" \
+	PATH="$fake_bin:$PATH" python3 "$repo_dir/tools/capture/run_on_tty.py" \
 		"$launcher" "${capture_args[@]}" >/dev/null 2>&1
 	status=$?
 	engine_argv="$(cat "$FAKE_ENGINE_ARGV")"
@@ -220,7 +197,38 @@ expect_docker_run_has "--screenshot=$work/shots/frame.png"
 pass
 unset GODOT_CAPTURE_RENDERER
 
-# 8. The sweep's manifest carries the renderer, and a comparison refuses to
+# 8. Forced and unavailable is a failure, not a fallback: the caller asked for a
+# frame this desktop does not draw, so an unasked-for desktop frame would answer
+# a different question.
+export GODOT_CAPTURE_RENDERER=container FAKE_DOCKER_DAEMON=down
+run_launcher "GODOT_CAPTURE_RENDERER=container with a blocker fails" "${capture_args[@]}"
+expect_no_engine
+expect_no_docker_run
+expect_stderr_has "GODOT_CAPTURE_RENDERER=container, but the docker daemon is not answering"
+((status != 0)) || fail "the launcher exited 0 with the container unavailable"
+pass
+unset FAKE_DOCKER_DAEMON
+
+# 9. A caller that kills the launcher outright leaves no trap to run, so the
+# container is stopped by a watcher that outlives the exec — measured here on
+# the fake docker's argv, with the poll turned down so the case is quick.
+case_name="the watcher kills the container when the launcher goes away"
+case_failures=0
+: >"$FAKE_DOCKER_KILL_ARGV"
+GODOT_CAPTURE_WATCH_INTERVAL=0.05 PATH="$fake_bin:$PATH" \
+	"$launcher" "${capture_args[@]}" </dev/null >/dev/null 2>&1 &
+launcher_pid=$!
+wait "$launcher_pid"
+for _ in $(seq 1 100); do
+	grep -q "^kill gc-capture-$launcher_pid\$" "$FAKE_DOCKER_KILL_ARGV" && break
+	sleep 0.05
+done
+grep -q "^kill gc-capture-$launcher_pid\$" "$FAKE_DOCKER_KILL_ARGV" ||
+	fail "no 'docker kill gc-capture-$launcher_pid': $(cat "$FAKE_DOCKER_KILL_ARGV")"
+pass
+unset GODOT_CAPTURE_RENDERER
+
+# 10. The sweep's manifest carries the renderer, and a comparison refuses to
 # cross it — the same refusal a manifest from another queue gets.
 case_name="a manifest from the other renderer is refused"
 case_failures=0

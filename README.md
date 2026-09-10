@@ -152,16 +152,19 @@ so the same scenario writes different bytes under `MODES="cutin"` than in the fu
 manifest names the queue it was recorded from and the comparison refuses to cross it, so a narrowed
 run asks for a new manifest instead of crying wolf.
 
-A capture launched by a script or an agent does not open that window at all: it renders inside a
-Linux container — a virtual display and a software Vulkan driver, with the official Linux arm64
-build of the same engine version — so nothing flashes across the desktop. Build the image once with
-`make capture-image` (Docker with a linux/arm64 daemon; the first capture after that spends one
-extra pass importing the project into the container's own cache, and says so). Nothing else changes:
-`make smoke`, `make screenshot` and their siblings keep their names, flags and outputs.
-`tools/godot_gui.sh` picks the renderer, and it never builds the image — with no Docker CLI, no
-daemon answering or no image built it prints one line saying which, and falls back to the windowed
-path below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container` forces the container
-one, and the default `auto` is the rule above. A `SMOKE_HASHES` manifest records which renderer
+A capture launched by a script or an agent on macOS does not open that window at all: it renders
+inside a Linux container — a virtual display and Mesa's software renderer (llvmpipe, which is what
+draws for the project's `gl_compatibility` method), with the official Linux arm64 build of the same
+engine version — so nothing flashes across the desktop. On any other host a windowed launch takes
+nobody's focus, so the automatic choice is macOS-only and every other host simply renders as it
+always did. Build the image once with `make capture-image` (Docker with a linux/arm64 daemon; the
+first capture after that spends one extra pass importing the project into the container's own cache,
+and says so). Nothing else changes: `make smoke`, `make screenshot` and their siblings keep their
+names, flags and outputs. `tools/godot_gui.sh` picks the renderer, and it never builds the image —
+with no Docker CLI, no daemon answering or no image built it prints one line saying which, and falls
+back to the windowed path below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container`
+forces the container one and *fails* rather than falling back when it cannot have it, and the
+default `auto` is the rule above. A `SMOKE_HASHES` manifest records which renderer
 drew it and the comparison refuses to cross renderers, exactly as it refuses to cross queues: two
 rasterisers, two sets of bytes.
 

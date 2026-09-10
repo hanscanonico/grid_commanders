@@ -33,6 +33,16 @@ set -u
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 source "$(dirname "$0")/capture/image.env"
 
+readonly DESKTOP_RENDERER=desktop
+readonly CONTAINER_RENDERER=container
+# The shell test turns this down rather than waiting half a second per case.
+readonly WATCH_INTERVAL="${GODOT_CAPTURE_WATCH_INTERVAL:-0.5}"
+
+# A tty means a human is watching this launch, on either path below.
+is_interactive() {
+	[[ -t 0 || -t 1 || -t 2 ]]
+}
+
 # Which renderer actually ran, for a caller that has to record it —
 # SMOKE_HASHES writes it into its manifest, because a container frame and a
 # desktop frame are two rasterisers and their bytes may not be compared.
@@ -71,10 +81,11 @@ capture_dir() {
 # built — the launcher never builds it, since a capture that silently spent
 # ten minutes fetching Debian is a hung capture.
 container_blocker() {
+	local shots="$1"
 	# A relative capture path means one thing on this side of the boundary and
 	# another on the other, and there is no directory to bind by name.
-	if [[ "$capture_shots" != /* ]]; then
-		echo "the capture path $capture_shots is relative"
+	if [[ "$shots" != /* ]]; then
+		echo "the capture path $shots is relative"
 	elif ! command -v docker >/dev/null 2>&1; then
 		echo "docker is not on PATH"
 	elif ! docker info >/dev/null 2>&1; then
@@ -110,13 +121,13 @@ exec_in_container() {
 		docker run --rm "${mounts[@]}" -w "$repo_dir" "$GODOT_CAPTURE_IMAGE" \
 			--headless --path "$repo_dir" --import >&2
 	fi
-	record_renderer container
+	record_renderer "$CONTAINER_RENDERER"
 	# A caller that kills this launcher outright (the sweep's timeout uses
 	# SIGKILL) leaves no trap to run, so the container is stopped by a watcher
 	# that outlives us — `$$` still names this process after the exec below.
 	local launcher_pid=$$
 	(
-		while kill -0 "$launcher_pid" 2>/dev/null; do sleep 0.5; done
+		while kill -0 "$launcher_pid" 2>/dev/null; do sleep "$WATCH_INTERVAL"; done
 		docker kill "$name"
 	) >/dev/null 2>&1 &
 	exec docker run --rm --init --name "$name" "${mounts[@]}" -w "$repo_dir" \
@@ -125,22 +136,39 @@ exec_in_container() {
 
 capture_shots="$(capture_dir "$@")"
 capture_renderer="${GODOT_CAPTURE_RENDERER:-auto}"
-interactive=0
-[[ -t 0 || -t 1 || -t 2 ]] && interactive=1
-# `auto` containerises exactly the launches that would otherwise flash a
-# window across a developer's desktop: a capture, from a script, on macOS.
-if [[ -n "$capture_shots" && "$capture_renderer" != "desktop" ]] &&
-	[[ "$capture_renderer" == "container" ||
-	($interactive == 0 && "$(uname)" == "Darwin") ]]; then
-	if blocker="$(container_blocker)"; then
+forced_container=0
+[[ "$capture_renderer" == "$CONTAINER_RENDERER" ]] && forced_container=1
+# `auto` containerises exactly the launches that would otherwise flash a window
+# across a developer's desktop: a capture, from a script, on macOS. A tty launch
+# is the human's own (D3) and stays silent; on another host a windowed launch
+# never stole anyone's focus, and that is the one auto case worth naming.
+consider_container=$forced_container
+if [[ "$capture_renderer" == "auto" && -n "$capture_shots" ]] && ! is_interactive; then
+	if [[ "$(uname)" == "Darwin" ]]; then
+		consider_container=1
+	else
+		echo "godot_gui: capturing on the desktop — the container renderer is" \
+			"chosen automatically on macOS only" >&2
+	fi
+fi
+
+if ((consider_container)) && [[ -n "$capture_shots" ]]; then
+	if blocker="$(container_blocker "$capture_shots")"; then
+		# A caller who named the container asked for a frame that is not drawn
+		# on this desktop, so drawing it here anyway answers a different
+		# question. Say what is missing and take nothing.
+		if ((forced_container)); then
+			echo "godot_gui: GODOT_CAPTURE_RENDERER=container, but $blocker" >&2
+			exit 1
+		fi
 		echo "godot_gui: capturing on the desktop — $blocker" >&2
 	else
 		exec_in_container "$(cd "$(dirname "$0")/.." && pwd)" "$capture_shots" "$@"
 	fi
 fi
-record_renderer desktop
+record_renderer "$DESKTOP_RENDERER"
 
-if [[ -t 0 || -t 1 || -t 2 ]] || [[ "$(uname)" != "Darwin" ]]; then
+if is_interactive || [[ "$(uname)" != "Darwin" ]]; then
 	exec "$GODOT" "$@"
 fi
 

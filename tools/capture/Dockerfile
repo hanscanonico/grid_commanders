@@ -1,20 +1,20 @@
-# The capture renderer: a Linux arm64 box with a virtual display and a software
-# Vulkan driver, so an agent's screenshot renders off the developer's desktop
-# instead of flashing a window across it (COM-279).
+# The capture renderer: a Linux arm64 box with a virtual display and Mesa's
+# software renderer, so an agent's screenshot renders off the developer's
+# desktop instead of flashing a window across it (COM-279).
 #
 # Native linux/arm64 — no x86 emulation. The engine is the official Linux arm64
 # build of the same version the macOS binary is; the image tag carries that
 # version, so a bump is a different image and cannot be answered from cache.
 FROM debian:bookworm-slim
 
-ARG GODOT_VERSION=4.7.1-stable
+# No default: tools/capture/image.env states the version, and the Makefile
+# passes it from there.
+ARG GODOT_VERSION
 
-# xvfb is the display and Mesa is the renderer: llvmpipe (libgl1-mesa-dri) draws
-# for the project's gl_compatibility method, lavapipe (mesa-vulkan-drivers) is
-# there for the Vulkan one. The x11 libraries are what the engine links against
-# at startup, and fontconfig is what it finds a fallback face through — without
-# it every glyph the project does not ship a font for is a box. No ALSA: there
-# is no sound card here, and the engine falls back to its dummy audio driver.
+# llvmpipe (libgl1-mesa-dri) is what draws, since the project renders with
+# gl_compatibility; lavapipe (mesa-vulkan-drivers) is here only for a future
+# switch to the Vulkan method. fontconfig earns its place too: without it every
+# glyph the project does not ship a font for is a box.
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ca-certificates \
 	curl \

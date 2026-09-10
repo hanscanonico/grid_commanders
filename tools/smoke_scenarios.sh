@@ -393,8 +393,10 @@ fi
 out_dir="$(mktemp -d "${TMPDIR:-/tmp}/battle-smoke.XXXXXX")"
 # The launcher decides whether a capture renders on the desktop or inside the
 # container image, and writes the answer here; the manifest records it rather
-# than deriving it a second time.
+# than deriving it a second time. Said once: a run the launcher never reached,
+# and a manifest older than the header, drew on the desktop.
 export GODOT_CAPTURE_RENDERER_OUT="$out_dir/renderer"
+readonly DEFAULT_RENDERER=desktop
 # Non-empty when the one-boot sweep failed as a batch and had to be re-run one
 # process per scenario; the entry names the log the batch left behind.
 batch_fallbacks=()
@@ -649,7 +651,7 @@ run_batched_sweep() {
 # A frame is also the renderer that drew it, so the manifest names that too and
 # the comparison refuses to cross it, exactly as it refuses to cross a queue.
 renderer_used() {
-	local name="desktop"
+	local name="$DEFAULT_RENDERER"
 	[[ -s "$GODOT_CAPTURE_RENDERER_OUT" ]] && name="$(cat "$GODOT_CAPTURE_RENDERER_OUT")"
 	printf '%s\n' "$name"
 }
@@ -679,12 +681,12 @@ compare_capture_hashes() {
 		echo "smoke: answer for a different font atlas — record a new one to compare" >&2
 		return 1
 	fi
-	# A manifest from before the header existed was recorded on the desktop.
 	local recorded_renderer now_renderer
 	recorded_renderer="$(sed -n 's/^# renderer: //p' "$manifest")"
+	recorded_renderer="${recorded_renderer:-$DEFAULT_RENDERER}"
 	now_renderer="$(renderer_used)"
-	if [[ "${recorded_renderer:-desktop}" != "$now_renderer" ]]; then
-		echo "smoke: $manifest was recorded on the ${recorded_renderer:-desktop} renderer and this" >&2
+	if [[ "$recorded_renderer" != "$now_renderer" ]]; then
+		echo "smoke: $manifest was recorded on the $recorded_renderer renderer and this" >&2
 		echo "smoke: run drew on $now_renderer — two rasterisers, so record a new one to compare" >&2
 		return 1
 	fi

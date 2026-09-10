@@ -22,5 +22,5 @@ for arg in "$@"; do
 	[[ "$arg" == "--headless" ]] && exec godot "$@"
 done
 
-# -a takes the first free display number, so two captures can run at once.
+# -a, so two captures can run at once.
 exec xvfb-run -a -s "-screen 0 1920x1080x24" godot "$@"
