@@ -72,11 +72,8 @@ docker_argv=""
 stderr_text=""
 status=0
 
-# One launch with a clean slate: the fakes' records are truncated, the engine
-# runs with no tty (which is what an agent or a script gives it), and what came
-# back is left in the four variables the checks read. The launch runs from the
-# scratch directory, so a case that hands the engine a relative capture path
-# cannot write into the checkout.
+# A case opens by naming itself and emptying the fakes' records, and closes by
+# reading what they caught into the variables the checks below look at.
 reset_fakes() {
 	case_name="$1"
 	case_failures=0
@@ -91,6 +88,9 @@ read_fakes() {
 	stderr_text="$(cat "$work/err")"
 }
 
+# One launch with a clean slate, with no tty — which is what an agent or a
+# script gives it — and from the scratch directory, so a case that hands the
+# engine a relative capture path cannot write into the checkout.
 run_launcher() {
 	reset_fakes "$1"
 	shift

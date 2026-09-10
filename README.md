@@ -165,9 +165,10 @@ with no Docker CLI, no daemon answering, no image built, or a capture path given
 no directory to bind by name) it prints one line saying which, and falls back to the windowed path
 below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container` forces the container one
 and *fails* rather than falling back when it cannot have it, and the default `auto` is the rule
-above. All three govern where a *frame* is drawn, so a launch that takes none runs here whichever
-is set. A `SMOKE_HASHES` manifest records which renderer drew it and the comparison refuses to cross
-renderers, exactly as it refuses to cross queues: two rasterisers, two sets of bytes.
+above. All three say only where a *frame* is drawn, so a launch that takes none runs on the desktop
+whichever one is set. A `SMOKE_HASHES` manifest records which renderer drew its frames, and the
+comparison refuses to cross renderers exactly as it refuses to cross queues: two rasterisers, two
+sets of bytes.
 
 The one window is still activated as it opens and again on each scene change, so a sweep briefly
 takes the front app away from you. `tools/focus_timeline.sh make smoke` measures that instead of
