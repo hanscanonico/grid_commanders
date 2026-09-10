@@ -13,7 +13,7 @@ from __future__ import annotations
 from PIL import Image
 
 from .palette import RGB
-from .sun import SHADOW, SHADOW_OFFSET
+from .sun import SHADOW, SHADOW_OFFSET, casts_shadow
 
 
 # The cell's vertical landmarks, each stated as a height ABOVE its bottom
@@ -34,7 +34,6 @@ def compose_cell(
     shadow: bool = True,
     origin: tuple[int, int] | None = None,
     footprint_w: int | None = None,
-    silhouette_w: int | None = None,
     ground: int | None = None,
     centred_shadow: bool = False,
     under_way: bool = False,
@@ -46,58 +45,59 @@ def compose_cell(
     the unit occupies. A taller cell therefore adds sky above the sprite and
     moves nothing, which is what lets a silhouette overflow its tile upward.
 
-    Shadow policy (sprite review round 3): land units get a tight hard
-    CONTACT shadow — without one they float over the tile — and the airborne
-    cue is the shadow's offset and the sky between unit and shadow, not its
-    presence: 'air' hovers over a larger ellipse displaced down-right.
-    'sea' sits in the water on a displacement shadow with waterline foam;
-    `wake` adds the running foam a hull that is mostly under water needs to
-    separate from open sea at all (see `_wake`).
+    Shadow policy (COM-270): only what is AIRBORNE casts — `sun.casts_shadow`
+    is the one statement of it. A unit on the ground and a hull in the water
+    are drawn flat on the tile, which already carries its own shading; what
+    separates them from it is the contour, not a baked ellipse. 'air' hovers
+    over a small ellipse displaced down-right, because the gap between unit
+    and shadow is the only altitude cue the sheet has. 'sea' still lays a
+    displacement patch — the shape the hull cuts in the water, which is what
+    `_waterline_foam` breaks around and what `_bow_wave` crests along — and
+    then takes it back out again, so the water's shape survives the shading's
+    removal. `wake` adds the running foam a hull that is mostly under water
+    needs to separate from open sea at all (see `_wake`).
     'prop' composes with no shadow (terrain tiles draw their own grounding).
 
     Altitude is read off the shadow's SIZE and OFFSET, never off its density
     (the round-3 quarter-tone/half-tone pair is superseded — see
-    `_shadow_ellipse`): a land unit's hugs the hull, an airborne one is
-    larger and displaced down-right with ground showing between. Nothing
-    here is semi-transparent — the shadow and every fleck of foam are opaque,
-    because partial alpha is a blurred halo at cut-in scale.
+    `_shadow_ellipse`). Nothing here is semi-transparent — the shadow and
+    every fleck of foam are opaque, because partial alpha is a blurred halo
+    at cut-in scale.
 
-    `shadow=False` leaves that cast shadow off, for a surface that draws its
-    own ground and its own shadow rather than standing the cell on a tile.
+    `shadow=False` leaves an aircraft's cast shadow off too, for a surface
+    that draws its own ground and its own shadow rather than standing the
+    cell on a tile.
 
     It SUBTRACTS rather than skips, so the cell is the tile's cell with those
     pixels taken back out and can never be a second opinion on the art. The
     waterline foam is why that matters: it is placed against the composed
     cell's own spans, so a shadow that was never drawn would move the foam.
 
-    The last four arguments are what lets a SECOND pose of the same unit be
+    The last three arguments are what lets a SECOND pose of the same unit be
     the same unit moving rather than a second composition. `origin` places the
     sprite's top-left corner outright, so a caller can pin two crops by their
     model origin (`sprite_origin`) instead of centring each one's own box.
-    `footprint_w` is the WIDTH a land ellipse's radius is taken from — the
-    unit's footprint on the ground, which a raised rotor or a swung barrel
-    does not change. `silhouette_w` sizes that ellipse's DEPTH instead, off
-    the whole crop rather than the footprint: depth read narrower shrank a
-    vehicle's shadow AREA along with its width and cost the board's
-    legibility ratchet 429 previously-passing cells, so it keeps reading the
-    wider measurement `footprint_w` answered with before this cast shadow was
-    fit to the footprint. `ground` is the SURFACE the unit is over, which is
-    not the row it rides at once it bobs: the shadow, the displacement
-    ellipse, the running wake and the waterline foam all stay here, so a ship
-    that rises a board texel rides a swell instead of dragging the sea up
-    with it. All four default to the single-pose behaviour: centred crop, the
-    sprite's own width twice over, and the surface right under the unit.
+    `footprint_w` is the WIDTH an ellipse's radius is taken from. `atlas`
+    hands it pose A's whole crop, for the aircraft that still casts and for
+    the displacement patch alike, so a swept rotor or a swung barrel cannot
+    pump the ellipse from one pose to the next.
+    `ground` is the SURFACE the unit is over, which is
+    not the row it rides at once it bobs: the displacement patch, the running
+    wake and the waterline foam all stay here, so a ship that rises a board
+    texel rides a swell instead of dragging the sea up with it. All three
+    default to the single-pose behaviour: centred crop, the sprite's own
+    width, and the surface right under the unit.
 
     `centred_shadow` drops the shadow's HORIZONTAL offset (the full vertical
     drop stays) and straddles the ellipse across the cell's mirror axis, so
     flipping the cell leaves the shadow exactly where it was. It is for a
     frame the consumer MIRRORS: the game plays the move clip with
-    `Sprite2D.flip_h` for rightward travel, which would otherwise swing the
-    shadow 5px (land) or 9px (air) to the wrong side of a sun every terrain
-    tile agrees on. Straddling costs the ellipse one column of width (see
-    `_shadow_ellipse`'s `mirrored`) and costs the unit a 2px — 4px for air —
-    shadow recentre at the instant it starts or stops moving, which lands on
-    the frame the position tween starts or ends on. See docs/move_clip.md.
+    `Sprite2D.flip_h` for rightward travel, which would otherwise swing an
+    aircraft's shadow 9px to the wrong side of a sun every terrain tile
+    agrees on. Straddling costs the ellipse one column of width (see
+    `_shadow_ellipse`'s `mirrored`) and costs the unit a 4px shadow recentre
+    at the instant it starts or stops moving, which lands on the frame the
+    position tween starts or ends on. See docs/move_clip.md.
 
     A ship does NOT ask for this even under way: its ellipse is displacement
     rather than a cast shadow, and `_waterline_foam` is placed against the
@@ -117,7 +117,6 @@ def compose_cell(
     if ground is None:
         ground = bottom
     fw = w if footprint_w is None else footprint_w
-    sw = w if silhouette_w is None else silhouette_w
 
     cast: list[tuple[int, int]] = []
     sx, sy = SHADOW_OFFSET
@@ -127,8 +126,12 @@ def compose_cell(
         # about the cell's flip axis rather than about one column of it.
         sx = 0
     if kind == "sea":
-        # Ships sit IN the water: a flat displacement shading right under
-        # the hull instead of a floating blob, then foam at the waterline.
+        # The shape the hull cuts in the water. It is no longer drawn (COM-270
+        # took the shading off every hull), but it is still laid down here and
+        # erased below, because the water's own foam is placed against it:
+        # `_waterline_foam` reads the composed cell's spans and `_bow_wave`
+        # crests along the patch's leading rim. Composing it and taking it back
+        # out is what keeps both of those where the sheet has always had them.
         rx = max(6, int(fw * 0.42))
         cast = _shadow_ellipse(
             out,
@@ -138,48 +141,24 @@ def compose_cell(
             max(2, rx // 5),
             mirrored=centred_shadow,
         )
-    elif kind == "air":
-        rx = max(6, int(fw * 0.30))
+    elif casts_shadow(kind):
+        # The one ellipse the sheet still shows, and the only one left to
+        # size — asked of `sun.casts_shadow` rather than of the kind, so the
+        # policy has one statement and this is a reading of it: an altitude
+        # cue read off the gap between unit and shadow, so
+        # it has to be there and does not have to be broad. 0.26 rather than
+        # the 0.30 it shipped at is the whole of the shrink COM-270 asks for,
+        # and the floor under it is the rung reading, not taste — a solid
+        # ellipse this shallow (`ry` is a third of `rx`) loses a whole row to
+        # the board's 4:1 sample at zoom rung 1, so its share of itself swings
+        # 0.147 at 0.26 and 0.378 at 0.22, against `CastShadow`'s 0.15 bar.
+        rx = max(6, int(fw * 0.26))
         cast = _shadow_ellipse(
             out,
             cell_w // 2 + dx + sx * 2,
             cell_h - AIR_SHADOW_BOTTOM,
             rx,
             max(2, rx // 3),
-            mirrored=centred_shadow,
-        )
-    elif kind == "land":
-        # `old_rx` is the pre-S3 shipped radius — the width and, via `ry`,
-        # the depth `silhouette_w` (the whole crop) answered with 0.34, the
-        # coefficient this file always shipped. The footprint fix answers
-        # WIDTH from `footprint_w` instead, at a higher 0.41 (every land
-        # footprint is narrower than the crop 0.34 was tuned against — a
-        # turret or a barrel held wide of the hull — so 0.34 read a
-        # footprint-accurate tank a 15% narrower shadow and cost the board
-        # legibility ratchet 380 previously-passing cells, mostly the
-        # tank's own), but never past `old_rx`: a footprint answer that
-        # widened a shadow the board had already been measured against
-        # once turned a marginal occlusion reading over (`apc` pose B's
-        # ellipse offset fell under its 1.0px floor) rather than help, so
-        # the ceiling is the shipped geometry, not a second guess at it.
-        # Within that ceiling this is still every unit's own measurement:
-        # infantry and mech shrink hardest (-17%/-26%), and every one of
-        # the eight vehicles lands exactly on its old width.
-        old_rx = max(4, int(sw * 0.34))
-        rx = min(old_rx, max(4, int(fw * 0.41)))
-        # A radius under 3 opens a blank row between the sprite's own
-        # contact row and the ellipse's, which only a foot unit's narrow
-        # stance was ever thin enough to hit: the sprite's lowest opaque row
-        # sits fixed relative to `ground` (the 2px sprite crop margin plus
-        # one), so a foot unit's shadow now starts on the row directly
-        # under it and a vehicle's, already wider, is unmoved.
-        ry = max(3, old_rx // 4)
-        cast = _shadow_ellipse(
-            out,
-            cell_w // 2 + dx + sx,
-            ground - 1 + sy,
-            rx,
-            ry,
             mirrored=centred_shadow,
         )
     place_in_cell(out, sprite, x0, y0)
@@ -197,7 +176,7 @@ def compose_cell(
             # the composed cell's own opaque spans, so a crest laid down first
             # would widen them and carry the ambient foam line off the water.
             _bow_wave(out)
-    if not shadow:
+    if not shadow or not casts_shadow(kind):
         _erase_shadow(out, cast)
     return out
 

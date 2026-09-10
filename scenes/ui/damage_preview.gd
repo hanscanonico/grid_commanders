@@ -51,8 +51,9 @@ func _build() -> void:
 ## secondary detail plan D4 allows it to be — a chip attack worth less than a
 ## displayed HP reads "Deal 0 HP" up top, and this is where it says it landed.
 ##
-## The turnstile is `»` and not `→`: neither vendored face carries U+2192, so an
-## arrow is the one mark on this panel the engine falls back to an OS font for.
+## The turnstile is `»` and not `→`: `»` is the vendored face's own glyph, where
+## U+2192 comes off the `UiMarks` fallback and its 8-pixel grid, and the line
+## reads better set in one face throughout.
 func show_forecast(forecast: CombatSnapshot.Forecast) -> void:
 	_deal_label.text = (
 		"Deal %s HP"

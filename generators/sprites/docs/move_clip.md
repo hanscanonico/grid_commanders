@@ -131,11 +131,13 @@ on the same tile. The HP, fuel and acted badges are child nodes and are not
 mirrored with it.
 
 The cast shadow **does not** mirror, because on the move sheets it is already
-centred. One sun lights the rest of the sheet from the top-left and every
-ambient shadow falls down-right by `voxel.SHADOW_OFFSET` (2, 2) — but a
-mirrored frame negates that x, so a rightward-moving unit would drop its
-shadow down-LEFT, 5 px (land) or 9 px (air) from where the terrain tiles put
-theirs: 1.25 and 2.25 board texels of a sun on the wrong side. The move poses
+centred. Since COM-270 an aircraft's is the only cast shadow a unit sheet
+draws (`sun.casts_shadow`): one sun lights the rest of the sheet from the
+top-left and that ellipse falls down-right along the same diagonal, at twice
+`voxel.SHADOW_OFFSET` (2, 2) because it drops from height — but a mirrored
+frame negates that x, so a rightward-flying unit would drop its shadow
+down-LEFT, 9 px from where the terrain tiles put theirs: 2.25 board texels of
+a sun on the wrong side. The move poses
 therefore compose with `voxel.compose_cell(centred_shadow=True)`: the shadow
 keeps its full vertical drop, gives up its horizontal throw, and is drawn
 symmetric about the cell's flip axis — the ellipse intersected with its own
@@ -145,41 +147,49 @@ where it was. What still mirrors is the hull, and with it which pixels of that
 ground patch the hull hides, which is correct: a unit occludes its own shadow
 from whichever side it faces.
 
-The cost is a 2 px horizontal recentre of the shadow — 4 px for air, whose
-shadow drops twice as far — at the instant a unit starts or stops moving: half
-a board texel on the ground, a whole one under an aircraft, on the same frame
-as the position tween starting or ending, which is the loudest thing on screen
-at that moment. Ambient, figures and terrain keep the offset
-shadow unchanged; nothing that is never mirrored gives up its sun.
+The cost is a 4 px horizontal recentre of that ellipse — a whole board texel,
+the airborne shadow dropping twice as far as any other — at the instant an
+aircraft starts or stops moving, on the same frame as the position tween
+starting or ending, which is the loudest thing on screen at that moment.
+Ambient, figures and terrain keep the offset shadow unchanged; nothing that is
+never mirrored gives up its sun.
 
-**Ships keep theirs.** A sea unit's ellipse is the water its hull displaces,
-not a shadow cast on a tile, and `voxel._waterline_foam` places the foam
-against the composed cell's own spans — recentring the ellipse would carry the
-foam line 2 px with it, and the foam line staying put across the clip is what
-makes the ship ride the sea instead of the sea heaving with the ship
-(`test_a_moving_hull_adds_a_bow_wave_and_moves_nothing_else`). A mirrored ship
-therefore does move its displacement patch 5 px, which is the one place this
-sheet still has a handedness. Nobody reads a water shading for a sun angle;
-everybody reads a hard ellipse on grass for one.
+**A hull's water is still placed against an off-centre patch.** A sea unit's
+ellipse was never a shadow cast on a tile — it is the water its hull displaces
+— and COM-270 took it off the sheet altogether: `compose_cell` lays it down
+and then erases it, kept only because `voxel._waterline_foam` places the foam
+against the composed cell's own spans and `_bow_wave` crests along the patch's
+leading rim. Recentring it would carry the foam line 2 px with it, and the
+foam line staying put across the clip is what makes the ship ride the sea
+instead of the sea heaving with the ship
+(`test_a_moving_hull_adds_a_bow_wave_and_moves_nothing_else`), so a ship still
+composes with `centred_shadow=False`. What a mirrored ship therefore moves is
+the foam and the wave that patch placed, which is the one place this sheet
+still has a handedness. Nobody reads white water for a sun angle.
 
 **What a ship's move frames get instead is a bow wave.** A held bow-up trim
 alone left a running hull almost the parked picture — 15 changed and 2 rung-1
 silhouette texels between the lander's pose A and its MOVE_A, 18/3 for the
 cruiser — so `voxel._bow_wave` breaks white water over the leading rim of the
 displacement patch on the move poses only: 20/3 and 22/3 after, 24/6 for the
-battleship, 27/7 for the sub. It is repainted displacement rather than foam
-laid on open sea, and that is three things at once — it sits on the water
-plane by construction so it cannot heave with the bob, it is white on
+battleship, 27/7 for the sub. (Those six readings are 2026-09-02's, before
+COM-270; against today's sheets the same four measure 20/7, 22/7, 24/10 and
+25/11, the hull's outline now being read against open water rather than
+against its own dark patch.) It is repainted displacement rather than foam
+laid on open sea, and that is two things at once — it sits on the water
+plane by construction so it cannot heave with the bob, and it is white on
 near-black rather than white on blue so it survives the board's 4:1 sample at
-rung 1, and it costs almost no new pixels, which matters because all four
-hulls' move poses already sit within 9 px of `MoveFrames.MAX_MASS_DRIFT`. That
-budget is also the ceiling on the wave: only the 1 px lip outside the rim is
-new water, and a second column of lip measures 0.083 drift on the battleship
-against a gate of 0.08. That is why the parked-vs-running change count rises by
-four or five texels while the SILHOUETTE count barely moves — one texel on the
-lander, none on the cruiser, the sub or the battleship. Six silhouette texels
-between parked and running is not reachable this way; a hull that has to change
-outline that much has to change shape, not water.
+rung 1. It used to be a third: costing almost no new pixels mattered while
+`MoveFrames._mass` weighed the foam as the ship's, and a second column of lip
+measured 0.083 drift on the battleship against a gate of 0.08. Since COM-270
+that mass leaves FOAM out — with the displacement patch gone, water weighed as
+hull said a battleship gains a fifth of itself under way — so the drift gate
+prices the trim and not the wave (0.103 worst, the battleship's, against
+`MAX_MASS_DRIFT` 0.11), and what bounds the wave is its own floor and shape
+tests. That is why the parked-vs-running change count rises by
+four or five texels while the SILHOUETTE count barely moves. Six silhouette
+texels between parked and running is not reachable this way; a hull that has
+to change outline that much has to change shape, not water.
 
 The wave rides the displacement patch, so a mirrored ship carries it the same
 5 px the patch moves — the handedness above, not a new one. It stays at the
@@ -269,9 +279,10 @@ and the sim — no file under `core/` or `ai/` sees any of this.
 
 - **Same grid.** 1152x480, the same 18 columns and 5 rows in the same order.
   The move sheets are further frames of the same atlas, not a new atlas.
-- **Same ground line.** `cell.ground_px` is measured off the art
-  (`anim.measure_ground_px`) and every pose must measure the same 7, which is
-  what the shared pose-A crop and the pose-invariant `ground` buy.
+- **Same ground line.** `cell.ground_px` is the composer's own arithmetic
+  (`anim.ground_px`, `GROUND_BOTTOM - SHADOW_OFFSET.y`) and stays 7 for
+  every pose, which is what the shared pose-A crop and the pose-invariant
+  `ground` buy.
 - **Mirror-safe silhouettes.** Nothing that reads as left- or right-handed on
   screen; the consumer flips about the cell centre.
 - **Whole-texel motion.** One board texel is 4 atlas px, i.e. dz ±2 or

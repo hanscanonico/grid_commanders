@@ -10,7 +10,7 @@ import unittest
 
 from spritegen import atlas, autotile, pipeline, terrain
 from spritegen.palette import FACTIONS
-from spritegen.units import ATLAS_ORDER, Pose
+from spritegen.units import ATLAS_ORDER, UNITS, Pose
 
 from pixel_helpers import pose_cell, terrain_sheet, units_sheet
 
@@ -76,11 +76,12 @@ class Determinism(unittest.TestCase):
 
 
 class FigureSheet(unittest.TestCase):
-    """units_atlas_figures[_b].png: the board's army, minus the tile's shadow.
+    """units_atlas_figures[_b].png: the board's army, minus the cast shadow.
 
     The cut-ins draw the art at 1:1 over a ground plane of their own, with a
-    contact shadow of their own under it, so the tile's would be a second
-    shadow rather than the same one. What the sheets must never be is a second
+    contact shadow of their own under it, so an aircraft's cast would be a
+    second shadow rather than the same one. Since COM-270 an aircraft's is the
+    only one there is. What the sheets must never be is a second
     opinion on the ART: the figure a cut-in blows up has to be the figure the
     board shows, in either key pose — the pair is the ambient pair with the
     shadow erased, which is what lets a cut-in idle on the same beat.
@@ -105,7 +106,11 @@ class FigureSheet(unittest.TestCase):
                         removed += 1
                 self.assertGreater(removed, 0)
 
-    def test_every_unit_of_every_faction_loses_its_shadow(self):
+    def test_every_aircraft_of_every_faction_loses_its_shadow(self):
+        """Only an aircraft has one to lose since COM-270: a unit standing on
+        the tile and a hull in the water are drawn flat, so their figure cell
+        is their board cell byte for byte, and that equality is half of what
+        is asserted here."""
         for pose in (Pose.A, Pose.B):
             with self.subTest(pose=pose):
                 board = units_sheet(pose)
@@ -118,11 +123,22 @@ class FigureSheet(unittest.TestCase):
                             (col + 1) * atlas.CELL_W,
                             (row + 1) * atlas.CELL_H,
                         )
-                        self.assertNotEqual(
-                            board.crop(box).tobytes(),
-                            figures.crop(box).tobytes(),
-                            f"{uid} ({fac.key}) has no shadow to leave off in {pose}",
-                        )
+                        on_tile = board.crop(box).tobytes()
+                        posed = figures.crop(box).tobytes()
+                        if UNITS[uid][1] == "air":
+                            self.assertNotEqual(
+                                on_tile,
+                                posed,
+                                f"{uid} ({fac.key}) has no shadow to leave off "
+                                f"in {pose}",
+                            )
+                        else:
+                            self.assertEqual(
+                                on_tile,
+                                posed,
+                                f"{uid} ({fac.key}) casts a shadow on the board "
+                                f"in {pose}",
+                            )
 
     def test_the_figure_sheets_are_reproducible(self):
         for pose in (Pose.A, Pose.B):

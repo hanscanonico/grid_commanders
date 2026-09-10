@@ -21,11 +21,11 @@ from spritegen.terrain import (
     WATER,
     WATER_DARK,
 )
-from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, MOVE_POSES, UNITS, Pose, foot
+from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, MOVE_POSES, UNITS, Pose
 from spritegen import cell as cell_mod
 from spritegen import voxel
 
-from pixel_helpers import opaque_pixels, pose_cell
+from pixel_helpers import opaque_pixels, pose_cell, units_sheet
 
 
 class OneSun(unittest.TestCase):
@@ -39,21 +39,26 @@ class OneSun(unittest.TestCase):
     it disagreed about where the sun was.
 
     `voxel.SHADOW_OFFSET` is now that one statement, and terrain re-exports
-    it rather than keeping a second copy. Airborne units keep their larger
-    drop — the gap between unit and shadow is the altitude cue — but on the
-    same diagonal.
+    it rather than keeping a second copy.
+
+    Since COM-270 only what is AIRBORNE casts at all (`sun.casts_shadow`): a
+    unit on the ground and a hull in the water are drawn flat on a tile that
+    carries its own shading. So the units' half of the sun is two claims — an
+    aircraft's ellipse is down-right of it, and nothing else on the sheet
+    holds a single pixel of the shadow tone.
 
     The move clip is the one thing on the board the consumer MIRRORS, and a
-    mirrored offset is a second sun. Its land and air poses therefore hold
+    mirrored offset is a second sun. An aircraft's move poses therefore hold
     the drop and drop the throw; that is the only place the sheet does not
     read down-right, and it has a test of its own
     (`test_a_mirrored_move_frame_owes_the_sun_nothing_lateral`).
     """
 
     OFFSET = voxel.SHADOW_OFFSET
-    # The measured floor on the units, whose shadow is an ellipse under the
-    # hull rather than the hull's own silhouette: rockets, whose long barrel
-    # sits left of its own cell centre, comes in at +0.37px lateral.
+    # The floor on the four aircraft, whose shadow is an ellipse under the
+    # hull rather than the hull's own silhouette. It is a sign check with
+    # room to spare: the airborne throw is doubled, so the closest of them
+    # (the fighter's frame B) still comes in at +3.14px lateral.
     MIN_UNIT_LATERAL = 0.2
     # Half a pixel: how far a centred move shadow's centre of mass may sit
     # off the cell's mirror axis. The ELLIPSE is symmetric by construction
@@ -65,13 +70,14 @@ class OneSun(unittest.TestCase):
     def _sheet_poses(self, uid: str) -> tuple[Pose, ...]:
         """The poses that carry the sheet's own sun for this unit.
 
-        Everything but the move poses of a unit whose shadow is CENTRED for
-        the consumer's mirror — land and air; a ship's ellipse is
-        displacement and keeps the offset in every pose. See
+        Only an aircraft casts, and only outside the move poses, whose shadow
+        is CENTRED for the consumer's mirror. Everything else on the sheet
+        casts nothing in any pose, which is the flat-unit test below rather
+        than this one's claim. See
         `test_a_mirrored_move_frame_owes_the_sun_nothing_lateral`.
         """
-        if UNITS[uid][1] == "sea":
-            return tuple(Pose)
+        if UNITS[uid][1] != "air":
+            return ()
         return AMBIENT_POSES
 
     def _centroid(self, pts) -> tuple[float, float]:
@@ -109,13 +115,46 @@ class OneSun(unittest.TestCase):
                     self.assertGreater(sx - hx, self.MIN_UNIT_LATERAL)
                     self.assertGreater(sy - hy, 0.0)
 
+    def _shadow_tones(self, sheet, uid: str, fac) -> set:
+        """The shadow-tone colours one unit's faction cell draws.
+
+        A colour census rather than a pixel walk, so the reading is cheap
+        enough to take on every army: the claim is that the tone is absent,
+        and where it would have been is `_split`'s question, not this one.
+        """
+        cell = sheet.crop(atlas.cell_box(uid, fac))
+        return {
+            colour
+            for _, colour in cell.getcolors(cell.width * cell.height)
+            if colour[3] > 0 and colour[:3] == voxel.SHADOW
+        }
+
+    def test_nothing_on_the_surface_casts_a_shadow(self):
+        """The other half: a unit standing on the tile, and a hull in the
+        water, hold not one pixel of the shadow tone — in any pose, on EVERY
+        faction row, COM-270 having changed every army the same way. The tile
+        carries its own shading and a second ellipse baked under the unit read
+        as a hole in it.
+
+        Read off the built sheets, which the rest of the suite renders anyway,
+        rather than composing a cell per army.
+        """
+        for pose in Pose:
+            sheet = units_sheet(pose)
+            for uid in ATLAS_ORDER:
+                if UNITS[uid][1] == "air":
+                    continue
+                for fac in FACTIONS:
+                    with self.subTest(unit=uid, pose=pose.name, faction=fac.key):
+                        self.assertEqual(self._shadow_tones(sheet, uid, fac), set())
+
     def test_a_unit_cell_lays_its_ellipse_by_the_sheet_offset(self):
         """The hull-relative reading above only fixes the SIGN — a unit whose
         own mass sits left of centre would pass it on a half-pixel. This one
-        moves the sheet's offset to zero and measures how far each shadow
-        travels: a land or sea ellipse follows the full diagonal (short of
-        2px only where the cell edge or the wake clips it), and an airborne
-        one keeps its own larger lateral drop."""
+        moves the sheet's offset to zero and measures how far the aircraft's
+        shadow travels: it keeps its own larger lateral drop. Its vertical
+        drop is off `AIR_SHADOW_BOTTOM` rather than off the offset, so only
+        the lateral reading is the sheet's here."""
         fac = FACTIONS[1]
         # Every render under a patched offset is `atlas`'s own: a shared cell
         # would answer the patched question with the unpatched cell.
@@ -127,11 +166,8 @@ class OneSun(unittest.TestCase):
                         bare, _ = self._split(
                             atlas.unit_cell(uid, fac, pose), voxel.SHADOW
                         )
-                    (lx, ly), (bx, by) = self._centroid(lit), self._centroid(bare)
+                    lx, bx = self._centroid(lit)[0], self._centroid(bare)[0]
                     self.assertGreaterEqual(lx - bx, 1.0)
-                    self.assertGreaterEqual(
-                        ly - by, 1.5 if UNITS[uid][1] != "air" else 0.0
-                    )
 
     def test_a_mirrored_move_frame_owes_the_sun_nothing_lateral(self):
         """The sheet's one exception, and it is the mirror that buys it.
@@ -141,22 +177,23 @@ class OneSun(unittest.TestCase):
         shadow thrown down-right on the sheet is thrown down-LEFT on screen
         for every unit travelling right, next to terrain that never mirrors.
         A sun that changes sides with a unit's heading is worse than one that
-        stops throwing, so the land and air move poses keep the whole drop
-        and give up the throw, on an ellipse drawn symmetric about the cell's
-        mirror axis — the same shadow either way round.
+        stops throwing, so the air move poses keep the whole drop and give up
+        the throw, on an ellipse drawn symmetric about the cell's mirror axis
+        — the same shadow either way round.
 
         Three readings say that: it is still under its caster, its centre of
         mass is on the mirror axis, and zeroing the sheet's offset in x alone
         changes not one byte of the cell — it owes the sheet's sun nothing
-        lateral — while zeroing it in y still costs a land unit its 2px drop.
+        lateral.
 
-        Ships are not centred and are asked the sheet's own question in all
-        four poses by the two tests above.
+        The aircraft are the only subject left: since COM-270 nothing on the
+        ground or in the water casts, so no other column has a shadow a
+        mirror could swing.
         """
         fac = FACTIONS[1]
         axis = (atlas.CELL_W - 1) / 2
         for uid in ATLAS_ORDER:
-            if UNITS[uid][1] == "sea":
+            if UNITS[uid][1] != "air":
                 continue
             for pose in MOVE_POSES:
                 with self.subTest(unit=uid, pose=pose.name):
@@ -171,13 +208,10 @@ class OneSun(unittest.TestCase):
                         bare, _ = self._split(
                             atlas.unit_cell(uid, fac, pose), voxel.SHADOW
                         )
-                    (lx, ly), (_, by) = self._centroid(lit), self._centroid(bare)
+                    (lx, ly), _ = self._centroid(lit), self._centroid(bare)
                     self.assertGreater(ly - self._centroid(hull)[1], 0.0)
                     self.assertLessEqual(abs(lx - axis), self.MAX_MOVE_LATERAL)
                     self.assertEqual(cell.tobytes(), no_throw.tobytes())
-                    self.assertGreaterEqual(
-                        ly - by, 1.5 if UNITS[uid][1] != "air" else 0.0
-                    )
 
     def test_every_building_drops_its_shadow_down_right_of_itself(self):
         for bid in sorted(terrain.PROPERTY):
@@ -267,36 +301,18 @@ class OneSun(unittest.TestCase):
                 self.assertGreater(self._airborne(draw, mirrored), 0)
 
 
-class FootprintContact(unittest.TestCase):
-    """A land unit's ellipse is CONTACT, and it never outgrew the shadow the
-    board was already measured against.
+class SurfaceContact(unittest.TestCase):
+    """What stands on the board casts nothing; what flies keeps its daylight.
 
-    Two halves of one statement. The shadow is fitted to the footprint the
-    unit plants on the ground (`voxel.footprint_width`) rather than to its
-    whole crop, so it must TOUCH the unit: a foot unit's 4px stance used to
-    carry a 23px lozenge two rows clear of its boots, which reads as a unit
-    hovering. And fitting it may only ever take width away — a land ellipse
-    the board had already been measured against is a shape the legibility
-    ratchet and the mirrored move frame's occlusion floor both hold, so the
-    pre-S3 radius is the ceiling.
+    The two halves of COM-270's decision, read on the composed cells rather
+    than on the formula: the shadow by DIFFERENCE against the same cell
+    composed with `shadow=False`, which is the only reading that tells a cast
+    pixel from a dark pixel of the unit itself.
 
-    The sheet cannot catch either on its own: a change that reopened the gap
-    or lifted the ceiling regenerates matching art and passes the snapshot
-    gate, both sides of it coming from this same code.
-
-    Read on the composed cells rather than on the formula: the shadow by
-    DIFFERENCE against the same cell composed with `shadow=False`, which is
-    the only reading that tells a cast pixel from a dark pixel of the unit
-    itself.
+    The sheet cannot catch either on its own: an ellipse that came back under
+    a tank regenerates matching art and passes the snapshot gate, both sides
+    of it coming from this same code.
     """
-
-    # The pre-S3 radius: 0.34 of the whole pose-A crop, the coefficient this
-    # file shipped before the shadow was fitted to the footprint.
-    SILHOUETTE_COEFFICIENT = 0.34
-    # The roster's own answer to which units walk rather than roll.
-    FOOT = frozenset(
-        uid for uid, (build, _) in UNITS.items() if build.__module__ == foot.__name__
-    )
 
     def _cast_and_body(self, uid: str):
         """(shadow pixels, the unit's own pixels) of one composed cell."""
@@ -323,10 +339,25 @@ class FootprintContact(unittest.TestCase):
         self.assertTrue(body, f"{uid} composed no sprite")
         return min(y for _, y in cast) - max(y for _, y in body) - 1
 
-    def test_every_foot_unit_stands_on_its_own_shadow(self):
-        for uid in sorted(self.FOOT):
-            with self.subTest(unit=uid):
-                self.assertLessEqual(self._gap(uid), 0)
+    def test_nothing_that_stands_on_the_board_casts(self):
+        """A land unit and a hull alike: the shadowless cell IS the cell.
+
+        A ship still lays its displacement patch down to place the waterline
+        foam and the bow wave, so this reads the finished cell rather than the
+        composer, and what it says is that the patch never survives to the
+        sheet. Taken on EVERY faction row — COM-270 changed every army the same
+        way — off the pair of sheets the suite already builds, where the
+        difference between them IS the cast shadow.
+        """
+        board = units_sheet(Pose.A)
+        figures = units_sheet(Pose.A, shadow=False)
+        for uid in self._kind("land") + self._kind("sea"):
+            for fac in FACTIONS:
+                box = atlas.cell_box(uid, fac)
+                cell = board.crop(box)
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertIsNotNone(cell.getbbox(), f"{uid} composed no sprite")
+                    self.assertEqual(cell.tobytes(), figures.crop(box).tobytes())
 
     def test_the_reading_sees_the_gap_an_aircraft_keeps(self):
         # worth asserting only if it catches a detached shadow, and the sheet
@@ -335,29 +366,6 @@ class FootprintContact(unittest.TestCase):
         for uid in self._kind("air"):
             with self.subTest(unit=uid):
                 self.assertGreater(self._gap(uid), 1)
-
-    def _ceiling(self, uid: str) -> int:
-        silhouette_w = atlas.cell_placement(uid, Pose.A).silhouette_w
-        return max(4, int(silhouette_w * self.SILHOUETTE_COEFFICIENT))
-
-    def _half_width(self, uid: str) -> int:
-        cast, _ = self._cast_and_body(uid)
-        self.assertTrue(cast, f"{uid} casts no shadow at all")
-        cx = atlas.CELL_W // 2 + cell_mod.SHADOW_OFFSET[0]
-        return max(abs(x - cx) for x, _ in cast)
-
-    def test_no_land_ellipse_is_wider_than_the_shadow_it_replaced(self):
-        for uid in self._kind("land"):
-            with self.subTest(unit=uid):
-                self.assertLessEqual(self._half_width(uid), self._ceiling(uid))
-
-    def test_a_foot_unit_is_narrower_than_that_ceiling_rather_than_at_it(self):
-        # the cap is only half the fit: if every unit simply converged on the
-        # ceiling, the footprint would be measuring nothing. The two units
-        # whose stance is nothing like their crop have to come in under it.
-        for uid in sorted(self.FOOT):
-            with self.subTest(unit=uid):
-                self.assertLess(self._half_width(uid), self._ceiling(uid))
 
 
 class CastShadow(unittest.TestCase):
@@ -376,22 +384,31 @@ class CastShadow(unittest.TestCase):
     these two readings pin: the shadow uses both parities (so it cannot go
     back to a checkerboard unnoticed), and every rung at every phase draws
     the same share of it.
+
+    Read on the aircraft alone since COM-270 — they are the only units that
+    cast — which is why the tolerance below is measured, not inherited.
     """
 
     SHADOW = (16, 18, 24)
+    # The units that cast at all.
+    CASTERS = tuple(uid for uid in ATLAS_ORDER if UNITS[uid][1] == "air")
     # Source pixels per screen pixel at the rungs a match is played at.
     RATIOS = (4, 2, 1)
     # How far a phase's share of the shadow may sit from the shadow's own
     # density. The checkerboard it replaced misses this by 0.85 at its best
-    # rung; solid comes in at 0.07.
+    # rung. The shipped air ellipse measures 0.147 here, which is what fixed
+    # its width coefficient at 0.26 when COM-270 shrank it: an ellipse three
+    # rows deep loses a whole row to the 4:1 sample at rung 1, and 0.22 came
+    # back at 0.378.
     TOLERANCE = 0.15
 
     def _shadows(self) -> list[list[tuple[int, int]]]:
-        """Every unit's cast-shadow pixels. One faction: the shadow belongs to
-        the cell rather than to the army and is identical on every row."""
+        """Every aircraft's cast-shadow pixels. One faction: the shadow
+        belongs to the cell rather than to the army and is identical on every
+        row."""
         fac = FACTIONS[1]
         found = []
-        for uid in ATLAS_ORDER:
+        for uid in self.CASTERS:
             px = pose_cell(uid, fac).convert("RGBA").load()
             found.append(
                 [
@@ -403,8 +420,8 @@ class CastShadow(unittest.TestCase):
             )
         return found
 
-    def test_every_unit_casts_a_shadow_on_both_parities(self):
-        for uid, cast in zip(ATLAS_ORDER, self._shadows()):
+    def test_every_aircraft_casts_a_shadow_on_both_parities(self):
+        for uid, cast in zip(self.CASTERS, self._shadows()):
             with self.subTest(unit=uid):
                 self.assertTrue(cast, "no cast shadow at all")
                 self.assertEqual({(x + y) % 2 for x, y in cast}, {0, 1})

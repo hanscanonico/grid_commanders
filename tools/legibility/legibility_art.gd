@@ -297,8 +297,12 @@ static func _fog_modulate() -> Color:
 
 ## The factor the acted checkerboard darkens a pixel by, read out of the shader
 ## that applies it. The number lives in exactly one place and this is that place.
+## It is read at the scrim's FULL fade, which is what a settled board draws: S7
+## wrapped the factor in `mix(1.0, x, fade)` so the scrim can tween in, and the
+## pattern that matched the bare multiply stopped matching then — the ruler read
+## every acted cell undarkened until this was re-pointed at the mix.
 static func _acted_scrim() -> float:
-	var expression := RegEx.create_from_string(r"COLOR\.rgb \*= ([\d.]+);")
+	var expression := RegEx.create_from_string(r"COLOR\.rgb \*= mix\(1\.0, ([\d.]+), fade\);")
 	var found := expression.search(UnitSprite._ACTED_SCRIM)
 	if found == null:
 		push_error("legibility: no darkening factor in UnitSprite._ACTED_SCRIM")

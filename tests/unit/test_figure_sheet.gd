@@ -1,6 +1,7 @@
 extends GutTest
-## The cut-ins' figure sheets: the board's army with the tile's cast shadow gone,
-## and nothing else about it moved. Both frames of the idle clip, because the
+## The cut-ins' figure sheets: the board's army with the cast shadow gone — an
+## aircraft's, the only one left since COM-270 — and nothing else about it
+## moved. Both frames of the idle clip, because the
 ## cut-ins beat between them — a pair regenerated on one side only would leave a
 ## cut-in flickering between two different armies.
 ##
@@ -58,37 +59,37 @@ func test_the_figure_sheets_only_ever_remove_a_pixel() -> void:
 				)
 
 
-func test_every_unit_leaves_its_tile_shadow_behind_in_both_frames() -> void:
+## Only an aircraft casts on the board (COM-270), so only an aircraft's column
+## has anything for the figure sheet to take: a unit that stands on the tile or
+## sits in the water is already drawn flat, and its figure cell is its board
+## cell. The cut-ins draw their own contact ellipse on UnitSprite.CELL_GROUND_PX
+## either way — `tests/unit/test_anim_manifest.gd` is that constant's pin,
+## against the generator's own `ground_px`.
+func test_only_the_aircraft_leave_a_shadow_behind_in_both_frames() -> void:
 	assert_gt(units.size(), 0, "no units loaded, so this would pass vacuously")
+	var flyers := 0
 	for frame in FRAMES.size():
 		_read_frame(frame)
 		for type in units.all():
-			assert_true(
-				_shadow_rows(type.atlas_col).y >= 0,
-				(
-					"%s keeps its tile shadow in frame %d's figure sheet (column %d)"
-					% [type.id, frame, type.atlas_col]
+			var dropped := _shadow_rows(type.atlas_col).y >= 0
+			if type.domain == UnitType.AIR:
+				flyers += 1
+				assert_true(
+					dropped,
+					(
+						"%s lost its cast shadow in frame %d's figure sheet (column %d)"
+						% [type.id, frame, type.atlas_col]
+					)
 				)
-			)
-
-
-## The cut-ins draw their own contact ellipse on UnitSprite.CELL_GROUND_PX, so
-## that constant has to be the row the generator centres the tile's shadow on —
-## and the shadow is exactly what the two sheets differ by. Air is left out: its
-## cast is displaced down the cell from height, and a cut-in lifts the aircraft
-## off the ground plane itself.
-func test_the_cell_ground_line_is_where_the_tile_shadow_is_centred() -> void:
-	var ground_line := float(SPRITE_H - UnitSprite.CELL_GROUND_PX)
-	for type in units.all():
-		if type.domain == UnitType.AIR:
-			continue
-		var span := _shadow_rows(type.atlas_col)
-		assert_almost_eq(
-			(span.x + span.y + 1.0) / 2.0,
-			ground_line,
-			0.5,
-			"%s centres its tile shadow off the cell's ground line" % type.id
-		)
+			else:
+				assert_false(
+					dropped,
+					(
+						"%s casts a shadow on the board in frame %d (column %d)"
+						% [type.id, frame, type.atlas_col]
+					)
+				)
+	assert_gt(flyers, 0, "no aircraft read, so the shadow half would pass vacuously")
 
 
 func test_the_cut_ins_ask_for_the_figure_sheet() -> void:
@@ -150,7 +151,8 @@ func test_the_cut_in_beat_is_the_directors_clock() -> void:
 
 ## The rows of `column` the figure sheet dropped, as first and last, over every
 ## faction row at once — the shadow is the same shape in all of them. Empty
-## (a negative last row) when the column lost nothing at all.
+## (a negative last row) when the column lost nothing at all, which is what
+## every land and sea column now reads.
 ##
 ## Read off drawn pixels rather than bytes: the atlases import with
 ## `fix_alpha_border`, which bleeds colour into transparent pixels, so a removed
