@@ -111,6 +111,17 @@ exec_in_container() {
 	name="gc-capture-$$"
 	mounts+=(-v "$repo_dir:$repo_dir" -v "$volume:$repo_dir/.godot")
 	[[ "$shots" == "$repo_dir"/* ]] || mounts+=(-v "$shots:$shots")
+	record_renderer "$CONTAINER_RENDERER"
+	# A caller that kills this launcher outright (the sweep's timeout uses
+	# SIGKILL) leaves no trap to run, so the container is stopped by a watcher
+	# that outlives us — `$$` still names this process after the exec below.
+	# The import below and the capture run one after the other under the same
+	# name, so this one kill reaches whichever is current.
+	local launcher_pid=$$
+	(
+		while kill -0 "$launcher_pid" 2>/dev/null; do sleep "$WATCH_INTERVAL"; done
+		docker kill "$name"
+	) >/dev/null 2>&1 &
 	# A capture reads imported assets, never source ones, and this cache starts
 	# empty — so a new volume gets the one-off headless import the macOS tree
 	# gets from `make import`. Without it the scene comes up with every texture
@@ -118,18 +129,9 @@ exec_in_container() {
 	if ! docker run --rm -v "$volume:/cache" --entrypoint test \
 		"$GODOT_CAPTURE_IMAGE" -d /cache/imported; then
 		echo "godot_gui: importing the project into the capture cache (first run on this checkout)" >&2
-		docker run --rm "${mounts[@]}" -w "$repo_dir" "$GODOT_CAPTURE_IMAGE" \
-			--headless --path "$repo_dir" --import >&2
+		docker run --rm --init --name "$name" "${mounts[@]}" -w "$repo_dir" \
+			"$GODOT_CAPTURE_IMAGE" --headless --path "$repo_dir" --import >&2
 	fi
-	record_renderer "$CONTAINER_RENDERER"
-	# A caller that kills this launcher outright (the sweep's timeout uses
-	# SIGKILL) leaves no trap to run, so the container is stopped by a watcher
-	# that outlives us — `$$` still names this process after the exec below.
-	local launcher_pid=$$
-	(
-		while kill -0 "$launcher_pid" 2>/dev/null; do sleep "$WATCH_INTERVAL"; done
-		docker kill "$name"
-	) >/dev/null 2>&1 &
 	exec docker run --rm --init --name "$name" "${mounts[@]}" -w "$repo_dir" \
 		"$GODOT_CAPTURE_IMAGE" "$@"
 }

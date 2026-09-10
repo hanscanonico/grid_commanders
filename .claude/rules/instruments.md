@@ -92,6 +92,8 @@ root index are in `docs/design_record.md`.
   launcher `exec`s docker, so pid, exit status and stdio stay the run's own, and a watcher that
   outlives the exec kills the container when the launcher is killed: **TERM and KILL on the launcher
   both leave `docker ps` clean**, measured, and the watcher's `docker kill` is held by a test case.
+  The import runs under that same name, and the watcher is installed before it, so a cold run's
+  extra pass is as killable as the capture it precedes.
   Under D1 a manifest now names its renderer as well as its queue and the comparison refuses to
   cross either: two rasterisers are two sets of bytes. `tools/test_godot_gui.sh`
   (`make capture-test`, in `make verify`) holds all of it on a fake engine and a fake `docker`, so the gate

@@ -48,7 +48,13 @@ printf '%s\n' "$*" >>"$FAKE_DOCKER_ARGV"
 case "${1:-}" in
 	info) [[ "${FAKE_DOCKER_DAEMON:-up}" == "up" ]] || exit 1 ;;
 	image) [[ "${FAKE_DOCKER_IMAGE:-present}" == "present" ]] || exit 1 ;;
+	run)
+		# The import-cache probe: failing it is how a case asks for a cold volume.
+		[[ "$*" == *"--entrypoint test"* && "${FAKE_CAPTURE_CACHE:-warm}" == "cold" ]] &&
+			exit 1
+		;;
 esac
+exit 0
 EOF
 chmod +x "$work/godot" "$fake_bin/docker"
 
@@ -163,6 +169,20 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	expect_no_engine
 	expect_docker_run_has "--shots-dir=$work/shots"
 	pass
+
+	# A cold volume's import is a second container, so it needs the same name
+	# the watcher kills — killed mid-import, a launcher would otherwise leave
+	# it running.
+	export FAKE_CAPTURE_CACHE=cold
+	run_launcher "a cold cache imports under the killable name" "${capture_args[@]}"
+	expect_no_engine
+	expect_stderr_has "importing the project into the capture cache"
+	import_run="$(grep '^run ' "$FAKE_DOCKER_ARGV" | grep -- '--import' | tail -1)"
+	[[ "$import_run" == *"--name gc-capture-"* ]] ||
+		fail "the import runs unnamed, so a killed launcher cannot stop it: $import_run"
+	expect_docker_run_has "--name gc-capture-"
+	pass
+	unset FAKE_CAPTURE_CACHE
 
 	export FAKE_DOCKER_DAEMON=down
 	run_launcher "a daemon that is down falls back" "${capture_args[@]}"
