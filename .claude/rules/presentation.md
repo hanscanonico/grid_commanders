@@ -548,12 +548,15 @@ forms named in the root index are in `docs/design_record.md`.
   vendored, OFL, recorded in `assets/LICENSES.md`.
   **Body copy is `SIZE_BODY` at 10 and a tip is body copy** (COM-271): at 8 a rules paragraph was
   set at the size of the micro-labels captioning it, so `SIZE_TIP` is now `SIZE_BODY` rather than
-  a size of its own and `tests/unit/test_ui_theme_sizes.gd` gates the ladder. Two surfaces pay for
-  the taller line: the map picker's viewport peeks half of the next cell's *picture* rather than
-  half a whole cell, and the select page's roster strip reserves two caption lines under every
-  face — six tiles across that column leave about 46 pixels of caption, which no name in that
-  six-general roster fits at 10 and every single word does, so the given name sits over the
-  surname rather than the strip clipping the roster it exists to read. **Whole-pixel text on the
+  a size of its own and `tests/unit/test_ui_theme_sizes.gd` gates the ladder. Three surfaces pay
+  for the taller line: the tooltip slab, which never sizes to its text, widens from the handoff's
+  110 to 138 by the same 10/8 the face grew by, because inside the old frame the longest board
+  blurb wrapped to six lines where it had wrapped to five; the map picker's viewport peeks half of
+  the next cell's *picture* rather than half a whole cell; and the select page's roster strip
+  reserves two caption lines under every face — six tiles across that column leave about 46 pixels
+  of caption, which no name in that six-general roster fits at 10 and every single word does, so
+  the given name sits over the surname rather than the strip clipping the roster it exists to
+  read. **Whole-pixel text on the
   web was not decided here**: `project.godot` stretches `canvas_items` with `aspect="keep"` and no
   `scale_mode`, so a fractional window scale does reach text today — but the only lever is the
   root stretch, which letterboxes every platform at once, so it is a project-wide window decision
