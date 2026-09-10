@@ -163,11 +163,10 @@ and says so). Nothing else changes: `make smoke`, `make screenshot` and their si
 names, flags and outputs. `tools/godot_gui.sh` picks the renderer, and it never builds the image —
 with no Docker CLI, no daemon answering, no image built, or a capture path given relative (there is
 no directory to bind by name) it prints one line saying which, and falls back to the windowed path
-below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container`
-forces the container one and *fails* rather than falling back when it cannot have it, and the
-default `auto` is the rule above. A `SMOKE_HASHES` manifest records which renderer
-drew it and the comparison refuses to cross renderers, exactly as it refuses to cross queues: two
-rasterisers, two sets of bytes.
+below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container` forces the container one
+and *fails* rather than falling back when it cannot have it, and the default `auto` is the rule
+above. A `SMOKE_HASHES` manifest records which renderer drew it and the comparison refuses to cross
+renderers, exactly as it refuses to cross queues: two rasterisers, two sets of bytes.
 
 The one window is still activated as it opens and again on each scene change, so a sweep briefly
 takes the front app away from you. `tools/focus_timeline.sh make smoke` measures that instead of

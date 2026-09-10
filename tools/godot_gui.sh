@@ -179,7 +179,6 @@ fi
 # why pid). Compiled once into the gitignored .godot/ cache. Without a Swift
 # toolchain, fall back to LaunchServices by bundle id — over the same targets
 # `restorable` below allows, and only while that app is still running.
-repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
 activate_bin="$repo_dir/.godot/activate_pid"
 activate_src="$repo_dir/tools/activate_pid.swift"
 if command -v swiftc >/dev/null 2>&1; then

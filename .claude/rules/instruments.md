@@ -87,9 +87,8 @@ root index are in `docs/design_record.md`.
   and the image already built — under `auto` any one missing is **one notice line and the windowed
   path**, never an implicit ten-minute build, while `GODOT_CAPTURE_RENDERER=container` **fails
   instead of falling back**, because a caller who named the container did not ask for a frame this
-  desktop drew. A **relative** capture
-  path blocks it the same way, under `auto` and forced alike, because there is no directory to bind
-  by name.
+  desktop drew. A **relative** capture path blocks it the same way, under `auto` and forced alike,
+  because there is no directory to bind by name.
   `GODOT_CAPTURE_RENDERER=container|desktop|auto` forces the choice. The checkout and the capture
   directory are bound at their own absolute paths so every path on the command line means the same
   thing on both sides, and the import cache is a **named volume per checkout and engine version**,
