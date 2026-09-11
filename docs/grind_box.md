@@ -23,10 +23,10 @@ make grind GRIND="--once --dry-run"      # fetches the engine, imports, prints t
 
 The first run fetches the Godot build the CI workflow pins into `bin/godot` and
 imports the project once per commit — a checkout that skipped the import looks
-like broken assets rather than a cold cache, so it is part of the bootstrap, and
-the checkout's HEAD moves under the box, so the marker holds the commit it
-imported. `gdtoolkit` is
-not needed: the box plays matches, it does not run `make verify`.
+like broken assets rather than a cold cache, so it is part of the bootstrap. The
+checkout's HEAD moves under the box, so the marker holds the commit it imported
+rather than a date, and art a later commit added is imported when it arrives.
+`gdtoolkit` is not needed: the box plays matches, it does not run `make verify`.
 
 Then install the service:
 

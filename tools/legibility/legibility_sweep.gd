@@ -146,7 +146,7 @@ func run() -> Array[Dictionary]:
 
 
 ## A composite ready to be measured or drawn, or null when the terrain's family
-## has no such variant and when either sheet the cell needs is missing from this
+## has no such variant, or when either sheet the cell needs is missing from this
 ## tree. The one place a cell of this matrix is assembled, so `--dump` eyeballs
 ## exactly what the sweep judged.
 func composite(
