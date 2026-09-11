@@ -146,8 +146,9 @@ func run() -> Array[Dictionary]:
 
 
 ## A composite ready to be measured or drawn, or null when the terrain's family
-## has no such variant. The one place a cell of this matrix is assembled, so
-## `--dump` eyeballs exactly what the sweep judged.
+## has no such variant, or when either sheet the cell needs is missing from this
+## tree. The one place a cell of this matrix is assembled, so `--dump` eyeballs
+## exactly what the sweep judged.
 func composite(
 	unit_type: UnitType,
 	row: int,
@@ -165,9 +166,16 @@ func composite(
 	)
 	if ground.is_empty() or not _sheets_of(view).has(frame):
 		return null
+	var figure := art.unit_cell(unit_type, row, _sheets_of(view)[frame])
+	# A sheet the tree does not hold leaves its cell with no image, and sampling
+	# one is an engine error per pixel — millions of them over a matrix this
+	# size. The cell is skipped instead; LegibilityArt already said the file
+	# could not be read, once, where it failed to read it.
+	if figure["image"] == null or ground["image"] == null:
+		return null
 	var cell := LegibilityComposite.new()
 	cell.art = art
-	cell.figure_cell = art.unit_cell(unit_type, row, _sheets_of(view)[frame])
+	cell.figure_cell = figure
 	cell.size = LegibilityComposite.CUTIN_PX if view == CUTIN_VIEW else LegibilityComposite.BOARD_PX
 	cell.ground_cell = ground
 	cell.overlay = overlay as LegibilityComposite.Overlay
@@ -350,13 +358,15 @@ func _unit_rows(unit_type: UnitType, row: int, terrain_id: StringName) -> Array[
 	for frame in frames_of(BOARD_VIEW):
 		for overlay in LegibilityComposite.Overlay.values():
 			for exhausted in [false, true]:
-				rows.append(
+				_keep(
+					rows,
 					_worst_row(unit_type, row, terrain_id, overlay, exhausted, BOARD_VIEW, frame)
 				)
 	# The cut-in draws neither the board's washes nor the acted scrim: it is the
 	# figure against the surface its terrain paves with, and nothing else.
 	for frame in frames_of(CUTIN_VIEW):
-		rows.append(
+		_keep(
+			rows,
 			_worst_row(
 				unit_type,
 				row,
@@ -368,6 +378,14 @@ func _unit_rows(unit_type: UnitType, row: int, terrain_id: StringName) -> Array[
 			)
 		)
 	return rows
+
+
+## A measured cell, or nothing when its art could not be read: a cell the run
+## could not compose is left out of the report rather than written as blanks,
+## and the ratchet then names it under "in the baseline, not in this run".
+static func _keep(rows: Array[Dictionary], row: Dictionary) -> void:
+	if not row.is_empty():
+		rows.append(row)
 
 
 ## One row per terrain: the worst of the variants its family offers, so a phase
@@ -388,6 +406,8 @@ func _worst_row(
 	var worst := {}
 	for variant in _variants_of(terrain_id, view):
 		var candidate := _row(unit_type, row, terrain_id, variant, overlay, exhausted, view, frame)
+		if candidate.is_empty():
+			continue
 		if worst.is_empty() or _worse(candidate, worst):
 			worst = candidate
 	return worst
@@ -412,6 +432,8 @@ func _row(
 	frame: String
 ) -> Dictionary:
 	var cell := composite(unit_type, row, terrain_id, variant, overlay, view, frame)
+	if cell == null:
+		return {}
 	cell.exhausted = exhausted
 	var figure := cell.figure_colours()
 	var ground := cell.ground_colours()
