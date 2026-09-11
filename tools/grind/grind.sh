@@ -69,6 +69,11 @@ DIFF_SEEDS=${GRIND_DIFF_SEEDS:-30}
 POOL_SEEDS=${GRIND_POOL_SEEDS:-32}
 SIM_SEEDS=${GRIND_SIM_SEEDS:-6}
 HEARTBEAT=${GRIND_HEARTBEAT:-300}
+# How the job logs are kept: nothing older than this many days, and this many
+# per job name.
+LOG_DAYS=${GRIND_LOG_DAYS:-14}
+LOG_KEEP=${GRIND_LOG_KEEP:-5}
+LOG_GLOB='*-????????-??????.log'
 GRIND_EXTRA_DIFF=${GRIND_EXTRA_DIFF:-}
 GRIND_EXTRA_BAL=${GRIND_EXTRA_BAL:-}
 GRIND_EXTRA_CAMPAIGN=${GRIND_EXTRA_CAMPAIGN:-}
@@ -103,6 +108,28 @@ POOL_REFRESH=""
 [ -n "$REFRESH" ] && POOL_REFRESH="--refresh"
 
 say() { printf '%s grind: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
+
+# A job's log is a few MB and nothing used to prune them, which is a full disk
+# in under a week. Two rules, both at the start of a pass: nothing older than
+# LOG_DAYS survives, and per job name only the newest LOG_KEEP do. A job's name
+# is everything before the `-YYYYMMDD-HHMMSS.log` stamp, so `import.log` is not
+# one of these files and neither rule can reach it — the bootstrap's own log
+# stays where the last import left it.
+rotate_logs() {
+	local dir="$GRIND_DIR/logs" name stamped drop i
+	[ -d "$dir" ] || return 0
+	find "$dir" -maxdepth 1 -type f -name "$LOG_GLOB" -mtime "+$LOG_DAYS" -delete 2>/dev/null
+	for name in $(find "$dir" -maxdepth 1 -type f -name "$LOG_GLOB" 2>/dev/null |
+		sed 's|.*/||; s/-[0-9]\{8\}-[0-9]\{6\}\.log$//' | sort -u); do
+		# The stamp sorts chronologically, so the glob's own order is oldest first.
+		stamped=("$dir/$name"-????????-??????.log)
+		[ -e "${stamped[0]}" ] || continue
+		drop=$((${#stamped[@]} - LOG_KEEP))
+		for ((i = 0; i < drop; i++)); do
+			rm -f "${stamped[i]}"
+		done
+	done
+}
 
 # ---------------------------------------------------------------- bootstrap
 
@@ -156,13 +183,18 @@ bootstrap() {
 	# A fresh checkout that skipped this reads as broken assets rather than as a
 	# cold cache, so it is part of the bootstrap and not of a job — and a dry run
 	# does it too, because the plan itself asks the engine which boards to play.
-	if [ ! -f "$GRIND_DIR/imported" ]; then
-		say "importing assets (once per checkout)"
+	#
+	# The marker holds the commit rather than a date: the checkout's HEAD moves
+	# under the box, and art a later commit added is art this tree never
+	# imported — which reads as a sheet that will not load, once per cell that
+	# wanted it, for the rest of the pass.
+	if [ "$(cat "$GRIND_DIR/imported" 2>/dev/null)" != "$SHA" ]; then
+		say "importing assets (once per commit)"
 		make -C "$ROOT" import >"$GRIND_DIR/logs/import.log" 2>&1 || {
 			say "import failed — see $GRIND_REL/logs/import.log"
 			return 1
 		}
-		date >"$GRIND_DIR/imported"
+		printf '%s\n' "$SHA" >"$GRIND_DIR/imported"
 	fi
 	return 0
 }
@@ -330,7 +362,10 @@ run_job() {
 	state running "$name" "$started"
 	record "$name" running 0 "$started" "$(date +%s)" "$log" "$kind" "$artifact" "$marker"
 
-	(nice -n 10 bash -c "$cmd" 2>&1 | tee "$ROOT/$log") &
+	# tee's own stdout is the service's, and a journal holding every engine's
+	# chatter is both a full disk and a supervisor nobody can read. The log file
+	# is the one copy; `say` and the heartbeat are what the journal carries.
+	(nice -n 10 bash -c "$cmd" 2>&1 | tee "$ROOT/$log" >/dev/null) &
 	CHILD=$!
 	beat=$started
 	while kill -0 "$CHILD" 2>/dev/null; do
@@ -433,6 +468,7 @@ bootstrap || exit 1
 PASS=0
 while :; do
 	PASS=$((PASS + 1))
+	rotate_logs
 	plan_jobs
 	ORDER=$(for job in "${JOBS[@]}"; do printf '%s,' "$(field "$job" 1)"; done)
 	QUEUE=$ORDER

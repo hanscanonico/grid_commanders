@@ -22,8 +22,10 @@ make grind GRIND="--once --dry-run"      # fetches the engine, imports, prints t
 ```
 
 The first run fetches the Godot build the CI workflow pins into `bin/godot` and
-imports the project once — a checkout that skipped the import looks like broken
-assets rather than a cold cache, so it is part of the bootstrap. `gdtoolkit` is
+imports the project once per commit — a checkout that skipped the import looks
+like broken assets rather than a cold cache, so it is part of the bootstrap, and
+the checkout's HEAD moves under the box, so the marker holds the commit it
+imported. `gdtoolkit` is
 not needed: the box plays matches, it does not run `make verify`.
 
 Then install the service:
@@ -55,7 +57,10 @@ Two answers, one live and one after the fact.
   timestamped line at every state change (pass start, job start with its full
   command, job end with exit code and wall time, a skip and why, sleep) plus a
   heartbeat at most every five minutes quoting the running job's progress. The
-  same facts are in `reports/grind/state.json`.
+  same facts are in `reports/grind/state.json`. A job's own output never reaches
+  the journal: its only copy is the log file the job-start line names, and every
+  pass prunes those — nothing older than 14 days, and the newest five per job
+  name (`GRIND_LOG_DAYS`, `GRIND_LOG_KEEP`; `import.log` is neither).
 
 ## Reading the digest
 
