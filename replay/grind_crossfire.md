@@ -1,4 +1,4 @@
-# Replay survey — reports/balance_sim/grind_replays_crossfire/replays
+# Replay survey — reports/balance_sim/grind_replays_crossfire/replays_s6
 
 12 recordings · 1 boards · 3201 commands · 252 days · 121 findings
 
