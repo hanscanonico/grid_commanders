@@ -65,11 +65,11 @@
 		},
 		{
 			"artifact": "",
-			"ended": 1789153621,
+			"ended": 1789154203,
 			"exit": 2,
 			"job": "difficulty-check",
 			"kind": "section",
-			"log": "reports/grind/logs/difficulty-check-20260911-210410.log",
+			"log": "reports/grind/logs/difficulty-check-20260911-211348.log",
 			"marker": "=== difficulty ladder ===",
 			"reading": [
 				"=== difficulty ladder ===",
@@ -81,16 +81,16 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1789153450,
+			"started": 1789154028,
 			"status": "failed"
 		},
 		{
 			"artifact": "",
-			"ended": 1789056565,
+			"ended": 1789156308,
 			"exit": 0,
 			"job": "commander-balance",
 			"kind": "section",
-			"log": "reports/grind/logs/commander-balance-20260910-173902.log",
+			"log": "reports/grind/logs/commander-balance-20260911-211643.log",
 			"marker": "=== commander balance ===",
 			"reading": [
 				"=== commander balance ===",
@@ -102,16 +102,16 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1789054742,
+			"started": 1789154203,
 			"status": "done"
 		},
 		{
 			"artifact": "",
-			"ended": 1789056720,
+			"ended": 1789156478,
 			"exit": 0,
 			"job": "campaign-difficulty",
 			"kind": "section",
-			"log": "reports/grind/logs/campaign-difficulty-20260910-180925.log",
+			"log": "reports/grind/logs/campaign-difficulty-20260911-215148.log",
 			"marker": "campaign-difficulty: ",
 			"reading": [
 				"campaign-difficulty: 49 flagged (never won, a clock at or under the median win, or a blind seat neve",
@@ -123,31 +123,50 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1789056565,
+			"started": 1789156308,
 			"status": "done"
 		},
 		{
-			"artifact": "reports/balance_pool/grind_arsenal_1adb54fd",
-			"ended": 1789150339,
+			"artifact": "",
+			"ended": 1789156854,
+			"exit": 0,
+			"job": "legibility-ratchet",
+			"kind": "section",
+			"log": "reports/grind/logs/legibility-ratchet-20260911-215438.log",
+			"marker": "# Legibility ratchet",
+			"reading": [
+				"# Legibility ratchet",
+				"regressed (PASS -> FAIL): 0",
+				"recovered (FAIL -> PASS): 0",
+				"not in the baseline: 0",
+				"in the baseline, not in this run: 0",
+				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
+			],
+			"started": 1789156478,
+			"status": "done"
+		},
+		{
+			"artifact": "reports/balance_pool/grind_arsenal_f1131a3d",
+			"ended": 1789156864,
 			"exit": 0,
 			"job": "balance-pool-arsenal",
 			"kind": "pool",
-			"log": "reports/grind/logs/balance-pool-arsenal-20260911-201209.log",
+			"log": "reports/grind/logs/balance-pool-arsenal-20260911-220054.log",
 			"marker": "",
 			"reading": [
 				"none:hard vs none:normal \u2014 red 56%, blue 44%, undecided 0% over 32",
 				"none:normal vs none:hard \u2014 red 66%, blue 34%, undecided 0% over 32"
 			],
-			"started": 1789150329,
+			"started": 1789156854,
 			"status": "done"
 		},
 		{
 			"artifact": "reports/replay/grind_arsenal",
-			"ended": 1789150354,
+			"ended": 1789156880,
 			"exit": 0,
 			"job": "replay-survey-arsenal",
 			"kind": "survey",
-			"log": "reports/grind/logs/replay-survey-arsenal-20260911-201219.log",
+			"log": "reports/grind/logs/replay-survey-arsenal-20260911-220104.log",
 			"marker": "",
 			"reading": [
 				"12 recordings, 3311 commands, 81 findings",
@@ -156,31 +175,31 @@
 				"hoarding: 6 (0.18 per 100 commands)",
 				"worse_shot: 5 (0.15 per 100 commands)"
 			],
-			"started": 1789150339,
+			"started": 1789156864,
 			"status": "done"
 		},
 		{
-			"artifact": "reports/balance_pool/grind_crossfire_1adb54fd",
-			"ended": 1789150365,
+			"artifact": "reports/balance_pool/grind_crossfire_f1131a3d",
+			"ended": 1789156890,
 			"exit": 0,
 			"job": "balance-pool-crossfire",
 			"kind": "pool",
-			"log": "reports/grind/logs/balance-pool-crossfire-20260911-201235.log",
+			"log": "reports/grind/logs/balance-pool-crossfire-20260911-220120.log",
 			"marker": "",
 			"reading": [
 				"none:hard vs none:normal \u2014 red 59%, blue 41%, undecided 0% over 32",
 				"none:normal vs none:hard \u2014 red 19%, blue 81%, undecided 0% over 32"
 			],
-			"started": 1789150355,
+			"started": 1789156880,
 			"status": "done"
 		},
 		{
 			"artifact": "reports/replay/grind_crossfire",
-			"ended": 1789150375,
+			"ended": 1789156900,
 			"exit": 0,
 			"job": "replay-survey-crossfire",
 			"kind": "survey",
-			"log": "reports/grind/logs/replay-survey-crossfire-20260911-201245.log",
+			"log": "reports/grind/logs/replay-survey-crossfire-20260911-220130.log",
 			"marker": "",
 			"reading": [
 				"12 recordings, 3201 commands, 121 findings",
@@ -189,31 +208,31 @@
 				"oscillation: 27 (0.84 per 100 commands)",
 				"worse_shot: 1 (0.03 per 100 commands)"
 			],
-			"started": 1789150365,
+			"started": 1789156890,
 			"status": "done"
 		},
 		{
-			"artifact": "reports/balance_pool/grind_first_steps_1adb54fd",
-			"ended": 1789150390,
+			"artifact": "reports/balance_pool/grind_first_steps_f1131a3d",
+			"ended": 1789156915,
 			"exit": 0,
 			"job": "balance-pool-first_steps",
 			"kind": "pool",
-			"log": "reports/grind/logs/balance-pool-first_steps-20260911-201255.log",
+			"log": "reports/grind/logs/balance-pool-first_steps-20260911-220140.log",
 			"marker": "",
 			"reading": [
 				"none:hard vs none:normal \u2014 red 88%, blue 12%, undecided 0% over 32",
 				"none:normal vs none:hard \u2014 red 47%, blue 53%, undecided 0% over 32"
 			],
-			"started": 1789150375,
+			"started": 1789156900,
 			"status": "done"
 		},
 		{
 			"artifact": "reports/replay/grind_first_steps",
-			"ended": 1789150406,
+			"ended": 1789156931,
 			"exit": 0,
 			"job": "replay-survey-first_steps",
 			"kind": "survey",
-			"log": "reports/grind/logs/replay-survey-first_steps-20260911-201311.log",
+			"log": "reports/grind/logs/replay-survey-first_steps-20260911-220156.log",
 			"marker": "",
 			"reading": [
 				"12 recordings, 3317 commands, 91 findings",
@@ -223,31 +242,31 @@
 				"worse_shot: 2 (0.06 per 100 commands)",
 				"undefended_hq: 1 (0.03 per 100 commands)"
 			],
-			"started": 1789150391,
+			"started": 1789156916,
 			"status": "done"
 		},
 		{
-			"artifact": "reports/balance_pool/grind_jet_stream_1adb54fd",
-			"ended": 1789150421,
+			"artifact": "reports/balance_pool/grind_jet_stream_f1131a3d",
+			"ended": 1789156946,
 			"exit": 0,
 			"job": "balance-pool-jet_stream",
 			"kind": "pool",
-			"log": "reports/grind/logs/balance-pool-jet_stream-20260911-201326.log",
+			"log": "reports/grind/logs/balance-pool-jet_stream-20260911-220211.log",
 			"marker": "",
 			"reading": [
 				"none:hard vs none:normal \u2014 red 50%, blue 50%, undecided 0% over 32",
 				"none:normal vs none:hard \u2014 red 56%, blue 44%, undecided 0% over 32"
 			],
-			"started": 1789150406,
+			"started": 1789156931,
 			"status": "done"
 		},
 		{
 			"artifact": "reports/replay/grind_jet_stream",
-			"ended": 1789150436,
+			"ended": 1789156961,
 			"exit": 0,
 			"job": "replay-survey-jet_stream",
 			"kind": "survey",
-			"log": "reports/grind/logs/replay-survey-jet_stream-20260911-201341.log",
+			"log": "reports/grind/logs/replay-survey-jet_stream-20260911-220226.log",
 			"marker": "",
 			"reading": [
 				"12 recordings, 3296 commands, 156 findings",
@@ -256,31 +275,31 @@
 				"oscillation: 9 (0.27 per 100 commands)",
 				"worse_shot: 7 (0.21 per 100 commands)"
 			],
-			"started": 1789150421,
+			"started": 1789156946,
 			"status": "done"
 		},
 		{
-			"artifact": "reports/balance_pool/grind_riverline_1adb54fd",
-			"ended": 1789150447,
+			"artifact": "reports/balance_pool/grind_riverline_f1131a3d",
+			"ended": 1789156972,
 			"exit": 0,
 			"job": "balance-pool-riverline",
 			"kind": "pool",
-			"log": "reports/grind/logs/balance-pool-riverline-20260911-201356.log",
+			"log": "reports/grind/logs/balance-pool-riverline-20260911-220241.log",
 			"marker": "",
 			"reading": [
 				"none:hard vs none:normal \u2014 red 97%, blue 3%, undecided 0% over 32",
 				"none:normal vs none:hard \u2014 red 56%, blue 44%, undecided 0% over 32"
 			],
-			"started": 1789150436,
+			"started": 1789156961,
 			"status": "done"
 		},
 		{
 			"artifact": "reports/replay/grind_riverline",
-			"ended": 1789150457,
+			"ended": 1789156982,
 			"exit": 0,
 			"job": "replay-survey-riverline",
 			"kind": "survey",
-			"log": "reports/grind/logs/replay-survey-riverline-20260911-201407.log",
+			"log": "reports/grind/logs/replay-survey-riverline-20260911-220252.log",
 			"marker": "",
 			"reading": [
 				"12 recordings, 3178 commands, 102 findings",
@@ -289,31 +308,31 @@
 				"oscillation: 10 (0.31 per 100 commands)",
 				"worse_shot: 8 (0.25 per 100 commands)"
 			],
-			"started": 1789150447,
+			"started": 1789156972,
 			"status": "done"
 		},
 		{
-			"artifact": "reports/balance_pool/grind_scrimmage_1adb54fd",
-			"ended": 1789150467,
+			"artifact": "reports/balance_pool/grind_scrimmage_f1131a3d",
+			"ended": 1789156992,
 			"exit": 0,
 			"job": "balance-pool-scrimmage",
 			"kind": "pool",
-			"log": "reports/grind/logs/balance-pool-scrimmage-20260911-201417.log",
+			"log": "reports/grind/logs/balance-pool-scrimmage-20260911-220302.log",
 			"marker": "",
 			"reading": [
 				"none:hard vs none:normal \u2014 red 88%, blue 12%, undecided 0% over 32",
 				"none:normal vs none:hard \u2014 red 91%, blue 9%, undecided 0% over 32"
 			],
-			"started": 1789150457,
+			"started": 1789156982,
 			"status": "done"
 		},
 		{
 			"artifact": "reports/replay/grind_scrimmage",
-			"ended": 1789150477,
+			"ended": 1789157002,
 			"exit": 0,
 			"job": "replay-survey-scrimmage",
 			"kind": "survey",
-			"log": "reports/grind/logs/replay-survey-scrimmage-20260911-201427.log",
+			"log": "reports/grind/logs/replay-survey-scrimmage-20260911-220312.log",
 			"marker": "",
 			"reading": [
 				"12 recordings, 1938 commands, 50 findings",
@@ -322,31 +341,31 @@
 				"oscillation: 4 (0.21 per 100 commands)",
 				"undefended_hq: 3 (0.15 per 100 commands)"
 			],
-			"started": 1789150467,
+			"started": 1789156992,
 			"status": "done"
 		},
 		{
-			"artifact": "reports/balance_pool/grind_timberline_1adb54fd",
-			"ended": 1789150493,
+			"artifact": "reports/balance_pool/grind_timberline_f1131a3d",
+			"ended": 1789157018,
 			"exit": 0,
 			"job": "balance-pool-timberline",
 			"kind": "pool",
-			"log": "reports/grind/logs/balance-pool-timberline-20260911-201437.log",
+			"log": "reports/grind/logs/balance-pool-timberline-20260911-220323.log",
 			"marker": "",
 			"reading": [
 				"none:hard vs none:normal \u2014 red 69%, blue 31%, undecided 0% over 32",
 				"none:normal vs none:hard \u2014 red 72%, blue 28%, undecided 0% over 32"
 			],
-			"started": 1789150477,
+			"started": 1789157003,
 			"status": "done"
 		},
 		{
 			"artifact": "reports/replay/grind_timberline",
-			"ended": 1789150508,
+			"ended": 1789157033,
 			"exit": 0,
 			"job": "replay-survey-timberline",
 			"kind": "survey",
-			"log": "reports/grind/logs/replay-survey-timberline-20260911-201453.log",
+			"log": "reports/grind/logs/replay-survey-timberline-20260911-220338.log",
 			"marker": "",
 			"reading": [
 				"12 recordings, 3942 commands, 124 findings",
@@ -356,12 +375,12 @@
 				"worse_shot: 5 (0.13 per 100 commands)",
 				"undefended_hq: 1 (0.03 per 100 commands)"
 			],
-			"started": 1789150493,
+			"started": 1789157018,
 			"status": "done"
 		}
 	],
 	"state": {
-		"boot": 1789150155,
+		"boot": 1789154021,
 		"host": "mini-pc-Default-string",
 		"job": "",
 		"order": [
@@ -387,29 +406,11 @@
 			"balance-pool-timberline",
 			"replay-survey-timberline"
 		],
-		"pass": 5,
+		"pass": 1,
 		"phase": "idle",
-		"queue": [
-			"commander-balance",
-			"campaign-difficulty",
-			"legibility-ratchet",
-			"balance-pool-arsenal",
-			"replay-survey-arsenal",
-			"balance-pool-crossfire",
-			"replay-survey-crossfire",
-			"balance-pool-first_steps",
-			"replay-survey-first_steps",
-			"balance-pool-jet_stream",
-			"replay-survey-jet_stream",
-			"balance-pool-riverline",
-			"replay-survey-riverline",
-			"balance-pool-scrimmage",
-			"replay-survey-scrimmage",
-			"balance-pool-timberline",
-			"replay-survey-timberline"
-		],
-		"sha": "1adb54fd",
+		"queue": [],
+		"sha": "f1131a3d",
 		"started": 0
 	},
-	"written": 1789153621
+	"written": 1789157033
 }
