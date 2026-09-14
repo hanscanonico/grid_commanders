@@ -73,3 +73,9 @@ build/
 
 # The Cloudflare tunnel token the mini PC's compose stack reads; .env.example is the shape.
 deploy/web/.env
+
+# The /admin monitor is Python: its linter cache and the local virtualenv the
+# tests run in are machine state. `__pycache__/` above already covers its
+# bytecode.
+.ruff_cache/
+.venv/

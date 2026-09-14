@@ -1,0 +1,144 @@
+/* No framework, no CDN, no webfont: Cloudflare Access is the only thing in
+   front of this page, and a page that fetches nothing cannot leak where it is
+   being read from. */
+:root {
+	color-scheme: light dark;
+	--bg: #f6f7f9;
+	--panel: #ffffff;
+	--ink: #16181d;
+	--muted: #5d6472;
+	--line: #dcdfe6;
+	--accent: #2f6df6;
+	--bar: #eceef3;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #14161b;
+		--panel: #1c1f26;
+		--ink: #e7e9ee;
+		--muted: #9aa2b1;
+		--line: #2c313b;
+		--accent: #6d9bff;
+		--bar: #1a1d23;
+	}
+}
+
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--ink);
+	font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	min-height: 100vh;
+}
+
+.bar {
+	background: var(--bar);
+	border-right: 1px solid var(--line);
+	padding: 20px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.bar h1 {
+	font-size: 15px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	margin: 0;
+	color: var(--muted);
+}
+
+.panels, .ranges { display: flex; flex-direction: column; gap: 4px; }
+
+button {
+	font: inherit;
+	text-align: left;
+	padding: 7px 10px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	background: none;
+	color: var(--ink);
+	cursor: pointer;
+}
+
+button:hover { border-color: var(--line); }
+
+button[aria-current="true"] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #fff;
+}
+
+/* A 2x2 block rather than a row that wraps at whatever width the rail is. */
+.ranges { display: grid; grid-template-columns: 1fr 1fr; }
+.ranges button { padding: 5px 8px; text-align: center; }
+
+.body { padding: 24px; min-width: 0; }
+
+.headline { display: flex; gap: 32px; flex-wrap: wrap; margin: 0 0 20px; }
+.headline div { display: flex; flex-direction: column; }
+.headline b { font-size: 34px; font-weight: 650; line-height: 1.1; }
+.headline span { color: var(--muted); font-size: 13px; }
+
+.card {
+	background: var(--panel);
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	padding: 16px;
+	margin-bottom: 16px;
+}
+
+.card h2 {
+	margin: 0 0 12px;
+	font-size: 13px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+}
+
+svg { width: 100%; height: 180px; display: block; }
+svg rect { fill: var(--accent); }
+svg .axis { fill: var(--muted); font-size: 10px; }
+
+.tables {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 16px;
+}
+
+/* Fixed layout so a long referrer host ellipsises instead of pushing the
+   card — and the page — wider than a phone screen. */
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+td:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+th.n, td.n { width: 5.5em; }
+th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; font-size: 12px; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: none; }
+
+.note { color: var(--muted); font-size: 12px; }
+
+@media (max-width: 720px) {
+	body { grid-template-columns: 1fr; }
+	.bar {
+		border-right: none;
+		border-bottom: 1px solid var(--line);
+		flex-direction: row;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 10px;
+		padding: 12px 14px;
+	}
+	/* The title takes the first line so the panel and range buttons get the
+	   whole of the second and nothing pushes the bar wider than the screen. */
+	.bar h1 { flex: 1 0 100%; }
+	.panels { flex-direction: row; flex-wrap: wrap; }
+	.ranges { grid-template-columns: repeat(4, auto); }
+	.body { padding: 16px; min-width: 0; }
+	.tables { grid-template-columns: 1fr; }
+}

@@ -42,7 +42,8 @@ if [ -n "$serving" ]; then
   docker image tag "$serving" "$previous"
 fi
 
-$compose build web
+# Both images: a collector that will not build must fail before `up`.
+$compose build web admin
 
 if $compose up -d && wait_healthy; then
   echo "Deployed and healthy."

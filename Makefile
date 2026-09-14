@@ -417,6 +417,20 @@ define require-portraitgen
 		exit 1; }
 endef
 
+# The site monitor behind /admin (deploy/web/admin) is Python too, and its
+# interpreter lives outside the checkout for the same reason the generators'
+# do. `make generators-venv` creates it with the others.
+ADMIN ?= deploy/web/admin
+ADMIN_VENV ?= $(HOME)/.cache/grid_commanders/venv-admin
+ADMIN_PY ?= $(ADMIN_VENV)/bin/python
+
+define require-admin
+	@test -x "$(ADMIN_PY)" || { \
+		echo "$@: no interpreter at $(ADMIN_PY) — run \`make generators-venv\`," >&2; \
+		echo "$@: or pass ADMIN_PY=<python with PyJWT[crypto] and ruff>" >&2; \
+		exit 1; }
+endef
+
 # Every pipeline's interpreter in one target: a contributor who needs one
 # usually needs the others, and three targets to remember is three to forget.
 generators-venv:
@@ -426,6 +440,8 @@ generators-venv:
 	"$(SPRITEGEN_PY)" -m pip install --quiet --requirement "$(SPRITEGEN)/requirements.txt"
 	python3 -m venv "$(PORTRAITGEN_VENV)"
 	"$(PORTRAITGEN_PY)" -m pip install --quiet --requirement "$(PORTRAITGEN)/requirements.txt"
+	python3 -m venv "$(ADMIN_VENV)"
+	"$(ADMIN_PY)" -m pip install --quiet ruff==0.16.2 --requirement "$(ADMIN)/requirements.txt"
 
 # `import` runs last for the reason `tiles` does: Godot caches by size, so a
 # stale import plays the old sound — or silence.
@@ -470,6 +486,25 @@ grain-census:
 portraits-test:
 	$(call require-portraitgen)
 	cd "$(PORTRAITGEN)" && "$(abspath $(PORTRAITGEN_PY))" -m unittest discover tests
+
+# The site monitor's own merge bar: the pure header-to-row functions, the
+# store's rollup and retention, the Access check against a locally generated
+# key pair, and the server end to end on an ephemeral port. Out of
+# `make verify` with the generator suites, for the venv; CI runs it as its own
+# job, which the deploy job waits on.
+admin-test:
+	$(call require-admin)
+	cd "$(ADMIN)" && "$(abspath $(ADMIN_PY))" -m unittest discover tests
+
+admin-lint:
+	$(call require-admin)
+	cd "$(ADMIN)" && "$(abspath $(ADMIN_PY))" -m ruff check . \
+		&& "$(abspath $(ADMIN_PY))" -m ruff format --check .
+
+# The hosting stack's own bar, next to `generators-test`/`generators-lint`.
+# One member today; a second thing under deploy/web/ joins it here.
+web-test: admin-test
+web-lint: admin-lint
 
 audio-lint:
 	$(call require-audiogen)
@@ -678,7 +713,8 @@ mobile-soak:
 	atlases \
 	audio audio-test audio-lint audio-snapshot sprites-test sprites-lint \
 	sprites-snapshot grain-census sheet-census generators-lint generators-test \
-	portraits-test portraits-lint portraits-snapshot \
+	portraits-test portraits-lint portraits-snapshot admin-test admin-lint \
+	web-test web-lint \
 	generators-venv portraits import campaign-difficulty export-android export-ios export-web serve-web \
 	screenshot menu-screenshot gallery-screenshot editor-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
