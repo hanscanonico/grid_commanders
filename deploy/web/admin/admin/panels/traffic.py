@@ -14,5 +14,5 @@ name = "Traffic"
 slug = "traffic"
 
 
-def query(store: Store, range_key: str, now: datetime) -> dict:
-    return store.traffic(range_key, now)
+def query(store: Store, asked: str, now: datetime) -> dict:
+    return store.traffic(asked, now)

@@ -25,6 +25,7 @@ RAW_RETENTION_DAYS = 90
 TOP_N = 20
 
 RANGES: dict[str, int] = {"7d": 7, "30d": 30, "90d": 90, "365d": 365}
+DEFAULT_RANGE = "7d"
 
 # The one condition every raw-event query shares, so "what counts as a
 # pageview on a day" is written once. It binds one parameter: the day.
@@ -71,6 +72,11 @@ CREATE TABLE IF NOT EXISTS daily_dimension (
 	PRIMARY KEY (day, dimension, key)
 );
 """
+
+
+def resolve_range(asked: str) -> str:
+    """The range a caller asked for, or the default when it named none we serve."""
+    return asked if asked in RANGES else DEFAULT_RANGE
 
 
 def day_of(moment: datetime) -> str:
@@ -173,7 +179,7 @@ class Store:
         with self._lock:
             return self._db.execute("SELECT COUNT(*) FROM events").fetchone()[0]
 
-    def traffic(self, range_key: str, now: datetime) -> dict:
+    def traffic(self, asked: str, now: datetime) -> dict:
         """The Traffic panel's numbers for a range ending today.
 
         Uniques do not add up across days on purpose: the visitor hash is
@@ -182,7 +188,8 @@ class Store:
         distinct people per day, not distinct people over the range. The
         panel's footnote says the same thing to the reader.
         """
-        span = RANGES.get(range_key, RANGES["7d"])
+        range_key = resolve_range(asked)
+        span = RANGES[range_key]
         today = day_of(now)
         first = (
             datetime.fromisoformat(today).date() - timedelta(days=span - 1)

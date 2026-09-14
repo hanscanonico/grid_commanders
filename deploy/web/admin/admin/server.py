@@ -17,9 +17,10 @@ import threading
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 from . import access, hit, panels
-from .store import RANGES, Store, day_of
+from .store import Store, day_of
 
 STATIC_DIR = Path(__file__).parent / "static"
 ROLLUP_INTERVAL_SECONDS = 3600
@@ -134,13 +135,8 @@ class Handler(BaseHTTPRequestHandler):
         if panel is None:
             self._json(404, {"error": "no such panel"})
             return
-        asked = ""
-        if "?" in self.path:
-            for part in self.path.split("?", 1)[1].split("&"):
-                if part.startswith("range="):
-                    asked = part[len("range=") :]
-        range_key = asked if asked in RANGES else "7d"
-        self._json(200, panel.query(self.store, range_key, datetime.now(timezone.utc)))
+        asked = parse_qs(urlsplit(self.path).query).get("range", [""])[-1]
+        self._json(200, panel.query(self.store, asked, datetime.now(timezone.utc)))
 
     def _page(self) -> None:
         self._file(STATIC_DIR / "index.html")

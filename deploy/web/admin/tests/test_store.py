@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from admin.hit import Hit
-from admin.store import DIMENSIONS, RAW_RETENTION_DAYS, Store
+from admin.store import DIMENSIONS, RAW_RETENTION_DAYS, Store, resolve_range
 
 NOW = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
 
@@ -155,6 +155,7 @@ class StoreTests(unittest.TestCase):
 
     def test_an_unknown_range_falls_back_to_a_week(self):
         self.assertEqual(len(self.store.traffic("nonsense", NOW)["daily"]), 7)
+        self.assertEqual(self.store.traffic("nonsense", NOW)["range"], "7d")
 
     def test_an_event_row_has_nowhere_to_put_a_person(self):
         # The privacy promise is the column list: a salted daily digest is the
@@ -169,6 +170,18 @@ class StoreTests(unittest.TestCase):
         result = self.store.traffic("7d", NOW)
         self.assertEqual((result["views"], result["uniques"]), (0, 0))
         self.assertEqual(result["breakdowns"]["country"], [])
+
+
+class ResolveRangeTests(unittest.TestCase):
+    def test_a_range_we_serve_is_kept(self):
+        for asked in ("7d", "30d", "90d", "365d"):
+            with self.subTest(asked=asked):
+                self.assertEqual(resolve_range(asked), asked)
+
+    def test_anything_else_is_a_week(self):
+        for asked in ("", "all-time", "7", "7D", "-1"):
+            with self.subTest(asked=asked):
+                self.assertEqual(resolve_range(asked), "7d")
 
 
 if __name__ == "__main__":
