@@ -21,6 +21,7 @@ import jwt
 CERTS_URL = "https://{team}.cloudflareaccess.com/cdn-cgi/access/certs"
 HEADER = "Cf-Access-Jwt-Assertion"
 JWKS_TTL_SECONDS = 12 * 3600
+JWKS_REFETCH_FLOOR_SECONDS = 60
 FETCH_TIMEOUT_SECONDS = 5
 
 NOT_CONFIGURED = "admin: Cloudflare Access not configured"
@@ -30,13 +31,20 @@ DENIED = "admin: Cloudflare Access required"
 class KeyCache:
     """The team's signing keys, fetched once and kept for 12 hours.
 
-    An unknown `kid` refetches immediately rather than waiting out the TTL:
-    that is what a key rotation looks like from here, and a rotation should
-    cost one request, not half a day of 403s.
+    An unknown `kid` refetches rather than waiting out the TTL: that is what a
+    key rotation looks like from here, and a rotation should cost one request,
+    not half a day of 403s. At most one refetch per minute, though — otherwise
+    a stream of made-up kids turns into a stream of outbound HTTPS calls, each
+    holding a handler thread for up to the fetch timeout.
     """
 
-    def __init__(self, ttl: float = JWKS_TTL_SECONDS) -> None:
+    def __init__(
+        self,
+        ttl: float = JWKS_TTL_SECONDS,
+        refetch_floor: float = JWKS_REFETCH_FLOOR_SECONDS,
+    ) -> None:
         self._ttl = ttl
+        self._refetch_floor = refetch_floor
         self._lock = threading.Lock()
         self._keys: dict[str, dict] = {}
         self._fetched_at: float = 0.0
@@ -48,9 +56,12 @@ class KeyCache:
 
     def key_for(self, url: str, kid: str, now: float) -> dict | None:
         with self._lock:
-            stale = now - self._fetched_at > self._ttl
-            if not stale and kid in self._keys:
-                return self._keys[kid]
+            since = now - self._fetched_at
+            if since <= self._ttl:
+                if kid in self._keys:
+                    return self._keys[kid]
+                if since < self._refetch_floor:
+                    return None
             self._keys = self.fetch(url)
             self._fetched_at = now
             return self._keys.get(kid)

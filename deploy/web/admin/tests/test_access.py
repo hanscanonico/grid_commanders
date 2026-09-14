@@ -93,8 +93,34 @@ class KeyCacheTests(unittest.TestCase):
         cache = keys.FakeKeyCache()
         url = access.CERTS_URL.format(team=TEAM)
         cache.key_for(url, keys.KID, NOW.timestamp())
-        self.assertIsNone(cache.key_for(url, "other", NOW.timestamp() + 1))
+        floor = access.JWKS_REFETCH_FLOOR_SECONDS
+        self.assertIsNone(cache.key_for(url, "other", NOW.timestamp() + floor))
         self.assertEqual(cache.fetches, 2)
+
+    def test_unknown_kids_inside_the_floor_cost_one_fetch(self):
+        cache = keys.FakeKeyCache()
+        url = access.CERTS_URL.format(team=TEAM)
+        cache.key_for(url, keys.KID, NOW.timestamp())
+        self.assertIsNone(cache.key_for(url, "one", NOW.timestamp() + 1))
+        self.assertIsNone(cache.key_for(url, "two", NOW.timestamp() + 2))
+        self.assertEqual(cache.fetches, 1)
+
+    def test_an_unknown_kid_refetches_once_the_floor_has_passed(self):
+        cache = keys.FakeKeyCache()
+        url = access.CERTS_URL.format(team=TEAM)
+        cache.key_for(url, keys.KID, NOW.timestamp())
+        floor = access.JWKS_REFETCH_FLOOR_SECONDS
+        self.assertIsNone(cache.key_for(url, "one", NOW.timestamp() + 1))
+        self.assertIsNone(cache.key_for(url, "two", NOW.timestamp() + floor + 1))
+        self.assertEqual(cache.fetches, 2)
+
+    def test_a_known_kid_is_still_served_inside_the_floor(self):
+        cache = keys.FakeKeyCache()
+        url = access.CERTS_URL.format(team=TEAM)
+        cache.key_for(url, keys.KID, NOW.timestamp())
+        cache.key_for(url, "stranger", NOW.timestamp() + 1)
+        self.assertIsNotNone(cache.key_for(url, keys.KID, NOW.timestamp() + 2))
+        self.assertEqual(cache.fetches, 1)
 
     def test_the_certs_url_is_the_teams(self):
         self.assertEqual(
