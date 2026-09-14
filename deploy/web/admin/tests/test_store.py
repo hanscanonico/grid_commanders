@@ -1,3 +1,4 @@
+import sqlite3
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -154,6 +155,15 @@ class StoreTests(unittest.TestCase):
 
     def test_an_unknown_range_falls_back_to_a_week(self):
         self.assertEqual(len(self.store.traffic("nonsense", NOW)["daily"]), 7)
+
+    def test_an_event_row_has_nowhere_to_put_a_person(self):
+        # The privacy promise is the column list: a salted daily digest is the
+        # only per-person thing there is room for. A new column here is a
+        # deliberate edit, never a drift.
+        self.store.record(a_hit(), NOW)
+        with sqlite3.connect(self.store.path) as db:
+            columns = [row[1] for row in db.execute("PRAGMA table_info(events)")]
+        self.assertEqual(columns, ["id", "ts", "kind", *DIMENSIONS, "visitor"])
 
     def test_an_empty_database_answers_zeroes(self):
         result = self.store.traffic("7d", NOW)

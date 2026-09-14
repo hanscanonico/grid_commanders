@@ -1,5 +1,6 @@
 import http.client
 import json
+import sqlite3
 import tempfile
 import threading
 import unittest
@@ -104,6 +105,17 @@ class IngestTests(ServerCase):
         self.assertEqual(connection.getresponse().status, 204)
         connection.close()
         self.assertEqual(self.store.raw_event_count(), 1)
+
+    def test_neither_the_ip_nor_the_user_agent_reaches_the_database(self):
+        self.mirror("/?utm_source=reddit")
+        with sqlite3.connect(self.store.path) as db:
+            written = " ".join(
+                str(tuple(row)) for row in db.execute("SELECT * FROM events")
+            )
+        self.assertIn("pageview", written)
+        self.assertNotIn("203.0.113.7", written)
+        self.assertNotIn("Chrome", written)
+        self.assertNotIn("Mozilla", written)
 
     def test_healthz(self):
         status, body, _ = self.request("GET", "/healthz")
