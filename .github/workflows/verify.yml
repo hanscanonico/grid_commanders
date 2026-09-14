@@ -238,13 +238,45 @@ jobs:
         working-directory: generators/portraits
         run: python tests/check_snapshots.py /tmp/portraits_a
 
+  # The site monitor behind /admin, on the same terms as the generator jobs: a
+  # pip install instead of the engine. The deploy job waits on it, so a broken
+  # collector never reaches the host.
+  admin:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: deploy/web/admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: deploy/web/admin/requirements.txt
+
+      # Pinned so a new ruff release cannot change the verdict; the settings are
+      # pinned separately in deploy/web/admin/ruff.toml.
+      - name: Install ruff and the collector's dependencies
+        run: pip install ruff==0.16.2 -r requirements.txt
+
+      - name: ruff check
+        run: ruff check .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+      - name: Collector contract tests
+        run: python -m unittest discover tests
+
   # The site follows green main by itself. It runs on the web host's own runner
   # and acts on that machine's live checkout, so there is no actions/checkout
   # step here: the deploy script fast-forwards the checkout to the tested commit.
   deploy:
     name: Deploy the web build
     runs-on: [self-hosted, grid-prod]
-    needs: [verify, audio, sprites, portraits]
+    needs: [verify, audio, sprites, portraits, admin]
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     concurrency: deploy-web
     timeout-minutes: 30

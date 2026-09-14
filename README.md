@@ -592,6 +592,34 @@ token, on `127.0.0.1:8090`. If the existing stock_market tunnel should serve it 
 hostname to that tunnel pointing at this stack's `web` service — the two only need to share a Docker
 network.
 
+### The admin page
+
+`https://gridcommanders.com/admin/` is a first-party, read-only site monitor: pageviews and unique
+visitors per day, broken down by landing page, country, referrer host, device class and UTM
+campaign. It is fed server side — nginx mirrors each page request to a small Python collector
+(`deploy/web/admin/`) that keeps daily aggregates in SQLite. It is cookieless and stores no IP: a
+visitor is a hash salted with the day, so the same person counts once a day and cannot be followed
+across days. Bots are dropped by user agent. Raw events are deleted after 90 days; the aggregates
+are kept. The collector runs in its own container with no published port, and the site serves
+normally whether it is up, down or absent. `make admin-test` and `make admin-lint` are its gates
+(`make web-test` / `make web-lint` aggregate the hosting stack's), and CI runs them before deploying.
+
+Access is **Cloudflare Access**, not an app login. Three keys in `deploy/web/.env`:
+`ADMIN_ACCESS_TEAM`, `ADMIN_ACCESS_AUD` and `ADMIN_HASH_SECRET`. **Until they exist `/admin`
+answers 403 by design** — there is no other way in and no fallback. The owner's steps, in order:
+
+1. Cloudflare **Zero Trust → Access → Applications → Add an application → Self-hosted**.
+2. Domain `gridcommanders.com`, path `admin`.
+3. A policy that allows the owner's email, and nothing else.
+4. Copy the application's **Application Audience (AUD)** tag into `.env` as `ADMIN_ACCESS_AUD`, and
+   the **team domain** (the name before `.cloudflareaccess.com`) as `ADMIN_ACCESS_TEAM`.
+5. `openssl rand -hex 32` into `ADMIN_HASH_SECRET`. Changing it later restarts today's unique
+   counts; leaving it blank restarts them on every container start.
+6. Redeploy (`deploy/web/deploy --no-pull`, or push to `main`).
+
+`/admin` is excluded from `robots.txt` and absent from the sitemap, and every response it sends
+carries `no-store` and `noindex`.
+
 What differs in a browser: audio starts on the first click, because the page cannot play sound before
 a gesture; saves, settings, campaign progress and editor maps live in the browser's own storage, not
 in a file on disk; the command-line flags do not exist there; the menu shows no Quit, since a tab

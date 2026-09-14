@@ -158,6 +158,10 @@ def check_robots(path: Path) -> None:
         fail("%s: does not name %s/sitemap.xml" % (path, SITE))
     if not re.search(r"^Allow: /$", text, re.MULTILINE):
         fail("%s: does not allow crawling" % path)
+    # The monitor is private: the sitemap never names it and robots keeps the
+    # crawlers that read this file away from it.
+    if not re.search(r"^Disallow: /admin$", text, re.MULTILINE):
+        fail("%s: does not keep crawlers out of /admin" % path)
 
 
 def check_sitemap(path: Path) -> None:

@@ -1,0 +1,5 @@
+# The Cloudflare Access check and nothing else: the collector is stdlib
+# http.server and sqlite3 by design. Pinned exactly, because the token check is
+# the only thing standing in front of /admin and a silent library change there
+# is not a surprise worth having. `[crypto]` pulls in `cryptography` for RS256.
+PyJWT[crypto]==2.14.0
