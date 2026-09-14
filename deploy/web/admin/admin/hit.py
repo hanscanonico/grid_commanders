@@ -79,6 +79,12 @@ _TABLET_MARKERS: tuple[str, ...] = ("ipad", "tablet", "kindle", "silk", "playboo
 
 UTM_KEYS: tuple[str, ...] = ("utm_source", "utm_medium", "utm_campaign")
 
+# Every breakdown key a visitor can choose the text of — the referrer host and
+# the three UTM fields — is cut to this. A real host and a real campaign are far
+# shorter, and the aggregates are kept forever: a stranger must not be able to
+# decide how wide a stored row is.
+MAX_KEY_CHARS = 64
+
 
 @dataclass(frozen=True)
 class Hit:
@@ -126,7 +132,7 @@ def referrer_host(referer: str, own_host: str) -> str:
     host = host.lower().removeprefix("www.")
     if not host or host == (own_host or "").lower().removeprefix("www."):
         return ""
-    return host
+    return host[:MAX_KEY_CHARS]
 
 
 def utm(query: str) -> tuple[str, str, str]:
@@ -135,7 +141,7 @@ def utm(query: str) -> tuple[str, str, str]:
     values: list[str] = []
     for key in UTM_KEYS:
         found = parsed.get(key, [""])[0].strip().lower()
-        values.append(found[:64])
+        values.append(found[:MAX_KEY_CHARS])
     return values[0], values[1], values[2]
 
 

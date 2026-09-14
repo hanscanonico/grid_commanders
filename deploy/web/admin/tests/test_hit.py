@@ -86,6 +86,12 @@ class ReferrerTests(unittest.TestCase):
     def test_garbage_is_not_a_host(self):
         self.assertEqual(hit.referrer_host("::::", "gridcommanders.com"), "")
 
+    def test_a_long_host_is_bounded(self):
+        host = hit.referrer_host(
+            "https://%s.example/" % ("x" * 300), "gridcommanders.com"
+        )
+        self.assertEqual(len(host), hit.MAX_KEY_CHARS)
+
 
 class UtmTests(unittest.TestCase):
     def test_all_three(self):
@@ -100,7 +106,7 @@ class UtmTests(unittest.TestCase):
 
     def test_long_values_are_bounded(self):
         source, _, _ = hit.utm("utm_source=" + "x" * 200)
-        self.assertEqual(len(source), 64)
+        self.assertEqual(len(source), hit.MAX_KEY_CHARS)
 
 
 class PathTests(unittest.TestCase):
