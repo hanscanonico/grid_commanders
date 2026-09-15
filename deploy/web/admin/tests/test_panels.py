@@ -32,6 +32,23 @@ class RegistryTests(unittest.TestCase):
             store.record(a_hit(), NOW)
             self.assertEqual(panels.traffic.query(store, "7d", NOW)["views"], 1)
 
+    def test_the_traffic_panel_carries_the_duration_keys(self):
+        with tempfile.TemporaryDirectory() as folder:
+            store = Store(str(Path(folder) / "admin.sqlite"))
+            self.addCleanup(store.close)
+            answer = panels.traffic.query(store, "7d", NOW)
+            for key in (
+                "engaged_visitors",
+                "engaged_seconds",
+                "avg_seconds",
+                "session_length",
+                "time_on_path",
+                "landing_uniques",
+                "played_uniques",
+            ):
+                self.assertIn(key, answer)
+            self.assertIn("engaged_seconds", answer["daily"][-1])
+
 
 if __name__ == "__main__":
     unittest.main()

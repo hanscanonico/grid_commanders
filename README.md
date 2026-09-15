@@ -596,8 +596,15 @@ network.
 
 `https://gridcommanders.com/admin/` is a first-party, read-only site monitor: pageviews and unique
 visitors per day, broken down by landing page, country, referrer host, device class and UTM
-campaign. It is fed server side — nginx mirrors each page request to a small Python collector
-(`deploy/web/admin/`) that keeps daily aggregates in SQLite. It is cookieless and stores no IP: a
+campaign, plus how long a visit lasts — average session, the engaged share, a session-length
+breakdown and time on page for the landing page against the game. It is fed server side — nginx
+mirrors each page request to a small Python collector (`deploy/web/admin/`) that keeps daily
+aggregates in SQLite. Duration is the one thing a mirrored request cannot show, so both pages send a
+tiny inline heartbeat to `POST /beat` every 30 s while they are visible: the beat carries the page
+path and no identifier, the collector derives the same day-salted visitor hash from the request as
+it does for a page view, and a session is the number of distinct 30-second slots it beat in. The
+route is rate-limited and size-capped at nginx and answers 204 whatever happens, so a blocked
+beacon or a stopped collector changes nothing a visitor sees. It is cookieless and stores no IP: a
 visitor is a hash salted with the day, so the same person counts once a day and cannot be followed
 across days. Bots are dropped by user agent. Raw events are deleted after 90 days; the aggregates
 are kept. The collector runs in its own container with no published port, and the site serves

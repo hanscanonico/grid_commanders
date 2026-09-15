@@ -126,6 +126,82 @@ class IngestTests(ServerCase):
         self.assertEqual(self.request("POST", "/nope")[0], 404)
 
 
+class BeatTests(ServerCase):
+    def beat(self, body=b'{"path": "/"}', **over):
+        headers = {
+            "CF-Connecting-IP": "203.0.113.7",
+            "User-Agent": CHROME,
+            "Content-Type": "text/plain",
+            "Content-Length": str(len(body)),
+        }
+        headers.update(over)
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        try:
+            connection.request("POST", "/beat", body=body, headers=headers)
+            return connection.getresponse().status
+        finally:
+            connection.close()
+
+    def traffic(self):
+        return self.store.traffic("7d", datetime.now(timezone.utc))
+
+    def test_a_beat_becomes_a_session(self):
+        self.assertEqual(self.beat(), 204)
+        payload = self.traffic()
+        self.assertEqual(payload["engaged_visitors"], 1)
+        self.assertEqual(payload["engaged_seconds"], 30)
+        self.assertEqual(payload["time_on_path"][0]["key"], "/")
+
+    def test_the_game_shell_beats_under_its_own_path(self):
+        self.beat(b'{"path": "/play/index.html"}')
+        self.assertEqual(self.traffic()["time_on_path"][0]["key"], "/play/")
+
+    def test_a_beat_stores_neither_the_address_nor_the_agent(self):
+        self.beat()
+        with sqlite3.connect(self.store.path) as db:
+            written = " ".join(
+                str(tuple(row)) for row in db.execute("SELECT * FROM events")
+            )
+        self.assertIn("heartbeat", written)
+        self.assertNotIn("203.0.113.7", written)
+        self.assertNotIn("Mozilla", written)
+
+    def test_junk_is_answered_quietly_and_counted_nowhere(self):
+        for body, over in (
+            (b'{"path": "/play/index.wasm"}', {}),
+            (b"not json at all", {}),
+            (b"", {}),
+            (b'{"path": "/"}', {"User-Agent": "Googlebot/2.1"}),
+            (b'{"path": "/", "pad": "' + b"x" * 600 + b'"}', {}),
+        ):
+            with self.subTest(body=body[:24], over=over):
+                self.assertEqual(self.beat(body, **over), 204)
+        self.assertEqual(self.store.raw_event_count(), 0)
+        self.assertEqual(self.traffic()["engaged_visitors"], 0)
+
+    def test_a_get_is_answered_quietly_and_records_nothing(self):
+        self.assertEqual(self.request("GET", "/beat")[0], 204)
+        self.assertEqual(self.store.raw_event_count(), 0)
+
+    def test_page_views_are_untouched_by_a_beat(self):
+        self.request(
+            "POST",
+            "/ingest",
+            {
+                "X-Original-URI": "/",
+                "X-Original-Method": "GET",
+                "CF-Connecting-IP": "203.0.113.7",
+                "CF-IPCountry": "DE",
+                "User-Agent": CHROME,
+            },
+        )
+        self.beat()
+        payload = self.traffic()
+        self.assertEqual((payload["views"], payload["uniques"]), (1, 1))
+        self.assertEqual(payload["breakdowns"]["country"][0]["key"], "DE")
+        self.assertEqual(payload["engaged_visitors"], 1)
+
+
 class UnconfiguredAccessTests(ServerCase):
     def test_every_admin_route_is_403(self):
         for path in (

@@ -27,28 +27,48 @@ const svgEl = (tag, attrs = {}) => {
 
 const number = (value) => value.toLocaleString();
 
+// Seconds as a reader says them: a bounce in seconds, a session in minutes,
+// and a card's total — which is everyone's time added up — in hours rather
+// than in four digits of minutes.
+const duration = (seconds) => {
+	if (seconds < 60) return `${seconds} s`;
+	if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+	return `${Math.round(seconds / 3600)} h`;
+};
+
+const VIEW_COLUMNS = [
+	["Views", (row) => number(row.views)],
+	["Uniques", (row) => number(row.uniques)],
+];
+const TIME_COLUMNS = [
+	["Visitors", (row) => number(row.visitors)],
+	["Time", (row) => duration(row.seconds)],
+];
+
 function card(title, kids) {
 	return el("section", { class: "card" }, [el("h2", { text: title }), ...kids]);
 }
 
-function table(heading, rows) {
+function table(heading, rows, columns = VIEW_COLUMNS) {
 	const head = el("thead", {}, [
 		el("tr", {}, [
 			el("th", { text: heading }),
-			el("th", { class: "n", text: "Views" }),
-			el("th", { class: "n", text: "Uniques" }),
+			...columns.map(([label]) => el("th", { class: "n", text: label })),
 		]),
 	]);
 	const body = el("tbody");
 	if (rows.length === 0) {
-		body.appendChild(el("tr", {}, [el("td", { colspan: "3", text: "—" })]));
+		body.appendChild(
+			el("tr", {}, [
+				el("td", { colspan: String(columns.length + 1), text: "—" }),
+			]),
+		);
 	}
 	for (const row of rows) {
 		body.appendChild(
 			el("tr", {}, [
 				el("td", { text: row.key === "" ? "(none)" : row.key }),
-				el("td", { class: "n", text: number(row.views) }),
-				el("td", { class: "n", text: number(row.uniques) }),
+				...columns.map(([, cell]) => el("td", { class: "n", text: cell(row) })),
 			]),
 		);
 	}
@@ -94,6 +114,15 @@ function chart(daily) {
 	return svg;
 }
 
+const percent = (part, whole) =>
+	whole === 0 ? "0%" : `${Math.round((part / whole) * 100)}%`;
+
+// The two numbers that tell a person from a scanner: how many visitors the
+// heartbeat could measure at all, and how many of the people who saw the pitch
+// went on to open the game.
+const engaged_share = (data) => percent(data.engaged_visitors, data.uniques);
+const played_share = (data) => percent(data.played_uniques, data.landing_uniques);
+
 function render_traffic(data) {
 	const headline = el("div", { class: "headline" }, [
 		el("div", {}, [
@@ -105,12 +134,28 @@ function render_traffic(data) {
 			el("span", { text: "unique visitors" }),
 		]),
 		el("div", {}, [
+			el("b", { text: duration(data.avg_seconds) }),
+			el("span", { text: "average session" }),
+		]),
+		el("div", {}, [
+			el("b", { text: number(data.engaged_visitors) }),
+			el("span", { text: `engaged (${engaged_share(data)} of uniques)` }),
+		]),
+		el("div", {}, [
+			el("b", { text: played_share(data) }),
+			el("span", { text: "played (of landing visitors)" }),
+		]),
+		el("div", {}, [
 			el("b", { text: data.range }),
 			el("span", { text: `${data.from} → ${data.to}` }),
 		]),
 	]);
 	const tables = el("div", { class: "tables" }, [
 		card("Landing page", [table("Path", data.breakdowns.path)]),
+		card("Session length", [
+			table("Length", data.session_length, TIME_COLUMNS),
+		]),
+		card("Time on page", [table("Path", data.time_on_path, TIME_COLUMNS)]),
 		card("Country", [table("Country", data.breakdowns.country)]),
 		card("Referrer", [table("Host", data.breakdowns.referrer_host)]),
 		card("Device", [table("Class", data.breakdowns.device)]),
@@ -128,7 +173,13 @@ function render_traffic(data) {
 				"Cookieless and IP-free: a visitor is a hash salted with the day, so" +
 				" the same person counts once per day and cannot be followed across" +
 				" days. A range's uniques is therefore the sum of daily uniques, not" +
-				" distinct people over the range. Bots are dropped by user agent.",
+				" distinct people over the range. Bots are dropped by user agent." +
+				" Duration comes from a heartbeat the page sends every 30 s while it" +
+				" is visible, carrying nothing but which page it is; a session is the" +
+				" 30-second slots it beat in, so a visitor whose browser blocks the" +
+				" beacon still counts as a view and a unique, but not as engaged." +
+				" Played is the share of landing-page visitors who opened the game;" +
+				" with the engaged share it is what separates people from scanners.",
 		}),
 	];
 }
