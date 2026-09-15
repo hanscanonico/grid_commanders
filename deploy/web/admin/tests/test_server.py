@@ -7,7 +7,7 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
-from admin import access
+from admin import access, server
 from admin.server import AdminServer, Config
 from admin.store import Store
 from tests import keys
@@ -182,6 +182,26 @@ class BeatTests(ServerCase):
     def test_a_get_is_answered_quietly_and_records_nothing(self):
         self.assertEqual(self.request("GET", "/beat")[0], 204)
         self.assertEqual(self.store.raw_event_count(), 0)
+
+    def test_a_body_too_big_to_read_takes_its_connection_with_it(self):
+        """The tail of an unread body must never be read as the next request."""
+        huge = b'{"path": "/", "pad": "' + b"x" * (server.MAX_BODY_BYTES * 2) + b'"}'
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        self.addCleanup(connection.close)
+        connection.request(
+            "POST",
+            "/beat",
+            body=huge,
+            headers={"User-Agent": CHROME, "Content-Length": str(len(huge))},
+        )
+        answer = connection.getresponse()
+        answer.read()
+        self.assertEqual(answer.status, 204)
+        with self.assertRaises((http.client.HTTPException, OSError)):
+            connection.request("GET", "/healthz")
+            connection.getresponse().read()
+        self.assertEqual(self.store.raw_event_count(), 0)
+        self.assertEqual(self.request("GET", "/healthz")[0], 200)
 
     def test_page_views_are_untouched_by_a_beat(self):
         self.request(
