@@ -547,14 +547,16 @@ community posts is `docs/off_site_copy.md`.
 
 Four steps are the owner's, in a dashboard rather than in this repo:
 
-1. **Google Search Console** and **Bing Webmaster Tools** — verify the site, then paste each code
-   into the empty `google-site-verification` / `msvalidate.01` meta tags in
-   `deploy/web/site/index.html` and redeploy.
+1. **Google Search Console** and **Bing Webmaster Tools** — verify the site. The Google code is
+   already in the `google-site-verification` meta tag of `deploy/web/site/index.html` (a URL-prefix
+   property for `https://gridcommanders.com/` verifies with one click; a Domain property needs the
+   same code as a DNS TXT record on the apex). Paste Bing's code into the empty `msvalidate.01` tag
+   and redeploy.
 2. **Submit `https://gridcommanders.com/sitemap.xml`** in both consoles.
-3. **Cloudflare Web Analytics** — add the site, then **uncomment** the beacon at the bottom of that
-   same file and replace its `CF_WEB_ANALYTICS_TOKEN` placeholder. It ships commented out because a
-   placeholder token is a request every visit makes and no visit can complete. The beacon is
-   cookie-free and stays on the landing page only, never on `/play/`.
+3. **Cloudflare Web Analytics** — done on the Cloudflare side: the site is on *automatic* setup
+   (the edge injects the beacon into every HTML page, EU visitors excluded), so the commented
+   snippet at the bottom of that same file stays commented. Switch the site to "JS snippet
+   installation" there before uncommenting it, or the page would carry the beacon twice.
 4. Optionally, a Cloudflare **redirect rule** sending `www.gridcommanders.com` to the apex, so the
    host the canonical tags name is the only one indexed.
 
