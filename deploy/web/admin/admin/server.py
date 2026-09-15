@@ -2,8 +2,11 @@
 
 `/ingest` is reached only through nginx's mirror and always answers 204: a
 mirror is fire-and-forget, and a collector that could fail a page request
-would be worse than no collector. Everything under `/admin` goes through the
-Cloudflare Access check first, and answers 403 when it is not configured.
+would be worse than no collector. `/beat` is the heartbeat the pages send
+while they are visible, and answers 204 the same way, for the same reason:
+nothing a visitor's browser sends here may come back as an error they see.
+Everything under `/admin` goes through the Cloudflare Access check first, and
+answers 403 when it is not configured.
 """
 
 from __future__ import annotations
@@ -27,6 +30,9 @@ ROLLUP_INTERVAL_SECONDS = 3600
 DEFAULT_PORT = 8000
 DEFAULT_DB_PATH = "/data/admin.sqlite"
 DEFAULT_SITE_HOST = "gridcommanders.com"
+# nginx caps the beat body far lower; this is the collector's own ceiling on
+# what it will read off a socket at all.
+MAX_BODY_BYTES = 4096
 
 log = logging.getLogger("admin")
 
@@ -74,15 +80,22 @@ class Handler(BaseHTTPRequestHandler):
         log.info("%s %s", self.address_string(), fmt % args)
 
     def do_POST(self) -> None:
-        if self.path.split("?")[0] == "/ingest":
+        route = self.path.split("?")[0]
+        if route == "/ingest":
             self._ingest()
-            return
-        self._text(404, "not found")
+        elif route == "/beat":
+            self._beat()
+        else:
+            self._text(404, "not found")
 
     def do_GET(self) -> None:
         route = self.path.split("?")[0]
         if route == "/healthz":
             self._text(200, "ok")
+        elif route == "/beat":
+            # A beat is a POST. A GET here is a curious visitor or a probe:
+            # quiet, and recorded nowhere.
+            self._empty(204)
         elif route == "/admin":
             self._redirect("/admin/")
         elif route == "/admin/":
@@ -112,6 +125,22 @@ class Handler(BaseHTTPRequestHandler):
             # The mirror must never become a reason a page is slow or broken,
             # so a bad row is a log line and a 204 like every other.
             log.exception("ingest failed")
+        self._empty(204)
+
+    def _beat(self) -> None:
+        body = self._read_body()
+        try:
+            now = datetime.now(timezone.utc)
+            row = hit.beat_from(
+                {name: value for name, value in self.headers.items()},
+                body,
+                self.config.hash_secret,
+                day_of(now),
+            )
+            if row is not None:
+                self.store.record(row, now, kind="heartbeat")
+        except Exception:
+            log.exception("beat failed")
         self._empty(204)
 
     def _guarded(self, render) -> None:
@@ -184,6 +213,22 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         if length > 0:
             self.rfile.read(length)
+
+    def _read_body(self) -> bytes:
+        """The request body, read whole so the connection stays usable.
+
+        `MAX_BODY_BYTES` is well above the beat parser's own limit, so a body
+        that reaches it is not a beat at all: it is refused unread and the
+        connection goes, rather than leaving its tail in the socket to be read
+        as the next request.
+        """
+        length = int(self.headers.get("Content-Length") or 0)
+        if length <= 0:
+            return b""
+        if length > MAX_BODY_BYTES:
+            self.close_connection = True
+            return b""
+        return self.rfile.read(length)
 
 
 class AdminServer(ThreadingHTTPServer):

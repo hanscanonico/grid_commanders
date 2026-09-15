@@ -8,6 +8,7 @@ testable without a socket.
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 from urllib.parse import parse_qs, urlsplit
 
@@ -84,6 +85,11 @@ UTM_KEYS: tuple[str, ...] = ("utm_source", "utm_medium", "utm_campaign")
 # shorter, and the aggregates are kept forever: a stranger must not be able to
 # decide how wide a stored row is.
 MAX_KEY_CHARS = 64
+
+# A beat carries one known path and nothing else, so a few hundred bytes is
+# already generous. nginx caps the request body at the same order of size; this
+# is the collector's own refusal, for the day it is reached another way.
+MAX_BEAT_BYTES = 256
 
 
 @dataclass(frozen=True)
@@ -167,6 +173,45 @@ def normalise_path(uri: str) -> str:
 def query_of(uri: str) -> str:
     """The query string of a request URI, without the `?`."""
     return urlsplit(uri or "").query
+
+
+def beat_from(
+    headers: dict[str, str], body: bytes, secret: str, day: str
+) -> Hit | None:
+    """The row for one heartbeat, or None when it is not one we count.
+
+    A beat says only which page it came from. Everything about the person —
+    the day's visitor digest — is derived from the same headers a pageview
+    uses, so a client cannot name itself even if it tries.
+    """
+    if not body or len(body) > MAX_BEAT_BYTES:
+        return None
+    try:
+        sent_body = json.loads(body)
+    except (ValueError, UnicodeDecodeError):
+        return None
+    if not isinstance(sent_body, dict):
+        return None
+    asked = sent_body.get("path")
+    if not isinstance(asked, str):
+        return None
+    path = normalise_path(asked)
+    if not path:
+        return None
+    sent = {name.lower(): value or "" for name, value in headers.items()}
+    ua = sent.get("user-agent", "")
+    if is_bot(ua):
+        return None
+    return Hit(
+        path=path,
+        country="",
+        referrer_host="",
+        device="",
+        utm_source="",
+        utm_medium="",
+        utm_campaign="",
+        visitor=visitor_hash(secret, day, sent.get("cf-connecting-ip", ""), ua),
+    )
 
 
 def from_headers(

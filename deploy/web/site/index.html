@@ -175,6 +175,32 @@ the source is on <a href="https://github.com/hanscanonico/grid_commanders">GitHu
 
 </main>
 
+<!-- How long a visit lasts: a beat now, one every 30 s while the page is visible, and one
+     when it goes away. Cookieless and id-free — the body is the page path, and the collector
+     derives the visitor the same way it does for a page view. 30000 ms is the collector's
+     BUCKET_SECONDS; the two are one number and move together. A blocked beacon, a blocked
+     route or a stopped collector is swallowed: nothing here may break the page. -->
+<script>
+(function () {
+	var body = JSON.stringify({ path: location.pathname });
+	var beat = function () {
+		try {
+			var blob = new Blob([body], { type: "text/plain" });
+			if (navigator.sendBeacon && navigator.sendBeacon("/beat", blob)) return;
+			fetch("/beat", { method: "POST", body: body, keepalive: true }).catch(function () {});
+		} catch (e) {}
+	};
+	beat();
+	setInterval(function () {
+		if (document.visibilityState === "visible") beat();
+	}, 30000);
+	document.addEventListener("visibilitychange", function () {
+		if (document.visibilityState === "hidden") beat();
+	});
+	addEventListener("pagehide", beat);
+})();
+</script>
+
 <!-- Cookie-free page-view counts. Commented out because Cloudflare Web Analytics is on
      automatic setup: the edge already injects its own beacon, so uncommenting this one would
      send two. Switch the site to "JS snippet installation" first. See README's "Web build".

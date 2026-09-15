@@ -223,5 +223,61 @@ class FromHeadersTests(unittest.TestCase):
         self.assertEqual(row.country, "XX")
 
 
+class BeatTests(unittest.TestCase):
+    def headers(self, **over):
+        sent = {"CF-Connecting-IP": "203.0.113.7", "User-Agent": CHROME}
+        sent.update(over)
+        return sent
+
+    def beat(self, body=b'{"path": "/"}', **over):
+        return hit.beat_from(self.headers(**over), body, "s", "2026-09-14")
+
+    def test_a_known_path_is_a_beat(self):
+        row = self.beat()
+        self.assertEqual(row.path, "/")
+        self.assertEqual(len(row.visitor), 64)
+
+    def test_the_game_shell_path_is_stored_as_the_game(self):
+        self.assertEqual(self.beat(b'{"path": "/play/index.html"}').path, "/play/")
+
+    def test_a_beat_carries_nothing_it_cannot_know(self):
+        row = self.beat()
+        self.assertEqual((row.country, row.referrer_host, row.device), ("", "", ""))
+        self.assertEqual(
+            (row.utm_source, row.utm_medium, row.utm_campaign), ("", "", "")
+        )
+
+    def test_the_visitor_is_the_pageview_hash_of_the_headers(self):
+        self.assertEqual(
+            self.beat().visitor,
+            hit.visitor_hash("s", "2026-09-14", "203.0.113.7", CHROME),
+        )
+
+    def test_a_client_supplied_id_is_never_read(self):
+        row = self.beat(b'{"path": "/", "visitor": "spoofed", "id": "abc"}')
+        self.assertEqual(
+            row.visitor, hit.visitor_hash("s", "2026-09-14", "203.0.113.7", CHROME)
+        )
+
+    def test_unknown_paths_malformed_bodies_and_bots_are_dropped(self):
+        for body, over in (
+            (b'{"path": "/play/index.wasm"}', {}),
+            (b'{"path": "/admin/"}', {}),
+            (b'{"path": ""}', {}),
+            (b'{"path": 7}', {}),
+            (b'{"path": "/"', {}),
+            (b"", {}),
+            (b'["/"]', {}),
+            (b'{"path": "/"}', {"User-Agent": "Googlebot/2.1"}),
+            (b'{"path": "/"}', {"User-Agent": ""}),
+        ):
+            with self.subTest(body=body[:24], over=over):
+                self.assertIsNone(self.beat(body, **over))
+
+    def test_an_oversize_body_is_dropped(self):
+        padded = b'{"path": "/", "pad": "' + b"x" * hit.MAX_BEAT_BYTES + b'"}'
+        self.assertIsNone(self.beat(padded))
+
+
 if __name__ == "__main__":
     unittest.main()
