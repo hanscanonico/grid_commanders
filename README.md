@@ -27,7 +27,7 @@ Then:
 ```sh
 make run             # boot the game — the menu (map, seats, difficulty, speed, commanders, fog, Start / Continue / Campaign)
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
-make verify          # the merge gate: check + lint + format-check + test + determinism, in one command
+make verify          # the merge gate: check + capture-test + lint + format-check + test + determinism, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless, two engines; TEST_JOBS=1 for one)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check (parallel; CHECK_JOBS=1 for one)
@@ -151,6 +151,24 @@ glyph rasteriser, and the process-wide font atlas shifts glyph edges with the qu
 so the same scenario writes different bytes under `MODES="cutin"` than in the full sweep. The
 manifest names the queue it was recorded from and the comparison refuses to cross it, so a narrowed
 run asks for a new manifest instead of crying wolf.
+
+A capture launched by a script or an agent on macOS does not open that window at all: it renders
+inside a Linux container — a virtual display and Mesa's software renderer (llvmpipe, which is what
+draws for the project's `gl_compatibility` method), with the official Linux arm64 build of the same
+engine version — so nothing flashes across the desktop. On any other host a windowed launch takes
+nobody's focus, so the automatic choice is macOS-only and every other host simply renders as it
+always did. Build the image once with `make capture-image` (Docker with a linux/arm64 daemon; the
+first capture after that spends one extra pass importing the project into the container's own cache,
+and says so). Nothing else changes: `make smoke`, `make screenshot` and their siblings keep their
+names, flags and outputs. `tools/godot_gui.sh` picks the renderer, and it never builds the image —
+with no Docker CLI, no daemon answering, no image built, or a capture path given relative (there is
+no directory to bind by name) it prints one line saying which, and falls back to the windowed path
+below. `GODOT_CAPTURE_RENDERER=desktop` forces that path, `=container` forces the container one
+and *fails* rather than falling back when it cannot have it, and the default `auto` is the rule
+above. All three say only where a *frame* is drawn, so a launch that takes none runs on the desktop
+whichever one is set. A `SMOKE_HASHES` manifest records which renderer drew its frames, and the
+comparison refuses to cross renderers exactly as it refuses to cross queues: two rasterisers, two
+sets of bytes.
 
 The one window is still activated as it opens and again on each scene change, so a sweep briefly
 takes the front app away from you. `tools/focus_timeline.sh make smoke` measures that instead of

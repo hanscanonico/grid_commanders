@@ -28,7 +28,8 @@ PRs #167/#173/#176), never by raising a ratchet.
 
 Gate: `make verify` must pass in your worktree, plus any area gate the task names
 (`make campaigns` for campaign content; for a visual change, re-capture the affected
-scenario headless and read the frame as an image). A shared, loaded machine makes gates
+scenario — it renders off-desktop in the capture container when that is available, and
+otherwise opens a window — and read the frame as an image). A shared, loaded machine makes gates
 slow; slowness is not failure.
 
 Ship: commit in repo style (present-tense imperative subject, focused body only if

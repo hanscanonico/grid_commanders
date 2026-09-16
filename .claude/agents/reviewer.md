@@ -20,7 +20,8 @@ Review the actual diff: `git -C <worktree> diff origin/main...HEAD` (fetch first
 
 Verify claims yourself rather than trusting the PR body: re-run the new and changed GUT
 tests plus `make check lint format-check` in the worktree; for a visual change re-capture
-the scenario headless and read the frame as an image; for a measured claim re-record the
+the scenario — off-desktop in the capture container when that is available, otherwise in a
+window — and read the frame as an image; for a measured claim re-record the
 measurement. Skip the full suite unless something smells wrong — the implementer already
 ran `make verify`.
 

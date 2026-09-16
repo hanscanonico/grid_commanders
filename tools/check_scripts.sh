@@ -517,6 +517,22 @@ if (($# == 0)); then
 		failed=$((failed + 1))
 	fi
 
+	# The capture image renders with the engine the rest of the repo is pinned
+	# to, or its frames are another build's. The version is stated once, in
+	# tools/capture/image.env, and held equal to the two places that name the
+	# engine the developer and CI run: the README's download URL and the
+	# workflow's GODOT_VERSION.
+	capture_version="$(sed -n 's/^GODOT_CAPTURE_VERSION=//p' tools/capture/image.env)"
+	workflow_version="$(sed -n 's/^ *GODOT_VERSION: *//p' .github/workflows/verify.yml)"
+	if [[ "$capture_version" != "$workflow_version" ]]; then
+		echo "check: tools/capture/image.env pins $capture_version, .github/workflows/verify.yml $workflow_version" >&2
+		failed=$((failed + 1))
+	fi
+	if ! grep -q "Godot_v${capture_version}_macos" README.md; then
+		echo "check: README.md's macOS engine download is not $capture_version, which the capture image is" >&2
+		failed=$((failed + 1))
+	fi
+
 	# The public site is HTML and a preset key, so no engine gate reaches it
 	# either. What a crawler and a link preview see — title, description,
 	# canonical, the OG tags, the sitemap, the route into the game — is checked

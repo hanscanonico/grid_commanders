@@ -42,6 +42,8 @@ set -uo pipefail
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 source "$(dirname "$0")/lib/require_godot.sh" || exit 1
+# The renderer names the launcher records and this sweep compares against.
+source "$(dirname "$0")/capture/image.env"
 BATTLE="${BATTLE:-scenes/battle/battle.tscn}"
 # Every boot opens a window — one per group, not one per scenario. Launching
 # through the wrapper keeps a scripted/agent run (no tty) from stealing the
@@ -391,6 +393,11 @@ if ((${#modes[@]} == 0)); then
 fi
 
 out_dir="$(mktemp -d "${TMPDIR:-/tmp}/battle-smoke.XXXXXX")"
+# The launcher decides whether a capture renders on the desktop or inside the
+# container image, and writes the answer here; the manifest records it rather
+# than deriving it a second time.
+export GODOT_CAPTURE_RENDERER_OUT="$out_dir/renderer"
+readonly DEFAULT_RENDERER="$GODOT_DESKTOP_RENDERER"
 # Non-empty when the one-boot sweep failed as a batch and had to be re-run one
 # process per scenario; the entry names the log the batch left behind.
 batch_fallbacks=()
@@ -641,9 +648,19 @@ run_batched_sweep() {
 # therefore only read against a run of the same modes, which its first line
 # records and the comparison refuses to cross: a narrowed run is a different
 # picture of the same scene, not a regression.
+#
+# A frame is also the renderer that drew it, so the manifest names that too and
+# the comparison refuses to cross it, exactly as it refuses to cross a queue.
+renderer_used() {
+	local name="$DEFAULT_RENDERER"
+	[[ -s "$GODOT_CAPTURE_RENDERER_OUT" ]] && name="$(cat "$GODOT_CAPTURE_RENDERER_OUT")"
+	printf '%s\n' "$name"
+}
+
 capture_manifest() {
 	local m shot
 	echo "# queue: ${modes[*]}"
+	echo "# renderer: $(renderer_used)"
 	for m in "${modes[@]}"; do
 		shot="$out_dir/${m//:/-}.png"
 		printf '%s  %s\n' "$(shasum -a 256 <"$shot" | cut -d ' ' -f1)" "$m"
@@ -663,6 +680,15 @@ compare_capture_hashes() {
 	if [[ "$(head -1 "$manifest")" != "# queue: ${modes[*]}" ]]; then
 		echo "smoke: $manifest was recorded from a different queue, so its bytes" >&2
 		echo "smoke: answer for a different font atlas — record a new one to compare" >&2
+		return 1
+	fi
+	local recorded_renderer now_renderer
+	recorded_renderer="$(sed -n 's/^# renderer: //p' "$manifest")"
+	recorded_renderer="${recorded_renderer:-$DEFAULT_RENDERER}"
+	now_renderer="$(renderer_used)"
+	if [[ "$recorded_renderer" != "$now_renderer" ]]; then
+		echo "smoke: $manifest was recorded on the $recorded_renderer renderer and this" >&2
+		echo "smoke: run drew on $now_renderer — two rasterisers, so record a new one to compare" >&2
 		return 1
 	fi
 	local m shot want got moved=0
