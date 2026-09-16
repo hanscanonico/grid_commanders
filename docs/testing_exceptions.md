@@ -109,14 +109,15 @@ same file on the same terms — whether the defence row qualifies the stars it p
 answer over two ints, and a plate promising a flier the ground's cover renders a frame that looks
 perfectly correct.
 
-`CommanderCard`, `VictoryLockup` and `MissionSpeech` join them for one assertion each.
-`test_commander_portraits.gd` reads `CommanderCard.WHOLE_BUST_BAND` / `CHIP_BAND`,
-`VictoryLockup.PORTRAIT` and `MissionSpeech.BUST` as plain constants — two `Control` subclasses and
-one `RefCounted`, no scene instantiated and no page built — because the thing being pinned is that
+`CommanderCard`, `VictoryLockup`, `MissionSpeech` and `CommanderSelectPanel` join them for one
+assertion each. `test_commander_portraits.gd` reads `CommanderCard.WHOLE_BUST_BAND` / `CHIP_BAND`,
+`VictoryLockup.PORTRAIT`, `MissionSpeech.BUST` and `CommanderSelectPanel.MINI_FACE` (the picker's
+roster tile, a whole bust since COM-280) as plain constants — three `Control` subclasses and one
+`RefCounted`, no scene instantiated and no page built — because the thing being pinned is that
 **every named bust field derives from `CommanderVisuals`**: each one falls to a whole rung of
 `art_scale` over the drawing `fits_whole_bust` picks, so a field hand-typed a texel off the ladder
-fails here instead of shipping a bust drawn at a fraction. The two fields no class names out loud
-(the power banner, the roster tile) are read off the captured frames instead.
+fails here instead of shipping a bust drawn at a fraction. The one field no class names out loud
+(the power banner) is read off the captured frames instead.
 
 `CampaignHubPanel` and `CampaignPickerPanel` join them too. What a hub row's second line says
 (`row_detail`), how wide the star cell every row shares has to be (`star_span`), what a picker row

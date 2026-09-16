@@ -8,8 +8,13 @@ extends Control
 ##
 ## One focused CommanderCard carries the full doctrine and power copy; four
 ## faction tabs and a peer portrait per member let the player browse, and a deliberate
-## "No Commander" stays reachable. Every widget is a focusable Control, so mouse,
-## keyboard, and controller all drive it through Godot's own focus navigation:
+## "No Commander" stays reachable. A roster tile is a *whole bust* at 1x, so a
+## general reads here the way they read on the card beside them: the tile is
+## `CommanderVisuals.PORTRAIT_SIZE` wide, the row that holds them scrolls
+## sideways under the card's reading width, and the cut-off tile plus the thin
+## bar under the row are the cue that there is more to walk to. Every widget is a
+## focusable Control, so mouse, keyboard and controller all drive it through
+## Godot's own focus navigation:
 ## Left/Right across a row, Up/Down between the tab, portrait, and button rows.
 ## No information hides behind hover, and none behind colour alone — the emblem
 ## and faction name back every tint.
@@ -24,18 +29,19 @@ signal cancelled
 ## seat more, and what `begin` falls back to if it is handed nothing.
 const DUEL_SEATS := 2
 
-## A roster tile's face field: the tile without the name band beneath it. The
-## tile is the sum of the two (`_mini_height`), asked of the font rather than
-## typed in, so a face keeps its rung when the shell's body size moves — 82 was
-## the whole tile at the 8px body, over a band of one line and its padding, and
-## this is the field that was left inside it.
-const _MINI_FACE_H := 69
-## The lines the name band reserves. Six tiles across this column leave a caption
-## about 46 pixels wide: no name in that six-general roster fits it at the body
-## size (the widest sets at 63) and every single word does (38), so the band is
-## two lines, the given name over the surname, rather than the strip clipping the
-## roster it exists to read (COM-271). Reserved on every tile, so the faces stay
-## one row.
+## A roster tile's face field: the tile without the name band beneath it, and the
+## drawing's own size rather than a number chosen here — under
+## `CommanderVisuals.WHOLE_BUST_FIELD` on either axis the tile draws the baked
+## face chip at a whole rung instead, which is the chunkier general the picker
+## used to show while the card, the cut-in and the info sheet all showed the bust
+## (COM-280). The tile is the sum of this field and the name band
+## (`_mini_height`), and it never stretches — the row scrolls instead.
+const MINI_FACE := CommanderVisuals.PORTRAIT_SIZE
+## The lines the name band reserves. A name sets at up to 63 pixels at the body
+## size and every single word of the roster fits in 38, so two lines carry the
+## given name over the surname on a tile of any width, and the band is kept at
+## two now the tile is wider than either (COM-271). Reserved on every tile, so
+## the faces stay one row.
 const _NAME_LINES := 2
 ## The band's padding over and under those lines.
 const _NAME_PAD := 1
@@ -78,6 +84,7 @@ var _chip_bar: HBoxContainer
 var _chips: Array[PanelContainer] = []
 var _chip_labels: Array[Label] = []
 var _tab_buttons: Array[Button] = []
+var _mini_frame: ScrollContainer
 var _mini_buttons: Array[Button] = []
 var _mini_marks: Array[ColorRect] = []
 var _summary_label: Label
@@ -263,11 +270,19 @@ func _build_right_column() -> VBoxContainer:
 		_tab_buttons.append(tab)
 	col.add_child(tabs)
 
+	# The cut-off tile and the always-shown bar are the whole scroll cue, and why
+	# there are no arrows is in `.claude/rules/presentation.md` (COM-280).
+	_mini_frame = ScrollContainer.new()
+	_mini_frame.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_mini_frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+	_mini_frame.follow_focus = true
+	_mini_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_child(_mini_frame)
+
 	var mini_row := HBoxContainer.new()
 	mini_row.name = "MiniRow"
 	mini_row.add_theme_constant_override("separation", 6)
-	mini_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_child(mini_row)
+	_mini_frame.add_child(mini_row)
 
 	var summary := PanelContainer.new()
 	summary.add_theme_stylebox_override("panel", UiTheme.flat(_INACTIVE))
@@ -383,6 +398,25 @@ func _members() -> Array[CommanderType]:
 	return _by_faction.get(_faction_keys[_faction_index], [] as Array[CommanderType])
 
 
+## Where a general stands in the row on show, or -1 when this faction's row does
+## not hold them — neutral never does, and nor does a general of another faction.
+## The walk stops at the shorter of the two, so a row asked for before it is
+## built answers -1 rather than reaching past its buttons.
+func _tile_index_for(id: StringName) -> int:
+	var members := _members()
+	for i in mini(members.size(), _mini_buttons.size()):
+		if members[i].id == id:
+			return i
+	return -1
+
+
+## Puts the gold mark on one tile and takes it off the rest; -1 clears the row,
+## which is what previewing No Commander leaves behind.
+func _mark_tile(index: int) -> void:
+	for i in _mini_marks.size():
+		_mini_marks[i].visible = i == index
+
+
 ## Deferred: freshly-created buttons are not in the focus system until the frame
 ## settles, so an immediate grab_focus is a no-op and the viewport falls back to
 ## focusing the first tab. Deferring lands focus on the portrait, as intended.
@@ -416,10 +450,13 @@ func _rebuild_minis() -> void:
 	for commander: CommanderType in _members():
 		var mini := _make_mini(commander, row)
 		_mini_buttons.append(mini)
+	_reveal_previewed.call_deferred()
 
 
+## The row itself, inside the frame that scrolls it — one child, so the cast is
+## the whole of the question.
 func _find_mini_row() -> HBoxContainer:
-	return find_child("MiniRow", true, false) as HBoxContainer
+	return _mini_frame.get_child(0) as HBoxContainer
 
 
 ## The height the name band reserves: its lines at the body size, solid — the
@@ -429,17 +466,15 @@ func _name_text_height() -> float:
 	return _NAME_LINES * UiTheme.display().get_height(UiTheme.SIZE_BODY)
 
 
-## A roster tile: its face field and the name band under it. The row gives the
-## tile its width, so this is the one dimension the page states.
+## A roster tile: its face field and the name band under it.
 func _mini_height() -> float:
-	return _MINI_FACE_H + _name_text_height() + 2 * _NAME_PAD
+	return MINI_FACE.y + _name_text_height() + 2 * _NAME_PAD
 
 
 func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	var theme := CommanderVisuals.theme_for(commander)
 	var button := Button.new()
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0, _mini_height())
+	button.custom_minimum_size = Vector2(MINI_FACE.x, _mini_height())
 	button.clip_contents = true
 	button.add_theme_stylebox_override("normal", _hard(theme.color_dark, 2))
 	button.add_theme_stylebox_override("hover", _hard(theme.color, 2))
@@ -452,10 +487,10 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	content.add_theme_constant_override("separation", 0)
 	button.add_child(content)
 
-	# The tile states no size of its own — the row gives it the width and what is
-	# left over under the name band — so the kit measures the band it is handed a
-	# frame late and, at a tile this small, draws the baked face chip at a whole
-	# rung rather than a bust nothing here could hold.
+	# The stage states no size of its own — it is the tile's width, and what is
+	# left over under the name band — so the kit measures the field it is handed a
+	# frame late. That field holds a whole bust, which is what the tile's fixed
+	# width is for.
 	var stage := UiKit.commander_bust(commander, Vector2.ZERO, theme.color)
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(stage)
@@ -470,7 +505,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var name_wrap := PanelContainer.new()
 	name_wrap.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_dark))
-	name_wrap.add_child(UiKit.pad(name_label, 2, 1))
+	name_wrap.add_child(UiKit.pad(name_label, 2, _NAME_PAD))
 	content.add_child(name_wrap)
 	UiTheme.make_decoration(content)
 
@@ -493,6 +528,29 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	return button
 
 
+## Scrolls the row until the previewed general's tile is whole. Called once per
+## rebuild — opening the page, a tab, a seat change, Back and Random all rebuild
+## the row — so the row opens on the seat's pick rather than on wherever the
+## previous faction left it. Random is why the rebuild owns it rather than the
+## focus: the draw previews a general nothing focused, and may be the sixth of a
+## faction the row shows three of. A tile the player *does* focus, by key or by
+## click, is `follow_focus`'s to bring into view.
+##
+## Queued rather than run, because a rebuilt row has no sizes until the frame
+## settles and `ensure_control_visible` on an unplaced tile scrolls to nothing.
+## Which tile is resolved when the call runs rather than when it was queued: the
+## preview that names it lands after the rebuild, and two rebuilds can share one
+## frame — the seat walk confirms and re-opens the roster without a frame between
+## — so the tile named at queue time is out of the row by then, which
+## `ensure_control_visible` refuses out loud.
+func _reveal_previewed() -> void:
+	if _current == null:
+		return
+	var index := _tile_index_for(_current.id)
+	if index >= 0:
+		_mini_frame.ensure_control_visible(_mini_buttons[index])
+
+
 ## Greys the portrait of a general an earlier seat already commands, and says
 ## which seat holds them: a dead control with no reason is the affordance this
 ## menu has been burned by once (COM-13). Disabled rather than absent, so the
@@ -511,8 +569,7 @@ func _mark_taken(button: Button, commander: CommanderType) -> void:
 func _preview(commander: CommanderType) -> void:
 	_current = commander
 	_card.bind(commander)
-	for i in _mini_buttons.size():
-		_mini_marks[i].visible = _members()[i].id == commander.id
+	_mark_tile(_tile_index_for(commander.id))
 	_refresh_summary()
 	_refresh_chips()  # the active side's chip tracks the browse, mirror fallback and all
 
@@ -623,10 +680,10 @@ func _focus_commander(id: StringName) -> void:
 	var key := CommanderVisuals.key_for_faction(commander.faction)
 	var index := _faction_keys.find(key)
 	_set_faction(index if index >= 0 else 0)
-	for i in mini(_members().size(), _mini_buttons.size()):
-		if _members()[i].id == id and not _mini_buttons[i].disabled:
-			_grab(_mini_buttons[i])
-			return
+	var tile := _tile_index_for(id)
+	if tile >= 0 and not _mini_buttons[tile].disabled:
+		_grab(_mini_buttons[tile])
+		return
 	_grab_first_mini()
 
 
