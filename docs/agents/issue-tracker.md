@@ -8,7 +8,11 @@ holds only the code and its pull requests.
 
 - **Create an issue**: `save_issue` with `team: "Grid_Commanders"`, a title and a markdown
   description. Attach it to a project when the work belongs to a plan; a plan's milestones are
-  labels (`MB1 · foundation`, `arena:search`, …), one per slice.
+  labels (`MB1 · foundation`, `arena:search`, …), one per slice. **A ticket about UI carries a
+  screenshot whenever one can be taken**: capture the screen (`make screenshot`, the smoke sweep,
+  or a browser capture for the web build), upload it with `prepare_attachment_upload` +
+  `create_attachment_from_upload`, and embed it inline in the description. A mockup or a
+  before/after pair beats a paragraph describing the layout.
 - **Read an issue**: `get_issue` by identifier, then `list_comments` — reproduction steps,
   corrections and the acceptance bar usually live in a comment, not the description. Run
   `extract_images` on any embedded screenshot.
