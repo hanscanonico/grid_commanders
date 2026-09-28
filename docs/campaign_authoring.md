@@ -184,7 +184,7 @@ the big ones.
 ## Limits of the vocabulary
 
 These are not bugs; they are the shape of the language, and each cost the
-retrofit at least one round.
+retrofit or the Five Flags rewrite at least one round.
 
 - **An event must carry at least one effect.** A beat that only speaks is
   unsayable. Give it the smallest true board fact instead.
@@ -199,8 +199,24 @@ retrofit at least one round.
   beat watching one reads a boundary-old count. Key such a beat to the board.
 - **`CaptureCell` and `CellOwned` are side-wide.** "Our team took it" is
   unsayable; an ally taking it reads the same way.
-- **There is no negation of `UnitDestroyed`.** "This unit is still alive" is a
-  `ProtectUnit` failure or nothing.
+- **There is no negation of `UnitDestroyed`** — but a `UnitReached` whose
+  `cells` cover the whole region a unit can be in reads "this unit is alive and
+  over there". Paired with `DayReached`, it is "if the cart is still on the road
+  on day four", which is how Five Flags writes every escape and every spared
+  commander.
+- **`DayBefore` includes its own day.** `DayBefore { day: 2 }` holds on days 1
+  and 2; a beat meant to stop the day an escape fires has to end the day before
+  it.
+- **A visible `DestroyUnit` bonus on a unit that can escape pays its star when it
+  escapes**, a scripted removal being a kill to that reader too. Hold the bonus
+  back (`hidden`) and let the beat that sees the kill reveal it, and say in the
+  briefing that the unit is leaving and when.
+- **An escort names its unit.** `ReachCell` with a `tag` counts only that one
+  unit, so "move the delegates' car to Greywater" cannot be finished by a recon
+  parked on the zone; keep a `ProtectUnit` failure beside it.
+- **A spawn onto an occupied cell is skipped** (trap 6) — which is also a tool:
+  an ambush that lands beside a bridge is defused by a player who holds the far
+  bank first, and a briefing can teach exactly that.
 - **A scripted `RemoveUnits` is indistinguishable from a kill** to every reader —
   the loss limit, the AI's board diff, the debrief. Say so in the line.
 - **A `Join` merge counts as a loss** for `LossLimit`, because a board diff cannot
@@ -331,90 +347,33 @@ The hand test:
 > **Say when the trigger comes due, and say where the player is then.** If the
 > answer is "on that square", move the spawn one cell.
 
-## The ledger, campaign by campaign
+## The ledger
 
-Snapshot of the shipped content at CD8. `CampaignDefinition.ledger_error` is what
+Snapshot of *Five Flags* as it shipped. `CampaignDefinition.ledger_error` is what
 keeps the names honest — a fact some mission reads and no mission writes fails
 the gate — so this table can go stale in its detail and never in its names.
-
-**The Six Marshals** — one fact per marshal, each written by the mission that
-meets them, read by the missions that follow and by the act's own page.
-
-| Fact | Written by | Read by |
-|---|---|---|
-| `ferrow_paid` | sm01, sm03 | sm02, sm18, interludes 0 & 5 |
-| `vale_factory` | sm04 | sm05, sm18, interludes 1 & 5 |
-| `orlov_trophy` | sm07 | sm08, sm09, sm18, interludes 2 & 5 |
-| `vance_dug_in` | sm10 | sm11, sm12, sm18, interludes 3 & 5 |
-| `draeg_column_intact` | sm13 | sm14, sm18, interludes 4 & 5 |
-| `morn_charged` | sm16 | sm17, sm18, interlude 5 |
-
-**The Collection** — the audit's own books; two of them gate a mission.
+`docs/five_flags.md` says what each fact means in the story; this is where each
+one is written and read. A fact's own mission reads it too, on its victory page.
 
 | Fact | Written by | Read by |
 |---|---|---|
-| `ferrow_bounty` | tc01, tc02 | tc02, tc03, tc18, interlude 0 |
-| `province_held` | tc04 | tc06, interlude 0 |
-| `forgery_proven` | tc05, tc12 | tc13, **tc14 (gate)**, tc18, interludes 1 & 2 |
-| `vale_funded` | tc07 | tc10, tc11, tc16, interlude 1 |
-| `witnesses_alive` | tc08 | **tc09 (gate)**, tc12, interlude 1 |
-| `draeg_veterans_spared` | tc14 | interlude 2 |
-| `morn_charged` | tc15 | tc17, interlude 2 |
+| `ff_gold_found` | ff02 — the paymaster destroyed before he leaves | ff09, **ff10 (gate)**, ff22, interlude 0 |
+| `ff_powder_lost` | ff03 — +1 per powder cart still on the road on day four | ff04 (the guns land, or a mech joins), interlude 0 |
+| `ff_convoys` | ff09 — +1 per carrier that reaches Hollin | ff13 (Hollin's garrison marches), interlude 1 |
+| `ff_mint_page` | ff10 — the counting house taken before the ledgers burn | ff22, ff27 |
+| `ff_nia_fought` | ff11 — one of Nia's tagged rangers destroyed | **ff15 / ff16 (the fork)**, ff17, ff39, interludes 2 & 5 |
+| `ff_capital_ring` | ff13 — the Old Town ours when the siege breaks | ff33, interlude 1 |
+| `ff_concord_shells` | ff14 — Thorne's depot taken | ff17 |
+| `ff_cipher_read` | ff19 — Orin's listening post taken | ff26, ff27, interlude 2 |
+| `ff_draeg_spared` | ff20 — Draeg's column withdraws with its command tank alive | ff26 (defects, or surrenders), ff35, ff39, interludes 2, 3 & 5 |
+| `ff_ferrow_bought` | ff22 — the counting house taken while Ferrow still has a company | ff28, ff36, ff39, interludes 3 & 5 |
+| `ff_rhea_turned` | ff30 — the lower town taken by day five | ff31, ff32, **ff37 / ff38 (the fork)**, ff39, interludes 4 & 5 |
+| `ff_refugees` | ff32 — +1 per refugee convoy across the causeway | ff39, interludes 4 & 5 |
+| `ff_vance_joined` | ff34 — the Ostra bridgehead taken by day seven with Vance's tank alive | ff35, ff39, interlude 5 |
+| `ff_vale_stood_down` | ff36 — the three foundries taken by day nine | ff39, interlude 5 |
 
-**The Furnace Winter** — the fuel road is a counter six missions add to, summing
-to 13 so the interludes' "thirteen depots, end to end" is the counter's own truth.
-
-| Fact | Written by | Read by |
-|---|---|---|
-| `fw_granary_saved` | fw02 (early capture, or the torch squad hunted down) | **fw05 (gate)**, fw18, interludes 0 & 2 |
-| `fw_ice_road_open` | fw04 (the fuel sledge reaches the east landing) | fw07, interlude 0 |
-| `fw_kestrel_held` | fw06 | fw17, interlude 0 |
-| `fw_depots_open` | fw07 +2, fw08 +2, fw09 +2, fw10 +3, fw11 +2, fw12 +2 | fw13, fw15, fw18, interludes 1 & 2 |
-| `fw_bounty_paid` | fw09, fw11, fw14, fw16 | fw14 (both branch beats), **fw16 (gate)**, fw18, interludes 1 & 2 |
-| `fw_vale_withdrew` | fw12 | fw13, interlude 1 |
-| `fw_siege_broken` | fw15 (the siege gun silenced) | fw17, interlude 2 |
-| `fw_road_half` | fw18 | — (the debrief's note) |
-
-**The Hollow Crown** — the one campaign with a branch in it.
-
-| Fact | Written by | Read by |
-|---|---|---|
-| `morn_bloodied` | hc01 | **hc05 (gate)**, interlude 0 |
-| `ferrow_unpaid` | hc03 | hc14, hc17 |
-| `vance_ledger_seized` | hc04 | hc15 |
-| `directorate_fallen` | hc06 | — (the debrief's note) |
-| `draeg_column_broken` | hc08 | **hc10 (gate)**, hc13, interlude 1 |
-| `marshal_kept` | hc08, hc10, hc12, hc16 | hc18, interlude 2 |
-| `alliance_debt` | hc12 | — (the debrief's note) |
-| `crown_hollow` | hc18 | interlude 2 |
-
-`marshal_kept` varies only because one of its four writers, hc10, is itself
-gated — which is the shape trap 1's check is written to allow.
-
-**The Long Front** — what was saved in the retreat, read at the end.
-
-| Fact | Written by | Read by |
-|---|---|---|
-| `column_saved` | lf01 | lf02, lf07, lf18, interludes 0 & 2 |
-| `coast_watch_saved` | lf03 | lf04, lf07, lf18, interludes 0 & 2 |
-| `shrine_saved` | lf06 | lf07, lf18, interludes 0 & 2 |
-| `averyn_held` | lf08 | lf16, lf18, interludes 1 & 2 |
-| `carrow_early` | lf09 | **lf11 (gate)**, interludes 1 & 2 |
-| `cities_burned` | lf10 | lf13, **lf15 (gate)** |
-| `battery_silenced` | lf16 | lf17, lf18, interlude 2 |
-
-**The Quiet War** — the file the whole war is about.
-
-| Fact | Written by | Read by |
-|---|---|---|
-| `qw_evidence` | qw01, qw04, qw06, qw08, qw10, qw12 | — (the debrief's note) |
-| `qw_towns_saved` | qw03, qw11, qw14 | qw18, interludes 1 & 2 |
-| `qw_thornfield_held` | qw05 | qw16, interlude 0 |
-| `qw_handler_taken` | qw06 | **qw09 (gate)**, interlude 0 |
-| `qw_columns_broken` | qw07, qw08, qw09 | **qw11 (gate)**, qw13, interlude 1 |
-| `qw_network_blind` | qw10 | qw12, qw17, interlude 1 |
-| `qw_draeg_bloodied` | qw14 | qw18, interlude 2 |
-| `qw_draeg_wall` | qw18 | — (the debrief's note) |
+Three gates shape the route: the optional ff10, and the two forks. Every other
+fact chooses words, a beat, or who arrives at Hammer Hill.
 
 ## The run's own facts
 

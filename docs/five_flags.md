@@ -42,8 +42,8 @@ turns Hammerfall on Aurum, and the last act is every flag against him.
 | I | The Seam | ff01–ff06 | Ferrow's raids, the Hall burns, every power grabs Candlemere, the Ninth scatters and Alina Ward is taken |
 | II | Home Fires | ff07–ff13 | Iron invades Meridian by sea, river, road and air; the capital holds; Hammerfall fires for the first time |
 | III | The Ninth | ff14–ff20 | Iris Colt rebuilds the Ninth: the Verdant rising against Thorne, Nia's road, Aurora's war game, Draeg's column over Skyreach |
-| IV | Into Iron | ff21–ff26 | The invasion of Iron: the pass, Ferrow bought or fought, Vale's foundries, Kharn prison, Draeg — and the truth |
-| V | The Vault | ff27–ff32 | The Concord: Sable hunted, the counting houses, the Glass Shore, Rhea's line, Lyra's citadel struck by Hammerfall; the player commands Lyra at the causeway |
+| IV | Iron | ff21–ff26 | The invasion of Iron: the pass, Ferrow bought or fought, Vale's foundries, Kharn prison, Draeg — and the truth |
+| V | Gold | ff27–ff32 | The Concord: Sable hunted, the counting houses, the Glass Shore, Rhea's line, Lyra's citadel struck by Hammerfall; the player commands Lyra at the causeway |
 | VI | Five Flags | ff33–ff39 | Every flag against Morn, the Ninth's veteran column carried to Hammer Hill |
 
 The player commands a different general most missions — the Ninth's roll call — and plays every
