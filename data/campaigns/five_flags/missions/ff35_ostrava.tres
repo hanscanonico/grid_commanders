@@ -1,71 +1,247 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=58 format=3]
 
-[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="14"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="15"]
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="16"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("1")
+text = "Destroy Orlov's command car."
+tag = &"orlov_command"
+
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Capture the Kasern barracks."
+cell = Vector2i(4, 2)
 
-[sub_resource type="Resource" id="Bonus_0"]
+[sub_resource type="Resource" id="Objective_3"]
 script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
+text = "Capture the radio house."
+cell = Vector2i(14, 2)
 
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Cond_4"]
 script = ExtResource("3")
-day = 2
+flag = &"ff_vance_joined"
+at_least = 1
+at_most = -1
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Trigger_5"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+condition = SubResource("Cond_4")
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Trigger_6"]
 script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: this mission is being written."
+day = 1
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Effect_7"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
+tags = Array[StringName]([&"kasern_1", &"kasern_2", &"kasern_3"])
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("7")
+speaker = &"iona_vance"
+text = "Vance, from the Kasern. The garrison has stacked its rifles in the yard and is waiting for the morning. Orlov is in the streets with his own people and nobody else."
+
+[sub_resource type="Resource" id="Event_9"]
+script = ExtResource("8")
+id = &"the_kasern_stands_aside"
+triggers = Array[Resource]([SubResource("Trigger_5"), SubResource("Trigger_6")])
+effects = Array[Resource]([SubResource("Effect_7")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Line_8")])
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder briefing for Ostrava."
+[sub_resource type="Resource" id="Trigger_10"]
+script = ExtResource("9")
+cell = Vector2i(11, 7)
+holder = 0
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Spawn_11"]
+script = ExtResource("11")
+unit_type = ExtResource("10")
+cell = Vector2i(0, 10)
+
+[sub_resource type="Resource" id="Spawn_12"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(1, 11)
+
+[sub_resource type="Resource" id="Spawn_13"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(0, 9)
+
+[sub_resource type="Resource" id="Effect_14"]
+script = ExtResource("13")
+team = 2
+units = Array[Resource]([SubResource("Spawn_11"), SubResource("Spawn_12"), SubResource("Spawn_13")])
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("7")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy has something to say."
+text = "They've reached the Tram Square and left the back of the column open, so go in from the west gate, quietly, and take the limping ones first."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("7")
 speaker = &"iris_colt"
-text = "Placeholder victory."
+text = "Contact behind us. Turn the rear around and keep the head moving."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_17"]
+script = ExtResource("8")
+id = &"the_hunt_turns"
+triggers = Array[Resource]([SubResource("Trigger_10")])
+effects = Array[Resource]([SubResource("Effect_14")])
+once = true
+lines = Array[Resource]([SubResource("Line_15"), SubResource("Line_16")])
+
+[sub_resource type="Resource" id="Trigger_18"]
+script = ExtResource("14")
+team = 2
+bound = 0
+count = 5
+
+[sub_resource type="Resource" id="Spawn_19"]
+script = ExtResource("11")
+unit_type = ExtResource("10")
+cell = Vector2i(21, 3)
+
+[sub_resource type="Resource" id="Spawn_20"]
+script = ExtResource("11")
+unit_type = ExtResource("15")
+cell = Vector2i(21, 2)
+
+[sub_resource type="Resource" id="Effect_21"]
+script = ExtResource("13")
+team = 2
+units = Array[Resource]([SubResource("Spawn_19"), SubResource("Spawn_20")])
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("7")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy holds."
+text = "Pull the last of the pack back to the old town. A wounded animal is the only kind worth hunting, Colonel, and I've watched you bleed for a week."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_23"]
+script = ExtResource("8")
+id = &"orlov_goes_to_ground"
+triggers = Array[Resource]([SubResource("Trigger_18")])
+effects = Array[Resource]([SubResource("Effect_21")])
+once = true
+lines = Array[Resource]([SubResource("Line_22")])
+
+[sub_resource type="Resource" id="Cond_24"]
+script = ExtResource("3")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_25"]
+script = ExtResource("3")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_26"]
+script = ExtResource("3")
+flag = &"ff_vance_joined"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_27"]
+script = ExtResource("3")
+flag = &"ff_vance_joined"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_28"]
+script = ExtResource("7")
+text = "Ostrava, capital of the Iron Dominion, a little after midnight. The street lamps have been shot out block by block ahead of the column."
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("7")
+speaker = &"cass_orlov"
+text = "Welcome to my city, Colonel. I know every cellar in it and every roof, and tonight I've switched the lights off for you."
+
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("7")
+speaker = &"viktor_draeg"
+text = "I grew up three streets from the arsenal. Orlov hunts out of the old town north of the river and he moves in a command car, never the same street twice. Kill the car and his people go home."
+requires = SubResource("Cond_24")
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("7")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Draeg drew us a map of the old town from his cell this morning. He wouldn't say whether it was a favour, so I've filed it under intelligence and not under gifts."
+unless = SubResource("Cond_25")
+
+[sub_resource type="Resource" id="Line_32"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Nobody builds tonight. What we brought is what we've got. Find the car."
+
+[sub_resource type="Resource" id="Line_33"]
+script = ExtResource("7")
+speaker = &"iona_vance"
+text = "The Kasern garrison is mine. They'll stay in their yard if I ask them to, and I've asked."
+requires = SubResource("Cond_26")
+
+[sub_resource type="Resource" id="Line_34"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "The Kasern barracks in the north-west block still answer to the Directorate, so expect company from that corner."
+unless = SubResource("Cond_27")
+
+[sub_resource type="Resource" id="Line_35"]
+script = ExtResource("7")
+speaker = &"cass_orlov"
+text = "Well hunted. I'd have taken the tired ones first."
+
+[sub_resource type="Resource" id="Line_36"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Orlov's dead. Get the lamps back on and tell Ostrava it can come out."
+
+[sub_resource type="Resource" id="Line_37"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "One command car, burned, formerly the property of State Security, and for once I'm not sending anyone the bill."
+
+[sub_resource type="Resource" id="Cond_38"]
+script = ExtResource("3")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_39"]
+script = ExtResource("7")
+speaker = &"cass_orlov"
+text = "Every cellar in Ostrava, Colonel. You never stood a chance of checking them all."
+
+[sub_resource type="Resource" id="Line_40"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "He came round behind us and took the headquarters while we were all looking north, so we'll need a new one, and a better map."
+requires = SubResource("Cond_38")
+
+[sub_resource type="Resource" id="Line_41"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "The column's scattered over six streets and I can't count it in the dark. We fall back to the south gate and try again at first light."
+unless = SubResource("Cond_38")
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("16")
 id = &"ff35_ostrava"
 title = "Ostrava"
 location = "Ostrava, capital of the Dominion"
@@ -80,14 +256,14 @@ commanders = {
 }
 fog_enabled = true
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_1")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
+bonus_objectives = Array[Resource]([SubResource("Objective_2"), SubResource("Objective_3")])
+events = Array[Resource]([SubResource("Event_9"), SubResource("Event_17"), SubResource("Event_23")])
 par_day = 8
 carry_in = true
-carry_floor_hp = 50
 carry_out = true
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+carry_floor_hp = 60
+briefing = Array[Resource]([SubResource("Line_28"), SubResource("Line_29"), SubResource("Line_30"), SubResource("Line_31"), SubResource("Line_32"), SubResource("Line_33"), SubResource("Line_34")])
+victory = Array[Resource]([SubResource("Line_35"), SubResource("Line_36"), SubResource("Line_37")])
+defeat = Array[Resource]([SubResource("Line_39"), SubResource("Line_40"), SubResource("Line_41")])

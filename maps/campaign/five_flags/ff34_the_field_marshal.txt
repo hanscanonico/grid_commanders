@@ -1,26 +1,82 @@
-# Five Flags placeholder — "The Field Marshal". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags — "The Field Marshal". The Ostra, two days short of the capital.
+# The river runs the length of the board and three bridges cross it. Vance holds
+# the whole east bank with the Dominion's regular army, the largest on the board,
+# and the middle bridge ends in the Ostra bridgehead town, the one piece of ground
+# the mission is about. The north and south bridges are the long way round and
+# open onto Vance's two depots, so a column that goes wide finds production to
+# take and a column that goes straight finds her guard. Foot can wade the Ostra
+# anywhere; treads need a bridge.
+# Tags: vance_command is Vance's command tank, far back on her own road;
+# vance_staff_* ride with her; vance_guard_* is the guard she brings over if the
+# bridgehead falls in time. Every other Iron unit is the Directorate's rearguard.
+# ninth_colours marks the Ninth's command-tank slot; ^ rows are the carried column.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
 [terrain]
-.......M.....
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-..M..........
+M...F.....F~..F...MM...M
+..C...F.C..~...C....F..M
+.==.....===+====....B..M
+.=..FFC.=..~.....F..=...
+.=..FF..=..~..C..F..=.C.
+.B......=.F~.F......=...
+.=..C...=F.~........=...
+Q=======.==+C========.Q.
+.=......=F.~........=...
+.B..F...=.F~.F......=...
+.=..F...=..~..C..F..=.C.
+.=....C.=..~.....F..=...
+.==.....===+====....B...
+..C...F.C..~...C....F...
+M...F.....F~..F...MM...M
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+1 0 7
+1 1 5
+1 1 9
+1 2 1
+1 4 6
+1 2 13
+1 6 3
+1 8 1
+1 8 13
+1 6 11
+2 22 7
+2 20 2
+2 20 12
+2 12 7
+2 14 4
+2 14 10
+2 22 4
 [units]
-1 i 2 3 ^
-1 i 3 3 ^
-1 t 2 2 ^
-1 r 1 3 ^
-2 i 9 6
-2 i 9 7
-2 t 12 6
+1 T 6 7 ninth_colours ^
+1 t 7 6 ^
+1 m 8 6 ^
+1 m 8 8 ^
+1 g 5 7 ^
+1 r 7 8 ^
+1 i 9 5
+1 i 9 9
+1 t 5 5
+1 a 4 8
+1 g 3 7
+1 i 9 3
+1 i 9 11
+1 t 3 9
+1 T 2 7
+1 R 4 7
+1 t 6 9
+2 T 21 7 vance_command
+2 t 21 6 vance_staff_1
+2 t 21 8 vance_staff_2
+2 t 14 6 vance_guard_1
+2 t 14 8 vance_guard_2
+2 g 16 7 vance_guard_3
+2 g 17 6 vance_guard_4
+2 m 13 7 vance_guard_5
+2 a 16 8 vance_guard_6
+2 i 13 5 vance_guard_7
+2 i 12 4
+2 i 12 10
+2 i 19 5
+2 i 19 9
+2 g 18 7 ostra_battery
+2 r 13 2

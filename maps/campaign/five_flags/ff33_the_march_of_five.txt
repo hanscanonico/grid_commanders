@@ -1,26 +1,91 @@
-# Five Flags placeholder — "The March of Five". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags — "The March of Five". The Lusk, where the Seam ends and Iron begins.
+# Three allied columns march north abreast: the Verdant League on the west road,
+# the Ninth up the middle, Aurora on the east road. The Lusk crosses the whole
+# board with a bridge under each column, so no army waits on another's crossing,
+# and infantry can wade it anywhere. North of the river Orlov's pickets hold two
+# wood-lined posts; behind them Vorn, the border fortress, sits in a ring of rock
+# with a road gate south and a road gate north and a wooded shoulder for foot to
+# climb. Orlov's two bases are on the rear road, far enough back that the
+# fortress has to be held by what he already has there.
+# Tags: ninth_colours is the Ninth's command tank (its crossing is a beat);
+# orlov_huntsman is the tank Orlov hunts with (a bonus).
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
 [terrain]
-......M......
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-..M..........
+MM...F...=...MMM...F.QMM
+M.B=====C=====.C.====B.M
+.F...FF..MM=MM..F...F..M
+...C.....M.C.M....C....M
+.F..F....M.=FM...F..F...
+..C.....F..=..F.....C...
+~~+~~~~~~~~+~~~~~~~+~~~~
+..=....F...=...F...=..F.
+.F=..C..F..=..FF..C=....
+..=..F.....=.......=..F.
+.C=.....C..=..C....=.C..
+..B.F......=......F.B...
+..=.....FF.B.C...F..=...
+..Q.........Q.......Q...
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+4 21 0
+4 21 1
+4 2 1
+4 8 1
+4 15 1
+4 11 3
+4 3 3
+4 18 3
+4 2 5
+4 20 5
+1 12 13
+1 11 12
+1 13 12
+1 8 10
+1 14 10
+2 2 13
+2 2 11
+2 1 10
+3 20 13
+3 20 11
+3 21 10
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+1 T 11 10 ninth_colours
+1 t 10 10
+1 m 12 10
+1 m 11 9
+1 g 12 11
+1 r 10 9
+1 i 9 11
+1 i 13 11
+2 i 1 9
+2 i 3 9
+2 i 4 10
+2 m 3 10
+2 t 1 11
+2 g 0 12
+2 i 3 11
+3 r 19 9
+3 r 21 9
+3 t 20 10
+3 t 22 10
+3 i 21 11
+3 a 22 11
+4 i 2 5
+4 i 20 5
+4 i 8 5
+4 i 14 5
+4 r 5 4
+4 r 16 4
+4 t 11 4
+4 t 3 3 orlov_huntsman
+4 t 18 3
+4 g 10 3
+4 g 12 3
+4 m 11 3
+4 a 15 2
+4 T 11 2
+4 R 14 1
+4 m 9 4
+4 i 5 5
+4 i 17 5
+4 t 7 2
