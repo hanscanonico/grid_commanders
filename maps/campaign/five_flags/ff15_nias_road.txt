@@ -1,7 +1,7 @@
 # Five Flags, Act III — "Nia's Road". The Thornwood at night, Nia v Thorne, fog.
 # An escort through forest: Nia's rangers walk the woods at road speed, the
-# delegates' car (the APC tagged delegates) cannot leave the road at all, and
-# the Grey river runs down column 12. The north road's bridge at (12,3) is
+# delegates' car (the APC tagged delegates) crawls through them at double cost,
+# and the Grey river runs down column 12. The north road's bridge at (12,3) is
 # burned, so the rangers can ford there and the car cannot; its one crossing is
 # the mill bridge (12,11) on the drovers' road, the route Sable arranged.
 # Thorne's hunters are waiting past it: the car reaching the mill bridge brings
@@ -9,7 +9,8 @@
 # the east edge on day 4, and the huntmaster's tank sits at Thorne's camp by
 # the north road, where the open clearings suit it.
 # Both roads meet at (15,3) for the last run to Greywater, the town in the
-# north-east corner; its gate zone is the reach objective.
+# north-east corner; its gate zone is the reach objective, and only the car
+# arriving there counts.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]

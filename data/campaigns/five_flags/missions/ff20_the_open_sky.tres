@@ -189,7 +189,7 @@ text = "I've got the east pass and anything with wheels. You keep his bombers of
 [sub_resource type="Resource" id="Line_10"]
 script = ExtResource("9")
 speaker = &"iris_colt"
-text = "Draeg's command tank is flying the Ninth's old pennant. He was ours for fifteen years, Perrin. Break his column and he'll go home. Or don't let him. Your call."
+text = "Draeg's command tank flies the Ninth's old pennant, and he was ours for fifteen years. Leave that tank standing and he'll take his column home when it breaks. Burn it and he won't, so it's your call, Perrin."
 
 [sub_resource type="Resource" id="Line_11"]
 script = ExtResource("9")

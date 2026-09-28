@@ -7,7 +7,7 @@
 # Take it and the three towns that trade there, (13,3), (12,9) and (15,8), rise
 # and fly Reed's colours. Thorne's shell depot (17,11) is the bonus at the
 # south bend: what is stamped on those crates is the act's first clue.
-# Iris's Meridian company lands on the west edge, (0,5) to (0,7), on day 3,
+# Iris's Meridian company lands on the west edge, (0,3) to (0,7), on day 2,
 # well behind wherever Reed's march has got to by then.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ

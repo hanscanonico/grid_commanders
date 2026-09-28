@@ -1,7 +1,7 @@
 # Five Flags, Act III — "The Race to Skyreach". Aurora's highlands, Sera v Orlov.
-# A race on two long roads. A mountain spine down the middle of the board
-# splits a north lane from a south lane, crossed only by the two pass roads at
-# columns 8 and 15; each lane runs edge to edge. The four signal relays are
+# A race on two long roads. A mountain spine across rows 6-7 splits a north
+# lane from a south lane; the pass roads at columns 8 and 15 cross it, and so do
+# the edge roads at columns 1 and 22. Each lane runs edge to edge. The four signal relays are
 # the four towns on the lanes: Aster (9,2), Brennock (14,2), Fallow (7,11) and
 # Vey (14,11). Sera opens in the west with the faster army and farther to go;
 # Orlov opens in the east with his infantry at the board's edge, so his two

@@ -25,9 +25,10 @@ at_most = -1
 
 [sub_resource type="Resource" id="ReachCell_1"]
 script = ExtResource("3")
-text = "Move 1 unit to Greywater."
+text = "Move the delegates' car to Greywater."
 cells = Array[Vector2i]([Vector2i(21, 4), Vector2i(20, 4), Vector2i(21, 3), Vector2i(20, 3), Vector2i(21, 5)])
 count = 1
+tag = &"delegates"
 
 [sub_resource type="Resource" id="ProtectUnit_1"]
 script = ExtResource("4")
@@ -149,7 +150,7 @@ text = "You're on my road, Iris. Every tree between you and Greywater has a rang
 [sub_resource type="Resource" id="Line_10"]
 script = ExtResource("11")
 speaker = &"iris_colt"
-text = "The car can't leave the road and there's only the one bridge. Recon out front, infantry in the trees, and nobody chases her into the woods alone."
+text = "The car can't ford the Grey and there's only the one bridge. Recon out front, infantry in the trees, and nobody chases her into the woods alone."
 
 [sub_resource type="Resource" id="Line_11"]
 script = ExtResource("11")
