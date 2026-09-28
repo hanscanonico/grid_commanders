@@ -1,68 +1,178 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="6"]
+[ext_resource type="Resource" path="res://data/units/bomber.tres" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="11"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_airfield"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Capture Vale's forward airfield."
+cell = Vector2i(13, 5)
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Bonus_bomber"]
 script = ExtResource("3")
-day = 2
+text = "Destroy Vale's heavy bomber."
+tag = &"vale_heavy_bomber"
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+day = 3
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Trigger_strip_his_3"]
 script = ExtResource("5")
-speaker = &"perrin_ash"
-text = "Placeholder: this mission is being written."
+cell = Vector2i(13, 5)
+holder = 1
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Spawn"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+unit_type = ExtResource("7")
+cell = Vector2i(17, 2)
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Effect_spawn"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn")])
+
+[sub_resource type="Resource" id="Line"]
+script = ExtResource("9")
 speaker = &"perrin_ash"
-text = "Placeholder briefing for Black Skies."
+text = "More coming in off the east. High, slow and heavy, so somebody's paid for a lot of fuel today."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("9")
 speaker = &"konrad_vale"
-text = "Placeholder: the enemy has something to say."
+text = "The second wing is airborne. Each aircraft is certified for two hundred sorties. I do not expect it to need twenty."
+
+[sub_resource type="Resource" id="Event_first_wave"]
+script = ExtResource("10")
+id = &"first_wave"
+triggers = Array[Resource]([SubResource("Trigger_day_3"), SubResource("Trigger_strip_his_3")])
+effects = Array[Resource]([SubResource("Effect_spawn")])
+once = true
+lines = Array[Resource]([SubResource("Line"), SubResource("Line_2")])
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("4")
+day = 5
+
+[sub_resource type="Resource" id="Trigger_strip_his_5"]
+script = ExtResource("5")
+cell = Vector2i(13, 5)
+holder = 1
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("6")
+unit_type = ExtResource("7")
+cell = Vector2i(17, 9)
+
+[sub_resource type="Resource" id="Effect_spawn_2"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_2")])
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
-speaker = &"perrin_ash"
-text = "Placeholder victory."
-
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+script = ExtResource("9")
 speaker = &"konrad_vale"
-text = "Placeholder: the enemy holds."
+text = "A third wing. The strip will keep receiving them for as long as it is mine."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "Then it stops being his. Get boots on that runway."
+
+[sub_resource type="Resource" id="Event_second_wave"]
+script = ExtResource("10")
+id = &"second_wave"
+triggers = Array[Resource]([SubResource("Trigger_day_5"), SubResource("Trigger_strip_his_5")])
+effects = Array[Resource]([SubResource("Effect_spawn_2")])
+once = true
+lines = Array[Resource]([SubResource("Line_3"), SubResource("Line_4")])
+
+[sub_resource type="Resource" id="Trigger_strip_ours"]
 script = ExtResource("5")
+cell = Vector2i(13, 5)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_fuel_dump"]
+script = ExtResource("11")
+team = 1
+amount = 3000
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "Runway's ours, and so is his fuel dump. Tell Aldmoor they can look up again."
+
+[sub_resource type="Resource" id="Event_strip_taken"]
+script = ExtResource("10")
+id = &"strip_taken"
+triggers = Array[Resource]([SubResource("Trigger_strip_ours")])
+effects = Array[Resource]([SubResource("Effect_fuel_dump")])
+once = true
+lines = Array[Resource]([SubResource("Line_5")])
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("9")
+speaker = &""
+text = "The Aldmoor airfields. Iron's bombers have been over the capital three nights running, flying from a strip Vale built on Meridian farmland in a week."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "Perrin Ash, Aurora air marshal, currently on leave. Aurora's neutral. I'm on holiday, and I brought my fighters."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("9")
+speaker = &"mara_voss"
+text = "Your chancellor will have questions."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "He always does. Fighters clear the sky, the missile battery covers the runway, and the infantry walk over and take his strip while he's looking up."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("9")
+speaker = &"konrad_vale"
+text = "Marshal Ash. My bombers are the best that have ever been built. That is not an opinion. I have the test results."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "His big one's parked behind the strip, and it would be rude not to visit."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("9")
+speaker = &"konrad_vale"
+text = "The forward strip is lost. I will build another. It will cost more, and it will be better."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "The sky's yours again, Marshal. Keep it; I have to go and explain my leave to Chancellor Rook."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("9")
+speaker = &"mara_voss"
+text = "Aldmoor sleeps tonight. Thank you, Marshal. Unofficially."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("9")
+speaker = &"konrad_vale"
+text = "The sky over Aldmoor belongs to the better aircraft. The test results were correct."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("9")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Three airfields gone and the fuel with them. We'll be meeting Vance at Aldmoor with whatever's left on the ground."
 
 [resource]
 script = ExtResource("1")
@@ -80,11 +190,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_airfield")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_bomber")])
+events = Array[Resource]([SubResource("Event_first_wave"), SubResource("Event_second_wave"), SubResource("Event_strip_taken")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+briefing = Array[Resource]([SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11")])
+victory = Array[Resource]([SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14")])
+defeat = Array[Resource]([SubResource("Line_15"), SubResource("Line_16")])
