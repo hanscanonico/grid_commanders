@@ -1,26 +1,75 @@
-# Five Flags placeholder — "The Grauwald Pass". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags, Act IV — "The Grauwald Pass". Iris Colt climbs into Iron against Iona Vance.
+# The Grauwald road runs straight up a gorge (rows 5-7) to the pass fort on the
+# saddle at (16,6). It is the short way and it is the trap: Vance has a battery
+# in each of the two height forts, (9,3) and (9,9), cities sunk in the mountain
+# walls where no wheel or tread can reach them. From there a gun ranges the
+# gorge floor and the southern edge of the northern track alike.
+#
+# Three ways up, and each costs something different:
+#   - the gorge road: fastest, under both batteries;
+#   - the northern track (rows 0-2): open ground for armour, longer, and the
+#     north battery still reaches its southern edge;
+#   - the goat paths (rows 10-12): mountain and pine, foot only. Nobody drives
+#     it, which is why the Verdant hill companies arrive there on day 3, behind
+#     the south battery at (11,11), (12,11) and (14,10) — deep in the massif,
+#     where no army is standing on day 3.
+# Foot climbing to a battery silences it; that is the lesson.
+#
+# Vance has no base. She is a garrison, not a factory: what she fields is what
+# stands here plus one reserve, which comes up behind the saddle at (20,5),
+# (20,7) and (21,5) when the north battery falls — off the road, so a player
+# already at the fort does not swallow the landing. With a base she outbuilt
+# the planner every seed measured; without one the pass is a siege she loses
+# slowly unless the climb is wasted.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-.......M.....
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-.M...........
+MMM..F..C...MMM..F.MMM
+M.......F.......F....M
+..C...F....F.....C....
+......MMMCMMMMMMM.....
+.B....MMMMMMMMMMM..C..
+......F........F......
+Q===============C====Q
+......F........F......
+.C....MMMMMMMMMMM.....
+......MMMCMMMMMMM.....
+..B..MMFFMMMMMFFM..C..
+....MMMMMMMFFMMMMM....
+MM..MMMMMMMMMMMMMM..MM
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+# team x y
+1 0 6
+1 1 4
+1 1 8
+1 2 10
+1 2 2
+2 21 6
+2 16 6
+2 9 3
+2 9 9
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+# team symbol x y [tag]
+1 i 4 5
+1 i 4 7
+1 i 3 1
+1 m 5 3
+1 m 5 9
+1 t 3 6
+1 t 4 2
+1 g 2 7
+1 r 5 1
+1 t 2 5
+1 g 3 8
+1 i 1 2
+2 g 9 3 north_battery
+2 g 9 9 south_battery
+2 i 11 5
+2 m 12 7
+2 t 14 6
+2 i 16 6
+2 a 18 5
+2 t 17 1
+2 i 19 7
+2 r 18 8
+2 m 17 5
+2 t 15 2

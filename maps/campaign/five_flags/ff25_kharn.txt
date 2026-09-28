@@ -1,26 +1,62 @@
-# Five Flags placeholder — "Kharn". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags, Act IV — "Kharn". Iris Colt breaks Alina Ward out of Kharn prison, against Cass Orlov.
+# The team that crossed Orlov's hills comes down off the ridge in the north
+# east into the carry slots — i, i, i, m, m, r in row order, the list
+# tests/unit/test_campaign_carry_authoring.gd pins. A type the crossing lost is
+# replaced by that row's own unit, and every veteran is refit to at least the floor (60).
+# Iris's own tanks and infantry (the unslotted player rows) wait with them.
+#
+# Kharn prison is the neutral city at (9,3) on the shore of the Kharn tarn.
+# Alina's truck (alina_transport, an Orlov APC) is in the cell block at (9,2):
+# water on three sides and the prison yard on the fourth, so no foot soldier
+# can reach it and no tread can leave. The yard's only way out is the gate
+# (9,4), and a slot infantry is standing on it, an enemy Orlov cannot pass, so the
+# warden's tank in the yard and the truck behind it are both boxed in for as
+# long as the gate holds. Neutral rather than Orlov's so the warden does not
+# repair on it. Kill the warden (the visible primary) and the cell block opens:
+# the truck defects, and the escort objective and the failure that guards it
+# are revealed at the same boundary, so the warden's death alone wins nothing.
+# The way out is the Kharn road, west along row 4 to the edge (x=0, rows 3-5),
+# and it is the truck that has to get there: a recon parked on the exit wins nothing. Orlov's lodge (HQ (2,10)) and depot
+# (base (8,9)) are south and west of the road, so the run passes his door; his
+# road patrol returns to (1,4)/(2,5) on day 3 and has to be cleared off the
+# exit. His headquarters sits far from the team's start on purpose: placed in
+# the east, the planner walked in and took it on day 4.
+# Symbols: . plains  F woods  M mountain  = road  S sea  C city  B base  Q HQ
 [terrain]
-...........M.
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-.M...........
+MMMMMMMSSSSMMMMMMM
+M..F..MSSSSSM.F.QM
+..F..FMSS.SSMF....
+.F..F.MMMCMM.F....
+==========..F.....
+..F..F..F.F.MM.F..
+.F..MM....==.....F
+..F.MF.F.F.=.F....
+....F...F..=..F.C.
+..F...F.B.F=....F.
+..Q===F..F.=F...F.
+MMMMMMMMMMMMMMMMMM
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+# team x y
+1 16 1
+2 2 10
+2 8 9
+2 16 8
 [units]
-1 i 2 3 ^
-1 i 3 3 ^
-1 t 2 2 ^
-1 r 1 3 ^
-2 i 9 6
-2 i 9 7
+# team symbol x y [tag] [^]
+1 i 9 4 ^
+1 i 13 1 ^
+1 i 13 2 ^
+1 m 8 3 ^
+1 m 10 3 ^
+1 r 14 3 ^
+1 t 15 2
+1 t 16 3
+1 i 17 2
+2 t 9 3 kharn_warden
+2 p 9 2 alina_transport
+2 i 6 6
+2 i 3 5
+2 m 13 5
 2 t 12 6
+2 r 14 8
+2 m 4 2

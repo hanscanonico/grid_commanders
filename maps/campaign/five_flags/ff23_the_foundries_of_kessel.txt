@@ -1,26 +1,52 @@
-# Five Flags placeholder — "The Foundries of Kessel". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags, Act IV — "The Foundries of Kessel". Ines Calder v Konrad Vale, a production race.
+# Kessel is six foundries (bases) in a grid of rail yards (the road rows 4 and
+# 9, and the streets). Each side opens with one foundry and its headquarters;
+# the other four are neutral, two nearer each side, so the race is fair and the
+# difference is the doctrine: Vale builds a fifth dearer and a tenth better,
+# Calder a tenth cheaper and a tenth weaker. Whoever keeps building every day
+# wins the city. Primary: own four foundries at once, which means taking at
+# least one Vale will be building on.
+# The ground and the ownership are a 180-degree mirror; the armies are not.
+# Calder opens a tank up, because Vale's +10% makes an even count uneven.
+# (16,11) is Vale's counting office, where the Concord's loan papers are.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-.........M...
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-.M...........
+MMM..C....=.....FMMM
+M.F....F..=..C.....M
+...C...B..=....F....
+.FB.......=.....C...
+..==========C=====..
+..=..F.....B.F.=....
+.Q=...C......F.=....
+....=.F......C...=Q.
+....=.F.B.....F..=..
+..=====C==========..
+...C.....=.......BF.
+....F....=..B...C...
+M.....C..=..F....F.M
+MMMF.....=....C..MMM
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+# team x y
+1 1 6
+1 2 3
+1 3 2
+1 6 6
+2 18 7
+2 17 10
+2 16 11
+2 13 7
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+# team symbol x y
+1 i 3 5
+1 i 4 3
+1 i 5 7
+1 m 3 7
+1 t 4 5
+1 r 5 4
+1 t 3 3
+2 i 16 8
+2 i 15 10
+2 i 14 6
+2 m 16 6
+2 t 15 8
+2 r 14 9

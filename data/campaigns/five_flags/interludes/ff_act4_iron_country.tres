@@ -1,19 +1,78 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
-[sub_resource type="Resource" id="Line_1"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Placeholder: the end of act 4, Iron Country."
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
 
-[sub_resource type="Resource" id="Line_2"]
+[sub_resource type="Resource" id="Cond_2"]
 script = ExtResource("2")
+flag = &"ff_draeg_spared"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_3"]
+script = ExtResource("2")
+flag = &"ff_ferrow_bought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_4"]
+script = ExtResource("2")
+flag = &"ff_ferrow_bought"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+text = "The Ninth came back over the Kharn border with its founder in the lead truck, and with a name."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Five officers of the Ninth were at the Hall that night, and one of them gave the order to burn it. Sable is in the Concord now. So is the money."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "My column's refuelled and pointed south. Somebody asked me to take the old pennant off the command tank, and I said no."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "They let me ride with the column, under guard. Fair enough. I'd have done the same, and I know the roads south."
+requires = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("3")
+speaker = &"dane_ferrow"
+text = "First honest contract I've signed in years: my company's on the Ninth's books until the Concord settles its account."
+requires = SubResource("Cond_3")
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt's tally of the act."
+text = "Ferrow's company scattered at Kessel. Somebody will hire them, and I'd rather it was us."
+requires = SubResource("Cond_4")
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "We went into Iron for Alina and came out with Alina, a name, and a bill to deliver to Aurum."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Tally for the act: one pass, one valley, four foundries, one prison, one fort, and one traitor named. I'd like the next act to be shorter."
 
 [resource]
 script = ExtResource("1")
 after_block = 3
-title = "Iron Country"
-lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
+title = "The Name"
+lines = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])
