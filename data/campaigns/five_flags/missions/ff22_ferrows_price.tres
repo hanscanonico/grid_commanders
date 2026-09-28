@@ -167,7 +167,7 @@ text = "The Iron depot is beyond the river. It is mine and it is stocked, and it
 [sub_resource type="Resource" id="Line_28"]
 script = ExtResource("7")
 speaker = &"gideon_holt"
-text = "Everybody in this valley has a price except Vale. Get somebody into that counting house and I'll do the haggling."
+text = "Everybody in this valley has a price except Vale. Get somebody into Ferrow's counting house while he still has a company to sell, and I'll buy the lot with his own coin."
 
 [sub_resource type="Resource" id="Line_29"]
 script = ExtResource("7")

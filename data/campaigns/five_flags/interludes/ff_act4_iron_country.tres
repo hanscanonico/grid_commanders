@@ -74,5 +74,5 @@ text = "Tally for the act: one pass, one valley, four foundries, one prison, one
 [resource]
 script = ExtResource("1")
 after_block = 3
-title = "Iron Country"
+title = "The Name"
 lines = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])

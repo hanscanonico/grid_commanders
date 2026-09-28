@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=55 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=56 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -174,12 +174,12 @@ text = "Ward. My orders came from Ostrava, signed and stamped. Nobody passes the
 [sub_resource type="Resource" id="Line_31"]
 script = ExtResource("8")
 speaker = &"cass_orlov"
-text = "Hold them at the wall, Colonel, and I'll shut the door behind them. Like old times, except for which side you're on."
+text = "Hold them at the wall, Colonel, and I'll shut the door behind them. My men in the fort will be watching how well you do it."
 
 [sub_resource type="Resource" id="Line_32"]
 script = ExtResource("8")
 speaker = &"iris_colt"
-text = "We let him ride out of Skyreach with the pennant up, and Viktor knows exactly who held their fire."
+text = "We let him ride out of Skyreach with the pennant up, so nobody shoots at that tank for the first two days."
 requires = SubResource("Cond_24")
 
 [sub_resource type="Resource" id="Line_33"]
@@ -207,7 +207,7 @@ requires = SubResource("Cond_24")
 [sub_resource type="Resource" id="Line_37"]
 script = ExtResource("8")
 speaker = &"viktor_draeg"
-text = "Put me in the back of a truck, then. You have my map case, and Wren's name is in it. If the Ninth only has room for a prisoner, I'll ride as one."
+text = "Put me in the back of a truck, then. Wren's order for the Hall is in my map case, and the Concord's pay slips with it. If the Ninth only has room for a prisoner, I'll ride as one."
 requires = SubResource("Cond_25")
 
 [sub_resource type="Resource" id="Line_38"]
@@ -236,6 +236,13 @@ text = "The fort held and the door's shut. I have Ward back, and Kharn kept her 
 script = ExtResource("8")
 speaker = &"gideon_holt"
 text = "One fort short of home. Draeg held it the way she taught him to."
+requires = SubResource("Cond_25")
+
+[sub_resource type="Resource" id="Line_43"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "Draeg turned his column round for us, and Orlov still had more shells on that road than we had tanks to stand in front of them."
+requires = SubResource("Cond_24")
 
 [resource]
 script = ExtResource("1")
@@ -261,4 +268,4 @@ events = Array[Resource]([SubResource("Event_10"), SubResource("Event_19"), SubR
 par_day = 10
 briefing = Array[Resource]([SubResource("Line_28"), SubResource("Line_29"), SubResource("Line_30"), SubResource("Line_31"), SubResource("Line_32"), SubResource("Line_33"), SubResource("Line_34")])
 victory = Array[Resource]([SubResource("Line_35"), SubResource("Line_36"), SubResource("Line_37"), SubResource("Line_38"), SubResource("Line_39"), SubResource("Line_40")])
-defeat = Array[Resource]([SubResource("Line_41"), SubResource("Line_42")])
+defeat = Array[Resource]([SubResource("Line_41"), SubResource("Line_42"), SubResource("Line_43")])

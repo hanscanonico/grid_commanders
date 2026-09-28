@@ -2,8 +2,8 @@
 # Fog. Six units, no production, and the goal is the Kharn ridge in the north
 # east — the six cells (14-16, 0-1) — with Kharn prison below it, off the board.
 # What survives is the team the next mission carries in (ff25's slots are
-# i, i, i, m, m, r, this team's types), so every unit lost here is missing at
-# the prison.
+# i, i, i, m, m, r, this team's types); a slot whose veteran was lost here is
+# filled by ff25's own authored unit, as CampaignRoster.deploy does everywhere.
 # The ground is birch wood broken by clearings: woods hide a unit from anyone
 # not standing next to it, and Nia's doctrine takes her foot through woods and
 # mountains a step cheaper. Orlov's hunting road is the L of road cells — the
