@@ -1,19 +1,55 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
-[sub_resource type="Resource" id="Line_1"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Placeholder: the end of act 5, The Gilded Ledger."
+flag = &"ff_rhea_turned"
+at_least = 1
+at_most = -1
 
-[sub_resource type="Resource" id="Line_2"]
+[sub_resource type="Resource" id="Cond_2"]
 script = ExtResource("2")
+flag = &"ff_refugees"
+at_least = 4
+at_most = -1
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+text = "Aurum emptied across its causeway in eight days. The Concord's banks shut their doors, and its Chancellor rode north in the back of a Meridian staff car, still working sums in the margins of a requisition pad."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt's tally of the act."
+text = "Ledger for the islands. One intelligence officer, taken in the reefs. One Exchange, frozen. One harbour fort, paid for in wet boots. One Chancellor in custody, who has corrected my arithmetic twice."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Every convoy made it over the causeway. I checked the manifests against the heads myself, and for once they matched."
+requires = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "My batteries are limbered and pointed north, Colt. Morn's gun is somewhere in Iron and I've spent twenty years learning to find guns. Let me be the one who silences it."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Rhea Sol went back to the Aurum hills with her guns. She did as she was told at the lower town and she can't forgive herself for it. We'll go for the Hammer without her."
+unless = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "Morn has the Directorate, the Hammer, and every Iron soldier who's more afraid of him than of us. That last number is the one we're going to change."
 
 [resource]
 script = ExtResource("1")
 after_block = 4
 title = "The Gilded Ledger"
-lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
+lines = Array[Resource]([SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8")])

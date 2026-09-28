@@ -1,95 +1,379 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=86 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
-[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="14"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="15"]
+[ext_resource type="Resource" path="res://data/units/rockets.tres" id="16"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="17"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="18"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="19"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="20"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+flag = &"ff_rhea_turned"
+at_least = 1
+at_most = -1
 
-[sub_resource type="Resource" id="Bonus_0"]
+[sub_resource type="Resource" id="Cond_2"]
 script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
+flag = &"ff_rhea_turned"
+at_least = 0
+at_most = 0
 
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Cond_3"]
+script = ExtResource("2")
+flag = &"ff_refugees"
+at_least = 4
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_4"]
+script = ExtResource("2")
+flag = &"ff_refugees"
+at_least = 0
+at_most = 1
+
+[sub_resource type="Resource" id="Objective_5"]
 script = ExtResource("3")
-day = 2
+text = "Keep the causeway gate for 8 days."
+cell = Vector2i(12, 8)
+days = 8
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Objective_6"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+text = "Destroy Morn's spearhead."
+tag = &"hammer_spearhead"
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Trigger_7"]
 script = ExtResource("5")
-speaker = &"lyra_quill"
-text = "Placeholder: this mission is being written."
+tag = &"refugees_hospital"
+cells = Array[Vector2i]([Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10)])
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Effect_8"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+tags = Array[StringName]([&"refugees_hospital"])
 
-[sub_resource type="Resource" id="Trigger_town_b_ours"]
+[sub_resource type="Resource" id="Effect_9"]
 script = ExtResource("7")
-cell = Vector2i(3, 6)
-holder = 0
-
-[sub_resource type="Resource" id="Effect_write"]
-script = ExtResource("8")
 flag = &"ff_refugees"
 mode = 1
 value = 1
-note = "Placeholder fact: the southern town was taken."
+note = "The hospital convoy crossed the causeway."
 
-[sub_resource type="Resource" id="Event_line_write"]
-script = ExtResource("5")
-speaker = &"lyra_quill"
-text = "Placeholder: the southern town is ours."
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "The hospital convoy is off the bridge, Lyra. We have surgeons waiting at this end. Send the next one."
 
-[sub_resource type="Resource" id="Event_writes_fact"]
-script = ExtResource("6")
-id = &"placeholder_fact"
-triggers = Array[Resource]([SubResource("Trigger_town_b_ours")])
-effects = Array[Resource]([SubResource("Effect_write")])
+[sub_resource type="Resource" id="Event_the_hospital_crosses"]
+script = ExtResource("9")
+id = &"the_hospital_crosses"
+triggers = Array[Resource]([SubResource("Trigger_7")])
+effects = Array[Resource]([SubResource("Effect_8"), SubResource("Effect_9")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_write")])
+lines = Array[Resource]([SubResource("Line_10")])
 
-[sub_resource type="Resource" id="Line_1"]
+[sub_resource type="Resource" id="Trigger_11"]
 script = ExtResource("5")
+tag = &"refugees_school"
+cells = Array[Vector2i]([Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10)])
+
+[sub_resource type="Resource" id="Effect_12"]
+script = ExtResource("6")
+tags = Array[StringName]([&"refugees_school"])
+
+[sub_resource type="Resource" id="Effect_13"]
+script = ExtResource("7")
+flag = &"ff_refugees"
+mode = 1
+value = 1
+note = "The schools' convoy crossed the causeway."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "Schools convoy's across. Two hundred kids and a teacher who asked me which army I'm in. I told her I'd get back to her."
+
+[sub_resource type="Resource" id="Event_the_schools_cross"]
+script = ExtResource("9")
+id = &"the_schools_cross"
+triggers = Array[Resource]([SubResource("Trigger_11")])
+effects = Array[Resource]([SubResource("Effect_12"), SubResource("Effect_13")])
+once = true
+lines = Array[Resource]([SubResource("Line_14")])
+
+[sub_resource type="Resource" id="Trigger_15"]
+script = ExtResource("5")
+tag = &"refugees_clerks"
+cells = Array[Vector2i]([Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10)])
+
+[sub_resource type="Resource" id="Effect_16"]
+script = ExtResource("6")
+tags = Array[StringName]([&"refugees_clerks"])
+
+[sub_resource type="Resource" id="Effect_17"]
+script = ExtResource("7")
+flag = &"ff_refugees"
+mode = 1
+value = 1
+note = "The Exchange's clerks crossed the causeway."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("8")
 speaker = &"lyra_quill"
-text = "Placeholder briefing for Recalculation."
+text = "The Exchange's clerks are across, and they brought the ledgers. Someone will have to read them when this is over, General Colt. I would prefer it was you."
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
-speaker = &"radek_morn"
-text = "Placeholder: the enemy has something to say."
+[sub_resource type="Resource" id="Event_the_clerks_cross"]
+script = ExtResource("9")
+id = &"the_clerks_cross"
+triggers = Array[Resource]([SubResource("Trigger_15")])
+effects = Array[Resource]([SubResource("Effect_16"), SubResource("Effect_17")])
+once = true
+lines = Array[Resource]([SubResource("Line_18")])
 
-[sub_resource type="Resource" id="Line_3"]
+[sub_resource type="Resource" id="Trigger_19"]
 script = ExtResource("5")
+tag = &"refugees_harbour"
+cells = Array[Vector2i]([Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10)])
+
+[sub_resource type="Resource" id="Effect_20"]
+script = ExtResource("6")
+tags = Array[StringName]([&"refugees_harbour"])
+
+[sub_resource type="Resource" id="Effect_21"]
+script = ExtResource("7")
+flag = &"ff_refugees"
+mode = 1
+value = 1
+note = "The harbour families crossed the causeway."
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("8")
 speaker = &"lyra_quill"
-text = "Placeholder victory."
+text = "The harbour families are on the mainland. That is the whole waterfront, eleven hundred people, and every one of them is accounted for on the manifest."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_harbour_crosses"]
+script = ExtResource("9")
+id = &"the_harbour_crosses"
+triggers = Array[Resource]([SubResource("Trigger_19")])
+effects = Array[Resource]([SubResource("Effect_20"), SubResource("Effect_21")])
+once = true
+lines = Array[Resource]([SubResource("Line_22")])
+
+[sub_resource type="Resource" id="Trigger_23"]
+script = ExtResource("10")
+condition = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Trigger_24"]
+script = ExtResource("11")
+day = 2
+
+[sub_resource type="Resource" id="Spawn_25"]
+script = ExtResource("12")
+unit_type = ExtResource("15")
+cell = Vector2i(12, 6)
+
+[sub_resource type="Resource" id="Spawn_26"]
+script = ExtResource("12")
+unit_type = ExtResource("16")
+cell = Vector2i(12, 10)
+
+[sub_resource type="Resource" id="Spawn_27"]
+script = ExtResource("12")
+unit_type = ExtResource("15")
+cell = Vector2i(13, 7)
+
+[sub_resource type="Resource" id="Effect_28"]
+script = ExtResource("13")
+team = 1
+units = Array[Resource]([SubResource("Spawn_25"), SubResource("Spawn_26"), SubResource("Spawn_27")])
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("8")
+speaker = &"rhea_sol"
+text = "Chancellor, this is Sol. Three of my batteries are behind your gate, laid on the eastern yards. Anything of Morn's that comes up those streets is mine."
+
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("8")
+speaker = &"lyra_quill"
+text = "Thank you, General. You were not in my model. I am glad of it."
+
+[sub_resource type="Resource" id="Event_rheas_guns_cover_the_bridge"]
+script = ExtResource("9")
+id = &"rheas_guns_cover_the_bridge"
+triggers = Array[Resource]([SubResource("Trigger_23"), SubResource("Trigger_24")])
+effects = Array[Resource]([SubResource("Effect_28")])
+once = true
+lines = Array[Resource]([SubResource("Line_29"), SubResource("Line_30")])
+
+[sub_resource type="Resource" id="Trigger_31"]
+script = ExtResource("11")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_32"]
+script = ExtResource("12")
+unit_type = ExtResource("17")
+cell = Vector2i(13, 14)
+
+[sub_resource type="Resource" id="Spawn_33"]
+script = ExtResource("12")
+unit_type = ExtResource("18")
+cell = Vector2i(14, 14)
+
+[sub_resource type="Resource" id="Spawn_34"]
+script = ExtResource("12")
+unit_type = ExtResource("19")
+cell = Vector2i(15, 14)
+
+[sub_resource type="Resource" id="Effect_35"]
+script = ExtResource("13")
+team = 2
+units = Array[Resource]([SubResource("Spawn_32"), SubResource("Spawn_33"), SubResource("Spawn_34")])
+
+[sub_resource type="Resource" id="Line_36"]
+script = ExtResource("8")
 speaker = &"radek_morn"
-text = "Placeholder: the enemy holds."
+text = "More boats on your south beach, Chancellor. I have plenty of boats. You taught me how to borrow for them."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_second_boats"]
+script = ExtResource("9")
+id = &"the_second_boats"
+triggers = Array[Resource]([SubResource("Trigger_31")])
+effects = Array[Resource]([SubResource("Effect_35")])
+once = true
+lines = Array[Resource]([SubResource("Line_36")])
+
+[sub_resource type="Resource" id="Trigger_37"]
+script = ExtResource("11")
+day = 5
+
+[sub_resource type="Resource" id="Effect_38"]
+script = ExtResource("14")
+team = 2
+points = 24000
+
+[sub_resource type="Resource" id="Spawn_39"]
+script = ExtResource("12")
+unit_type = ExtResource("20")
+cell = Vector2i(17, 14)
+
+[sub_resource type="Resource" id="Spawn_40"]
+script = ExtResource("12")
+unit_type = ExtResource("16")
+cell = Vector2i(18, 14)
+
+[sub_resource type="Resource" id="Spawn_41"]
+script = ExtResource("12")
+unit_type = ExtResource("18")
+cell = Vector2i(19, 14)
+
+[sub_resource type="Resource" id="Effect_42"]
+script = ExtResource("13")
+team = 2
+units = Array[Resource]([SubResource("Spawn_39"), SubResource("Spawn_40"), SubResource("Spawn_41")])
+
+[sub_resource type="Resource" id="Line_43"]
+script = ExtResource("8")
+speaker = &"radek_morn"
+text = "A queue of trucks on a bridge. A Chancellor at the end of it. The Hammer is loaded."
+
+[sub_resource type="Resource" id="Line_44"]
+script = ExtResource("8")
+speaker = &"lyra_quill"
+text = "All units, disperse. Nobody stands within two streets of anyone else. He fires at crowds."
+
+[sub_resource type="Resource" id="Event_the_hammer_turns"]
+script = ExtResource("9")
+id = &"the_hammer_turns"
+triggers = Array[Resource]([SubResource("Trigger_37")])
+effects = Array[Resource]([SubResource("Effect_38"), SubResource("Effect_42")])
+once = true
+lines = Array[Resource]([SubResource("Line_43"), SubResource("Line_44")])
+
+[sub_resource type="Resource" id="Line_45"]
+script = ExtResource("8")
+text = "The Aurum causeway is one road over the water between the city and the mainland, and half of Aurum is already on it, on foot, in carts and in the backs of army trucks."
+
+[sub_resource type="Resource" id="Line_46"]
+script = ExtResource("8")
+speaker = &"lyra_quill"
+text = "All Concord units. We hold the east end of the causeway until the city is across. Every convoy that reaches the mainland is one number in this war I can still change."
+
+[sub_resource type="Resource" id="Line_47"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "Quill, this is Colt. We're on the mainland end. Your people can come over, and nobody with a gun crosses behind them. That includes you."
+
+[sub_resource type="Resource" id="Line_48"]
+script = ExtResource("8")
+speaker = &"lyra_quill"
+text = "Understood, General. I had not planned to cross."
+
+[sub_resource type="Resource" id="Line_49"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Rhea Sol's gunners are on their way down from the hills, Lyra, and she was careful not to say it was for you."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_50"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Rhea's guns are still dug in on the hills, pointed where you told her to point them, and they won't turn round in time to help anyone."
+requires = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_51"]
+script = ExtResource("8")
+speaker = &"radek_morn"
+text = "Chancellor. You lent me a gun, and now you want to stand in front of it. I respect a creditor who comes to collect in person."
+
+[sub_resource type="Resource" id="Line_52"]
+script = ExtResource("8")
+speaker = &"lyra_quill"
+text = "Eight days. Aurum is across, or as much of it as reached the bridge. What is left of the Concord's army is standing at this gate."
+
+[sub_resource type="Resource" id="Line_53"]
+script = ExtResource("8")
+speaker = &"lyra_quill"
+text = "Every convoy crossed. I will not pretend that balances anything."
+requires = SubResource("Cond_3")
+
+[sub_resource type="Resource" id="Line_54"]
+script = ExtResource("8")
+speaker = &"lyra_quill"
+text = "Most of the convoys never reached the bridge. I have their manifests, and I will read every name on them."
+requires = SubResource("Cond_4")
+
+[sub_resource type="Resource" id="Line_55"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "Morn's pulling his vanguard back to the east yards. You held, Quill. I'll say that once."
+
+[sub_resource type="Resource" id="Line_56"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "We march on Iron in the morning, Lyra. You'll ride with us, where we can see you."
+
+[sub_resource type="Resource" id="Line_57"]
+script = ExtResource("8")
+speaker = &"radek_morn"
+text = "The bridge is mine, Chancellor, and everyone still on it. Your arithmetic was always going to end at my gun."
+
+[sub_resource type="Resource" id="Line_58"]
+script = ExtResource("8")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Morn has Aurum's end of the causeway. I've got a list of convoys that crossed, and a longer one of those that didn't."
 
 [resource]
 script = ExtResource("1")
@@ -107,11 +391,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_5")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder"), SubResource("Event_writes_fact")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("Objective_6")])
+events = Array[Resource]([SubResource("Event_the_hospital_crosses"), SubResource("Event_the_schools_cross"), SubResource("Event_the_clerks_cross"), SubResource("Event_the_harbour_crosses"), SubResource("Event_rheas_guns_cover_the_bridge"), SubResource("Event_the_second_boats"), SubResource("Event_the_hammer_turns")])
+par_day = 9
+briefing = Array[Resource]([SubResource("Line_45"), SubResource("Line_46"), SubResource("Line_47"), SubResource("Line_48"), SubResource("Line_49"), SubResource("Line_50"), SubResource("Line_51")])
+victory = Array[Resource]([SubResource("Line_52"), SubResource("Line_53"), SubResource("Line_54"), SubResource("Line_55"), SubResource("Line_56")])
+defeat = Array[Resource]([SubResource("Line_57"), SubResource("Line_58")])

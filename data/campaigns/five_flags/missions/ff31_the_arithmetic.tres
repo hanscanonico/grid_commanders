@@ -1,68 +1,248 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=65 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/defeat_team_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="14"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="15"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="16"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="17"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="18"]
+[ext_resource type="Resource" path="res://data/units/rockets.tres" id="19"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="20"]
+[ext_resource type="Resource" path="res://data/units/anti_air.tres" id="21"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+flag = &"ff_rhea_turned"
+at_least = 1
+at_most = -1
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
-day = 2
+text = "Capture the citadel gate."
+cell = Vector2i(17, 8)
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Objective_3"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+text = "Destroy Radek Morn's vanguard."
+id = &"morn_vanguard"
+hidden = true
+team = 3
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Objective_4"]
+script = ExtResource("3")
+text = "Capture the lower city."
+cell = Vector2i(13, 8)
+
+[sub_resource type="Resource" id="Trigger_5"]
 script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: this mission is being written."
+day = 3
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Effect_6"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
+team = 2
+points = 14000
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("7")
+speaker = &"lyra_quill"
+text = "Every gun in the lower city now fires at maximum. I would prefer not to spend lives proving a result I already have, General. You are forcing me to."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Keep coming. She can roll all the sixes she likes; the gate doesn't move."
+
+[sub_resource type="Resource" id="Event_the_model_runs"]
+script = ExtResource("8")
+id = &"the_model_runs"
+triggers = Array[Resource]([SubResource("Trigger_5")])
+effects = Array[Resource]([SubResource("Effect_6")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Line_7"), SubResource("Line_8")])
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder briefing for The Arithmetic."
+[sub_resource type="Resource" id="Trigger_9"]
+script = ExtResource("9")
+cell = Vector2i(17, 8)
+holder = 0
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Effect_10"]
+script = ExtResource("10")
+tags = Array[StringName]([&"citadel_guard_1", &"citadel_guard_2", &"citadel_guard_3"])
+
+[sub_resource type="Resource" id="Effect_11"]
+script = ExtResource("11")
+from_team = 2
+to_team = 1
+tags = Array[StringName]([&"concord_1", &"concord_2", &"concord_3", &"concord_4", &"concord_5", &"concord_6", &"concord_7", &"concord_8", &"concord_9", &"concord_10", &"concord_11"])
+
+[sub_resource type="Resource" id="Spawn_12"]
+script = ExtResource("12")
+unit_type = ExtResource("15")
+cell = Vector2i(10, 14)
+
+[sub_resource type="Resource" id="Spawn_13"]
+script = ExtResource("12")
+unit_type = ExtResource("16")
+cell = Vector2i(11, 14)
+
+[sub_resource type="Resource" id="Spawn_14"]
+script = ExtResource("12")
+unit_type = ExtResource("17")
+cell = Vector2i(12, 14)
+
+[sub_resource type="Resource" id="Spawn_15"]
+script = ExtResource("12")
+unit_type = ExtResource("16")
+cell = Vector2i(13, 14)
+
+[sub_resource type="Resource" id="Spawn_16"]
+script = ExtResource("12")
+unit_type = ExtResource("17")
+cell = Vector2i(14, 14)
+
+[sub_resource type="Resource" id="Spawn_17"]
+script = ExtResource("12")
+unit_type = ExtResource("18")
+cell = Vector2i(15, 14)
+
+[sub_resource type="Resource" id="Spawn_18"]
+script = ExtResource("12")
+unit_type = ExtResource("19")
+cell = Vector2i(16, 14)
+
+[sub_resource type="Resource" id="Spawn_19"]
+script = ExtResource("12")
+unit_type = ExtResource("20")
+cell = Vector2i(17, 14)
+
+[sub_resource type="Resource" id="Spawn_20"]
+script = ExtResource("12")
+unit_type = ExtResource("21")
+cell = Vector2i(18, 14)
+
+[sub_resource type="Resource" id="Spawn_21"]
+script = ExtResource("12")
+unit_type = ExtResource("17")
+cell = Vector2i(11, 13)
+
+[sub_resource type="Resource" id="Spawn_22"]
+script = ExtResource("12")
+unit_type = ExtResource("18")
+cell = Vector2i(13, 13)
+
+[sub_resource type="Resource" id="Spawn_23"]
+script = ExtResource("12")
+unit_type = ExtResource("19")
+cell = Vector2i(16, 13)
+
+[sub_resource type="Resource" id="Spawn_24"]
+script = ExtResource("12")
+unit_type = ExtResource("17")
+cell = Vector2i(18, 13)
+
+[sub_resource type="Resource" id="Effect_25"]
+script = ExtResource("13")
+team = 3
+units = Array[Resource]([SubResource("Spawn_12"), SubResource("Spawn_13"), SubResource("Spawn_14"), SubResource("Spawn_15"), SubResource("Spawn_16"), SubResource("Spawn_17"), SubResource("Spawn_18"), SubResource("Spawn_19"), SubResource("Spawn_20"), SubResource("Spawn_21"), SubResource("Spawn_22"), SubResource("Spawn_23"), SubResource("Spawn_24")])
+
+[sub_resource type="Resource" id="Effect_26"]
+script = ExtResource("14")
+objective_id = &"morn_vanguard"
+
+[sub_resource type="Resource" id="Line_27"]
+script = ExtResource("7")
+text = "A white light over the south sea, and then the inner citadel is gone, guard and tower and all."
+
+[sub_resource type="Resource" id="Line_28"]
+script = ExtResource("7")
+speaker = &"radek_morn"
+text = "Aurum. Your Chancellor lent me the money for that gun. This is the first repayment. My vanguard is on your beach."
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("7")
 speaker = &"lyra_quill"
-text = "Placeholder: the enemy has something to say."
+text = "All Concord units, this is the Chancellor. The arithmetic has changed. You are under General Colt's command, effective now."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("7")
 speaker = &"iris_colt"
-text = "Placeholder victory."
+text = "Morn's landing on the south beach. Everybody who was shooting at us a minute ago, turn around and face the sea."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_hammerfall_on_aurum"]
+script = ExtResource("8")
+id = &"hammerfall_on_aurum"
+triggers = Array[Resource]([SubResource("Trigger_9")])
+effects = Array[Resource]([SubResource("Effect_10"), SubResource("Effect_11"), SubResource("Effect_25"), SubResource("Effect_26")])
+once = true
+lines = Array[Resource]([SubResource("Line_27"), SubResource("Line_28"), SubResource("Line_29"), SubResource("Line_30")])
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Lyra Quill's citadel. Cliffs all round, one gate in the west wall, her army in the lower city in front of it. We take the gate and the Concord has nowhere left to stand."
+
+[sub_resource type="Resource" id="Line_32"]
+script = ExtResource("7")
 speaker = &"lyra_quill"
-text = "Placeholder: the enemy holds."
+text = "General Colt. I have modelled this afternoon four hundred times. In most of them you reach my gate. In none of them does it change the arithmetic."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_33"]
+script = ExtResource("7")
+speaker = &"rhea_sol"
+text = "Colt, it's Sol. My gunners are in the lower city handing out bread, and they have been told to keep their heads down. Nobody on those walls is mine."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_34"]
+script = ExtResource("7")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Orin's picking up Iron traffic from somewhere past the south sea. Nobody knows whose. I've filed it under things to worry about later, which is getting to be a thick file."
+
+[sub_resource type="Resource" id="Line_35"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Then she can watch us reach it. Guns forward to cover the approach, armour on the road, and nobody stops in the open under those walls."
+
+[sub_resource type="Resource" id="Line_36"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Morn's vanguard is wreckage on the beach. He's still out there with his gun, but he doesn't have Aurum."
+
+[sub_resource type="Resource" id="Line_37"]
+script = ExtResource("7")
+speaker = &"lyra_quill"
+text = "General Colt. I burned the Lantern Hall. Sable gave the order because I gave it to her. I paid Ferrow, I lent Konrad Vale the money for his foundries, and through him I paid for the gun that has just fired on my own city."
+
+[sub_resource type="Resource" id="Line_38"]
+script = ExtResource("7")
+speaker = &"lyra_quill"
+text = "My models said a war nobody chose would kill two million people. They had no variable for Radek Morn. I will not ask you to forgive the arithmetic. I will ask you to let my city cross the causeway before he lands again."
+
+[sub_resource type="Resource" id="Line_39"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Get them moving. Then you and I are going to talk about the Hall, and it's going to take a long time."
+
+[sub_resource type="Resource" id="Line_40"]
+script = ExtResource("7")
+speaker = &"lyra_quill"
+text = "The citadel stands, General, exactly as the model said it would, and I take no pleasure in having been right about a thing that cost this many lives."
+
+[sub_resource type="Resource" id="Line_41"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "Iris is back behind the lower city, Aurum's gate is still shut, and I've moved everything in the file marked later into the file marked now."
 
 [resource]
 script = ExtResource("1")
@@ -71,20 +251,21 @@ title = "The Arithmetic"
 location = "The citadel at Aurum"
 map_path = "res://maps/campaign/five_flags/ff31_the_arithmetic.txt"
 player_team = 1
-ai_teams = Array[int]([2])
+ai_teams = Array[int]([2, 3])
 seats = Array[int]([])
 sides = {}
 commanders = {
 1: &"iris_colt",
-2: &"lyra_quill"
+2: &"lyra_quill",
+3: &"radek_morn"
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_2"), SubResource("Objective_3")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("Objective_4")])
+events = Array[Resource]([SubResource("Event_the_model_runs"), SubResource("Event_hammerfall_on_aurum")])
+par_day = 14
+briefing = Array[Resource]([SubResource("Line_31"), SubResource("Line_32"), SubResource("Line_33"), SubResource("Line_34"), SubResource("Line_35")])
+victory = Array[Resource]([SubResource("Line_36"), SubResource("Line_37"), SubResource("Line_38"), SubResource("Line_39")])
+defeat = Array[Resource]([SubResource("Line_40"), SubResource("Line_41")])

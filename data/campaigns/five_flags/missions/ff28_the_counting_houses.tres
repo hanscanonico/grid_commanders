@@ -1,74 +1,209 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=52 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="13"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="14"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="15"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="16"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="17"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+flag = &"ff_ferrow_bought"
+at_least = 1
+at_most = -1
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
+text = "Hold 10 cities at once."
+count = 10
+terrain_id = &"city"
+
+[sub_resource type="Resource" id="Objective_3"]
+script = ExtResource("4")
+text = "Capture the Exchange."
+cell = Vector2i(12, 11)
+
+[sub_resource type="Resource" id="Objective_4"]
+script = ExtResource("4")
+text = "Capture the Ledger Road mint."
+cell = Vector2i(14, 1)
+
+[sub_resource type="Resource" id="Trigger_5"]
+script = ExtResource("5")
+condition = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Trigger_6"]
+script = ExtResource("6")
 day = 2
 
-[sub_resource type="Resource" id="Effect_funds"]
-script = ExtResource("4")
+[sub_resource type="Resource" id="Spawn_7"]
+script = ExtResource("7")
+unit_type = ExtResource("14")
+cell = Vector2i(0, 7)
+
+[sub_resource type="Resource" id="Spawn_8"]
+script = ExtResource("7")
+unit_type = ExtResource("15")
+cell = Vector2i(0, 8)
+
+[sub_resource type="Resource" id="Spawn_9"]
+script = ExtResource("7")
+unit_type = ExtResource("16")
+cell = Vector2i(0, 9)
+
+[sub_resource type="Resource" id="Spawn_10"]
+script = ExtResource("7")
+unit_type = ExtResource("17")
+cell = Vector2i(1, 9)
+
+[sub_resource type="Resource" id="Effect_11"]
+script = ExtResource("8")
 team = 1
-amount = 1000
+units = Array[Resource]([SubResource("Spawn_7"), SubResource("Spawn_8"), SubResource("Spawn_9"), SubResource("Spawn_10")])
 
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("9")
+speaker = &"dane_ferrow"
+text = "Rook. Holt paid me through the season, so the company's yours until the money stops. The vaults are under the Exchange, second cellar down, and the men guarding them earn less than I do."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("9")
 speaker = &"cassian_rook"
-text = "Placeholder: this mission is being written."
+text = "The board just changed. Ferrow, take the coast road and don't stop to write receipts."
 
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
+[sub_resource type="Resource" id="Event_ferrow_rides_with_rook"]
+script = ExtResource("10")
+id = &"ferrow_rides_with_rook"
+triggers = Array[Resource]([SubResource("Trigger_5"), SubResource("Trigger_6")])
+effects = Array[Resource]([SubResource("Effect_11")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Line_12"), SubResource("Line_13")])
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Trigger_14"]
+script = ExtResource("11")
+cell = Vector2i(12, 11)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_15"]
+script = ExtResource("12")
+team = 2
+amount = -8000
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("9")
 speaker = &"cassian_rook"
-text = "Placeholder briefing for The Counting Houses."
+text = "The Exchange is ours and its books are shut. Every loan she signed this season stopped paying out an hour ago, and her yards just felt it."
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("9")
 speaker = &"lyra_quill"
-text = "Placeholder: the enemy has something to say."
+text = "A frozen loan is still owed, Chancellor. I will collect it, with interest, on a date of my choosing."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_loans_freeze"]
+script = ExtResource("10")
+id = &"the_loans_freeze"
+triggers = Array[Resource]([SubResource("Trigger_14")])
+effects = Array[Resource]([SubResource("Effect_15")])
+once = true
+lines = Array[Resource]([SubResource("Line_16"), SubResource("Line_17")])
+
+[sub_resource type="Resource" id="Trigger_18"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Effect_19"]
+script = ExtResource("13")
+team = 2
+points = 14000
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("9")
+speaker = &"lyra_quill"
+text = "Your column has an eleven per cent chance of reaching the coast intact, Chancellor, and I am about to remove the eleven."
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("9")
 speaker = &"cassian_rook"
-text = "Placeholder victory."
+text = "She's putting the whole purse on one throw. Spread out, keep moving, give her nothing worth rolling against."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_perfect_solution"]
+script = ExtResource("10")
+id = &"the_perfect_solution"
+triggers = Array[Resource]([SubResource("Trigger_18")])
+effects = Array[Resource]([SubResource("Effect_19")])
+once = true
+lines = Array[Resource]([SubResource("Line_20"), SubResource("Line_21")])
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("9")
+speaker = &"cassian_rook"
+text = "Every army on the continent is fighting on Concord credit. Ours was too, until Draeg's proof came in. Those towns are where the loans get written, so we take enough of them and the money stops moving."
+
+[sub_resource type="Resource" id="Line_23"]
+script = ExtResource("9")
 speaker = &"lyra_quill"
-text = "Placeholder: the enemy holds."
+text = "Chancellor Rook. You have a column of armoured cars and a grievance. I have the towns, the garrisons, and a model of this afternoon that has already finished running."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_24"]
+script = ExtResource("9")
+speaker = &"cassian_rook"
+text = "Her dice roll high. Mine don't roll at all if we're somewhere else. Recons on the lanes, carriers right behind, and nobody stops to trade shots with a garrison we can drive around."
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("9")
+speaker = &"cassian_rook"
+text = "Holt bought Ferrow's company at Kessel. It comes down the west road tomorrow, and Ferrow swears he knows which cellars the vaults are in."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_26"]
+script = ExtResource("9")
+speaker = &"cassian_rook"
+text = "Ferrow would have known which cellars hold the vaults. Nobody bought him at Kessel, so we'll open every cellar ourselves."
+unless = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_27"]
+script = ExtResource("9")
+speaker = &"cassian_rook"
+text = "Ten towns flying Aurora's colours and the Exchange's ledgers in the back of my cars. The Concord can't lend a coin on this coast until somebody gives them back."
+
+[sub_resource type="Resource" id="Line_28"]
+script = ExtResource("9")
+speaker = &"dane_ferrow"
+text = "Vault's counted and every coin of it went into your cars, Chancellor. Write that down somewhere, because nobody at home will believe it."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("9")
+speaker = &"lyra_quill"
+text = "You have taken the ledgers, Chancellor. The arithmetic is still standing, and two million people are still inside it."
+
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("9")
+speaker = &"lyra_quill"
+text = "The column stopped exactly where the model said it would. I am sorry, Chancellor. The numbers were never going to allow anything else."
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("9")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Rook's cars are back up the highland road, the Concord is still lending to everyone, and the fuel bill has been sent to me, naturally, with interest."
 
 [resource]
 script = ExtResource("1")
 id = &"ff28_the_counting_houses"
 title = "The Counting Houses"
-location = "The Concord mainland towns"
+location = "The Concord's market coast"
 map_path = "res://maps/campaign/five_flags/ff28_the_counting_houses.txt"
 player_team = 1
 ai_teams = Array[int]([2])
@@ -80,11 +215,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_2")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("Objective_3"), SubResource("Objective_4")])
+events = Array[Resource]([SubResource("Event_ferrow_rides_with_rook"), SubResource("Event_the_loans_freeze"), SubResource("Event_the_perfect_solution")])
+par_day = 12
+briefing = Array[Resource]([SubResource("Line_22"), SubResource("Line_23"), SubResource("Line_24"), SubResource("Line_25"), SubResource("Line_26")])
+victory = Array[Resource]([SubResource("Line_27"), SubResource("Line_28"), SubResource("Line_29")])
+defeat = Array[Resource]([SubResource("Line_30"), SubResource("Line_31")])
