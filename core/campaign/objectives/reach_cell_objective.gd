@@ -1,7 +1,9 @@
 class_name ReachCellObjective
 extends MissionObjective
 ## Get this many of our units onto named ground — the exit zone, and the shape an
-## evacuation or a breakout is written in.
+## evacuation or a breakout is written in. With a `tag`, it is one named unit
+## that has to arrive: the escort's car, the freed prisoners, the convoy — the
+## thing the mission is about, which a fast recon parked on the zone is not.
 ##
 ## Counted across the player's **side**, like every other objective: an ally's
 ## column that reaches the pass has reached it for both of you, and a team-only
@@ -17,6 +19,10 @@ extends MissionObjective
 ## square holds one unit, so any `count` above 1 would otherwise be unreachable.
 @export var cells: Array[Vector2i] = []
 @export var count: int = 1
+## The one unit that counts, or empty for any of ours. A named arrival is still
+## read by side — a tagged unit that has changed sides to ours arrives for us —
+## and asks `count` to be 1, a name being one unit.
+@export var tag: StringName = &""
 
 
 func is_met(state: GameState, team: int, _progress: MissionProgress) -> bool:
@@ -34,6 +40,12 @@ func marker_cells() -> Array[Vector2i]:
 func definition_error(map: MapData, _team: int, unit_db: UnitDB) -> String:
 	if count <= 0:
 		return "reach objective asks for %d units" % count
+	if tag != &"":
+		if count != 1:
+			return "reach objective names '%s' and asks for %d units" % [tag, count]
+		var named_error := MissionBoardCheck.named_unit(map, tag, "reach objective names")
+		if named_error != "":
+			return named_error
 	var fieldable := _fieldable_classes(map, unit_db)
 	var named: Dictionary[Vector2i, bool] = {}
 	for cell: Vector2i in cells:
@@ -78,6 +90,8 @@ func _arrived(state: GameState, team: int) -> int:
 	var total := 0
 	for cell: Vector2i in cells:
 		var unit := state.unit_at(cell)
-		if unit != null and state.allied(unit.team, team):
+		if unit == null or not state.allied(unit.team, team):
+			continue
+		if tag == &"" or unit.tag == tag:
 			total += 1
 	return total
