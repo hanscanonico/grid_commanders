@@ -11,8 +11,9 @@
 #
 # The two powder carts (tagged `powder_cart_a` and `powder_cart_b`) start on
 # and beside the Candlemere road and are gone east at the start of day 4.
-# Nia's recon sees them from the start line; her foot have to walk. A
-# picket at (6,4) guards the hill.
+# Nia's recon sees them once it drives east along the road, and can hit
+# the road cart on day 1; her foot have to walk. A picket at (6,4) guards
+# the hill.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
 FFF..FF..FFF..FF

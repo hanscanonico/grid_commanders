@@ -44,7 +44,7 @@ const CAMPAIGN := &"five_flags"
 const MISSION := &"ff01_twenty_years"
 ## The bonus town the mission's counter-raid beat is keyed to, where that raid
 ## lands, and the beat's id.
-const DEPOT := Vector2i(3, 6)
+const DEPOT := Vector2i(6, 7)
 const EVENT_LANDING := Vector2i(10, 7)
 const EVENT := &"ferrow_counter_raid"
 ## Open ground on that same board, where a confirm selects nothing and so opens

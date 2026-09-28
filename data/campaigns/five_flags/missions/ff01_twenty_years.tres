@@ -82,7 +82,7 @@ units = Array[Resource]([SubResource("Spawn_4"), SubResource("Spawn_5")])
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("9")
 speaker = &"dane_ferrow"
-text = "That mill grinds my flour! Riders, down the mill road, and bring it back to me."
+text = "That mill grinds flour I have already invoiced, Colonel. Riders, down the mill road, and bring it back."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("9")

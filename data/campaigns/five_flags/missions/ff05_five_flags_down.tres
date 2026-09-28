@@ -14,9 +14,9 @@
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Keep the Accord Archive for 6 days."
+text = "Keep the Accord Archive for 5 days."
 cell = Vector2i(8, 6)
-days = 6
+days = 5
 
 [sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
@@ -135,7 +135,7 @@ text = "Iron, the League, Aurora. The Concord hasn't sent a column at all. I'd f
 [sub_resource type="Resource" id="Line_12"]
 script = ExtResource("7")
 speaker = &"iris_colt"
-text = "Six days, and the Archive's still ours, every page of it."
+text = "Five days, and the Archive's still ours, every page of it."
 
 [sub_resource type="Resource" id="Line_13"]
 script = ExtResource("7")

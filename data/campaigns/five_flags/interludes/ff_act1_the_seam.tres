@@ -56,5 +56,5 @@ text = "Orlov has Alina. The Ninth is a dozen officers in a Meridian barracks an
 [resource]
 script = ExtResource("1")
 after_block = 0
-title = "The Seam"
+title = "The Accord Runs Out"
 lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
