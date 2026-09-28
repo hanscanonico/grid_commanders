@@ -1,19 +1,60 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Placeholder: the end of act 1, The Seam."
+text = "The Lantern Accord ran out at dawn on the twentieth anniversary of its signing, with no Hall left to renew it in and nobody willing to try."
+
+[sub_resource type="Resource" id="Cond_1"]
+script = ExtResource("3")
+flag = &"ff_gold_found"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt's tally of the act."
+text = "I kept the paymaster's strongbox. Four hundred Concord crowns, minted this year, and nobody has asked for them back. That's the part I keep turning over."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Ferrow's paymaster got away east with his strongbox. I still don't know what a freebooter gets paid in these days."
+unless = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Cond_2"]
+script = ExtResource("3")
+flag = &"ff_powder_lost"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"nia_rowan"
+text = "I let a powder cart through the orchard the night before, and some of what it carried went up with the Hall."
+requires = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"nia_rowan"
+text = "We burned the powder in the orchard. They burned the Hall anyway, with whatever else they'd brought."
+unless = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+text = "The recalls scattered the rest: Draeg home to Iron, Nia to the League, Sera to Aurora, and Sable south to the Concord, which had never sent for her."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"iris_colt"
+text = "Orlov has Alina. The Ninth is a dozen officers in a Meridian barracks and a flagpole with one flag on it. I'm going to need more people."
 
 [resource]
 script = ExtResource("1")
 after_block = 0
-title = "The Seam"
-lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
+title = "The Accord Runs Out"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
