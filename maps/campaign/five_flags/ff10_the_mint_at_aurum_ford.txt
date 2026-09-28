@@ -1,26 +1,49 @@
-# Five Flags placeholder — "The Mint at Aurum Ford". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Aurum Ford, a Seam river town with a Concord exchange house on its high street.
+# The river runs straight across the board. Anything on foot can wade it anywhere;
+# anything on treads crosses at the one bridge, which Ferrow's gun covers. Both
+# banks are lined with woods, which is Sable Wren's ground: her doctrine fights
+# from trees. The counting house stands in the middle of the town on the north
+# bank, three steps from the water - close enough to reach in two days and take
+# by the fourth, if nobody stops to argue at the ford.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
 [terrain]
-.........M...
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-M............
+MMFF..FF..FFM..M
+M.C..=====..=BQ.
+..F..=.CC.=.=..F
+F.F..=.FCF=.=.C.
+.FF.==..=..==.FF
+~~~+~~~~+~~~~~~~
+.FFF..F...FF..F.
+..F..=====..F.C.
+.C...=.FF=...F..
+..FF.=..F=.FF...
+.QB..=..C=...F.M
+MMM..FF...FF..MM
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+1 1 10
+1 2 10
+1 1 8
+1 8 10
+1 14 7
+2 14 1
+2 13 1
+2 7 2
+2 8 2
+2 8 3
+2 14 3
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+1 i 4 6
+1 i 6 6
+1 m 3 6
+1 m 10 6
+1 r 7 7
+1 g 6 8
+1 t 9 8
+1 t 5 7
+2 i 8 4
+2 i 7 3
+2 m 9 3
+2 t 10 2
+2 g 8 1
+2 r 12 3

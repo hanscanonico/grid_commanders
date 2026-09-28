@@ -1,68 +1,237 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=58 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/apc.tres" id="11"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="12"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="14"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="15"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="16"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="17"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_survive"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Survive until day 9."
+day = 9
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
+[sub_resource type="Resource" id="Failure_losses"]
+script = ExtResource("3")
+text = "More than 8 units are lost, from any cause."
+max_losses = 8
+
+[sub_resource type="Resource" id="Bonus_town"]
+script = ExtResource("4")
+text = "Keep Tamsin Bridge for 8 days."
+cell = Vector2i(9, 6)
+days = 8
 
 [sub_resource type="Resource" id="Trigger_day_2"]
-script = ExtResource("3")
+script = ExtResource("5")
 day = 2
 
-[sub_resource type="Resource" id="Effect_funds"]
-script = ExtResource("4")
-team = 1
+[sub_resource type="Resource" id="Effect_old_pay"]
+script = ExtResource("6")
+team = 2
 amount = 1000
 
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"mara_voss"
-text = "Placeholder: this mission is being written."
-
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
-
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"mara_voss"
-text = "Placeholder briefing for The Voss Line."
+[sub_resource type="Resource" id="Line"]
+script = ExtResource("7")
+speaker = &"iona_vance"
+text = "You taught me to count a line by the men in it, Mara. I count thirty per cent fewer in yours than last year."
 
 [sub_resource type="Resource" id="Line_2"]
+script = ExtResource("7")
+speaker = &"mara_voss"
+text = "And I taught you to stop talking once you'd counted, which you never learned."
+
+[sub_resource type="Resource" id="Event_old_friends"]
+script = ExtResource("8")
+id = &"old_friends"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_old_pay")])
+once = true
+lines = Array[Resource]([SubResource("Line"), SubResource("Line_2")])
+
+[sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("5")
-speaker = &"iona_vance"
-text = "Placeholder: the enemy has something to say."
+day = 4
+
+[sub_resource type="Resource" id="Effect_vance_charge"]
+script = ExtResource("9")
+team = 2
+points = 17000
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
-speaker = &"mara_voss"
-text = "Placeholder victory."
-
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+script = ExtResource("7")
 speaker = &"iona_vance"
-text = "Placeholder: the enemy holds."
+text = "The reserve divisions are up. That tips it by about a pip a man, Marshal. I'd pull back while it's only a pip."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("7")
+speaker = &"mara_voss"
+text = "She's leaning on the whole line at once. Stay in the trees, let her lean, and hit whatever comes out of the river."
+
+[sub_resource type="Resource" id="Event_tip_the_scales"]
+script = ExtResource("8")
+id = &"tip_the_scales"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_vance_charge")])
+once = true
+lines = Array[Resource]([SubResource("Line_3"), SubResource("Line_4")])
+
+[sub_resource type="Resource" id="Trigger_day_5"]
 script = ExtResource("5")
+day = 5
+
+[sub_resource type="Resource" id="Spawn"]
+script = ExtResource("10")
+unit_type = ExtResource("11")
+cell = Vector2i(2, 7)
+tag = &"holt_supply"
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("10")
+unit_type = ExtResource("12")
+cell = Vector2i(3, 6)
+
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("10")
+unit_type = ExtResource("13")
+cell = Vector2i(2, 4)
+
+[sub_resource type="Resource" id="Spawn_4"]
+script = ExtResource("10")
+unit_type = ExtResource("14")
+cell = Vector2i(3, 5)
+
+[sub_resource type="Resource" id="Effect_spawn"]
+script = ExtResource("15")
+team = 1
+units = Array[Resource]([SubResource("Spawn"), SubResource("Spawn_2"), SubResource("Spawn_3"), SubResource("Spawn_4")])
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("7")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Supply column, Marshal. One carrier of shells, one tank I borrowed from a depot that'll want it back, and two companies who got lost in the right direction."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("7")
+speaker = &"mara_voss"
+text = "Tank on the highway, shells behind the woods, and nobody's giving anything back."
+
+[sub_resource type="Resource" id="Event_supply_column"]
+script = ExtResource("8")
+id = &"supply_column"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_spawn")])
+once = true
+lines = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+
+[sub_resource type="Resource" id="Trigger_town_enemy"]
+script = ExtResource("16")
+cell = Vector2i(9, 6)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_town_rent"]
+script = ExtResource("6")
+team = 2
+amount = 2000
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("7")
+speaker = &"iona_vance"
+text = "Tamsin Bridge. My engineers say the span will take a medium tank. I'll find out tonight."
+
+[sub_resource type="Resource" id="Event_town_lost"]
+script = ExtResource("8")
+id = &"town_lost"
+triggers = Array[Resource]([SubResource("Trigger_town_enemy")])
+effects = Array[Resource]([SubResource("Effect_town_rent")])
+once = true
+lines = Array[Resource]([SubResource("Line_7")])
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("7")
+speaker = &""
+text = "The Tamsin river, eastern Meridian. Iron's field army has crossed the border in strength, and the marshal of Meridian has chosen where to meet it."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("7")
+speaker = &"mara_voss"
+text = "Three bridges. The trees on our bank, open plain on hers. We don't win this; we make her pay for every hour until the capital's ready."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Nine days on this river and the rest of the army is dug in behind Aldmoor. Lose the regiment doing it and there's nobody to put in the holes."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("7")
+speaker = &"iona_vance"
+text = "Mara Voss. I heard you'd gone over to the Meridians. I'd hoped it was a rumour."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("7")
+speaker = &"mara_voss"
+text = "Counter when she comes to you. Never go to her. And I want most of this line walking home on day nine."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("7")
+speaker = &"iona_vance"
+text = "Day nine and the river's still hers. Tell the Directorate the timetable has changed. Tell them why, too: I'd like it on record."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("7")
+speaker = &"mara_voss"
+text = "She'll come again at Aldmoor, with everything. Pull the line back tonight. Quietly."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "We held."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("7")
+speaker = &"mara_voss"
+text = "Held, and paid for. Go and count what it cost, then sleep, because she's coming to Aldmoor next and so are we."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("7")
+speaker = &"iona_vance"
+text = "The Tamsin is crossed. Mara always did hold a line one day longer than the arithmetic allowed."
+
+[sub_resource type="Resource" id="Cond_run_cause"]
+script = ExtResource("17")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "Too many graves on the west bank for the days we bought. The marshal's pulling back before there's nobody left to pull."
+requires = SubResource("Cond_run_cause")
+
+[sub_resource type="Resource" id="Cond_run_cause_2"]
+script = ExtResource("17")
+flag = &"run:cause"
+at_least = 3
+at_most = 3
+
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "She came through the middle and didn't stop, so I've started loading the depot at Aldmoor."
+unless = SubResource("Cond_run_cause_2")
 
 [resource]
 script = ExtResource("1")
@@ -80,11 +249,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+objectives = Array[Resource]([SubResource("Objective_survive")])
+failures = Array[Resource]([SubResource("Failure_losses")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_town")])
+events = Array[Resource]([SubResource("Event_old_friends"), SubResource("Event_tip_the_scales"), SubResource("Event_supply_column"), SubResource("Event_town_lost")])
+par_day = 9
+briefing = Array[Resource]([SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])
+victory = Array[Resource]([SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15"), SubResource("Line_16")])
+defeat = Array[Resource]([SubResource("Line_17"), SubResource("Line_18"), SubResource("Line_19")])
