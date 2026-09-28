@@ -132,7 +132,7 @@ text = "Her command tank's in the south-east woods, by her headquarters. Take th
 [sub_resource type="Resource" id="Line_21"]
 script = ExtResource("7")
 speaker = &"orin_flux"
-text = "Command tank's burning. Wren walked out of it on her own, asked me for a pencil, and she's in the back of my car now writing something down."
+text = "We have her. Wren walked out of the trees on her own, asked me for a pencil, and she's in the back of my car now writing something down."
 
 [sub_resource type="Resource" id="Line_22"]
 script = ExtResource("7")

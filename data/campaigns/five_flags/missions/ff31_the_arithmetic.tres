@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=65 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=67 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
@@ -201,7 +201,7 @@ text = "General Colt. I have modelled this afternoon four hundred times. In most
 [sub_resource type="Resource" id="Line_33"]
 script = ExtResource("7")
 speaker = &"rhea_sol"
-text = "Colt, it's Sol. My gunners are in the lower city handing out bread, and they have been told to keep their heads down. Nobody on those walls is mine."
+text = "Colt, it's Sol. My batteries are limbered on the ridge and laid on nothing. Nobody on those walls is mine."
 requires = SubResource("Cond_1")
 
 [sub_resource type="Resource" id="Line_34"]
@@ -222,12 +222,12 @@ text = "Morn's vanguard is wreckage on the beach. He's still out there with his 
 [sub_resource type="Resource" id="Line_37"]
 script = ExtResource("7")
 speaker = &"lyra_quill"
-text = "General Colt. I burned the Lantern Hall. Sable gave the order because I gave it to her. I paid Ferrow, I lent Konrad Vale the money for his foundries, and through him I paid for the gun that has just fired on my own city."
+text = "General Colt. I burned the Lantern Hall: Sable gave the order because I gave it to her. I paid Ferrow, and I lent Konrad Vale the money for the foundries that built the gun which has just fired on my own city."
 
 [sub_resource type="Resource" id="Line_38"]
 script = ExtResource("7")
 speaker = &"lyra_quill"
-text = "My models said a war nobody chose would kill two million people. They had no variable for Radek Morn. I will not ask you to forgive the arithmetic. I will ask you to let my city cross the causeway before he lands again."
+text = "My models gave the mainland nine years before a war nobody chose, and two million dead in it. So I chose a small one, and a Settlement after it: every nation's debt in my vaults and every army capped by contract. None of the models had a variable for Radek Morn."
 
 [sub_resource type="Resource" id="Line_39"]
 script = ExtResource("7")
@@ -243,6 +243,16 @@ text = "The citadel stands, General, exactly as the model said it would, and I t
 script = ExtResource("7")
 speaker = &"gideon_holt"
 text = "Iris is back behind the lower city, Aurum's gate is still shut, and I've moved everything in the file marked later into the file marked now."
+
+[sub_resource type="Resource" id="Line_34b"]
+script = ExtResource("7")
+speaker = &"alina_ward"
+text = "Iris, most of the soldiers in that lower city were clerks and dockhands a month ago. Go through them to the gate if you have to, but leave as many standing as you can. Somebody will have to hold Aurum after Lyra."
+
+[sub_resource type="Resource" id="Line_38b"]
+script = ExtResource("7")
+speaker = &"lyra_quill"
+text = "I am not asking you to forgive the arithmetic, General, only to let my city cross the causeway before he lands again."
 
 [resource]
 script = ExtResource("1")
@@ -266,6 +276,6 @@ failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Objective_4")])
 events = Array[Resource]([SubResource("Event_the_model_runs"), SubResource("Event_hammerfall_on_aurum")])
 par_day = 14
-briefing = Array[Resource]([SubResource("Line_31"), SubResource("Line_32"), SubResource("Line_33"), SubResource("Line_34"), SubResource("Line_35")])
-victory = Array[Resource]([SubResource("Line_36"), SubResource("Line_37"), SubResource("Line_38"), SubResource("Line_39")])
+briefing = Array[Resource]([SubResource("Line_31"), SubResource("Line_32"), SubResource("Line_35"), SubResource("Line_33"), SubResource("Line_34b"), SubResource("Line_34")])
+victory = Array[Resource]([SubResource("Line_36"), SubResource("Line_37"), SubResource("Line_38"), SubResource("Line_38b"), SubResource("Line_39")])
 defeat = Array[Resource]([SubResource("Line_40"), SubResource("Line_41")])

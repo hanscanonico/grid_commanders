@@ -104,7 +104,7 @@ note = "The schools' convoy crossed the causeway."
 [sub_resource type="Resource" id="Line_14"]
 script = ExtResource("8")
 speaker = &"iris_colt"
-text = "Schools convoy's across. Two hundred kids and a teacher who asked me which army I'm in. I told her I'd get back to her."
+text = "Schools convoy's across. Two hundred children, and not one of them knows whose war this was. I do."
 
 [sub_resource type="Resource" id="Event_the_schools_cross"]
 script = ExtResource("9")
@@ -287,7 +287,7 @@ units = Array[Resource]([SubResource("Spawn_39"), SubResource("Spawn_40"), SubRe
 [sub_resource type="Resource" id="Line_43"]
 script = ExtResource("8")
 speaker = &"radek_morn"
-text = "A queue of trucks on a bridge. A Chancellor at the end of it. The Hammer is loaded."
+text = "One road over the water. A Chancellor standing at the end of it. The Hammer is loaded."
 
 [sub_resource type="Resource" id="Line_44"]
 script = ExtResource("8")

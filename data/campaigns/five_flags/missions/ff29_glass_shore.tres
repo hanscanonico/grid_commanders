@@ -144,7 +144,7 @@ text = "Admiral Marr, General Sol. My guns are registered on both your beaches a
 [sub_resource type="Resource" id="Line_22"]
 script = ExtResource("7")
 speaker = &"halden_marr"
-text = "I believe her about the guns, and about the families. Clear her cruisers out of the channel first. Once they're gone the battleship can reach the plateau."
+text = "I believe her about the guns, and about the families. Clear her hulls out of the channel and the battleship can reach the plateau, and a lander can run up to the harbour mole and put a company straight into the fort without climbing that gully."
 
 [sub_resource type="Resource" id="Line_23"]
 script = ExtResource("7")

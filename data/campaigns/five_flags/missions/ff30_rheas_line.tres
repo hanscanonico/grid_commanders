@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
@@ -80,6 +80,10 @@ script = ExtResource("4")
 cell = Vector2i(13, 3)
 holder = 1
 
+[sub_resource type="Resource" id="Trigger_12b"]
+script = ExtResource("5")
+day = 6
+
 [sub_resource type="Resource" id="Effect_13"]
 script = ExtResource("11")
 team = 2
@@ -98,7 +102,7 @@ text = "She hated every word of that, and she said them all. We were too slow to
 [sub_resource type="Resource" id="Event_the_order_is_obeyed"]
 script = ExtResource("9")
 id = &"the_order_is_obeyed"
-triggers = Array[Resource]([SubResource("Trigger_11"), SubResource("Trigger_12")])
+triggers = Array[Resource]([SubResource("Trigger_11"), SubResource("Trigger_12"), SubResource("Trigger_12b")])
 effects = Array[Resource]([SubResource("Effect_13")])
 once = true
 lines = Array[Resource]([SubResource("Line_14"), SubResource("Line_15")])
@@ -131,7 +135,7 @@ text = "Rhea's headquarters is ours and the road to Aurum is open. We camp in th
 [sub_resource type="Resource" id="Line_21"]
 script = ExtResource("8")
 speaker = &"rhea_sol"
-text = "My gunners are in the lower town handing out bread, General. Whatever the Chancellor does next, she'll do it without my guns. Tell Colt I'll be at the citadel if she needs a counter-battery."
+text = "My gunners are in the lower town handing out bread, General. Whatever the Chancellor does next, she'll do it without my guns."
 requires = SubResource("Cond_1")
 
 [sub_resource type="Resource" id="Line_22"]
