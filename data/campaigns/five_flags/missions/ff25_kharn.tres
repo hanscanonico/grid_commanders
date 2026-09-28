@@ -1,68 +1,151 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/protect_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="14"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Destroy the warden's tank in the prison yard."
+tag = &"kharn_warden"
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
-day = 2
+text = "Move 3 units to the Kharn road."
+id = &"the_way_out"
+hidden = true
+cells = Array[Vector2i]([Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5)])
+count = 3
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Objective_3"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+text = "Alina Ward's transport is destroyed."
+id = &"alina_alive"
+hidden = true
+tag = &"alina_transport"
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Trigger_4"]
 script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: this mission is being written."
+tag = &"kharn_warden"
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Effect_5"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
+from_team = 2
+to_team = 1
+tags = Array[StringName]([&"alina_transport"])
+
+[sub_resource type="Resource" id="Effect_6"]
+script = ExtResource("7")
+objective_id = &"the_way_out"
+
+[sub_resource type="Resource" id="Effect_7"]
+script = ExtResource("7")
+objective_id = &"alina_alive"
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Iris? Is that you on the yard radio? We're in the truck, all of us, and the engine still turns over."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "Then drive. Kharn road, west, and don't stop for anything. My tanks will ride beside you the whole way."
+
+[sub_resource type="Resource" id="Event_10"]
+script = ExtResource("9")
+id = &"cell_block_open"
+triggers = Array[Resource]([SubResource("Trigger_4")])
+effects = Array[Resource]([SubResource("Effect_5"), SubResource("Effect_6"), SubResource("Effect_7")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Line_8"), SubResource("Line_9")])
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder briefing for Kharn."
+[sub_resource type="Resource" id="Trigger_11"]
+script = ExtResource("10")
+day = 3
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Spawn_12"]
+script = ExtResource("12")
+unit_type = ExtResource("11")
+cell = Vector2i(1, 4)
+
+[sub_resource type="Resource" id="Spawn_13"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(2, 5)
+
+[sub_resource type="Resource" id="Effect_14"]
+script = ExtResource("14")
+team = 2
+units = Array[Resource]([SubResource("Spawn_12"), SubResource("Spawn_13")])
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("8")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy has something to say."
+text = "Somebody's in my prison yard. How rude. Call the road patrol back and shut the Kharn road behind them."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_16"]
+script = ExtResource("9")
+id = &"kharn_alarm"
+triggers = Array[Resource]([SubResource("Trigger_11")])
+effects = Array[Resource]([SubResource("Effect_14")])
+once = true
+lines = Array[Resource]([SubResource("Line_15")])
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("8")
+text = "Kharn prison, before dawn. The cell block backs onto the black water of the Kharn tarn, and the only door out of it is the prison yard."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("8")
 speaker = &"iris_colt"
-text = "Placeholder victory."
+text = "Alina's truck is in the cell block, and the warden's tank is in the yard between us. Kill the tank, then get her out down the Kharn road."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("8")
+speaker = &"nia_rowan"
+text = "The truck in the cell block is ours. Nobody shoots at it, whatever colour it's wearing."
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("8")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy holds."
+text = "Colonel Colt. I hoped you'd come in person. A cage is only half a trap until someone opens the door."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Iris. Look at you. You brought half the Ninth into Iron to fetch one old woman."
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "Most of the Ninth. The rest are on their way."
+
+[sub_resource type="Resource" id="Line_23"]
+script = ExtResource("8")
+speaker = &"cass_orlov"
+text = "Let them run to the border. Draeg is holding it, and Draeg follows orders."
+
+[sub_resource type="Resource" id="Line_24"]
+script = ExtResource("8")
+speaker = &"cass_orlov"
+text = "The door's shut again, and now I have more of you to keep behind it."
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("8")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Kharn's still locked, and Alina's still in it. I've stopped counting what we spent getting this far."
 
 [resource]
 script = ExtResource("1")
@@ -80,13 +163,13 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
+objectives = Array[Resource]([SubResource("Objective_1"), SubResource("Objective_2")])
+failures = Array[Resource]([SubResource("Objective_3")])
+bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_10"), SubResource("Event_16")])
+par_day = 9
 carry_in = true
-carry_floor_hp = 50
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+carry_floor_hp = 60
+briefing = Array[Resource]([SubResource("Line_17"), SubResource("Line_18"), SubResource("Line_19"), SubResource("Line_20")])
+victory = Array[Resource]([SubResource("Line_21"), SubResource("Line_22"), SubResource("Line_23")])
+defeat = Array[Resource]([SubResource("Line_24"), SubResource("Line_25")])

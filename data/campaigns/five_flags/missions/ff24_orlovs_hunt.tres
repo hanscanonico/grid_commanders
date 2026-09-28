@@ -1,74 +1,165 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="13"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Move 3 units to the Kharn ridge."
+cells = Array[Vector2i]([Vector2i(14, 0), Vector2i(15, 0), Vector2i(16, 0), Vector2i(14, 1), Vector2i(15, 1), Vector2i(16, 1)])
+count = 3
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
+text = "More than 3 units lost, to any cause."
+max_losses = 3
+
+[sub_resource type="Resource" id="Objective_3"]
+script = ExtResource("4")
+text = "Destroy Orlov's lead hound."
+tag = &"orlov_hound"
+
+[sub_resource type="Resource" id="Trigger_4"]
+script = ExtResource("5")
 day = 2
 
-[sub_resource type="Resource" id="Effect_funds"]
-script = ExtResource("4")
-team = 1
-amount = 1000
+[sub_resource type="Resource" id="Spawn_5"]
+script = ExtResource("7")
+unit_type = ExtResource("6")
+cell = Vector2i(17, 10)
 
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"nia_rowan"
-text = "Placeholder: this mission is being written."
+[sub_resource type="Resource" id="Effect_6"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_5")])
 
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("9")
+speaker = &"cass_orlov"
+text = "Something walked through my birches last night and left no tracks. How considerate. Send a rider down the lodge road."
+
+[sub_resource type="Resource" id="Event_8"]
+script = ExtResource("10")
+id = &"hunters_loosed"
+triggers = Array[Resource]([SubResource("Trigger_4")])
+effects = Array[Resource]([SubResource("Effect_6")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Line_7")])
 
-[sub_resource type="Resource" id="Line_1"]
+[sub_resource type="Resource" id="Trigger_9"]
 script = ExtResource("5")
-speaker = &"nia_rowan"
-text = "Placeholder briefing for Orlov's Hunt."
+day = 4
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Spawn_10"]
+script = ExtResource("7")
+unit_type = ExtResource("11")
+cell = Vector2i(17, 2)
+
+[sub_resource type="Resource" id="Effect_11"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_10")])
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("9")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy has something to say."
+text = "They're going uphill. Everyone goes uphill at Kharn, it's the only direction with a view of the prison. Put a picket on the ridge road and wait."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("9")
 speaker = &"nia_rowan"
-text = "Placeholder victory."
+text = "Picket on the ridge. We go round it or through it, quietly."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_14"]
+script = ExtResource("10")
+id = &"ridge_picket"
+triggers = Array[Resource]([SubResource("Trigger_9")])
+effects = Array[Resource]([SubResource("Effect_11")])
+once = true
+lines = Array[Resource]([SubResource("Line_12"), SubResource("Line_13")])
+
+[sub_resource type="Resource" id="Trigger_15"]
+script = ExtResource("12")
+tag = &"orlov_hound"
+
+[sub_resource type="Resource" id="Effect_16"]
+script = ExtResource("13")
+team = 1
+amount = 500
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("9")
+speaker = &"nia_rowan"
+text = "His lead rider's down. He'll hunt slower without it."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("9")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy holds."
+text = "That was my favourite. I'll remember the woods it died in."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_19"]
+script = ExtResource("10")
+id = &"hound_down"
+triggers = Array[Resource]([SubResource("Trigger_15")])
+effects = Array[Resource]([SubResource("Effect_16")])
+once = true
+lines = Array[Resource]([SubResource("Line_17"), SubResource("Line_18")])
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("9")
+text = "Kharn prison sits in a bowl of hills Cass Orlov keeps as a hunting ground. Alina Ward has been in it since the Parade Road."
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("9")
+speaker = &"nia_rowan"
+text = "Six of us, no lights, through the birches to the ridge above the prison. Stay in the trees. Clearings get you seen."
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("9")
+speaker = &"cass_orlov"
+text = "Hunting at night is mostly patience. The animal gets tired, it bleeds a little, it limps, and then I'm there."
+
+[sub_resource type="Resource" id="Line_23"]
+script = ExtResource("9")
+speaker = &"iris_colt"
+text = "Whoever reaches that ridge goes into Kharn with me. Bring me as many as you can, Nia."
+
+[sub_resource type="Resource" id="Line_24"]
+script = ExtResource("9")
+speaker = &"nia_rowan"
+text = "On the ridge. The prison lights are right below us, and the guard changes on the hour."
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("9")
+speaker = &"cass_orlov"
+text = "They reached the ridge. Good. A prison is a trap with walls, and I built this one."
+
+[sub_resource type="Resource" id="Line_26"]
+script = ExtResource("9")
+speaker = &"cass_orlov"
+text = "The birches are quiet again. I'll hang the trophies in the lodge, beside the last ones."
+
+[sub_resource type="Resource" id="Line_27"]
+script = ExtResource("9")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Six went into Orlov's birches. Not enough came out to open Kharn, and Alina waits another month."
 
 [resource]
 script = ExtResource("1")
 id = &"ff24_orlovs_hunt"
 title = "Orlov's Hunt"
-location = "The Kharn hills"
+location = "The Kharn hills, at night"
 map_path = "res://maps/campaign/five_flags/ff24_orlovs_hunt.txt"
 player_team = 1
 ai_teams = Array[int]([2])
@@ -80,12 +171,12 @@ commanders = {
 }
 fog_enabled = true
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
+objectives = Array[Resource]([SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Objective_2")])
+bonus_objectives = Array[Resource]([SubResource("Objective_3")])
+events = Array[Resource]([SubResource("Event_8"), SubResource("Event_14"), SubResource("Event_19")])
+par_day = 9
 carry_out = true
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+briefing = Array[Resource]([SubResource("Line_20"), SubResource("Line_21"), SubResource("Line_22"), SubResource("Line_23")])
+victory = Array[Resource]([SubResource("Line_24"), SubResource("Line_25")])
+defeat = Array[Resource]([SubResource("Line_26"), SubResource("Line_27")])

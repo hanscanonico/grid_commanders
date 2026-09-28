@@ -112,7 +112,9 @@ func test_the_shipped_chain_carries_the_army_it_says_it_does() -> void:
 	assert_false(kharn.carry_out, "the team's chain ends at the prison")
 	assert_gt(kharn.carry_floor_hp, 0, "and it declares what the team is refit to")
 	var slots := _slots(MapData.load_from_file(kharn.map_path, Fixture.terrain_db()))
-	assert_eq(slots, ["i", "i", "t", "r"] as Array[String], "the team that crossed the hills")
+	assert_eq(
+		slots, ["i", "i", "i", "m", "m", "r"] as Array[String], "the team that crossed the hills"
+	)
 
 
 ## Every shipped board outside `CHAINED` carries no slot at all: nothing to
