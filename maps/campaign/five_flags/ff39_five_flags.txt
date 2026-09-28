@@ -1,12 +1,13 @@
 # Five Flags — "Five Flags". Hammer Hill, the last ground of the war.
 # Morn's citadel stands on the hill at the head of the board, ringed by rock with
-# one road gate to the south, and the lower town's twin gates sit below it where
+# a road gate to the south and two breaches in the ring, at (11-12,4) and
+# (18-19,4), and the lower town's twin gates sit below it where
 # the switchback road comes down. His two arsenals are out on the wings, the
 # eastern one with the Dominion's last tank crews parked in its yard. The Ninth
 # comes up the middle from the south with Alina Ward's army on its west flank;
 # the whole south edge and both flanks are left open, because every army the war
 # earned marches in from one of them, each on its own road. The middle of the
-# board is farmland and five neutral towns, room for all of them to spread out
+# board is farmland and seven neutral towns, room for all of them to spread out
 # under a gun that fires at whoever bunches.
 # Tags: arsenal_* is the tank crews Vale can send home. ninth_colours marks the
 # Ninth's command-tank slot; ^ rows are the carried column.

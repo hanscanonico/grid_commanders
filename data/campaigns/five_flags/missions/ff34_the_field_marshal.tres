@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=47 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=51 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -129,7 +129,7 @@ text = "The Ostra, two days short of the capital. Iona Vance has the Dominion's 
 [sub_resource type="Resource" id="Line_22"]
 script = ExtResource("10")
 speaker = &"iona_vance"
-text = "Colonel Colt. You have ten battalions to my twenty, and I hold all three bridges between here and Ostrava. I make your chances about one in five."
+text = "Colonel Colt. I hold all three bridges between here and Ostrava, and every gun on this bank is ranged on the middle one. I make your chances about one in five."
 
 [sub_resource type="Resource" id="Line_23"]
 script = ExtResource("10")
@@ -169,7 +169,7 @@ text = "Three bridges, one still standing, and a field marshal's fuel depot nobo
 [sub_resource type="Resource" id="Line_30"]
 script = ExtResource("10")
 speaker = &"iona_vance"
-text = "Twenty battalions to ten. The arithmetic was never in your favour, Colonel, and I don't hold rivers by luck."
+text = "Three bridges, and you needed one of them. I told you the odds, Colonel, and I don't hold rivers by luck."
 
 [sub_resource type="Resource" id="Line_31"]
 script = ExtResource("10")
@@ -182,6 +182,30 @@ script = ExtResource("10")
 speaker = &"gideon_holt"
 text = "The Ostra's still hers. I've counted the bridges again and there are still three."
 unless = SubResource("Cond_20")
+
+[sub_resource type="Resource" id="Cond_vance_joined"]
+script = ExtResource("13")
+flag = &"ff_vance_joined"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_vance_withdrew"]
+script = ExtResource("13")
+flag = &"ff_vance_joined"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_vance_joined"]
+script = ExtResource("10")
+speaker = &"iris_colt"
+text = "Her guard's crossing with us under their own colours. That's the first Iron flag on our side of any river."
+requires = SubResource("Cond_vance_joined")
+
+[sub_resource type="Resource" id="Line_vance_withdrew"]
+script = ExtResource("10")
+speaker = &"iris_colt"
+text = "Vance went back to Ostrava with her staff and most of her guns. We'll meet them again at the capital."
+requires = SubResource("Cond_vance_withdrew")
 
 [resource]
 script = ExtResource("14")
@@ -208,5 +232,5 @@ carry_in = true
 carry_out = true
 carry_floor_hp = 60
 briefing = Array[Resource]([SubResource("Line_21"), SubResource("Line_22"), SubResource("Line_23"), SubResource("Line_24"), SubResource("Line_25"), SubResource("Line_26")])
-victory = Array[Resource]([SubResource("Line_27"), SubResource("Line_28"), SubResource("Line_29")])
+victory = Array[Resource]([SubResource("Line_27"), SubResource("Line_vance_joined"), SubResource("Line_vance_withdrew"), SubResource("Line_28"), SubResource("Line_29")])
 defeat = Array[Resource]([SubResource("Line_30"), SubResource("Line_31"), SubResource("Line_32")])

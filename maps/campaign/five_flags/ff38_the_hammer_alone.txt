@@ -7,7 +7,8 @@
 # is what reloads the gun: while it and the gun are both Morn's, a shell goes up
 # the line every third day. The slopes are wooded for foot and the valley floor
 # is open, so a column that spreads out walks up the middle and one that bunches
-# walks into the next shell.
+# walks into the next shell. A second company waits in the south-west at
+# (4-7,12-13) and comes up the west slope.
 # Tags: powder_train is the ammunition car on the rail. ninth_colours marks the
 # Ninth's command-tank slot; ^ rows are the carried column.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
