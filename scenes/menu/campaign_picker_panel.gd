@@ -1,6 +1,6 @@
 class_name CampaignPickerPanel
 extends Control
-## The six campaigns, shown over the main menu without tearing it down —
+## The installed campaigns, shown over the main menu without tearing it down —
 ## `ReplayPickerPanel`'s sibling, built the same way and for the same reason: a
 ## Back has to land on the setup exactly as it was left.
 ##
@@ -228,7 +228,7 @@ func _micro(text: String, ink: Color, lines: int) -> Label:
 	return label
 
 
-## "The Six Marshals — 4/18 · 9 stars", or "— new" for a war with no profile, or
+## "Five Flags — 4/39 · 9 stars", or "— new" for a war with no profile, or
 ## "— complete" for one with nothing left to offer.
 ##
 ## Both halves are the **route's** answers, never the list's: finished is
