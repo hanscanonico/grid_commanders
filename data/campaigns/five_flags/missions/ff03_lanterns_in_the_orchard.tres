@@ -54,12 +54,12 @@ cells = Array[Vector2i]([Vector2i(6, 5)])
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("8")
 speaker = &"nia_rowan"
-text = "Top of the hill. Lanterns on every tower from here to Candlemere, and two carts on the road below them, riding heavy."
+text = "Top of the hill. Lanterns on every tower from here to Candlemere, and two carts below them riding heavy. They'll be out of the orchard by the fourth morning."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("8")
 speaker = &"nia_rowan"
-text = "That's powder. What does a freebooter want with a road's worth of powder the night before a ceremony?"
+text = "That's powder. What does a freebooter want with a road's worth of powder the night before a ceremony? Burn both before they're gone."
 
 [sub_resource type="Resource" id="Event_1"]
 script = ExtResource("4")
