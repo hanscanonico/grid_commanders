@@ -120,7 +120,7 @@ text = "I've arranged your route, Captain. The north bridge is burned, so it's t
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("11")
 speaker = &"nia_rowan"
-text = "The car stays on the road. My rangers don't need one. We walk beside it and we don't shoot unless we're seen."
+text = "The car stays on the road. My rangers cross every bridge first and hold the far bank before it rolls. We don't shoot unless we're seen."
 
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("11")
