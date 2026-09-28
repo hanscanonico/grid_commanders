@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Placeholder: the end of act 3, Old Friends."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Placeholder: Holt's tally of the act."
+
+[sub_resource type="Resource" id="Cond_ff_nia_fought_yes"]
+script = ExtResource("3")
+flag = &"ff_nia_fought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_ff_nia_fought_no"]
+script = ExtResource("3")
+flag = &"ff_nia_fought"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_ff_nia_fought_yes"]
+script = ExtResource("2")
+speaker = &"iris_colt"
+text = "Placeholder: it went one way."
+requires = SubResource("Cond_ff_nia_fought_yes")
+
+[sub_resource type="Resource" id="Line_ff_nia_fought_no"]
+script = ExtResource("2")
+speaker = &"iris_colt"
+text = "Placeholder: it went the other."
+requires = SubResource("Cond_ff_nia_fought_no")
+
+[resource]
+script = ExtResource("1")
+after_block = 2
+title = "Old Friends"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ff_nia_fought_yes"), SubResource("Line_ff_nia_fought_no")])

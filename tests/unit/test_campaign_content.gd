@@ -70,22 +70,26 @@ func test_every_interlude_can_be_shown() -> void:
 			assert_eq(page.definition_error(commander_db), "", "campaign '%s'" % campaign.id)
 
 
-## The one branch the shipped content authors, and the page it feeds: break Morn's
-## vanguard in the spring and he never sends the ultimatum mission five is, so the
-## route walks past it and the interlude that closes the act says which spring it
-## was.
-func test_the_shipped_branch_opens_and_closes_the_way_it_reads() -> void:
-	var campaign := db.by_id(&"the_hollow_crown")
+## The fork the second act writes and the third act reads: shoot Nia's rangers at
+## the shrine and the Thornwood road is hers to hunt you on; spare them and it is
+## hers to guide you down. The two roads are one slot of the route, and the page
+## that closes the act says which it was.
+func test_the_shipped_fork_opens_and_closes_the_way_it_reads() -> void:
+	var campaign := db.by_id(&"five_flags")
 	assert_not_null(campaign)
-	assert_has(campaign.mission(&"hc01_border_skirmish").written_flags(), &"morn_bloodied")
-	var ultimatum := campaign.mission(&"hc05_the_ultimatum")
-	assert_not_null(ultimatum.unlock_requires, "the ultimatum is the optional mission")
-	assert_eq(ultimatum.unlock_requires.flag, &"morn_bloodied")
-	assert_eq(ultimatum.unlock_requires.at_most, 0, "it opens only while the vanguard stood")
-	assert_eq(campaign.closes_block(&"hc06_the_crack"), 0)
-	var page := campaign.interlude_after(0)
+	assert_has(campaign.mission(&"ff11_the_green_border").written_flags(), &"ff_nia_fought")
+	var guided := campaign.mission(&"ff15_nias_road")
+	assert_not_null(guided.unlock_requires, "Nia's road is one side of the fork")
+	assert_eq(guided.unlock_requires.flag, &"ff_nia_fought")
+	assert_eq(guided.unlock_requires.at_most, 0, "it opens only while her rangers stood")
+	var hunted := campaign.mission(&"ff16_the_hunters_road")
+	assert_not_null(hunted.unlock_requires, "the hunters' road is the other")
+	assert_eq(hunted.unlock_requires.flag, &"ff_nia_fought")
+	assert_eq(hunted.unlock_requires.at_least, 1, "it opens only once one of them fell")
+	assert_eq(campaign.closes_block(&"ff20_the_open_sky"), 2)
+	var page := campaign.interlude_after(2)
 	assert_not_null(page, "and the act it closes has a page")
-	assert_has(page.read_flags(), &"morn_bloodied")
+	assert_has(page.read_flags(), &"ff_nia_fought")
 
 
 func test_every_mission_names_a_board_that_parses() -> void:

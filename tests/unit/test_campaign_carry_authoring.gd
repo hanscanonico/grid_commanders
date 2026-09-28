@@ -12,12 +12,9 @@ extends GutTest
 ## carry an army in or out. Every other mission carries nothing and marks no
 ## slot.
 const CHAINED: Dictionary[StringName, int] = {
-	&"the_long_front": 8,  # Voss's retreat, lf01 -> lf02, and the last act, lf13 -> lf18
-	&"the_furnace_winter": 7,  # the veteran column, fw12 -> fw18
-	&"six_marshals": 6,  # the crews that held the gate, sm13 -> sm18
-	&"the_collection": 6,  # the veteran column, tc13 -> tc18
-	&"the_quiet_war": 6,  # the last act in daylight, qw13 -> qw18
-	&"the_hollow_crown": 6,  # the veteran column, hc13 -> hc18
+	# The infiltration team, ff24 -> ff25, and the Ninth's veteran column through
+	# the last act, ff33 -> ff39 (both Hammer forks carry it).
+	&"five_flags": 9,
 }
 
 ## One carry slot for team 1, and the enemy's own row marked as well.
@@ -101,24 +98,26 @@ func test_a_chain_with_a_hole_in_it_is_refused() -> void:
 	assert_eq(campaign.carry_error(), "")
 
 
-## Voss's retreat, the chain this test pins: she holds the customs line and
-## falls back to the causeway with the same three units. The other shipped
-## chains — a war's whole last act each — are counted by the census below.
+## The infiltration team, the chain this test pins: it crosses Orlov's hunting
+## grounds and the same units walk into Kharn. The other shipped chain — the last
+## act, where the Ninth's column marches on mission by mission — is counted by the
+## census below.
 func test_the_shipped_chain_carries_the_army_it_says_it_does() -> void:
-	var campaign := CampaignDB.load_default().by_id(&"the_long_front")
+	var campaign := CampaignDB.load_default().by_id(&"five_flags")
 	assert_not_null(campaign)
 	assert_eq(campaign.carry_error(), "")
-	assert_true(campaign.mission(&"lf01_customs_line").carry_out)
-	var causeway := campaign.mission(&"lf02_the_last_causeway")
-	assert_true(causeway.carry_in)
-	assert_gt(causeway.carry_floor_hp, 0, "and it declares what the retreat refits them to")
-	var slots := _slots(MapData.load_from_file(causeway.map_path, Fixture.terrain_db()))
-	assert_eq(slots, ["r", "t", "i"] as Array[String], "the three that came off the customs line")
+	assert_true(campaign.mission(&"ff24_orlovs_hunt").carry_out)
+	var kharn := campaign.mission(&"ff25_kharn")
+	assert_true(kharn.carry_in)
+	assert_false(kharn.carry_out, "the team's chain ends at the prison")
+	assert_gt(kharn.carry_floor_hp, 0, "and it declares what the team is refit to")
+	var slots := _slots(MapData.load_from_file(kharn.map_path, Fixture.terrain_db()))
+	assert_eq(slots, ["i", "i", "t", "r"] as Array[String], "the team that crossed the hills")
 
 
 ## Every shipped board outside `CHAINED` carries no slot at all: nothing to
-## fill, so nothing to get wrong. The chains exist on purpose — Voss's retreat,
-## and a war's last act where the army that opened it marches on mission by
+## fill, so nothing to get wrong. The chains exist on purpose — the Kharn
+## infiltration, and the last act, where the Ninth's column marches on mission by
 ## mission.
 func test_the_rest_of_the_shipped_content_carries_nothing() -> void:
 	for campaign: CampaignDefinition in CampaignDB.load_default().all():

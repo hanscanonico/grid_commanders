@@ -15,7 +15,7 @@ const CAMPAIGN_FILE := "campaign.tres"
 ## drift apart — `MapCatalog.TUTORIAL_MAP_PATH`'s shape, for its reason. A pin
 ## rather than an assumption: a build this campaign is missing from loads the rest
 ## alphabetically instead of refusing.
-const FLAGSHIP_ID := &"the_furnace_winter"
+const FLAGSHIP_ID := &"five_flags"
 
 var _by_id: Dictionary[StringName, CampaignDefinition] = {}
 var _order: Array[StringName] = []

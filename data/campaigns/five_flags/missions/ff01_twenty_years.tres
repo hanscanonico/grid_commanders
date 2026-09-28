@@ -1,0 +1,126 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="5"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="9"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Capture the northern town."
+cell = Vector2i(9, 2)
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("2")
+text = "Capture the southern town."
+cell = Vector2i(3, 6)
+
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("3")
+day = 2
+
+[sub_resource type="Resource" id="Spawn_second_wave"]
+script = ExtResource("5")
+unit_type = ExtResource("6")
+cell = Vector2i(12, 0)
+
+[sub_resource type="Resource" id="Effect_second_wave"]
+script = ExtResource("4")
+team = 2
+units = Array[Resource]([SubResource("Spawn_second_wave")])
+
+[sub_resource type="Resource" id="Event_line_wave"]
+script = ExtResource("7")
+speaker = &"dane_ferrow"
+text = "Placeholder: Ferrow's second wave comes over the ridge."
+
+[sub_resource type="Resource" id="Event_ferrow_second_wave"]
+script = ExtResource("8")
+id = &"ferrow_second_wave"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_second_wave")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_wave")])
+
+[sub_resource type="Resource" id="Trigger_mill_ours"]
+script = ExtResource("9")
+cell = Vector2i(3, 6)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_counter_raid"]
+script = ExtResource("5")
+unit_type = ExtResource("6")
+cell = Vector2i(11, 4)
+
+[sub_resource type="Resource" id="Effect_counter_raid"]
+script = ExtResource("4")
+team = 2
+units = Array[Resource]([SubResource("Spawn_counter_raid")])
+
+[sub_resource type="Resource" id="Event_line_raid"]
+script = ExtResource("7")
+speaker = &"dane_ferrow"
+text = "Placeholder: Ferrow wants his mill back."
+
+[sub_resource type="Resource" id="Event_ferrow_counter_raid"]
+script = ExtResource("8")
+id = &"ferrow_counter_raid"
+triggers = Array[Resource]([SubResource("Trigger_mill_ours")])
+effects = Array[Resource]([SubResource("Effect_counter_raid")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_raid")])
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Placeholder briefing for Twenty Years."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("7")
+speaker = &"dane_ferrow"
+text = "Placeholder: the enemy has something to say."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("7")
+speaker = &"iris_colt"
+text = "Placeholder victory."
+
+[sub_resource type="Resource" id="Line_defeat_foe"]
+script = ExtResource("7")
+speaker = &"dane_ferrow"
+text = "Placeholder: the enemy holds."
+
+[sub_resource type="Resource" id="Line_defeat_staff"]
+script = ExtResource("7")
+speaker = &"gideon_holt"
+text = "Placeholder: Holt counts the cost."
+
+[resource]
+script = ExtResource("1")
+id = &"ff01_twenty_years"
+title = "Twenty Years"
+location = "Orchard Row, the Seam"
+map_path = "res://maps/campaign/five_flags/ff01_twenty_years.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"iris_colt",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_ferrow_second_wave"), SubResource("Event_ferrow_counter_raid")])
+par_day = 8
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
+victory = Array[Resource]([SubResource("Line_3")])
+defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])

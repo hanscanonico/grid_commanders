@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=47 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff01_twenty_years.tres" id="2"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff02_the_toll_bridge.tres" id="3"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff03_lanterns_in_the_orchard.tres" id="4"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff04_the_lantern_hall.tres" id="5"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff05_five_flags_down.tres" id="6"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff06_the_last_parade.tres" id="7"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff07_harbour_lights.tres" id="8"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff08_the_voss_line.tres" id="9"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff09_the_quartermasters_road.tres" id="10"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff10_the_mint_at_aurum_ford.tres" id="11"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff11_the_green_border.tres" id="12"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff12_black_skies.tres" id="13"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff13_the_capital_line.tres" id="14"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff14_the_peoples_march.tres" id="15"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff15_nias_road.tres" id="16"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff16_the_hunters_road.tres" id="17"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff17_thornes_wall.tres" id="18"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff18_the_race_to_skyreach.tres" id="19"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff19_signal_and_noise.tres" id="20"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff20_the_open_sky.tres" id="21"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff21_the_grauwald_pass.tres" id="22"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff22_ferrows_price.tres" id="23"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff23_the_foundries_of_kessel.tres" id="24"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff24_orlovs_hunt.tres" id="25"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff25_kharn.tres" id="26"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff26_draeg.tres" id="27"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff27_wren.tres" id="28"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff28_the_counting_houses.tres" id="29"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff29_glass_shore.tres" id="30"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff30_rheas_line.tres" id="31"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff31_the_arithmetic.tres" id="32"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff32_recalculation.tres" id="33"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff33_the_march_of_five.tres" id="34"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff34_the_field_marshal.tres" id="35"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff35_ostrava.tres" id="36"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff36_the_arsenal.tres" id="37"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff37_the_hammer.tres" id="38"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff38_the_hammer_alone.tres" id="39"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/missions/ff39_five_flags.tres" id="40"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/interludes/ff_act1_the_seam.tres" id="41"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/interludes/ff_act2_home_fires.tres" id="42"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/interludes/ff_act3_old_friends.tres" id="43"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/interludes/ff_act4_iron_country.tres" id="44"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/interludes/ff_act5_the_gilded_ledger.tres" id="45"]
+[ext_resource type="Resource" path="res://data/campaigns/five_flags/interludes/ff_act6_five_flags.tres" id="46"]
+
+[resource]
+script = ExtResource("1")
+id = &"five_flags"
+title = "Five Flags"
+premise = "For twenty years the Ninth — the only brigade on the continent that flies five flags — kept the peace in the Seam. Then someone burned the Lantern Hall on the night the Accord was to be renewed, and every flag went home to war."
+antagonist = "Whoever paid for the fire"
+missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19"), ExtResource("20"), ExtResource("21"), ExtResource("22"), ExtResource("23"), ExtResource("24"), ExtResource("25"), ExtResource("26"), ExtResource("27"), ExtResource("28"), ExtResource("29"), ExtResource("30"), ExtResource("31"), ExtResource("32"), ExtResource("33"), ExtResource("34"), ExtResource("35"), ExtResource("36"), ExtResource("37"), ExtResource("38"), ExtResource("39"), ExtResource("40")])
+block_titles = Array[String](["The Seam", "Home Fires", "Old Friends", "Iron Country", "The Gilded Ledger", "Five Flags"])
+block_lengths = Array[int]([6, 7, 7, 6, 6, 7])
+interludes = Array[Resource]([ExtResource("41"), ExtResource("42"), ExtResource("43"), ExtResource("44"), ExtResource("45"), ExtResource("46")])

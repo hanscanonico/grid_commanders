@@ -36,32 +36,33 @@ const TURN_WAIT_FRAMES := 1800
 ## it. Wall clock rather than frames: what is being watched for is a runner that
 ## keeps planning, and the lockup arms its own buttons on a real half-second timer.
 const SETTLE_MS := 1500
-## The Collection's opening mission, because CD2 re-authored it onto `HoldCell`:
-## the card then carries a new verb, its running readout, and the deadline that
-## ends it, rather than a lone "take the depot". CD3 hung its exemplar beat on
-## the same mission, so the two frames stack rather than spreading.
-const CAMPAIGN := &"the_collection"
-const MISSION := &"tc01_the_ledger_opens"
-## The customs depot the mission is about, and what Ferrow does the moment it
-## changes hands.
-const DEPOT := Vector2i(6, 4)
-const EVENT := &"ferrow_collects"
+## Five Flags' opening mission: the objective card, a scripted beat landing on
+## the board and the map menu are all posed on it. Its bonus town is the depot the
+## event frame hands the player, because capturing it does not end the mission —
+## Ferrow answers it with a counter-raid that lands on the road.
+const CAMPAIGN := &"five_flags"
+const MISSION := &"ff01_twenty_years"
+## The bonus town the mission's counter-raid beat is keyed to, where that raid
+## lands, and the beat's id.
+const DEPOT := Vector2i(3, 6)
+const EVENT_LANDING := Vector2i(11, 4)
+const EVENT := &"ferrow_counter_raid"
 ## Open ground on that same board, where a confirm selects nothing and so opens
 ## the map menu — the `mapmenu` scenario's press, made on a mission.
 const OPEN_GROUND := Vector2i(7, 1)
-## The Long Front's exemplar mission, for the defection frame: its board is the
-## one that already names a unit of the army a beat would take it from — Morn's
-## garrison in the ruins, which the mission's own `DestroyUnit` reads.
-const DEFECT_CAMPAIGN := &"the_long_front"
-const DEFECT_MISSION := &"lf08_after_hammerfall"
-const GARRISON := &"ruin_garrison"
-const DEFECT_EVENT := &"the_garrison_turns"
+## The mission posed for the defection frame: its board already names a unit of
+## the army a beat would take it from — Ferrow's paymaster, which the mission's own
+## `DestroyUnit` reads.
+const DEFECT_CAMPAIGN := &"five_flags"
+const DEFECT_MISSION := &"ff02_the_toll_bridge"
+const GARRISON := &"paymaster"
+const DEFECT_EVENT := &"the_paymaster_turns"
 const GARRISON_ARMY := 2
 ## The fact the defection is gated on, which makes the frame CD4's live proof as
 ## well: the consequence ledger is what decides whether this board opens with the
-## garrison on our side, and with the fact missing the beat does not fire and
+## paymaster on our side, and with the fact missing the beat does not fire and
 ## `_run_defection` says so.
-const GARRISON_FLAG := &"wardens_wavered"
+const GARRISON_FLAG := &"ff_paymaster_bought"
 
 
 ## Stages this scenario's launch, if this boot is one of its three. Called from
@@ -206,7 +207,7 @@ func _run_event() -> String:
 	await BattleCampaign.fire_due(_battle)
 	if not CampaignSession.tally.has_fired(EVENT):
 		return "the mission's '%s' beat did not fire on a board that was due it" % EVENT
-	if _battle.game.unit_at(Vector2i(11, 4)) == null:
+	if _battle.game.unit_at(EVENT_LANDING) == null:
 		return "the '%s' beat landed no unit on the road" % EVENT
 	var board_error := _board_error()
 	if board_error != "":
@@ -219,7 +220,7 @@ func _run_event() -> String:
 	return BattleScenario.band_error(_battle, "mission speech card", card)
 
 
-## Morn's garrison changes sides, and the frame is what it is wearing afterwards.
+## The paymaster changes sides, and the frame is what it is wearing afterwards.
 ## The beat has already fired by the time this runs — `Battle` fires the board it
 ## opens on — so the pose needs no play to reach it and cannot depend on what the
 ## computer decided to do. `_board_error` is the check the picture cannot make:
