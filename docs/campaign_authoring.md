@@ -102,7 +102,7 @@ victory: a loss is spoken, not narrated.
 |---|---|---|
 | `CaptureCell` | a named property is ours | board |
 | `OwnProperties` | we hold N properties, optionally of one `terrain_id` | board |
-| `ReachCell` | N of our units stand on named ground | board |
+| `ReachCell` | N of our units stand on named ground — or, with a `tag`, that one named unit does | board |
 | `DestroyUnit` | a tagged unit is off the board | board |
 | `ProtectUnit` | a tagged unit is still standing | board |
 | `DefeatTeam` | one named army is gone | board |

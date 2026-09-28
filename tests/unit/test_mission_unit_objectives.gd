@@ -171,6 +171,37 @@ func test_reach_cell_never_counts_an_enemy_holding_the_zone() -> void:
 	assert_false(objective.is_met(state, 1, null))
 
 
+func test_reach_cell_with_a_name_counts_only_that_unit() -> void:
+	# The escort case the anonymous count cannot say: any fast unit parked on the
+	# zone would otherwise finish a mission about somebody else getting there.
+	var state := _state([1, 3])
+	var objective := _zone([Vector2i(2, 1), Vector2i(3, 1)] as Array[Vector2i], 1)
+	objective.tag = &"relay"
+	state.units_of(3)[0].cell = Vector2i(2, 1)
+	assert_false(objective.is_met(state, 1, null), "an ally in the zone is not the relay")
+	assert_eq(objective.readout(state, 1, null), "0/1")
+	_tagged(state, &"relay").cell = Vector2i(3, 1)
+	assert_true(objective.is_met(state, 1, null))
+
+
+func test_reach_cell_with_a_name_refuses_what_one_unit_cannot_be() -> void:
+	var map := _map()
+	var objective := _zone([Vector2i(2, 1), Vector2i(3, 1)] as Array[Vector2i], 2)
+	objective.tag = &"relay"
+	assert_eq(
+		objective.definition_error(map, 1, unit_db),
+		"reach objective names 'relay' and asks for 2 units"
+	)
+	objective.count = 1
+	objective.tag = &"the_courier"
+	assert_eq(
+		objective.definition_error(map, 1, unit_db),
+		"reach objective names 'the_courier', which no unit on this board carries"
+	)
+	objective.tag = &"relay"
+	assert_eq(objective.definition_error(map, 1, unit_db), "")
+
+
 func test_reach_cell_refuses_a_zone_that_could_never_be_filled() -> void:
 	var map := _map()
 	var objective := _zone([Vector2i(2, 1), Vector2i(3, 1)] as Array[Vector2i], 3)

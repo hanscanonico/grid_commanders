@@ -89,7 +89,7 @@ func _build() -> void:
 	_title = UiKit.page_title("CAMPAIGNS")
 	main.add_child(_title)
 
-	main.add_child(UiKit.page_note("Six wars against the Iron Dominion. Eighteen missions each."))
+	main.add_child(UiKit.page_note("One war in six acts, from the Seam to Hammer Hill."))
 
 	_empty = UiKit.page_note("No campaigns installed.")
 	main.add_child(_empty)
