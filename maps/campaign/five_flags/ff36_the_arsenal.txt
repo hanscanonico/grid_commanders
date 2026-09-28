@@ -1,26 +1,71 @@
-# Five Flags placeholder — "The Arsenal". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags — "The Arsenal". Ostrava's foundry quarter, east of the old town.
+# Vale's three foundries stand in a line down the middle of the board, each in
+# its own yard of slag heaps: north, centre and south, far enough apart that a
+# column taking all three has to split. Behind them the arsenal sits in a wall
+# of rock with one gate road through it and Vale's two arsenals at the ends,
+# where he builds the best tanks in the Dominion at the highest prices. Take the
+# three foundries in time and Vale has nothing left to build for. The four
+# towns between the lines belong to nobody yet.
+# Tags: vale_guard_* is the arsenal guard he can stand down; vale_prototype is
+# the new tank parked inside the gate. ninth_colours marks the Ninth's
+# command-tank slot; ^ rows are the carried column.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
 [terrain]
-.........M...
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-..M..........
+MM...F...M.....F....MMMM
+M......C...MM......C..MM
+....C..=....C==......=.M
+.F....==...MMF..F....B..
+..B...=.F.....=.C...=...
+..=...=...F...=.....=...
+..=..FF....MM.=..M..=...
+.Q====C====.C======C==Q.
+..=..FF....MM.=..M..=...
+..=...=...F...=.....=...
+..B...=.F.....=.C...=...
+.F....==...MMF..F....B..
+....C..=....C==......=.M
+M......C...MM......C..MM
+MM...F...M.....F....MMMM
 [owners]
-1 1 1
 1 1 7
-2 11 7
-2 10 7
-2 11 5
+1 2 4
+1 2 10
+1 4 2
+1 4 12
+1 6 7
+1 7 1
+1 7 13
+2 22 7
+2 21 3
+2 21 11
+2 19 7
+2 12 2
+2 12 7
+2 12 12
 [units]
-1 i 2 3 ^
-1 i 3 3 ^
-1 t 2 2 ^
-1 r 1 3 ^
-2 i 9 6
-2 i 9 7
-2 t 12 6
+1 T 4 7 ninth_colours ^
+1 t 5 6 ^
+1 m 7 6 ^
+1 m 7 8 ^
+1 g 3 7 ^
+1 r 5 8 ^
+1 i 6 5
+1 i 6 9
+1 t 3 6
+1 a 3 8
+1 R 2 7
+1 t 2 8
+1 g 1 6
+2 T 18 6 vale_guard_1
+2 T 18 8 vale_guard_2
+2 t 20 6 vale_guard_3
+2 g 20 8 vale_guard_4
+2 T 21 7 vale_prototype
+2 i 12 3
+2 m 11 2
+2 i 13 7
+2 i 13 12
+2 m 11 12
+2 a 20 4
+2 m 13 2

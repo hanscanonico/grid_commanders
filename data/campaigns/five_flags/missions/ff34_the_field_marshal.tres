@@ -1,98 +1,190 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=47 format=3]
 
-[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
-[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="14"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("1")
+text = "Hold the Ostra bridgehead for 2 days."
+cell = Vector2i(12, 7)
+days = 2
+
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Capture the northern depot."
+cell = Vector2i(20, 2)
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_3"]
 script = ExtResource("3")
-day = 2
+text = "Destroy the Ostra battery."
+tag = &"ostra_battery"
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Trigger_4"]
 script = ExtResource("4")
-team = 1
-amount = 1000
-
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: this mission is being written."
-
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
-
-[sub_resource type="Resource" id="Trigger_town_b_ours"]
-script = ExtResource("7")
-cell = Vector2i(3, 6)
+cell = Vector2i(12, 7)
 holder = 0
 
-[sub_resource type="Resource" id="Effect_write"]
+[sub_resource type="Resource" id="Trigger_5"]
+script = ExtResource("5")
+day = 7
+
+[sub_resource type="Resource" id="Trigger_6"]
+script = ExtResource("6")
+tag = &"vance_command"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 0), Vector2i(8, 0), Vector2i(9, 0), Vector2i(10, 0), Vector2i(11, 0), Vector2i(12, 0), Vector2i(13, 0), Vector2i(14, 0), Vector2i(15, 0), Vector2i(16, 0), Vector2i(17, 0), Vector2i(18, 0), Vector2i(19, 0), Vector2i(20, 0), Vector2i(21, 0), Vector2i(22, 0), Vector2i(23, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1), Vector2i(6, 1), Vector2i(7, 1), Vector2i(8, 1), Vector2i(9, 1), Vector2i(10, 1), Vector2i(11, 1), Vector2i(12, 1), Vector2i(13, 1), Vector2i(14, 1), Vector2i(15, 1), Vector2i(16, 1), Vector2i(17, 1), Vector2i(18, 1), Vector2i(19, 1), Vector2i(20, 1), Vector2i(21, 1), Vector2i(22, 1), Vector2i(23, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2), Vector2i(5, 2), Vector2i(6, 2), Vector2i(7, 2), Vector2i(8, 2), Vector2i(9, 2), Vector2i(10, 2), Vector2i(11, 2), Vector2i(12, 2), Vector2i(13, 2), Vector2i(14, 2), Vector2i(15, 2), Vector2i(16, 2), Vector2i(17, 2), Vector2i(18, 2), Vector2i(19, 2), Vector2i(20, 2), Vector2i(21, 2), Vector2i(22, 2), Vector2i(23, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(4, 3), Vector2i(5, 3), Vector2i(6, 3), Vector2i(7, 3), Vector2i(8, 3), Vector2i(9, 3), Vector2i(10, 3), Vector2i(11, 3), Vector2i(12, 3), Vector2i(13, 3), Vector2i(14, 3), Vector2i(15, 3), Vector2i(16, 3), Vector2i(17, 3), Vector2i(18, 3), Vector2i(19, 3), Vector2i(20, 3), Vector2i(21, 3), Vector2i(22, 3), Vector2i(23, 3), Vector2i(0, 4), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4), Vector2i(4, 4), Vector2i(5, 4), Vector2i(6, 4), Vector2i(7, 4), Vector2i(8, 4), Vector2i(9, 4), Vector2i(10, 4), Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4), Vector2i(14, 4), Vector2i(15, 4), Vector2i(16, 4), Vector2i(17, 4), Vector2i(18, 4), Vector2i(19, 4), Vector2i(20, 4), Vector2i(21, 4), Vector2i(22, 4), Vector2i(23, 4), Vector2i(0, 5), Vector2i(1, 5), Vector2i(2, 5), Vector2i(3, 5), Vector2i(4, 5), Vector2i(5, 5), Vector2i(6, 5), Vector2i(7, 5), Vector2i(8, 5), Vector2i(9, 5), Vector2i(10, 5), Vector2i(11, 5), Vector2i(12, 5), Vector2i(13, 5), Vector2i(14, 5), Vector2i(15, 5), Vector2i(16, 5), Vector2i(17, 5), Vector2i(18, 5), Vector2i(19, 5), Vector2i(20, 5), Vector2i(21, 5), Vector2i(22, 5), Vector2i(23, 5), Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(6, 6), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 6), Vector2i(10, 6), Vector2i(11, 6), Vector2i(12, 6), Vector2i(13, 6), Vector2i(14, 6), Vector2i(15, 6), Vector2i(16, 6), Vector2i(17, 6), Vector2i(18, 6), Vector2i(19, 6), Vector2i(20, 6), Vector2i(21, 6), Vector2i(22, 6), Vector2i(23, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(6, 7), Vector2i(7, 7), Vector2i(8, 7), Vector2i(9, 7), Vector2i(10, 7), Vector2i(11, 7), Vector2i(12, 7), Vector2i(13, 7), Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(17, 7), Vector2i(18, 7), Vector2i(19, 7), Vector2i(20, 7), Vector2i(21, 7), Vector2i(22, 7), Vector2i(23, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(6, 8), Vector2i(7, 8), Vector2i(8, 8), Vector2i(9, 8), Vector2i(10, 8), Vector2i(11, 8), Vector2i(12, 8), Vector2i(13, 8), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8), Vector2i(17, 8), Vector2i(18, 8), Vector2i(19, 8), Vector2i(20, 8), Vector2i(21, 8), Vector2i(22, 8), Vector2i(23, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(6, 9), Vector2i(7, 9), Vector2i(8, 9), Vector2i(9, 9), Vector2i(10, 9), Vector2i(11, 9), Vector2i(12, 9), Vector2i(13, 9), Vector2i(14, 9), Vector2i(15, 9), Vector2i(16, 9), Vector2i(17, 9), Vector2i(18, 9), Vector2i(19, 9), Vector2i(20, 9), Vector2i(21, 9), Vector2i(22, 9), Vector2i(23, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10), Vector2i(6, 10), Vector2i(7, 10), Vector2i(8, 10), Vector2i(9, 10), Vector2i(10, 10), Vector2i(11, 10), Vector2i(12, 10), Vector2i(13, 10), Vector2i(14, 10), Vector2i(15, 10), Vector2i(16, 10), Vector2i(17, 10), Vector2i(18, 10), Vector2i(19, 10), Vector2i(20, 10), Vector2i(21, 10), Vector2i(22, 10), Vector2i(23, 10), Vector2i(0, 11), Vector2i(1, 11), Vector2i(2, 11), Vector2i(3, 11), Vector2i(4, 11), Vector2i(5, 11), Vector2i(6, 11), Vector2i(7, 11), Vector2i(8, 11), Vector2i(9, 11), Vector2i(10, 11), Vector2i(11, 11), Vector2i(12, 11), Vector2i(13, 11), Vector2i(14, 11), Vector2i(15, 11), Vector2i(16, 11), Vector2i(17, 11), Vector2i(18, 11), Vector2i(19, 11), Vector2i(20, 11), Vector2i(21, 11), Vector2i(22, 11), Vector2i(23, 11), Vector2i(0, 12), Vector2i(1, 12), Vector2i(2, 12), Vector2i(3, 12), Vector2i(4, 12), Vector2i(5, 12), Vector2i(6, 12), Vector2i(7, 12), Vector2i(8, 12), Vector2i(9, 12), Vector2i(10, 12), Vector2i(11, 12), Vector2i(12, 12), Vector2i(13, 12), Vector2i(14, 12), Vector2i(15, 12), Vector2i(16, 12), Vector2i(17, 12), Vector2i(18, 12), Vector2i(19, 12), Vector2i(20, 12), Vector2i(21, 12), Vector2i(22, 12), Vector2i(23, 12), Vector2i(0, 13), Vector2i(1, 13), Vector2i(2, 13), Vector2i(3, 13), Vector2i(4, 13), Vector2i(5, 13), Vector2i(6, 13), Vector2i(7, 13), Vector2i(8, 13), Vector2i(9, 13), Vector2i(10, 13), Vector2i(11, 13), Vector2i(12, 13), Vector2i(13, 13), Vector2i(14, 13), Vector2i(15, 13), Vector2i(16, 13), Vector2i(17, 13), Vector2i(18, 13), Vector2i(19, 13), Vector2i(20, 13), Vector2i(21, 13), Vector2i(22, 13), Vector2i(23, 13), Vector2i(0, 14), Vector2i(1, 14), Vector2i(2, 14), Vector2i(3, 14), Vector2i(4, 14), Vector2i(5, 14), Vector2i(6, 14), Vector2i(7, 14), Vector2i(8, 14), Vector2i(9, 14), Vector2i(10, 14), Vector2i(11, 14), Vector2i(12, 14), Vector2i(13, 14), Vector2i(14, 14), Vector2i(15, 14), Vector2i(16, 14), Vector2i(17, 14), Vector2i(18, 14), Vector2i(19, 14), Vector2i(20, 14), Vector2i(21, 14), Vector2i(22, 14), Vector2i(23, 14)])
+
+[sub_resource type="Resource" id="Effect_7"]
+script = ExtResource("7")
+from_team = 2
+to_team = 1
+tags = Array[StringName]([&"vance_guard_1", &"vance_guard_2", &"vance_guard_3", &"vance_guard_4", &"vance_guard_5", &"vance_guard_6", &"vance_guard_7", &"vance_staff_1", &"vance_staff_2"])
+
+[sub_resource type="Resource" id="Effect_8"]
 script = ExtResource("8")
+tags = Array[StringName]([&"vance_command"])
+
+[sub_resource type="Resource" id="Effect_9"]
+script = ExtResource("9")
 flag = &"ff_vance_joined"
 mode = 0
 value = 1
-note = "Placeholder fact: the southern town was taken."
+note = "Iona Vance brought the Dominion's regular army over at the Ostra."
 
-[sub_resource type="Resource" id="Event_line_write"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: the southern town is ours."
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("10")
+speaker = &"iona_vance"
+text = "The bridge is out of my hands, then. Morn will burn Iron to keep it. I will not."
 
-[sub_resource type="Resource" id="Event_writes_fact"]
-script = ExtResource("6")
-id = &"placeholder_fact"
-triggers = Array[Resource]([SubResource("Trigger_town_b_ours")])
-effects = Array[Resource]([SubResource("Effect_write")])
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("10")
+speaker = &"mara_voss"
+text = "Iona."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("10")
+speaker = &"iona_vance"
+text = "Don't thank me, Mara. My guard crosses to the Colonel with its guns loaded. I'm taking my staff car to Ostrava to talk to the barracks before Orlov does, and whatever's left on this bank answers to the Directorate."
+
+[sub_resource type="Resource" id="Event_13"]
+script = ExtResource("11")
+id = &"the_field_marshal_comes_over"
+triggers = Array[Resource]([SubResource("Trigger_4"), SubResource("Trigger_5"), SubResource("Trigger_6")])
+effects = Array[Resource]([SubResource("Effect_7"), SubResource("Effect_8"), SubResource("Effect_9")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_write")])
+lines = Array[Resource]([SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder briefing for The Field Marshal."
+[sub_resource type="Resource" id="Trigger_14"]
+script = ExtResource("12")
+day = 8
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Trigger_15"]
+script = ExtResource("6")
+tag = &"vance_command"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 0), Vector2i(8, 0), Vector2i(9, 0), Vector2i(10, 0), Vector2i(11, 0), Vector2i(12, 0), Vector2i(13, 0), Vector2i(14, 0), Vector2i(15, 0), Vector2i(16, 0), Vector2i(17, 0), Vector2i(18, 0), Vector2i(19, 0), Vector2i(20, 0), Vector2i(21, 0), Vector2i(22, 0), Vector2i(23, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1), Vector2i(6, 1), Vector2i(7, 1), Vector2i(8, 1), Vector2i(9, 1), Vector2i(10, 1), Vector2i(11, 1), Vector2i(12, 1), Vector2i(13, 1), Vector2i(14, 1), Vector2i(15, 1), Vector2i(16, 1), Vector2i(17, 1), Vector2i(18, 1), Vector2i(19, 1), Vector2i(20, 1), Vector2i(21, 1), Vector2i(22, 1), Vector2i(23, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2), Vector2i(5, 2), Vector2i(6, 2), Vector2i(7, 2), Vector2i(8, 2), Vector2i(9, 2), Vector2i(10, 2), Vector2i(11, 2), Vector2i(12, 2), Vector2i(13, 2), Vector2i(14, 2), Vector2i(15, 2), Vector2i(16, 2), Vector2i(17, 2), Vector2i(18, 2), Vector2i(19, 2), Vector2i(20, 2), Vector2i(21, 2), Vector2i(22, 2), Vector2i(23, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(4, 3), Vector2i(5, 3), Vector2i(6, 3), Vector2i(7, 3), Vector2i(8, 3), Vector2i(9, 3), Vector2i(10, 3), Vector2i(11, 3), Vector2i(12, 3), Vector2i(13, 3), Vector2i(14, 3), Vector2i(15, 3), Vector2i(16, 3), Vector2i(17, 3), Vector2i(18, 3), Vector2i(19, 3), Vector2i(20, 3), Vector2i(21, 3), Vector2i(22, 3), Vector2i(23, 3), Vector2i(0, 4), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4), Vector2i(4, 4), Vector2i(5, 4), Vector2i(6, 4), Vector2i(7, 4), Vector2i(8, 4), Vector2i(9, 4), Vector2i(10, 4), Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4), Vector2i(14, 4), Vector2i(15, 4), Vector2i(16, 4), Vector2i(17, 4), Vector2i(18, 4), Vector2i(19, 4), Vector2i(20, 4), Vector2i(21, 4), Vector2i(22, 4), Vector2i(23, 4), Vector2i(0, 5), Vector2i(1, 5), Vector2i(2, 5), Vector2i(3, 5), Vector2i(4, 5), Vector2i(5, 5), Vector2i(6, 5), Vector2i(7, 5), Vector2i(8, 5), Vector2i(9, 5), Vector2i(10, 5), Vector2i(11, 5), Vector2i(12, 5), Vector2i(13, 5), Vector2i(14, 5), Vector2i(15, 5), Vector2i(16, 5), Vector2i(17, 5), Vector2i(18, 5), Vector2i(19, 5), Vector2i(20, 5), Vector2i(21, 5), Vector2i(22, 5), Vector2i(23, 5), Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(6, 6), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 6), Vector2i(10, 6), Vector2i(11, 6), Vector2i(12, 6), Vector2i(13, 6), Vector2i(14, 6), Vector2i(15, 6), Vector2i(16, 6), Vector2i(17, 6), Vector2i(18, 6), Vector2i(19, 6), Vector2i(20, 6), Vector2i(21, 6), Vector2i(22, 6), Vector2i(23, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(6, 7), Vector2i(7, 7), Vector2i(8, 7), Vector2i(9, 7), Vector2i(10, 7), Vector2i(11, 7), Vector2i(12, 7), Vector2i(13, 7), Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(17, 7), Vector2i(18, 7), Vector2i(19, 7), Vector2i(20, 7), Vector2i(21, 7), Vector2i(22, 7), Vector2i(23, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(6, 8), Vector2i(7, 8), Vector2i(8, 8), Vector2i(9, 8), Vector2i(10, 8), Vector2i(11, 8), Vector2i(12, 8), Vector2i(13, 8), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8), Vector2i(17, 8), Vector2i(18, 8), Vector2i(19, 8), Vector2i(20, 8), Vector2i(21, 8), Vector2i(22, 8), Vector2i(23, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(6, 9), Vector2i(7, 9), Vector2i(8, 9), Vector2i(9, 9), Vector2i(10, 9), Vector2i(11, 9), Vector2i(12, 9), Vector2i(13, 9), Vector2i(14, 9), Vector2i(15, 9), Vector2i(16, 9), Vector2i(17, 9), Vector2i(18, 9), Vector2i(19, 9), Vector2i(20, 9), Vector2i(21, 9), Vector2i(22, 9), Vector2i(23, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10), Vector2i(6, 10), Vector2i(7, 10), Vector2i(8, 10), Vector2i(9, 10), Vector2i(10, 10), Vector2i(11, 10), Vector2i(12, 10), Vector2i(13, 10), Vector2i(14, 10), Vector2i(15, 10), Vector2i(16, 10), Vector2i(17, 10), Vector2i(18, 10), Vector2i(19, 10), Vector2i(20, 10), Vector2i(21, 10), Vector2i(22, 10), Vector2i(23, 10), Vector2i(0, 11), Vector2i(1, 11), Vector2i(2, 11), Vector2i(3, 11), Vector2i(4, 11), Vector2i(5, 11), Vector2i(6, 11), Vector2i(7, 11), Vector2i(8, 11), Vector2i(9, 11), Vector2i(10, 11), Vector2i(11, 11), Vector2i(12, 11), Vector2i(13, 11), Vector2i(14, 11), Vector2i(15, 11), Vector2i(16, 11), Vector2i(17, 11), Vector2i(18, 11), Vector2i(19, 11), Vector2i(20, 11), Vector2i(21, 11), Vector2i(22, 11), Vector2i(23, 11), Vector2i(0, 12), Vector2i(1, 12), Vector2i(2, 12), Vector2i(3, 12), Vector2i(4, 12), Vector2i(5, 12), Vector2i(6, 12), Vector2i(7, 12), Vector2i(8, 12), Vector2i(9, 12), Vector2i(10, 12), Vector2i(11, 12), Vector2i(12, 12), Vector2i(13, 12), Vector2i(14, 12), Vector2i(15, 12), Vector2i(16, 12), Vector2i(17, 12), Vector2i(18, 12), Vector2i(19, 12), Vector2i(20, 12), Vector2i(21, 12), Vector2i(22, 12), Vector2i(23, 12), Vector2i(0, 13), Vector2i(1, 13), Vector2i(2, 13), Vector2i(3, 13), Vector2i(4, 13), Vector2i(5, 13), Vector2i(6, 13), Vector2i(7, 13), Vector2i(8, 13), Vector2i(9, 13), Vector2i(10, 13), Vector2i(11, 13), Vector2i(12, 13), Vector2i(13, 13), Vector2i(14, 13), Vector2i(15, 13), Vector2i(16, 13), Vector2i(17, 13), Vector2i(18, 13), Vector2i(19, 13), Vector2i(20, 13), Vector2i(21, 13), Vector2i(22, 13), Vector2i(23, 13), Vector2i(0, 14), Vector2i(1, 14), Vector2i(2, 14), Vector2i(3, 14), Vector2i(4, 14), Vector2i(5, 14), Vector2i(6, 14), Vector2i(7, 14), Vector2i(8, 14), Vector2i(9, 14), Vector2i(10, 14), Vector2i(11, 14), Vector2i(12, 14), Vector2i(13, 14), Vector2i(14, 14), Vector2i(15, 14), Vector2i(16, 14), Vector2i(17, 14), Vector2i(18, 14), Vector2i(19, 14), Vector2i(20, 14), Vector2i(21, 14), Vector2i(22, 14), Vector2i(23, 14)])
+
+[sub_resource type="Resource" id="Effect_16"]
+script = ExtResource("8")
+tags = Array[StringName]([&"vance_command", &"vance_staff_1", &"vance_staff_2"])
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("10")
 speaker = &"iona_vance"
-text = "Placeholder: the enemy has something to say."
+text = "Day 8, and the bridge is still mine. I'm withdrawing my staff to Ostrava, and the rearguard holds the river as long as it has shells."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder victory."
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("10")
+speaker = &"mara_voss"
+text = "She gave you a week, Colt. Now you get what she left behind."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_19"]
+script = ExtResource("11")
+id = &"the_field_marshal_withdraws"
+triggers = Array[Resource]([SubResource("Trigger_14"), SubResource("Trigger_15")])
+effects = Array[Resource]([SubResource("Effect_16")])
+once = true
+lines = Array[Resource]([SubResource("Line_17"), SubResource("Line_18")])
+
+[sub_resource type="Resource" id="Cond_20"]
+script = ExtResource("13")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("10")
+text = "The Ostra, two days short of the capital. Iona Vance has the Dominion's regular army drawn up on the east bank, more guns than the Ninth has seen in one place."
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("10")
 speaker = &"iona_vance"
-text = "Placeholder: the enemy holds."
+text = "Colonel Colt. You have ten battalions to my twenty, and I hold all three bridges between here and Ostrava. I make your chances about one in five."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_23"]
+script = ExtResource("10")
+speaker = &"iris_colt"
+text = "Then I'll take the middle one."
+
+[sub_resource type="Resource" id="Line_24"]
+script = ExtResource("10")
+speaker = &"mara_voss"
+text = "Iona, it's Mara. You saw Aurum. You know he'll do the same to Ostrava the day it suits him."
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("10")
+speaker = &"iona_vance"
+text = "The Directorate signs my orders, Marshal. Until somebody takes that bridge out of my hands I'm obliged to hold it."
+
+[sub_resource type="Resource" id="Line_26"]
+script = ExtResource("10")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Read that the way a quartermaster reads a contract. Take the Ostra bridgehead by day 7, leave her command tank alone, and she's out of obligations."
+
+[sub_resource type="Resource" id="Line_27"]
+script = ExtResource("10")
+speaker = &"iris_colt"
+text = "Bridgehead's ours, and it stayed ours. Get the column over before dark."
+
+[sub_resource type="Resource" id="Line_28"]
+script = ExtResource("10")
+speaker = &"mara_voss"
+text = "Iona held that river for eleven years. I trained half the officers who dug those guns in, Colt, so I know what it cost."
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Three bridges, one still standing, and a field marshal's fuel depot nobody has billed us for yet, which I'm told makes this a good day."
+
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("10")
+speaker = &"iona_vance"
+text = "Twenty battalions to ten. The arithmetic was never in your favour, Colonel, and I don't hold rivers by luck."
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Our headquarters went while we were all looking at the bridge, and I'll be writing that one up myself."
+requires = SubResource("Cond_20")
+
+[sub_resource type="Resource" id="Line_32"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "The Ostra's still hers. I've counted the bridges again and there are still three."
+unless = SubResource("Cond_20")
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("14")
 id = &"ff34_the_field_marshal"
 title = "The Field Marshal"
 location = "The Ostra river"
@@ -107,14 +199,14 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_1")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder"), SubResource("Event_writes_fact")])
-par_day = 8
+bonus_objectives = Array[Resource]([SubResource("Objective_2"), SubResource("Objective_3")])
+events = Array[Resource]([SubResource("Event_13"), SubResource("Event_19")])
+par_day = 10
 carry_in = true
-carry_floor_hp = 50
 carry_out = true
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+carry_floor_hp = 60
+briefing = Array[Resource]([SubResource("Line_21"), SubResource("Line_22"), SubResource("Line_23"), SubResource("Line_24"), SubResource("Line_25"), SubResource("Line_26")])
+victory = Array[Resource]([SubResource("Line_27"), SubResource("Line_28"), SubResource("Line_29")])
+defeat = Array[Resource]([SubResource("Line_30"), SubResource("Line_31"), SubResource("Line_32")])
