@@ -172,7 +172,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_14"]
 script = ExtResource("6")
 speaker = &"sable_wren"
-text = "W. Half the Concord signs with a W, Quartermaster. I'll make enquiries."
+text = "Keep it safe, Quartermaster. I'll want to know whose hand that is."
 requires = SubResource("Cond_ff_mint_page_2")
 
 [sub_resource type="Resource" id="Cond_ff_mint_page_3"]

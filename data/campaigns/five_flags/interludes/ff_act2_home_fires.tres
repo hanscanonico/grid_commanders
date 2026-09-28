@@ -59,7 +59,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "The Old Town never fell, every ward in Aldmoor knows it, and so does Vance."
+text = "The Old Town was ours when the siege broke. Every ward in Aldmoor knows it, and so does Vance."
 requires = SubResource("Cond_ff_capital_ring")
 
 [sub_resource type="Resource" id="Cond_ff_capital_ring_2"]
@@ -92,5 +92,5 @@ text = "In the second week of winter, Iris Colt left Aldmoor with a quartermaste
 [resource]
 script = ExtResource("1")
 after_block = 1
-title = "Home Fires"
+title = "One Flag of Five"
 lines = Array[Resource]([SubResource("Line"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10")])

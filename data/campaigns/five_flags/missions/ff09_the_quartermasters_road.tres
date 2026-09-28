@@ -303,7 +303,7 @@ text = "Hollin is taken. Your trucks were well maintained; I will use them."
 [sub_resource type="Resource" id="Line_21"]
 script = ExtResource("10")
 speaker = &"gideon_holt"
-text = "I've lost a town, three carriers and a piano. Put the piano first on the report. People will ask about the piano."
+text = "I've lost a town, a road and a piano. Put the piano first on the report. People will ask about the piano."
 
 [resource]
 script = ExtResource("1")

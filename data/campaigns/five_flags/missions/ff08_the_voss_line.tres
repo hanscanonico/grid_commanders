@@ -25,8 +25,8 @@ day = 9
 
 [sub_resource type="Resource" id="Failure_losses"]
 script = ExtResource("3")
-text = "Lose no more than 14 units, from any cause."
-max_losses = 14
+text = "More than 8 units are lost, from any cause."
+max_losses = 8
 
 [sub_resource type="Resource" id="Bonus_town"]
 script = ExtResource("4")

@@ -160,9 +160,9 @@ effects = Array[Resource]([SubResource("Effect_hammer_loaded")])
 once = true
 lines = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
 
-[sub_resource type="Resource" id="Trigger_day_8"]
+[sub_resource type="Resource" id="Trigger_day_7"]
 script = ExtResource("7")
-day = 8
+day = 7
 
 [sub_resource type="Resource" id="Spawn_5"]
 script = ExtResource("8")
@@ -201,12 +201,12 @@ text = "Marines ashore behind the Iron camp. Tide was kind. Her headquarters is 
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("13")
 speaker = &"mara_voss"
-text = "Then go and knock on its back door, Admiral."
+text = "You knock on the back, Admiral. We'll knock on the front. Everything at the Old Town, forward."
 
 [sub_resource type="Resource" id="Event_marr_lands"]
 script = ExtResource("14")
 id = &"marr_lands"
-triggers = Array[Resource]([SubResource("Trigger_day_8")])
+triggers = Array[Resource]([SubResource("Trigger_day_7")])
 effects = Array[Resource]([SubResource("Effect_spawn_2"), SubResource("Effect_reveal_siege")])
 once = true
 lines = Array[Resource]([SubResource("Line_7"), SubResource("Line_8")])
@@ -230,7 +230,7 @@ note = "Aldmoor's Old Town was still Meridian's when the siege broke."
 [sub_resource type="Resource" id="Line_9"]
 script = ExtResource("13")
 speaker = &"mara_voss"
-text = "Ten days, and the Old Town never once changed hands."
+text = "Ten days, and the Old Town is still ours."
 
 [sub_resource type="Resource" id="Event_capital_ring"]
 script = ExtResource("14")
@@ -258,7 +258,7 @@ text = "What's on the heights?"
 [sub_resource type="Resource" id="Line_13"]
 script = ExtResource("13")
 speaker = &"mara_voss"
-text = "Radek Morn. I served under him once, and I left Iron so I'd never do it again. Don't bunch up where his gun can see."
+text = "Radek Morn. I served under him once. Don't bunch up where his gun can see."
 
 [sub_resource type="Resource" id="Line_14"]
 script = ExtResource("13")

@@ -157,7 +157,7 @@ text = "The forward strip is lost. I will build another. It will cost more, and 
 [sub_resource type="Resource" id="Line_13"]
 script = ExtResource("9")
 speaker = &"perrin_ash"
-text = "Tell Rook I spent my leave usefully. No, on second thought, don't tell Rook anything, he'll only want the fuel back."
+text = "The sky's yours again, Marshal. Keep it; I have to go and explain my leave to Chancellor Rook."
 
 [sub_resource type="Resource" id="Line_14"]
 script = ExtResource("9")
