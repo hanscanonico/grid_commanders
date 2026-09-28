@@ -1,68 +1,218 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=53 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="8"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="9"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="10"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="14"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Move 4 units to the border crossing."
+cells = Array[Vector2i]([Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5), Vector2i(0, 6), Vector2i(0, 7)])
+count = 4
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
+text = "Keep Alina Ward's rearguard in the fight."
+team = 2
+
+[sub_resource type="Resource" id="Trigger_1"]
+script = ExtResource("5")
 day = 2
 
-[sub_resource type="Resource" id="Effect_funds"]
-script = ExtResource("4")
-team = 1
-amount = 1000
+[sub_resource type="Resource" id="Spawn_1"]
+script = ExtResource("7")
+unit_type = ExtResource("8")
+cell = Vector2i(15, 3)
 
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"sera_lark"
-text = "Placeholder: this mission is being written."
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("7")
+unit_type = ExtResource("9")
+cell = Vector2i(14, 9)
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("7")
+unit_type = ExtResource("10")
+cell = Vector2i(15, 8)
+
+[sub_resource type="Resource" id="Effect_1"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+team = 3
+units = Array[Resource]([SubResource("Spawn_1"), SubResource("Spawn_2"), SubResource("Spawn_3")])
 
 [sub_resource type="Resource" id="Line_1"]
+script = ExtResource("11")
+speaker = &"cass_orlov"
+text = "There you are. A column makes such a lot of noise on a parade road."
+
+[sub_resource type="Resource" id="Event_1"]
+script = ExtResource("4")
+id = &"orlovs_hunters"
+triggers = Array[Resource]([SubResource("Trigger_1")])
+effects = Array[Resource]([SubResource("Effect_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_1")])
+
+[sub_resource type="Resource" id="Trigger_2"]
 script = ExtResource("5")
-speaker = &"sera_lark"
-text = "Placeholder briefing for The Last Parade."
+day = 3
+
+[sub_resource type="Resource" id="Spawn_4"]
+script = ExtResource("7")
+unit_type = ExtResource("8")
+cell = Vector2i(15, 9)
+
+[sub_resource type="Resource" id="Spawn_5"]
+script = ExtResource("7")
+unit_type = ExtResource("12")
+cell = Vector2i(15, 10)
+
+[sub_resource type="Resource" id="Spawn_6"]
+script = ExtResource("7")
+unit_type = ExtResource("12")
+cell = Vector2i(14, 10)
+
+[sub_resource type="Resource" id="Effect_2"]
+script = ExtResource("6")
+team = 3
+units = Array[Resource]([SubResource("Spawn_4"), SubResource("Spawn_5"), SubResource("Spawn_6")])
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("11")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy has something to say."
+text = "More of my people on the road behind you, Major. They've been told to be patient. I haven't."
+
+[sub_resource type="Resource" id="Event_2"]
+script = ExtResource("4")
+id = &"the_second_pack"
+triggers = Array[Resource]([SubResource("Trigger_2")])
+effects = Array[Resource]([SubResource("Effect_2")])
+once = true
+lines = Array[Resource]([SubResource("Line_2")])
+
+[sub_resource type="Resource" id="Trigger_3"]
+script = ExtResource("5")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_7"]
+script = ExtResource("7")
+unit_type = ExtResource("9")
+cell = Vector2i(14, 4)
+
+[sub_resource type="Resource" id="Spawn_8"]
+script = ExtResource("7")
+unit_type = ExtResource("12")
+cell = Vector2i(14, 6)
+
+[sub_resource type="Resource" id="Effect_3"]
+script = ExtResource("6")
+team = 3
+units = Array[Resource]([SubResource("Spawn_7"), SubResource("Spawn_8")])
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+script = ExtResource("11")
 speaker = &"sera_lark"
-text = "Placeholder victory."
+text = "More of them behind us. Don't look back, just drive."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_3"]
+script = ExtResource("4")
+id = &"the_third_pack"
+triggers = Array[Resource]([SubResource("Trigger_3")])
+effects = Array[Resource]([SubResource("Effect_3")])
+once = true
+lines = Array[Resource]([SubResource("Line_3")])
+
+[sub_resource type="Resource" id="Trigger_4"]
+script = ExtResource("13")
+tag = &"ninth_colours"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2), Vector2i(5, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(4, 3), Vector2i(5, 3), Vector2i(0, 4), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4), Vector2i(4, 4), Vector2i(5, 4), Vector2i(0, 5), Vector2i(1, 5), Vector2i(2, 5), Vector2i(3, 5), Vector2i(4, 5), Vector2i(5, 5), Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10)])
+
+[sub_resource type="Resource" id="Effect_4"]
+script = ExtResource("14")
+team = 2
+points = 14000
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("11")
+speaker = &"alina_ward"
+text = "Go, Sera. I have the bridge."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("11")
+speaker = &"sera_lark"
+text = "There's room in the trucks for your lot and room for you, General, just get in and we'll all go together."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("11")
+speaker = &"alina_ward"
+text = "Take the colours home, Sera. Somebody has to hold the far end of this bridge, and I've been holding it for twenty years."
+
+[sub_resource type="Resource" id="Event_4"]
+script = ExtResource("4")
+id = &"i_have_the_bridge"
+triggers = Array[Resource]([SubResource("Trigger_4")])
+effects = Array[Resource]([SubResource("Effect_4")])
+once = true
+lines = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("11")
+text = "The recall orders were a day old. What was left of the Ninth's Meridian officers formed up on the Parade Road, facing west."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("11")
+speaker = &"sera_lark"
+text = "Border's thirty miles off, the road's straight, and between us and it there's a river and everyone who's decided since Tuesday that we're the enemy."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("11")
+speaker = &"alina_ward"
+text = "Iris is already over with the wounded. You take the column, Sera. I'll keep the rearguard at the bridge."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("11")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy holds."
+text = "Director Orlov, State Security. I hold a warrant for the Meridian general who blamed Iron for the fire. Please walk slowly."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("11")
+speaker = &"sera_lark"
+text = "Four through the crossing and we're home. Colours ride in the APC."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("11")
+speaker = &"sera_lark"
+text = "We're over. The trucks, the colours, everyone who could walk."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("11")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "The General held the bridge until the last truck crossed. I watched her through the glass. Then the bridge was Orlov's, and so was she."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("11")
+speaker = &"iris_colt"
+text = "Then we'll go and get her back, however long it takes."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("11")
+speaker = &"cass_orlov"
+text = "The column stopped at the river, the way columns do when they've been running for a day and a night."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("11")
+speaker = &"gideon_holt"
+text = "Orlov has the General, the colours and most of the column, and I've no line in the ledger for any of it."
 
 [resource]
 script = ExtResource("1")
@@ -71,20 +221,21 @@ title = "The Last Parade"
 location = "The Parade Road, west of Candlemere"
 map_path = "res://maps/campaign/five_flags/ff06_the_last_parade.txt"
 player_team = 1
-ai_teams = Array[int]([2])
+ai_teams = Array[int]([2, 3])
 seats = Array[int]([])
-sides = {}
+sides = {1: 0, 2: 0, 3: 1}
 commanders = {
 1: &"sera_lark",
-2: &"cass_orlov"
+2: &"alina_ward",
+3: &"cass_orlov"
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_1")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("Objective_2")])
+events = Array[Resource]([SubResource("Event_1"), SubResource("Event_2"), SubResource("Event_3"), SubResource("Event_4")])
+par_day = 6
+briefing = Array[Resource]([SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11")])
+victory = Array[Resource]([SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14")])
+defeat = Array[Resource]([SubResource("Line_15"), SubResource("Line_16")])
