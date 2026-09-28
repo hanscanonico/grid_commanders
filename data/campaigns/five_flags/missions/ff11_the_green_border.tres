@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=47 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -6,90 +6,202 @@
 [ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="11"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_shrine"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Capture the Old Shrine."
+cell = Vector2i(13, 2)
 
-[sub_resource type="Resource" id="Bonus_0"]
+[sub_resource type="Resource" id="Bonus_camp"]
 script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
+text = "Capture Thorne's woodcutters' town."
+cell = Vector2i(16, 3)
 
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("3")
-day = 2
+day = 3
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Effect_levy"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+team = 2
+amount = 3000
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Line"]
 script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: this mission is being written."
+speaker = &"ivar_thorne"
+text = "The League taxes its own villages for this war, Colonel. It hurts them, and it should. Nobody here goes home until it's done."
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Event_thornes_column"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
+id = &"thornes_column"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_levy")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Line")])
 
-[sub_resource type="Resource" id="Trigger_town_b_ours"]
+[sub_resource type="Resource" id="Trigger_nia_ranger_a"]
 script = ExtResource("7")
-cell = Vector2i(3, 6)
-holder = 0
+tag = &"nia_ranger_a"
 
-[sub_resource type="Resource" id="Effect_write"]
+[sub_resource type="Resource" id="Effect_fought_nia_ranger_a"]
 script = ExtResource("8")
 flag = &"ff_nia_fought"
 mode = 0
 value = 1
-note = "Placeholder fact: the southern town was taken."
-
-[sub_resource type="Resource" id="Event_line_write"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: the southern town is ours."
-
-[sub_resource type="Resource" id="Event_writes_fact"]
-script = ExtResource("6")
-id = &"placeholder_fact"
-triggers = Array[Resource]([SubResource("Trigger_town_b_ours")])
-effects = Array[Resource]([SubResource("Effect_write")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_write")])
-
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder briefing for The Green Border."
+note = "The Ninth destroyed one of Nia Rowan's ranger squads at the Old Shrine."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
-speaker = &"ivar_thorne"
-text = "Placeholder: the enemy has something to say."
+speaker = &"nia_rowan"
+text = "That was my first squad."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"iris_colt"
-text = "Placeholder victory."
+text = "Nia, get them off the hill. Please."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
+[sub_resource type="Resource" id="Event_ranger_a_down"]
+script = ExtResource("6")
+id = &"ranger_a_down"
+triggers = Array[Resource]([SubResource("Trigger_nia_ranger_a")])
+effects = Array[Resource]([SubResource("Effect_fought_nia_ranger_a")])
+once = true
+lines = Array[Resource]([SubResource("Line_2"), SubResource("Line_3")])
+
+[sub_resource type="Resource" id="Trigger_nia_ranger_b"]
+script = ExtResource("7")
+tag = &"nia_ranger_b"
+
+[sub_resource type="Resource" id="Effect_fought_nia_ranger_b"]
+script = ExtResource("8")
+flag = &"ff_nia_fought"
+mode = 0
+value = 1
+note = "The Ninth destroyed one of Nia Rowan's ranger squads at the Old Shrine."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"nia_rowan"
+text = "Second squad. They trained with yours, Iris. At Candlemere, every spring."
+
+[sub_resource type="Resource" id="Event_ranger_b_down"]
+script = ExtResource("6")
+id = &"ranger_b_down"
+triggers = Array[Resource]([SubResource("Trigger_nia_ranger_b")])
+effects = Array[Resource]([SubResource("Effect_fought_nia_ranger_b")])
+once = true
+lines = Array[Resource]([SubResource("Line_4")])
+
+[sub_resource type="Resource" id="Trigger_shrine_ours"]
+script = ExtResource("9")
+cell = Vector2i(13, 2)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_rangers_withdraw"]
+script = ExtResource("10")
+tags = Array[StringName]([&"nia_ranger_a", &"nia_ranger_b"])
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"nia_rowan"
+text = "Rangers, off the hill. We don't fire on the Ninth."
+
+[sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
 speaker = &"ivar_thorne"
-text = "Placeholder: the enemy holds."
+text = "Captain Rowan. Come back to the line."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("5")
+speaker = &"nia_rowan"
+text = "No."
+
+[sub_resource type="Resource" id="Event_nia_withdraws"]
+script = ExtResource("6")
+id = &"nia_withdraws"
+triggers = Array[Resource]([SubResource("Trigger_shrine_ours")])
+effects = Array[Resource]([SubResource("Effect_rangers_withdraw")])
+once = true
+lines = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("5")
+speaker = &""
+text = "The Thornwood marches. Ivar Thorne has seized the League council and marched into Meridian's forest provinces, to protect them, he says."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("5")
+speaker = &"mara_voss"
+text = "Thorne's holding the Old Shrine. Take it and the whole border province can see his flag come down."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "The rangers at the shrine are Nia's. Her own squads. She was recalled to the League the same morning they recalled everyone."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("5")
+speaker = &"ivar_thorne"
+text = "Colonel Colt. The Captain is a League officer. She'll hold the shrine for the League, and she'll bleed for it."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "I'm not shooting at Nia's people if I can help it. We go round them, we go through Thorne, and we take the hill."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("5")
+speaker = &"mara_voss"
+text = "Your sentiment, Colonel. Your casualties. Take the shrine."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("5")
+speaker = &"ivar_thorne"
+text = "Keep the shrine, Colonel, and the League will remember who took it."
+
+[sub_resource type="Resource" id="Cond_ff_nia_fought"]
+script = ExtResource("11")
+flag = &"ff_nia_fought"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("5")
+speaker = &"nia_rowan"
+text = "You didn't shoot. I watched you not shoot, all afternoon. Thorne won't forget it and neither will I."
+requires = SubResource("Cond_ff_nia_fought")
+
+[sub_resource type="Resource" id="Cond_ff_nia_fought_2"]
+script = ExtResource("11")
+flag = &"ff_nia_fought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("5")
+speaker = &"nia_rowan"
+text = "I'm taking my rangers home, what's left of them. Don't follow us into the wood, Iris."
+requires = SubResource("Cond_ff_nia_fought_2")
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "The shrine's ours. Tell the marshal the border province is clear."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("5")
+speaker = &"ivar_thorne"
+text = "Go home, Colonel, the wood's League ground now and we paid for every tree of it."
+
+[sub_resource type="Resource" id="Line_19"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Thorne's flag is still over the shrine. The province is his until somebody's got the men to argue."
 
 [resource]
 script = ExtResource("1")
@@ -107,11 +219,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_shrine")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder"), SubResource("Event_writes_fact")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_camp")])
+events = Array[Resource]([SubResource("Event_thornes_column"), SubResource("Event_ranger_a_down"), SubResource("Event_ranger_b_down"), SubResource("Event_nia_withdraws")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+briefing = Array[Resource]([SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12"), SubResource("Line_13")])
+victory = Array[Resource]([SubResource("Line_14"), SubResource("Line_15"), SubResource("Line_16"), SubResource("Line_17")])
+defeat = Array[Resource]([SubResource("Line_18"), SubResource("Line_19")])

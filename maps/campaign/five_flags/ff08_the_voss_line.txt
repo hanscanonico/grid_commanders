@@ -1,26 +1,63 @@
-# Five Flags placeholder — "The Voss Line". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# The Tamsin, the river Voss chose to lose slowly behind.
+# Nothing on treads or tyres crosses it but by three bridges, and the middle one
+# is the highway Vance's whole offensive is aimed down, with Tamsin Bridge town on
+# the Meridian end of it. The west bank is woods and broken hills - cover for a
+# line that counter-punches; the east bank is open plain with nowhere to hide an
+# attacker. Foot soldiers can wade the river anywhere, which is how the line gets
+# turned when it is spread too thin. The fight is attrition: days, not ground.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
 [terrain]
-.......M.....
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-M............
+MM..FF.FM~.....F..MM
+M.C..F.FF~..C.....C.
+..=======+=====.B...
+.F=..C.FM~....=.....
+..=...MFF.~...=.F..C
+.B=...F.F.~...=.....
+.Q=======C+========Q
+..=...F.F.~...=.....
+.C=..FMF..~.F.=...C.
+.B=...F.FM~...=.B...
+..=======+=====.....
+M.C..F.FF~...C...F..
+MM..FF..M~.....F..MM
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+1 1 6
+1 1 5
+1 2 1
+1 5 3
+1 1 8
+1 2 11
+1 9 6
+1 1 9
+2 19 6
+2 16 2
+2 16 9
+2 12 1
+2 18 1
+2 19 4
+2 18 8
+2 13 11
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+1 i 8 1
+1 m 8 4
+1 i 9 5
+1 t 8 6
+1 g 6 5
+1 i 8 8
+1 m 8 10
+1 R 4 6
+1 t 5 9
+1 i 9 3
+1 g 7 7
+2 t 13 2
+2 t 14 6
+2 t 15 6
+2 g 14 4
+2 g 14 8
+2 i 12 4
+2 i 12 8
+2 m 12 6
+2 r 13 10
+2 R 16 6
+2 i 12 1
