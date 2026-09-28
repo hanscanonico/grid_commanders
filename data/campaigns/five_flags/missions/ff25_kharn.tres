@@ -22,11 +22,11 @@ tag = &"kharn_warden"
 
 [sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
-text = "Move 3 units to the Kharn road."
+text = "Move Alina Ward's transport to the Kharn road."
 id = &"the_way_out"
 hidden = true
 cells = Array[Vector2i]([Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5)])
-count = 3
+tag = &"alina_transport"
 
 [sub_resource type="Resource" id="Objective_3"]
 script = ExtResource("4")

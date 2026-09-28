@@ -2,7 +2,7 @@
 # The team that crossed Orlov's hills comes down off the ridge in the north
 # east into the carry slots — i, i, i, m, m, r in row order, the list
 # tests/unit/test_campaign_carry_authoring.gd pins. A type the crossing lost is
-# replaced by that row's own unit, and everyone is refit to the floor (60).
+# replaced by that row's own unit, and every veteran is refit to at least the floor (60).
 # Iris's own tanks and infantry (the unslotted player rows) wait with them.
 #
 # Kharn prison is the neutral city at (9,3) on the shore of the Kharn tarn.
@@ -16,7 +16,7 @@
 # the truck defects, and the escort objective and the failure that guards it
 # are revealed at the same boundary, so the warden's death alone wins nothing.
 # The way out is the Kharn road, west along row 4 to the edge (x=0, rows 3-5),
-# three units standing there at once. Orlov's lodge (HQ (2,10)) and depot
+# and it is the truck that has to get there: a recon parked on the exit wins nothing. Orlov's lodge (HQ (2,10)) and depot
 # (base (8,9)) are south and west of the road, so the run passes his door; his
 # road patrol returns to (1,4)/(2,5) on day 3 and has to be cleared off the
 # exit. His headquarters sits far from the team's start on purpose: placed in
