@@ -1,83 +1,192 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=20 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=47 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/protect_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="6"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="13"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="14"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="15"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
-
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
-script = ExtResource("3")
-day = 2
-
-[sub_resource type="Resource" id="Effect_funds"]
-script = ExtResource("4")
-team = 1
-amount = 1000
-
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"nia_rowan"
-text = "Placeholder: this mission is being written."
-
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
-
-[sub_resource type="Resource" id="Gate"]
-script = ExtResource("7")
 flag = &"ff_nia_fought"
 at_least = 0
 at_most = 0
 
-[sub_resource type="Resource" id="Line_1"]
+[sub_resource type="Resource" id="ReachCell_1"]
+script = ExtResource("3")
+text = "Move 1 unit to Greywater."
+cells = Array[Vector2i]([Vector2i(18, 1), Vector2i(17, 1), Vector2i(18, 0), Vector2i(18, 2), Vector2i(19, 1)])
+count = 1
+
+[sub_resource type="Resource" id="ProtectUnit_1"]
+script = ExtResource("4")
+text = "The delegates' car is destroyed."
+tag = &"delegates"
+
+[sub_resource type="Resource" id="DestroyUnit_1"]
 script = ExtResource("5")
-speaker = &"nia_rowan"
-text = "Placeholder briefing for Nia's Road."
+text = "Destroy Thorne's huntmaster."
+tag = &"huntmaster"
+
+[sub_resource type="Resource" id="UnitReached_1"]
+script = ExtResource("6")
+tag = &"delegates"
+cells = Array[Vector2i]([Vector2i(12, 11), Vector2i(13, 11), Vector2i(14, 11)])
+
+[sub_resource type="Resource" id="Spawn_1"]
+script = ExtResource("8")
+unit_type = ExtResource("7")
+cell = Vector2i(16, 10)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(13, 12)
+
+[sub_resource type="Resource" id="SpawnUnits_1"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_1"), SubResource("Spawn_2")])
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("11")
+speaker = &"ivar_thorne"
+text = "The mill bridge, an hour before dawn. My informant was punctual."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
-speaker = &"ivar_thorne"
-text = "Placeholder: the enemy has something to say."
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "Off the road, into the trees, and keep the car moving."
+
+[sub_resource type="Resource" id="Event_the_punctual_informant"]
+script = ExtResource("12")
+id = &"the_punctual_informant"
+triggers = Array[Resource]([SubResource("UnitReached_1")])
+effects = Array[Resource]([SubResource("SpawnUnits_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
+
+[sub_resource type="Resource" id="DayReached_1"]
+script = ExtResource("13")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("8")
+unit_type = ExtResource("14")
+cell = Vector2i(19, 5)
+
+[sub_resource type="Resource" id="Spawn_4"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(18, 6)
+
+[sub_resource type="Resource" id="SpawnUnits_2"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_3"), SubResource("Spawn_4")])
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
-speaker = &"nia_rowan"
-text = "Placeholder victory."
-
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+script = ExtResource("11")
 speaker = &"ivar_thorne"
-text = "Placeholder: the enemy holds."
+text = "Second column in from the east edge. Drive them onto the river. Hold them there till I come."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_east_column"]
+script = ExtResource("12")
+id = &"the_east_column"
+triggers = Array[Resource]([SubResource("DayReached_1")])
+effects = Array[Resource]([SubResource("SpawnUnits_2")])
+once = true
+lines = Array[Resource]([SubResource("Line_3")])
+
+[sub_resource type="Resource" id="UnitReached_2"]
+script = ExtResource("6")
+tag = &"delegates"
+cells = Array[Vector2i]([Vector2i(18, 1), Vector2i(17, 1), Vector2i(18, 0), Vector2i(18, 2), Vector2i(19, 1)])
+
+[sub_resource type="Resource" id="SetOwner_1"]
+script = ExtResource("15")
+team = 1
+cells = Array[Vector2i]([Vector2i(18, 1)])
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "Greywater's opened its gate. The delegates are inside."
+
+[sub_resource type="Resource" id="Event_greywater_opens"]
+script = ExtResource("12")
+id = &"greywater_opens"
+triggers = Array[Resource]([SubResource("UnitReached_2")])
+effects = Array[Resource]([SubResource("SetOwner_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_4")])
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("11")
+text = "The Thornwood. The League delegates who escaped Thorne's council are meeting at Greywater, and one armoured car is carrying all of them."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("11")
+speaker = &"sable_wren"
+text = "I've arranged your route, Captain. The north bridge is burned, so it's the drovers' road through the trees and over the mill bridge. Thorne's scouts haven't used it in a year."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "The car stays on the road. My rangers don't need one. We walk beside it and we don't shoot unless we're seen."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("11")
+speaker = &"ivar_thorne"
+text = "Traitors in a tin box, driving through my forest in the dark. Find it. Nobody goes home."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "His huntmaster's tank is out there somewhere. If it finds us, it doesn't leave."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "The road's clear and the delegates are through to Greywater. They'll vote by morning."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("11")
+speaker = &"sable_wren"
+text = "Well done, Captain. Thorne must have had scouts of his own on the drovers' road. He's always been thorough."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "Must have. Tell Colonel Colt the rangers march with her to Greenhollow, and I'll pick our roads myself from now on."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("11")
+speaker = &"ivar_thorne"
+text = "The car's burning on the road, and your council with it."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("11")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "One armoured car, eleven delegates, a whole government. I'd have sent two cars. Nobody asks the quartermaster."
 
 [resource]
 script = ExtResource("1")
 id = &"ff15_nias_road"
 title = "Nia's Road"
-location = "The Thornwood"
+location = "The Thornwood, by night"
 map_path = "res://maps/campaign/five_flags/ff15_nias_road.txt"
-unlock_requires = SubResource("Gate")
+unlock_requires = SubResource("Cond_1")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])
@@ -88,11 +197,11 @@ commanders = {
 }
 fog_enabled = true
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+objectives = Array[Resource]([SubResource("ReachCell_1")])
+failures = Array[Resource]([SubResource("ProtectUnit_1")])
+bonus_objectives = Array[Resource]([SubResource("DestroyUnit_1")])
+events = Array[Resource]([SubResource("Event_the_punctual_informant"), SubResource("Event_the_east_column"), SubResource("Event_greywater_opens")])
+par_day = 7
+briefing = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9")])
+victory = Array[Resource]([SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])
+defeat = Array[Resource]([SubResource("Line_13"), SubResource("Line_14")])

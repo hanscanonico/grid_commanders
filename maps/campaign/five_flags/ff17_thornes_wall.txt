@@ -1,26 +1,67 @@
-# Five Flags placeholder — "Thorne's Wall". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags, Act III — "Thorne's Wall". Greenhollow, Iris + Ines Calder v Thorne.
+# A siege from two sides. The Wall is the mountain line across rows 5-6: two
+# gate towns carry the roads through it, the Moss Gate (6,5) in the west and
+# the Ash Gate (17,5) in the east, and two wooded sally ports at columns 10 and
+# 13 let foot and slow armour through the middle. The wall stops short of both
+# edges, so the woods at the corners are a third way round for the patient.
+# Iris opens in the south-west and Ines's loyalists in the south-east, each
+# with an HQ and a base; the stream on row 13 has one bridge between
+# them. Inside the wall Thorne has a base, one town (three more stand empty) and his HQ at (12,1),
+# the one primary.
+# On day 2 Nia's rangers arrive: on the west edge for Iris if she was spared at
+# the shrine, on the east edge for Ines if she was not. Thorne's power, which
+# costs every unit on the board 2 HP, is filled on day 4.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
 [terrain]
-...M.........
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-.M...........
+MMMMMMMMMMMMMMMMMMMMMMMM
+M...C.......Q......C...M
+M.....============.....M
+...F..=..B..C..C.=..F...
+......=..........=......
+FFMMMMCMMMFMMFMMMCMMMMFF
+FFMMMM=MMMFMMFMMM=MMMMFF
+......=..........=......
+.C.FF.=..........=.FF.C.
+....F.=..C.FF.C..=.F....
+.F....=..........=....F.
+......============......
+..F.B.=.....C....=.B.F..
+......=.~~~~+~~~.=......
+...Q..=..........=..Q...
+......=.....F....=......
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+3 12 1
+3 9 3
+3 12 3
+3 6 5
+3 17 5
+1 3 14
+1 4 12
+2 20 14
+2 19 12
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+1 t 5 13
+1 t 7 14
+1 g 4 13
+1 m 5 11
+1 i 3 12
+1 i 7 12
+1 r 5 14
+1 m 2 13
+1 t 8 12
+2 i 18 13
+2 i 20 12
+2 i 16 12
+2 i 18 14
+2 m 17 12
+2 g 19 13
+2 t 16 14
+3 t 12 4
+3 g 8 4
+3 i 16 4
+3 i 7 4
+3 i 5 7
+3 i 18 7
+3 t 11 8
+3 m 14 7

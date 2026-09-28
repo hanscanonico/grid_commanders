@@ -1,44 +1,78 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
-[sub_resource type="Resource" id="Line_1"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Placeholder: the end of act 3, Old Friends."
-
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("2")
-speaker = &"gideon_holt"
-text = "Placeholder: Holt's tally of the act."
-
-[sub_resource type="Resource" id="Cond_ff_nia_fought_yes"]
-script = ExtResource("3")
 flag = &"ff_nia_fought"
 at_least = 1
 at_most = -1
 
-[sub_resource type="Resource" id="Cond_ff_nia_fought_no"]
+[sub_resource type="Resource" id="Cond_2"]
+script = ExtResource("2")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_3"]
+script = ExtResource("2")
+flag = &"ff_cipher_read"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
-flag = &"ff_nia_fought"
-at_least = 0
-at_most = 0
+text = "Autumn. The Verdant League and the Aurora Compact signed with Meridian in the same week, and the Ninth's pole flew three flags again."
 
-[sub_resource type="Resource" id="Line_ff_nia_fought_yes"]
-script = ExtResource("2")
-speaker = &"iris_colt"
-text = "Placeholder: it went one way."
-requires = SubResource("Cond_ff_nia_fought_yes")
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "The rangers wear the Ninth's colours again. I kept them folded in my pack the whole time Thorne had us."
+unless = SubResource("Cond_1")
 
-[sub_resource type="Resource" id="Line_ff_nia_fought_no"]
-script = ExtResource("2")
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "I march with the Ninth because Thorne was worse. Don't mistake it for anything else, Iris. I haven't forgiven the shrine."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
 speaker = &"iris_colt"
-text = "Placeholder: it went the other."
-requires = SubResource("Cond_ff_nia_fought_no")
+text = "Draeg took his column home under our old pennant. Somewhere in Ostrava there's an Iron colonel who still counts himself one of ours."
+requires = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "Draeg's alive in an Iron field hospital. The pennant burned with his tank, and I watched it go."
+unless = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Season's tally. Two nations, one junta, four relays, a war game we paid for in live shells, and a spymaster who owes me a bottle."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "I read Orin's intercepts with my own eyes. WREN, every week, reporting on us to Aurum."
+requires = SubResource("Cond_3")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("3")
+speaker = &"sable_wren"
+text = "Orin sees birds in everything, Colonel. It's the altitude."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "Iron next, then. Alina's been in Kharn since the bridge. I'm going to get her."
 
 [resource]
 script = ExtResource("1")
 after_block = 2
 title = "Old Friends"
-lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_ff_nia_fought_yes"), SubResource("Line_ff_nia_fought_no")])
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9")])

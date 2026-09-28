@@ -1,68 +1,277 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=57 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/effects/end_mission_effect.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="7"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="CaptureCell_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
+text = "Capture the Aster relay."
 cell = Vector2i(9, 2)
 
-[sub_resource type="Resource" id="Bonus_0"]
+[sub_resource type="Resource" id="CaptureCell_2"]
 script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
+text = "Capture the Brennock relay."
+cell = Vector2i(14, 2)
 
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="CaptureCell_3"]
+script = ExtResource("2")
+text = "Capture the Fallow relay."
+cell = Vector2i(7, 11)
+
+[sub_resource type="Resource" id="CaptureCell_4"]
+script = ExtResource("2")
+text = "Capture the Vey relay."
+cell = Vector2i(14, 11)
+
+[sub_resource type="Resource" id="CaptureCell_5"]
+script = ExtResource("2")
+text = "Capture Orlov's base."
+cell = Vector2i(21, 8)
+
+[sub_resource type="Resource" id="CellOwned_1"]
 script = ExtResource("3")
-day = 2
+cell = Vector2i(9, 2)
+holder = 1
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="CellOwned_2"]
+script = ExtResource("3")
+cell = Vector2i(14, 2)
+holder = 1
+
+[sub_resource type="Resource" id="EndMission_1"]
 script = ExtResource("4")
-team = 1
-amount = 1000
-
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"sera_lark"
-text = "Placeholder: this mission is being written."
-
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+success = false
+reason = "Orlov holds the Aster and Brennock relays."
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
-speaker = &"sera_lark"
-text = "Placeholder briefing for The Race to Skyreach."
+speaker = &"cass_orlov"
+text = "Aster and Brennock, and the whole north lane's gone quiet, Major."
+
+[sub_resource type="Resource" id="Event_orlov_holds_aster_and_brennock"]
+script = ExtResource("6")
+id = &"orlov_holds_aster_and_brennock"
+triggers = Array[Resource]([SubResource("CellOwned_1"), SubResource("CellOwned_2")])
+effects = Array[Resource]([SubResource("EndMission_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_1")])
+
+[sub_resource type="Resource" id="CellOwned_3"]
+script = ExtResource("3")
+cell = Vector2i(9, 2)
+holder = 1
+
+[sub_resource type="Resource" id="CellOwned_4"]
+script = ExtResource("3")
+cell = Vector2i(7, 11)
+holder = 1
+
+[sub_resource type="Resource" id="EndMission_2"]
+script = ExtResource("4")
+success = false
+reason = "Orlov holds the Aster and Fallow relays."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy has something to say."
+text = "Aster and Fallow are mine. Skyreach is looking west through a blindfold. Hold them, and let the Major come to us."
+
+[sub_resource type="Resource" id="Event_orlov_holds_aster_and_fallow"]
+script = ExtResource("6")
+id = &"orlov_holds_aster_and_fallow"
+triggers = Array[Resource]([SubResource("CellOwned_3"), SubResource("CellOwned_4")])
+effects = Array[Resource]([SubResource("EndMission_2")])
+once = true
+lines = Array[Resource]([SubResource("Line_2")])
+
+[sub_resource type="Resource" id="CellOwned_5"]
+script = ExtResource("3")
+cell = Vector2i(9, 2)
+holder = 1
+
+[sub_resource type="Resource" id="CellOwned_6"]
+script = ExtResource("3")
+cell = Vector2i(14, 11)
+holder = 1
+
+[sub_resource type="Resource" id="EndMission_3"]
+script = ExtResource("4")
+success = false
+reason = "Orlov holds the Aster and Vey relays."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
-speaker = &"sera_lark"
-text = "Placeholder victory."
+speaker = &"cass_orlov"
+text = "Two relays, Aster and Vey, and a hunter only ever needs one eye."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
+[sub_resource type="Resource" id="Event_orlov_holds_aster_and_vey"]
+script = ExtResource("6")
+id = &"orlov_holds_aster_and_vey"
+triggers = Array[Resource]([SubResource("CellOwned_5"), SubResource("CellOwned_6")])
+effects = Array[Resource]([SubResource("EndMission_3")])
+once = true
+lines = Array[Resource]([SubResource("Line_3")])
+
+[sub_resource type="Resource" id="CellOwned_7"]
+script = ExtResource("3")
+cell = Vector2i(14, 2)
+holder = 1
+
+[sub_resource type="Resource" id="CellOwned_8"]
+script = ExtResource("3")
+cell = Vector2i(7, 11)
+holder = 1
+
+[sub_resource type="Resource" id="EndMission_4"]
+script = ExtResource("4")
+success = false
+reason = "Orlov holds the Brennock and Fallow relays."
+
+[sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"cass_orlov"
-text = "Placeholder: the enemy holds."
+text = "Tell your Chancellor that Brennock and Fallow sing for Iron now."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
+[sub_resource type="Resource" id="Event_orlov_holds_brennock_and_fallow"]
+script = ExtResource("6")
+id = &"orlov_holds_brennock_and_fallow"
+triggers = Array[Resource]([SubResource("CellOwned_7"), SubResource("CellOwned_8")])
+effects = Array[Resource]([SubResource("EndMission_4")])
+once = true
+lines = Array[Resource]([SubResource("Line_4")])
+
+[sub_resource type="Resource" id="CellOwned_9"]
+script = ExtResource("3")
+cell = Vector2i(14, 2)
+holder = 1
+
+[sub_resource type="Resource" id="CellOwned_10"]
+script = ExtResource("3")
+cell = Vector2i(14, 11)
+holder = 1
+
+[sub_resource type="Resource" id="EndMission_5"]
+script = ExtResource("4")
+success = false
+reason = "Orlov holds the Brennock and Vey relays."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "The eastern pair's mine. Brennock, Vey. Aurora won't see us coming."
+
+[sub_resource type="Resource" id="Event_orlov_holds_brennock_and_vey"]
+script = ExtResource("6")
+id = &"orlov_holds_brennock_and_vey"
+triggers = Array[Resource]([SubResource("CellOwned_9"), SubResource("CellOwned_10")])
+effects = Array[Resource]([SubResource("EndMission_5")])
+once = true
+lines = Array[Resource]([SubResource("Line_5")])
+
+[sub_resource type="Resource" id="CellOwned_11"]
+script = ExtResource("3")
+cell = Vector2i(7, 11)
+holder = 1
+
+[sub_resource type="Resource" id="CellOwned_12"]
+script = ExtResource("3")
+cell = Vector2i(14, 11)
+holder = 1
+
+[sub_resource type="Resource" id="EndMission_6"]
+script = ExtResource("4")
+success = false
+reason = "Orlov holds the Fallow and Vey relays."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "The south lane's mine, Fallow and Vey both, and so is everything they could have seen."
+
+[sub_resource type="Resource" id="Event_orlov_holds_fallow_and_vey"]
+script = ExtResource("6")
+id = &"orlov_holds_fallow_and_vey"
+triggers = Array[Resource]([SubResource("CellOwned_11"), SubResource("CellOwned_12")])
+effects = Array[Resource]([SubResource("EndMission_6")])
+once = true
+lines = Array[Resource]([SubResource("Line_6")])
+
+[sub_resource type="Resource" id="CellOwned_13"]
+script = ExtResource("3")
+cell = Vector2i(9, 2)
+holder = 0
+
+[sub_resource type="Resource" id="GrantFunds_1"]
+script = ExtResource("7")
+team = 1
+amount = 3000
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "Aster's up and talking, Skyreach says thanks and sends money, which is the nicest thing Skyreach has ever said to me."
+
+[sub_resource type="Resource" id="Event_the_first_relay_sings"]
+script = ExtResource("6")
+id = &"the_first_relay_sings"
+triggers = Array[Resource]([SubResource("CellOwned_13")])
+effects = Array[Resource]([SubResource("GrantFunds_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_7")])
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("5")
+text = "The Aurora highlands. Four signal relays tell the Compact what is coming over its borders, and Iron wants Aurora blind before it comes."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "Two of them, Major Lark. That's all I need. Two relays and Skyreach can't see past its own gate."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "Then I need four, and I'm faster than he is, so everybody go, go now, and don't stop for anything that isn't a relay."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "Recon can't capture, but a recon sitting on a relay means nobody else can either, so park them there and bring the rifles up behind."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Rook won't commit Aurora until the relays are his again, so win this one fast, Sera."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "All four relays are ours, Skyreach can see every road into Aurora, and I'd like it noted that I got here first."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Noted. Orlov wanted this country blind, which means Iron's coming soon."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "A good run, Major, and I'll be in the hills when you tire."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "Two relays out, and Aurora's looking at a blank screen. I'll tell Draeg the road's open. He'll want to know tonight."
+
+[sub_resource type="Resource" id="Line_17"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Four relays, two roads, and Sera Lark came second. I've checked the report twice. It still says second."
 
 [resource]
 script = ExtResource("1")
@@ -80,11 +289,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("CaptureCell_1"), SubResource("CaptureCell_2"), SubResource("CaptureCell_3"), SubResource("CaptureCell_4")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("CaptureCell_5")])
+events = Array[Resource]([SubResource("Event_orlov_holds_aster_and_brennock"), SubResource("Event_orlov_holds_aster_and_fallow"), SubResource("Event_orlov_holds_aster_and_vey"), SubResource("Event_orlov_holds_brennock_and_fallow"), SubResource("Event_orlov_holds_brennock_and_vey"), SubResource("Event_orlov_holds_fallow_and_vey"), SubResource("Event_the_first_relay_sings")])
+par_day = 10
+briefing = Array[Resource]([SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])
+victory = Array[Resource]([SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
+defeat = Array[Resource]([SubResource("Line_16"), SubResource("Line_17")])

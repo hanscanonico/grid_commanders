@@ -1,95 +1,243 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=61 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/objectives/defeat_team_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="14"]
+[ext_resource type="Resource" path="res://data/units/b_copter.tres" id="15"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="16"]
+[ext_resource type="Resource" path="res://data/units/bomber.tres" id="17"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="18"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="19"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="DefeatTeam_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Break Vale's air wing outright."
+team = 4
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="AllySurvives_1"]
 script = ExtResource("3")
-day = 2
+text = "Keep Sera Lark's army in the war."
+team = 2
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="DestroyUnit_1"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+text = "Destroy Vale's lead bomber."
+tag = &"vale_lead"
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="ForceStrength_1"]
 script = ExtResource("5")
-speaker = &"perrin_ash"
-text = "Placeholder: this mission is being written."
+team = 3
+bound = 0
+count = 6
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="UnitReached_1"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+tag = &"draeg_command"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 0), Vector2i(8, 0), Vector2i(9, 0), Vector2i(10, 0), Vector2i(11, 0), Vector2i(12, 0), Vector2i(13, 0), Vector2i(14, 0), Vector2i(15, 0), Vector2i(16, 0), Vector2i(17, 0), Vector2i(18, 0), Vector2i(19, 0), Vector2i(20, 0), Vector2i(21, 0), Vector2i(22, 0), Vector2i(23, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1), Vector2i(6, 1), Vector2i(7, 1), Vector2i(8, 1), Vector2i(9, 1), Vector2i(10, 1), Vector2i(11, 1), Vector2i(12, 1), Vector2i(13, 1), Vector2i(14, 1), Vector2i(15, 1), Vector2i(16, 1), Vector2i(17, 1), Vector2i(18, 1), Vector2i(19, 1), Vector2i(20, 1), Vector2i(21, 1), Vector2i(22, 1), Vector2i(23, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2), Vector2i(5, 2), Vector2i(6, 2), Vector2i(7, 2), Vector2i(8, 2), Vector2i(9, 2), Vector2i(10, 2), Vector2i(11, 2), Vector2i(12, 2), Vector2i(13, 2), Vector2i(14, 2), Vector2i(15, 2), Vector2i(16, 2), Vector2i(17, 2), Vector2i(18, 2), Vector2i(19, 2), Vector2i(20, 2), Vector2i(21, 2), Vector2i(22, 2), Vector2i(23, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(4, 3), Vector2i(5, 3), Vector2i(6, 3), Vector2i(7, 3), Vector2i(8, 3), Vector2i(9, 3), Vector2i(10, 3), Vector2i(11, 3), Vector2i(12, 3), Vector2i(13, 3), Vector2i(14, 3), Vector2i(15, 3), Vector2i(16, 3), Vector2i(17, 3), Vector2i(18, 3), Vector2i(19, 3), Vector2i(20, 3), Vector2i(21, 3), Vector2i(22, 3), Vector2i(23, 3), Vector2i(0, 4), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4), Vector2i(4, 4), Vector2i(5, 4), Vector2i(6, 4), Vector2i(7, 4), Vector2i(8, 4), Vector2i(9, 4), Vector2i(10, 4), Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4), Vector2i(14, 4), Vector2i(15, 4), Vector2i(16, 4), Vector2i(17, 4), Vector2i(18, 4), Vector2i(19, 4), Vector2i(20, 4), Vector2i(21, 4), Vector2i(22, 4), Vector2i(23, 4), Vector2i(0, 5), Vector2i(1, 5), Vector2i(2, 5), Vector2i(3, 5), Vector2i(4, 5), Vector2i(5, 5), Vector2i(6, 5), Vector2i(7, 5), Vector2i(8, 5), Vector2i(9, 5), Vector2i(10, 5), Vector2i(11, 5), Vector2i(12, 5), Vector2i(13, 5), Vector2i(14, 5), Vector2i(15, 5), Vector2i(16, 5), Vector2i(17, 5), Vector2i(18, 5), Vector2i(19, 5), Vector2i(20, 5), Vector2i(21, 5), Vector2i(22, 5), Vector2i(23, 5), Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(6, 6), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 6), Vector2i(10, 6), Vector2i(11, 6), Vector2i(12, 6), Vector2i(13, 6), Vector2i(14, 6), Vector2i(15, 6), Vector2i(16, 6), Vector2i(17, 6), Vector2i(18, 6), Vector2i(19, 6), Vector2i(20, 6), Vector2i(21, 6), Vector2i(22, 6), Vector2i(23, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(6, 7), Vector2i(7, 7), Vector2i(8, 7), Vector2i(9, 7), Vector2i(10, 7), Vector2i(11, 7), Vector2i(12, 7), Vector2i(13, 7), Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(17, 7), Vector2i(18, 7), Vector2i(19, 7), Vector2i(20, 7), Vector2i(21, 7), Vector2i(22, 7), Vector2i(23, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(6, 8), Vector2i(7, 8), Vector2i(8, 8), Vector2i(9, 8), Vector2i(10, 8), Vector2i(11, 8), Vector2i(12, 8), Vector2i(13, 8), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8), Vector2i(17, 8), Vector2i(18, 8), Vector2i(19, 8), Vector2i(20, 8), Vector2i(21, 8), Vector2i(22, 8), Vector2i(23, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(6, 9), Vector2i(7, 9), Vector2i(8, 9), Vector2i(9, 9), Vector2i(10, 9), Vector2i(11, 9), Vector2i(12, 9), Vector2i(13, 9), Vector2i(14, 9), Vector2i(15, 9), Vector2i(16, 9), Vector2i(17, 9), Vector2i(18, 9), Vector2i(19, 9), Vector2i(20, 9), Vector2i(21, 9), Vector2i(22, 9), Vector2i(23, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10), Vector2i(6, 10), Vector2i(7, 10), Vector2i(8, 10), Vector2i(9, 10), Vector2i(10, 10), Vector2i(11, 10), Vector2i(12, 10), Vector2i(13, 10), Vector2i(14, 10), Vector2i(15, 10), Vector2i(16, 10), Vector2i(17, 10), Vector2i(18, 10), Vector2i(19, 10), Vector2i(20, 10), Vector2i(21, 10), Vector2i(22, 10), Vector2i(23, 10), Vector2i(0, 11), Vector2i(1, 11), Vector2i(2, 11), Vector2i(3, 11), Vector2i(4, 11), Vector2i(5, 11), Vector2i(6, 11), Vector2i(7, 11), Vector2i(8, 11), Vector2i(9, 11), Vector2i(10, 11), Vector2i(11, 11), Vector2i(12, 11), Vector2i(13, 11), Vector2i(14, 11), Vector2i(15, 11), Vector2i(16, 11), Vector2i(17, 11), Vector2i(18, 11), Vector2i(19, 11), Vector2i(20, 11), Vector2i(21, 11), Vector2i(22, 11), Vector2i(23, 11), Vector2i(0, 12), Vector2i(1, 12), Vector2i(2, 12), Vector2i(3, 12), Vector2i(4, 12), Vector2i(5, 12), Vector2i(6, 12), Vector2i(7, 12), Vector2i(8, 12), Vector2i(9, 12), Vector2i(10, 12), Vector2i(11, 12), Vector2i(12, 12), Vector2i(13, 12), Vector2i(14, 12), Vector2i(15, 12), Vector2i(16, 12), Vector2i(17, 12), Vector2i(18, 12), Vector2i(19, 12), Vector2i(20, 12), Vector2i(21, 12), Vector2i(22, 12), Vector2i(23, 12), Vector2i(0, 13), Vector2i(1, 13), Vector2i(2, 13), Vector2i(3, 13), Vector2i(4, 13), Vector2i(5, 13), Vector2i(6, 13), Vector2i(7, 13), Vector2i(8, 13), Vector2i(9, 13), Vector2i(10, 13), Vector2i(11, 13), Vector2i(12, 13), Vector2i(13, 13), Vector2i(14, 13), Vector2i(15, 13), Vector2i(16, 13), Vector2i(17, 13), Vector2i(18, 13), Vector2i(19, 13), Vector2i(20, 13), Vector2i(21, 13), Vector2i(22, 13), Vector2i(23, 13), Vector2i(0, 14), Vector2i(1, 14), Vector2i(2, 14), Vector2i(3, 14), Vector2i(4, 14), Vector2i(5, 14), Vector2i(6, 14), Vector2i(7, 14), Vector2i(8, 14), Vector2i(9, 14), Vector2i(10, 14), Vector2i(11, 14), Vector2i(12, 14), Vector2i(13, 14), Vector2i(14, 14), Vector2i(15, 14), Vector2i(16, 14), Vector2i(17, 14), Vector2i(18, 14), Vector2i(19, 14), Vector2i(20, 14), Vector2i(21, 14), Vector2i(22, 14), Vector2i(23, 14), Vector2i(0, 15), Vector2i(1, 15), Vector2i(2, 15), Vector2i(3, 15), Vector2i(4, 15), Vector2i(5, 15), Vector2i(6, 15), Vector2i(7, 15), Vector2i(8, 15), Vector2i(9, 15), Vector2i(10, 15), Vector2i(11, 15), Vector2i(12, 15), Vector2i(13, 15), Vector2i(14, 15), Vector2i(15, 15), Vector2i(16, 15), Vector2i(17, 15), Vector2i(18, 15), Vector2i(19, 15), Vector2i(20, 15), Vector2i(21, 15), Vector2i(22, 15), Vector2i(23, 15)])
 
-[sub_resource type="Resource" id="Trigger_town_b_ours"]
+[sub_resource type="Resource" id="RemoveUnits_1"]
 script = ExtResource("7")
-cell = Vector2i(3, 6)
-holder = 0
+tags = Array[StringName]([&"draeg_command", &"draeg_heavy", &"draeg_tank_a", &"draeg_tank_b", &"draeg_guns", &"draeg_mech_a", &"draeg_mech_b", &"draeg_recon", &"draeg_flak", &"draeg_tank_c"])
 
-[sub_resource type="Resource" id="Effect_write"]
+[sub_resource type="Resource" id="SetFlag_1"]
 script = ExtResource("8")
 flag = &"ff_draeg_spared"
 mode = 0
 value = 1
-note = "Placeholder fact: the southern town was taken."
-
-[sub_resource type="Resource" id="Event_line_write"]
-script = ExtResource("5")
-speaker = &"perrin_ash"
-text = "Placeholder: the southern town is ours."
-
-[sub_resource type="Resource" id="Event_writes_fact"]
-script = ExtResource("6")
-id = &"placeholder_fact"
-triggers = Array[Resource]([SubResource("Trigger_town_b_ours")])
-effects = Array[Resource]([SubResource("Effect_write")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_write")])
+note = "Draeg's column broke on the Skyreach passes and he took it home under the Ninth's old pennant, command tank and all."
 
 [sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"perrin_ash"
-text = "Placeholder briefing for The Open Sky."
+script = ExtResource("9")
+speaker = &"viktor_draeg"
+text = "Column, reverse and go home. That's an order, and I'll answer for it in Ostrava."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
-speaker = &"viktor_draeg"
-text = "Placeholder: the enemy has something to say."
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "Let him go. Nobody fires on that pennant."
+
+[sub_resource type="Resource" id="Event_the_pennant_goes_home"]
+script = ExtResource("10")
+id = &"the_pennant_goes_home"
+triggers = Array[Resource]([SubResource("ForceStrength_1"), SubResource("UnitReached_1")])
+effects = Array[Resource]([SubResource("RemoveUnits_1"), SubResource("SetFlag_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
+
+[sub_resource type="Resource" id="ObjectiveMet_1"]
+script = ExtResource("11")
+objective = SubResource("DefeatTeam_1")
+
+[sub_resource type="Resource" id="UnitReached_2"]
+script = ExtResource("6")
+tag = &"draeg_command"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 0), Vector2i(8, 0), Vector2i(9, 0), Vector2i(10, 0), Vector2i(11, 0), Vector2i(12, 0), Vector2i(13, 0), Vector2i(14, 0), Vector2i(15, 0), Vector2i(16, 0), Vector2i(17, 0), Vector2i(18, 0), Vector2i(19, 0), Vector2i(20, 0), Vector2i(21, 0), Vector2i(22, 0), Vector2i(23, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1), Vector2i(6, 1), Vector2i(7, 1), Vector2i(8, 1), Vector2i(9, 1), Vector2i(10, 1), Vector2i(11, 1), Vector2i(12, 1), Vector2i(13, 1), Vector2i(14, 1), Vector2i(15, 1), Vector2i(16, 1), Vector2i(17, 1), Vector2i(18, 1), Vector2i(19, 1), Vector2i(20, 1), Vector2i(21, 1), Vector2i(22, 1), Vector2i(23, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2), Vector2i(5, 2), Vector2i(6, 2), Vector2i(7, 2), Vector2i(8, 2), Vector2i(9, 2), Vector2i(10, 2), Vector2i(11, 2), Vector2i(12, 2), Vector2i(13, 2), Vector2i(14, 2), Vector2i(15, 2), Vector2i(16, 2), Vector2i(17, 2), Vector2i(18, 2), Vector2i(19, 2), Vector2i(20, 2), Vector2i(21, 2), Vector2i(22, 2), Vector2i(23, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(4, 3), Vector2i(5, 3), Vector2i(6, 3), Vector2i(7, 3), Vector2i(8, 3), Vector2i(9, 3), Vector2i(10, 3), Vector2i(11, 3), Vector2i(12, 3), Vector2i(13, 3), Vector2i(14, 3), Vector2i(15, 3), Vector2i(16, 3), Vector2i(17, 3), Vector2i(18, 3), Vector2i(19, 3), Vector2i(20, 3), Vector2i(21, 3), Vector2i(22, 3), Vector2i(23, 3), Vector2i(0, 4), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4), Vector2i(4, 4), Vector2i(5, 4), Vector2i(6, 4), Vector2i(7, 4), Vector2i(8, 4), Vector2i(9, 4), Vector2i(10, 4), Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4), Vector2i(14, 4), Vector2i(15, 4), Vector2i(16, 4), Vector2i(17, 4), Vector2i(18, 4), Vector2i(19, 4), Vector2i(20, 4), Vector2i(21, 4), Vector2i(22, 4), Vector2i(23, 4), Vector2i(0, 5), Vector2i(1, 5), Vector2i(2, 5), Vector2i(3, 5), Vector2i(4, 5), Vector2i(5, 5), Vector2i(6, 5), Vector2i(7, 5), Vector2i(8, 5), Vector2i(9, 5), Vector2i(10, 5), Vector2i(11, 5), Vector2i(12, 5), Vector2i(13, 5), Vector2i(14, 5), Vector2i(15, 5), Vector2i(16, 5), Vector2i(17, 5), Vector2i(18, 5), Vector2i(19, 5), Vector2i(20, 5), Vector2i(21, 5), Vector2i(22, 5), Vector2i(23, 5), Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6), Vector2i(5, 6), Vector2i(6, 6), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 6), Vector2i(10, 6), Vector2i(11, 6), Vector2i(12, 6), Vector2i(13, 6), Vector2i(14, 6), Vector2i(15, 6), Vector2i(16, 6), Vector2i(17, 6), Vector2i(18, 6), Vector2i(19, 6), Vector2i(20, 6), Vector2i(21, 6), Vector2i(22, 6), Vector2i(23, 6), Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7), Vector2i(4, 7), Vector2i(5, 7), Vector2i(6, 7), Vector2i(7, 7), Vector2i(8, 7), Vector2i(9, 7), Vector2i(10, 7), Vector2i(11, 7), Vector2i(12, 7), Vector2i(13, 7), Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(17, 7), Vector2i(18, 7), Vector2i(19, 7), Vector2i(20, 7), Vector2i(21, 7), Vector2i(22, 7), Vector2i(23, 7), Vector2i(0, 8), Vector2i(1, 8), Vector2i(2, 8), Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(6, 8), Vector2i(7, 8), Vector2i(8, 8), Vector2i(9, 8), Vector2i(10, 8), Vector2i(11, 8), Vector2i(12, 8), Vector2i(13, 8), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8), Vector2i(17, 8), Vector2i(18, 8), Vector2i(19, 8), Vector2i(20, 8), Vector2i(21, 8), Vector2i(22, 8), Vector2i(23, 8), Vector2i(0, 9), Vector2i(1, 9), Vector2i(2, 9), Vector2i(3, 9), Vector2i(4, 9), Vector2i(5, 9), Vector2i(6, 9), Vector2i(7, 9), Vector2i(8, 9), Vector2i(9, 9), Vector2i(10, 9), Vector2i(11, 9), Vector2i(12, 9), Vector2i(13, 9), Vector2i(14, 9), Vector2i(15, 9), Vector2i(16, 9), Vector2i(17, 9), Vector2i(18, 9), Vector2i(19, 9), Vector2i(20, 9), Vector2i(21, 9), Vector2i(22, 9), Vector2i(23, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10), Vector2i(4, 10), Vector2i(5, 10), Vector2i(6, 10), Vector2i(7, 10), Vector2i(8, 10), Vector2i(9, 10), Vector2i(10, 10), Vector2i(11, 10), Vector2i(12, 10), Vector2i(13, 10), Vector2i(14, 10), Vector2i(15, 10), Vector2i(16, 10), Vector2i(17, 10), Vector2i(18, 10), Vector2i(19, 10), Vector2i(20, 10), Vector2i(21, 10), Vector2i(22, 10), Vector2i(23, 10), Vector2i(0, 11), Vector2i(1, 11), Vector2i(2, 11), Vector2i(3, 11), Vector2i(4, 11), Vector2i(5, 11), Vector2i(6, 11), Vector2i(7, 11), Vector2i(8, 11), Vector2i(9, 11), Vector2i(10, 11), Vector2i(11, 11), Vector2i(12, 11), Vector2i(13, 11), Vector2i(14, 11), Vector2i(15, 11), Vector2i(16, 11), Vector2i(17, 11), Vector2i(18, 11), Vector2i(19, 11), Vector2i(20, 11), Vector2i(21, 11), Vector2i(22, 11), Vector2i(23, 11), Vector2i(0, 12), Vector2i(1, 12), Vector2i(2, 12), Vector2i(3, 12), Vector2i(4, 12), Vector2i(5, 12), Vector2i(6, 12), Vector2i(7, 12), Vector2i(8, 12), Vector2i(9, 12), Vector2i(10, 12), Vector2i(11, 12), Vector2i(12, 12), Vector2i(13, 12), Vector2i(14, 12), Vector2i(15, 12), Vector2i(16, 12), Vector2i(17, 12), Vector2i(18, 12), Vector2i(19, 12), Vector2i(20, 12), Vector2i(21, 12), Vector2i(22, 12), Vector2i(23, 12), Vector2i(0, 13), Vector2i(1, 13), Vector2i(2, 13), Vector2i(3, 13), Vector2i(4, 13), Vector2i(5, 13), Vector2i(6, 13), Vector2i(7, 13), Vector2i(8, 13), Vector2i(9, 13), Vector2i(10, 13), Vector2i(11, 13), Vector2i(12, 13), Vector2i(13, 13), Vector2i(14, 13), Vector2i(15, 13), Vector2i(16, 13), Vector2i(17, 13), Vector2i(18, 13), Vector2i(19, 13), Vector2i(20, 13), Vector2i(21, 13), Vector2i(22, 13), Vector2i(23, 13), Vector2i(0, 14), Vector2i(1, 14), Vector2i(2, 14), Vector2i(3, 14), Vector2i(4, 14), Vector2i(5, 14), Vector2i(6, 14), Vector2i(7, 14), Vector2i(8, 14), Vector2i(9, 14), Vector2i(10, 14), Vector2i(11, 14), Vector2i(12, 14), Vector2i(13, 14), Vector2i(14, 14), Vector2i(15, 14), Vector2i(16, 14), Vector2i(17, 14), Vector2i(18, 14), Vector2i(19, 14), Vector2i(20, 14), Vector2i(21, 14), Vector2i(22, 14), Vector2i(23, 14), Vector2i(0, 15), Vector2i(1, 15), Vector2i(2, 15), Vector2i(3, 15), Vector2i(4, 15), Vector2i(5, 15), Vector2i(6, 15), Vector2i(7, 15), Vector2i(8, 15), Vector2i(9, 15), Vector2i(10, 15), Vector2i(11, 15), Vector2i(12, 15), Vector2i(13, 15), Vector2i(14, 15), Vector2i(15, 15), Vector2i(16, 15), Vector2i(17, 15), Vector2i(18, 15), Vector2i(19, 15), Vector2i(20, 15), Vector2i(21, 15), Vector2i(22, 15), Vector2i(23, 15)])
+
+[sub_resource type="Resource" id="RemoveUnits_2"]
+script = ExtResource("7")
+tags = Array[StringName]([&"draeg_command", &"draeg_heavy", &"draeg_tank_a", &"draeg_tank_b", &"draeg_guns", &"draeg_mech_a", &"draeg_mech_b", &"draeg_recon", &"draeg_flak", &"draeg_tank_c"])
+
+[sub_resource type="Resource" id="SetFlag_2"]
+script = ExtResource("8")
+flag = &"ff_draeg_spared"
+mode = 0
+value = 1
+note = "Vale's wing went down over Skyreach, and Draeg took his column home rather than fight on without cover."
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
-speaker = &"perrin_ash"
-text = "Placeholder victory."
-
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+script = ExtResource("9")
 speaker = &"viktor_draeg"
-text = "Placeholder: the enemy holds."
+text = "Vale's gone, and so is our sky. Column, turn around. I'm not feeding tanks to Perrin Ash for a Directorate that won't come and fetch them."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_pennant_loses_its_cover"]
+script = ExtResource("10")
+id = &"the_pennant_loses_its_cover"
+triggers = Array[Resource]([SubResource("ObjectiveMet_1"), SubResource("UnitReached_2")])
+effects = Array[Resource]([SubResource("RemoveUnits_2"), SubResource("SetFlag_2")])
+once = true
+lines = Array[Resource]([SubResource("Line_3")])
+
+[sub_resource type="Resource" id="UnitDestroyed_1"]
+script = ExtResource("12")
+tag = &"draeg_command"
+
+[sub_resource type="Resource" id="GrantCharge_1"]
+script = ExtResource("13")
+team = 3
+points = 10000
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "Draeg's tank is burning at the pass. His crew's hauled him out of the hatch, and he's alive."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("9")
+speaker = &"viktor_draeg"
+text = "Keep driving. Somebody else can carry that flag now."
+
+[sub_resource type="Resource" id="Event_the_pennant_burns"]
+script = ExtResource("10")
+id = &"the_pennant_burns"
+triggers = Array[Resource]([SubResource("UnitDestroyed_1")])
+effects = Array[Resource]([SubResource("GrantCharge_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+
+[sub_resource type="Resource" id="DayReached_1"]
+script = ExtResource("14")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_1"]
+script = ExtResource("16")
+unit_type = ExtResource("15")
+cell = Vector2i(23, 12)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("16")
+unit_type = ExtResource("17")
+cell = Vector2i(23, 13)
+
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("16")
+unit_type = ExtResource("15")
+cell = Vector2i(23, 14)
+
+[sub_resource type="Resource" id="SpawnUnits_1"]
+script = ExtResource("18")
+team = 4
+units = Array[Resource]([SubResource("Spawn_1"), SubResource("Spawn_2"), SubResource("Spawn_3")])
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("9")
+speaker = &"konrad_vale"
+text = "Second sortie. Aurora's air marshal flies well. He does not fly enough."
+
+[sub_resource type="Resource" id="Event_vale_second_sortie"]
+script = ExtResource("10")
+id = &"vale_second_sortie"
+triggers = Array[Resource]([SubResource("DayReached_1")])
+effects = Array[Resource]([SubResource("SpawnUnits_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_6")])
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("9")
+text = "The Skyreach plateau. Aurora has joined the war, and Iron has answered by invading it."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "Vale's bombers are coming in from the south-east, and Draeg's armour's coming up the western pass under them. Take the sky away and the tanks are just tanks."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("9")
+speaker = &"sera_lark"
+text = "I've got the east pass and anything with wheels. You keep his bombers off my back and I'll keep his tanks off yours."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("9")
+speaker = &"iris_colt"
+text = "Draeg's command tank is flying the Ninth's old pennant. He was ours for fifteen years, Perrin. Break his column and he'll go home. Or don't let him. Your call."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("9")
+speaker = &"viktor_draeg"
+text = "I'm told Iris Colt is up there. Tell her I kept the flag clean."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("9")
+speaker = &"konrad_vale"
+text = "Quality is decisive in the air. We will see how Aurora's is priced."
+
+[sub_resource type="Resource" id="Cond_1"]
+script = ExtResource("19")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("9")
+speaker = &"perrin_ash"
+text = "Vale's wing is down, the sky over Skyreach is ours again, and Rook's signing the alliance this afternoon."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("9")
+speaker = &"iris_colt"
+text = "Draeg took his column home. The pennant was still up on the command tank when it went round the bend."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("9")
+speaker = &"iris_colt"
+text = "Draeg's alive. His crew dragged him out of the tank and his own column carried him back to Iron."
+unless = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("9")
+speaker = &"sera_lark"
+text = "Aurora and Verdant both, in one month. The Ninth's getting crowded, Colonel, I love it."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("9")
+speaker = &"konrad_vale"
+text = "Skyreach has no air cover and no air marshal. The Directorate will send the invoice."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("9")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Aurora's airfield is full of Vale's bombers and my requisition forms are full of ours. Rook's declared neutrality again, as of about an hour ago."
 
 [resource]
 script = ExtResource("1")
@@ -98,20 +246,22 @@ title = "The Open Sky"
 location = "The Skyreach plateau"
 map_path = "res://maps/campaign/five_flags/ff20_the_open_sky.txt"
 player_team = 1
-ai_teams = Array[int]([2])
+ai_teams = Array[int]([2, 3, 4])
 seats = Array[int]([])
-sides = {}
+sides = {1: 0, 2: 0, 3: 1, 4: 1}
 commanders = {
 1: &"perrin_ash",
-2: &"viktor_draeg"
+2: &"sera_lark",
+3: &"viktor_draeg",
+4: &"konrad_vale"
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("DefeatTeam_1")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder"), SubResource("Event_writes_fact")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("AllySurvives_1"), SubResource("DestroyUnit_1")])
+events = Array[Resource]([SubResource("Event_the_pennant_goes_home"), SubResource("Event_the_pennant_loses_its_cover"), SubResource("Event_the_pennant_burns"), SubResource("Event_vale_second_sortie")])
+par_day = 12
+briefing = Array[Resource]([SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])
+victory = Array[Resource]([SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15"), SubResource("Line_16")])
+defeat = Array[Resource]([SubResource("Line_17"), SubResource("Line_18")])
