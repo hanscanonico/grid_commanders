@@ -1,95 +1,163 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
-[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="11"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Cond_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+flag = &"ff_rhea_turned"
+at_least = 1
+at_most = -1
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
-day = 2
+text = "Capture Rhea Sol's headquarters."
+cell = Vector2i(23, 8)
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="Objective_3"]
+script = ExtResource("3")
+text = "Capture the lower town."
+cell = Vector2i(13, 3)
+
+[sub_resource type="Resource" id="Trigger_4"]
 script = ExtResource("4")
-team = 1
-amount = 1000
-
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"alina_ward"
-text = "Placeholder: this mission is being written."
-
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
-
-[sub_resource type="Resource" id="Trigger_town_b_ours"]
-script = ExtResource("7")
-cell = Vector2i(3, 6)
+cell = Vector2i(13, 3)
 holder = 0
 
-[sub_resource type="Resource" id="Effect_write"]
-script = ExtResource("8")
+[sub_resource type="Resource" id="Trigger_5"]
+script = ExtResource("5")
+day = 5
+
+[sub_resource type="Resource" id="Effect_6"]
+script = ExtResource("6")
+tags = Array[StringName]([&"rhea_gun_1", &"rhea_gun_2", &"rhea_gun_3", &"rhea_gun_4", &"rhea_gun_5"])
+
+[sub_resource type="Resource" id="Effect_7"]
+script = ExtResource("7")
 flag = &"ff_rhea_turned"
 mode = 0
 value = 1
-note = "Placeholder fact: the southern town was taken."
+note = "Rhea Sol stood her guns down rather than fire on the lower town."
 
-[sub_resource type="Resource" id="Event_line_write"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("8")
+speaker = &"rhea_sol"
+text = "General Ward. You took the lower town without putting a shell in it, and the Chancellor's order to clear it by fire reached me this morning. I have sent back my answer. Every battery on this line is limbering up."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("8")
+speaker = &"rhea_sol"
+text = "Those guns belong to the Concord's people, not to its Chancellor. The regiments in front of Aurum are hers, and they'll fight you without me."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("8")
 speaker = &"alina_ward"
-text = "Placeholder: the southern town is ours."
+text = "Thank you, Rhea. Keep your gunners somewhere safe. We'll want to talk to them when this is over."
 
-[sub_resource type="Resource" id="Event_writes_fact"]
-script = ExtResource("6")
-id = &"placeholder_fact"
-triggers = Array[Resource]([SubResource("Trigger_town_b_ours")])
-effects = Array[Resource]([SubResource("Effect_write")])
+[sub_resource type="Resource" id="Event_rhea_parleys"]
+script = ExtResource("9")
+id = &"rhea_parleys"
+triggers = Array[Resource]([SubResource("Trigger_4"), SubResource("Trigger_5")])
+effects = Array[Resource]([SubResource("Effect_6"), SubResource("Effect_7")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_write")])
+lines = Array[Resource]([SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10")])
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"alina_ward"
-text = "Placeholder briefing for Rhea's Line."
+[sub_resource type="Resource" id="Trigger_11"]
+script = ExtResource("10")
+day = 6
 
-[sub_resource type="Resource" id="Line_2"]
+[sub_resource type="Resource" id="Trigger_12"]
+script = ExtResource("4")
+cell = Vector2i(13, 3)
+holder = 1
+
+[sub_resource type="Resource" id="Trigger_12b"]
 script = ExtResource("5")
+day = 6
+
+[sub_resource type="Resource" id="Effect_13"]
+script = ExtResource("11")
+team = 2
+points = 14000
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("8")
 speaker = &"rhea_sol"
-text = "Placeholder: the enemy has something to say."
+text = "Fire mission from the Chancellor's office, lower town, all batteries. Acknowledged. Gunners, the streets are cleared of our own people as far as I can clear them. Fire on my mark."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("8")
 speaker = &"alina_ward"
-text = "Placeholder victory."
+text = "She hated every word of that, and she said them all. We were too slow to give her a way out."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_order_is_obeyed"]
+script = ExtResource("9")
+id = &"the_order_is_obeyed"
+triggers = Array[Resource]([SubResource("Trigger_11"), SubResource("Trigger_12"), SubResource("Trigger_12b")])
+effects = Array[Resource]([SubResource("Effect_13")])
+once = true
+lines = Array[Resource]([SubResource("Line_14"), SubResource("Line_15")])
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Rhea's guns stand in a ring across every road into Aurum, five batteries on the shelves between these hills, and her headquarters behind them. We go through the ring or we don't reach the capital."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Orin's people read an order from Lyra's office last night. If the lower town is still between our armies on the sixth day, Rhea is to clear it by fire so we can't use its streets. There are families in those streets."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("8")
 speaker = &"rhea_sol"
-text = "Placeholder: the enemy holds."
+text = "General Ward. I have read your file, and you have read mine. I protect the Concord's people. I will also carry out my orders. Please don't make me choose between them in front of my gunners."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Then we won't. Take the lower town quickly and cleanly, before the sixth day. If there's nothing in it left to shell, I think she'll find a reason not to."
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Rhea's headquarters is ours and the road to Aurum is open. We camp in the hills tonight, and for the first time in a week nobody is shelling anybody."
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("8")
+speaker = &"rhea_sol"
+text = "My gunners are in the lower town handing out bread, General. Whatever the Chancellor does next, she'll do it without my guns."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("8")
+speaker = &"rhea_sol"
+text = "I did what I was ordered to do, and the lower town will be counting its dead for a week. Take the road, General. I won't be on it."
+unless = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_23"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Iris goes for the citadel in the morning. I'd like to be there when Lyra explains the arithmetic."
+
+[sub_resource type="Resource" id="Line_24"]
+script = ExtResource("8")
+speaker = &"rhea_sol"
+text = "The ring holds, General. Pull back past the hills and I will not fire on your columns while they go. I would rather be thanked for that than for anything else today."
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("8")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Alina's back past the hills, and Rhea's guns are still in front of Aurum. I counted the shells she didn't fire at us. It was a lot of shells."
 
 [resource]
 script = ExtResource("1")
@@ -107,11 +175,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_2")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder"), SubResource("Event_writes_fact")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("Objective_3")])
+events = Array[Resource]([SubResource("Event_rhea_parleys"), SubResource("Event_the_order_is_obeyed")])
+par_day = 14
+briefing = Array[Resource]([SubResource("Line_16"), SubResource("Line_17"), SubResource("Line_18"), SubResource("Line_19")])
+victory = Array[Resource]([SubResource("Line_20"), SubResource("Line_21"), SubResource("Line_22"), SubResource("Line_23")])
+defeat = Array[Resource]([SubResource("Line_24"), SubResource("Line_25")])

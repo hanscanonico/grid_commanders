@@ -1,74 +1,181 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=46 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="12"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="14"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="15"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Capture the harbour fort."
+cell = Vector2i(12, 7)
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
+text = "Destroy the picket cruiser."
+tag = &"concord_picket"
+
+[sub_resource type="Resource" id="Objective_3"]
+script = ExtResource("2")
+text = "Capture the fishing town."
+cell = Vector2i(12, 11)
+
+[sub_resource type="Resource" id="Trigger_4"]
+script = ExtResource("4")
 day = 2
 
-[sub_resource type="Resource" id="Effect_funds"]
-script = ExtResource("4")
-team = 1
-amount = 1000
-
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Spawn_5"]
 script = ExtResource("5")
-speaker = &"halden_marr"
-text = "Placeholder: this mission is being written."
+unit_type = ExtResource("12")
+cell = Vector2i(9, 2)
 
-[sub_resource type="Resource" id="Event_placeholder"]
+[sub_resource type="Resource" id="Spawn_6"]
+script = ExtResource("5")
+unit_type = ExtResource("13")
+cell = Vector2i(9, 1)
+
+[sub_resource type="Resource" id="Spawn_7"]
+script = ExtResource("5")
+unit_type = ExtResource("14")
+cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Spawn_8"]
+script = ExtResource("5")
+unit_type = ExtResource("15")
+cell = Vector2i(10, 0)
+
+[sub_resource type="Resource" id="Effect_9"]
 script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
+team = 1
+units = Array[Resource]([SubResource("Spawn_5"), SubResource("Spawn_6"), SubResource("Spawn_7"), SubResource("Spawn_8")])
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("7")
+speaker = &"halden_marr"
+text = "Second wave's on the north sand, dry-shod, which the tide tables didn't promise me. Push them south along the cliff road and pinch that fort from both ends."
+
+[sub_resource type="Resource" id="Event_the_second_wave"]
+script = ExtResource("8")
+id = &"the_second_wave"
+triggers = Array[Resource]([SubResource("Trigger_4")])
+effects = Array[Resource]([SubResource("Effect_9")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Line_10")])
 
-[sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
-speaker = &"halden_marr"
-text = "Placeholder briefing for Glass Shore."
+[sub_resource type="Resource" id="Trigger_11"]
+script = ExtResource("9")
+cell = Vector2i(12, 11)
+holder = 0
 
-[sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Effect_12"]
+script = ExtResource("10")
+tags = Array[StringName]([&"rhea_town_battery"])
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("7")
 speaker = &"rhea_sol"
-text = "Placeholder: the enemy has something to say."
+text = "Battery Four, you are laid on a street with people in it. Cease fire, limber up, withdraw to the ridge. That is an order, not a suggestion."
 
-[sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("7")
 speaker = &"halden_marr"
-text = "Placeholder victory."
+text = "She's just pulled her own guns off her own town with us standing in it, which is worth remembering the next time we meet her."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_battery_four_stands_down"]
+script = ExtResource("8")
+id = &"battery_four_stands_down"
+triggers = Array[Resource]([SubResource("Trigger_11")])
+effects = Array[Resource]([SubResource("Effect_12")])
+once = true
+lines = Array[Resource]([SubResource("Line_13"), SubResource("Line_14")])
+
+[sub_resource type="Resource" id="Trigger_15"]
+script = ExtResource("4")
+day = 4
+
+[sub_resource type="Resource" id="Effect_16"]
+script = ExtResource("11")
+team = 2
+points = 14000
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("7")
 speaker = &"rhea_sol"
-text = "Placeholder: the enemy holds."
+text = "Fire plan Glass. Every square from the harbour mole to the south rocks, grid by grid, on my mark."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("7")
+speaker = &"halden_marr"
+text = "Get off the sand. The dead ground under the cliffs is the one place her guns can't reach."
+
+[sub_resource type="Resource" id="Event_fire_plan_glass"]
+script = ExtResource("8")
+id = &"fire_plan_glass"
+triggers = Array[Resource]([SubResource("Trigger_15")])
+effects = Array[Resource]([SubResource("Effect_16")])
+once = true
+lines = Array[Resource]([SubResource("Line_17"), SubResource("Line_18")])
+
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("7")
+text = "The Glass Shore takes its name from the sand the old kilns fused along the waterline, and beyond its cliffs the road runs straight to Aurum."
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("7")
+speaker = &"halden_marr"
+text = "First wave's ashore on the south beach and holding. The second rides the tide onto the north beach tomorrow. Between them it's all cliff, except for a harbour fort on one strip of shoal, and I mean to have that fort by the end of the week."
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("7")
+speaker = &"rhea_sol"
+text = "Admiral Marr, General Sol. My guns are registered on both your beaches and on the harbour mole, to the metre. I would prefer you turned around. There are fishing families on this shore."
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("7")
+speaker = &"halden_marr"
+text = "I believe her about the guns, and about the families. Clear her hulls out of the channel and the battleship can reach the plateau, and a lander can run up to the harbour mole and put a company straight into the fort without climbing that gully."
+
+[sub_resource type="Resource" id="Line_23"]
+script = ExtResource("7")
+speaker = &"halden_marr"
+text = "The fort's ours, and the harbour behind it. The rest of the army can come in over the mole now instead of wading."
+
+[sub_resource type="Resource" id="Line_24"]
+script = ExtResource("7")
+speaker = &"rhea_sol"
+text = "Harbour fort, this is Sol. I am pulling my guns back to the Aurum hills. Admiral, there are four hundred people in the town on your south beach, and tonight they are yours to feed."
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("7")
+speaker = &"halden_marr"
+text = "They'll eat what my sailors eat. Tell her so. And tell her we saw where she pointed her guns today, and where she wouldn't."
+
+[sub_resource type="Resource" id="Line_26"]
+script = ExtResource("7")
+speaker = &"rhea_sol"
+text = "Your landing is broken, Admiral. My boats will pull your survivors out of the surf. I would rather not have fired on them in it."
+
+[sub_resource type="Resource" id="Line_27"]
+script = ExtResource("7")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Marr's fleet is back off the island counting hulls, and the Glass Shore is Concord sand again. The landing craft were borrowed, so I'll be writing an apology to somebody."
 
 [resource]
 script = ExtResource("1")
 id = &"ff29_glass_shore"
 title = "Glass Shore"
-location = "The Glass Shore"
+location = "The Glass Shore, below Aurum"
 map_path = "res://maps/campaign/five_flags/ff29_glass_shore.txt"
 player_team = 1
 ai_teams = Array[int]([2])
@@ -80,11 +187,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_1")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("Objective_2"), SubResource("Objective_3")])
+events = Array[Resource]([SubResource("Event_the_second_wave"), SubResource("Event_battery_four_stands_down"), SubResource("Event_fire_plan_glass")])
+par_day = 10
+briefing = Array[Resource]([SubResource("Line_19"), SubResource("Line_20"), SubResource("Line_21"), SubResource("Line_22")])
+victory = Array[Resource]([SubResource("Line_23"), SubResource("Line_24"), SubResource("Line_25")])
+defeat = Array[Resource]([SubResource("Line_26"), SubResource("Line_27")])

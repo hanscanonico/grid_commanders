@@ -1,26 +1,76 @@
-# Five Flags placeholder — "The Arithmetic". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags 31 — "The Arithmetic": Aurum, Lyra Quill's citadel, and the day the Hammer falls on it.
+# Iris Colt comes in from the west with her headquarters and two yards. The
+# lower city fills the middle of the board, and Lyra's field army holds it in
+# front of the citadel: a ring of cliffs on the east side with a single gate in
+# its west face and Lyra's headquarters behind it. The Concord builds nothing
+# here; what Lyra has is what stands on the board.
+# The south shore is a beach of shoals with nobody on it, and that is where
+# Radek Morn's vanguard lands when the gate falls. Morn's own headquarters is a
+# landing field on an island in the far south-east, out of everyone's reach.
+# Symbols: . plains  F woods  M mountain  = road  S sea  _ shoal
+#          C city  B base  Q HQ
 [terrain]
-....M........
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-..M..........
+MM...F....C.....F..MMMMMMM
+M..F.....F....C.....F..MMM
+..C..=========.....F....MM
+.....=....F..=...MMMMMMMMM
+.B...=..C....=..FM.C...C.M
+.....=.....F.=...M.......M
+..F..=..F....=..FM.......M
+.....=.....C.=...M..F....M
+.Q===========C===C====Q..M
+.....=.....F.=...M.......M
+..F..=..C....=..FM..F....M
+.B...=.......=...M.C...C.M
+.....=..F..C.=..FMMMMMMMMM
+..C..=====.....=....F....M
+SS__......______....SSSSSS
+SSSS...SSSSSSSSSSSSSS_.Q_S
+SSSSSSSSSSSSSSSSSSSSSS___S
 [owners]
-1 1 1
-1 1 7
+1 1 8
+1 1 4
+1 1 11
+1 2 2
+1 2 13
+2 22 8
+2 17 8
+2 13 8
 2 11 7
-2 10 7
-2 11 5
+2 19 4
+2 23 4
+2 19 11
+2 23 11
+3 23 15
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+# Iris's army.
+1 i 3 7
+1 i 3 9
+1 i 4 5
+1 i 4 11
+1 m 5 7
+1 m 5 9
+1 t 6 8
+1 t 4 6
+1 t 4 10
+1 T 3 8
+1 g 2 6
+1 g 2 10
+1 r 6 4
+1 a 2 9
+# Lyra's field army in the lower city, every unit named so it can change sides.
+2 i 13 8 concord_1
+2 i 11 7 concord_2
+2 m 14 5 concord_3
+2 m 14 11 concord_4
+2 t 15 8 concord_5
+2 t 12 9 concord_6
+2 T 16 8 concord_7
+2 g 18 5 concord_8
+2 g 18 10 concord_9
+2 R 19 8 concord_10
+2 a 10 5 concord_11
+# The citadel guard, inside the walls, where the Hammer lands.
+2 i 20 7 citadel_guard_1
+2 m 21 9 citadel_guard_2
+2 i 23 8 citadel_guard_3
