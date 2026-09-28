@@ -1,26 +1,47 @@
-# Five Flags placeholder — "Nia's Road". Scaffolding only: the act that owns
-# this mission replaces this board with its own ground.
+# Five Flags, Act III — "Nia's Road". The Thornwood at night, Nia v Thorne, fog.
+# An escort through forest: Nia's rangers walk the woods at road speed, the
+# delegates' car (the APC tagged delegates) crawls through them at double cost,
+# and the Grey river runs down column 12. The north road's bridge at (12,3) is
+# burned, so the rangers can ford there and the car cannot; its one crossing is
+# the mill bridge (12,11) on the drovers' road, the route Sable arranged.
+# Thorne's hunters are waiting past it: the car reaching the mill bridge brings
+# them out of the woods at (13,12) and (16,10). A second column comes in from
+# the east edge on day 4, and the huntmaster's tank sits at Thorne's camp by
+# the north road, where the open clearings suit it.
+# Both roads meet at (15,3) for the last run to Greywater, the town in the
+# north-east corner; its gate zone is the reach objective, and only the car
+# arriving there counts.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
 [terrain]
-.M...........
-.Q.FF........
-.=.FF....C...
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-.B........BQ.
-.M...........
+FFFFFFF.....~FFF....
+FFFF.FF..Q.B~F.F.=C.
+FF.FFFF.....~FFF.=..
+FFFMF=======~=====FF
+FFFFF=......~FF=FFFF
+MFFFF=......~..=FFF.
+FFF.F=FFMMFF~..=F.FF
+FFFFF=FMMMFF~..=FCFF
+F.FFF=FFMM.F~..=FFFF
+FFFFF=FFFFFF~FF=FF.F
+FFFFF=FFFFFF~FF=FFFF
+F===========+===FFFM
+.Q..FFFFF.FF~FFFF.FF
+....FFFFFFFF~FFFFFFF
 [owners]
-1 1 1
-1 1 7
-2 11 7
-2 10 7
-2 11 5
+1 1 12
+2 9 1
+2 11 1
 [units]
-1 i 2 3
-1 i 3 3
-1 t 2 2
-1 r 1 3
-2 i 9 6
-2 i 9 7
-2 t 12 6
+1 p 2 11 delegates
+1 i 3 11
+1 i 4 11
+1 i 1 10
+1 m 0 12
+1 m 2 12
+1 m 3 12
+2 t 10 0 huntmaster
+2 i 7 2
+2 m 10 2
+2 i 14 6
+2 i 18 9

@@ -1,74 +1,209 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=51 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="11"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="15"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="16"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="OwnProperties_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Own 12 properties."
+count = 12
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="CaptureCell_1"]
 script = ExtResource("3")
-day = 2
+text = "Capture Thorne's shell depot."
+cell = Vector2i(17, 11)
 
-[sub_resource type="Resource" id="Effect_funds"]
+[sub_resource type="Resource" id="CellOwned_1"]
 script = ExtResource("4")
-team = 1
-amount = 1000
+cell = Vector2i(13, 6)
+holder = 0
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="SetOwner_1"]
 script = ExtResource("5")
-speaker = &"tomas_reed"
-text = "Placeholder: this mission is being written."
-
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+team = 1
+cells = Array[Vector2i]([Vector2i(13, 3), Vector2i(12, 9), Vector2i(15, 8)])
 
 [sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"tomas_reed"
-text = "Placeholder briefing for The People's March."
+text = "Ring the market bell! Every town that trades in Harrowgate can hear it, and they're pulling Thorne's flags down as we speak."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"ivar_thorne"
-text = "Placeholder: the enemy has something to say."
+text = "Three towns in an afternoon. Write down the names."
+
+[sub_resource type="Resource" id="Event_the_market_rises"]
+script = ExtResource("7")
+id = &"the_market_rises"
+triggers = Array[Resource]([SubResource("CellOwned_1")])
+effects = Array[Resource]([SubResource("SetOwner_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
+
+[sub_resource type="Resource" id="DayReached_1"]
+script = ExtResource("8")
+day = 2
+
+[sub_resource type="Resource" id="Spawn_1"]
+script = ExtResource("10")
+unit_type = ExtResource("9")
+cell = Vector2i(0, 5)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("10")
+unit_type = ExtResource("9")
+cell = Vector2i(0, 6)
+
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("10")
+unit_type = ExtResource("11")
+cell = Vector2i(0, 7)
+
+[sub_resource type="Resource" id="Spawn_4"]
+script = ExtResource("10")
+unit_type = ExtResource("12")
+cell = Vector2i(0, 3)
+
+[sub_resource type="Resource" id="SpawnUnits_1"]
+script = ExtResource("13")
+team = 1
+units = Array[Resource]([SubResource("Spawn_1"), SubResource("Spawn_2"), SubResource("Spawn_3"), SubResource("Spawn_4")])
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "Meridian volunteers, two tanks, one gun, and a mech squad that argued the whole way here. Where do you want us, Tribune?"
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("6")
 speaker = &"tomas_reed"
-text = "Placeholder victory."
+text = "Wherever Thorne's armour is. My people can't stop a tank with a pitchfork."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_the_volunteers"]
+script = ExtResource("7")
+id = &"the_volunteers"
+triggers = Array[Resource]([SubResource("DayReached_1")])
+effects = Array[Resource]([SubResource("SpawnUnits_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_3"), SubResource("Line_4")])
+
+[sub_resource type="Resource" id="CellOwned_2"]
+script = ExtResource("4")
+cell = Vector2i(17, 11)
+holder = 0
+
+[sub_resource type="Resource" id="GrantFunds_1"]
+script = ExtResource("14")
+team = 1
+amount = 4000
+
+[sub_resource type="Resource" id="SetFlag_1"]
+script = ExtResource("15")
+flag = &"ff_concord_shells"
+mode = 0
+value = 1
+note = "Thorne's depot at Harrowgate fell with its shell crates unopened; the crates are stamped in Aurum."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("6")
+speaker = &"tomas_reed"
+text = "The depot's ours, and look at the crates. Aurum Arsenal, this year's lot number."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "Concord shells in a Verdant junta's depot. The Concord told everyone it was selling to nobody."
+
+[sub_resource type="Resource" id="Event_the_stamped_crates"]
+script = ExtResource("7")
+id = &"the_stamped_crates"
+triggers = Array[Resource]([SubResource("CellOwned_2")])
+effects = Array[Resource]([SubResource("GrantFunds_1"), SubResource("SetFlag_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("6")
+text = "Harrowgate, in the Verdant lowlands. Ivar Thorne holds the League council at bayonet point, and the river towns have stopped paying his levy."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("6")
+speaker = &"tomas_reed"
+text = "Every town on the Harrow pulled a flag down last week. We're here to make sure nobody runs one back up. Market first."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("6")
 speaker = &"ivar_thorne"
-text = "Placeholder: the enemy holds."
+text = "Farmers with rifles. The Ash War taught me what that's worth, Reed, and I'll teach it to your people one field at a time."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "I've got a Meridian company a day behind me. Get across the river on foot, leave the bridges to his tanks, and don't stand in the open waiting for us."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("6")
+speaker = &"tomas_reed"
+text = "He keeps his shells in the depot at the south bend, and I'd like to see what's in the crates."
+
+[sub_resource type="Resource" id="Cond_1"]
+script = ExtResource("16")
+flag = &"ff_concord_shells"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("6")
+speaker = &"tomas_reed"
+text = "Harrowgate's ours, and so is the river! Look at them, Colonel. They'll march on Greenhollow the day you ask."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "Then I'm asking. Thorne's gone behind his Wall, and the Ninth needs friends before it needs anything else."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "And somebody in Aurum sold him those shells. I want to know who signed for them."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("6")
+speaker = &"tomas_reed"
+text = "His depot's still full at the south bend. He'll be shelling us from Greenhollow with it."
+unless = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("6")
+speaker = &"ivar_thorne"
+text = "Put the market bell back in its tower so Reed can hear it from his cell."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("6")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Reed's rising is back in the barns and the Meridian company walked home. I've written it up as a march, since it went one way and then the other."
 
 [resource]
 script = ExtResource("1")
 id = &"ff14_the_peoples_march"
 title = "The People's March"
-location = "The Harrowgate lowlands"
+location = "Harrowgate, the Verdant lowlands"
 map_path = "res://maps/campaign/five_flags/ff14_the_peoples_march.txt"
 player_team = 1
 ai_teams = Array[int]([2])
@@ -80,11 +215,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("OwnProperties_1")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("CaptureCell_1")])
+events = Array[Resource]([SubResource("Event_the_market_rises"), SubResource("Event_the_volunteers"), SubResource("Event_the_stamped_crates")])
+par_day = 10
+briefing = Array[Resource]([SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11")])
+victory = Array[Resource]([SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
+defeat = Array[Resource]([SubResource("Line_16"), SubResource("Line_17")])

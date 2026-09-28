@@ -1,90 +1,281 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=61 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="15"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="CaptureCell_1"]
 script = ExtResource("2")
-text = "Capture the northern town."
-cell = Vector2i(9, 2)
+text = "Capture Thorne's headquarters."
+cell = Vector2i(12, 1)
 
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("2")
-text = "Capture the southern town."
-cell = Vector2i(3, 6)
-
-[sub_resource type="Resource" id="Trigger_day_2"]
+[sub_resource type="Resource" id="AllySurvives_1"]
 script = ExtResource("3")
+text = "Keep Ines Calder's loyalists in the war."
+team = 2
+
+[sub_resource type="Resource" id="CaptureCell_2"]
+script = ExtResource("2")
+text = "Capture the Moss Gate."
+cell = Vector2i(6, 5)
+
+[sub_resource type="Resource" id="Cond_1"]
+script = ExtResource("4")
+flag = &"ff_nia_fought"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_2"]
+script = ExtResource("4")
+flag = &"ff_nia_fought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Flag_1"]
+script = ExtResource("5")
+condition = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="DayReached_1"]
+script = ExtResource("6")
 day = 2
 
-[sub_resource type="Resource" id="Effect_funds"]
-script = ExtResource("4")
+[sub_resource type="Resource" id="Spawn_1"]
+script = ExtResource("8")
+unit_type = ExtResource("7")
+cell = Vector2i(0, 9)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(0, 10)
+
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(0, 11)
+
+[sub_resource type="Resource" id="SpawnUnits_1"]
+script = ExtResource("10")
 team = 1
-amount = 1000
-
-[sub_resource type="Resource" id="Event_line_1"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder: this mission is being written."
-
-[sub_resource type="Resource" id="Event_placeholder"]
-script = ExtResource("6")
-id = &"placeholder_signal"
-triggers = Array[Resource]([SubResource("Trigger_day_2")])
-effects = Array[Resource]([SubResource("Effect_funds")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+units = Array[Resource]([SubResource("Spawn_1"), SubResource("Spawn_2"), SubResource("Spawn_3")])
 
 [sub_resource type="Resource" id="Line_1"]
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "Rangers on your west flank, Iris, and we know every path through those corner woods."
+
+[sub_resource type="Resource" id="Event_nia_joins_the_ninth"]
+script = ExtResource("12")
+id = &"nia_joins_the_ninth"
+triggers = Array[Resource]([SubResource("Flag_1"), SubResource("DayReached_1")])
+effects = Array[Resource]([SubResource("SpawnUnits_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_1")])
+
+[sub_resource type="Resource" id="Flag_2"]
 script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder briefing for Thorne's Wall."
+condition = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="DayReached_2"]
+script = ExtResource("6")
+day = 2
+
+[sub_resource type="Resource" id="Spawn_4"]
+script = ExtResource("8")
+unit_type = ExtResource("7")
+cell = Vector2i(23, 9)
+
+[sub_resource type="Resource" id="Spawn_5"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(23, 10)
+
+[sub_resource type="Resource" id="Spawn_6"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(23, 11)
+
+[sub_resource type="Resource" id="SpawnUnits_2"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_4"), SubResource("Spawn_5"), SubResource("Spawn_6")])
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
-speaker = &"ivar_thorne"
-text = "Placeholder: the enemy has something to say."
+script = ExtResource("11")
+speaker = &"nia_rowan"
+text = "I'm on the east flank with the Speaker's people. Don't come looking for me, Iris."
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
-speaker = &"iris_colt"
-text = "Placeholder victory."
+script = ExtResource("11")
+speaker = &"ines_calder"
+text = "She's ours for today. Take what the League can give you."
 
-[sub_resource type="Resource" id="Line_defeat_foe"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_nia_joins_the_league"]
+script = ExtResource("12")
+id = &"nia_joins_the_league"
+triggers = Array[Resource]([SubResource("Flag_2"), SubResource("DayReached_2")])
+effects = Array[Resource]([SubResource("SpawnUnits_2")])
+once = true
+lines = Array[Resource]([SubResource("Line_2"), SubResource("Line_3")])
+
+[sub_resource type="Resource" id="DayReached_3"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="GrantCharge_1"]
+script = ExtResource("13")
+team = 3
+points = 11000
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("11")
 speaker = &"ivar_thorne"
-text = "Placeholder: the enemy holds."
+text = "Everyone on this field bleeds today, mine as well. The ones who keep walking are the ones I want."
 
-[sub_resource type="Resource" id="Line_defeat_staff"]
-script = ExtResource("5")
+[sub_resource type="Resource" id="Event_cut_both_ways"]
+script = ExtResource("12")
+id = &"cut_both_ways"
+triggers = Array[Resource]([SubResource("DayReached_3")])
+effects = Array[Resource]([SubResource("GrantCharge_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_4")])
+
+[sub_resource type="Resource" id="CellOwned_1"]
+script = ExtResource("14")
+cell = Vector2i(17, 5)
+holder = 0
+
+[sub_resource type="Resource" id="GrantFunds_1"]
+script = ExtResource("15")
+team = 2
+amount = 5000
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("11")
+speaker = &"ines_calder"
+text = "Ash Gate's open. Greenhollow's quartermasters are handing us their keys, so send everything you've got through it."
+
+[sub_resource type="Resource" id="Event_the_ash_gate_falls"]
+script = ExtResource("12")
+id = &"the_ash_gate_falls"
+triggers = Array[Resource]([SubResource("CellOwned_1")])
+effects = Array[Resource]([SubResource("GrantFunds_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_5")])
+
+[sub_resource type="Resource" id="Cond_3"]
+script = ExtResource("4")
+flag = &"ff_concord_shells"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("11")
+text = "Greenhollow, the League's capital. Ivar Thorne has walled himself in with what's left of the junta and every gun in the cantons."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("11")
+speaker = &"ines_calder"
+text = "First Speaker Calder, what's left of the council. I have a lot of cheap soldiers and one good idea: we both hit the Wall at once and he can't be in two places."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("11")
+speaker = &"iris_colt"
+text = "West gate's mine. Keep your people out of his artillery's reach until the gates open."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("11")
+speaker = &"ines_calder"
+text = "And watch the day he spends his temper. Thorne's trick hurts his own lines as badly as ours, and he's proud of it."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("11")
+speaker = &"ines_calder"
+text = "He's firing Aurum shells from that wall, by the way, the same lot you found in the crates at Harrowgate."
+requires = SubResource("Cond_3")
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("11")
+speaker = &"ivar_thorne"
+text = "The League forgot what it costs to be free. I'll remind it from the Wall, and nobody goes home until it has learned."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("11")
+speaker = &"iris_colt"
+text = "Thorne's alive. He sat in his headquarters with a pistol on the desk and didn't pick it up."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("11")
+speaker = &"ines_calder"
+text = "Good, because the League will try him in public, in the council chamber he locked us out of."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("11")
+speaker = &"ines_calder"
+text = "And the League marches with the Ninth, Colonel. Cheap rifles, lots of them. Send the bill to Aldmoor."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("11")
+speaker = &"ivar_thorne"
+text = "I held this country together with my own hands for six years, and you'll see how long it lasts in yours."
+
+[sub_resource type="Resource" id="Cond_4"]
+script = ExtResource("4")
+flag = &"run:cause"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("11")
+speaker = &"ivar_thorne"
+text = "The Wall stands, and every soldier you left under it stays there."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("11")
 speaker = &"gideon_holt"
-text = "Placeholder: Holt counts the cost."
+text = "Calder's people ran out of soldiers before Thorne ran out of wall. I've got the League's invoice here and nobody to hand it to."
+unless = SubResource("Cond_4")
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("11")
+speaker = &"gideon_holt"
+text = "Every unit we sent up to that wall is on my casualty list, and it's the longest list I've written this war."
+requires = SubResource("Cond_4")
 
 [resource]
 script = ExtResource("1")
 id = &"ff17_thornes_wall"
 title = "Thorne's Wall"
-location = "Greenhollow"
+location = "Greenhollow, the League's capital"
 map_path = "res://maps/campaign/five_flags/ff17_thornes_wall.txt"
 player_team = 1
-ai_teams = Array[int]([2])
+ai_teams = Array[int]([2, 3])
 seats = Array[int]([])
-sides = {}
+sides = {1: 0, 2: 0, 3: 1}
 commanders = {
 1: &"iris_colt",
-2: &"ivar_thorne"
+2: &"ines_calder",
+3: &"ivar_thorne"
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("CaptureCell_1")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_placeholder")])
-par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2")])
-victory = Array[Resource]([SubResource("Line_3")])
-defeat = Array[Resource]([SubResource("Line_defeat_foe"), SubResource("Line_defeat_staff")])
+bonus_objectives = Array[Resource]([SubResource("AllySurvives_1"), SubResource("CaptureCell_2")])
+events = Array[Resource]([SubResource("Event_nia_joins_the_ninth"), SubResource("Event_nia_joins_the_league"), SubResource("Event_cut_both_ways"), SubResource("Event_the_ash_gate_falls")])
+par_day = 14
+briefing = Array[Resource]([SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11")])
+victory = Array[Resource]([SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
+defeat = Array[Resource]([SubResource("Line_16"), SubResource("Line_17"), SubResource("Line_18")])
