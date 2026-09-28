@@ -198,13 +198,13 @@ at_most = 0
 [sub_resource type="Resource" id="Line_vance_joined"]
 script = ExtResource("10")
 speaker = &"iris_colt"
-text = "Her guard's crossing with us under their own colours. That's the first Iron flag on our side of any river."
+text = "Her guard is crossing under its own colours, the first Iron flag on our side of any river since the Hall burned."
 requires = SubResource("Cond_vance_joined")
 
 [sub_resource type="Resource" id="Line_vance_withdrew"]
 script = ExtResource("10")
 speaker = &"iris_colt"
-text = "Vance went back to Ostrava with her staff and most of her guns. We'll meet them again at the capital."
+text = "Vance took her staff car and most of her guns back to Ostrava, so the next time we see those batteries they'll be on the capital's walls."
 requires = SubResource("Cond_vance_withdrew")
 
 [resource]
