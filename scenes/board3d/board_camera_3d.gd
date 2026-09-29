@@ -38,6 +38,10 @@ const SLACK_BEHIND := 0.14
 const SEEN_ACROSS := 0.47
 const SEEN_AHEAD := 0.33
 const SEEN_BEHIND := 0.23
+## A cursor this far past the box, in cells, is dragged even when that is off the
+## band: at the closest rungs the band's near edge sits less than a cell past the
+## box's, and a single arrow step would otherwise re-centre every other press.
+const STEP_PAST := 1.01
 
 var camera: Camera3D
 ## An unrendered twin posed where the camera is heading rather than where it is.
@@ -112,18 +116,16 @@ func _framed(spot: Vector3, reach: float, yaw: float) -> Vector3:
 	var offset := spot - _goal
 	var across := offset.dot(across_axis)
 	var ahead := offset.dot(ahead_axis)
-	var goal := _goal
+	var past_across := across - clampf(across, -SLACK_ACROSS * reach, SLACK_ACROSS * reach)
+	var past_ahead := ahead - clampf(ahead, -SLACK_BEHIND * reach, SLACK_AHEAD * reach)
 	var seen := (
 		absf(across) <= SEEN_ACROSS * reach
 		and ahead <= SEEN_AHEAD * reach
 		and ahead >= -SEEN_BEHIND * reach
 	)
-	if not seen:
-		goal = spot
-	else:
-		var slack_x := SLACK_ACROSS * reach
-		goal += across_axis * (across - clampf(across, -slack_x, slack_x))
-		goal += ahead_axis * (ahead - clampf(ahead, -SLACK_BEHIND * reach, SLACK_AHEAD * reach))
+	var goal := spot
+	if seen or maxf(absf(past_across), absf(past_ahead)) <= STEP_PAST:
+		goal = _goal + across_axis * past_across + ahead_axis * past_ahead
 	if bounds.has_area():
 		goal.x = clampf(goal.x, bounds.position.x, bounds.end.x)
 		goal.z = clampf(goal.z, bounds.position.y, bounds.end.y)
