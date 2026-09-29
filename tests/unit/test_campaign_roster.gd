@@ -9,8 +9,8 @@ extends GutTest
 ## true, 108 boards nobody is going to re-balance are being played with armies
 ## nobody authored.
 ##
-## The short-roster fallback is the common case rather than the edge: 106 of the
-## 108 missions carry nothing, so the path where the map's own unit stands is the
+## The short-roster fallback is the common case rather than the edge: most
+## missions carry nothing, so the path where the map's own unit stands is the
 ## one almost every mission takes.
 
 const PROBE := &"__probe_roster_campaign"

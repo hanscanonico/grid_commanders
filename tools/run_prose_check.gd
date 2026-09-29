@@ -15,7 +15,7 @@ extends SceneTree
 ##
 ## Usage (headless; see `make prose`):
 ##   Godot --headless --path . -s res://tools/run_prose_check.gd -- [flags]
-##     --campaign=the_quiet_war   one war rather than all of them
+##     --campaign=five_flags      one campaign rather than all of them
 ##     --speaker=vale             one voice; "(narration)" for the narrator
 ##     --worst=25                 how many lines to list (default 25)
 ##     --min=0.0                  list only lines at or above this score

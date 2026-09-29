@@ -1127,16 +1127,21 @@ a very low decibel to be inaudible. Every step lives in one table at the top of
 
 ## Campaigns
 
-**Campaign** on the main menu opens six authored wars against the Iron Dominion — *The Six
-Marshals*, *The Collection*, *The Furnace Winter*, *The Hollow Crown*, *The Long Front* and *The
-Quiet War* — eighteen missions each, on authored boards under `maps/campaign/`. A few missions
-still share ground with another: `core/campaign/campaign_boards.gd` holds the list, `make
-campaigns` and `make test` fail on any share that is not on it, and the *Furnace Winter* pipeline
-pair is the one there on purpose. You
-play the other three factions' commanders; the casting, seating, grouping, fog and difficulty are
-each mission's own (`data/campaigns/<campaign>/missions/`), so an act can be a 2v2 as easily as a
-duel, and difficulty is always one of the shipped tiers — no mission carries tuned AI numbers of
-its own.
+**Campaign** on the main menu opens *Five Flags*: one war in six acts, 39 missions on boards of
+their own under `maps/campaign/`, of which a single run plays 36. For twenty years the Ninth — a
+peacekeeping brigade whose officers come from all five powers — kept the peace in the Seam. Then
+somebody burned the Lantern Hall on the night the Accord was to be renewed, and every flag went
+home to war. The acts are *The Seam*, *Home Fires*, *The Ninth*, *Iron*, *Gold* and *Five Flags*;
+`docs/five_flags.md` is the story's record — the premise, the secret, the cast and how each of them
+talks, and the thread every mission closes. You play commanders of **all five factions** — the
+Ninth's own Iris Colt most of all, but also an Iron colonel, the Concord's traitor and, once, the
+Chancellor who started the war — and you fight every faction too. The casting, seating, sides,
+fog and difficulty are each mission's own (`data/campaigns/five_flags/missions/`): eleven missions
+seat three or four armies, a four-way free-for-all among them, six put an allied army beside you
+and three put two enemy armies on one side. Difficulty is always one of the shipped tiers — no
+mission carries tuned AI numbers of its own. No two missions share ground:
+`core/campaign/campaign_boards.gd` holds the list of boards allowed to share, `make campaigns` and
+`make test` fail on any share that is not on it, and the list is empty.
 
 Picking a war opens its **hub**: the mission list in play order under its block headers, stars
 beside every cleared mission and a `cleared · stars` line up top — counted out of the missions this
@@ -1158,11 +1163,12 @@ completed the objective is a failure. The shipped missions are lost three ways w
 used to be the only one in the game: some run out of days, some spend a loss limit, and some lose
 somebody the board named and you were told to keep alive. The deadline stays only where a
 time-shaped primary makes the clock the mission's own subject — on an ordinary capture the par day
-carries the pressure without taking the match away — so it is no longer the default it once was
-(24 missions today, against a loss limit's 20 and a protected unit's 6).
+carries the pressure without taking the match away — so *Five Flags* sets one, against two loss
+limits and six units you are told to keep alive.
 A mission asks for more than the enemy's headquarters: take a cell or so many properties, hold out
-to a day, **hold** named ground for a run of whole days, get a number of units onto an **exit
-zone**, **destroy** or **keep alive** a unit the board names, break one named **army**, or finish
+to a day, **hold** named ground for a run of whole days, get a number of units — or one named
+unit, the car you are escorting — onto an **exit zone**, **destroy** or **keep alive** a unit the
+board names, break one named **army**, or finish
 having lost no more than so many units. Everything is counted across your **side** — an ally
 reaching the zone reaches it for both of you, and an ally's casualty is on your bill — except
 "break that army", which is about one army on purpose. Two units merged into one spend a unit, and
@@ -1184,7 +1190,7 @@ anything else, and a replay speaks the same words in the same place. Beats fire 
 mission is judged, so a relief column arriving on the day the deadline expires is on the board the
 deadline is judged against; losing still outranks winning, so that mission is still lost. A beat
 marked once fires once, and a mission picked back up from a save does not play it again. **Every
-one of the 108 missions carries at least one**, 208 beats in all.
+one of the 39 missions carries at least one**, 141 beats in all.
 
 **A war remembers.** A beat can write a fact to its campaign's ledger — Greenwater held, the
 courier lost, three marshals still standing — and a later mission reads it: a briefing line only
@@ -1197,19 +1203,21 @@ is won**: it reads the war as it stood when it began, a lost or abandoned attemp
 and replaying a mission you have already cleared does not rewrite what later missions were briefed
 off — it can still improve your stars and your best day. When a win does move the war, the debrief
 says so on a `RECORDED` line in the beat's own words, and the hub's strip keeps saying it for the
-rest of the war. **Fifty-eight of the 108 missions write a fact**, every war keeping a handful of
-its own — whether Ferrow was ever paid, how much of the fuel road runs east, whether the marshal
-you fought beside is still standing.
+rest of the war. **Fourteen facts carry the war across its acts** — whether you caught Ferrow's
+paymaster, whether you spared Nia's rangers and Draeg's command tank, whether Ferrow was bought,
+whether Rhea turned, how many convoys and refugees got through — and at Hammer Hill every ally
+you earned arrives with a line of their own.
 
 **A war has a route through it.** A mission can state how the war has to read for it to open at all,
 and the campaign walks its list forward to the first mission that does — so a fact you wrote four
 missions ago can hand you a mission another player never sees, or take one away. A mission the route
 went past is gone for that run rather than owed: it is not counted against you, and a war with
 nothing left to offer reads as finished even though a mission of it was never played. What has
-already opened stays open, so nothing you do later can shut a mission you are standing on. **Ten
-missions across five of the six wars are authored this way** — *The Hollow Crown*'s ultimatum is
-offered only to a commander who let Morn's vanguard walk away, and *The Collection* holds two back
-— one for a commander who got the witness out, one for a commander who proved the forgery.
+already opened stays open, so nothing you do later can shut a mission you are standing on. **Five
+missions are authored this way**: *The Mint at Aurum Ford* opens only for a commander who caught
+Ferrow's paymaster, and two slots of the war fork — spare Nia's rangers and she guides your column
+down the Thornwood, shoot one and she hunts it; reach the lower town before Rhea's guns are ordered
+onto it and she fights beside you at the Hammer, or take the Hammer alone.
 
 **An army carries.** A war can hand one mission's survivors to the next. The second board marks some
 of its own starting units as slots those veterans stand in, at the HP and the name they came off the
@@ -1218,10 +1226,10 @@ the board authored, so every board still fields exactly the army it was balanced
 tank is a decision you have to make about it, never a tank you are missing. Nothing else crosses:
 what was riding inside a transport is banked as itself and arrives on its own feet. A lost mission
 banks nothing, so a **Retry** deploys the army the attempt began with, and replaying a mission you
-have already cleared does not re-deal what the ones after it opened on. Two chains are authored
-today — the two *Long Front* missions Mara Voss fights in a row, and the whole third act of *The
-Furnace Winter*, whose veteran column marches from the last mile to Vale's own furnace — and every
-other board opens at full strength as it always did.
+have already cleared does not re-deal what the ones after it opened on. Two chains are authored —
+the infiltration team that crosses Orlov's hunting grounds and walks into Kharn prison, and the
+Ninth's veteran column, which marches through the whole last act to Hammer Hill — and every other
+board opens at full strength as it always did.
 
 While you are fighting it, the mission's terms stay on the board: a card in the top-left corner
 names the mission and where it is fought, lists what wins, what loses and the bonuses — the par
@@ -1245,7 +1253,7 @@ between the acts, spoken by the generals exactly as a briefing is, and reading d
 on how the block went. Replaying a mission keeps the best stars and best day it ever earned.
 
 Progress is one file per campaign under `user://campaigns/`, written through a temp and a backup
-like the skirmish save, so the six wars advance independently and finishing one cannot corrupt
+like the skirmish save, so each campaign advances independently and finishing one cannot corrupt
 another's record. Inside a mission, both save rows on the map menu write the match *into its
 campaign's profile* rather than the skirmish slot — **Continue** on the main menu still means the
 one skirmish save, and the hub is where a saved mission picks its board back up. What the mission
@@ -1271,7 +1279,7 @@ That gate says a mission is playable, never that it is winnable. `make campaign-
 other question: every shipped mission played to a verdict with both armies driven by the planner at
 its own tier, plus the odds and the income the player's side opens on. A measurement rather than a
 gate — `docs/campaign_difficulty.md` is the committed record, the caveats to read before acting on a
-row, and what the last content pass over the six wars changed.
+row, and the escorts and ledger routes the planner cannot measure.
 
 ## Replays
 

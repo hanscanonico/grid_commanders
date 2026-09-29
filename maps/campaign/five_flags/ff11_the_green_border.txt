@@ -1,0 +1,51 @@
+# The Thornwood marches, Meridian's forest provinces, with Thorne's army in them.
+# One road runs east out of the Meridian towns and turns north up to the Old
+# Shrine, a clearing in the deepest stand of the wood. Nia Rowan's two ranger
+# squads hold the trees either side of it; Thorne's regulars camp to the south-east
+# and come up the same road behind anyone who takes it. The shrine can be taken
+# without killing a ranger - screen the capture, soak their fire, never shoot
+# back at them - and it is slower and dearer that way. That is the choice.
+# Symbols: . plains  F woods  M mountain  = road
+#          C city  B base  Q HQ
+[terrain]
+MMFFFFFFMMFFF.FFMM
+M.C.FFF.FFF..FF..M
+..=.F.FF.F.F.CF..F
+F.=..FF.FF.F.=F.C.
+..=.F..F..FF.=..F.
+.B=.FFF.F.F..=F.F.
+.Q============....
+..=..F.F..F..=..FC
+F.C..FF....F.=..F.
+..=...F.F...F===BQ
+M.=====..C...F..F.
+MMFF.......FF...MM
+[owners]
+1 1 6
+1 1 5
+1 2 1
+1 2 8
+1 9 10
+2 17 9
+2 16 9
+2 13 2
+2 16 3
+2 17 7
+[units]
+1 i 5 5
+1 i 4 4
+1 m 6 3
+1 t 5 6
+1 t 4 7
+1 g 3 6
+1 r 6 6
+1 i 3 9
+1 t 2 7
+1 m 7 4
+2 m 12 2 nia_ranger_a
+2 m 14 3 nia_ranger_b
+2 t 15 7
+2 r 14 9
+2 g 16 8
+2 i 12 5
+2 m 15 5

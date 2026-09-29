@@ -1,6 +1,6 @@
 # Prose slop — how the campaign dialogue is measured
 
-`make prose` scores every spoken line of the six authored wars for **structural AI-slop**: the
+`make prose` scores every spoken line of the authored campaign for **structural AI-slop**: the
 shapes that give away writing produced in bulk rather than the words. It is a measurement, not a
 gate — it exits 0 whatever it finds, stays out of `make verify` and `make test`, and edits no
 content. This file is the committed record: what each reading means, which false positives are
@@ -205,6 +205,36 @@ slot. The corpus grew 1067 → 1382 lines since the interlude pass, 173 of them 
 the rest the same PRs' rank lines, finale ledgers and staff voices, so the corpus mean's fall
 (0.086 → 0.075) and the entropy's rise (1.53 → 1.57 bits) are mostly, not only, the defeat slot.
 Events are the slot to read next: the highest mean and the highest two-sentence share of the five.
+
+## Five Flags — measured 2026-09-29
+
+The six wars were replaced by one campaign, *Five Flags*, written from scratch to the rewrite rules
+above and scored before it merged: every act's author read its worst lines and rewrote the ones the
+readings were right about, and every act's reviewer did it again. This is the corpus the sections
+above now measure; the figures before this one are the six wars' and compare only as a baseline.
+
+```
+prose: 733 lines, 23 voices
+prose: mean score 0.075 | mean sentence 10.2 words | sentence-count entropy 1.59 bits
+prose: fired on — lockstep 50%, aphorism 1%, negation 2%, em_dash 0%, cadence 74%, triad 12%, stock 0%, vocative 0%, register 39%
+prose: speaker sentence-length σ spans 1.54 to 8.94 words
+```
+
+| Slot | Lines | Mean | Two-sentence | Spoken |
+|---|---|---|---|---|
+| briefing | 217 | 0.073 | 43% | 83% |
+| event | 218 | 0.076 | 51% | 99% |
+| victory | 146 | 0.074 | 53% | 99% |
+| defeat | 89 | 0.077 | 57% | 100% |
+| interlude | 63 | 0.080 | 51% | 84% |
+
+The mean matches the six wars' last reading (0.075) on half the lines, with the entropy slightly
+higher (1.59 bits) and aphorisms nearly gone (1%, the readings' hardest shape to write out). Every
+mission scores between 0.068 and 0.107. The worst lines left are Holt's tallies, whose list shape
+the aphorism reading dislikes, and Konrad Vale's and Lyra Quill's, whose refusal to contract is the
+characterisation rather than the slop — the false positive this file already names. Two voices
+have the narrowest cadence and are the ones to vary first if a pass is ever run: Rhea Sol (σ 1.54)
+and Iona Vance (σ 2.41); Radek Morn's short σ is his few-words voice.
 
 ## The control corpus
 

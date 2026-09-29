@@ -1,0 +1,75 @@
+# Five Flags, Act III — "The Open Sky". The Skyreach plateau, Perrin Ash + Sera Lark v Draeg + Vale.
+# Iron's invasion of Aurora, two sides of two. A mountain wall across rows 7-8
+# splits the plateau from the lowlands, and the only roads through it are the
+# two passes at columns 6 and 17; foot can climb the rock anywhere, treads
+# cannot. Skyreach's airfield (8,2) and Perrin's HQ are north-west, Sera's
+# base and HQ north-east. Below the wall Draeg's armour column (every unit
+# tagged draeg_*, no production) stands at the foot of the western pass, and
+# Vale's air wing flies from his airfield (22,13) in the south-east corner.
+# The primary is Vale's wing, broken outright. Draeg's command tank,
+# draeg_command, flies the Ninth's old pennant: when the enemy side is down to
+# 6 units, or Vale's wing is broken, with that tank still alive, his column
+# withdraws off the board and ff_draeg_spared is written. Destroy the tank and
+# Draeg's crew pull him out; his column fights on without him.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  A airport  Q HQ
+[terrain]
+MMMMMMMMMMMMMMMMMMMMMMMM
+.....Q.......FF...Q.....
+.FF..=..A..C....B.=...F.
+.....==============.....
+..C...=...F.C....=...C..
+.F....=....F.....=....F.
+..MMM.=..MMMMMM..=.MMM..
+MMMMMM=MMMMMMMMMM=MMMMMM
+MMMMMM=MMMMMMMMMM=MMMMMM
+......=...MMMM...=......
+......=.M....C.M.=.....M
+...FF.=....M...F.=.FF...
+M.C...============......
+.....M=..........=M...A.
+.F....=...CFF....=......
+....Q.=..........=..Q...
+[owners]
+1 5 1
+1 8 2
+1 2 4
+2 18 1
+2 16 2
+2 21 4
+3 4 15
+3 2 12
+4 20 15
+4 22 13
+[units]
+1 f 8 4
+1 f 4 3
+1 h 9 2
+1 h 3 2
+1 M 7 4
+1 a 5 5
+1 i 6 5
+1 i 9 4
+1 m 4 5
+2 r 19 4
+2 r 16 4
+2 t 15 4
+2 t 19 5
+2 i 18 5
+2 m 20 4
+3 t 4 13 draeg_command
+3 T 5 12 draeg_heavy
+3 t 7 13 draeg_tank_a
+3 t 16 11 draeg_tank_b
+3 g 5 14 draeg_guns
+3 m 7 10 draeg_mech_a
+3 m 16 13 draeg_mech_b
+3 r 9 13 draeg_recon
+3 a 8 13 draeg_flak
+3 t 7 11 draeg_tank_c
+4 b 21 13 vale_lead
+4 b 21 12
+4 h 19 13
+4 h 19 14
+4 f 22 14
+4 h 20 12

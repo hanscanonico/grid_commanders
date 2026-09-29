@@ -1,0 +1,222 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=41 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="3"]
+
+[sub_resource type="Resource" id="Cond_1"]
+script = ExtResource("1")
+flag = &"ff_vance_joined"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_2"]
+script = ExtResource("1")
+flag = &"ff_vance_joined"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_3"]
+script = ExtResource("1")
+flag = &"ff_vale_stood_down"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_4"]
+script = ExtResource("1")
+flag = &"ff_vale_stood_down"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_5"]
+script = ExtResource("1")
+flag = &"ff_ferrow_bought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_6"]
+script = ExtResource("1")
+flag = &"ff_ferrow_bought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_7"]
+script = ExtResource("1")
+flag = &"ff_rhea_turned"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_8"]
+script = ExtResource("1")
+flag = &"ff_rhea_turned"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_9"]
+script = ExtResource("1")
+flag = &"ff_refugees"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_10"]
+script = ExtResource("1")
+flag = &"ff_refugees"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_11"]
+script = ExtResource("1")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_12"]
+script = ExtResource("1")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_13"]
+script = ExtResource("1")
+flag = &"ff_nia_fought"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_14"]
+script = ExtResource("1")
+flag = &"ff_nia_fought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("2")
+text = "Three weeks after Hammer Hill. The Lantern Hall at Candlemere has a roof again, and five delegations are sitting under it."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("2")
+speaker = &"lyra_quill"
+text = "The Concord's ledgers are on the table, every loan to every nation since the Hall burned. I move that they be read into the record and then cancelled in full. I have run the numbers, and there is no arithmetic in which I keep them."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Every war debt on the continent, cancelled by the woman who wrote them. I kept one page as a souvenir. It's ours, and it's enormous."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("2")
+speaker = &"ines_calder"
+text = "Ivar Thorne goes before the League council in the spring, in public, with a lawyer the council pays for. It's a fairer trial than he'd have given any of us."
+
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "Sable Wren, cell nine, Skyreach. Asks for every newspaper every morning. Still says the sums were right."
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("2")
+speaker = &"iona_vance"
+text = "The regular army answers to an elected council from next month. I've agreed to stay until the council can count its own tanks."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("2")
+speaker = &"mara_voss"
+text = "Iona Vance resigned her commission in Ostrava the day the hill fell. She says she'll come to Aldmoor once she's decided whether she lost."
+unless = SubResource("Cond_2")
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("2")
+speaker = &"konrad_vale"
+text = "The Karlov foundry is pouring rails and ploughshares. The quality is excellent, and so, I regret to say, is the price."
+requires = SubResource("Cond_3")
+
+[sub_resource type="Resource" id="Line_23"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Vale's under arrest in his own counting office and won't sign anything he hasn't costed, so the new council has sent him an accountant."
+unless = SubResource("Cond_4")
+
+[sub_resource type="Resource" id="Line_24"]
+script = ExtResource("2")
+speaker = &"dane_ferrow"
+text = "Account closed, Holt. Ferrow's company runs grain barges on the Lusk now. The work's honest and the margins are a crime."
+requires = SubResource("Cond_5")
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Dane Ferrow was last seen on a packet boat heading south with his licence and nothing else, and I've sent the invoice after him anyway."
+unless = SubResource("Cond_6")
+
+[sub_resource type="Resource" id="Line_26"]
+script = ExtResource("2")
+speaker = &"rhea_sol"
+text = "Sol, from Aurum. The batteries on the hills are dismantled, and the lower town is rebuilding without a single shell hole in it."
+requires = SubResource("Cond_7")
+
+[sub_resource type="Resource" id="Line_27"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Rhea Sol surrendered her guns the day the hill fell and asked to stand trial beside the Chancellor. The Concord's courts are still arguing over who tries whom."
+unless = SubResource("Cond_8")
+
+[sub_resource type="Resource" id="Line_28"]
+script = ExtResource("2")
+speaker = &"lyra_quill"
+text = "Every family that crossed the Aurum causeway is home. I owe that to an army I once tried to buy."
+requires = SubResource("Cond_9")
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("2")
+speaker = &"lyra_quill"
+text = "Nobody crossed the Aurum causeway in time. I have that number as well, and I intend to carry it."
+unless = SubResource("Cond_10")
+
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "I took the Ninth's old pennant off my aerial this morning and gave it back. The column's staying, if the Ninth still wants it."
+requires = SubResource("Cond_11")
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "They cleared my name and gave me my rank back. I'd rather have had my column, so I'll build another one for the Ninth."
+unless = SubResource("Cond_12")
+
+[sub_resource type="Resource" id="Line_32"]
+script = ExtResource("2")
+speaker = &"nia_rowan"
+text = "My rangers went home to Greenhollow. I stayed."
+requires = SubResource("Cond_13")
+
+[sub_resource type="Resource" id="Line_33"]
+script = ExtResource("2")
+speaker = &"nia_rowan"
+text = "I hunted you through the Thornwood and you asked me back anyway, so I'm here."
+requires = SubResource("Cond_14")
+
+[sub_resource type="Resource" id="Line_34"]
+script = ExtResource("2")
+speaker = &"mara_voss"
+text = "I left Iron because of Morn and distrusted the Ninth because of Iron, and it turns out I was only right about one of them."
+
+[sub_resource type="Resource" id="Line_35"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "The Accord runs another twenty years, and it needs a Ninth to keep it. I'm too old to command one, Iris. It's yours."
+
+[sub_resource type="Resource" id="Line_36"]
+script = ExtResource("2")
+speaker = &"iris_colt"
+text = "Then we start tomorrow. Five flags, one pole."
+
+[sub_resource type="Resource" id="Line_37"]
+script = ExtResource("2")
+text = "The Ninth rode out of Candlemere the next morning under five flags."
+
+[resource]
+script = ExtResource("3")
+after_block = 5
+title = "Twenty More Years"
+lines = Array[Resource]([SubResource("Line_15"), SubResource("Line_16"), SubResource("Line_17"), SubResource("Line_18"), SubResource("Line_19"), SubResource("Line_20"), SubResource("Line_21"), SubResource("Line_22"), SubResource("Line_23"), SubResource("Line_24"), SubResource("Line_25"), SubResource("Line_26"), SubResource("Line_27"), SubResource("Line_28"), SubResource("Line_29"), SubResource("Line_30"), SubResource("Line_31"), SubResource("Line_32"), SubResource("Line_33"), SubResource("Line_34"), SubResource("Line_35"), SubResource("Line_36"), SubResource("Line_37")])

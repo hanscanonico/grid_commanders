@@ -1,0 +1,67 @@
+# Five Flags, The Seam — "The Last Parade": the Ninth marches west while Alina holds the bridge.
+# The Parade Road runs the whole board east to west. Sera's column starts at
+# the east end (x 10-13) and has to reach the Meridian border crossing, the
+# five road and verge cells at the west edge (0, 3-7). The Seam river (x 6)
+# has one bridge (6,5): the column crosses there, and Alina's rearguard (an
+# allied seat) stands at its east end with its post at (8,1).
+#
+# Orlov comes from behind and waits ahead. His hunters start at the east
+# edge, and more land behind the column: day 2 at (15,3), (14,9) and
+# (15,8), day 3 at the south-east corner, day 4 on the north-east hills
+# (15,1) and (15,2) — ground nobody else stands on. His command post (0,0)
+# sits at the border itself, beside the crossing, so taking it is never a
+# shorter way home than the run. Its party holds the western woods and the
+# road in front of the crossing (2,5): four fast units drive the empty road
+# in two turns, so the column has to fight its way through the last mile
+# while the hunters close from behind.
+#
+# The player's HQ is the border post (1,9) — the column's destination, not
+# its home. Orlov's road block is close enough to try for it, which is one
+# more reason not to dawdle.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  Q HQ
+[terrain]
+QF..FF~..F..MMMM
+....F.~.Q..FMMMM
+.F...F~......MMM
+......~..F..C...
+..F...~..F......
+======+=========
+.F...F~...F.....
+......~..C...F..
+.F..F.~.....F...
+.Q....~..F....F.
+FF..F.~...FF....
+[owners]
+1 1 9
+2 8 1
+3 0 0
+[units]
+# Sera's column: the colours ride in the APC.
+1 r 13 5
+1 r 12 4
+1 t 12 6
+1 i 11 4
+1 i 11 6
+1 m 10 4
+1 g 13 6
+1 p 10 5 ninth_colours
+# Alina's rearguard, on the east end of the bridge: five units, not an army.
+2 t 7 4
+2 t 7 6
+2 i 8 5
+2 m 8 3
+2 a 7 7
+# Orlov: the hunters behind the column, more landing every day, and the
+# party in the western woods.
+3 t 15 5
+3 t 15 4
+3 r 15 6
+3 i 14 8
+3 m 14 3
+3 t 4 1
+3 i 2 2
+3 m 4 2
+3 r 4 8
+# The road block in front of the crossing.
+3 t 2 5

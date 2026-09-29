@@ -1,0 +1,135 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="8"]
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("2")
+text = "Own 4 foundries."
+count = 4
+terrain_id = &"base"
+
+[sub_resource type="Resource" id="Objective_2"]
+script = ExtResource("3")
+text = "Capture Vale's counting office."
+cell = Vector2i(16, 11)
+
+[sub_resource type="Resource" id="Trigger_3"]
+script = ExtResource("4")
+day = 3
+
+[sub_resource type="Resource" id="Effect_4"]
+script = ExtResource("5")
+team = 2
+amount = 3000
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "The Concord's second instalment has arrived on schedule. Their terms assume this war lasts eleven more months, and their models are seldom wrong."
+
+[sub_resource type="Resource" id="Event_6"]
+script = ExtResource("7")
+id = &"concord_instalment"
+triggers = Array[Resource]([SubResource("Trigger_3")])
+effects = Array[Resource]([SubResource("Effect_4")])
+once = true
+lines = Array[Resource]([SubResource("Line_5")])
+
+[sub_resource type="Resource" id="Trigger_7"]
+script = ExtResource("8")
+cell = Vector2i(16, 11)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_8"]
+script = ExtResource("5")
+team = 1
+amount = 3000
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("6")
+speaker = &"ines_calder"
+text = "Loan papers in Vale's safe. Signed in Aurum, secured against every furnace in Kessel, and the ink's still fresh."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("6")
+speaker = &"ines_calder"
+text = "I'm spending the float on tanks. Somebody in Aurum lent Iron the money for every gun it's pointing at us, so they can pay for ours as well."
+
+[sub_resource type="Resource" id="Event_11"]
+script = ExtResource("7")
+id = &"loan_papers"
+triggers = Array[Resource]([SubResource("Trigger_7")])
+effects = Array[Resource]([SubResource("Effect_8")])
+once = true
+lines = Array[Resource]([SubResource("Line_9"), SubResource("Line_10")])
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("6")
+text = "Kessel is six foundries and the rail yards between them. Whoever keeps the furnaces lit builds the tanks, and Konrad Vale builds very good tanks."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "Speaker Calder. Each machine I build costs a fifth more than yours and is worth a good deal more than a fifth. I have done the arithmetic."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("6")
+speaker = &"ines_calder"
+text = "So have I. Mine comes out cheaper. Take the furnaces, keep them lit, build something every day."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("6")
+speaker = &"ines_calder"
+text = "Four foundries and Kessel's ours. Vale keeps his office in the east yards, and I'd like a look at his books while we're here."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("6")
+speaker = &"ines_calder"
+text = "Four furnaces lit under a green flag. His tanks were better. We had more of them, every single morning."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "Quantity is a quality I declined to purchase, and I will not make that economy a second time."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "Your machines were cheap, Speaker, and correctly priced. The foundries of Kessel remain the property of the Directorate."
+
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Calder's quartermaster sent me her bill. Cheap tanks, lots of them, and every one of them still in Kessel."
+
+[resource]
+script = ExtResource("1")
+id = &"ff23_the_foundries_of_kessel"
+title = "The Foundries of Kessel"
+location = "Kessel, the foundry city"
+map_path = "res://maps/campaign/five_flags/ff23_the_foundries_of_kessel.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"ines_calder",
+2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_1")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Objective_2")])
+events = Array[Resource]([SubResource("Event_6"), SubResource("Event_11")])
+par_day = 12
+briefing = Array[Resource]([SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
+victory = Array[Resource]([SubResource("Line_16"), SubResource("Line_17")])
+defeat = Array[Resource]([SubResource("Line_18"), SubResource("Line_19")])

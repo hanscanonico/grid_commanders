@@ -1,0 +1,73 @@
+# Five Flags 29 — "Glass Shore": an amphibious landing under the Concord's sea cliffs.
+# Halden Marr's fleet anchors off a small island in the west, where he keeps
+# his headquarters and the port that builds his hulls. The first wave is
+# already ashore on the south beach with its landers still in the surf, and has
+# taken the beach yard behind it; the second comes in on the north beach with
+# the tide. Between the two beaches the coast is cliff, broken once by the
+# harbour: a fort on a single shoal landing, cliffs to either side and Rhea
+# Sol's guns on the plateau behind. A gully through the south cliffs is the
+# short road to it, straight past a battery. Her picket hulls hold the channel
+# between the island and the shore, and the fishing town on the south beach sits
+# under one of her guns.
+# Symbols: . plains  F woods  M mountain  = road  S sea  _ shoal
+#          C city  B base  P port  Q HQ
+[terrain]
+SSSSSSSSS__.MM..F..C..MM
+SSSSSSSSS_..MM.====F...M
+SSSSSSSSS_.C....=...F..C
+SSSSSSSSSS__MM..=.F....F
+SSSSSSSSSSSMMM..=...B..F
+SSSSSSSSSSSSM.F.=..F....
+SSSSSSSSSSSSM..==..C..F.
+SSSSSSSSSSS_C==========Q
+SSSSSSSSSSSSM..F..=.C..F
+SSSSSSSSSSSMM.....=...F.
+SSSSSSSSS__...M...=..C..
+SQ..CPSSS__.C.M.F.=.....
+S.F..SSSS__...MM..=.C..F
+S..C.SSSSS__B.M..F.=....
+SS...SSSSSS_....F..=.C.M
+SSSSSSSSSSSS__....MM....
+[owners]
+1 1 11
+1 5 11
+1 4 11
+1 3 13
+1 12 13
+2 23 7
+2 20 4
+2 12 7
+2 12 11
+2 19 6
+2 20 8
+2 21 10
+[units]
+# The first wave, ashore on the south beach, and the landers that brought it.
+1 i 10 10
+1 m 10 11
+1 i 10 12
+1 t 11 10
+1 t 11 11
+1 m 11 12
+1 g 12 12
+1 l 8 11
+1 l 8 12
+1 c 7 13
+1 B 6 12
+1 H 2 12
+# Rhea's shore: the fort garrison, a battery laid on the fishing town, the
+# guns on the plateau, and the picket hulls in the channel.
+2 i 12 7
+2 i 12 11
+2 i 11 2
+2 m 13 6
+2 i 13 9
+2 g 15 11 rhea_town_battery
+2 g 14 8
+2 g 14 5
+2 R 16 4
+2 t 15 7
+2 a 16 6
+2 c 8 5 concord_picket
+2 c 6 2
+2 s 7 8

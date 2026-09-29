@@ -1,0 +1,206 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=45 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="13"]
+
+[sub_resource type="Resource" id="CaptureCell_1"]
+script = ExtResource("2")
+text = "Capture Orin's command post."
+cell = Vector2i(10, 1)
+
+[sub_resource type="Resource" id="CaptureCell_2"]
+script = ExtResource("2")
+text = "Capture Orin's listening post."
+cell = Vector2i(18, 3)
+
+[sub_resource type="Resource" id="DayReached_1"]
+script = ExtResource("3")
+day = 3
+
+[sub_resource type="Resource" id="GrantCharge_1"]
+script = ExtResource("4")
+team = 2
+points = 11000
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"orin_flux"
+text = "Blue Actual to all stations, jamming on my mark. Mark. Red's about to find out how far a tank goes when it can't hear itself."
+
+[sub_resource type="Resource" id="Event_signal_jam"]
+script = ExtResource("6")
+id = &"signal_jam"
+triggers = Array[Resource]([SubResource("DayReached_1")])
+effects = Array[Resource]([SubResource("GrantCharge_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_1")])
+
+[sub_resource type="Resource" id="DayReached_2"]
+script = ExtResource("3")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_1"]
+script = ExtResource("8")
+unit_type = ExtResource("7")
+cell = Vector2i(0, 1)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(19, 7)
+
+[sub_resource type="Resource" id="SpawnUnits_1"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_1"), SubResource("Spawn_2")])
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Umpires release the blue reserve. The board just changed, Colonel. Let's see if you do."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Tell your umpires I've been ambushed by worse."
+
+[sub_resource type="Resource" id="Event_the_umpires_release_the_reserve"]
+script = ExtResource("6")
+id = &"the_umpires_release_the_reserve"
+triggers = Array[Resource]([SubResource("DayReached_2")])
+effects = Array[Resource]([SubResource("SpawnUnits_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_2"), SubResource("Line_3")])
+
+[sub_resource type="Resource" id="CellOwned_1"]
+script = ExtResource("11")
+cell = Vector2i(18, 3)
+holder = 0
+
+[sub_resource type="Resource" id="SetFlag_1"]
+script = ExtResource("12")
+flag = &"ff_cipher_read"
+mode = 0
+value = 1
+note = "Iris took Orin's listening post at Skyreach and read the Concord intercept pinned to its board."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Orin's got a Concord cipher pinned to the board in here, half broken. Somebody's reporting on the Ninth to Aurum, and they sign every message the same way."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"orin_flux"
+text = "Hands off my board, Red. That's live traffic, not part of the exercise."
+
+[sub_resource type="Resource" id="Event_the_cipher_board"]
+script = ExtResource("6")
+id = &"the_cipher_board"
+triggers = Array[Resource]([SubResource("CellOwned_1")])
+effects = Array[Resource]([SubResource("SetFlag_1")])
+once = true
+lines = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("5")
+text = "Skyreach. Chancellor Rook won't commit Aurora to a war on a stranger's word, so he has set the stranger an exam."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Beat my spymaster on the exercise grounds and Aurora listens to you. Live rounds, Colonel. Blanks never taught anybody anything."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("5")
+speaker = &"orin_flux"
+text = "Blue Actual. Comms check. You won't see me, Red, you'll see what I let through."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Two ridges, one road up the middle, and fog on all of it. Scouts first, then armour. He'll jam us on day three, so be across the first ridge by then."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "And that listening post in the east woods. I want to know what Aurora's been hearing."
+
+[sub_resource type="Resource" id="Cond_1"]
+script = ExtResource("13")
+flag = &"ff_cipher_read"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Command post taken. Aurora is listening, Colonel."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("5")
+speaker = &"orin_flux"
+text = "Before you go. We've been reading Concord traffic for a month, and one agent reports on the Ninth. Call sign WREN."
+unless = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("5")
+speaker = &"orin_flux"
+text = "You read my board, so you've seen it already. Call sign WREN, reporting on the Ninth to Aurum, every week for a month."
+requires = SubResource("Cond_1")
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Wren's a bird. Half the Concord's agents are named after birds."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("5")
+speaker = &"orin_flux"
+text = "Sure. Signal ends."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("5")
+speaker = &"orin_flux"
+text = "Red Actual's off the air. Exercise over. Tell the Chancellor the stranger lost."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "We lost a war game. The shells were real, so the bills are real. Rook's already asked for his ammunition back."
+
+[resource]
+script = ExtResource("1")
+id = &"ff19_signal_and_noise"
+title = "Signal and Noise"
+location = "The Skyreach exercise grounds"
+map_path = "res://maps/campaign/five_flags/ff19_signal_and_noise.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"iris_colt",
+2: &"orin_flux"
+}
+fog_enabled = true
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("CaptureCell_1")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("CaptureCell_2")])
+events = Array[Resource]([SubResource("Event_signal_jam"), SubResource("Event_the_umpires_release_the_reserve"), SubResource("Event_the_cipher_board")])
+par_day = 10
+briefing = Array[Resource]([SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10")])
+victory = Array[Resource]([SubResource("Line_11"), SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
+defeat = Array[Resource]([SubResource("Line_16"), SubResource("Line_17")])

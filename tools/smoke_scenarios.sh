@@ -262,8 +262,8 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # selects the first board on the shelf that deals more than a duel: the picker's
 # `· NP` suffix and a four-row seat strip are otherwise in no frame at all.
 #
-# The campaign menu scenarios are the same argument for the six authored
-# wars, which had no frame anywhere: `menu_campaigns` is the war picker,
+# The campaign menu scenarios are the same argument for the authored
+# campaign, which had no frame anywhere: `menu_campaigns` is the war picker,
 # `menu_campaign_hub` its mission list, `menu_campaign_brief` that hub with the
 # open mission's briefing up, and `menu_campaign_debrief`, `menu_campaign_defeat`
 # and `menu_campaign_interlude` the panels a war speaks through on the way back
@@ -320,7 +320,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # mission_defection is the other half of what a beat can do to the board, and it
 # is a check before it is a picture: a unit that changed army has to be redrawn in
 # the colours it changed to, and a sprite still wearing the army it left writes a
-# perfectly healthy PNG. It poses the defection on The Long Front's exemplar
+# perfectly healthy PNG. It poses the defection on Five Flags' toll-bridge
 # board, whose units the mission already names one of, and reads every sprite's
 # atlas row back against SideIdentity's answer for its owner.
 #

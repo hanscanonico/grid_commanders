@@ -1,0 +1,331 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=71 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="13"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="14"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="15"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="16"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="17"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="18"]
+
+[sub_resource type="Resource" id="Objective_hollin"]
+script = ExtResource("2")
+text = "Keep Hollin for 7 days."
+cell = Vector2i(16, 5)
+days = 7
+
+[sub_resource type="Resource" id="Failure_deadline"]
+script = ExtResource("3")
+text = "Time runs out at the end of day 12."
+last_day = 12
+
+[sub_resource type="Resource" id="Bonus_town"]
+script = ExtResource("4")
+text = "Capture the town south of the valley road."
+cell = Vector2i(11, 10)
+
+[sub_resource type="Resource" id="Bonus_heavy"]
+script = ExtResource("5")
+text = "Destroy Vale's heavy tank."
+tag = &"vale_heavy"
+
+[sub_resource type="Resource" id="Trigger_convoy_a"]
+script = ExtResource("6")
+tag = &"convoy_a"
+cells = Array[Vector2i]([Vector2i(15, 4), Vector2i(16, 4), Vector2i(15, 5), Vector2i(16, 5), Vector2i(15, 6), Vector2i(16, 6)])
+
+[sub_resource type="Resource" id="Effect_unload_convoy_a"]
+script = ExtResource("7")
+tags = Array[StringName]([&"convoy_a"])
+
+[sub_resource type="Resource" id="Effect_pay_convoy_a"]
+script = ExtResource("8")
+team = 1
+amount = 4000
+
+[sub_resource type="Resource" id="Effect_count_convoy_a"]
+script = ExtResource("9")
+flag = &"ff_convoys"
+mode = 1
+value = 1
+note = "A convoy of Holt's reached besieged Hollin."
+
+[sub_resource type="Resource" id="Line"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "First carrier's in. Four thousand rounds, two hundred blankets and one crate marked 'spoons', which I didn't order and won't be returning."
+
+[sub_resource type="Resource" id="Event_first_convoy"]
+script = ExtResource("11")
+id = &"first_convoy"
+triggers = Array[Resource]([SubResource("Trigger_convoy_a")])
+effects = Array[Resource]([SubResource("Effect_unload_convoy_a"), SubResource("Effect_pay_convoy_a"), SubResource("Effect_count_convoy_a")])
+once = true
+lines = Array[Resource]([SubResource("Line")])
+
+[sub_resource type="Resource" id="Trigger_convoy_b"]
+script = ExtResource("6")
+tag = &"convoy_b"
+cells = Array[Vector2i]([Vector2i(15, 4), Vector2i(16, 4), Vector2i(15, 5), Vector2i(16, 5), Vector2i(15, 6), Vector2i(16, 6)])
+
+[sub_resource type="Resource" id="Effect_unload_convoy_b"]
+script = ExtResource("7")
+tags = Array[StringName]([&"convoy_b"])
+
+[sub_resource type="Resource" id="Effect_pay_convoy_b"]
+script = ExtResource("8")
+team = 1
+amount = 4000
+
+[sub_resource type="Resource" id="Effect_count_convoy_b"]
+script = ExtResource("9")
+flag = &"ff_convoys"
+mode = 1
+value = 1
+note = "A convoy of Holt's reached besieged Hollin."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Second carrier unloaded. Hollin's depot has started building with it, which is the first time anyone's spent my money faster than me."
+
+[sub_resource type="Resource" id="Event_second_convoy"]
+script = ExtResource("11")
+id = &"second_convoy"
+triggers = Array[Resource]([SubResource("Trigger_convoy_b")])
+effects = Array[Resource]([SubResource("Effect_unload_convoy_b"), SubResource("Effect_pay_convoy_b"), SubResource("Effect_count_convoy_b")])
+once = true
+lines = Array[Resource]([SubResource("Line_2")])
+
+[sub_resource type="Resource" id="Trigger_convoy_c"]
+script = ExtResource("6")
+tag = &"convoy_c"
+cells = Array[Vector2i]([Vector2i(15, 4), Vector2i(16, 4), Vector2i(15, 5), Vector2i(16, 5), Vector2i(15, 6), Vector2i(16, 6)])
+
+[sub_resource type="Resource" id="Effect_unload_convoy_c"]
+script = ExtResource("7")
+tags = Array[StringName]([&"convoy_c"])
+
+[sub_resource type="Resource" id="Effect_pay_convoy_c"]
+script = ExtResource("8")
+team = 1
+amount = 4000
+
+[sub_resource type="Resource" id="Effect_count_convoy_c"]
+script = ExtResource("9")
+flag = &"ff_convoys"
+mode = 1
+value = 1
+note = "A convoy of Holt's reached besieged Hollin."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Third carrier. That's the set."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Somebody write down that the quartermaster got everything through, because I'd like it read at my funeral."
+
+[sub_resource type="Resource" id="Event_third_convoy"]
+script = ExtResource("11")
+id = &"third_convoy"
+triggers = Array[Resource]([SubResource("Trigger_convoy_c")])
+effects = Array[Resource]([SubResource("Effect_unload_convoy_c"), SubResource("Effect_pay_convoy_c"), SubResource("Effect_count_convoy_c")])
+once = true
+lines = Array[Resource]([SubResource("Line_3"), SubResource("Line_4")])
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("12")
+day = 3
+
+[sub_resource type="Resource" id="Spawn"]
+script = ExtResource("13")
+unit_type = ExtResource("14")
+cell = Vector2i(13, 0)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("13")
+unit_type = ExtResource("15")
+cell = Vector2i(12, 2)
+
+[sub_resource type="Resource" id="Effect_spawn"]
+script = ExtResource("16")
+team = 2
+units = Array[Resource]([SubResource("Spawn"), SubResource("Spawn_2")])
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("10")
+speaker = &"konrad_vale"
+text = "The northern road is also watched, Quartermaster. I did not build a tank that costs this much to leave a road unwatched."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "He's put a price tag on the north road. I've seen the tank. It's very shiny, and I'd rather not get any of our paint on it."
+
+[sub_resource type="Resource" id="Event_north_road_raid"]
+script = ExtResource("11")
+id = &"north_road_raid"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_spawn")])
+once = true
+lines = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+
+[sub_resource type="Resource" id="Trigger_hollin_enemy"]
+script = ExtResource("17")
+cell = Vector2i(16, 5)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_hollin_stores"]
+script = ExtResource("8")
+team = 2
+amount = 3000
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("10")
+speaker = &"konrad_vale"
+text = "Hollin's stores are now the Dominion's. They were of adequate quality."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Take it back and the count starts again from nothing, and he's sitting on my blankets."
+
+[sub_resource type="Resource" id="Event_hollin_falls"]
+script = ExtResource("11")
+id = &"hollin_falls"
+triggers = Array[Resource]([SubResource("Trigger_hollin_enemy")])
+effects = Array[Resource]([SubResource("Effect_hollin_stores")])
+once = true
+lines = Array[Resource]([SubResource("Line_7"), SubResource("Line_8")])
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("10")
+speaker = &""
+text = "The Hollin road. Hollin has been under Vale's guns for a week, and the Ninth's quartermaster is the only officer in Meridian with trucks to spare."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Three carriers. Shells, bandages, flour and a piano, which the mayor insisted on and I've stopped arguing about."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("10")
+speaker = &"mara_voss"
+text = "If Hollin holds seven days, Vale has to lift the siege or miss Aldmoor, so get them whatever they need to hold."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Valley road's short and has his heavy tanks on it. North road's long and has nobody on it yet. I prefer yet."
+
+[sub_resource type="Resource" id="Cond_ff_gold_found"]
+script = ExtResource("18")
+flag = &"ff_gold_found"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "I've still got the paymaster's strongbox from Garrow, too. Concord coin, minted this year. I've been paying for petrol with it and every time I do, the petrol looks at me."
+requires = SubResource("Cond_ff_gold_found")
+
+[sub_resource type="Resource" id="Cond_ff_gold_found_2"]
+script = ExtResource("18")
+flag = &"ff_gold_found"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "And my carriers resupply at two tiles, before anyone asks what a quartermaster is for."
+unless = SubResource("Cond_ff_gold_found_2")
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("10")
+speaker = &"konrad_vale"
+text = "Quartermaster Holt. You are bringing trucks to a siege. I built the siege."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("10")
+speaker = &"konrad_vale"
+text = "The town has been resupplied past the point where a siege is economical. I am withdrawing to Aldmoor, where the return is better."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Seven days. The mayor is playing the piano on the town hall steps, badly, and nobody has asked him to stop."
+
+[sub_resource type="Resource" id="Cond_ff_convoys"]
+script = ExtResource("18")
+flag = &"ff_convoys"
+at_least = 2
+at_most = -1
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Hollin's garrison says they'll march for Aldmoor once they've eaten."
+requires = SubResource("Cond_ff_convoys")
+
+[sub_resource type="Resource" id="Cond_ff_convoys_2"]
+script = ExtResource("18")
+flag = &"ff_convoys"
+at_least = 0
+at_most = 1
+
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "Hollin kept itself, just, and it won't have a man to spare for Aldmoor."
+requires = SubResource("Cond_ff_convoys_2")
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("10")
+speaker = &"konrad_vale"
+text = "Hollin is taken. Your trucks were well maintained; I will use them."
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("10")
+speaker = &"gideon_holt"
+text = "I've lost a town, a road and a piano. Put the piano first on the report. People will ask about the piano."
+
+[resource]
+script = ExtResource("1")
+id = &"ff09_the_quartermasters_road"
+title = "The Quartermaster's Road"
+location = "The Hollin road, central Meridian"
+map_path = "res://maps/campaign/five_flags/ff09_the_quartermasters_road.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"gideon_holt",
+2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hollin")])
+failures = Array[Resource]([SubResource("Failure_deadline")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_town"), SubResource("Bonus_heavy")])
+events = Array[Resource]([SubResource("Event_first_convoy"), SubResource("Event_second_convoy"), SubResource("Event_third_convoy"), SubResource("Event_north_road_raid"), SubResource("Event_hollin_falls")])
+par_day = 8
+briefing = Array[Resource]([SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
+victory = Array[Resource]([SubResource("Line_16"), SubResource("Line_17"), SubResource("Line_18"), SubResource("Line_19")])
+defeat = Array[Resource]([SubResource("Line_20"), SubResource("Line_21")])

@@ -30,8 +30,8 @@ extends SceneTree
 ##
 ## Usage (headless; see `make campaign-difficulty`):
 ##   Godot --headless --path . -s res://tools/run_campaign_difficulty.gd -- [flags]
-##     --campaign=six_marshals   one war rather than all six (repeatable slug)
-##     --mission=sm03_the_long_watch   one mission, for iterating on an edit
+##     --campaign=five_flags    one campaign rather than all of them (repeatable slug)
+##     --mission=ff01_twenty_years   one mission, for iterating on an edit
 ##     --seeds=6         matches per mission (default 6)
 ##     --seed-offset=0   first seed skipped, so a rerun can extend a sample
 ##     --days=24         day horizon; a mission still running at it is counted
@@ -112,7 +112,7 @@ func _initialize() -> void:
 
 ## Returns false on any bad flag rather than quietly measuring something else,
 ## the policy every instrument in `tools/` states: a mistyped `--seeds=` here
-## costs the whole 108-mission sweep.
+## costs the whole campaign sweep.
 func _parse_args() -> bool:
 	for arg in CmdArgs.user():
 		var taken := BalanceHarness.take(_sample, TOOL, arg)

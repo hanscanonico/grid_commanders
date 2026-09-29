@@ -1,0 +1,271 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=56 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/defeat_team_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="12"]
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("2")
+text = "Capture the border fort."
+cell = Vector2i(2, 7)
+
+[sub_resource type="Resource" id="Objective_2"]
+script = ExtResource("3")
+text = "Break Orlov's army."
+team = 3
+
+[sub_resource type="Resource" id="Cond_3"]
+script = ExtResource("4")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_4"]
+script = ExtResource("5")
+condition = SubResource("Cond_3")
+
+[sub_resource type="Resource" id="Trigger_5"]
+script = ExtResource("6")
+day = 3
+
+[sub_resource type="Resource" id="Effect_6"]
+script = ExtResource("7")
+from_team = 2
+to_team = 1
+tags = Array[StringName]([&"draeg_command", &"draeg_escort_a", &"draeg_escort_b", &"draeg_guns", &"draeg_rifles", &"draeg_mech"])
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("8")
+speaker = &"viktor_draeg"
+text = "Ward. Stand your guns down, mine are turning round. You let this pennant ride out of Skyreach, and every tank under it is yours."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("8")
+speaker = &"viktor_draeg"
+text = "You want the Hall? Sable Wren gave the order to the men in our colours, and the money was the Concord's. Her signal log is in my map case."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Sable. Then half the briefings I ever read came from the Concord."
+
+[sub_resource type="Resource" id="Event_10"]
+script = ExtResource("9")
+id = &"draeg_turns"
+triggers = Array[Resource]([SubResource("Trigger_4"), SubResource("Trigger_5")])
+effects = Array[Resource]([SubResource("Effect_6")])
+once = true
+lines = Array[Resource]([SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9")])
+
+[sub_resource type="Resource" id="Cond_11"]
+script = ExtResource("4")
+flag = &"ff_draeg_spared"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Trigger_12"]
+script = ExtResource("5")
+condition = SubResource("Cond_11")
+
+[sub_resource type="Resource" id="Trigger_13"]
+script = ExtResource("10")
+tag = &"draeg_escort_a"
+
+[sub_resource type="Resource" id="Trigger_14"]
+script = ExtResource("10")
+tag = &"draeg_escort_b"
+
+[sub_resource type="Resource" id="Effect_15"]
+script = ExtResource("11")
+tags = Array[StringName]([&"draeg_command", &"draeg_escort_a", &"draeg_escort_b", &"draeg_guns", &"draeg_rifles", &"draeg_mech"])
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("8")
+speaker = &"viktor_draeg"
+text = "Enough. Crews out and hands up, all of you, and off the field. I'm walking over, Ward. Don't shoot the old man."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("8")
+speaker = &"viktor_draeg"
+text = "You want the Hall? Sable Wren gave the order to the men in our colours, and the money was the Concord's. Her signal log is in my map case."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Take his map case and his crews. Nobody lays a hand on him."
+
+[sub_resource type="Resource" id="Event_19"]
+script = ExtResource("9")
+id = &"draeg_surrenders"
+triggers = Array[Resource]([SubResource("Trigger_12"), SubResource("Trigger_13"), SubResource("Trigger_14")])
+effects = Array[Resource]([SubResource("Effect_15")])
+once = true
+lines = Array[Resource]([SubResource("Line_16"), SubResource("Line_17"), SubResource("Line_18")])
+
+[sub_resource type="Resource" id="Trigger_20"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Effect_21"]
+script = ExtResource("12")
+team = 3
+points = 6000
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("8")
+speaker = &"cass_orlov"
+text = "They're tired now. You can hear it in how they move. Close in on anything limping."
+
+[sub_resource type="Resource" id="Event_23"]
+script = ExtResource("9")
+id = &"orlov_power"
+triggers = Array[Resource]([SubResource("Trigger_20")])
+effects = Array[Resource]([SubResource("Effect_21")])
+once = true
+lines = Array[Resource]([SubResource("Line_22")])
+
+[sub_resource type="Resource" id="Cond_24"]
+script = ExtResource("4")
+flag = &"ff_draeg_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_25"]
+script = ExtResource("4")
+flag = &"ff_draeg_spared"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_26"]
+script = ExtResource("4")
+flag = &"ff_cipher_read"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_27"]
+script = ExtResource("4")
+flag = &"ff_cipher_read"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_28"]
+script = ExtResource("8")
+text = "The Kharn border fort guards the last road out of Iron. Viktor Draeg has orders to hold it, and Orlov is a day behind the column."
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Viktor has the fort. I taught him how to hold a road, so I know exactly what this costs."
+
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("8")
+speaker = &"viktor_draeg"
+text = "Ward. My orders came from Ostrava, signed and stamped. Nobody passes the fort."
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("8")
+speaker = &"cass_orlov"
+text = "Hold them at the wall, Colonel, and I'll shut the door behind them. My men in the fort will be watching how well you do it."
+
+[sub_resource type="Resource" id="Line_32"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "We let him ride out of Skyreach with the pennant up, so nobody shoots at that tank for the first two days."
+requires = SubResource("Cond_24")
+
+[sub_resource type="Resource" id="Line_33"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "He walked away from a burning command tank over Skyreach, and we were the ones who set it burning."
+requires = SubResource("Cond_25")
+
+[sub_resource type="Resource" id="Line_34"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "Take the fort. Everything behind us is Orlov's problem, and I intend to leave it with him."
+
+[sub_resource type="Resource" id="Line_35"]
+script = ExtResource("8")
+speaker = &"alina_ward"
+text = "The fort's ours and the road's open. We go home the long way, and the long way runs through the Concord."
+
+[sub_resource type="Resource" id="Line_36"]
+script = ExtResource("8")
+speaker = &"viktor_draeg"
+text = "My column rides with the Ninth. It always should have."
+requires = SubResource("Cond_24")
+
+[sub_resource type="Resource" id="Line_37"]
+script = ExtResource("8")
+speaker = &"viktor_draeg"
+text = "Put me in the back of a truck, then. Wren's order for the Hall is in my map case, and the Concord's pay slips with it. If the Ninth only has room for a prisoner, I'll ride as one."
+requires = SubResource("Cond_25")
+
+[sub_resource type="Resource" id="Line_38"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "Orin showed me WREN on a Concord cipher at Skyreach and I told myself it was a coincidence, twice."
+requires = SubResource("Cond_26")
+
+[sub_resource type="Resource" id="Line_39"]
+script = ExtResource("8")
+speaker = &"iris_colt"
+text = "Sable Wren. She sat beside me at the Hall and passed me the water jug."
+requires = SubResource("Cond_27")
+
+[sub_resource type="Resource" id="Line_40"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "New line in the ledger. The Gilded Concord, debit: one Lantern Hall, and the war that came after it."
+
+[sub_resource type="Resource" id="Line_41"]
+script = ExtResource("8")
+speaker = &"cass_orlov"
+text = "The fort held and the door's shut. I have Ward back, and Kharn kept her cell warm."
+
+[sub_resource type="Resource" id="Line_42"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "One fort short of home. Draeg held it the way she taught him to."
+requires = SubResource("Cond_25")
+
+[sub_resource type="Resource" id="Line_43"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "Draeg turned his column round for us, and Orlov still had more shells on that road than we had tanks to stand in front of them."
+requires = SubResource("Cond_24")
+
+[resource]
+script = ExtResource("1")
+id = &"ff26_draeg"
+title = "Draeg"
+location = "The Kharn border fort"
+map_path = "res://maps/campaign/five_flags/ff26_draeg.txt"
+player_team = 1
+ai_teams = Array[int]([2, 3])
+seats = Array[int]([1, 2, 3])
+sides = {1: 0, 2: 1, 3: 1}
+commanders = {
+1: &"alina_ward",
+2: &"viktor_draeg",
+3: &"cass_orlov"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_1")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Objective_2")])
+events = Array[Resource]([SubResource("Event_10"), SubResource("Event_19"), SubResource("Event_23")])
+par_day = 10
+briefing = Array[Resource]([SubResource("Line_28"), SubResource("Line_29"), SubResource("Line_30"), SubResource("Line_31"), SubResource("Line_32"), SubResource("Line_33"), SubResource("Line_34")])
+victory = Array[Resource]([SubResource("Line_35"), SubResource("Line_36"), SubResource("Line_37"), SubResource("Line_38"), SubResource("Line_39"), SubResource("Line_40")])
+defeat = Array[Resource]([SubResource("Line_41"), SubResource("Line_42"), SubResource("Line_43")])

@@ -1,0 +1,248 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=57 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="14"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="15"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="16"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="17"]
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="18"]
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("1")
+text = "Capture the arsenal gate."
+cell = Vector2i(19, 7)
+
+[sub_resource type="Resource" id="Objective_2"]
+script = ExtResource("2")
+text = "Destroy Vale's prototype."
+tag = &"vale_prototype"
+
+[sub_resource type="Resource" id="Objective_3"]
+script = ExtResource("1")
+text = "Capture the northern arsenal."
+cell = Vector2i(21, 3)
+
+[sub_resource type="Resource" id="Trigger_4"]
+script = ExtResource("3")
+cell = Vector2i(12, 7)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_5"]
+script = ExtResource("4")
+team = 2
+amount = -4000
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "The Karlov foundry poured the best armour plate in the Dominion for thirty years, and I will be billing the Colonel for the furnace."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "He's just lost a week of steel and four thousand in orders he can't fill, and I'd send him the bill if the Concord still paid anyone's."
+
+[sub_resource type="Resource" id="Event_8"]
+script = ExtResource("6")
+id = &"the_first_foundry"
+triggers = Array[Resource]([SubResource("Trigger_4")])
+effects = Array[Resource]([SubResource("Effect_5")])
+once = true
+lines = Array[Resource]([SubResource("Line_6"), SubResource("Line_7")])
+
+[sub_resource type="Resource" id="Trigger_9"]
+script = ExtResource("3")
+cell = Vector2i(12, 2)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_10"]
+script = ExtResource("3")
+cell = Vector2i(12, 7)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_11"]
+script = ExtResource("3")
+cell = Vector2i(12, 12)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_12"]
+script = ExtResource("7")
+day = 9
+
+[sub_resource type="Resource" id="Effect_13"]
+script = ExtResource("8")
+tags = Array[StringName]([&"vale_guard_1", &"vale_guard_2", &"vale_guard_3", &"vale_guard_4"])
+
+[sub_resource type="Resource" id="Effect_14"]
+script = ExtResource("9")
+flag = &"ff_vale_stood_down"
+mode = 0
+value = 1
+note = "Konrad Vale stood his arsenal guard down when his three foundries fell."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "All three furnaces, and before the week is out. Radek Morn has ordered me to fire them if they fall, and I do not build for a man who burns his own factories."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "My guard is standing down. The gate is yours to take, Colonel, from whoever is still standing on it."
+
+[sub_resource type="Resource" id="Event_17"]
+script = ExtResource("6")
+id = &"vale_stands_down"
+triggers = Array[Resource]([SubResource("Trigger_9"), SubResource("Trigger_10"), SubResource("Trigger_11"), SubResource("Trigger_12")])
+effects = Array[Resource]([SubResource("Effect_13"), SubResource("Effect_14")])
+once = true
+lines = Array[Resource]([SubResource("Line_15"), SubResource("Line_16")])
+
+[sub_resource type="Resource" id="Cond_18"]
+script = ExtResource("10")
+flag = &"ff_ferrow_bought"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_19"]
+script = ExtResource("11")
+condition = SubResource("Cond_18")
+
+[sub_resource type="Resource" id="Trigger_20"]
+script = ExtResource("12")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_21"]
+script = ExtResource("14")
+unit_type = ExtResource("13")
+cell = Vector2i(0, 5)
+
+[sub_resource type="Resource" id="Spawn_22"]
+script = ExtResource("14")
+unit_type = ExtResource("15")
+cell = Vector2i(0, 9)
+
+[sub_resource type="Resource" id="Spawn_23"]
+script = ExtResource("14")
+unit_type = ExtResource("16")
+cell = Vector2i(0, 6)
+
+[sub_resource type="Resource" id="Effect_24"]
+script = ExtResource("17")
+team = 1
+units = Array[Resource]([SubResource("Spawn_21"), SubResource("Spawn_22"), SubResource("Spawn_23")])
+
+[sub_resource type="Resource" id="Line_25"]
+script = ExtResource("5")
+speaker = &"dane_ferrow"
+text = "Ferrow's company, reporting on the west road. Holt paid for the whole war up front, Colonel, and I don't leave an account open."
+
+[sub_resource type="Resource" id="Event_26"]
+script = ExtResource("6")
+id = &"paid_in_full"
+triggers = Array[Resource]([SubResource("Trigger_19"), SubResource("Trigger_20")])
+effects = Array[Resource]([SubResource("Effect_24")])
+once = true
+lines = Array[Resource]([SubResource("Line_25")])
+
+[sub_resource type="Resource" id="Cond_27"]
+script = ExtResource("10")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_28"]
+script = ExtResource("5")
+text = "The foundry quarter of Ostrava, the morning after Orlov. Every chimney in it is still smoking."
+
+[sub_resource type="Resource" id="Line_29"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "Colonel Colt. My foundries are the finest in the Dominion and they are not for sale, whatever the Concord told you about my debts."
+
+[sub_resource type="Resource" id="Line_30"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Karlov, the north yard and the south yard. Three furnaces and every Hammer shell comes out of one of them."
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Vale's been ordered to burn the lot if they fall. I don't think he's the burning sort. Take all three by day 9 and we'll find out."
+
+[sub_resource type="Resource" id="Line_32"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Then the arsenal gate. That's the job. Everything else is on the way to it."
+
+[sub_resource type="Resource" id="Line_33"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "The gate's ours. Get the column through before Morn hears."
+
+[sub_resource type="Resource" id="Line_34"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "The finest arsenal in the Dominion, taken by an army that paid half price for its tanks, is a lesson I would have preferred to read about."
+
+[sub_resource type="Resource" id="Line_35"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Three hundred shells for the Hammer, counted, crated and now ours. I've never been so pleased to own something I'd rather not."
+
+[sub_resource type="Resource" id="Line_36"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "Quality, Colonel. It costs more because it is worth more, and today it was worth the arsenal."
+
+[sub_resource type="Resource" id="Line_37"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "The headquarters fell while we were all at the gate. Vale's tanks turned out to have a longer reach than his invoices, which I'd have told you was impossible."
+requires = SubResource("Cond_27")
+
+[sub_resource type="Resource" id="Line_38"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "The foundries are still pouring. I'll get the column back to the old town and count what's left."
+unless = SubResource("Cond_27")
+
+[resource]
+script = ExtResource("18")
+id = &"ff36_the_arsenal"
+title = "The Arsenal"
+location = "The Ostrava arsenals"
+map_path = "res://maps/campaign/five_flags/ff36_the_arsenal.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"iris_colt",
+2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_1")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Objective_2"), SubResource("Objective_3")])
+events = Array[Resource]([SubResource("Event_8"), SubResource("Event_17"), SubResource("Event_26")])
+par_day = 14
+carry_in = true
+carry_out = true
+carry_floor_hp = 60
+briefing = Array[Resource]([SubResource("Line_28"), SubResource("Line_29"), SubResource("Line_30"), SubResource("Line_31"), SubResource("Line_32")])
+victory = Array[Resource]([SubResource("Line_33"), SubResource("Line_34"), SubResource("Line_35")])
+defeat = Array[Resource]([SubResource("Line_36"), SubResource("Line_37"), SubResource("Line_38")])

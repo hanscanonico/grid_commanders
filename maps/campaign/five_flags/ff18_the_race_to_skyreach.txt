@@ -1,0 +1,51 @@
+# Five Flags, Act III — "The Race to Skyreach". Aurora's highlands, Sera v Orlov.
+# A race on two long roads. A mountain spine across rows 6-7 splits a north
+# lane from a south lane; the pass roads at columns 8 and 15 cross it, and so do
+# the edge roads at columns 1 and 22. Each lane runs edge to edge. The four signal relays are
+# the four towns on the lanes: Aster (9,2), Brennock (14,2), Fallow (7,11) and
+# Vey (14,11). Sera opens in the west with the faster army and farther to go;
+# Orlov opens in the east with his infantry at the board's edge, so his two
+# nearest relays are a long walk even for him. His recon can stand on a relay
+# before hers can, and a unit parked on a town stops anyone capturing it.
+# Orlov holding any two relays at once ends the mission: one beat per pair.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+MMMMMMMMMMMMMMMMMMMMMMMM
+.QFF.......FF......CF...
+....M....CM..MC.........
+============C===========
+.=...F..=...F..=..F...=.
+.=B...F.=...F..=......=.
+.=.MMMMM=MMMMMM=MMMMM.=.
+.=.MMMMM=MMMMMM=MMMMM.=.
+.=......=......=.....B=.
+.=...F..=..FF..=...F..=.
+============C===========
+.......C..M..MC....M....
+..F.C.....F..F.......FQ.
+MMMMMMMMMMMMMMMMMMMMMMMM
+[owners]
+1 1 1
+1 2 5
+2 22 12
+2 21 8
+[units]
+1 r 2 3
+1 r 2 10
+1 i 4 4
+1 i 4 9
+1 i 5 3
+1 i 5 10
+1 m 3 4
+1 m 3 9
+1 t 0 6
+2 r 21 3
+2 r 21 10
+2 t 20 4
+2 t 20 9
+2 i 23 4
+2 i 23 9
+2 m 23 5
+2 m 23 8
+2 i 23 11

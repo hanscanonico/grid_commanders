@@ -1,0 +1,339 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=76 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="9"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="15"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="16"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="17"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="18"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="19"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="20"]
+
+[sub_resource type="Resource" id="Objective_survive"]
+script = ExtResource("2")
+text = "Survive until day 10."
+day = 10
+
+[sub_resource type="Resource" id="Bonus_old_town"]
+script = ExtResource("3")
+text = "Keep the Old Town for 9 days."
+cell = Vector2i(7, 7)
+days = 9
+
+[sub_resource type="Resource" id="Bonus_siege_hq"]
+script = ExtResource("4")
+text = "Capture Vance's siege headquarters."
+cell = Vector2i(12, 7)
+id = &"siege_hq"
+hidden = true
+
+[sub_resource type="Resource" id="Cond_ff_convoys"]
+script = ExtResource("5")
+flag = &"ff_convoys"
+at_least = 2
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_convoys_through"]
+script = ExtResource("6")
+condition = SubResource("Cond_ff_convoys")
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Spawn"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(0, 4)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("8")
+unit_type = ExtResource("10")
+cell = Vector2i(0, 6)
+
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("8")
+unit_type = ExtResource("11")
+cell = Vector2i(0, 8)
+
+[sub_resource type="Resource" id="Spawn_4"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(0, 3)
+
+[sub_resource type="Resource" id="Effect_spawn"]
+script = ExtResource("12")
+team = 1
+units = Array[Resource]([SubResource("Spawn"), SubResource("Spawn_2"), SubResource("Spawn_3"), SubResource("Spawn_4")])
+
+[sub_resource type="Resource" id="Line"]
+script = ExtResource("13")
+speaker = &"gideon_holt"
+text = "Hollin's garrison, on the west road. Fed, shod and armed out of my trucks, and they'd like everyone to know it."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "South ward. Tell them the marshal said thank you, and tell them she only says it once."
+
+[sub_resource type="Resource" id="Event_hollin_marches"]
+script = ExtResource("14")
+id = &"hollin_marches"
+triggers = Array[Resource]([SubResource("Trigger_convoys_through"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_spawn")])
+once = true
+lines = Array[Resource]([SubResource("Line"), SubResource("Line_2")])
+
+[sub_resource type="Resource" id="Cond_ff_convoys_2"]
+script = ExtResource("5")
+flag = &"ff_convoys"
+at_least = 0
+at_most = 1
+
+[sub_resource type="Resource" id="Trigger_convoys_short"]
+script = ExtResource("6")
+condition = SubResource("Cond_ff_convoys_2")
+
+[sub_resource type="Resource" id="Trigger_day_3b"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Effect_hollin_purse"]
+script = ExtResource("15")
+team = 1
+amount = 2000
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("13")
+speaker = &"gideon_holt"
+text = "Nothing from Hollin but a purse and an apology. They've barely enough to hold their own walls, and I know whose trucks didn't get there."
+
+[sub_resource type="Resource" id="Event_hollin_keeps"]
+script = ExtResource("14")
+id = &"hollin_keeps"
+triggers = Array[Resource]([SubResource("Trigger_convoys_short"), SubResource("Trigger_day_3b")])
+effects = Array[Resource]([SubResource("Effect_hollin_purse")])
+once = true
+lines = Array[Resource]([SubResource("Line_3")])
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("7")
+day = 5
+
+[sub_resource type="Resource" id="Effect_hammer_loaded"]
+script = ExtResource("16")
+team = 3
+points = 24000
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("13")
+speaker = &"radek_morn"
+text = "The Hammer is loaded. Clear the square."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("13")
+speaker = &"iona_vance"
+text = "Marshal Morn, I have men in every square you can see from up there."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("13")
+speaker = &"radek_morn"
+text = "Then they will be remembered."
+
+[sub_resource type="Resource" id="Event_hammerfall"]
+script = ExtResource("14")
+id = &"hammerfall"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_hammer_loaded")])
+once = true
+lines = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
+
+[sub_resource type="Resource" id="Trigger_day_7"]
+script = ExtResource("7")
+day = 7
+
+[sub_resource type="Resource" id="Spawn_5"]
+script = ExtResource("8")
+unit_type = ExtResource("10")
+cell = Vector2i(17, 1)
+
+[sub_resource type="Resource" id="Spawn_6"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(18, 1)
+
+[sub_resource type="Resource" id="Spawn_7"]
+script = ExtResource("8")
+unit_type = ExtResource("17")
+cell = Vector2i(18, 2)
+
+[sub_resource type="Resource" id="Spawn_8"]
+script = ExtResource("8")
+unit_type = ExtResource("10")
+cell = Vector2i(19, 2)
+
+[sub_resource type="Resource" id="Effect_spawn_2"]
+script = ExtResource("12")
+team = 1
+units = Array[Resource]([SubResource("Spawn_5"), SubResource("Spawn_6"), SubResource("Spawn_7"), SubResource("Spawn_8")])
+
+[sub_resource type="Resource" id="Effect_reveal_siege"]
+script = ExtResource("18")
+objective_id = &"siege_hq"
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("13")
+speaker = &"halden_marr"
+text = "Marines ashore behind the Iron camp. Tide was kind. Her headquarters is in the town on the highway, Marshal, facing the wrong way."
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "You knock on the back, Admiral. We'll knock on the front. Everything at the Old Town, forward."
+
+[sub_resource type="Resource" id="Event_marr_lands"]
+script = ExtResource("14")
+id = &"marr_lands"
+triggers = Array[Resource]([SubResource("Trigger_day_7")])
+effects = Array[Resource]([SubResource("Effect_spawn_2"), SubResource("Effect_reveal_siege")])
+once = true
+lines = Array[Resource]([SubResource("Line_7"), SubResource("Line_8")])
+
+[sub_resource type="Resource" id="Trigger_day_last"]
+script = ExtResource("7")
+day = 10
+
+[sub_resource type="Resource" id="Trigger_old_town_ours"]
+script = ExtResource("19")
+cell = Vector2i(7, 7)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_ring"]
+script = ExtResource("20")
+flag = &"ff_capital_ring"
+mode = 0
+value = 1
+note = "Aldmoor's Old Town was still Meridian's when the siege broke."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "Ten days, and the Old Town is still ours."
+
+[sub_resource type="Resource" id="Event_capital_ring"]
+script = ExtResource("14")
+id = &"capital_ring"
+triggers = Array[Resource]([SubResource("Trigger_day_last"), SubResource("Trigger_old_town_ours")])
+effects = Array[Resource]([SubResource("Effect_ring")])
+once = true
+lines = Array[Resource]([SubResource("Line_9")])
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("13")
+speaker = &""
+text = "Aldmoor, capital of Meridian. Everything the Tamsin and the Hollin road bought comes due here: Vance's whole army on the highway, and on the southern heights, a battery nobody in Meridian has seen fire."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "Hold the city ten days. By then the fleet's in position, and Vance finds out what's behind her."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("13")
+speaker = &"iris_colt"
+text = "What's on the heights?"
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "Radek Morn. I served under him once. Don't bunch up where his gun can see."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("13")
+speaker = &"iona_vance"
+text = "Mara. The arithmetic says four days. I'll give you six for old times, and then I stop counting."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "If the Old Town goes, the ring breaks, and then everything else in this city burns with it."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("13")
+speaker = &"iona_vance"
+text = "Marines in my camp and the timetable in pieces. I'm withdrawing, Mara. It isn't a defeat, and you know that better than anyone."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("13")
+speaker = &"cass_orlov"
+text = "A broadcast for the soldiers of the Ninth. Your general, Alina Ward, is alive and well in Kharn. Come and collect her."
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("13")
+speaker = &"iris_colt"
+text = "She's alive."
+
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "I've watched you hold my city with a brigade that doesn't exist. The Ninth, then. Go and get your five flags back."
+
+[sub_resource type="Resource" id="Cond_ff_capital_ring"]
+script = ExtResource("5")
+flag = &"ff_capital_ring"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("13")
+speaker = &"mara_voss"
+text = "And Colonel, the ring held. Tell the others that too."
+requires = SubResource("Cond_ff_capital_ring")
+
+[sub_resource type="Resource" id="Line_21"]
+script = ExtResource("13")
+speaker = &"iona_vance"
+text = "Aldmoor has fallen. I'm sorry, Mara; I did tell you four days."
+
+[sub_resource type="Resource" id="Line_22"]
+script = ExtResource("13")
+speaker = &"gideon_holt"
+text = "The capital's gone and the government's in a lorry on the west road. I'm driving it. I've counted the passengers twice."
+
+[resource]
+script = ExtResource("1")
+id = &"ff13_the_capital_line"
+title = "The Capital Line"
+location = "Aldmoor, capital of Meridian"
+map_path = "res://maps/campaign/five_flags/ff13_the_capital_line.txt"
+player_team = 1
+ai_teams = Array[int]([2, 3])
+seats = Array[int]([])
+sides = {1: 0, 2: 1, 3: 1}
+commanders = {
+1: &"mara_voss",
+2: &"iona_vance",
+3: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_survive")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_old_town"), SubResource("Bonus_siege_hq")])
+events = Array[Resource]([SubResource("Event_hollin_marches"), SubResource("Event_hollin_keeps"), SubResource("Event_hammerfall"), SubResource("Event_marr_lands"), SubResource("Event_capital_ring")])
+par_day = 10
+briefing = Array[Resource]([SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12"), SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
+victory = Array[Resource]([SubResource("Line_16"), SubResource("Line_17"), SubResource("Line_18"), SubResource("Line_19"), SubResource("Line_20")])
+defeat = Array[Resource]([SubResource("Line_21"), SubResource("Line_22")])

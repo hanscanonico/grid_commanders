@@ -1,0 +1,284 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=56 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="9"]
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("1")
+text = "Capture the Hammerfall emplacement."
+cell = Vector2i(4, 4)
+
+[sub_resource type="Resource" id="Objective_2"]
+script = ExtResource("2")
+text = "Destroy the powder train."
+tag = &"powder_train"
+
+[sub_resource type="Resource" id="Objective_3"]
+script = ExtResource("1")
+text = "Capture the powder magazine."
+cell = Vector2i(9, 8)
+
+[sub_resource type="Resource" id="Trigger_4"]
+script = ExtResource("3")
+day = 4
+
+[sub_resource type="Resource" id="Trigger_5"]
+script = ExtResource("4")
+cell = Vector2i(9, 8)
+holder = 1
+
+[sub_resource type="Resource" id="Trigger_6"]
+script = ExtResource("4")
+cell = Vector2i(4, 4)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_7"]
+script = ExtResource("5")
+team = 2
+points = 8000
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "Load."
+
+[sub_resource type="Resource" id="Event_9"]
+script = ExtResource("7")
+id = &"the_hammer_reloads_1"
+triggers = Array[Resource]([SubResource("Trigger_4"), SubResource("Trigger_5"), SubResource("Trigger_6")])
+effects = Array[Resource]([SubResource("Effect_7")])
+once = true
+lines = Array[Resource]([SubResource("Line_8")])
+
+[sub_resource type="Resource" id="Trigger_10"]
+script = ExtResource("3")
+day = 7
+
+[sub_resource type="Resource" id="Trigger_11"]
+script = ExtResource("4")
+cell = Vector2i(9, 8)
+holder = 1
+
+[sub_resource type="Resource" id="Trigger_12"]
+script = ExtResource("4")
+cell = Vector2i(4, 4)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_13"]
+script = ExtResource("5")
+team = 2
+points = 8000
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "Load. They spread out now. It makes no difference."
+
+[sub_resource type="Resource" id="Event_15"]
+script = ExtResource("7")
+id = &"the_hammer_reloads_2"
+triggers = Array[Resource]([SubResource("Trigger_10"), SubResource("Trigger_11"), SubResource("Trigger_12")])
+effects = Array[Resource]([SubResource("Effect_13")])
+once = true
+lines = Array[Resource]([SubResource("Line_14")])
+
+[sub_resource type="Resource" id="Trigger_16"]
+script = ExtResource("3")
+day = 10
+
+[sub_resource type="Resource" id="Trigger_17"]
+script = ExtResource("4")
+cell = Vector2i(9, 8)
+holder = 1
+
+[sub_resource type="Resource" id="Trigger_18"]
+script = ExtResource("4")
+cell = Vector2i(4, 4)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_19"]
+script = ExtResource("5")
+team = 2
+points = 8000
+
+[sub_resource type="Resource" id="Line_20"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "Again."
+
+[sub_resource type="Resource" id="Event_21"]
+script = ExtResource("7")
+id = &"the_hammer_reloads_3"
+triggers = Array[Resource]([SubResource("Trigger_16"), SubResource("Trigger_17"), SubResource("Trigger_18")])
+effects = Array[Resource]([SubResource("Effect_19")])
+once = true
+lines = Array[Resource]([SubResource("Line_20")])
+
+[sub_resource type="Resource" id="Trigger_22"]
+script = ExtResource("3")
+day = 13
+
+[sub_resource type="Resource" id="Trigger_23"]
+script = ExtResource("4")
+cell = Vector2i(9, 8)
+holder = 1
+
+[sub_resource type="Resource" id="Trigger_24"]
+script = ExtResource("4")
+cell = Vector2i(4, 4)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_25"]
+script = ExtResource("5")
+team = 2
+points = 8000
+
+[sub_resource type="Resource" id="Line_26"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "Load, and aim at the flag."
+
+[sub_resource type="Resource" id="Event_27"]
+script = ExtResource("7")
+id = &"the_hammer_reloads_4"
+triggers = Array[Resource]([SubResource("Trigger_22"), SubResource("Trigger_23"), SubResource("Trigger_24")])
+effects = Array[Resource]([SubResource("Effect_25")])
+once = true
+lines = Array[Resource]([SubResource("Line_26")])
+
+[sub_resource type="Resource" id="Trigger_28"]
+script = ExtResource("4")
+cell = Vector2i(9, 8)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_29"]
+script = ExtResource("4")
+cell = Vector2i(4, 4)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_30"]
+script = ExtResource("5")
+team = 2
+points = 24000
+
+[sub_resource type="Resource" id="Line_31"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Magazine's ours. Whatever's up that rail line now is all he's got, and I've counted one shell on the loading tray."
+
+[sub_resource type="Resource" id="Line_32"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "Then I will fire the one in the breech."
+
+[sub_resource type="Resource" id="Event_33"]
+script = ExtResource("7")
+id = &"the_last_shell"
+triggers = Array[Resource]([SubResource("Trigger_28"), SubResource("Trigger_29")])
+effects = Array[Resource]([SubResource("Effect_30")])
+once = true
+lines = Array[Resource]([SubResource("Line_31"), SubResource("Line_32")])
+
+[sub_resource type="Resource" id="Cond_34"]
+script = ExtResource("8")
+flag = &"run:cause"
+at_least = 2
+at_most = 2
+
+[sub_resource type="Resource" id="Line_35"]
+script = ExtResource("6")
+text = "The east valley below the Hammerfall emplacement. Rhea Sol's batteries stayed with the Concord, and nobody is coming to answer the gun for the Ninth."
+
+[sub_resource type="Resource" id="Line_36"]
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "No counter-battery. Fine. We don't shoot the gun, we starve it."
+
+[sub_resource type="Resource" id="Line_37"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "The rail line runs from the gun down to a powder magazine in the middle of the valley. While Morn holds both, a shell goes up that line every third day. Take the magazine and he's firing what's left in the breech."
+
+[sub_resource type="Resource" id="Line_38"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "You have come a long way to stand in one valley."
+
+[sub_resource type="Resource" id="Line_39"]
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "Spread the column out. Nobody bunches, nobody stops, and nobody waits for anybody."
+
+[sub_resource type="Resource" id="Line_40"]
+script = ExtResource("6")
+speaker = &"iris_colt"
+text = "The emplacement's ours. Spike the gun."
+
+[sub_resource type="Resource" id="Line_41"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "The gun was never the hammer. I am."
+
+[sub_resource type="Resource" id="Line_42"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "One siege gun, captured and not for resale, with not a single shell left in the valley to fire from it, because I walked the rail line myself and checked."
+
+[sub_resource type="Resource" id="Line_43"]
+script = ExtResource("6")
+speaker = &"radek_morn"
+text = "You stood where I could reach you."
+
+[sub_resource type="Resource" id="Line_44"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "Morn came down his own rail line and took the headquarters while the gun kept us in the woods. I'll count what's left when the ringing stops."
+requires = SubResource("Cond_34")
+
+[sub_resource type="Resource" id="Line_45"]
+script = ExtResource("6")
+speaker = &"gideon_holt"
+text = "The Hammer broke the column halfway up the valley. What's left is walking back to the start line in fives."
+unless = SubResource("Cond_34")
+
+[sub_resource type="Resource" id="Cond_46"]
+script = ExtResource("8")
+flag = &"ff_rhea_turned"
+at_least = 0
+at_most = 0
+
+[resource]
+script = ExtResource("9")
+id = &"ff38_the_hammer_alone"
+title = "The Hammer, Alone"
+location = "The Hammerfall emplacement, the east valley"
+map_path = "res://maps/campaign/five_flags/ff38_the_hammer_alone.txt"
+unlock_requires = SubResource("Cond_46")
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"iris_colt",
+2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_1")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Objective_2"), SubResource("Objective_3")])
+events = Array[Resource]([SubResource("Event_9"), SubResource("Event_15"), SubResource("Event_21"), SubResource("Event_27"), SubResource("Event_33")])
+par_day = 17
+carry_in = true
+carry_out = true
+carry_floor_hp = 60
+briefing = Array[Resource]([SubResource("Line_35"), SubResource("Line_36"), SubResource("Line_37"), SubResource("Line_38"), SubResource("Line_39")])
+victory = Array[Resource]([SubResource("Line_40"), SubResource("Line_41"), SubResource("Line_42")])
+defeat = Array[Resource]([SubResource("Line_43"), SubResource("Line_44"), SubResource("Line_45")])

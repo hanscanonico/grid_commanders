@@ -1,0 +1,57 @@
+# Five Flags, Act III — "The People's March". Harrowgate lowlands, Reed v Thorne.
+# A capture race across farm country: seventeen properties and a rising that
+# spreads town to town. The Harrow runs down column 10 and only three bridges
+# carry treads, so Thorne's armour holds the crossings while Reed's foot fords
+# the river wherever it likes.
+# Harrowgate market (13,6) sits just over the central bridge in Thorne's hands.
+# Take it and the three towns that trade there, (13,3), (12,9) and (15,8), rise
+# and fly Reed's colours. Thorne's shell depot (17,11) is the bonus at the
+# south bend: what is stamped on those crates is the act's first clue.
+# Iris's Meridian company lands on the west edge, (0,3) to (0,7), on day 2,
+# well behind wherever Reed's march has got to by then.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+....F...C.~...F...M.
+.....C....~..C.....M
+.C..F.....~.......F.
+..========+==C..C...
+.B=..F.F..~..=......
+..=.......~..=...F..
+.Q====C===+==C====Q.
+..=..F....~.......=.
+.B=......F~....C..B.
+..=...C...~.C.....=.
+..========+=======..
+.F.C...F..~....F.C..
+....F.....~.......M.
+[owners]
+1 1 2
+1 1 4
+1 1 6
+1 1 8
+2 16 3
+2 18 6
+2 18 8
+2 17 11
+[units]
+1 i 3 5
+1 i 3 7
+1 i 2 4
+1 i 2 9
+1 i 4 6
+1 m 5 5
+1 m 5 7
+1 r 3 6
+1 g 2 7
+1 i 4 4
+1 i 4 9
+1 m 4 7
+2 i 13 5
+2 i 14 6
+2 m 12 7
+2 t 15 6
+2 i 14 10
+2 i 16 5
+2 i 16 9
+2 i 16 11

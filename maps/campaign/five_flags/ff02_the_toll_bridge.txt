@@ -1,0 +1,56 @@
+# Five Flags, The Seam — "The Toll Bridge": one bridge, one toll post, and Ferrow's payroll.
+# The Garrow valley: a river down column 6 with a single bridge at (6,4),
+# mountains closing the valley's ends. Treads cross at the bridge or not at
+# all; infantry wade (two points a square) and mechs wade at a walk. So the
+# tank and the artillery have to take the bridge the hard way, and the foot
+# can take it from the side.
+#
+# Draeg owns the one base on the board (3,5) — this is the mission that
+# teaches building — plus the Ninth's billet town (3,1) for income. Ferrow
+# has more on the board and nothing to build.
+#
+# The toll house (8,4) is the primary: a city on the east bridgehead. The
+# paymaster (tagged `paymaster`, an APC) waits at (11,4) on the east road
+# and is gone on day 3. It is shielded by the bridge guard and the mountain
+# at (9,3): a tank that charges on day 1 is stopped at the bridgehead, and
+# the unit that catches it is the one that forded early or the tank that
+# broke the guard first. The defection capture frame also reads this tag on
+# team 2 (scenes/battle/battle_mission_scenario.gd).
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+MMF...~..FF.MMM
+M..C..~.....FFM
+...F..~..M...F.
+.....F~..M..C..
+.Q====+=C====Q.
+...B..~..F.....
+.F....~...M.F..
+...F..~...M....
+M.....~..F...FM
+MMM...~....MMMM
+[owners]
+1 1 4
+1 3 5
+1 3 1
+2 13 4
+2 12 3
+2 8 4
+[units]
+# Draeg: armour first, as he would have it.
+1 t 4 4
+1 t 3 3
+1 g 2 3
+1 r 2 5
+1 i 4 2
+1 m 4 6
+# Ferrow: the bridge guard, the toll house's back line, and the payroll.
+2 i 7 3
+2 i 7 5
+2 m 8 2
+2 i 8 6
+2 t 9 5
+2 g 10 4
+2 r 11 5
+2 i 10 2
+2 p 11 4 paymaster

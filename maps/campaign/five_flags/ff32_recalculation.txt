@@ -1,0 +1,73 @@
+# Five Flags 32 — "Recalculation": the Aurum causeway, and the city crossing it.
+# Aurum is the island on the east. One causeway, a bridge six spans long, joins
+# it to the mainland shore on the west, where the Ninth's armies wait and Lyra
+# Quill has put her field headquarters under their guns. The causeway gate
+# stands at the island end. Lyra's last regiments hold the quarter around it,
+# and four refugee convoys wait in its streets for their turn on the bridge.
+# Radek Morn's vanguard holds the eastern yards and the landing field across
+# the island; the south beach is where his next boats come in.
+# Symbols: . plains  F woods  M mountain  = road  + bridge  S sea  _ shoal
+#          C city  B base  Q HQ
+[terrain]
+.F...FSSSSSS..C...F...MM
+...F..SSSSSS_...F.....=M
+.C....SSSSSS_..C..F...=Q
+......SSSSSS..F.....C.=.
+..F...SSSSSS_.....F.==B.
+.....FSSSSSS_.C.=.....F.
+..C...SSSSS_..F.=..F....
+......SSSSS__...=...F..C
+.Q====++++++C===C=======
+......SSSSS__.B.=..F....
+..C...SSSSSS..C.=...F.C.
+......SSSSSS_F..=.F.....
+.F....SSSSSS_..C.=....B.
+...F..SSSSSS__...=.F...F
+.....SSSSSSSS___.___..SS
+SSSSSSSSSSSSSSSSSSSSSSSS
+[owners]
+1 1 8
+1 1 2
+1 2 6
+1 2 10
+1 12 8
+1 16 8
+1 14 5
+1 14 10
+1 15 12
+1 14 9
+2 23 2
+2 22 4
+2 22 12
+2 20 3
+2 23 7
+2 22 10
+[units]
+# Lyra's last regiments around the causeway gate.
+1 i 13 8
+1 i 15 7
+1 m 14 6
+1 m 15 11
+1 t 15 8
+1 t 14 11
+1 g 13 9
+1 g 13 5
+1 a 15 9
+1 T 17 8
+1 i 12 9
+1 t 16 6
+1 R 13 10
+# The convoys: the hospital, the schools, the Exchange's clerks, the harbour.
+1 p 14 5 refugees_hospital
+1 p 14 10 refugees_school
+1 p 16 8 refugees_clerks
+1 p 15 12 refugees_harbour
+# Morn's vanguard in the eastern yards. The md tank on the road is his spearhead.
+2 T 21 8 hammer_spearhead
+2 t 21 5
+2 i 20 11
+2 m 20 6
+2 i 20 3
+2 i 22 10
+2 g 22 7
+2 R 23 5

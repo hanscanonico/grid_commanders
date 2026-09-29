@@ -23,12 +23,13 @@ const DAYS := 8
 ## because playback rebuilds him from `CommanderDB` and a doctored copy would be
 ## re-issued against a meter it never filled.
 const AIMED_DAYS := 12
-## The mission the scripted-beat run plays, and the beat it has to reach: Ferrow
-## picking his lane on day three. A shipped mission rather than a fixture, for the
+## The mission the scripted-beat run plays, and the beat it has to reach: Ferrow's
+## second wave landing on day two. A shipped mission rather than a fixture, for the
 ## board's own reason — a replay stores its board by path — and because what the
 ## header carries is the pair of ids `CampaignDB` resolves.
-const CAMPAIGN := &"six_marshals"
-const MISSION := &"sm02_ambush_pass"
+const CAMPAIGN := &"five_flags"
+const MISSION := &"ff01_twenty_years"
+const EVENT := &"ferrow_second_wave"
 const EVENT_DAYS := 4
 
 var terrain_db: TerrainDB
@@ -255,10 +256,9 @@ func test_a_recorded_mission_re_issues_its_scripted_beats() -> void:
 	var lines := recorder.lines()
 	var beats := 0
 	for line in lines:
-		if String(line.get("c", "")) == "event":
+		if String(line.get("c", "")) == "event" and String(line["event"]) == String(EVENT):
 			beats += 1
-			assert_eq(String(line["event"]), "he_commits", "the line names the beat by id")
-	assert_eq(beats, 1, "the mission's day-three beat has to have landed exactly once")
+	assert_eq(beats, 1, "the mission's day-two beat has to have landed exactly once, by id")
 
 	var state := _re_issue(_replay_of(lines), lines.size() - 1)
 	assert_not_null(state)
@@ -277,9 +277,9 @@ func test_a_recorded_mission_re_issues_its_scripted_beats() -> void:
 ## then stopped with a message about the board.
 func test_a_recording_of_a_mission_that_has_gone_is_refused_by_name() -> void:
 	var replay := ReplayCodec.Replay.new()
-	replay.campaign = &"six_marshals"
-	replay.mission = &"sm99_a_mission_that_never_shipped"
-	assert_string_contains(ReplayPlayer.new(replay, unit_db, campaign_db).mission_error(), "sm99")
+	replay.campaign = &"five_flags"
+	replay.mission = &"ff99_a_mission_that_never_shipped"
+	assert_string_contains(ReplayPlayer.new(replay, unit_db, campaign_db).mission_error(), "ff99")
 	replay.campaign = &"a_war_nobody_fought"
 	assert_string_contains(
 		ReplayPlayer.new(replay, unit_db, campaign_db).mission_error(), "a_war_nobody_fought"

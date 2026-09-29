@@ -1,0 +1,309 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=68 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="4"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="5"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/end_mission_effect.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="15"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="16"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="17"]
+
+[sub_resource type="Resource" id="Objective_flagship"]
+script = ExtResource("2")
+text = "Destroy Ferrow's flagship."
+tag = &"ferrow_flagship"
+
+[sub_resource type="Resource" id="Bonus_sub"]
+script = ExtResource("2")
+text = "Destroy Ferrow's submarine."
+tag = &"ferrow_sub"
+
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("3")
+day = 2
+
+[sub_resource type="Resource" id="Spawn"]
+script = ExtResource("4")
+unit_type = ExtResource("5")
+cell = Vector2i(10, 0)
+
+[sub_resource type="Resource" id="Spawn_2"]
+script = ExtResource("4")
+unit_type = ExtResource("5")
+cell = Vector2i(11, 2)
+
+[sub_resource type="Resource" id="Spawn_3"]
+script = ExtResource("4")
+unit_type = ExtResource("6")
+cell = Vector2i(12, 2)
+
+[sub_resource type="Resource" id="Effect_spawn"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn"), SubResource("Spawn_2"), SubResource("Spawn_3")])
+
+[sub_resource type="Resource" id="Line"]
+script = ExtResource("8")
+speaker = &"dane_ferrow"
+text = "Boats on the north beach, Admiral. Every man in them is billed by the hour, so do try to be quick."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("8")
+speaker = &"halden_marr"
+text = "Let them come up the sand. The tide's ours once they're off it."
+
+[sub_resource type="Resource" id="Event_north_beach"]
+script = ExtResource("9")
+id = &"north_beach"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_spawn")])
+once = true
+lines = Array[Resource]([SubResource("Line"), SubResource("Line_2")])
+
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("3")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_4"]
+script = ExtResource("4")
+unit_type = ExtResource("5")
+cell = Vector2i(11, 8)
+
+[sub_resource type="Resource" id="Spawn_5"]
+script = ExtResource("4")
+unit_type = ExtResource("6")
+cell = Vector2i(12, 8)
+
+[sub_resource type="Resource" id="Spawn_6"]
+script = ExtResource("4")
+unit_type = ExtResource("10")
+cell = Vector2i(12, 9)
+
+[sub_resource type="Resource" id="Spawn_7"]
+script = ExtResource("4")
+unit_type = ExtResource("5")
+cell = Vector2i(10, 11)
+
+[sub_resource type="Resource" id="Spawn_8"]
+script = ExtResource("4")
+unit_type = ExtResource("11")
+cell = Vector2i(12, 10)
+
+[sub_resource type="Resource" id="Effect_spawn_2"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn_4"), SubResource("Spawn_5"), SubResource("Spawn_6"), SubResource("Spawn_7"), SubResource("Spawn_8")])
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("8")
+speaker = &"dane_ferrow"
+text = "South beach. Guns this time."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("8")
+speaker = &"dane_ferrow"
+text = "A harbour's worth about nine invoices, if you were wondering, and Iron's already paid six of them."
+
+[sub_resource type="Resource" id="Event_south_beach"]
+script = ExtResource("9")
+id = &"south_beach"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_spawn_2")])
+once = true
+lines = Array[Resource]([SubResource("Line_3"), SubResource("Line_4")])
+
+[sub_resource type="Resource" id="Trigger_day_6"]
+script = ExtResource("3")
+day = 6
+
+[sub_resource type="Resource" id="Trigger_flagship_afloat"]
+script = ExtResource("12")
+tag = &"ferrow_flagship"
+cells = Array[Vector2i]([Vector2i(11, 0), Vector2i(12, 0), Vector2i(13, 0), Vector2i(14, 0), Vector2i(15, 0), Vector2i(16, 0), Vector2i(17, 0), Vector2i(12, 1), Vector2i(13, 1), Vector2i(14, 1), Vector2i(15, 1), Vector2i(17, 1), Vector2i(13, 2), Vector2i(14, 2), Vector2i(15, 2), Vector2i(16, 2), Vector2i(17, 2), Vector2i(12, 3), Vector2i(13, 3), Vector2i(14, 3), Vector2i(15, 3), Vector2i(16, 3), Vector2i(17, 3), Vector2i(12, 4), Vector2i(13, 4), Vector2i(14, 4), Vector2i(15, 4), Vector2i(16, 4), Vector2i(17, 4), Vector2i(11, 5), Vector2i(12, 5), Vector2i(13, 5), Vector2i(14, 5), Vector2i(15, 5), Vector2i(16, 5), Vector2i(17, 5), Vector2i(12, 6), Vector2i(13, 6), Vector2i(14, 6), Vector2i(15, 6), Vector2i(16, 6), Vector2i(17, 6), Vector2i(13, 7), Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(17, 7), Vector2i(13, 8), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8), Vector2i(17, 8), Vector2i(13, 9), Vector2i(14, 9), Vector2i(15, 9), Vector2i(16, 9), Vector2i(17, 9), Vector2i(13, 10), Vector2i(14, 10), Vector2i(15, 10), Vector2i(16, 10), Vector2i(17, 10), Vector2i(12, 11), Vector2i(13, 11), Vector2i(14, 11), Vector2i(15, 11), Vector2i(16, 11), Vector2i(17, 11)])
+
+[sub_resource type="Resource" id="Spawn_9"]
+script = ExtResource("4")
+unit_type = ExtResource("6")
+cell = Vector2i(11, 1)
+
+[sub_resource type="Resource" id="Spawn_10"]
+script = ExtResource("4")
+unit_type = ExtResource("10")
+cell = Vector2i(11, 2)
+
+[sub_resource type="Resource" id="Spawn_11"]
+script = ExtResource("4")
+unit_type = ExtResource("5")
+cell = Vector2i(12, 2)
+
+[sub_resource type="Resource" id="Effect_spawn_3"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn_9"), SubResource("Spawn_10"), SubResource("Spawn_11")])
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("8")
+speaker = &"halden_marr"
+text = "Third boat on the north beach. He'll keep landing them as long as that flagship's afloat to pay the crews."
+
+[sub_resource type="Resource" id="Event_third_boat"]
+script = ExtResource("9")
+id = &"third_boat"
+triggers = Array[Resource]([SubResource("Trigger_day_6"), SubResource("Trigger_flagship_afloat")])
+effects = Array[Resource]([SubResource("Effect_spawn_3")])
+once = true
+lines = Array[Resource]([SubResource("Line_5")])
+
+[sub_resource type="Resource" id="Trigger_harbour_enemy"]
+script = ExtResource("13")
+cell = Vector2i(9, 5)
+holder = 1
+
+[sub_resource type="Resource" id="Effect_harbour_lost"]
+script = ExtResource("14")
+success = false
+reason = "Ferrow took Port Averly."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("8")
+speaker = &"dane_ferrow"
+text = "Port Averly, receipted. I'll leave the lights on."
+
+[sub_resource type="Resource" id="Event_harbour_taken"]
+script = ExtResource("9")
+id = &"harbour_taken"
+triggers = Array[Resource]([SubResource("Trigger_harbour_enemy")])
+effects = Array[Resource]([SubResource("Effect_harbour_lost")])
+once = true
+lines = Array[Resource]([SubResource("Line_6")])
+
+[sub_resource type="Resource" id="Trigger_sub_sunk"]
+script = ExtResource("15")
+tag = &"ferrow_sub"
+
+[sub_resource type="Resource" id="Effect_salvage"]
+script = ExtResource("16")
+team = 1
+amount = 3000
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("8")
+speaker = &"halden_marr"
+text = "His boat's on the bottom. The salvage crews are already rowing out; she was full of Concord coin."
+
+[sub_resource type="Resource" id="Event_sub_sunk"]
+script = ExtResource("9")
+id = &"sub_sunk"
+triggers = Array[Resource]([SubResource("Trigger_sub_sunk")])
+effects = Array[Resource]([SubResource("Effect_salvage")])
+once = true
+lines = Array[Resource]([SubResource("Line_7")])
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("8")
+speaker = &""
+text = "Port Averly, on the Meridian coast. The Ninth is scattered, Iron's columns are over the border, and a privateer is anchored off the harbour lights."
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("8")
+speaker = &"halden_marr"
+text = "Ferrow's parked a battleship where my fishing fleet ought to be. Two cruisers and a boat under the water to keep it company."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "Our side of the water has one port, one cruiser and one submarine. I've counted twice. It doesn't grow."
+
+[sub_resource type="Resource" id="Line_11"]
+script = ExtResource("8")
+speaker = &"halden_marr"
+text = "The cruiser kills his submarine. My sub kills his battleship. His battleship kills everything else, so keep the rockets back on the quay and let the bay do the work."
+
+[sub_resource type="Resource" id="Line_12"]
+script = ExtResource("8")
+speaker = &"dane_ferrow"
+text = "Admiral. I hold an Iron licence to stop every hull in this bay, and a bill for each one. Surrender the harbour and I'll knock off the port fee."
+
+[sub_resource type="Resource" id="Line_13"]
+script = ExtResource("8")
+speaker = &"halden_marr"
+text = "Sink the flagship and his crews lose their nerve. Lose the harbour city and we've lost the coast."
+
+[sub_resource type="Resource" id="Line_14"]
+script = ExtResource("8")
+speaker = &"halden_marr"
+text = "The flagship's down by the bow. That's the tide going out on Ferrow."
+
+[sub_resource type="Resource" id="Line_15"]
+script = ExtResource("8")
+speaker = &"dane_ferrow"
+text = "I was in the launch before the second torpedo, Admiral. Send the bill for the battleship to Iron. They'll pay; they always do."
+
+[sub_resource type="Resource" id="Line_16"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "One harbour kept. The lights are back on, and I've sent a boy out to the rock to count what he left there."
+
+[sub_resource type="Resource" id="Line_17"]
+script = ExtResource("8")
+speaker = &"dane_ferrow"
+text = "The harbour's under new management. Rates have gone up."
+
+[sub_resource type="Resource" id="Cond_run_cause"]
+script = ExtResource("17")
+flag = &"run:cause"
+at_least = 3
+at_most = 4
+
+[sub_resource type="Resource" id="Line_18"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "He's got the port, so he's got the coast road. Anything we ship now goes round the long way and pays his toll."
+requires = SubResource("Cond_run_cause")
+
+[sub_resource type="Resource" id="Cond_run_cause_2"]
+script = ExtResource("17")
+flag = &"run:cause"
+at_least = 3
+at_most = 4
+
+[sub_resource type="Resource" id="Line_19"]
+script = ExtResource("8")
+speaker = &"gideon_holt"
+text = "His guns had the bay, and the bay had us. I've written it down as a loan from the sea."
+unless = SubResource("Cond_run_cause_2")
+
+[resource]
+script = ExtResource("1")
+id = &"ff07_harbour_lights"
+title = "Harbour Lights"
+location = "Port Averly, the Meridian coast"
+map_path = "res://maps/campaign/five_flags/ff07_harbour_lights.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"halden_marr",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_flagship")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_sub")])
+events = Array[Resource]([SubResource("Event_north_beach"), SubResource("Event_south_beach"), SubResource("Event_third_boat"), SubResource("Event_harbour_taken"), SubResource("Event_sub_sunk")])
+par_day = 9
+briefing = Array[Resource]([SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12"), SubResource("Line_13")])
+victory = Array[Resource]([SubResource("Line_14"), SubResource("Line_15"), SubResource("Line_16")])
+defeat = Array[Resource]([SubResource("Line_17"), SubResource("Line_18"), SubResource("Line_19")])

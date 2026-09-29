@@ -1,0 +1,57 @@
+# Five Flags, The Seam — "Twenty Years": retake a river village before the parade.
+# The first board of the war, and a teaching board. Iris has a fixed drill
+# company and no production; so has Ferrow. What she learns is move, fight and
+# capture, and that artillery wants a turn to set up before it fires.
+#
+# The parade road (row 3) runs from the Ninth's post straight into the village
+# square at (8,3) and on to Ferrow's camp at the east edge. The orchards north
+# and south of the square are the cover the road does not give: the planner
+# hugs a wall, so both flanks are left open enough to walk round.
+#
+# The Seam river cuts the board at row 6. South of it, the mill at (6,7) is
+# the bonus and the capture scenario's depot: taking it sends Ferrow's
+# counter-raid down the mill road onto (10,7). Keep that road cell empty of
+# starting units — the event frame checks a unit landed there on day 1.
+#
+# Ferrow's second wave (day 2) lands in the north-east corner, (12,0) and
+# (13,0) and (13,1): off every road, behind his own lines, and nobody's
+# ground by then. The replay-fidelity test plays this board AI against AI
+# and needs that beat to land; do not put a road or a starting unit there.
+#
+# (7,1) is the empty plain the map-menu scenario presses on. Leave it empty.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  Q HQ
+[terrain]
+..F....FF.....
+.Q===...FF..M.
+....=F.....F..
+.F..====C====Q
+.F..=..F..F=..
+....=..FF..=..
+~~~~+~~~~~~+~~
+..F.==C=====F.
+......F....F..
+[owners]
+# The Ninth's post (west) and Ferrow's camp (east); Ferrow holds the square
+# and the mill.
+1 1 1
+2 13 3
+2 8 3
+2 6 7
+[units]
+# Iris: two infantry, a mech, a tank, artillery and a recon — the drill
+# company, nothing to build.
+1 m 1 2
+1 i 2 2
+1 i 3 2
+1 g 2 1
+1 t 3 1
+1 r 4 1
+# Ferrow: less, and nothing to build either. The square's garrison sits in
+# the open on purpose; the orchard behind it is his only cover.
+2 i 8 2
+2 i 8 4
+2 m 9 4
+2 t 10 2
+2 r 12 4
+2 i 7 8

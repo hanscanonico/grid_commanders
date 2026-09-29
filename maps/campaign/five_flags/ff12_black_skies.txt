@@ -1,0 +1,54 @@
+# The Aldmoor airfields, and the one Vale built on Meridian's farmland to reach them.
+# The first air board of the war. Both armies own an airport: Meridian's under the
+# capital at the west edge, Vale's forward strip on open fields two-thirds of the
+# way east, with his camp and his heavy bomber behind it. Open farmland in between
+# gives aircraft nothing to hide behind and ground units little more; the hills
+# in the south-centre are the only cover a missile battery gets. His bombers are
+# flown in from beyond the east edge until the forward strip is taken from him.
+# Symbols: . plains  F woods  M mountain  = road
+#          C city  B base  A airport  Q HQ
+[terrain]
+MM..FF....MM..F.MM
+M.C..=====....C..M
+..=..=..F..FF.....
+F.=..=.....=====..
+.B=..=..C..=...F.C
+.A=======..=.A=...
+.Q=.F..=...=..=BQ.
+..=..F.=..MM..=...
+F.C....=..MM.F=.C.
+..=....=====.F=...
+M.=====..F....F..M
+MMF.....FF....FMMM
+[owners]
+1 1 6
+1 1 4
+1 1 5
+1 2 1
+1 2 8
+1 8 4
+2 16 6
+2 15 6
+2 13 5
+2 14 1
+2 17 4
+2 16 8
+[units]
+1 f 3 5
+1 f 3 4
+1 a 5 6
+1 M 4 5
+1 i 6 4
+1 i 6 6
+1 m 7 5
+1 t 6 5
+1 H 2 3
+1 a 4 7
+1 t 5 3
+2 b 16 3 vale_heavy_bomber
+2 h 12 4
+2 a 13 6
+2 t 12 6
+2 i 13 5
+2 i 14 6
+2 g 12 7

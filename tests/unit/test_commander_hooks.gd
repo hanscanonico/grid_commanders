@@ -244,8 +244,8 @@ static func _stored_fields(resource: Resource) -> Array[String]:
 
 ## The reviewed 6 / 5 / 4 / 4 / 3 roster. Pinned so a half-added general — a
 ## script with no .tres, or a .tres with the wrong faction string — fails
-## visibly. Iron keeps all six on purpose: it is The Collection's named
-## antagonist, and the three the Gilded Concord took came one from each of the
+## visibly. Iron keeps all six on purpose: it is the war's largest cast of
+## antagonists, and the three the Gilded Concord took came one from each of the
 ## other three.
 func test_the_roster_has_the_reviewed_faction_counts() -> void:
 	var counts: Dictionary = {}

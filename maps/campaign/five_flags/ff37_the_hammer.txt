@@ -1,0 +1,81 @@
+# Five Flags — "The Hammer". The Hammerfall emplacement, from the western valley.
+# The gun sits in a cup of rock in the north-east with a road gate to the south
+# and a service road east to Morn's depot; foot can climb the rim, treads have to
+# use a gate. The Hammer road runs straight down the valley from the south gate,
+# which is the quick way up and the one the gun is registered on. Rhea Sol's
+# batteries hold the south-east corner and outrange anything on the valley
+# floor. The Hammer's spotter sits on the lone peak west of the cup: while it
+# lives and the gun is Morn's, the gun is reloaded every third day.
+# Tags: hammer_eye is the spotter. ninth_colours marks the Ninth's command-tank
+# slot; ^ rows are the carried column.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+MMMM.....F...MMMM....=QM
+MMM....C....MMM.C..MB=.M
+MM...F.......MM..=..=..M
+M...F........M..MMM.=...
+...F....C...F...MC===...
+..F.....F....F..F=M....C
+.....C.....M..M..=..F...
+..F.......MMM....=......
+......F...M...C..=..MM..
+.C.......F.......=....C.
+....F.......F....=..F...
+.B=======.......==....M.
+..=..C....F..........C..
+.B=.....F.....F.....BF..
+.Q=..C.....M.......C.Q..
+MMM.....MMM.....MMM...MM
+[owners]
+1 1 14
+1 1 13
+1 1 11
+1 5 12
+1 5 14
+1 1 9
+2 21 14
+2 20 13
+2 19 14
+2 21 12
+3 22 0
+3 20 1
+3 17 4
+3 16 1
+3 23 5
+[units]
+1 T 3 12 ninth_colours ^
+1 t 4 13 ^
+1 m 3 11 ^
+1 m 4 11 ^
+1 g 2 12 ^
+1 r 5 11 ^
+1 i 6 13
+1 i 7 12
+1 t 3 13
+1 a 6 11
+1 R 2 13
+1 T 4 12
+1 t 7 13
+2 R 19 11
+2 g 20 11
+2 g 18 12
+2 i 21 11
+2 t 20 12
+2 R 22 12
+2 i 22 13
+3 m 13 3 hammer_eye
+3 m 17 5
+3 m 18 4
+3 g 17 2
+3 g 19 3
+3 i 16 5
+3 a 19 5
+3 i 21 3
+3 i 20 2
+3 i 22 2
+3 i 15 2
+3 T 20 3
+3 t 18 2
+3 m 14 4
+3 i 16 6

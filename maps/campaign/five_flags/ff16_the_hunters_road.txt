@@ -1,0 +1,48 @@
+# Five Flags, Act III — "The Hunters' Road". The Thornwood valley, Iris v Nia, fog.
+# The same errand as Nia's Road on another stretch of the forest, with Nia on
+# the other side of it. One road runs the length of a walled valley, mountains
+# above and below, and the woods crowding it on both sides are where Nia's
+# rangers wait; her foot crosses woods and hills as if they were road. The
+# delegates' car (the APC tagged delegates) has one bridge over the Grey, at
+# (11,5), and it lights Nia's power when the car reaches it. Her lodge (9,3)
+# sits in the northern trees.
+# Her own starting rangers are tagged nia_r1 to nia_r8. When her side is down
+# to 2 units she calls the tagged ones off the hunt and they leave the board.
+# Greywater is the east end of the road, the zone round the town at (21,4).
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+MMMMMMMMMMM~MMMMMMMMMM
+MM.MM..MMMM~MMMMMMMM.M
+...FFFFFFFF~..FFFFFF..
+...FFF..FCF~FFFFFFFF..
+.B.FFFFFFFF~FFFFFFFF=C
+....F.=====+====..F.=.
+=Q=====....~...======.
+...FFFFFFFF~FFFFFFFF..
+...FFFFF..F~FFFF..FF.C
+...FFFFFFFF~FFFFFFBFQ.
+MMMMMMMMMMM~MM..MMMMMM
+MMMMMMMMMM.~MMMMMMMMMM
+[owners]
+1 1 6
+1 1 4
+2 20 9
+2 18 9
+2 9 3
+[units]
+1 p 2 6 delegates
+1 t 3 6
+1 r 3 5
+1 i 2 5
+1 i 2 7
+1 m 4 6
+1 g 3 7
+2 i 7 4 nia_r1
+2 i 9 7 nia_r2
+2 m 13 4 nia_r3
+2 m 13 7 nia_r4
+2 i 16 4 nia_r5
+2 i 17 7 nia_r6
+2 m 19 5 nia_r7
+2 r 20 7 nia_r8

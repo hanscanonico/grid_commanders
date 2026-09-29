@@ -1,0 +1,59 @@
+# Five Flags, The Seam — "The Lantern Hall": get three delegations out of a burning town.
+# Candlemere sits inside a loop of the Seam river: four bridges, one on each
+# side, and those are the gates. The north, east and south gates are where
+# the men in Iron colours come in; the west gate (4,5) is the way out, and
+# the three cells beyond it (0,4), (0,5), (0,6) are where the cars are safe.
+#
+# The Lantern Hall (8,5) is the town's middle and the bonus ground. The
+# Ninth's post (6,5) is Alina's HQ, on the road the cars have to use — lose
+# it and the mission is lost with it.
+#
+# A flanking party already stands on the west gate's outer road (0-2, 3-8):
+# the way out is open only once it is cleared. Waves land at the north gate
+# (day 2), the east gate (day 3) and the south gate (day 4), each outside the
+# river, never on the road the cars use. When ff03's powder got through, two
+# guns land east of the town on day 3 as well, at (15,2) and (15,8).
+# Symbols: . plains  F woods  = road  ~ river  + bridge  C city  Q HQ
+[terrain]
+.F..F...=...F..F
+...F~~~~+~~~~...
+.F..~.F.=.F.~.F.
+....~.C.=.C.~...
+....~...=...~..F
+====+=Q=C===+==Q
+....~...=...~...
+....~.C.=.C.~.F.
+.F..~.F.=.F.~...
+...F~~~~+~~~~F..
+.F....F.=..F...F
+[owners]
+1 6 5
+1 8 5
+1 6 3
+1 6 7
+2 15 5
+2 10 3
+2 10 7
+[units]
+# Alina's guard, and the three delegations' armoured cars at the Hall.
+1 t 7 4
+1 t 7 6
+1 m 5 4
+1 m 5 6
+1 i 9 2
+1 i 9 8
+1 g 6 4
+1 a 10 5
+1 p 9 4 delegate_iron
+1 p 9 6 delegate_verdant
+1 p 7 5 delegate_aurora
+# Ferrow: the party at the west gate, and the first men over the east bridge.
+2 i 2 3
+2 m 2 7
+2 t 0 8
+2 i 1 4
+2 i 13 4
+2 m 13 6
+2 t 15 3
+2 r 14 3
+2 g 15 7

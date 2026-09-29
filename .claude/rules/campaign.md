@@ -16,7 +16,7 @@ paths:
 
 # The campaign — designs of record
 
-These are the `## Designs of record` entries of `CLAUDE.md` that own the six authored wars, the
+These are the `## Designs of record` entries of `CLAUDE.md` that own the authored campaign, the
 mission vocabulary and the consequence ledger. Read the owning entry before an architectural
 decision in its area; the plans themselves are under `.lavish/`, and the long forms named in the
 root index are in `docs/design_record.md`.
@@ -27,7 +27,10 @@ root index are in `docs/design_record.md`.
   CD1–CD8, **all shipped** (D9 is the content gate, whose refusals are
   `docs/campaign_authoring.md`'s). It is the design of record for the campaign's *depth*; the
   **Campaign mode** entry below stays the record of the campaign layer's own architecture, and the
-  two are read together. It retired exactly one clause of that entry — "no evacuate/escort/convoy objective
+  two are read together. The six wars it was written against were **replaced on 2026-09-28 by one
+  campaign, Five Flags** (`docs/five_flags.md`), so its counts — 108 missions, 208 beats, ten gated
+  missions — describe the retrofit as it shipped, not the content in the tree; the rules it settled
+  stand unchanged. It retired exactly one clause of that entry — "no evacuate/escort/convoy objective
   exists on purpose", which CD2 made sayable — and supersedes nothing else there. The diagnosis was
   the number: 86 of 108 authored objectives were `CaptureCell`, and `DayDeadline` the only failure
   condition in the game. D1: **an event effect is a `Command` issued at the one broker, never a
@@ -139,9 +142,11 @@ root index are in `docs/design_record.md`.
   applied to the board its mission opens on, because a planner-against-planner game brings about
   half of them.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
-  four-army play and this entry supersedes it where they disagree) — six authored wars against the
-  Iron Dominion, eighteen missions each, the player rotating through the other three factions'
-  commanders. The content is data end to end: a campaign is a directory under `data/campaigns/`
+  four-army play and this entry supersedes it where they disagree) — one authored war, **Five
+  Flags**: 39 missions in six acts, of which a run plays 36 (one optional mission, two forks), the
+  player rotating through commanders of all five factions and fighting every one of them.
+  `docs/five_flags.md` is the story's design of record — premise, cast and voices, the facts one act
+  hands another, and the thread each mission closes. The content is data end to end: a campaign is a directory under `data/campaigns/`
   (`campaign.tres` plus `missions/*.tres`, discovered by `CampaignDB` and never listed by hand),
   every mission owns a board under `maps/campaign/<campaign>/`, and `make campaigns`
   (`tools/check_campaigns.gd`) is the content gate — the board parses, the seating is one the
@@ -217,7 +222,7 @@ root index are in `docs/design_record.md`.
   outside a campaign must not have to know a campaign exists. `clear()` empties it whole, runtime
   and verdict included, for the same reason `MatchConfig.take()` clears.
   D5: **progress is one file per campaign** under `user://campaigns/`, temp+backup like
-  `SaveGame`, so six wars advance independently and finishing one cannot corrupt another's record.
+  `SaveGame`, so each campaign advances independently and finishing one cannot corrupt another's record.
   The mid-mission board is `SaveCodec.encode`'s envelope embedded whole (`CampaignSaveCodec`
   serialises no board of its own; its own format is **VERSION 4** — 2 arrived with CD2's mission
   tally, 3 with CD4's consequence ledger, 4 with CD5's carried army, and a profile below the current

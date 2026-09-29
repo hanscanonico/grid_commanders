@@ -1,0 +1,69 @@
+# Five Flags — "Ostrava". The Dominion's capital at night, with the street lamps out.
+# Four avenues run north to south and three cross them, so every block is a
+# corner somebody can wait behind; parks give foot a place to hide and the city
+# blocks give anything a roof. The Ostra cuts the city in two with a bridge on
+# every avenue. Nobody builds tonight: the column fights with what it brought and
+# Orlov with what he has in the streets. His command car moves in the fog of the
+# old town north of the river; killing it is the mission, and nothing on the
+# board marks where it is. The Kasern barracks in the north-west block hold a
+# garrison that answers to whoever the regular army answers to.
+# Tags: orlov_command is Orlov's command car; kasern_* is the barracks garrison;
+# ninth_colours marks the Ninth's command-tank slot; ^ rows are the carried column.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+.C=.C.F=..C.=.C..=.CMM
+.F=...F=C...=...F=..QM
+C.=.C..=..F.=.C..=C...
+======================
+.C=..F.=C...=.F..=..C.
+..=.C..=.FF.=...C=....
+~~+~~~~+~~~~+~~~~+~~~~
+.C=..C.=...C=.F..=.C..
+======================
+..=.F..=C.F.=..C.=F.C.
+C.=..C.=....=.F..=....
+..=.F..=.C..=C...=.C..
+======================
+.F=.C..=..F.=..C.=.F..
+Q.=...F=.C..=....=..C.
+MM=..C.=....=.C..=....
+[owners]
+2 20 1
+2 4 2
+2 14 2
+2 18 2
+2 10 0
+2 19 0
+2 20 4
+2 8 4
+1 0 14
+1 4 13
+1 5 15
+1 9 14
+[units]
+1 T 3 14 ninth_colours ^
+1 t 4 14 ^
+1 m 1 13 ^
+1 m 3 13 ^
+1 g 1 14 ^
+1 r 5 13 ^
+1 i 0 12
+1 i 6 12
+1 m 8 14
+1 a 3 15
+1 t 8 13
+2 p 19 2 orlov_command
+2 t 4 2 kasern_1
+2 i 3 1 kasern_2
+2 m 4 4 kasern_3
+2 r 14 7
+2 t 11 7
+2 t 15 9
+2 r 8 9
+2 i 9 5
+2 i 16 5
+2 m 13 11
+2 g 18 4
+2 T 20 4
+2 a 10 2

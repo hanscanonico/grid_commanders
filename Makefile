@@ -595,7 +595,7 @@ campaigns:
 # stays out of `make verify` and `make test`, and it edits no content.
 # docs/campaign_difficulty.md is the committed record and the caveats to read
 # before acting on a row. Narrow it while iterating on an edit:
-#   make campaign-difficulty CAMPAIGN="--campaign=the_long_front --seeds=3"
+#   make campaign-difficulty CAMPAIGN="--campaign=five_flags --seeds=3"
 CAMPAIGN ?=
 campaign-difficulty:
 	$(call require-godot)
@@ -609,7 +609,7 @@ campaign-difficulty:
 # `make verify` and `make test`, and edits no content. docs/prose_slop.md is the
 # committed record and the false positives to read before acting on a row.
 # Narrow it while working through a war:
-#   make prose PROSE="--campaign=the_quiet_war --worst=50"
+#   make prose PROSE="--campaign=five_flags --worst=50"
 PROSE ?=
 prose:
 	$(call require-godot)

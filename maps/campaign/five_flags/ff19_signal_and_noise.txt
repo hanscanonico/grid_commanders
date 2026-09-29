@@ -1,0 +1,52 @@
+# Five Flags, Act III — "Signal and Noise". The Skyreach exercise grounds, Iris v Orin Flux, fog.
+# A war game fought with live rounds, for Rook's benefit. The umpires built the
+# ground in bands: two broken ridge lines across rows 4 and 8, each with a gap
+# where the central road climbs and open plain either side of it, so every
+# advance north crosses a line Orin can watch. His command post, the HQ at
+# (10,1), is the one primary. His listening post (18,3) sits in the north-east
+# woods off the main road, the bonus that reads the Concord cipher. Orin's
+# scouts see a square further than anyone's, his jam is filled on day 3, and
+# the umpires release his reserve at the north-west and east edges on day 5.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+MMMMMMMMMMMMMMMMMMMM
+..........Q.....FFFF
+.FF.====B==..F..FFFF
+....=.....=.....FFCF
+..MMMMMM..=.MMMMFFFF
+.........F=.....FFFF
+FFF....F..========..
+FFF.......=......=..
+FFF.MMMMM.=MMMMM.=C.
+FFF.....C.=......=FF
+......C..F=...C..=FF
+...F......=......=FF
+...Q=======...F..=FF
+.....B....=......=..
+[owners]
+2 10 1
+2 8 2
+2 18 3
+1 3 12
+1 5 13
+1 6 10
+[units]
+1 t 4 11
+1 t 6 12
+1 g 2 12
+1 m 5 11
+1 i 4 13
+1 i 7 11
+1 r 8 12
+1 i 12 12
+1 i 1 11
+1 m 9 13
+2 r 10 3
+2 r 15 6
+2 t 11 5
+2 i 7 3
+2 i 13 3
+2 m 11 7
+2 g 9 1
+2 i 17 4

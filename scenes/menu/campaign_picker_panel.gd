@@ -1,6 +1,6 @@
 class_name CampaignPickerPanel
 extends Control
-## The six campaigns, shown over the main menu without tearing it down —
+## The installed campaigns, shown over the main menu without tearing it down —
 ## `ReplayPickerPanel`'s sibling, built the same way and for the same reason: a
 ## Back has to land on the setup exactly as it was left.
 ##
@@ -89,7 +89,7 @@ func _build() -> void:
 	_title = UiKit.page_title("CAMPAIGNS")
 	main.add_child(_title)
 
-	main.add_child(UiKit.page_note("Six wars against the Iron Dominion. Eighteen missions each."))
+	main.add_child(UiKit.page_note("One war in six acts, from the Seam to Hammer Hill."))
 
 	_empty = UiKit.page_note("No campaigns installed.")
 	main.add_child(_empty)
@@ -228,7 +228,7 @@ func _micro(text: String, ink: Color, lines: int) -> Label:
 	return label
 
 
-## "The Six Marshals — 4/18 · 9 stars", or "— new" for a war with no profile, or
+## "Five Flags — 4/39 · 9 stars", or "— new" for a war with no profile, or
 ## "— complete" for one with nothing left to offer.
 ##
 ## Both halves are the **route's** answers, never the list's: finished is

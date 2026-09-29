@@ -196,7 +196,7 @@ func test_erase_takes_the_siblings_with_it() -> void:
 	assert_false(FileAccess.file_exists(path + CampaignProfile.BACKUP_SUFFIX))
 
 
-## Six campaigns progress independently, so one file each — finishing one must
+## Campaigns progress independently, so one file each — finishing one must
 ## not be able to touch the record of another.
 func test_each_campaign_keeps_its_own_file() -> void:
 	var other := &"__probe_campaign_two"

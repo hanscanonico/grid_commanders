@@ -1,0 +1,65 @@
+# Five Flags, Act IV — "Draeg". Alina Ward's column breaks for home against Viktor Draeg and Cass Orlov.
+# Three seats, two sides: Draeg (2) and Orlov (3) stand together against Alina.
+# The Kharn border fort (2,7) is the last gate on the border road (row 7), and
+# the mission is taking it. It sits in a notch of rock: from the east only the
+# road reaches it, and foot can climb the shoulders at (2,6) and (2,8).
+# The fort is Orlov's, not Draeg's — his security men watch the colonel from
+# inside it — so a Draeg who changes sides does not hand over the fort with him.
+# Draeg holds the ground in front of it with a fixed column: no base, and every
+# unit tagged, because every one of them is named by a beat. If the war spared
+# him over Skyreach (ff_draeg_spared) the column turns round on day 3; if it
+# did not, the column fights until both his escort tanks are gone, and then his
+# crews leave the field. Orlov comes up the border road from his lodge in the
+# east (HQ (21,7)) and builds at his depot (19,3), so the column is squeezed
+# from both ends. Alina holds a waystation in the south (HQ (10,12), base
+# (8,11)) and fights in the open middle, where her mixed arms stand side by side.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+MMMMMMMMMMMMMMMMMMMMMM
+M..F...MM....F...MM..M
+.Q..F..M..C.....F.....
+....MM....F..MM....B..
+.M..M..F....F......F..
+..MMM....F.....F......
+..M.......F.....F.....
+==C==================Q
+..M....F......F.......
+..MMM.....F.......F...
+.M...F....MM...F......
+....F...B.F...F.......
+..C......FQ.F.....C...
+MMMMMMMMMMMMMMMMMMMMMM
+[owners]
+# team x y
+1 10 12
+1 8 11
+2 1 2
+3 2 7
+3 21 7
+3 19 3
+[units]
+# team symbol x y [tag]
+1 t 10 6
+1 t 12 8
+1 m 9 7
+1 m 11 6
+1 i 10 8
+1 i 12 6
+1 g 11 9
+1 r 13 7
+1 a 9 9
+1 T 11 8
+1 t 9 5
+2 T 5 7 draeg_command
+2 t 4 6 draeg_escort_a
+2 t 4 8 draeg_escort_b
+2 g 5 5 draeg_guns
+2 i 3 7 draeg_rifles
+2 m 6 9 draeg_mech
+3 t 17 7
+3 t 18 6
+3 i 16 8
+3 m 17 5
+3 r 18 9
+3 m 2 7 orlov_watch
+3 g 1 6

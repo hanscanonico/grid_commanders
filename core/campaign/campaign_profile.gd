@@ -8,7 +8,7 @@ extends RefCounted
 ## JSON text, so a full disk and a malformed profile are separate failures with
 ## separate messages.
 ##
-## **One file per campaign** rather than one profile holding six. Six campaigns
+## **One file per campaign** rather than one profile holding them all. Campaigns
 ## progress independently, so a single file would make finishing one able to
 ## corrupt the record of another, and a player who deletes one campaign's
 ## progress should not lose the rest.

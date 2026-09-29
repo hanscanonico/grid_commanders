@@ -44,9 +44,9 @@ func test_a_header_names_a_mission_only_when_there_is_one() -> void:
 	assert_false(skirmish.has("campaign"), "a skirmish is a recording of no mission")
 	assert_false(skirmish.has("mission"))
 
-	var mission := ReplayCodec.header(opening, "a label", "now", &"six_marshals", &"sm02")
-	assert_eq(mission["campaign"], "six_marshals")
-	assert_eq(mission["mission"], "sm02")
+	var mission := ReplayCodec.header(opening, "a label", "now", &"five_flags", &"ff02")
+	assert_eq(mission["campaign"], "five_flags")
+	assert_eq(mission["mission"], "ff02")
 	assert_eq(ReplayCodec.header_error(mission), "")
 
 
