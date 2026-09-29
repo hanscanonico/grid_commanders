@@ -183,7 +183,7 @@ func setup(camera: BoardCamera3D, map: MapData, hud: CanvasLayer) -> void:
 ## Plays a spoken beat, the briefing read again or a mission's opening, and
 ## returns once it has finished and the bars are out.
 func play_lines(cast: DialogueCast) -> void:
-	if rolling:
+	while rolling:
 		await finished
 	var takes := _takes_of(cast)
 	if takes.is_empty():
@@ -194,7 +194,7 @@ func play_lines(cast: DialogueCast) -> void:
 
 ## Plays a Command Power's activation for `commander`, fired from `post`.
 func play_power(commander: CommanderType, quote: String, post: Vector2i) -> void:
-	if rolling:
+	while rolling:
 		await finished
 	var take := Take.new()
 	take.kind = Kind.POWER
@@ -233,7 +233,8 @@ func consume_press(event: InputEvent) -> bool:
 	if event.is_action_pressed(&"cancel"):
 		_close()
 		return true
-	if not _revealed and _t < _takes[_index].typed_at():
+	var take := _takes[_index]
+	if not _revealed and not take.words.is_empty() and _t < take.typed_at():
 		_revealed = true
 	else:
 		_next()
@@ -271,7 +272,11 @@ func advance(delta: float) -> void:
 		_next()
 
 
+## Returns at once on a board off the screen, which no longer drives `advance`:
+## a scene queued behind one `cut` short would otherwise never finish.
 func _roll(takes: Array[Take], themed: bool) -> void:
+	if not is_visible_in_tree():
+		return
 	_takes = takes
 	_clock = 0.0
 	_closing = false

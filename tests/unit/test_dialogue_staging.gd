@@ -39,6 +39,18 @@ func test_the_words_outrank_the_punctuation() -> void:
 	assert_eq(DialogueStaging.gesture_for("No. Nobody walks into that square yet."), &"shake")
 
 
+## A cue is a whole word, and an acknowledgement opens the line: the campaign's
+## "I stayed" and "hold 10 cities at once" are plain talk, not salutes.
+func test_a_cue_is_a_whole_word_and_an_acknowledgement_opens_the_line() -> void:
+	assert_eq(DialogueStaging.gesture_for("My rangers went home. I stayed."), &"talk")
+	assert_eq(DialogueStaging.gesture_for("Hold 10 cities at once."), &"talk")
+	assert_eq(DialogueStaging.gesture_for("The players are set."), &"talk")
+	assert_eq(DialogueStaging.gesture_for("Aha! The mill."), &"fist")
+	assert_eq(DialogueStaging.gesture_for("At once, General."), &"salute")
+	assert_eq(DialogueStaging.gesture_for("Aye, the guns are ours."), &"salute")
+	assert_eq(DialogueStaging.gesture_for("Heh. Fine."), &"laugh")
+
+
 func test_every_gesture_is_a_clip_the_actor_plays() -> void:
 	var lines: Array[String] = [
 		"Plain words.",
