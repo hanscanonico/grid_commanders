@@ -3,8 +3,8 @@
 Deterministic sound pipeline for this game, living in the repository it feeds
 (`generators/audio`, an offline instrument the engine never sees — the sibling
 `generators/.gdignore` keeps Godot out of it). It renders the game's complete
-sound-effect roster — the nine names `autoload/sfx.gd`'s `Sfx.NAMES` plays —
-as authored synthesis recipes over a small numpy DSP toolkit, and its two
+sound-effect roster — the fourteen names `autoload/sfx.gd`'s `Sfx.NAMES` plays —
+as authored synthesis recipes over a small numpy DSP toolkit, and its three
 looping music tracks — `autoload/music.gd`'s `Music.NAMES` — as authored song
 data played by a deterministic sequencer. The direction is 16-bit-era
 chiptune-plus: layered synthesis with punchy envelopes and filtered noise,
@@ -21,17 +21,24 @@ Regenerating after an edit changes exactly the sounds you edited.
 | Category | Sounds | Peak |
 | --- | --- | --- |
 | UI | select, move, capture, fanfare | −8…−5 dBFS |
+| UI (story cinematics) | text_blip, window_open, cut_whoosh, emote_pop, power_sting | −16…−5 dBFS |
 | Combat | shot, explosion, flak, rocket, torpedo | −4…−1.5 dBFS |
 | Music | parade, advance | −7…−6 dBFS |
+| Music (under dialogue) | council | −18 dBFS |
 
 UI sits a step under combat by contract — a menu never barks louder than a
 battle — and the `Mix` gate holds the bands apart. Output is 44100 Hz mono
 (the shipped placeholders were 22050 Hz; Godot reimports transparently): the
-nine effects as 16-bit PCM `.wav`, the two music loops as Ogg Vorbis `.ogg`.
+fourteen effects as 16-bit PCM `.wav`, the three music loops as Ogg Vorbis `.ogg`.
+
+The cinematic effects are UI tier and mostly well under it: `text_blip`
+plays every couple of letters, so it is a 28 ms sine chirp at −16 dBFS;
+`power_sting`, the Command Power's fanfare, is the one allowed up at
+`fanfare`'s −5 dBFS.
 
 ## The music
 
-Two strictly original marches, composed as hand-written note data in
+Two strictly original marches and a story theme, composed as hand-written note data in
 `audiogen/music.py` — melodies note by note, harmony as a bar chart, drums
 as patterns plus authored fills — rendered by `audiogen/sequencer.py`, the
 voxel-model analogue for composition:
@@ -44,17 +51,22 @@ voxel-model analogue for composition:
   (58 s). Driving eighth-note bass, syncopated stabs, a thin urgent lead;
   a descending E7 run resolves across the seam onto the loop's opening
   note, under the same swelling buzz roll.
+- **council** (story cinematics, under dialogue): a D-minor theme at 76
+  BPM, ABA' over 24 bars (76 s). A reed lead that leaves room for
+  reading, a detuned triangle pad, harp broken chords keeping the time in
+  place of drums, a soft sine bass; the last bar's A7 pickup lifts the
+  loop back to its opening A. Rendered 7–8 dB of RMS under the marches.
 
 The game loops the whole file (`LOOP_FORWARD`), so each track is rendered as
 one seamless loop: every tail that rings past the end wraps back to beat
 zero, and the loop gates measure the seam.
 
-The music ships as Ogg Vorbis (`audiogen/ogg.py`), because 132 seconds of
-44100 Hz PCM is 11.6 MB of package and of resident RAM on a phone and about
+The music ships as Ogg Vorbis (`audiogen/ogg.py`), because 208 seconds of
+44100 Hz PCM is 18 MB of package and of resident RAM on a phone and about
 an eighth of that encoded. libsndfile stamps each Ogg stream with a random
 serial number, so the serial is pinned and the page CRCs recomputed — this
-repo's promise is bytes, not just samples. The effects stay PCM: all nine
-together are 264 KB, where the codec's own overhead would be most of the
+repo's promise is bytes, not just samples. The effects stay PCM: all fourteen
+together are 492 KB, where the codec's own overhead would be most of the
 file.
 
 ## Usage
@@ -86,7 +98,7 @@ py=~/.cache/grid_commanders/venv-audio/bin/python
 "$py" audio_generator.py --install /path/to/grid_commanders
 ```
 
-`--only` takes any of the nine effect names and the two track names; an
+`--only` takes any of the fourteen effect names and the three track names; an
 unknown name lists the known ones and exits non-zero. It refuses `--install`,
 because installing a narrowed run would leave the rest of `assets/` from an
 older render. `--no-boards` skips the two HTML pages, each of which inlines
@@ -126,8 +138,14 @@ leftover would ship beside its replacement.
   fails by name.
 - **Distinctness** — pairwise spectral distance over log-band fingerprints:
   no two effects may sound like the same event (the silhouette-IoU gate
-  with a Fourier transform). The two marches must also separate — spectrally
+  with a Fourier transform). The three tracks must also separate — spectrally
   and in measured tempo, each of which must land on its authored BPM.
+  council has no drums, so its beat is read off the harp that keeps it
+  (`music.TIMEKEEPER`): through its held pad the onset reader hears none.
+- **Underscore** — council sits at least 6 dB of RMS under each march, is
+  darker than 1200 Hz of spectral centroid, and plays no drum voice. The
+  marches' own contour-at-the-seam and centroid band are march claims it
+  is exempt from.
 - **Timbre** — inharmonic (aliased) energy at each melodic voice's highest
   authored note, pinned under today's level: the point-sampled oscillators
   fold 15–18 % of a high lead's spectrum off the harmonic comb, which is
@@ -146,8 +164,8 @@ note, never a failure.
 
 ## Adoption
 
-The game ships this pipeline's exact output: `make audio` installs the nine
-effects into `assets/sfx/` and the two marches into `assets/music/`, and
+The game ships this pipeline's exact output: `make audio` installs the fourteen
+effects into `assets/sfx/` and the three tracks into `assets/music/`, and
 those bytes are what is committed. The gates above hold consistency and
 technical quality; whether an explosion feels right or a march is worth
 humming stays a human verdict on the soundboard.

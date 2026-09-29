@@ -14,8 +14,8 @@ extends GutTest
 ## A loop is seamless only if the file is a whole number of beats long, so the
 ## length is pinned here rather than eyeballed — and it is what says the codec
 ## kept every sample frame.
-const TEMPOS := {&"parade": 104.0, &"advance": 132.0}
-const BARS := 32
+const TEMPOS := {&"parade": 104.0, &"advance": 132.0, &"council": 76.0}
+const BARS := {&"parade": 32, &"advance": 32, &"council": 24}
 
 
 func after_each() -> void:
@@ -51,8 +51,9 @@ func test_each_shipped_track_plays_and_loops_its_whole_length() -> void:
 func test_each_track_is_a_whole_number_of_bars() -> void:
 	for track: StringName in Music.NAMES:
 		Music.play(track)
+		var bars: int = BARS[track]
 		var beats: float = _voice(track).stream.get_length() * TEMPOS[track] / 60.0
-		assert_almost_eq(beats, float(BARS * 4), 0.001, "%s should be %d bars" % [track, BARS])
+		assert_almost_eq(beats, float(bars * 4), 0.001, "%s should be %d bars" % [track, bars])
 
 
 func test_restating_the_playing_track_is_a_no_op() -> void:
@@ -81,6 +82,17 @@ func test_the_battle_theme_crossfades_over_the_menu_theme() -> void:
 	await wait_seconds(Music.CROSSFADE_SEC + 0.1)
 	assert_null(_voice(&"parade"), "the menu theme should have faded out")
 	assert_almost_eq(_voice(&"advance").volume_db, Music.LEVEL_DB, 0.01)
+
+
+func test_current_names_the_playing_track_and_clears_on_stop() -> void:
+	assert_eq(Music.current(), &"", "nothing should be playing yet")
+	Music.play(&"advance")
+	Music.play(&"council")  # a cinematic crossfading to the story theme
+	assert_eq(Music.current(), &"council")
+	Music.stop(0.0)
+	assert_eq(Music.current(), &"", "a stopped track is no longer current")
+	Music.play(&"nothing_was_generated")
+	assert_eq(Music.current(), &"", "a track that could not load is never current")
 
 
 func test_stop_fades_out_and_lets_the_track_start_again() -> void:

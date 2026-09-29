@@ -11,11 +11,12 @@ extends Node
 ## here writes anything but volume_db on its own two players.
 
 const MUSIC_DIR := "res://assets/music"
-const NAMES: Array[StringName] = [&"parade", &"advance"]
+const NAMES: Array[StringName] = [&"parade", &"advance", &"council"]
 
-## The tracks render at about -21 dBFS RMS, so -4 dB plays them near -25 dBFS —
+## The marches render at about -23 dBFS RMS, so -4 dB plays them near -27 dBFS —
 ## still some 20 dB under the combat SFX peaks, which is loud enough to hear on
-## a laptop speaker and quiet enough never to stand over a shot.
+## a laptop speaker and quiet enough never to stand over a shot. council, the
+## story theme, renders some 7 dB under them, because it plays beneath dialogue.
 const LEVEL_DB := -4.0
 ## Two players: one holds the outgoing track while the other fades up.
 const PLAYERS := 2
@@ -71,6 +72,12 @@ func play(track: StringName, volume_db: float = LEVEL_DB) -> void:
 	player.volume_db = SILENT_DB
 	player.play()
 	_ramp(_active, volume_db, CROSSFADE_SEC, true)
+
+
+## The track playing now, or &"" — what a cinematic returns to once it has
+## crossfaded to its own theme.
+func current() -> StringName:
+	return _current
 
 
 func stop(fade: float = STOP_FADE_SEC) -> void:

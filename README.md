@@ -1503,12 +1503,12 @@ atlases are its exact output; the generator also exports the same art cell by ce
 (`spritegen/chrome.py`) and gated the same way. The commander portraits and faction emblems are
 generated too, by `generators/portraits` (`make portraits`) — a second Python pipeline in this
 repository, painting project-original art to the "Heroic Commander Portraits" design handoff's
-spec with no third-party pixels, gated by `make portraits-test` and `make portraits-snapshot`. All sound — the nine effects and two
-project-original looping marches, `parade` for the menu and `advance` for the battle — is composed
+spec with no third-party pixels, gated by `make portraits-test` and `make portraits-snapshot`. All sound — the fourteen effects and three
+project-original loops, `parade` for the menu, `advance` for the battle and `council` under the story cinematics — is composed
 and rendered deterministically by `generators/audio`, a Python pipeline living in this
 repository and gated by `make audio-test` (determinism, loop-seam, loudness and distinctness
 measurements) and `make audio-snapshot` (the installed sound against a fresh render), and installed
-by `make audio` — the effects as committed WAVs, the two marches as Ogg Vorbis. `generators/.gdignore` keeps the engine out of the directory, so nothing there is
+by `make audio` — the effects as committed WAVs, the three loops as Ogg Vorbis. `generators/.gdignore` keeps the engine out of the directory, so nothing there is
 imported or exported. Third-party asset licenses must be
 tracked in `assets/LICENSES.md`. No Nintendo assets or names may ever be used.
 
