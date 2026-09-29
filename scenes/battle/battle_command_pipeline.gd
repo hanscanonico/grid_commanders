@@ -218,7 +218,6 @@ func _present_join(command: JoinCommand, target: Unit, watched: bool) -> void:
 func _present_power(
 	command: PowerCommand, before: PowerEffects.Snapshot, blast: Array[Vector2i]
 ) -> void:
-	Sfx.play(&"fanfare")
 	var post := DialogueCast.post_of(_battle, command.team)
 	await _battle.animator.show_power_banner(command.commander, command.team, post)
 	await _battle.animator.show_power_effects(_visible_marks(before, blast), blast)

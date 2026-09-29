@@ -19,6 +19,11 @@ static func stage() -> void:
 	BattleMissionScenario.stage()
 
 
+## Whether the board being opened is a mission starting fresh, owed its opening
+## scene: set as each battle opens its board, spent the first time it plays.
+static var _opening_owed := false
+
+
 ## Opens the board a mission is played on: the army the war remembers stands in
 ## the board's carry slots, and the tally takes what results as its baseline — so
 ## the first command of either a fresh board or a resumed one is diffed against
@@ -29,9 +34,21 @@ static func stage() -> void:
 ## wherever the fight has since put them, so standing the war's army on it again
 ## would deploy onto a board that has already been played.
 static func open_board(game: GameState, fresh: bool) -> void:
+	_opening_owed = fresh and CampaignSession.active()
 	if fresh:
 		CampaignSession.deploy_army(game)
 	CampaignSession.open_board(game)
+
+
+## The board a mission opens on. A mission starting fresh opens on its scene
+## first — on the 3D board its title card and its briefing acted out, and on the
+## flat board nothing, as before — and then every beat the opening is due fires
+## as usual. A resumed mission goes straight to its beats.
+static func open(battle: Battle) -> void:
+	if _opening_owed:
+		_opening_owed = false
+		await battle.animator.open_scene(DialogueCast.of_opening(battle, briefing_lines()))
+	await fire_due(battle)
 
 
 ## Fires every scripted beat the board is now due, in the order the mission lists

@@ -24,6 +24,10 @@ var home := NOWHERE
 ## Waits for a press after each line rather than timing out: the briefing, read
 ## again because the player asked for it.
 var untimed := false
+## The mission's name and where it is fought, for the title card a mission's
+## opening scene fades up on; empty for every other scene.
+var title := ""
+var place := ""
 
 
 static func of_lines(battle: Battle, spoken: Array[MissionLine]) -> DialogueCast:
@@ -60,6 +64,14 @@ static func of_beat(battle: Battle, command: MissionEventCommand) -> DialogueCas
 static func of_briefing(battle: Battle, spoken: Array[MissionLine]) -> DialogueCast:
 	var cast := of_lines(battle, spoken)
 	cast.untimed = true
+	return cast
+
+
+## A mission's opening scene: its title card, then the briefing acted out.
+static func of_opening(battle: Battle, spoken: Array[MissionLine]) -> DialogueCast:
+	var cast := of_lines(battle, spoken)
+	cast.title = CampaignSession.mission.title
+	cast.place = CampaignSession.mission.location
 	return cast
 
 

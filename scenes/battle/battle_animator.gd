@@ -710,6 +710,7 @@ func show_power_banner(
 		power_banner.bind(commander, team)
 		await cinema.play_power(commander, power_banner.spoken_quote, post)
 		return
+	Sfx.play(&"fanfare")
 	await _present(
 		_POWER_CARD,
 		Settings.speed.power_banner_seconds(),
@@ -854,6 +855,14 @@ func speak_until_dismissed(cast: DialogueCast) -> void:
 	if _frozen(card):
 		return
 	await card.finished
+
+
+## A mission's opening scene: its title card and its briefing, acted out on the
+## 3D board. The flat board opens on the board itself, as it always has.
+func open_scene(cast: DialogueCast) -> void:
+	var cinema := _cinema()
+	if cinema != null:
+		await cinema.play_lines(cast)
 
 
 ## The 3D board's cinematic, when dialogue is to be played as one: with the 3D

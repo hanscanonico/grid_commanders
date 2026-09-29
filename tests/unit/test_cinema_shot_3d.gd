@@ -1,9 +1,10 @@
 extends GutTest
-## CinemaShot3D and CinemaPose3D: where the 3D board's dialogue cinematic stands
-## the lens for each shot, and how it moves between them. Pure arithmetic over
-## four numbers a pose, so every framing rule is checked without a scene.
+## CinemaShot3D and CinemaPose3D: where the 3D board's story scenes stand the
+## lens for each shot, and how it moves between them. Pure arithmetic over four
+## numbers a pose, so every framing rule is checked without a scene.
 
 const POST := Vector3(4.5, 0.0, 6.5)
+const EYES := 0.5
 
 
 func _assert_same_pose(got: CinemaPose3D, want: CinemaPose3D, why: String) -> void:
@@ -19,7 +20,7 @@ func _across(pose: CinemaPose3D, point: Vector3) -> float:
 
 
 func test_a_shot_opens_on_its_start_and_settles_on_its_end() -> void:
-	var shot := CinemaShot3D.close(POST, 0.0, 1)
+	var shot := CinemaShot3D.actor(POST, EYES, 0.0, 1, false)
 	_assert_same_pose(shot.pose_at(0.0), shot.start, "the first frame")
 	_assert_same_pose(shot.pose_at(shot.drift_seconds * 12.0), shot.end, "long after")
 
@@ -27,7 +28,7 @@ func test_a_shot_opens_on_its_start_and_settles_on_its_end() -> void:
 ## An untimed line holds for as long as the player reads, so the drift must
 ## still be moving — slowly — well past its settling time, never stopped dead.
 func test_the_drift_keeps_moving_while_a_line_is_held() -> void:
-	var shot := CinemaShot3D.close(POST, 0.0, 1)
+	var shot := CinemaShot3D.actor(POST, EYES, 0.0, 1, false)
 	var later := shot.pose_at(shot.drift_seconds * 2.0)
 	var much_later := shot.pose_at(shot.drift_seconds * 3.0)
 	assert_gt(later.reach - much_later.reach, 0.0, "still pushing in")
@@ -52,20 +53,29 @@ func test_a_long_glide_cranes_up_and_a_short_one_does_not() -> void:
 
 
 ## Two voices trade sides like a shot and its reverse: each stands on the third
-## of the frame its side names, the other third left open.
-func test_a_close_shot_stands_its_speaker_on_the_named_third() -> void:
-	for side: int in [1, -1]:
-		var shot := CinemaShot3D.close(POST, 0.0, side)
-		for pose: CinemaPose3D in [shot.start, shot.end]:
-			var where := _across(pose, POST)
-			assert_true(where * side < 0.0, "side %d puts the speaker on its third" % side)
+## of the frame its side names, the other third left open — in the medium shot
+## a speaker is introduced in and in the closer one after it.
+func test_an_actor_shot_stands_its_speaker_on_the_named_third() -> void:
+	for near: bool in [false, true]:
+		for side: int in [1, -1]:
+			var shot := CinemaShot3D.actor(POST, EYES, 0.0, side, near)
+			for pose: CinemaPose3D in [shot.start, shot.end]:
+				var where := _across(pose, POST)
+				assert_true(where * side < 0.0, "side %d puts the speaker on its third" % side)
 
 
-func test_a_close_shot_pushes_in_and_comes_down() -> void:
-	var shot := CinemaShot3D.close(POST, 0.0, 1)
+func test_an_actor_shot_pushes_in_and_looks_at_the_face() -> void:
+	var shot := CinemaShot3D.actor(POST, EYES, 0.0, 1, false)
 	assert_lt(shot.end.reach, shot.start.reach)
 	assert_lt(shot.end.pitch, shot.start.pitch)
-	assert_gt(shot.start.target.y, POST.y, "it looks up at the screen, not at the ground")
+	assert_almost_eq(shot.start.target.y, EYES * CinemaShot3D.LOOK_AT_EYES, 0.0001)
+
+
+func test_the_closer_shot_is_closer() -> void:
+	var medium := CinemaShot3D.actor(POST, EYES, 0.0, 1, false)
+	var near := CinemaShot3D.actor(POST, EYES, 0.0, 1, true)
+	assert_lt(near.start.reach, medium.start.reach)
+	assert_lt(near.end.reach, medium.end.reach)
 
 
 ## The open third looks into the board, whichever side of it the camera is on.
@@ -78,17 +88,6 @@ func test_a_speaker_faces_into_the_board() -> void:
 	assert_eq(CinemaShot3D.side_facing(west, middle, PI, -1), -1, "seen from the far side")
 	var ahead := Vector3(10, 0, 1.5)
 	assert_eq(CinemaShot3D.side_facing(ahead, middle, 0.0, -1), -1, "no side: the fallback")
-
-
-func test_a_second_line_carries_on_from_where_the_lens_is() -> void:
-	var from := CinemaPose3D.new(POST, 7.0, 0.3, deg_to_rad(12.0))
-	var shot := CinemaShot3D.more(from, 1)
-	_assert_same_pose(shot.start, from, "no cut between one voice's two lines")
-	assert_lt(shot.end.reach, from.reach, "a little closer")
-	assert_true(
-		shot.end.pitch >= deg_to_rad(CinemaShot3D.LOWEST_PITCH_DEG) - 0.0001,
-		"never down into the table"
-	)
 
 
 func test_the_establishing_shot_takes_in_boards_of_every_size_within_bounds() -> void:
@@ -112,9 +111,11 @@ func test_a_subject_shot_backs_off_to_take_in_all_of_it() -> void:
 	assert_eq(CinemaShot3D.middle_of(spread), Vector2(6.0, 5.5))
 
 
-func test_the_power_swoops_down_and_in_onto_the_general() -> void:
-	var shot := CinemaShot3D.power(POST, 0.0)
-	assert_lt(shot.end.reach, shot.start.reach)
-	assert_lt(shot.end.pitch, shot.start.pitch)
+## The limit break's orbit starts low at the general's boots on one side and
+## climbs and pulls back round to the other, taking in the pillar.
+func test_the_power_orbits_up_and_out_round_the_general() -> void:
+	var shot := CinemaShot3D.limit(POST, EYES, 0.0)
+	assert_gt(shot.end.reach, shot.start.reach, "it pulls back")
+	assert_gt(shot.end.pitch, shot.start.pitch, "and climbs")
 	assert_gt(absf(angle_difference(shot.start.yaw, shot.end.yaw)), deg_to_rad(45.0), "a swing")
 	assert_true(_across(shot.end, POST) < 0.0, "it lands with the general on the left third")
