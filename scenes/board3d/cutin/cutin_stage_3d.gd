@@ -156,7 +156,7 @@ func _environment() -> Environment:
 	env.ambient_light_energy = 0.3
 	env.fog_enabled = true
 	env.fog_light_color = StageBackdrop3D.HORIZON
-	env.fog_density = 0.01
+	env.fog_density = 0.0045
 	env.fog_sky_affect = 0.0
 	return env
 
@@ -168,7 +168,7 @@ func _add_lights() -> void:
 	key.name = "Key"
 	key.rotation_degrees = Vector3(-42.0, -32.0, 0.0)
 	key.light_color = KEY_COLOUR
-	key.light_energy = 0.85
+	key.light_energy = 0.78
 	key.shadow_enabled = true
 	add_child(key)
 	var fill := DirectionalLight3D.new()

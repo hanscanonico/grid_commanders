@@ -49,6 +49,7 @@ var _prop_material: ShaderMaterial
 var _cinema: DialogueCinema3D
 var _sun: DirectionalLight3D
 var _stage: CutinStage3D
+var _combat: CombatCutin3D
 var _properties: Dictionary[Vector2i, Node3D] = {}
 var _property_rows: Dictionary[Vector2i, int] = {}
 var _clock := 0.0
@@ -143,6 +144,17 @@ func cutin_stage() -> CutinStage3D:
 		]
 		_stage.setup(_camera.camera, _sun, _hud_layer(), _view.db, ground)
 	return _stage
+
+
+## The combat cut-in played on the stage, built on the first one.
+func combat_cut_in() -> CombatCutin3D:
+	if _combat == null:
+		_combat = CombatCutin3D.new()
+		_combat.name = "CombatCutin3D"
+		_combat.view = _view
+		_combat.stage = cutin_stage()
+		add_child(_combat)
+	return _combat
 
 
 ## Whether a press went to the cinematic playing now — the one route a press

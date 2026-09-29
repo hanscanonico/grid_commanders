@@ -11,7 +11,7 @@ extends Node3D
 ## foe, as on the flat cut-in.
 
 ## A figure's hit flash, as emission over its own colours.
-const FLASH_ENERGY := 1.6
+const FLASH_ENERGY := 0.55
 ## A casualty and a wreck char toward this.
 const CHAR := Color(0.28, 0.27, 0.27)
 const ROTOR_SPIN := 26.0
@@ -134,30 +134,32 @@ func is_on_foot() -> bool:
 	return type.id == &"infantry" or type.id == &"mech"
 
 
-## Every standing figure's barrel mouth on the stage, nearest the foe last —
-## where a flash goes off and a volley leaves from.
-func muzzle_points() -> PackedVector3Array:
+## The barrel mouths of the first `firing` figures (every survivor when
+## negative), in the stage's frame, nearest the foe last — where a flash goes
+## off and a volley leaves from. An attacker fires with every figure it went in
+## with; a counter only with those still up.
+func muzzle_points(firing: int = -1) -> PackedVector3Array:
 	var points := PackedVector3Array()
-	for slot in standing:
-		points.append(_figures[slot].global_transform * _muzzle)
+	for slot in standing if firing < 0 else mini(firing, posted):
+		points.append(transform * (_figures[slot].transform * _muzzle))
 	return points
 
 
-## Every posted figure's middle, on the stage — where a round is aimed and a
-## burst goes off. Includes the lost, which are hit before they fall.
+## Every posted figure's middle, in the stage's frame — where a round is aimed
+## and a burst goes off. Includes the lost, which are hit before they fall.
 func body_points() -> PackedVector3Array:
 	var points := PackedVector3Array()
 	for figure in _figures:
-		points.append(figure.global_transform * Vector3(0.0, _height * 0.5 / _scale, 0.0))
+		points.append(transform * (figure.transform * Vector3(0.0, _height * 0.5 / _scale, 0.0)))
 	return points
 
 
-## The squad's middle at body height as it stands posted, without the hover:
-## a lens framed on it, or a number pinned to it, does not judder.
+## The squad's middle at body height as it stands posted, in the stage's frame
+## and without the hover: a lens framed on it, or a number pinned to it, does
+## not judder.
 func focus() -> Vector3:
-	var middle := global_transform * _anchor
 	var cruise := SquadFormation3D.CRUISE if type.domain == UnitType.AIR else 0.0
-	return middle + Vector3.UP * (cruise + _height * 0.5)
+	return transform * (_anchor + Vector3.UP * (cruise + _height * 0.5))
 
 
 ## How tall one figure stands.
@@ -185,5 +187,5 @@ func _paint(slot: int, shown: float, charred: float) -> void:
 	var lit := flash > 0.0 and slot < standing
 	material.emission_enabled = lit
 	if lit:
-		material.emission = Color.WHITE
+		material.emission = Color("#fff4dc")
 		material.emission_energy_multiplier = FLASH_ENERGY * flash

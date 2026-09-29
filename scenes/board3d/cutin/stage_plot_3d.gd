@@ -28,14 +28,15 @@ const SQUAD_REACH := 3.5
 ## A property is blown up so it reads as the place being fought over, not a
 ## model on a table: the main building behind the squad, and for a city a
 ## smaller pair either side.
-const BUILDING_SCALE := 2.3
-const BUILDING_ROW := 2
-const TOWN_SCALE := 1.5
-const TOWN_REACH: Array[float] = [0.9, 6.6]
+const BUILDING_SCALE := 3.4
+const BUILDING_DEPTH := -3.3
+const TOWN_SCALE := 2.2
+const TOWN_REACH: Array[float] = [0.4, 7.6]
 ## How far the apron runs, and how far below the patch's own top it sits: just
 ## under, so the patch's rim walls are buried in it.
 const APRON_FAR := 160.0
 ## The range behind a mountain: x outward from the seam, z on the stage, height.
+const FAR_TREES := 70
 const RANGE_ROCK := Color("#6d6a70")
 const RANGE: Array[Vector3] = [
 	Vector3(2.0, -15.0, 3.0), Vector3(7.0, -17.5, 3.9), Vector3(12.5, -14.0, 2.6)
@@ -75,6 +76,7 @@ func setup(
 		_add(meshes[1], materials[1])
 	_add_apron(rows[ROWS - 1].left(1), BACK_ROWS, APRON_FAR, materials)
 	_add_apron(rows[0].left(1), -APRON_FAR, BACK_ROWS, materials)
+	_add_far_trees(rows[0].left(1))
 	if terrain.is_property:
 		_add_buildings(terrain.id, owner)
 	elif terrain.id == &"mountain":
@@ -179,6 +181,26 @@ func _add_apron(symbol: String, z0: float, z1: float, materials: Array[Material]
 	_add(st.commit(), materials[1] if water else materials[0])
 
 
+## Clumps of trees far out on dry ground behind the patch, so the field has a
+## far side rather than running flat into the haze. None on water.
+func _add_far_trees(symbol: String) -> void:
+	if _is_water(symbol) or symbol == "_":
+		return
+	var st := MeshKit.begin()
+	for i in FAR_TREES:
+		var out := 1.0 + 44.0 * SquadFormation3D.scatter(i, 91 + side)
+		var deep := -22.0 - 26.0 * SquadFormation3D.scatter(i, 93 + side)
+		var foot := Vector3(out * side, BoardSpace3D.LAND_TOP, deep) - position
+		var tall := 0.9 + 1.1 * SquadFormation3D.scatter(i, 95 + side)
+		var foliage := TerrainMesher3D.FOLIAGE[i % TerrainMesher3D.FOLIAGE.size()]
+		MeshKit.column(st, MeshKit.at(foot), tall * 0.4, 0.0, tall, 6, foliage.darkened(0.15))
+	var trees := MeshInstance3D.new()
+	trees.mesh = st.commit()
+	trees.material_override = MeshKit.vertex_material()
+	trees.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(trees)
+
+
 ## Three big peaks behind the patch's own, so a mountain reads as a range
 ## rather than a field of hillocks.
 func _add_range() -> void:
@@ -216,7 +238,9 @@ func _stand_building(
 	terrain_id: StringName, owner: CommanderVisuals.FactionTheme, reach: float, scale_by: float
 ) -> void:
 	var building := PropertyModels3D.build(terrain_id, owner)
-	var at := Vector3(reach * side, 0.0, BUILDING_ROW + 0.5 - (SQUAD_ROW + 0.5))
+	var at := Vector3(
+		reach * side, 0.0, BUILDING_DEPTH - (1.0 if scale_by < BUILDING_SCALE else 0.0)
+	)
 	building.position = at - position + Vector3(0.0, BoardSpace3D.LAND_TOP, 0.0)
 	building.scale = Vector3.ONE * scale_by
 	add_child(building)

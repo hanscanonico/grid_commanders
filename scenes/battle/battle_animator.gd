@@ -198,10 +198,14 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 	var attacker_sprite := view.sprite_for(attacker)
 	view.refresh_sprite(attacker)  # snap to the committed destination
 	if _cut_in_applies(attacker, defender):
-		_pace_cut_in()
-		await _punch_board()
-		await cutscene.play(result, attacker, defender)
-		_drop_punch()
+		var staged := combat_cut_in_3d()
+		_pace_cut_in(staged)
+		if staged != null:
+			await staged.play(result, attacker, defender)
+		else:
+			await _punch_board()
+			await cutscene.play(result, attacker, defender)
+			_drop_punch()
 		_last_cut_in_ms = Time.get_ticks_msec()
 		_clear_cut_in_dead(result, attacker, defender)
 		_sync_aftermath()
@@ -427,7 +431,7 @@ func _cut_in_applies(attacker: Unit, defender: Unit) -> bool:
 ## The one beat defended against that compression is the wind-up, which CombatBeats
 ## stretches against its own rate ceiling, so a howitzer still reads longer than a
 ## rifle on the fourth cut-in of a streak.
-func _pace_cut_in() -> void:
+func _pace_cut_in(staged: CutsceneDirector = null) -> void:
 	var gap := Time.get_ticks_msec() - _last_cut_in_ms
 	_cut_in_streak = (
 		mini(_cut_in_streak + 1, CUT_IN_MAX_STREAK) if gap < CUT_IN_STREAK_GAP_MS else 0
@@ -440,6 +444,21 @@ func _pace_cut_in() -> void:
 	if capture_cutscene != null:
 		capture_cutscene.speed = streak_speed
 		capture_cutscene.tail_scale = streak_tail
+	if staged != null:
+		staged.speed = streak_speed
+		staged.tail_scale = streak_tail
+
+
+## The 3D board's combat cut-in when this exchange plays on its stage — the 3D
+## board is up — else null, and the flat one plays. The live path and the
+## scenario driver both ask here, so a posed still takes the route play does.
+## The flat board's punch is a still of a board the 3D view has culled, so the
+## stage never takes it.
+func combat_cut_in_3d() -> CombatCutin3D:
+	var board := view.board_3d
+	if board == null or not board.active:
+		return null
+	return board.combat_cut_in()
 
 
 ## A short push onto the cell about to be struck, so the board flinches before
