@@ -45,7 +45,7 @@ const DUST := Color("efe6d2")
 const DUST_REACH := 0.45
 const DUST_SIZE := Vector2(0.08, 0.24)
 const CONFETTI_SIZE := Vector3(0.18, 0.012, 0.12)
-const SPARK_RADIUS := 0.08
+const SPARK_RADIUS := 0.13
 const SPARK_TRAIL := 0.35
 
 ## The flag's top, and the middle of the roof — where the chips rise from and
@@ -259,7 +259,9 @@ func _draw_confetti(beats: CaptureBeats, captured: bool, t: float) -> void:
 
 
 ## Two firework rings popping over the building behind the banner, each spark
-## trailing back toward its burst.
+## trailing back toward its burst. The sparks are blended rather than added:
+## light added over the pale sky washes out to white, and these are to read in
+## the capturer's colours.
 func _draw_fireworks(beats: CaptureBeats, captured: bool, t: float) -> void:
 	for ring in CaptureShot3D.FIREWORKS.size():
 		var p := CaptureShot3D.firework(beats, captured, ring, t)
@@ -269,9 +271,12 @@ func _draw_fireworks(beats: CaptureBeats, captured: bool, t: float) -> void:
 		var fade := 1.0 - p * p
 		for i in CaptureShot3D.FIREWORK_SPARKS:
 			var offset := CaptureShot3D.spark_offset(ring, i, p)
-			var tint := CutscenePalette.GOLD if i % 2 == 0 else _after.color_light
+			var tint := _after.color if i % 2 == 0 else _after.color_light
 			var at := centre + offset
-			_fx.glow_ball(at, SPARK_RADIUS * (1.0 - p * 0.6), Color(tint, fade))
+			_fx.smoke_ball(at, SPARK_RADIUS * (1.0 - p * 0.6), Color(tint, fade))
 			_fx.streak(
-				at, at - offset.normalized() * SPARK_TRAIL * fade, 0.04, Color(tint, fade * 0.6)
+				at,
+				at - offset.normalized() * SPARK_TRAIL * fade,
+				0.04,
+				Color(CutscenePalette.GOLD, fade * 0.3)
 			)
