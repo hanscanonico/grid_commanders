@@ -25,7 +25,10 @@ const BADGE_PX := 16
 var map: MapData
 var sprites_root: Node2D
 
-var _models: Dictionary[UnitSprite, Model] = {}
+## Keyed by the sprite's instance id rather than the sprite: a sprite freed by
+## its own death tween is gone before the next sync, and a freed object cannot
+## be read back out of a typed key.
+var _models: Dictionary[int, Model] = {}
 var _clock := 0.0
 
 
@@ -40,7 +43,6 @@ class Model:
 	var hp: Label3D
 	var fuel: Label3D
 	var rotor: Node3D
-	var propeller: Node3D
 	var phase := 0.0
 
 
@@ -48,21 +50,21 @@ class Model:
 ## sit to its right and left of a unit whichever way the board is turned.
 func sync(delta: float, lens: Basis) -> void:
 	_clock += delta
-	var seen: Dictionary[UnitSprite, bool] = {}
+	var seen: Dictionary[int, bool] = {}
 	for child in sprites_root.get_children():
 		var sprite := child as UnitSprite
 		if sprite == null or sprite.is_queued_for_deletion() or sprite.unit == null:
 			continue
-		seen[sprite] = true
-		var model: Model = _models.get(sprite)
+		seen[sprite.get_instance_id()] = true
+		var model: Model = _models.get(sprite.get_instance_id())
 		if model == null or model.row != sprite.atlas_row:
 			model = _rebuild(sprite, model)
 		_pose(model, sprite, delta)
 		_badges(model, sprite, lens)
-	for sprite: UnitSprite in _models.keys():
-		if not seen.has(sprite):
-			_drop(_models[sprite])
-			_models.erase(sprite)
+	for id: int in _models.keys():
+		if not seen.has(id):
+			_drop(_models[id])
+			_models.erase(id)
 
 
 func _rebuild(sprite: UnitSprite, old: Model) -> Model:
@@ -80,13 +82,12 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	var body := model.node.get_node("Body") as GeometryInstance3D
 	model.material = body.material_override as StandardMaterial3D
 	model.rotor = model.node.get_node_or_null("Rotor")
-	model.propeller = model.node.get_node_or_null("Propeller")
 	model.phase = float(sprite.unit.cell.x * 7 + sprite.unit.cell.y * 3)
 	model.hp = _badge(Color.WHITE)
 	model.fuel = _badge(UiTheme.AMMO)
 	model.plane = BoardSpace3D.plane_of(sprite.position)
 	add_child(model.node)
-	_models[sprite] = model
+	_models[sprite.get_instance_id()] = model
 	return model
 
 
@@ -116,8 +117,6 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 	_tint(model, sprite)
 	if model.rotor != null:
 		model.rotor.rotate_y(delta * ROTOR_SPIN)
-	if model.propeller != null:
-		model.propeller.rotate_x(delta * ROTOR_SPIN)
 
 
 ## The sprite's fade, hit flash and acted scrim, carried onto the one material
