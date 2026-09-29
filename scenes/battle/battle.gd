@@ -333,7 +333,7 @@ func _ready() -> void:
 		# an unpinned capture would hash differently by shutter time.
 		BoardBeat.frozen = true
 	animator.start_cursor_pulse()
-	await BattleCampaign.fire_due(self)  # the opening board: the one boundary with no command
+	await BattleCampaign.open(self)  # the opening board: the one boundary with no command
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn
 	if _capturing:
 		_scenario_driver.run()

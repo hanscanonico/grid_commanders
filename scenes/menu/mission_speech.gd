@@ -30,7 +30,7 @@ static func render(line: MissionLine, commanders: CommanderDB) -> Control:
 	var words_width := WIDTH - BUST - _BUST_GAP
 	var copy := VBoxContainer.new()
 	copy.add_theme_constant_override("separation", 0)
-	copy.add_child(_name_of(commander, words_width))
+	copy.add_child(name_of(commander, words_width))
 	copy.add_child(paragraph(line.text, false, words_width))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", _BUST_GAP)
@@ -55,7 +55,8 @@ static func paragraph(text: String, dim: bool = false, width: int = WIDTH) -> La
 	return label
 
 
-static func _name_of(commander: CommanderType, width: int) -> Label:
+## The speaker's name over their words, in their faction's colour.
+static func name_of(commander: CommanderType, width: int) -> Label:
 	var label := Label.new()
 	label.text = commander.display_name.to_upper()
 	label.add_theme_font_override("font", UiTheme.stat(true))

@@ -46,6 +46,7 @@ var _fog_texture: ImageTexture
 var _fog_dirty := true
 var _owners_dirty := true
 var _prop_material: ShaderMaterial
+var _cinema: DialogueCinema3D
 var _properties: Dictionary[Vector2i, Node3D] = {}
 var _property_rows: Dictionary[Vector2i, int] = {}
 var _clock := 0.0
@@ -90,8 +91,18 @@ func _exit_tree() -> void:
 
 
 ## V flips the board from anywhere in the battle — a watched match, a paused one,
-## the computer's turn — and C and B turn the 3D one a quarter each way.
+## the computer's turn — and C and B turn the 3D one a quarter each way. Under a
+## cinematic all three hold still: it has the lens, and the flat board has no
+## cinematic to hand the scene to.
 func _unhandled_input(event: InputEvent) -> void:
+	var view_key := (
+		event.is_action_pressed(&"toggle_view")
+		or event.is_action_pressed(&"turn_view_left")
+		or event.is_action_pressed(&"turn_view_right")
+	)
+	if view_key and _cinema != null and _cinema.rolling:
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed(&"toggle_view"):
 		Settings.set_board_3d(not Settings.board_3d)
 	elif active and event.is_action_pressed(&"turn_view_left"):
@@ -110,6 +121,18 @@ func turned(direction: Vector2i) -> Vector2i:
 	if not active:
 		return direction
 	return BoardSpace3D.turned(direction, _camera.quarters)
+
+
+## The cinematic dialogue is played in, built with the board. Asked only while
+## the board is up.
+func cinema() -> DialogueCinema3D:
+	return _cinema
+
+
+## Whether a press went to the cinematic playing now — the one route a press
+## reaches it by, ahead of every blocking card.
+func consume_cinema_press(event: InputEvent) -> bool:
+	return _cinema != null and _cinema.consume_press(event)
 
 
 ## The cell under a screen point, walked down the ray from the camera until it
@@ -172,6 +195,8 @@ func _on_view_changed() -> void:
 		window.canvas_cull_mask |= BOARD_ROOT
 	if not _built:
 		return
+	if not on:
+		_cinema.cut()
 	_camera.camera.current = on
 	_environment.environment = _make_environment() if on else null
 	_overlay.render_target_update_mode = (
@@ -191,15 +216,18 @@ func _process(delta: float) -> void:
 		_owners_dirty = false
 		_refresh_owners()
 	var focus := _focus()
-	_camera.follow(
-		delta,
-		focus,
-		_view.camera.zoom.x,
-		float(MobileDock.board_lift_px()),
-		_view.board_camera.shake_offset
-	)
+	if _cinema.rolling:
+		_cinema.advance(delta)
+	if not _cinema.directs_lens():
+		_camera.follow(
+			delta,
+			focus,
+			_view.camera.zoom.x,
+			float(MobileDock.board_lift_px()),
+			_view.board_camera.shake_offset
+		)
 	_units.sync(delta, _camera.camera.global_basis)
-	_cursor.visible = _view.cursor.visible
+	_cursor.visible = _view.cursor.visible and not _cinema.rolling
 	_cursor.follow(delta, focus, _clock)
 
 
@@ -250,6 +278,12 @@ func _build() -> void:
 	_add_sun()
 	_environment = WorldEnvironment.new()
 	add_child(_environment)
+	_cinema = DialogueCinema3D.new()
+	_cinema.name = "DialogueCinema3D"
+	# The layer the HUD's bars are drawn on: a cinematic takes the chrome off the
+	# screen along with them.
+	_cinema.setup(_camera, _map, _view.hud_top.get_parent() as CanvasLayer)
+	add_child(_cinema)
 
 
 ## The flat marks, rendered from straight above into a texture one board-cell

@@ -4,13 +4,16 @@ extends Node
 ## run or a stripped build never breaks.
 
 const SFX_DIR := "res://assets/sfx"
-## The last three belong to the battle cut-in's weapon styles — a BattleStyle
-## names the sound its volley makes, and these are the ones that wanted a voice
-## of their own rather than the generic `shot`. A style may name a sound that has
-## not been generated yet: `play` skips a missing stream in silence, which is
-## what lets a new style ship before its wav does. The other two directions are
-## linted in tests/unit/test_battle_styles.gd: every style names a sound on this
-## list, and every wav on disk is on it.
+## flak, rocket and torpedo belong to the battle cut-in's weapon styles — a
+## BattleStyle names the sound its volley makes, and these are the ones that
+## wanted a voice of their own rather than the generic `shot`. A style may name
+## a sound that has not been generated yet: `play` skips a missing stream in
+## silence, which is what lets a new style ship before its wav does. The other
+## two directions are linted in tests/unit/test_battle_styles.gd: every style
+## names a sound on this list, and every wav on disk is on it.
+## The last five voice the story cinematics: a letter typing, a message window
+## opening, the camera cutting between speakers, an emote bubble, and a
+## Command Power breaking loose.
 const NAMES: Array[StringName] = [
 	&"select",
 	&"move",
@@ -21,6 +24,11 @@ const NAMES: Array[StringName] = [
 	&"flak",
 	&"rocket",
 	&"torpedo",
+	&"text_blip",
+	&"window_open",
+	&"cut_whoosh",
+	&"emote_pop",
+	&"power_sting",
 ]
 const POOL_SIZE := 6
 

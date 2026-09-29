@@ -1,11 +1,11 @@
-"""Contract tests for the two music loops.
+"""Contract tests for the three music loops.
 
 The SFX discipline applied to composition: determinism, the game's
 Music.NAMES contract, a seamless loop (the file's end must lead into its
 start — the game plays LOOP_FORWARD over the whole file), music sitting
 clearly under the combat SFX peaks, every authored voice being heard in
-the mix it plays in, and the two marches staying distinct in both spectrum
-and tempo.
+the mix it plays in, and the three tracks staying distinct in both spectrum
+and tempo — plus the story theme sitting under the marches it follows.
 
 Run with `make audio-test` from the repository root.
 """
@@ -28,7 +28,11 @@ from audiogen.ogg import ogg_bytes, vendor_string
 GAME_ROOT = Path(__file__).resolve().parents[3]
 
 # The game's autoload/music.gd Music.NAMES, verbatim.
-CONTRACT = ("parade", "advance")
+CONTRACT = ("parade", "advance", "council")
+
+# The two marches, whose loudness shape and brightness band are march claims
+# the story theme, played under reading, is not meant to meet.
+MARCHES = ("parade", "advance")
 
 # One render per track for every gate below; Determinism renders fresh and
 # compares against these, which is the render-twice check itself.
@@ -158,12 +162,12 @@ class Mix(unittest.TestCase):
     # The arrangement's quiet strains lower both means by design: the floors
     # were -21.9 / -23.7 against -21.74 / -23.44 flat, and are re-stated here
     # against -22.64 / -24.10 with the same slack.
-    PROGRAM_RMS_DB = {"parade": -22.8, "advance": -24.3}
+    PROGRAM_RMS_DB = {"parade": -22.8, "advance": -24.3, "council": -31.1}
 
     # A chordal voice this far under the lead is a harmony nobody hears; the
     # leads used to sit 16-18 dB over their own chords.
     CHORDAL_SPREAD_DB = 10.0
-    CHORDAL = ("stab", "pad")
+    CHORDAL = ("stab", "pad", "hymn_pad", "harp")
 
     def test_no_dc(self):
         for name in CONTRACT:
@@ -243,9 +247,9 @@ class Brightness(unittest.TestCase):
                 self.assertLess(measure.hf_share(x, 10000.0), self.SHARE_10K)
                 self.assertLess(measure.hf_share(x, 15000.0), self.SHARE_15K)
 
-    def test_each_track_centres_where_a_march_should(self):
+    def test_each_march_centres_where_a_march_should(self):
         lo, hi = self.CENTROID_HZ
-        for name in CONTRACT:
+        for name in MARCHES:
             with self.subTest(track=name):
                 self.assertTrue(
                     lo <= measure.centroid_hz(RENDERED[name]) <= hi,
@@ -255,31 +259,40 @@ class Brightness(unittest.TestCase):
 
 
 class Distinctness(unittest.TestCase):
-    """The menu and the battle may not wear the same march."""
+    """The menu, the battle and the story may not wear the same music."""
 
-    SPECTRAL_THRESHOLD = 0.05  # measured 0.121 between the two as authored
+    # Measured 0.178 parade/advance, 0.258 parade/council, 0.266
+    # advance/council as authored.
+    SPECTRAL_THRESHOLD = 0.05
     TEMPO_TOLERANCE_BPM = 3.0
 
-    def test_the_two_tracks_separate_spectrally(self):
-        self.assertGreater(
-            measure.spectral_distance(RENDERED["parade"], RENDERED["advance"]),
-            self.SPECTRAL_THRESHOLD,
-        )
+    PAIRS = tuple((a, b) for i, a in enumerate(CONTRACT) for b in CONTRACT[i + 1 :])
+
+    def tempo(self, name: str) -> float:
+        song = music.MUSIC[name][0]()
+        return measure.tempo_bpm(music.pulse(name), *measure.tempo_band(song.bpm))
+
+    def test_every_pair_separates_spectrally(self):
+        for a, b in self.PAIRS:
+            with self.subTest(pair=(a, b)):
+                self.assertGreater(
+                    measure.spectral_distance(RENDERED[a], RENDERED[b]),
+                    self.SPECTRAL_THRESHOLD,
+                )
 
     def test_each_track_pulses_at_its_authored_tempo(self):
         for name in CONTRACT:
             builder, _peak = music.MUSIC[name]
             with self.subTest(track=name):
                 self.assertAlmostEqual(
-                    measure.tempo_bpm(RENDERED[name]),
-                    builder().bpm,
-                    delta=self.TEMPO_TOLERANCE_BPM,
+                    self.tempo(name), builder().bpm, delta=self.TEMPO_TOLERANCE_BPM
                 )
 
-    def test_the_two_tempos_are_far_apart(self):
-        a = measure.tempo_bpm(RENDERED["parade"])
-        b = measure.tempo_bpm(RENDERED["advance"])
-        self.assertGreater(abs(a - b) / min(a, b), 0.15)
+    def test_every_pair_of_tempos_is_far_apart(self):
+        for a, b in self.PAIRS:
+            ta, tb = self.tempo(a), self.tempo(b)
+            with self.subTest(pair=(a, b)):
+                self.assertGreater(abs(ta - tb) / min(ta, tb), 0.15)
 
 
 class Arrangement(unittest.TestCase):
@@ -306,6 +319,12 @@ class Arrangement(unittest.TestCase):
             ("hat", 0.20),
             ("roll", 1.40),
         ),
+        "council": (
+            ("reed_lead", 0.30),
+            ("hymn_pad", 0.22),
+            ("harp", 0.34),
+            ("soft_bass", 0.22),
+        ),
     }
 
     # Measured level each voice carries in its mix, dB relative to the whole.
@@ -330,6 +349,12 @@ class Arrangement(unittest.TestCase):
             "snare": -19.7,
             "hat": -33.5,
             "roll": -15.3,
+        },
+        "council": {
+            "reed_lead": -3.4,
+            "hymn_pad": -6.4,
+            "harp": -7.3,
+            "soft_bass": -6.3,
         },
     }
 
@@ -362,7 +387,7 @@ class Arrangement(unittest.TestCase):
 
 
 class Dynamics(unittest.TestCase):
-    """A 74-second loop needs a shape, not a level.
+    """A loop of a minute or more needs a shape, not a level.
 
     Both marches used to play every bar at the same weight — 2.1 dB and
     2.7 dB of bar-to-bar spread, which is the melody moving, not the band —
@@ -371,7 +396,8 @@ class Dynamics(unittest.TestCase):
     pinned is what the game plays.
     """
 
-    # Measured 4.60 dB / 1.40 dB (parade) and 5.95 dB / 1.73 dB (advance).
+    # Measured 4.60 dB / 1.40 dB (parade), 5.95 dB / 1.73 dB (advance) and
+    # 4.27 dB / 1.34 dB (council, whose B strain swells).
     SPREAD_DB = 4.0
     SIGMA_DB = 1.0
 
@@ -379,8 +405,11 @@ class Dynamics(unittest.TestCase):
     # quietest bar sits 3.0 dB under the mean on both marches today.
     DIP_DB = 8.0
 
+    def bars(self, name: str) -> int:
+        return int(music.MUSIC[name][0]().beats / 4.0)
+
     def contour(self, name: str) -> np.ndarray:
-        return measure.bar_rms_db(RENDERED[name], music.BARS)
+        return measure.bar_rms_db(RENDERED[name], self.bars(name))
 
     def test_the_measure_reads_a_flat_tone_as_flat(self):
         flat = measure.bar_rms_db(sine(440.0, 4.0), 32)
@@ -389,7 +418,7 @@ class Dynamics(unittest.TestCase):
     def test_every_bar_is_read(self):
         for name in CONTRACT:
             with self.subTest(track=name):
-                self.assertEqual(len(self.contour(name)), music.BARS)
+                self.assertEqual(len(self.contour(name)), self.bars(name))
 
     def test_each_march_has_a_contour(self):
         for name in CONTRACT:
@@ -409,14 +438,46 @@ class Dynamics(unittest.TestCase):
                     f"{float(bars.mean()):.1f} dB",
                 )
 
-    def test_the_loop_wraps_on_full_bars(self):
+    def test_each_march_wraps_on_full_bars(self):
         # The seam is the reprise leading back to the downbeat, never a
         # thinned strain: bar 32 and bar 1 are the loudest bars of each march.
-        for name in CONTRACT:
+        # council wraps inside its quiet A strain on purpose: the theme comes
+        # back at its softest, under whoever is speaking.
+        for name in MARCHES:
             bars = self.contour(name)
             with self.subTest(track=name):
                 self.assertGreater(bars[0], bars.mean())
                 self.assertGreater(bars[-1], bars.mean())
+
+
+class Underscore(unittest.TestCase):
+    """council plays under dialogue: quieter, darker and drumless beside the
+    marches, so the words on screen are what the player attends to."""
+
+    # Measured 8.3 dB under parade's RMS and 6.8 dB under advance's.
+    RMS_UNDER_MARCHES_DB = 6.0
+    # Measured 613 Hz, against 3810 and 4614 Hz for the marches.
+    CENTROID_HZ = 1200.0
+    PERCUSSION = ("kick", "snare", "hat", "roll")
+
+    def test_it_sits_under_every_march(self):
+        council = measure.rms_db(RENDERED["council"])
+        for name in MARCHES:
+            with self.subTest(march=name):
+                self.assertLessEqual(
+                    council, measure.rms_db(RENDERED[name]) - self.RMS_UNDER_MARCHES_DB
+                )
+                self.assertLess(
+                    measure.peak_db(RENDERED["council"]),
+                    measure.peak_db(RENDERED[name]),
+                )
+
+    def test_it_is_soft(self):
+        self.assertLess(measure.centroid_hz(RENDERED["council"]), self.CENTROID_HZ)
+
+    def test_it_plays_no_drums(self):
+        voices = {t.instrument for t in music.council().tracks}
+        self.assertFalse(voices & set(self.PERCUSSION))
 
 
 class OggEncoding(unittest.TestCase):
@@ -485,7 +546,18 @@ class Timbre(unittest.TestCase):
     a band-limited oscillator would move every one of them down.
     """
 
-    MELODIC = ("brass_lead", "edge_lead", "tuba_bass", "drive_bass", "stab", "pad")
+    MELODIC = (
+        "brass_lead",
+        "edge_lead",
+        "tuba_bass",
+        "drive_bass",
+        "stab",
+        "pad",
+        "reed_lead",
+        "hymn_pad",
+        "harp",
+        "soft_bass",
+    )
 
     # Measured today, at the note each voice tops out on.
     INHARMONIC = {
@@ -495,6 +567,10 @@ class Timbre(unittest.TestCase):
         "drive_bass": 0.091,
         "stab": 0.184,
         "pad": 0.001,
+        "reed_lead": 0.003,
+        "hymn_pad": 0.000,
+        "harp": 0.030,
+        "soft_bass": 0.002,
     }
     SLACK = 0.02
 

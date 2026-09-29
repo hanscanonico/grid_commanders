@@ -98,6 +98,50 @@ def pad(midi: float, t: float, vel: float) -> np.ndarray:
     return dsp.triangle(midi_hz(midi), t) * dsp.adsr(t, 0.06, 0.1, 0.8, 0.12) * vel
 
 
+# -- the story voices --------------------------------------------------------
+# council plays under reading, so its voices are the marches' opposite: slow
+# attacks, rounded tones, nothing percussive. The pad and the harp sit mostly
+# on sines and triangles, whose partials fall away fast enough that little
+# folds back over Nyquist.
+
+
+def hymn_pad(midi: float, t: float, vel: float) -> np.ndarray:
+    """A held chord tone: two slightly detuned triangles, slow to swell."""
+    f = midi_hz(midi)
+    tone = dsp.triangle(f * 1.001, t) + dsp.triangle(f * 0.999, t)
+    tone = dsp.lowpass_poles(tone * 0.5, 1600.0)
+    env = dsp.adsr(t, min(0.45, t * 0.3), min(0.3, t * 0.2), 0.75, min(0.6, t * 0.3))
+    return tone * env * vel
+
+
+def harp(midi: float, t: float, vel: float) -> np.ndarray:
+    """A plucked string for the broken chords: bright onset, long fade."""
+    f = midi_hz(midi)
+    tone = dsp.mix(dsp.triangle(f, t) * 0.7, dsp.sine(f * 2.0, t) * 0.3)
+    tone = dsp.lowpass_poles(tone, 3200.0)
+    env = dsp.decay(t, 0.28) * dsp.adsr(t, 0.003, 0.0, 1.0, min(0.06, t * 0.3))
+    return tone * env * vel
+
+
+def reed_lead(midi: float, t: float, vel: float) -> np.ndarray:
+    """The storyteller: a round reed tone whose vibrato blooms as it holds."""
+    t = max(0.1, t * 0.96)
+    n = dsp.samples(t)
+    depth = 0.005 * np.clip(np.linspace(-0.4, 1.0, n), 0.0, 1.0)
+    freq = midi_hz(midi) * (1.0 + depth * dsp.sine(5.0, t))
+    reed = dsp.lowpass_poles(dsp.square(freq, t), 1500.0)
+    tone = dsp.mix(dsp.sine(freq, t) * 0.75, reed * 0.25)
+    return tone * dsp.adsr(t, 0.05, 0.12, 0.82, min(0.15, t * 0.3)) * vel
+
+
+def soft_bass(midi: float, t: float, vel: float) -> np.ndarray:
+    """A low hum under the pad: a sine with a little triangle for edge."""
+    t = max(0.1, t * 0.95)
+    f = midi_hz(midi)
+    tone = dsp.mix(dsp.sine(f, t), dsp.triangle(f, t) * 0.2)
+    return tone * dsp.adsr(t, 0.03, 0.15, 0.8, min(0.2, t * 0.3)) * vel
+
+
 # -- percussion --------------------------------------------------------------
 # Fixed-length hits (midi and duration ignored), built once and reused: the
 # same crack at every backbeat is the chiptune read, and caching it keeps the
@@ -176,6 +220,10 @@ INSTRUMENTS = {
     "drive_bass": drive_bass,
     "stab": stab,
     "pad": pad,
+    "hymn_pad": hymn_pad,
+    "harp": harp,
+    "reed_lead": reed_lead,
+    "soft_bass": soft_bass,
     "kick": kick,
     "snare": snare,
     "hat": hat,

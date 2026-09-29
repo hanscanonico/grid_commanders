@@ -46,6 +46,9 @@ const _COPY_WIDTH := Vector2(300, 0)
 ## the art its own size rather than the other way round.
 const _PORTRAIT_FIELD := Vector2(CommanderVisuals.PORTRAIT_SIZE)
 
+## The line the last `bind` put on the card, "" for a general with none — what
+## the 3D board's cinematic has the general say instead of raising the card.
+var spoken_quote := ""
 var _built := false
 ## Activations announced so far, per team — the rotation index for the next
 ## quote. Scene-lifetime state: a loaded save restarts the rotation, which is
@@ -116,6 +119,7 @@ func bind(commander: CommanderType, team: int) -> void:
 	_field.bind(commander, theme.color)
 	_eyebrow.text = "%s · COMMAND POWER" % commander.display_name.to_upper()
 	var line := _next_quote(commander, team)
+	spoken_quote = line
 	_quote.visible = not line.is_empty()
 	_quote.text = "“%s”" % line
 	_power_name.text = commander.power_name.to_upper()

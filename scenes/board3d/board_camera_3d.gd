@@ -63,6 +63,10 @@ var quarters := 0
 var bounds := Rect2()
 
 var _yaw := 0.0
+## The pitch and lift the lens stands at now. Both sit at the board's own values
+## unless a cinematic has just `direct`ed the lens, and then ease back to them.
+var _pitch := deg_to_rad(PITCH_DEG)
+var _lift := 0.0
 ## Where the camera is heading and where it is, both on the ground plane.
 var _goal := Vector3.ZERO
 var _target := Vector3.ZERO
@@ -84,8 +88,10 @@ func snap(focus: Vector3, rung: float, lift_px: float) -> void:
 	_target = _goal
 	_reach = REACH_AT_RUNG_ONE / maxf(rung, 0.1)
 	_yaw = quarters * PI / 2.0
-	_place(camera, _target, _reach, _yaw, lift_px, Vector2.ZERO)
-	_place(probe, _target, _reach, _yaw, lift_px, Vector2.ZERO)
+	_pitch = deg_to_rad(PITCH_DEG)
+	_lift = lift_px
+	_place(camera, _target, _reach, _yaw, _pitch, lift_px, Vector2.ZERO)
+	_place(probe, _target, _reach, _yaw, _pitch, lift_px, Vector2.ZERO)
 
 
 ## Eases toward the cursor, the rung and the quarter turn in hand. `lift_px` is
@@ -100,8 +106,27 @@ func follow(delta: float, focus: Vector3, rung: float, lift_px: float, shake: Ve
 	pose_probe(focus, rung, lift_px)
 	_target = _target.lerp(_goal, ease_follow)
 	_reach = lerpf(_reach, reach, ease_follow)
+	_pitch = lerpf(_pitch, deg_to_rad(PITCH_DEG), ease_follow)
+	_lift = lerpf(_lift, lift_px, ease_follow)
 	_yaw = lerp_angle(_yaw, yaw, 1.0 if BoardBeat.still() else 1.0 - exp(-delta * TURN_RATE))
-	_place(camera, _target, _reach, _yaw, lift_px, shake)
+	_place(camera, _target, _reach, _yaw, _pitch, _lift, shake)
+
+
+## Stands the lens exactly where a cinematic says, off the board's framing. The
+## pose is kept as the lens's own, so once the cinematic lets go `follow` glides
+## home from wherever it left the lens rather than cutting back.
+func direct(pose: CinemaPose3D) -> void:
+	_target = pose.target
+	_reach = pose.reach
+	_yaw = pose.yaw
+	_pitch = pose.pitch
+	_lift = 0.0
+	_place(camera, _target, _reach, _yaw, _pitch, 0.0, Vector2.ZERO)
+
+
+## Where the lens stands now, for a cinematic to start its first move from.
+func pose_now() -> CinemaPose3D:
+	return CinemaPose3D.new(_target, _reach, _yaw, _pitch)
 
 
 ## Frames `focus` and stands the probe where the camera will come to rest on it.
@@ -110,7 +135,7 @@ func pose_probe(focus: Vector3, rung: float, lift_px: float) -> void:
 	var reach := REACH_AT_RUNG_ONE / maxf(rung, 0.1)
 	var yaw := quarters * PI / 2.0
 	_goal = _framed(_grounded(focus), reach, yaw)
-	_place(probe, _goal, reach, yaw, lift_px, Vector2.ZERO)
+	_place(probe, _goal, reach, yaw, deg_to_rad(PITCH_DEG), lift_px, Vector2.ZERO)
 
 
 func turn(step: int) -> void:
@@ -181,9 +206,14 @@ static func _grounded(spot: Vector3) -> Vector3:
 
 
 static func _place(
-	lens: Camera3D, target: Vector3, reach: float, yaw: float, lift_px: float, shake: Vector2
+	lens: Camera3D,
+	target: Vector3,
+	reach: float,
+	yaw: float,
+	pitch: float,
+	lift_px: float,
+	shake: Vector2
 ) -> void:
-	var pitch := deg_to_rad(PITCH_DEG)
 	var back := Vector3(sin(yaw), 0, cos(yaw)) * cos(pitch) * reach
 	lens.position = target + back + Vector3.UP * sin(pitch) * reach
 	lens.look_at_from_position(lens.position, target, Vector3.UP)

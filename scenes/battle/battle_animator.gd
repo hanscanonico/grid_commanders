@@ -698,7 +698,19 @@ func hide_banner() -> void:
 ## While capturing it holds, so a screenshot of the same activation is the same
 ## frame — the whole reason the two open-ended animations above are suppressed
 ## for captures.
-func show_power_banner(commander: CommanderType, team: int) -> void:
+##
+## On the 3D board the card is a cinematic instead, fired from `post`; the card
+## is still bound, so its quote rotation stays the one rotation whichever board
+## a power is fired on.
+func show_power_banner(
+	commander: CommanderType, team: int, post: Vector2i = DialogueCast.NOWHERE
+) -> void:
+	var cinema := _cinema()
+	if cinema != null:
+		power_banner.bind(commander, team)
+		await cinema.play_power(commander, power_banner.spoken_quote, post)
+		return
+	Sfx.play(&"fanfare")
 	await _present(
 		_POWER_CARD,
 		Settings.speed.power_banner_seconds(),
@@ -811,14 +823,18 @@ func _pose_blink(marks: Array[PowerEffects.Mark]) -> void:
 ## impatient player nothing. Silent for an event nobody comments on.
 ##
 ## While capturing it holds, exactly as the power card does, so a posed frame
-## still has the card in it.
-func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
-	if lines.is_empty():
+## still has the card in it. On the 3D board it is a cinematic instead.
+func speak_lines(cast: DialogueCast) -> void:
+	if cast.lines.is_empty():
+		return
+	var cinema := _cinema()
+	if cinema != null:
+		await cinema.play_lines(cast)
 		return
 	await _present(
 		_SPEECH_CARD,
-		Settings.speed.speech_seconds(_spoken_characters(lines)),
-		_fill_speech.bind(lines, commanders)
+		Settings.speed.speech_seconds(_spoken_characters(cast.lines)),
+		_fill_speech.bind(cast.lines, cast.commanders)
 	)
 
 
@@ -826,14 +842,36 @@ func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 ## the pause menu. Untimed because it was asked for rather than delivered —
 ## a beat's card interrupts a turn and has to give it back, while this one is the
 ## thing the player stopped to look at, and orders are read at reading speed.
-func speak_until_dismissed(lines: Array[MissionLine], commanders: CommanderDB) -> void:
-	if lines.is_empty():
+## On the 3D board the cinematic waits for a press after every line instead.
+func speak_until_dismissed(cast: DialogueCast) -> void:
+	if cast.lines.is_empty():
+		return
+	var cinema := _cinema()
+	if cinema != null:
+		await cinema.play_lines(cast)
 		return
 	var card := _blocking_cards()[_SPEECH_CARD]
-	card.raise(_fill_speech.bind(lines, commanders))
+	card.raise(_fill_speech.bind(cast.lines, cast.commanders))
 	if _frozen(card):
 		return
 	await card.finished
+
+
+## A mission's opening scene: its title card and its briefing, acted out on the
+## 3D board. The flat board opens on the board itself, as it always has.
+func open_scene(cast: DialogueCast) -> void:
+	var cinema := _cinema()
+	if cinema != null:
+		await cinema.play_lines(cast)
+
+
+## The 3D board's cinematic, when dialogue is to be played as one: with the 3D
+## board up and never while capturing, where the card is the frame's subject.
+func _cinema() -> DialogueCinema3D:
+	var board := view.board_3d
+	if capturing or board == null or not board.active:
+		return null
+	return board.cinema()
 
 
 ## How much there is to read on the card: the words themselves, the speakers'
@@ -860,6 +898,8 @@ func _fill_speech(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 func consume_banner_skip(event: InputEvent) -> bool:
 	if not TransitionInput.is_press(event):
 		return false
+	if view.board_3d != null and view.board_3d.consume_cinema_press(event):
+		return true
 	for card: BlockingCard in _blocking_cards():
 		if card.is_up() and not _frozen(card):
 			card.dismiss()

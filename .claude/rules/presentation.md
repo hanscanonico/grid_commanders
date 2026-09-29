@@ -676,14 +676,43 @@ forms named in the root index are in `docs/design_record.md`.
   footprint and height contract pinned by `tests/unit/test_unit_models_3d.gd`), faction colour
   from `SideIdentity.theme_for_row`, and one material per unit the mirror tints in place.
   `scenes/board3d/model_gallery.tscn` is the dev sheet to look at them. The ground's variety is
-  per-sub-square shade, flat, by the standing-terrain rule below. **Known gaps, left on purpose**:
+  per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
+  request, 2026-09-29: "cinematics like in Final Fantasy with music, dialogs"). A scripted beat's
+  lines, the briefing read again, a Command Power's activation and — new — a fresh mission's opening
+  (its title card over the board, then its briefing) play through `DialogueCinema3D` whenever the 3D
+  board is up and the battle is not capturing; `BattleAnimator.speak_lines` /
+  `speak_until_dismissed` / `show_power_banner` / `open_scene` stay the one seam and branch there,
+  so the flat board, every golden frame and every smoke capture keep their cards and open as they
+  always did. `BattleCampaign.open` owes the opening only to a board `open_board` saw start fresh.
+  Each general steps out of their HQ as a little figure (`CommanderActor3D`, built from the same
+  FACES traits their portrait is painted from and mirrored in `CommanderLooks3D`, posed by the pure
+  clips of `ActorPose3D`) and acts their line — the gesture and the "!"/"?"/"..." emote are read off
+  the words by `DialogueStaging`, since a line carries no stage directions — in a
+  `DialogueWindow` that unfurls over their head and points at them, typed with a blip; the lens
+  flies to a speaker the first time (`CinemaPose3D.glide`, a crane's arc, with a whoosh) and cuts
+  between medium and closer shots after (`CinemaShot3D.actor`, the open third facing into the
+  board); a general with no army on the board is projected as a hologram on a `Projector3D` at the
+  viewer's post; the narrator speaks over an establishing shot. The story theme (`council`) comes in
+  for the scene and the match's own track comes back after it (`Music.current`). A power is a limit
+  break: under a flash and `power_sting` the general stands in a sparking pillar of light, raises a
+  fist, two shockwaves roll out to the rim and the power's name slams in; the card is still bound so
+  its quote rotation stays one rotation. **Where a voice stands is the battle's answer, handed
+  over**: `DialogueCast` (`scenes/battle/`) reads the match so the 3D board keeps D1 — a general is
+  framed at their home HQ while their army lives, else at their visible unit nearest the middle of
+  their visible army; a voice with no seat on the board at the viewer's own post; and a beat's
+  subject is only what the viewer can see. Moves run at `GameSpeed.cutscene_rate()`, a line holds
+  `speech_seconds` of its own words, and `BoardBeat.still()` cuts, types whole, stands everyone on
+  their mark and snaps the bars. A press finishes the typing or moves on and cancel skips; `V` / `C`
+  / `B` hold still under it and the HUD's layer is off the screen for its length.
+  `tests/unit/test_cinema_shot_3d.gd` and `test_dialogue_staging.gd` pin the framing and the
+  staging. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
   `follow_cursor` still steps aside by the flat board's geometry, `V` pressed over the open pause
   menu flips the board but leaves the View row's label stale until the menu reopens, the 3D
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
-  by presentation keys on `TerrainType`, and the cut-ins, the map editor and the menu backdrop
-  stay 2D.
+  by presentation keys on `TerrainType`, and the turn banner, the cut-ins, the map editor and the
+  menu backdrop stay 2D.
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
   no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
   slice's measurements, the packaging facts, the refutations, the known hit-area limits and the

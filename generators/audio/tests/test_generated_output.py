@@ -30,6 +30,11 @@ CONTRACT = (
     "flak",
     "rocket",
     "torpedo",
+    "text_blip",
+    "window_open",
+    "cut_whoosh",
+    "emote_pop",
+    "power_sting",
 )
 
 # Per-name duration budgets (seconds): a UI blip must stay a blip and a
@@ -44,6 +49,11 @@ BUDGET = {
     "flak": (0.15, 0.6),
     "rocket": (0.2, 0.7),
     "torpedo": (0.25, 0.9),
+    "text_blip": (0.02, 0.035),
+    "window_open": (0.1, 0.18),
+    "cut_whoosh": (0.3, 0.45),
+    "emote_pop": (0.12, 0.2),
+    "power_sting": (2.0, 3.0),
 }
 
 

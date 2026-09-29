@@ -173,6 +173,20 @@ def tempo_bpm(x: np.ndarray, lo: float = 95.0, hi: float = 170.0) -> float:
     return 60.0 / ((lag_lo + int(np.argmax(strength))) * 0.005)
 
 
+# The octave-free search windows tempo_bpm reads in: the marches' band, and
+# the story theme's below it. Each excludes the other's tempos and the half,
+# double and dotted aliases of its own.
+TEMPO_BANDS = ((60.0, 95.0), (95.0, 170.0))
+
+
+def tempo_band(bpm: float) -> tuple[float, float]:
+    """The search window a track authored at `bpm` is read in."""
+    for lo, hi in TEMPO_BANDS:
+        if lo <= bpm < hi:
+            return lo, hi
+    raise ValueError(f"no tempo band holds {bpm} BPM")
+
+
 def inharmonic_fraction(x: np.ndarray, f0_hz: float, tol_hz: float = 8.0) -> float:
     """Share of a note's spectral energy that is not on a harmonic of f0.
 

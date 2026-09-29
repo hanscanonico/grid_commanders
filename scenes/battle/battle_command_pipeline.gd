@@ -218,8 +218,8 @@ func _present_join(command: JoinCommand, target: Unit, watched: bool) -> void:
 func _present_power(
 	command: PowerCommand, before: PowerEffects.Snapshot, blast: Array[Vector2i]
 ) -> void:
-	Sfx.play(&"fanfare")
-	await _battle.animator.show_power_banner(command.commander, command.team)
+	var post := DialogueCast.post_of(_battle, command.team)
+	await _battle.animator.show_power_banner(command.commander, command.team, post)
 	await _battle.animator.show_power_effects(_visible_marks(before, blast), blast)
 
 
@@ -256,7 +256,7 @@ func _visible_marks(
 ## a fired power's — which is also what lets a replay speak the same words, the
 ## recording re-issuing the beat through this same seam.
 func _present_mission_event(command: MissionEventCommand) -> void:
-	await _battle.animator.speak_lines(command.event.lines, _battle.commander_db)
+	await _battle.animator.speak_lines(DialogueCast.of_beat(_battle, command))
 
 
 func _present_build(command: BuildCommand) -> void:
