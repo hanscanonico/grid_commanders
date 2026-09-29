@@ -8,6 +8,12 @@ extends RefCounted
 ## zoom key, a pinch and the next-unit jump reach both boards by one route, and
 ## flipping boards mid-turn keeps the same cell in the middle of the screen.
 ##
+## It frames with slack, the way a tactics camera does: the cursor roams a box in
+## the middle of the view and the camera only moves to keep it inside. Centring on
+## every cursor step would make the mouse chase itself — hovering moves the cursor,
+## the camera recentres, and a new cell slides under a pointer that never moved.
+## A cursor that lands off screen (a jump to the next unit, a new day) is centred.
+##
 ## Unlike the flat board it glides: the whole-texel rule that makes the 2D
 ## camera land on a cell (presentation.md, the zoom ladder) is about sampling
 ## pixel art, and a perspective render has no texel grid to keep.
@@ -21,6 +27,17 @@ const FOLLOW_RATE := 9.0
 const TURN_RATE := 10.0
 ## The 2D board's shake is in world pixels; this is how far one moves the lens.
 const SHAKE_PER_PX := 1.0 / 16.0
+## The slack box, in fractions of the reach along the ground: across the screen,
+## up it and down it. About three fifths of what the board band shows at the pitch
+## and field of view above, so the cursor turns the camera well before an edge.
+const SLACK_ACROSS := 0.28
+const SLACK_AHEAD := 0.2
+const SLACK_BEHIND := 0.14
+## Past these the cursor is off the band altogether, and is centred rather than
+## merely brought back inside the box.
+const SEEN_ACROSS := 0.47
+const SEEN_AHEAD := 0.33
+const SEEN_BEHIND := 0.23
 
 var camera: Camera3D
 ## An unrendered twin posed where the camera is heading rather than where it is.
@@ -29,8 +46,12 @@ var camera: Camera3D
 var probe: Camera3D
 ## Quarter turns anticlockwise, seen from above, from looking north.
 var quarters := 0
+## The board's extent on the ground plane: the camera never frames past it.
+var bounds := Rect2()
 
 var _yaw := 0.0
+## Where the camera is heading and where it is, both on the ground plane.
+var _goal := Vector3.ZERO
 var _target := Vector3.ZERO
 var _reach := REACH_AT_RUNG_ONE / 2.0
 
@@ -46,7 +67,8 @@ func _init(p_camera: Camera3D, p_probe: Camera3D) -> void:
 
 ## Stands the camera on its goal with no glide — the first frame after a flip.
 func snap(focus: Vector3, rung: float, lift_px: float) -> void:
-	_target = focus
+	_goal = _grounded(focus)
+	_target = _goal
 	_reach = REACH_AT_RUNG_ONE / maxf(rung, 0.1)
 	_yaw = quarters * PI / 2.0
 	_place(camera, _target, _reach, _yaw, lift_px, Vector2.ZERO)
@@ -62,21 +84,56 @@ func follow(delta: float, focus: Vector3, rung: float, lift_px: float, shake: Ve
 	var ease_follow := 1.0 if BoardBeat.still() else 1.0 - exp(-delta * FOLLOW_RATE)
 	var reach := REACH_AT_RUNG_ONE / maxf(rung, 0.1)
 	var yaw := quarters * PI / 2.0
-	_target = _target.lerp(focus, ease_follow)
+	pose_probe(focus, rung, lift_px)
+	_target = _target.lerp(_goal, ease_follow)
 	_reach = lerpf(_reach, reach, ease_follow)
 	_yaw = lerp_angle(_yaw, yaw, 1.0 if BoardBeat.still() else 1.0 - exp(-delta * TURN_RATE))
 	_place(camera, _target, _reach, _yaw, lift_px, shake)
-	pose_probe(focus, rung, lift_px)
 
 
-## Stands the probe where the camera will come to rest on `focus`.
+## Frames `focus` and stands the probe where the camera will come to rest on it.
+## Safe to ask twice in a frame: a cursor already inside the box moves nothing.
 func pose_probe(focus: Vector3, rung: float, lift_px: float) -> void:
 	var reach := REACH_AT_RUNG_ONE / maxf(rung, 0.1)
-	_place(probe, focus, reach, quarters * PI / 2.0, lift_px, Vector2.ZERO)
+	var yaw := quarters * PI / 2.0
+	_goal = _framed(_grounded(focus), reach, yaw)
+	_place(probe, _goal, reach, yaw, lift_px, Vector2.ZERO)
 
 
 func turn(step: int) -> void:
 	quarters = posmod(quarters + step, 4)
+
+
+## The goal moved just far enough to hold `spot` inside the slack box — or onto
+## it, when it is off the band — and kept over the board.
+func _framed(spot: Vector3, reach: float, yaw: float) -> Vector3:
+	var across_axis := Vector3(cos(yaw), 0, -sin(yaw))
+	var ahead_axis := Vector3(-sin(yaw), 0, -cos(yaw))
+	var offset := spot - _goal
+	var across := offset.dot(across_axis)
+	var ahead := offset.dot(ahead_axis)
+	var goal := _goal
+	var seen := (
+		absf(across) <= SEEN_ACROSS * reach
+		and ahead <= SEEN_AHEAD * reach
+		and ahead >= -SEEN_BEHIND * reach
+	)
+	if not seen:
+		goal = spot
+	else:
+		var slack_x := SLACK_ACROSS * reach
+		goal += across_axis * (across - clampf(across, -slack_x, slack_x))
+		goal += ahead_axis * (ahead - clampf(ahead, -SLACK_BEHIND * reach, SLACK_AHEAD * reach))
+	if bounds.has_area():
+		goal.x = clampf(goal.x, bounds.position.x, bounds.end.x)
+		goal.z = clampf(goal.z, bounds.position.y, bounds.end.y)
+	return goal
+
+
+## A point on the board's ground plane, so a cursor on a peak or at sea does not
+## bob the whole view up and down with it.
+static func _grounded(spot: Vector3) -> Vector3:
+	return Vector3(spot.x, BoardSpace3D.LAND_TOP, spot.z)
 
 
 static func _place(

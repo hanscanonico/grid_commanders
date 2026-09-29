@@ -46,9 +46,12 @@ func test_off_board_heights_read_the_nearest_edge_cell() -> void:
 	assert_eq(BoardSpace3D.stand_at(map, Vector2(9.0, 0.5)), BoardSpace3D.SEA_TOP)
 
 
-func test_a_pointer_meets_a_mountain_at_its_shoulder() -> void:
+## A peak stands well above the shoulder a unit is posed on, and a click on it
+## must pick the mountain rather than the cell behind.
+func test_a_pointer_meets_a_mountain_high_on_its_peaks() -> void:
 	var map := _map(ROW)
-	assert_eq(BoardSpace3D.pick_top(map, Vector2i(1, 0)), BoardSpace3D.MOUNTAIN_SHOULDER)
+	assert_eq(BoardSpace3D.pick_top(map, Vector2i(1, 0)), BoardSpace3D.MOUNTAIN_PICK)
+	assert_true(BoardSpace3D.MOUNTAIN_PICK > BoardSpace3D.MOUNTAIN_SHOULDER)
 	assert_eq(BoardSpace3D.pick_top(map, Vector2i(2, 0)), BoardSpace3D.SEA_TOP)
 	assert_eq(BoardSpace3D.pick_top(map, Vector2i(7, 7)), BoardSpace3D.LAND_TOP, "off the board")
 
@@ -73,6 +76,10 @@ func test_turns_wrap_both_ways() -> void:
 ## so the pointer's ray march — which starts above the shoulder and ends below
 ## the sea — can meet any cell.
 func test_every_terrain_stands_inside_the_pointer_march() -> void:
+	var map := _map("[terrain]\n.MS_~+=F*")
+	for x in map.width:
+		var top := BoardSpace3D.pick_top(map, Vector2i(x, 0))
+		assert_between(top, BoardSpace3D.SEA_TOP, BoardSpace3D.PICK_CEILING, "pick top at %d" % x)
 	for terrain: TerrainType in Fixture.terrain_db().all():
 		var top := BoardSpace3D.stand_top(terrain.id)
 		assert_between(

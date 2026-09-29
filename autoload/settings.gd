@@ -637,7 +637,7 @@ func apply_args(args: PackedStringArray) -> void:
 			# Same terms as --no-battle-anim: this launch only, and it outranks a
 			# capture's pin, since asking for a capture of the 3D board is its use.
 			_persistent = false
-			board_3d = arg.get_slice("=", 1).strip_edges() == "3d"
+			board_3d = arg.get_slice("=", 1).strip_edges().to_lower() == "3d"
 			_view_flag_wins = true
 		elif arg == MUTE_ARG:
 			# Same terms as --no-battle-anim. _ready applies the volume once this

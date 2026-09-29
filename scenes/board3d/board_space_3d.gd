@@ -28,6 +28,11 @@ const MOUNTAIN_SHOULDER := 0.24
 const SLAB_BOTTOM := -0.55
 ## The height aircraft fly at, above every peak's shoulder.
 const AIR_ALTITUDE := 0.72
+## How high a pointer ray still meets a mountain: most of its peaks' height, so
+## a click on a peak picks the mountain rather than the cell behind it.
+const MOUNTAIN_PICK := 0.5
+## The highest any cell answers a pointer ray at, where the ray walk starts.
+const PICK_CEILING := MOUNTAIN_PICK
 
 ## What stands on each terrain, by id. A terrain missing here is dry ground.
 const _STAND: Dictionary[StringName, float] = {
@@ -89,12 +94,13 @@ static func stand_at(map: MapData, plane: Vector2) -> float:
 
 
 ## The surface a pointer ray is tested against on `cell`: what a player sees as
-## that cell's top. A mountain answers its shoulder, not its peak, so a click on
-## a peak lands on the cell the peak stands in.
+## that cell's top. A mountain answers most of its peaks' height, not its
+## shoulder, so a click on a peak lands on the cell the peak stands in.
 static func pick_top(map: MapData, cell: Vector2i) -> float:
 	if not map.in_bounds(cell):
 		return LAND_TOP
-	return stand_top(map.terrain_at(cell).id)
+	var id := map.terrain_at(cell).id
+	return MOUNTAIN_PICK if id == &"mountain" else stand_top(id)
 
 
 ## A screen direction turned into a board direction for a camera turned

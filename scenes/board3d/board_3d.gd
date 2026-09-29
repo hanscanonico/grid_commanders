@@ -121,7 +121,7 @@ func pick(screen: Vector2) -> Vector2i:
 	var along := lens.project_ray_normal(screen)
 	if along.y > -0.01:
 		return Vector2i(-1, -1)
-	var high := BoardSpace3D.MOUNTAIN_SHOULDER + 0.02
+	var high := BoardSpace3D.PICK_CEILING + 0.02
 	var low := BoardSpace3D.SEA_TOP - 0.02
 	var t := (high - from.y) / along.y
 	var t_end := (low - from.y) / along.y
@@ -246,6 +246,7 @@ func _build() -> void:
 	add_child(lens)
 	add_child(probe)
 	_camera = BoardCamera3D.new(lens, probe)
+	_camera.bounds = Rect2(Vector2.ZERO, Vector2(_map.size()))
 	_add_sun()
 	_environment = WorldEnvironment.new()
 	add_child(_environment)

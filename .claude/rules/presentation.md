@@ -655,14 +655,19 @@ forms named in the root index are in `docs/design_record.md`.
   D2: **the flat board stays the default and the authority on framing.** `Settings.board_3d` is a
   device preference beside the window mode, `pin` stands it back (and says so through
   `board_view_changed`, since a battle may already stand on the 3D board) unless `--view=` spoke,
-  so every golden frame and smoke capture is the flat board. `BoardCamera3D` follows the 2D
-  cursor and the rung `BattleZoom` settled on — a zoom key, a pinch and `N` reach both boards by
+  so every golden frame and smoke capture is the flat board. `BoardCamera3D` frames the 2D
+  cursor at the rung `BattleZoom` settled on — a zoom key, a pinch and `N` reach both boards by
   one route — and orbits in quarter turns (`C` / `B`); `BoardSpace3D.turned` turns the arrow keys
-  and a touch pan with it, so up always walks away from the camera. It **glides**, because the
+  and a touch pan with it, so up always walks away from the camera. **It frames with slack, never
+  by centring on every step** (review, 2026-09-29): the cursor roams a box in the middle of the band
+  and the camera moves only to keep it inside, re-centring when the cursor lands off the band (a
+  jump, a new day) — a camera centred on the cursor makes mouse hover chase itself, the cell under a
+  still pointer sliding away as the view follows the cursor it just set. It **glides**, because the
   whole-texel rule behind A3 is about sampling pixel art, and **lands when `BoardBeat.still()`**, so
   no capture depends on its shutter frame. D3: **one seam per question the flat board already
   answered.** `BoardPointer._cell_under` asks `Board3D.pick` (a ray walked down onto each cell's
-  `BoardSpace3D.pick_top`, a mountain answering its shoulder); `BoardCamera.screen_pos_for_cell`
+  `BoardSpace3D.pick_top`, a mountain answering most of its peaks' height so a click on a peak
+  picks the mountain); `BoardCamera.screen_pos_for_cell`
   asks `Board3D.screen_of`, read off a **probe camera posed where the lens will come to rest**, so a
   menu opened mid-glide lands beside its cell. D4: **models are code**: `MeshKit`'s flat-shaded
   primitives merged into one mesh per unit or building (`UnitModels3D`, `PropertyModels3D`, their
@@ -672,8 +677,11 @@ forms named in the root index are in `docs/design_record.md`.
   per-sub-square shade, flat, by the standing-terrain rule below. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
-  `follow_cursor` still steps aside by the flat board's geometry, and the cut-ins, the map editor
-  and the menu backdrop stay 2D.
+  `follow_cursor` still steps aside by the flat board's geometry, `V` pressed over the open pause
+  menu flips the board but leaves the View row's label stale until the menu reopens, the 3D
+  heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
+  by presentation keys on `TerrainType`, and the cut-ins, the map editor and the menu backdrop
+  stay 2D.
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
   no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
   slice's measurements, the packaging facts, the refutations, the known hit-area limits and the
