@@ -66,7 +66,13 @@ func follow(delta: float, focus: Vector3, rung: float, lift_px: float, shake: Ve
 	_reach = lerpf(_reach, reach, ease_follow)
 	_yaw = lerp_angle(_yaw, yaw, 1.0 if BoardBeat.still() else 1.0 - exp(-delta * TURN_RATE))
 	_place(camera, _target, _reach, _yaw, lift_px, shake)
-	_place(probe, focus, reach, yaw, lift_px, Vector2.ZERO)
+	pose_probe(focus, rung, lift_px)
+
+
+## Stands the probe where the camera will come to rest on `focus`.
+func pose_probe(focus: Vector3, rung: float, lift_px: float) -> void:
+	var reach := REACH_AT_RUNG_ONE / maxf(rung, 0.1)
+	_place(probe, focus, reach, quarters * PI / 2.0, lift_px, Vector2.ZERO)
 
 
 func turn(step: int) -> void:

@@ -140,14 +140,22 @@ func pick(screen: Vector2) -> Vector2i:
 ## callout opens beside the cell it is about. Asked of where the camera is
 ## heading, not where it is mid-glide.
 func screen_of(cell: Vector2i) -> Vector2:
-	var lens := _camera.probe
+	var lens := _resting_probe()
 	var corner := _surface(cell) + lens.global_basis.x * 0.5 + Vector3.UP * 0.35
 	return lens.unproject_position(corner) + Vector2(6, 0)
 
 
 ## Where a cell's middle lands on screen, as the camera will come to rest.
 func screen_of_centre(cell: Vector2i) -> Vector2:
-	return _camera.probe.unproject_position(_surface(cell))
+	return _resting_probe().unproject_position(_surface(cell))
+
+
+## The probe re-posed on the cursor now: a menu often opens the same frame the
+## cursor jumped (a tap on a base, a scripted confirm), before `_process` has
+## moved the probe after it.
+func _resting_probe() -> Camera3D:
+	_camera.pose_probe(_focus(), _view.camera.zoom.x, float(MobileDock.board_lift_px()))
+	return _camera.probe
 
 
 func _on_view_changed() -> void:
