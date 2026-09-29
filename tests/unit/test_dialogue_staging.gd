@@ -41,8 +41,13 @@ func test_the_words_outrank_the_punctuation() -> void:
 
 func test_every_gesture_is_a_clip_the_actor_plays() -> void:
 	var lines: Array[String] = [
-		"Plain words.", "Loud words!", "A question?", "Trailing off...", "Haha, fine.",
-		"Yes, sir.", "Never."
+		"Plain words.",
+		"Loud words!",
+		"A question?",
+		"Trailing off...",
+		"Haha, fine.",
+		"Yes, sir.",
+		"Never."
 	]
 	for line in lines:
 		for beat in 2:

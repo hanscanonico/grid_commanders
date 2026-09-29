@@ -121,14 +121,20 @@ func _draw() -> void:
 	var inner := field.grow(-BORDER_PX)
 	draw_polygon(
 		PackedVector2Array(
-			[inner.position, Vector2(inner.end.x, inner.position.y), inner.end,
-			Vector2(inner.position.x, inner.end.y)]
+			[
+				inner.position,
+				Vector2(inner.end.x, inner.position.y),
+				inner.end,
+				Vector2(inner.position.x, inner.end.y)
+			]
 		),
 		PackedColorArray([FIELD_TOP, FIELD_TOP, FIELD_BOTTOM, FIELD_BOTTOM])
 	)
 	for corner: Vector2 in [
-		field.position, Vector2(field.end.x - 1, field.position.y),
-		Vector2(field.position.x, field.end.y - 1), field.end - Vector2.ONE
+		field.position,
+		Vector2(field.end.x - 1, field.position.y),
+		Vector2(field.position.x, field.end.y - 1),
+		field.end - Vector2.ONE
 	]:
 		draw_rect(Rect2(corner, Vector2.ONE), EDGE)
 	if cursor_on and open >= 1.0:

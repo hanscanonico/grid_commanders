@@ -437,9 +437,7 @@ func _takes_of(cast: DialogueCast) -> Array[Take]:
 			_frame_wide(take, cast.subject)
 		else:
 			_stage_speaker(take, line, cast, sides, said, previous)
-		var travels := (
-			previous == null or previous.kind != take.kind or previous.post != take.post
-		)
+		var travels := previous == null or previous.kind != take.kind or previous.post != take.post
 		take.glide = GLIDE_SECONDS / _rate() if travels and not still else 0.0
 		var entrance := ENTER_SECONDS if take.steps_out else SETTLE_SECONDS
 		take.window_at = 0.0 if still else take.glide + entrance / _rate()

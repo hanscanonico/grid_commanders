@@ -58,7 +58,9 @@ func pose(t: float, life: float) -> void:
 	if not visible:
 		return
 	var grow := clampf(t / POP_SECONDS, 0.0, 1.0)
-	var size := lerpf(0.0, OVERSHOOT, grow) if grow < 0.7 else lerpf(OVERSHOOT, 1.0, (grow - 0.7) / 0.3)
+	var size := (
+		lerpf(0.0, OVERSHOOT, grow) if grow < 0.7 else lerpf(OVERSHOOT, 1.0, (grow - 0.7) / 0.3)
+	)
 	scale = Vector3.ONE * maxf(size, 0.001)
 	var alpha := clampf((life - t) / FADE_SECONDS, 0.0, 1.0)
 	_bubble.modulate.a = alpha
