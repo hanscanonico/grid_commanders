@@ -53,7 +53,6 @@ const POWER_HOLO_SIZE := 1.3
 ## Above the HUD's layer, which is hidden while this plays, and level with the
 ## cut-ins', which never play at the same time.
 const FRAME_LAYER := 3
-const NOWHERE := Vector2i(-1, -1)
 
 var rolling := false
 
@@ -171,7 +170,7 @@ func consume_press(event: InputEvent) -> bool:
 		return false
 	if _closing:
 		return true
-	if event.is_action_pressed(&"ui_cancel"):
+	if event.is_action_pressed(&"cancel"):
 		_close()
 		return true
 	if not _revealed and _t < _takes[_index].typed_at():
@@ -309,8 +308,8 @@ func _takes_of(cast: DialogueCast) -> Array[Take]:
 		else:
 			take.kind = Kind.CLOSE
 			take.speaker = cast.commanders.by_id(line.speaker)
-			var post: Vector2i = cast.posts.get(line.speaker, NOWHERE)
-			take.off_board = post == NOWHERE
+			var post: Vector2i = cast.posts.get(line.speaker, DialogueCast.NOWHERE)
+			take.off_board = post == DialogueCast.NOWHERE
 			take.post = _ground(_on_board(cast.home if take.off_board else post))
 			if not sides.has(line.speaker):
 				var alternate := 1 if sides.size() % 2 == 0 else -1

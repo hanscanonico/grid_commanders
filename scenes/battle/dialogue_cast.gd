@@ -63,12 +63,13 @@ static func of_briefing(battle: Battle, spoken: Array[MissionLine]) -> DialogueC
 	return cast
 
 
-## The cell `team`'s general is framed at: their HQ, or the unit of theirs the
-## viewer can see nearest the middle of all of them; NOWHERE when neither.
+## The cell `team`'s general is framed at: their home HQ, or the unit of theirs
+## the viewer can see nearest the middle of all of them; NOWHERE when neither.
+## The home HQ rather than any HQ they own now: a living army always holds its
+## home, while an HQ taken in the fog still shows its last-seen owner.
 static func post_of(battle: Battle, team: int) -> Vector2i:
-	for cell in battle.map.property_cells():
-		if battle.map.terrain_at(cell).is_headquarters and battle.game.owner_at(cell) == team:
-			return cell
+	if battle.game.home_hq.has(team) and not battle.game.is_eliminated(team):
+		return battle.game.home_hq[team]
 	var seen: Array[Vector2i] = []
 	for unit in battle.game.units_of(team):
 		if battle.perspective.can_see_unit(unit):
