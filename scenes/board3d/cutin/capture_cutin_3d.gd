@@ -107,6 +107,7 @@ func _apply() -> void:
 		stage.enter()
 	else:
 		stage.leave()
+	stage.set_clock(t)
 	_pose_squad(t, captured)
 	var bodies := _squad.body_points()
 	var feet := PackedVector3Array()
