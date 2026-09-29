@@ -7,19 +7,27 @@ extends Node3D
 ## no particle system, no tween, no state — and a skip or a posed still lands
 ## on exactly the frame the clock names.
 ##
-## Three layers: `solid` is lit like the models (shells, darts, chips), `smoke`
-## is lit and translucent, `glow` is unlit and additive (fire, flashes,
-## tracers). Two lights ride with them, one per side, set per frame.
+## Four layers: `solid` is lit like the models (shells, darts, chips); `smoke`
+## and `fire` are soft balls whose rims melt away (blended, and added); `glow`
+## is the hard-edged added light of streaks, stars and rings. Two lights ride
+## with them, one per side, set per frame.
 
 const LIGHT_RANGE := 4.5
+const SOFT_SHADER := preload("res://scenes/board3d/cutin/cutin_soft_3d.gdshader")
+const FIRE_SHADER := preload("res://scenes/board3d/cutin/cutin_fire_3d.gdshader")
+## A soft ball's facets: enough that its melting edge reads round.
+const SOFT_RINGS := 6
+const SOFT_SEGMENTS := 12
 
 var _solid: MeshInstance3D
 var _smoke: MeshInstance3D
 var _glow: MeshInstance3D
+var _fire: MeshInstance3D
+var _fire_st: SurfaceTool
 var _solid_st: SurfaceTool
 var _smoke_st: SurfaceTool
 var _glow_st: SurfaceTool
-var _counts := PackedInt32Array([0, 0, 0])
+var _counts := PackedInt32Array([0, 0, 0, 0])
 var _lights: Array[OmniLight3D] = []
 var _eye := Vector3.ZERO
 
@@ -27,10 +35,7 @@ var _eye := Vector3.ZERO
 func _init() -> void:
 	name = "CutinFx3D"
 	_solid = _layer(MeshKit.vertex_material())
-	var smoke := MeshKit.vertex_material()
-	smoke.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	smoke.roughness = 1.0
-	_smoke = _layer(smoke)
+	_smoke = _layer(_soft(false, 1.4))
 	_smoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var glow := StandardMaterial3D.new()
 	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -40,9 +45,10 @@ func _init() -> void:
 	glow.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	glow.cull_mode = BaseMaterial3D.CULL_DISABLED
 	glow.disable_fog = true
-	glow.no_depth_test = false
 	_glow = _layer(glow)
 	_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_fire = _layer(_soft(true, 2.2))
+	_fire.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for i in 2:
 		var light := OmniLight3D.new()
 		light.omni_range = LIGHT_RANGE
@@ -58,7 +64,8 @@ func begin(eye: Vector3) -> void:
 	_solid_st = MeshKit.begin()
 	_smoke_st = MeshKit.begin()
 	_glow_st = MeshKit.begin()
-	_counts = PackedInt32Array([0, 0, 0])
+	_fire_st = MeshKit.begin()
+	_counts = PackedInt32Array([0, 0, 0, 0])
 	for light in _lights:
 		light.visible = false
 
@@ -68,24 +75,26 @@ func commit() -> void:
 	_solid.mesh = _solid_st.commit() if _counts[0] > 0 else null
 	_smoke.mesh = _smoke_st.commit() if _counts[1] > 0 else null
 	_glow.mesh = _glow_st.commit() if _counts[2] > 0 else null
+	_fire.mesh = _fire_st.commit() if _counts[3] > 0 else null
 
 
 # --- primitives --------------------------------------------------------------
 
 
-## A faceted ball of fire or light.
+## A soft ball of fire or light, added over what is behind it and melting
+## away at its rim.
 func glow_ball(at: Vector3, radius: float, colour: Color) -> void:
 	if radius <= 0.001 or colour.a <= 0.002:
 		return
-	MeshKit.ball(_glow_st, MeshKit.at(at), radius, 3, 7, colour)
-	_counts[2] += 1
+	_soft_ball(_fire_st, at, radius, colour)
+	_counts[3] += 1
 
 
 ## A puff of smoke or dust, lit by the scene.
 func smoke_ball(at: Vector3, radius: float, colour: Color) -> void:
 	if radius <= 0.001 or colour.a <= 0.002:
 		return
-	MeshKit.ball(_smoke_st, MeshKit.at(at, radius * 97.0), radius, 5, 8, colour)
+	_soft_ball(_smoke_st, at, radius, colour)
 	_counts[1] += 1
 
 
@@ -166,6 +175,39 @@ func light(index: int, at: Vector3, energy: float, colour: Color) -> void:
 	lamp.position = at
 	lamp.light_energy = energy
 	lamp.light_color = colour
+
+
+## A ball with smooth normals, so the soft shader's rim falls off evenly
+## rather than facet by facet.
+static func _soft_ball(st: SurfaceTool, at: Vector3, radius: float, colour: Color) -> void:
+	for r in SOFT_RINGS:
+		var a0 := PI * float(r) / SOFT_RINGS
+		var a1 := PI * float(r + 1) / SOFT_RINGS
+		for s in SOFT_SEGMENTS:
+			var t0 := TAU * float(s) / SOFT_SEGMENTS
+			var t1 := TAU * float(s + 1) / SOFT_SEGMENTS
+			var n00 := _on_sphere(a0, t0)
+			var n01 := _on_sphere(a0, t1)
+			var n10 := _on_sphere(a1, t0)
+			var n11 := _on_sphere(a1, t1)
+			for n in [n00, n10, n11, n00, n11, n01]:
+				st.set_color(colour)
+				st.set_normal(n)
+				st.add_vertex(at + (n as Vector3) * radius)
+
+
+static func _on_sphere(down: float, turn: float) -> Vector3:
+	return Vector3(sin(down) * cos(turn), cos(down), sin(down) * sin(turn))
+
+
+static func _soft(additive: bool, softness: float) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = FIRE_SHADER if additive else SOFT_SHADER
+	material.set_shader_parameter(&"softness", softness)
+	material.set_shader_parameter(&"top_light", 0.0 if additive else 0.55)
+	if additive:
+		material.render_priority = 1
+	return material
 
 
 func _layer(material: Material) -> MeshInstance3D:

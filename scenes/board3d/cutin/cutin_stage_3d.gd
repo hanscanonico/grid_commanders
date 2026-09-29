@@ -16,6 +16,7 @@ extends Node3D
 ## the other's world past its far plane.
 const ORIGIN := Vector3(0.0, 0.0, -400.0)
 const FOV_DEG := 34.0
+const WATER_SHADER := preload("res://scenes/board3d/cutin/stage_water_3d.gdshader")
 const FAR := 400.0
 const KEY_COLOUR := Color("#fff0dc")
 const FILL_COLOUR := Color("#b9cdf0")
@@ -35,11 +36,13 @@ var _hud_was_visible := true
 var _db: TerrainDB
 var _materials: Array[Material] = []
 var _dressing: Node3D
+var _water: ShaderMaterial
 
 
 ## `board_lens` gets the lens back on `leave`; the board's own sun is put out
 ## while the stage has the lens, which lights itself; `hud` goes off the screen
-## with it. `ground` holds the board's land and water materials.
+## with it. `ground` holds the board's land material; the stage's water is its
+## own, calmer and run off the cut-in's clock (`set_clock`).
 func setup(
 	board_lens: Camera3D,
 	board_sun: DirectionalLight3D,
@@ -51,7 +54,9 @@ func setup(
 	_board_sun = board_sun
 	_hud = hud
 	_db = db
-	_materials = ground
+	_water = ShaderMaterial.new()
+	_water.shader = WATER_SHADER
+	_materials = [ground[0], _water]
 	name = "CutinStage3D"
 	position = ORIGIN
 	visible = false
@@ -89,6 +94,12 @@ func leave() -> void:
 	_board_sun.visible = true
 	_hud.visible = _hud_was_visible
 	_board_lens.current = true
+
+
+## Moves the water's swell to `t` on the playing cut-in's clock, so a posed
+## still over the sea is the same still every run.
+func set_clock(t: float) -> void:
+	_water.set_shader_parameter(&"clock", t)
 
 
 ## Frees everything the last cut-in stood on the stage.

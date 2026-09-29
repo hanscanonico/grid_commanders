@@ -138,10 +138,7 @@ func cutin_stage() -> CutinStage3D:
 	if _stage == null:
 		_stage = CutinStage3D.new()
 		add_child(_stage)
-		var ground: Array[Material] = [
-			ground_material(false, null, null, Vector2.ONE),
-			ground_material(true, null, null, Vector2.ONE),
-		]
+		var ground: Array[Material] = [ground_material(false, null, null, Vector2.ONE)]
 		_stage.setup(_camera.camera, _sun, _hud_layer(), _view.db, ground)
 	return _stage
 

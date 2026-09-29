@@ -15,7 +15,10 @@ enum Shot { OPEN, ATTACKER_FIRES, DEFENDER_HIT, DEFENDER_FIRES, ATTACKER_HIT, CL
 ## The wide: how far back it stands per cell the two squads span, and how
 ## high; how far it pushes in over its length.
 const WIDE_REACH := 1.05
-const WIDE_REACH_MIN := 11.0
+const WIDE_REACH_MIN := 13.0
+## What the wide stands back for beyond the squads' own spread: the ranks either
+## side of each anchor.
+const WIDE_MARGIN := 7.5
 const WIDE_RISE := 0.16
 const WIDE_PUSH := 0.12
 const WIDE_SWING := 0.2
@@ -54,7 +57,7 @@ static func plan(beats: CombatBeats, atk: Vector3, def: Vector3, lob: float = 0.
 	var shots := CombatShots3D.new()
 	shots._beats = beats
 	var mid := (atk + def) * 0.5
-	var reach := maxf(absf(def.x - atk.x) * WIDE_REACH + 5.0, WIDE_REACH_MIN)
+	var reach := maxf(absf(def.x - atk.x) * WIDE_REACH + WIDE_MARGIN, WIDE_REACH_MIN)
 	var open_eye := mid + Vector3(reach * WIDE_SWING, reach * WIDE_RISE, reach)
 	shots._add(Shot.OPEN, 0.0, open_eye, open_eye * (1.0 - WIDE_PUSH) + mid * WIDE_PUSH, mid)
 	var ready := beats.atk_ready

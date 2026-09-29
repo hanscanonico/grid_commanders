@@ -12,8 +12,12 @@ const FIRE := Color("#ffb04a")
 const FIRE_DEEP := Color("#e0501c")
 const SMOKE := Color("#66646a")
 const SMOKE_LIGHT := Color("#8d8a88")
+const SMOKE_WARM := Color("#5a3f2e")
 const DUST := Color("#a48762")
 const SPRAY := Color("#eef7ff")
+## Thrown water is blended, not added, and a shade of the sea: a column of
+## pure white over bright water saturated into a blank.
+const SPLASH := Color("#bcdcf0")
 const WAKE := Color("#dff0ff")
 const SHELL := Color("#3a3a3e")
 const ROCKET_BODY := Color("#e9e6df")
@@ -28,6 +32,8 @@ const SPARK_LIFE := 0.16
 const TRAIL_PUFFS := 16
 const TRAIL_STEP := 0.022
 const BLAST_STAGGER := 0.06
+const SPLASH_PUFFS := 5
+const WAKE_PUFFS := 8
 
 
 ## One side's volley: `from` its barrels (nearest the foe last), `targets` the
@@ -179,9 +185,10 @@ static func _trail(
 static func _wake(fx: CutinFx3D, from: Vector3, at: Vector3, water: float) -> void:
 	var start := Vector3(from.x, water + 0.01, from.z)
 	var head := Vector3(at.x, water + 0.01, at.z)
-	fx.streak(start.lerp(head, 0.35), head, 0.07, Color(WAKE, 0.35))
-	fx.streak(start.lerp(head, 0.75), head, 0.12, Color(WAKE, 0.5))
-	fx.glow_ball(head, 0.06, Color(WAKE, 0.6))
+	for k in WAKE_PUFFS:
+		var back := float(k) / WAKE_PUFFS
+		var at_k := head.lerp(start, back * 0.6)
+		fx.smoke_ball(at_k, 0.05 + 0.08 * back, Color(SPLASH, 0.55 * (1.0 - back)))
 
 
 ## What each landed round leaves on its target at `t`: a burst with smoke, chips
@@ -215,16 +222,16 @@ static func _burst(
 ) -> void:
 	var grow := 1.0 - pow(1.0 - q, 3.0)
 	var fade := 1.0 - q
-	var flare := clampf(1.0 - q * 2.5, 0.0, 1.0)
-	fx.glow_ball(at, radius * (0.2 + 0.4 * grow), Color(FIRE, 0.6 * flare))
-	fx.glow_ball(at, radius * 0.25 * flare, Color(FIRE_CORE, flare))
+	var flare := clampf(1.0 - q * 2.2, 0.0, 1.0)
+	fx.glow_ball(at, radius * (0.3 + 0.5 * grow), Color(fire_at(q * 2.0), 0.9 * flare))
+	fx.glow_ball(at, radius * 0.3 * flare, Color(FIRE_CORE, flare))
 	for k in 3:
 		var puff := CutinBallistics3D.puff(at, index * 5 + k, q, radius * 1.2)
-		fx.smoke_ball(puff, radius * (0.12 + 0.28 * grow), Color(SMOKE, 0.7 * fade))
+		fx.smoke_ball(puff, radius * (0.2 + 0.4 * grow), Color(smoke_at(q), 0.75 * fade))
 	for k in v.style.impact_debris:
 		var chip := CutinBallistics3D.debris(at, index * 7 + k, q, radius * 1.6)
 		if v.wet:
-			fx.glow_ball(chip, radius * 0.08, Color(SPRAY, 0.8 * fade))
+			fx.smoke_ball(chip, radius * 0.09, Color(SPLASH, 0.7 * fade))
 		else:
 			fx.solid_box(chip, Vector3(1.0, k, 0.5), Vector3.ONE * radius * 0.13, DUST)
 	if v.airborne:
@@ -247,9 +254,25 @@ static func _splash(
 		var turn := TAU * (k + SquadFormation3D.scatter(index * 4 + k, 101)) / 4.0
 		var foot := base + Vector3(cos(turn), 0.0, sin(turn)) * radius * 0.25
 		var tall := radius * (1.6 + 1.6 * SquadFormation3D.scatter(index * 4 + k, 102)) * grow
-		fx.streak(foot, foot + Vector3.UP * tall, radius * 0.16, Color(SPRAY, 0.4 * fade))
-		fx.glow_ball(foot + Vector3.UP * tall, radius * 0.12, Color(SPRAY, 0.6 * fade))
-	fx.ring(base + Vector3.UP * 0.01, radius * (0.4 + 1.2 * grow), 0.05, Color(SPRAY, 0.5 * fade))
+		for step in SPLASH_PUFFS:
+			var up := float(step + 1) / SPLASH_PUFFS
+			var size := radius * (0.22 - 0.1 * up) * (0.6 + 0.4 * grow)
+			fx.smoke_ball(foot + Vector3.UP * tall * up, size, Color(SPLASH, 0.5 * fade))
+	fx.ring(base + Vector3.UP * 0.01, radius * (0.4 + 1.2 * grow), 0.05, Color(SPRAY, 0.3 * fade))
+
+
+## A fireball's colour `q` of the way through its life: a white-hot core, to
+## orange, to deep red as it burns out.
+static func fire_at(q: float) -> Color:
+	var at := clampf(q, 0.0, 1.0)
+	if at < 0.3:
+		return FIRE_CORE.lerp(FIRE, at / 0.3)
+	return FIRE.lerp(FIRE_DEEP, (at - 0.3) / 0.7)
+
+
+## Smoke off a fire: dark and warm as it leaves the flame, cooling to grey.
+static func smoke_at(q: float) -> Color:
+	return SMOKE_WARM.lerp(SMOKE, smoothstep(0.0, 0.6, q))
 
 
 static func _sparks(fx: CutinFx3D, v: Volley, at: Vector3, q: float, index: int) -> void:
@@ -279,12 +302,16 @@ static func draw_blast(
 		var at := points[i]
 		var grow := 1.0 - pow(1.0 - q, 2.5)
 		var fade := 1.0 - q
-		fx.glow_ball(at + Vector3.UP * 0.2 * q, 0.2 + 0.6 * grow, Color(FIRE_DEEP, 0.9 * fade))
-		fx.glow_ball(at + Vector3.UP * 0.15 * q, 0.15 + 0.4 * grow, Color(FIRE, fade))
-		fx.glow_ball(at, 0.3 * (1.0 - q), Color(FIRE_CORE, 1.0 - q))
-		for k in 4:
-			var puff := CutinBallistics3D.puff(at, i * 9 + k, q, 1.1)
-			fx.smoke_ball(puff, 0.12 + 0.35 * grow, Color(SMOKE, 0.65 * minf(1.0, fade * 1.6)))
+		var burn := clampf(1.0 - (q - 0.35) / 0.5, 0.0, 1.0)
+		fx.glow_ball(at + Vector3.UP * 0.25 * q, 0.3 + 0.7 * grow, Color(fire_at(q), 0.7 * burn))
+		fx.glow_ball(
+			at + Vector3.UP * 0.1 * q, 0.25 + 0.3 * grow, Color(fire_at(q * 0.5), 0.5 * burn)
+		)
+		fx.glow_ball(at, 0.35 * (1.0 - q), Color(FIRE_CORE, 0.6 * (1.0 - q)))
+		for k in 5:
+			var puff := CutinBallistics3D.puff(at, i * 9 + k, q, 1.3)
+			var shade := Color(smoke_at(q), 0.8 * minf(1.0, fade * 1.8) * smoothstep(0.05, 0.3, q))
+			fx.smoke_ball(puff, 0.2 + 0.5 * grow, shade)
 		for k in 6:
 			var chip := CutinBallistics3D.debris(at, i * 11 + k, q, 1.2)
 			fx.solid_box(chip, Vector3(k, 1.0, 0.3), Vector3.ONE * 0.06, SHELL)
@@ -292,5 +319,5 @@ static func draw_blast(
 	var wave := clampf(p / 0.6, 0.0, 1.0)
 	if not airborne and wave < 1.0:
 		var ground := Vector3(middle.x, floor_y + 0.02, middle.z)
-		fx.ring(ground, 0.3 + 3.0 * wave, 0.1, Color(SPRAY if wet else FIRE, 0.4 * (1.0 - wave)))
+		fx.ring(ground, 0.3 + 3.0 * wave, 0.08, Color(SPRAY if wet else FIRE, 0.25 * (1.0 - wave)))
 	fx.light(1, middle + Vector3.UP * 0.5, 6.0 * (1.0 - p), FIRE)

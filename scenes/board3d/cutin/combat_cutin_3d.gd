@@ -188,6 +188,7 @@ func _apply() -> void:
 	else:
 		stage.leave()
 	_flash.color.a = _flash_at(t)
+	stage.set_clock(t)
 	_pose_squads(t)
 	var lens := _shots.pose_at(t)
 	stage.frame(lens[0], lens[1])
