@@ -38,13 +38,36 @@ var banner_text := ""
 var banner_sub := ""
 var banner_p := 0.0
 var banner_complete := false
+## The name and terrain plates, for a director whose stage draws none of its own
+## (the 3D one): left null by the flat cut-in, whose stage wears them.
+var plate_unit: Unit
+var plate_terrain: TerrainType
+var plate_accent := Color.WHITE
+var plate_p := 0.0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+## Poses the banner at `t` of a capture laid out on `beats`: a gold CAPTURED! on
+## a completion, OCCUPYING and what is left on a partial, popping in over its
+## window's first 0.3 s. Both capture cut-ins print it, so it is said once.
+func frame_banner(beats: CaptureBeats, result: CaptureCommand.CaptureResult, t: float) -> void:
+	banner_complete = result.captured
+	if result.captured:
+		banner_text = "CAPTURED!"
+		banner_sub = ""
+	else:
+		banner_text = "OCCUPYING"
+		banner_sub = "%d/%d LEFT" % [maxi(result.points_after, 0), GameState.CAPTURE_POINTS]
+	var shown := t >= beats.banner.x and t < beats.banner.y
+	banner_p = clampf((t - beats.banner.x) / 0.3, 0.0, 1.0) if shown else 0.0
+
+
 func _draw() -> void:
+	if plate_unit != null and plate_terrain != null:
+		CaptureStage.draw_plates(self, plate_unit, plate_terrain, plate_accent, plate_p)
 	if flash > 0.0:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(1.0, 1.0, 1.0, flash * 0.55))
 	_draw_specks()

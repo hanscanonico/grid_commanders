@@ -17,58 +17,23 @@ extends CutsceneDirector
 ## Every visual below is a pure function of `_play.t`, so skipping is the clock
 ## jumping to its end rather than a race between cancelled tweens, and the
 ## awaitable `play()` resolves exactly once whatever the player presses (plan R2).
-## This file owns the beat sheet and what goes in the band; the lifecycle and the
-## shell around it — letterbox, dim, camera punch, cue ledger — are shared with
-## CombatCutscene.
+## This file owns what goes in the band and CaptureBeats the beat sheet; the
+## lifecycle and the shell around it — letterbox, dim, camera punch, cue ledger —
+## are shared with CombatCutscene.
 
-## Beat budgets, in seconds. A completing capture runs ~2.4 s and a partial ~2.0
-## — the tempo the plan's beat sheet asks for, and deliberately faster than the
-## design handoff's 4.6 s reference, because captures are the most frequent
-## ceremony in the game (plan R1). Fixed constants scaled by the streak pacing the
-## animator sets, exactly as CombatCutscene's are — the two cut-ins keep one clock
-## shape, and neither reads GameSpeed: these seconds are the default tier's, and
-## CutscenePlayback is the one place a tier scales them.
-const WIPE_IN := 0.22
-const PLATES := 0.22
-const MARCH := 0.34
-const HOP_DUR := 0.24
-const HOP_GAP := 0.03
+## How high a mash hops the squad, in band pixels. The beat sheet — when each
+## window opens and the chips each mash knocks off — is CaptureBeats'.
 const HOP_HEIGHT := 46.0
-const FLIP := 0.30
-const BANNER := 0.55
-const HOLD := 0.20
-const WIPE_OUT := 0.20
-const MIN_WIPE_SCALE := 0.4
-## At most three mashes, however many points came off — a strength-12 doctrine
-## turn still reads as three hops, not twelve.
-const MAX_HOPS := 3
 
 ## The band shake's two frequencies. Deliberately not the combat cut-in's 91/77 —
 ## see CutscenePlayback.frame_band for why the drift is carried rather than fixed.
 const SHAKE_FREQ := Vector2(90.0, 76.0)
 
-
-## The beat windows this capture has, laid out on the clock. A completing capture
-## has a flip; a partial does not, and its banner opens where the flip would have.
-class Beats:
-	var plates := Vector2.ZERO
-	var march := Vector2.ZERO
-	var hops: Array[Vector2] = []
-	var lands := PackedFloat32Array()
-	var flip := Vector2.ZERO
-	var banner := Vector2.ZERO
-	var wipe_out := Vector2.ZERO
-	var total := 0.0
-
-
 var _stage: CaptureStage
 var _hud: CaptureHud
 
-var _beats := Beats.new()
+var _beats := CaptureBeats.new()
 var _result: CaptureCommand.CaptureResult
-## The point chips each mash knocks off, largest first, summing to the meter's
-## drop. Computed once in `_pose`.
-var _chips := PackedInt32Array()
 
 
 func _ready() -> void:
@@ -119,46 +84,7 @@ func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> 
 	var owner_row := view.identity.atlas_row(result.owner_before)
 	var capturer_row := view.identity.atlas_row(unit.team)
 	_stage.bind(unit, terrain, terrain.atlas_col, owner_row, capturer_row)
-	var removed := maxi(result.points_before - result.points_after, 0)
-	var hops := clampi(removed, 1, MAX_HOPS)
-	_chips = _split(removed, hops)
-	_beats = _plan(result.captured, hops, clampf(tail_scale, 0.0, 1.0))
-
-
-## Splits the points removed across the mashes, largest first, so the chips sum
-## to the meter's committed drop: 10 over 3 hops is 4/3/3, a doctrine's 12 is
-## 4/4/4, a finishing 1 is a single hop of 1.
-static func _split(removed: int, hops: int) -> PackedInt32Array:
-	var out := PackedInt32Array()
-	var base := removed / hops
-	var extra := removed % hops
-	for i in hops:
-		out.append(base + (1 if i < extra else 0))
-	return out
-
-
-## The beat sheet, laid out on the clock. `tail` trims the closing hold and wipe,
-## the only part the pacing is allowed to take — the mashes and the flip keep
-## their length, because those carry what the cut-in is for.
-static func _plan(captured: bool, hops: int, tail: float) -> Beats:
-	var beats := Beats.new()
-	beats.plates = Vector2(WIPE_IN * 0.5, WIPE_IN * 0.5 + PLATES)
-	beats.march = Vector2(WIPE_IN, WIPE_IN + MARCH)
-	var t := beats.march.y
-	for i in hops:
-		var start := t + i * (HOP_DUR + HOP_GAP)
-		beats.hops.append(Vector2(start, start + HOP_DUR))
-		beats.lands.append(start + HOP_DUR)
-	var settled: float = beats.lands[beats.lands.size() - 1]
-	var banner_start := settled + 0.05
-	if captured:
-		beats.flip = Vector2(settled + 0.05, settled + 0.05 + FLIP)
-		banner_start = beats.flip.x + FLIP * 0.4
-	beats.banner = Vector2(banner_start, banner_start + BANNER)
-	var hold := beats.banner.y + HOLD * tail
-	beats.wipe_out = Vector2(hold, hold + WIPE_OUT * maxf(tail, MIN_WIPE_SCALE))
-	beats.total = beats.wipe_out.y
-	return beats
+	_beats = CaptureBeats.plan(result, clampf(tail_scale, 0.0, 1.0))
 
 
 ## How long this capture runs: the beat sheet's own end.
@@ -173,7 +99,7 @@ func _total() -> float:
 ## keeps a beat crossed twice heard once.
 func _apply() -> void:
 	var present := clampf(
-		_play.window(Vector2(0.0, WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
+		_play.window(Vector2(0.0, CaptureBeats.WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
 	)
 	var plates := _play.window(_beats.plates) * present
 	_play.frame(present, _beats.wipe_out)
@@ -181,7 +107,7 @@ func _apply() -> void:
 
 	# The meter reading and the chips: a split of the committed delta, applied as
 	# each mash lands.
-	var shown := _result.points_before
+	var shown := _beats.points_at(_result.points_before, _play.t)
 	var flip_p := _play.window(_beats.flip) if _result.captured else 0.0
 	var flash := sin(flip_p * PI) if (flip_p > 0.0 and flip_p < 1.0) else 0.0
 	var squash := 0.0
@@ -192,8 +118,6 @@ func _apply() -> void:
 		if hp > 0.0:
 			hop_advance = (i + minf(hp * 2.0, 1.0)) / float(_beats.hops.size())
 		var land: float = _beats.lands[i]
-		if _play.t >= land:
-			shown -= _chips[i]
 		squash = maxf(squash, sin(clampf((_play.t - land) / 0.22, 0.0, 1.0) * PI) * 0.12)
 		chip_p.append(_play.window(Vector2(land, land + 0.6)))
 
@@ -211,7 +135,7 @@ func _apply() -> void:
 
 	_hud.points_shown = shown
 	_hud.meter_p = plates
-	_hud.chip_values = _chips
+	_hud.chip_values = _beats.chips
 	_hud.chip_p = chip_p
 	_hud.chip_at = _prop_head()
 	_hud.flash = flash * 0.55
@@ -222,7 +146,7 @@ func _apply() -> void:
 	)
 	_hud.specks_at = _prop_head() + Vector2(0.0, 20.0)
 	_hud.specks_accent = _play.accent
-	_frame_banner()
+	_hud.frame_banner(_beats, _result, _play.t)
 	_hud.modulate.a = present
 	_hud.queue_redraw()
 
@@ -252,20 +176,6 @@ func _prop_head() -> Vector2:
 	return Vector2(_play.band.size.x * CaptureStage.PROP_CENTER, _play.band.size.y * 0.34)
 
 
-func _frame_banner() -> void:
-	_hud.banner_p = _play.window(Vector2(_beats.banner.x, _beats.banner.x + 0.3))
-	_hud.banner_complete = _result.captured
-	if _result.captured:
-		_hud.banner_text = "CAPTURED!"
-		_hud.banner_sub = ""
-	else:
-		_hud.banner_text = "OCCUPYING"
-		var left := maxi(_result.points_after, 0)
-		_hud.banner_sub = "%d/%d LEFT" % [left, GameState.CAPTURE_POINTS]
-	if _play.t < _beats.banner.x or _play.t >= _beats.banner.y:
-		_hud.banner_p = 0.0
-
-
 ## The single panel pushes in slightly, with a decaying shake on every landing and
 ## the flip flash. The push and the shake are the shell's; which beats jolt it is
 ## this cut-in's alone.
@@ -276,7 +186,12 @@ func _frame_band(present: float) -> void:
 	if _result.captured:
 		var flip_p := _play.window(_beats.flip)
 		jolt += (sin(flip_p * PI) if (flip_p > 0.0 and flip_p < 1.0) else 0.0) * 0.6
-	_play.frame_band(present, jolt, SHAKE_FREQ, _play.window(Vector2(WIPE_IN, WIPE_IN + 0.3)))
+	_play.frame_band(
+		present,
+		jolt,
+		SHAKE_FREQ,
+		_play.window(Vector2(CaptureBeats.WIPE_IN, CaptureBeats.WIPE_IN + 0.3))
+	)
 
 
 func _sound() -> void:

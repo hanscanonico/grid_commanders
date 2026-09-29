@@ -595,10 +595,14 @@ func animate_capture(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vec
 	if result == null:
 		return
 	if _capture_cut_in_applies(unit):
-		_pace_cut_in()
-		await _punch_board()
-		await capture_cutscene.play(result, unit, cell)
-		_drop_punch()
+		var staged := capture_cut_in_3d()
+		_pace_cut_in(staged)
+		if staged != null:
+			await staged.play(result, unit, cell)
+		else:
+			await _punch_board()
+			await capture_cutscene.play(result, unit, cell)
+			_drop_punch()
 		_last_cut_in_ms = Time.get_ticks_msec()
 		return
 	if perspective.can_see_unit(unit):
@@ -615,6 +619,17 @@ func _capture_cut_in_applies(unit: Unit) -> bool:
 	if Settings.speed.instant:
 		return false
 	return perspective.can_see_unit(unit)
+
+
+## The 3D stage's capture cut-in while the 3D board is up, else null and the
+## flat one plays. The scenario driver asks it too, so a posed still takes the
+## route a played capture does. The flat board's punch is a still of a board the
+## 3D one has culled, so the 3D path goes without it.
+func capture_cut_in_3d() -> CaptureCutin3D:
+	var board := view.board_3d
+	if board == null or not board.active:
+		return null
+	return board.capture_cut_in()
 
 
 # --- ambush ------------------------------------------------------------------

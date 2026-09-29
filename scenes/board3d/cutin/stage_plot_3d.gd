@@ -48,6 +48,8 @@ const APRON_DROP := 0.003
 var spread := 1.0
 ## The side this plot stands on: -1 left of the seam, +1 right.
 var side := 1
+## A property's buildings, the main one first — what a capture flips.
+var buildings: Array[Node3D] = []
 
 var _map: MapData
 
@@ -244,3 +246,4 @@ func _stand_building(
 	building.position = at - position + Vector3(0.0, BoardSpace3D.LAND_TOP, 0.0)
 	building.scale = Vector3.ONE * scale_by
 	add_child(building)
+	buildings.append(building)
