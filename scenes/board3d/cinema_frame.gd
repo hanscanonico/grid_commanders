@@ -119,12 +119,14 @@ func pose_bars(bars: float, fade: float, flash: float) -> void:
 
 ## The dialogue window `open` of the way unfurled with `typed` of its words
 ## out. `anchor` is the speaker's head on screen: the window stands over it
-## with its tail pointing down at it, or under it when there is no room above.
-## The narrator's window (`anchored` false) sits low in the picture.
+## with its tail pointing down at it; a window too tall for the room above
+## goes to the top of the picture on the far side of the speaker, so it never
+## covers them. The narrator's window (`anchored` false) sits low in the
+## picture.
 func pose_window(
 	open: float, typed: float, cursor: bool, anchor: Vector2, anchored: bool, clock: float
 ) -> void:
-	_window.open = open
+	_window.open = clampf(open, 0.0, 1.0)
 	_window.cursor_on = cursor
 	_window.clock = clock
 	var frame := picture()
@@ -137,7 +139,11 @@ func pose_window(
 		)
 		at.y = anchor.y - HEAD_GAP - box.y
 		if at.y < frame.position.y + EDGE_GAP:
-			at.y = minf(anchor.y + HEAD_GAP * 3.0, frame.end.y - box.y - EDGE_GAP)
+			at.y = frame.position.y + EDGE_GAP
+			var clear := HEAD_GAP * 2.0
+			at.x = anchor.x + clear if anchor.x < frame.get_center().x else anchor.x - clear - box.x
+			at.x = clampf(at.x, frame.position.x + EDGE_GAP, frame.end.x - box.x - EDGE_GAP)
+			_window.has_tail = false
 		_window.tail_tip = anchor - at.round()
 	_window.position = at.round()
 	_window.pose(typed)

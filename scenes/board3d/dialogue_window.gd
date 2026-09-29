@@ -92,9 +92,7 @@ func say(speaker: CommanderType, words: String) -> void:
 	_words.text = words
 	_words.visible_ratio = 0.0
 	quiet(_row)
-	var content := _row.get_combined_minimum_size()
-	_row.size = content
-	size = content + PAD * 2.0
+	_fit()
 
 
 ## How many letters of the words are showing at `typed` (0..1): what the blip
@@ -104,12 +102,22 @@ func letters_at(typed: float) -> int:
 
 
 func pose(typed: float) -> void:
+	_fit()
 	_words.visible_ratio = clampf(typed, 0.0, 1.0)
 	visible = open > 0.0
 	pivot_offset = size / 2.0
 	scale = Vector2(1.0, maxf(open, 0.02))
 	_row.modulate.a = clampf(open * 2.0 - 1.0, 0.0, 1.0)
 	queue_redraw()
+
+
+## Sized to the words. Asked every frame, not once: a wrapped label only knows
+## how many lines it takes once its row has laid it out at its width, a frame
+## after it was filled.
+func _fit() -> void:
+	var content := _row.get_combined_minimum_size()
+	_row.size = content
+	size = content + PAD * 2.0
 
 
 func _draw() -> void:

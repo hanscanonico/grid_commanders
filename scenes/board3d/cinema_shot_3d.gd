@@ -26,9 +26,11 @@ const NEAR_THIRD := 0.3
 const ACTOR_SWING_DEG := 32.0
 const ACTOR_DRIFT_DEG := 12.0
 const ACTOR_DRIFT_SECONDS := 3.5
-## The lens looks a little under the eyes, so the head sits high in the frame
-## and the window over it has the sky to stand in.
-const LOOK_AT_EYES := 0.85
+## The lens looks a little over the head, so the general stands in the lower
+## half of the frame and the window over them has the sky to stand in; the
+## closer shot looks a little lower, or it would crop the face at the bar.
+const LOOK_AT_EYES := 1.3
+const NEAR_LOOK_AT_EYES := 1.1
 ## Cells either side of straight ahead within which the board's middle picks no
 ## side for a speaker.
 const SIDE_DEAD_ZONE := 1.0
@@ -84,10 +86,11 @@ static func actor(
 	var reach := NEAR_REACH if near else MEDIUM_REACH
 	var pitch := NEAR_PITCH_DEG if near else MEDIUM_PITCH_DEG
 	var third := NEAR_THIRD if near else MEDIUM_THIRD
+	var look_at := NEAR_LOOK_AT_EYES if near else LOOK_AT_EYES
 	var yaw_from := bearing + side * deg_to_rad(ACTOR_SWING_DEG)
 	var yaw_to := yaw_from - side * deg_to_rad(ACTOR_DRIFT_DEG)
 	var middle := CinemaPose3D.new(Vector3.ZERO, 1.0, (yaw_from + yaw_to) / 2.0)
-	var look := mark + Vector3.UP * eyes * LOOK_AT_EYES + middle.across() * side * third
+	var look := mark + Vector3.UP * eyes * look_at + middle.across() * side * third
 	return CinemaShot3D.new(
 		CinemaPose3D.new(look, reach.x, yaw_from, deg_to_rad(pitch.x)),
 		CinemaPose3D.new(look, reach.y, yaw_to, deg_to_rad(pitch.y)),

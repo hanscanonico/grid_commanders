@@ -60,8 +60,12 @@ const EMOTE_LIFT := 0.12
 const DOOR := 0.1
 const MARK := 0.46
 ## A general with no army on this board, projected: a little larger than life,
-## on a low projector.
+## on a low projector beside the post rather than on it, since the post's own
+## general may step out onto the same spot. The projection flickers out while
+## somebody else speaks.
 const HOLO_SCALE := 1.25
+const HOLO_BESIDE := 0.55
+const HOLO_FADE_SECONDS := 0.35
 const HOLO_RADIUS := 0.26
 const HOLO_BEAM := 0.35
 ## The Command Power: the general appears under the flash, raises a fist into
@@ -98,6 +102,7 @@ var _takes: Array[Take] = []
 var _index := 0
 var _t := 0.0
 var _clock := 0.0
+var _delta := 0.0
 var _bars := 0.0
 var _bars_seconds := BARS_SECONDS
 var _closing := false
@@ -152,6 +157,9 @@ class Actor:
 	var door := Vector3.ZERO
 	var mark := Vector3.ZERO
 	var scale := 1.0
+	var projected := false
+	## How far a projection is switched on: it fades while somebody else speaks.
+	var shown := 1.0
 	## When they started stepping out; negative until they do.
 	var out_at := -1.0
 	var clip := &"idle"
@@ -241,6 +249,7 @@ func cut() -> void:
 ## One frame of the cinematic. Board3D calls it while `rolling`.
 func advance(delta: float) -> void:
 	var still := BoardBeat.still()
+	_delta = delta
 	_clock += delta
 	var bars_to := 0.0 if _closing else 1.0
 	_bars = bars_to if still else move_toward(_bars, bars_to, delta * _rate() / _bars_seconds)
@@ -296,7 +305,7 @@ func _begin(index: int) -> void:
 				actor.out_at = _clock + take.glide * 0.5
 		Kind.POWER:
 			var actor := _cast(take)
-			actor.out_at = _clock - ENTER_SECONDS
+			actor.out_at = _clock
 			var eyes := actor.figure.face_height() * actor.scale
 			_shot = CinemaShot3D.limit(actor.mark, eyes, bearing)
 	if take.glide > 0.0 and _from.target.distance_to(_shot.start.target) >= WHOOSH_CELLS:
@@ -357,7 +366,7 @@ func _pose_frame(take: Take, still: bool) -> void:
 		open = 1.0 if still else _since(take.window_at) / (WINDOW_SECONDS / _rate())
 	var typed := _typed(take)
 	var actor: Actor = _actors.get(take.actor)
-	var anchored := actor != null
+	var anchored := actor != null and take.kind == Kind.SPEAKER
 	var anchor := Vector2.ZERO
 	if anchored:
 		var head := actor.figure.to_global(actor.figure.head_top())
@@ -525,13 +534,16 @@ func _cast(take: Take) -> Actor:
 	actor.figure = CommanderActor3D.make(take.speaker)
 	var tint := CommanderVisuals.theme_for(take.speaker).color_light
 	if take.projected:
+		actor.projected = true
 		actor.scale = HOLO_SCALE
 		actor.figure.set_hologram(tint)
+		actor.mark += Vector3(cos(_bearing()), 0.0, -sin(_bearing())) * HOLO_BESIDE
 		actor.door = actor.mark
 		actor.out_at = _clock
 		actor.light = Projector3D.make(tint, HOLO_RADIUS, HOLO_BEAM, false)
 		actor.light_at = _clock
 	elif take.kind == Kind.POWER:
+		actor.door = actor.mark
 		actor.light = Projector3D.make(tint, PILLAR_RADIUS, PILLAR_HEIGHT, true)
 	actor.figure.scale = Vector3.ONE * actor.scale
 	actor.figure.position = actor.door
@@ -566,7 +578,13 @@ func _pop(actor: Actor, emote: StringName) -> void:
 func _advance_actors(presence: float) -> void:
 	var still := BoardBeat.still()
 	var eye := _camera.camera.global_position
-	for actor: Actor in _actors.values():
+	var speaking: StringName = &"" if _closing else _takes[_index].actor
+	for key: StringName in _actors:
+		var actor := _actors[key]
+		if actor.projected:
+			var wanted := 1.0 if key == speaking else 0.0
+			var step := _delta * _rate() / HOLO_FADE_SECONDS
+			actor.shown = wanted if still else move_toward(actor.shown, wanted, step)
 		var figure := actor.figure
 		if actor.out_at < 0.0 or _clock < actor.out_at:
 			figure.visible = false
@@ -574,7 +592,7 @@ func _advance_actors(presence: float) -> void:
 		figure.visible = true
 		var out := 1.0 if still else clampf((_clock - actor.out_at) / ENTER_SECONDS, 0.0, 1.0)
 		figure.position = actor.door.lerp(actor.mark, smoothstep(0.0, 1.0, out))
-		figure.set_alpha(minf(clampf(out * 3.0, 0.0, 1.0), presence))
+		figure.set_alpha(minf(clampf(out * 3.0, 0.0, 1.0), presence * actor.shown))
 		var walking := out < 1.0
 		var facing := actor.mark + (actor.mark - actor.door) if walking else eye
 		facing.y = figure.position.y
@@ -589,7 +607,7 @@ func _advance_actors(presence: float) -> void:
 			if actor.light_at >= 0.0:
 				var rise := (_clock - actor.light_at) / (PILLAR_SECONDS / _rate())
 				lit = 1.0 if still else clampf(rise, 0.0, 1.0)
-			actor.light.pose(lit * presence, _clock)
+			actor.light.pose(lit * presence * actor.shown, _clock)
 
 
 func _spawn_shocks(take: Take) -> void:
