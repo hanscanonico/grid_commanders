@@ -662,7 +662,9 @@ forms named in the root index are in `docs/design_record.md`.
   by centring on every step** (review, 2026-09-29): the cursor roams a box in the middle of the band
   and the camera moves only to keep it inside, re-centring when the cursor lands off the band (a
   jump, a new day) — a camera centred on the cursor makes mouse hover chase itself, the cell under a
-  still pointer sliding away as the view follows the cursor it just set. It **glides**, because the
+  still pointer sliding away as the view follows the cursor it just set. And it **keeps the board in the
+  band**, as the flat board's camera limits do: its goal is held in from each edge as seen from the
+  side it looks from (`KEEP_*`), so an edge shows the diorama's rim, not half a screen of table. It **glides**, because the
   whole-texel rule behind A3 is about sampling pixel art, and **lands when `BoardBeat.still()`**, so
   no capture depends on its shutter frame. D3: **one seam per question the flat board already
   answered.** `BoardPointer._cell_under` asks `Board3D.pick` (a ray walked down onto each cell's

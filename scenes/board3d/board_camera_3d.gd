@@ -42,6 +42,15 @@ const SEEN_BEHIND := 0.23
 ## band: at the closest rungs the band's near edge sits less than a cell past the
 ## box's, and a single arrow step would otherwise re-centre every other press.
 const STEP_PAST := 1.01
+## How much of the band the board may leave empty at an edge, as the flat board's
+## camera limits keep its view on the map: the goal stays this far in from each
+## side, so an edge shows the diorama's rim and a sliver of table, not half a
+## screen of it. Inside what SEEN_* allows, so a cursor on the edge stays in view.
+const KEEP_ACROSS := 0.4
+const KEEP_AHEAD := 0.28
+const KEEP_BEHIND := 0.19
+## Cells of table left showing past the rim at an edge.
+const RIM_SHOWN := 0.6
 
 var camera: Camera3D
 ## An unrendered twin posed where the camera is heading rather than where it is.
@@ -126,10 +135,43 @@ func _framed(spot: Vector3, reach: float, yaw: float) -> Vector3:
 	var goal := spot
 	if seen or maxf(absf(past_across), absf(past_ahead)) <= STEP_PAST:
 		goal = _goal + across_axis * past_across + ahead_axis * past_ahead
-	if bounds.has_area():
-		goal.x = clampf(goal.x, bounds.position.x, bounds.end.x)
-		goal.z = clampf(goal.z, bounds.position.y, bounds.end.y)
-	return goal
+	return _over_board(goal, reach, across_axis, ahead_axis)
+
+
+## `goal`, held in from the board's edges as seen from this side of it; a board
+## narrower than the band on an axis is centred on that axis instead.
+func _over_board(goal: Vector3, reach: float, across_axis: Vector3, ahead_axis: Vector3) -> Vector3:
+	if not bounds.has_area():
+		return goal
+	var low := Vector2(INF, INF)
+	var high := Vector2(-INF, -INF)
+	for corner: Vector2 in [
+		bounds.position,
+		Vector2(bounds.end.x, bounds.position.y),
+		bounds.end,
+		Vector2(bounds.position.x, bounds.end.y),
+	]:
+		var point := Vector3(corner.x, 0, corner.y)
+		var seen_as := Vector2(point.dot(across_axis), point.dot(ahead_axis))
+		low = low.min(seen_as)
+		high = high.max(seen_as)
+	var across := _held_in(
+		goal.dot(across_axis),
+		low.x + KEEP_ACROSS * reach - RIM_SHOWN,
+		high.x - KEEP_ACROSS * reach + RIM_SHOWN
+	)
+	var ahead := _held_in(
+		goal.dot(ahead_axis),
+		low.y + KEEP_BEHIND * reach - RIM_SHOWN,
+		high.y - KEEP_AHEAD * reach + RIM_SHOWN
+	)
+	return across_axis * across + ahead_axis * ahead + Vector3.UP * goal.y
+
+
+static func _held_in(value: float, lowest: float, highest: float) -> float:
+	if lowest > highest:
+		return (lowest + highest) / 2.0
+	return clampf(value, lowest, highest)
 
 
 ## A point on the board's ground plane, so a cursor on a peak or at sea does not
