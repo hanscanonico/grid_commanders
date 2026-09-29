@@ -368,6 +368,9 @@ func _spam_skip(result: CombatSnapshot.CombatResult, attacker: Unit, defender: U
 		if finishes[0] != 1:
 			_fail("cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]])
 			return
+		if staged != null and (staged.stage.on_air or staged.stage.rolling):
+			_fail("3D cut-in skipped after %d frame(s) kept the stage" % delay)
+			return
 		if not camera.zoom.is_equal_approx(resting):
 			_fail(
 				(
