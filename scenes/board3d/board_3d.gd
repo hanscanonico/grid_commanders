@@ -247,12 +247,14 @@ func _build_overlay() -> void:
 	_overlay.size = _map.size() * px
 	_overlay.transparent_bg = true
 	_overlay.disable_3d = true
+	_overlay.canvas_cull_mask = DEFAULT_BIT | BOARD_ROOT
+	# In the tree before the world is shared: a canvas transform is set on the
+	# canvas the viewport is attached to, and it attaches on entering.
+	add_child(_overlay)
 	_overlay.world_2d = get_viewport().world_2d
 	_overlay.canvas_transform = Transform2D.IDENTITY.scaled(
 		Vector2.ONE * float(px) / BoardSpace3D.PX_PER_CELL
 	)
-	_overlay.canvas_cull_mask = DEFAULT_BIT | BOARD_ROOT
-	add_child(_overlay)
 
 
 func _terrain_material(water: bool) -> ShaderMaterial:
@@ -288,11 +290,12 @@ func _add_table() -> void:
 
 func _add_sun() -> void:
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-55, -35, 0)
+	# Low from the west-north-west, so a shadow falls to the right of what casts
+	# it — beside it on screen, where a sun behind the camera would hide it.
+	sun.rotation_degrees = Vector3(-48, -115, 0)
 	sun.light_color = Color("#fff6ea")
 	sun.light_energy = 0.8
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 80.0
 	add_child(sun)
 
 
