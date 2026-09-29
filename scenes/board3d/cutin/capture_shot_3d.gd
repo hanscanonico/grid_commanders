@@ -60,9 +60,10 @@ const MASH_LOOK_UP := 1.25
 ## A partial holds on the squad standing its ground, easing back.
 const HOLD_PULL := Vector3(-0.5, 0.2, 0.9)
 const FLIP_EYE: Array[Vector3] = [Vector3(-1.4, 1.0, 10.6), Vector3(-0.8, 1.7, 11.6)]
-const FLIP_LOOK_SHARE := 0.42
-## The pole height the flip's wide is framed for; a taller one backs it off.
-const FLIP_POLE := 3.5
+const FLIP_LOOK_SHARE := 0.55
+## The pole height every shot is framed for: a taller one backs the lens off and
+## lifts what it looks at, so the flag stays clear of the meter in the top right.
+const FRAMED_POLE := 2.55
 ## How much a jolt shakes the lens, in stage units.
 const LENS_SHAKE := 0.05
 
@@ -238,21 +239,21 @@ static func lens(
 	var target: Vector3
 	var settled: float = beats.lands[beats.lands.size() - 1] + 0.05
 	var between := squad.lerp(door, 0.5)
+	var reach := maxf(1.0, (top.y - door.y) / FRAMED_POLE)
 	if t < beats.march.y:
 		var p := _ease_out(clampf((t - cut_in()) / (beats.march.y - cut_in()), 0.0, 1.0))
 		var pan := Vector3.RIGHT * minf(leading.x - squad.x, 0.0) * MARCH_PAN
-		eye = between + MARCH_EYE[0].lerp(MARCH_EYE[1], p) + pan
-		target = between + MARCH_LOOK + pan
+		eye = between + MARCH_EYE[0].lerp(MARCH_EYE[1], p) * reach + pan
+		target = between + MARCH_LOOK * reach + pan
 	elif not captured or t < beats.flip.x:
 		var p := clampf((t - beats.march.y) / (settled - beats.march.y), 0.0, 1.0)
-		eye = squad + MASH_EYE[0].lerp(MASH_EYE[1], p)
+		eye = squad + MASH_EYE[0].lerp(MASH_EYE[1], p) * reach
 		if not captured and t >= settled:
 			eye += HOLD_PULL * _ease_out(clampf((t - settled) / 0.8, 0.0, 1.0))
-		target = squad.lerp(door, MASH_LOOK_SHARE) + Vector3.UP * MASH_LOOK_UP
+		target = squad.lerp(door, MASH_LOOK_SHARE) + Vector3.UP * MASH_LOOK_UP * reach
 	else:
 		var p := _ease_out(clampf((t - beats.flip.x) / (beats.wipe_out.x - beats.flip.x), 0.0, 1.0))
 		var middle := Vector3(squad.x, door.y, door.z).lerp(Vector3(top.x, door.y, top.z), 0.55)
-		var reach := maxf(1.0, (top.y - door.y) / FLIP_POLE)
 		eye = middle + FLIP_EYE[0].lerp(FLIP_EYE[1], p) * reach
 		target = middle + Vector3.UP * (top.y - door.y) * FLIP_LOOK_SHARE
 	var shake := jolt(beats, t) * LENS_SHAKE

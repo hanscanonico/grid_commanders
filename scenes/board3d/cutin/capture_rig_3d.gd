@@ -20,10 +20,11 @@ extends Node3D
 const GROW := 1.3
 const NEIGHBOUR_GAP := 0.9
 ## The pole stands this far out from the pad's right edge, a share of the pad
-## forward, and this far over the roof.
-const POLE_OUT := 0.5
+## forward, and this far over the roof — low enough that the flag flies clear
+## of the meter in the band's top right in every shot.
+const POLE_OUT := 0.3
 const POLE_FORWARD := 0.22
-const POLE_OVER := 1.5
+const POLE_OVER := 0.7
 const PAD_HALF := 0.46
 const POLE_RADIUS := 0.045
 const FINIAL := Color("e8c35a")
