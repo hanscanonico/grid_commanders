@@ -55,6 +55,13 @@ const METEOR_SHAKE := 5.0
 const BLINK_PULSES := 3
 const BLINK_GAIN := 2.5
 const BLINK_FLASH := Color(BLINK_GAIN, BLINK_GAIN, BLINK_GAIN)
+## How far the map path pushes the bodies in an exchange, in world pixels: a
+## direct shot's lunge at its target, a lobbed one's kick back from it, and the
+## struck unit's flinch away from the shooter. A lunge is the biggest because it
+## is the shot's whole gesture; a recoil and a flinch only answer one.
+const LUNGE_PX := 3
+const RECOIL_PX := 2
+const FLINCH_PX := 2
 ## Where each blocking card sits in `_cards`.
 const _TURN_CARD := 0
 const _POWER_CARD := 1
@@ -114,6 +121,20 @@ var _callout_tween: Tween
 var _flip_tweens: Dictionary[Vector2i, Tween] = {}
 
 # --- movement ----------------------------------------------------------------
+
+
+## A dropped rider stepping off its transport at `from` onto `to`, fading in over
+## the step the way `UnitSprite.board` fades one out: the move clip's one-leg
+## walk, where the rider used to appear on the cell fully formed. Awaitable, and
+## Instant is `animate_path`'s own snap.
+func animate_step_off(sprite: UnitSprite, from: Vector2i, to: Vector2i) -> void:
+	var seconds := Settings.speed.move_step_seconds()
+	if seconds > 0.0:
+		sprite.position = BattleView.cell_center(from)
+		var settled := sprite.modulate.a
+		node.create_tween().tween_property(sprite, "modulate:a", settled, seconds).from(0.0)
+	var leg: Array[Vector2i] = [from, to]
+	await animate_path(sprite, leg)
 
 
 ## Tweens a sprite along a path without touching the sim. Awaitable.
@@ -186,11 +207,13 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		_sync_aftermath()
 		return
 	Sfx.play(&"shot")
+	_lunge(attacker, defender, result.attacker_indirect)
 	await _flash_muzzle(attacker, defender, result.attacker_weapon_slot)
 	# Non-blocking, like the departing twin's fade in `animate_join`: the map
 	# path never showed a number at all, and this is only the flourish that
 	# fixes it — the exchange's own pacing must not wait on it.
 	_show_damage(defender, result.defender_hp_before - result.defender_hp_after, attacker)
+	_flinch(defender, attacker)
 	await flash_hit(defender_sprite)
 	shake_camera()
 	if result.defender_died:
@@ -203,7 +226,10 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		view.refresh_sprite(defender)
 	if result.countered:
 		Sfx.play(&"shot")
+		# Never a lob: only a max_range of 1 ever answers (CombatResult).
+		_lunge(defender, attacker, false)
 		await _flash_muzzle(defender, attacker, result.counter_weapon_slot)
+		_flinch(attacker, defender)
 		await flash_hit(attacker_sprite)
 	if result.attacker_died:
 		view.release_sprite(attacker)
@@ -248,6 +274,37 @@ func _flash_muzzle(shooter: Unit, target: Unit, slot: StringName) -> void:
 	tween.tween_property(muzzle_flash, "spark", 0.0, seconds)
 	await tween.finished
 	muzzle_flash.clear_shot()
+
+
+## The shooter's body behind the shot on the map path: a direct shot lunges at
+## its target and a lobbed one kicks back from it, over the muzzle flash and the
+## hit after it. Whether it was lobbed is the snapshot's answer, never
+## re-derived. Fire-and-forget, since the flash and the hit are what the exchange
+## waits on.
+func _lunge(shooter: Unit, target: Unit, lobbed: bool) -> void:
+	var toward := UnitSprite.step_toward(target.cell - shooter.cell)
+	_nudge(shooter, target, -RECOIL_PX * toward if lobbed else LUNGE_PX * toward)
+
+
+## The struck unit giving ground: a flinch away from whoever hit it, over the hit
+## flash.
+func _flinch(struck: Unit, shooter: Unit) -> void:
+	_nudge(struck, shooter, FLINCH_PX * UnitSprite.step_toward(struck.cell - shooter.cell))
+
+
+## Pushes `unit` by `offset` and back over the hit flash's two halves, so the
+## push, the flash and the tier can never disagree about how long a hit lasts.
+## Instant answers zero for both and nothing moves. The fog rule is
+## `_flash_muzzle`'s — both combatants seen — because a push is aimed: a unit
+## lunging at nothing would point out what the board is hiding.
+func _nudge(unit: Unit, other: Unit, offset: Vector2i) -> void:
+	if not perspective.can_see_unit(unit) or not perspective.can_see_unit(other):
+		return
+	var sprite := view.sprite_for(unit)
+	if sprite == null:
+		return
+	var tier := Settings.speed
+	sprite.nudge(Vector2(offset), tier.flash_in_seconds(), tier.flash_out_seconds())
 
 
 ## The white hit flash, at the active tier's pace. Awaitable.
@@ -560,8 +617,20 @@ func _show_ambush(unit: Unit) -> void:
 func settle_move(command: Command, unit: Unit) -> void:
 	if command.ambushed:
 		await _show_ambush(unit)
-	else:
-		view.refresh_sprite(unit)
+		return
+	if unit.carrier != null:
+		await _board(unit)
+	view.refresh_sprite(unit)
+
+
+## A rider whose move ended aboard a transport fading into it, where it used to
+## blink out: the last half-step of its walk, on the tier's step. Drawn only
+## where the viewer sees the hull it boards, the cell the fade plays on.
+func _board(rider: Unit) -> void:
+	var sprite := view.sprite_for(rider)
+	if sprite == null or not sprite.visible or not perspective.can_see_unit(rider.carrier):
+		return
+	await sprite.board(Settings.speed.move_step_seconds())
 
 
 ## The sprite side of a Join: the moving unit's twin fades away and the survivor

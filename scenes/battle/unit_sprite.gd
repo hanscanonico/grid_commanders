@@ -48,8 +48,9 @@ const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
 ## breath reads fine and doubling every board sheet is cost with no complaint
 ## behind it.
 const UNITS_ATLAS_SHEETS: Array[String] = [UNITS_ATLAS_PATH, UNITS_ATLAS_B_PATH]
-## The walk cycle: the same grid again, one gait pose per frame, played only
-## while BattleAnimator is tweening a unit along its path. Four frames since
+## The walk cycle: the same grid again, one gait pose per frame, played while
+## BattleAnimator is tweening a unit along its path and on the spot while the
+## player holds one (`in_hand`). Four frames since
 ## S6 (2026-09-02) — contact / passing / contact / passing for a foot unit, a
 ## quarter-phase tread crawl for a tracked one, the existing two-frame motion
 ## held across the extra pair for everything else — at the same 160 ms
@@ -188,8 +189,19 @@ var moving: bool = false:
 		moving = value
 		if not moving:
 			flip_h = false
-		_frame = BoardBeat.frame(_period_ms(), Time.get_ticks_msec(), _frame_count())
-		_repoint_sheet()
+		_restart_clip()
+
+## True while the player holds this unit — picked up, walked to its menu, aiming.
+## It marches on the spot on the move clip, Advance Wars' tell for which piece is
+## taking orders, and parks the moment it is put down or its order is given.
+## Written by `BattleView.hold` and nothing else; a still board keeps it parked
+## — see `marches`. Unlike `moving` it never mirrors: it walks nowhere.
+var in_hand: bool = false:
+	set(value):
+		if in_hand == value:
+			return
+		in_hand = value
+		_restart_clip()
 
 ## Which frame of the current clip this sprite shows. Instance state so a
 ## repaint (atlas_row, refresh) rebuilds the texture on the right sheet.
@@ -346,6 +358,24 @@ static func facing_for(delta: Vector2i, was: bool) -> bool:
 	return delta.x > 0
 
 
+## Whether a sprite draws the move clip: always while it walks a path, and while
+## it is held in hand unless the board is a still — a capture photographs the
+## held unit parked like every other, and Instant plays no clip at all. Static and
+## pure for `facing_for`'s reason.
+static func marches(walking: bool, held: bool, still: bool) -> bool:
+	return walking or (held and not still)
+
+
+## One world pixel along whichever axis `delta` mostly runs on: the way a lunge,
+## a recoil or a flinch pushes. Snapped to an axis because the board moves on
+## four, so a shot two across and one down still reads as "to the right"; a tie
+## goes sideways, the axis the sheets face along. Zero for no delta.
+static func step_toward(delta: Vector2i) -> Vector2i:
+	if absi(delta.x) >= absi(delta.y):
+		return Vector2i(signi(delta.x), 0)
+	return Vector2i(0, signi(delta.y))
+
+
 ## Turns this sprite for one leg of a walk. Called at the corner rather than once
 ## for the whole path, and never from refresh(): a repaint mid-walk — a fog flip,
 ## a defection's atlas_row — must not turn a striding unit around. The facing
@@ -357,21 +387,32 @@ func face_step(delta: Vector2i) -> void:
 ## The one answer to which sheet this sprite draws from, so that a repaint
 ## mid-walk — a defection's atlas_row, a fog flip — cannot snap a striding unit
 ## back to its parked pose. Indexes the clip's own array (`UNITS_ATLAS_SHEETS`
-## parked, `UNITS_ATLAS_MOVE_SHEETS` moving) rather than a ternary, which is
+## parked, `UNITS_ATLAS_MOVE_SHEETS` marching) rather than a ternary, which is
 ## what let the move clip grow to four frames with no branch added here.
 func _sheet_path(frame: int) -> String:
-	return UNITS_ATLAS_MOVE_SHEETS[frame] if moving else UNITS_ATLAS_SHEETS[frame]
+	return UNITS_ATLAS_MOVE_SHEETS[frame] if _on_move_clip() else UNITS_ATLAS_SHEETS[frame]
+
+
+func _on_move_clip() -> bool:
+	return marches(moving, in_hand, BoardBeat.still())
 
 
 func _period_ms() -> int:
-	return BoardBeat.move_ms() if moving else BoardBeat.AMBIENT_MS
+	return BoardBeat.move_ms() if _on_move_clip() else BoardBeat.AMBIENT_MS
 
 
 ## How many frames the current clip carries — the array `_sheet_path` reads,
 ## sized rather than hardcoded, so the beat and the sheet lookup can never
 ## disagree about the clip's own length.
 func _frame_count() -> int:
-	return UNITS_ATLAS_MOVE_SHEETS.size() if moving else UNITS_ATLAS_SHEETS.size()
+	return UNITS_ATLAS_MOVE_SHEETS.size() if _on_move_clip() else UNITS_ATLAS_SHEETS.size()
+
+
+## Picks the clip back up on the beat the rest of the board is on, after whatever
+## chose the clip (`moving`, `in_hand`) changed.
+func _restart_clip() -> void:
+	_frame = BoardBeat.frame(_period_ms(), Time.get_ticks_msec(), _frame_count())
+	_repoint_sheet()
 
 
 func _repoint_sheet() -> void:
@@ -389,7 +430,7 @@ func set_active_team(team: int) -> void:
 ## state. Carried units are hidden until dropped, and so is anything the
 ## viewing team may not see — see `fogged`.
 func refresh() -> void:
-	position = Vector2(unit.cell * TILE) + Vector2(TILE, TILE) / 2.0
+	position = _centre_of(unit.cell)
 	visible = unit.carrier == null and not fogged
 	var acted := unit.acted and unit.team == active_team
 	_set_acted(acted)
@@ -489,8 +530,47 @@ func flash_hit(in_seconds: float, out_seconds: float) -> void:
 ## fade would run on a node nobody can see. Only ever used on a sprite already
 ## on its way out: BattleView has stopped tracking it and `die` is next.
 func pose_at(cell: Vector2i) -> void:
-	position = Vector2(cell * TILE) + Vector2(TILE, TILE) / 2.0
+	position = _centre_of(cell)
 	visible = true
+
+
+static func _centre_of(cell: Vector2i) -> Vector2:
+	return Vector2(cell * TILE) + Vector2(TILE, TILE) / 2.0
+
+
+## A push off the tile and back — the shooter's lunge or recoil and the target's
+## flinch on the map path. `offset` is in world pixels and the two durations
+## arrive from BattleAnimator, `flash_hit`'s shape; a zero-length half is Instant
+## asking for the result, and nothing moves. It pushes off the unit's own cell
+## rather than off wherever it happens to be drawn, so a push that lands on
+## another's return still settles on the tile.
+func nudge(offset: Vector2, out_seconds: float, back_seconds: float) -> void:
+	if out_seconds <= 0.0 or back_seconds <= 0.0:
+		return
+	var rest := _centre_of(unit.cell)
+	var tween := create_tween()
+	(
+		tween
+		. tween_property(self, "position", rest + offset, out_seconds)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(self, "position", rest, back_seconds).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_IN_OUT
+	)
+
+
+## Fades into a transport, the last half-step of a walk that ends aboard.
+## Awaitable. A fade in place and never a sink: the units layer is y-sorted, so a
+## rider drawn a pixel lower than its hull would step out in front of it. `refresh`
+## hides the rider afterwards and stands its alpha back up for the day it is
+## dropped; `seconds` arrives from BattleAnimator, and zero skips it.
+func board(seconds: float) -> void:
+	if seconds <= 0.0:
+		return
+	var tween := create_tween()
+	tween.tween_property(self, "modulate:a", 0.0, seconds)
+	await tween.finished
 
 
 ## Fade out and free. Awaitable; the caller must drop its reference first.

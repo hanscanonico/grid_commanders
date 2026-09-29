@@ -61,9 +61,17 @@ static func move_ms() -> int:
 ## capture — are checkable rather than being read off whichever beat the suite
 ## happened to run in.
 static func frame(period_ms: int, now_ms: int = Time.get_ticks_msec(), frames: int = 2) -> int:
-	if frozen or Settings.speed.instant:
+	if still():
 		return 0
 	return frame_at(period_ms, now_ms, frames)
+
+
+## Whether the board is a still right now: a pinned capture or the Instant tier.
+## Every clip answers frame A then, and a unit held in hand stands parked rather
+## than marching (`UnitSprite.marches`), so no frame depends on which unit was
+## last picked up.
+static func still() -> bool:
+	return frozen or Settings.speed.instant
 
 
 ## The same arithmetic on a clock of the caller's own. The two cut-ins read this

@@ -353,6 +353,24 @@ forms named in the root index are in `docs/design_record.md`.
   HP badge's punch read `Settings.speed.instant` directly instead, `refresh()` having no
   animator-threaded duration to take (`UnitSprite.SCRIM_FADE_SECONDS` states it). All of it is
   fire-and-forget: **the pipeline's apply path gains no `await`**.
+  **The board's quiet moments got bodies (2026-09-29)**, four more snaps retired through seams
+  that already existed, all presentation. **The unit in hand marches on the spot** — the move
+  clip without the walk — from the pick-up to the order: `BattleView.hold` is the one writer of
+  `UnitSprite.in_hand`, Battle picks up in `_select` and puts down in `clear_selection`, and the
+  pipeline lets go the moment a command passes validation, so a unit carries its order out at
+  rest. `UnitSprite.marches` is the clip policy and `BoardBeat.still()` — a pinned capture or
+  Instant — parks a held unit, so no captured frame depends on who was picked up. **The map
+  path's exchange has bodies**: a direct shot lunges at its target, a lobbed one kicks back from
+  it (the snapshot's `attacker_indirect`; a counter never lobs), and the struck unit flinches —
+  pushed along `UnitSprite.step_toward`'s dominant axis, over the hit flash's own two halves,
+  under `_flash_muzzle`'s both-seen fog rule. **A rider boards and steps off**: `settle_move`
+  fades a unit whose move ended aboard into its hull — a fade and never a sink, because the units
+  layer is y-sorted and a rider drawn lower than its hull steps out in front of it — and a
+  dropped rider walks its one leg off the transport through `animate_path`, fading in, only where
+  both the hull and the landing are seen. That step is the one new `await`, beside the walk the
+  pipeline already awaits. Every duration is one the tier already answers (`flash_in_seconds`,
+  `flash_out_seconds`, `move_step_seconds`), so Instant moves nothing and no tier number was
+  added.
   **The fifth slice is the 64x96 unit cell** — `UnitSprite.SPRITE_H` is 96 with every vertical
   landmark measured up from the cell's **bottom** edge, so the extra rows are sky and an unraised
   unit is byte-identical. **The headroom is spent on MASS, not height** (`docs/density_128.md`), and
