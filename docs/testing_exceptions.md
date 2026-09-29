@@ -71,6 +71,7 @@ suites pin.
 | `TouchGestures` | `test_touch_gestures.gd` | `gain_for`, `rung_step` and `cells_in` are static, and the recogniser itself is a `RefCounted` fed synthetic events, so the pinch ladder and the tap slop are checked without a touchscreen |
 | `FastForward`, `CutscenePlayback` | `test_fast_forward.gd` | `held` / `rate` is a static read of the `InputMap` and the clock's `advance` is arithmetic over its own fields, so the whole held-key rate path is checked without a cut-in |
 | `MobileProfile.touch` | `test_mobile_profile.gd` | pure over the arguments handed in and the engine's feature tag, like `CmdArgs`, so the gate the touch chrome is built behind is checked without an exported package |
+| `UnitModels3D.mesh_for`, `PropertyModels3D.mesh_for` | `test_unit_models_3d.gd` | a model's mesh is a Resource built from a type id and a faction theme with no `Node` made, so the geometry contract the 3D board places every model by — the footprint inside its cell, the height per domain, the owner's colour — is checked without a scene; `build`, which does make nodes, stays out of the suite |
 
 ## Content registries and resolved identity
 
