@@ -400,8 +400,8 @@ func release_sprite(unit: Unit) -> UnitSprite:
 ## everything down. The held sprite marches on the spot (`UnitSprite.in_hand`).
 ## Battle picks a unit up in `_select` and lets go in `clear_selection`, and the
 ## pipeline lets go the moment an order is committed, so the unit carries it out
-## at rest. Held as the sprite rather than the unit, so letting go still reaches
-## one an exchange has already released from the table.
+## at rest. Held as the sprite rather than the unit, so putting it down never
+## depends on the view still tracking the unit it belonged to.
 func hold(unit: Unit) -> void:
 	if is_instance_valid(_held):
 		_held.in_hand = false
