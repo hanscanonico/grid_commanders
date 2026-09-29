@@ -143,7 +143,7 @@ static func briefing_lines() -> Array[MissionLine]:
 ## paused computer turn returns to that paused turn.
 static func _say_briefing(battle: Battle) -> void:
 	battle.state = Battle.State.ANIMATING
-	await battle.animator.speak_until_dismissed(briefing_lines(), battle.commander_db)
+	await battle.animator.speak_until_dismissed(DialogueCast.of_briefing(battle, briefing_lines()))
 	battle.state = battle.rest_state()
 
 

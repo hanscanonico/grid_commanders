@@ -676,14 +676,34 @@ forms named in the root index are in `docs/design_record.md`.
   footprint and height contract pinned by `tests/unit/test_unit_models_3d.gd`), faction colour
   from `SideIdentity.theme_for_row`, and one material per unit the mirror tints in place.
   `scenes/board3d/model_gallery.tscn` is the dev sheet to look at them. The ground's variety is
-  per-sub-square shade, flat, by the standing-terrain rule below. **Known gaps, left on purpose**:
+  per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board
+  is a cinematic, not a card** (user request, 2026-09-29). A scripted beat's lines, the briefing
+  read again and a Command Power's activation play through `DialogueCinema3D` whenever the 3D board
+  is up and the battle is not capturing; `BattleAnimator.speak_lines` / `speak_until_dismissed` /
+  `show_power_banner` stay the one seam and branch there, so the flat board, every golden frame and
+  every smoke capture keep their cards. Per line the lens flies to the speaker on a crane's arc
+  (`CinemaPose3D.glide`) and drifts round them on an ease that never arrives (`CinemaShot3D`, so an
+  untimed line never freezes), `SpeakerHolo3D` projects their portrait over their post and
+  `CinemaFrame` — the letterbox, built from `MissionSpeech`'s own pieces — types the words; a
+  narrated line is an establishing shot of the board, or of what the beat put on it; a close shot's
+  open third faces into the board (`side_facing`). A power flash-cuts to a swoop round the HQ,
+  rolls two shockwaves out to the rim and lands its name as a title, and the card is still bound so
+  its quote rotation stays one rotation. **Where a voice stands is the battle's answer, handed
+  over**: `DialogueCast` (`scenes/battle/`) reads the match so the 3D board keeps D1 — a general is
+  framed at their HQ, else at their visible unit nearest the middle of their visible army; a voice
+  with no seat on the board at the viewer's own post, over a noisy line; and a beat's subject is
+  only what the viewer can see. Moves run at `GameSpeed.cutscene_rate()`, a line holds
+  `speech_seconds` of its own words, and `BoardBeat.still()` cuts, types whole and snaps the bars.
+  A press finishes the typing or moves on and Esc skips; `V` / `C` / `B` hold still under it and the
+  HUD's layer is off the screen for its length. `tests/unit/test_cinema_shot_3d.gd` pins the
+  framing. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
   `follow_cursor` still steps aside by the flat board's geometry, `V` pressed over the open pause
   menu flips the board but leaves the View row's label stale until the menu reopens, the 3D
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
-  by presentation keys on `TerrainType`, and the cut-ins, the map editor and the menu backdrop
-  stay 2D.
+  by presentation keys on `TerrainType`, and the turn banner, the cut-ins, the map editor and the
+  menu backdrop stay 2D.
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
   no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
   slice's measurements, the packaging facts, the refutations, the known hit-area limits and the
