@@ -1,4 +1,5 @@
-"""The two authored marches — the game's Music.NAMES contract.
+"""The authored music — two marches and a story theme, the game's
+Music.NAMES contract.
 
 Composition lives here as hand-written data, the way each sprite is a
 hand-written voxel model: melodies note by note, harmony as a bar chart of
@@ -20,9 +21,16 @@ advance — the battle's pulse: an A-minor quickstep at 132 BPM, ABAC over 32
           at C6 as the hats double to sixteenths, and a descending E7 run
           resolves across the seam onto the loop's opening A under the same
           swelling buzz roll.
+council — the story cinematics' underscore: a D-minor theme at 76 BPM,
+          ABA' over 24 bars, played under dialogue. A reed lead that leaves
+          room for reading, a detuned triangle pad, harp broken chords that
+          keep the time in place of drums, and a soft sine bass; rendered
+          well under the marches, since it plays beneath words.
 """
 
 from __future__ import annotations
+
+import dataclasses
 
 import numpy as np
 
@@ -35,7 +43,7 @@ BEATS = BARS * 4.0
 # -- authoring helpers -------------------------------------------------------
 
 
-def seq(steps, vel: float = 0.9) -> tuple:
+def seq(steps, vel: float = 0.9, song_beats: float = BEATS) -> tuple:
     """A voice played through in sequence: (midi, beats[, velocity]) steps,
     midi None for a rest. Must span the whole song — a march has no slack."""
     notes = []
@@ -45,18 +53,18 @@ def seq(steps, vel: float = 0.9) -> tuple:
         if midi is not None:
             notes.append((at, midi, beats, step[2] if len(step) > 2 else vel))
         at += beats
-    if at != BEATS:
-        raise ValueError(f"melody spans {at} beats, the song is {BEATS}")
+    if at != song_beats:
+        raise ValueError(f"melody spans {at} beats, the song is {song_beats}")
     return tuple(notes)
 
 
-def _beat_chords(chart) -> list:
+def _beat_chords(chart, song_beats: float = BEATS) -> list:
     """Per-beat (root, voicing) lookup expanded from the bar chart."""
     out = []
     for beats, root, chord in chart:
         out.extend([(root, chord)] * int(beats))
-    if len(out) != int(BEATS):
-        raise ValueError(f"chart spans {len(out)} beats, the song is {BEATS}")
+    if len(out) != int(song_beats):
+        raise ValueError(f"chart spans {len(out)} beats, the song is {song_beats}")
     return out
 
 
@@ -415,15 +423,167 @@ def advance() -> sequencer.Song:
     )
 
 
+# -- council -----------------------------------------------------------------
+# D minor, 76 BPM, ABA' over 24 bars: the story theme the generals talk over.
+# No drums — a harp's broken chords keep the time. A states the theme over
+# quarter-note plucks; B climbs through the relative major as the harp moves
+# to eighths and the pad swells; A' returns the theme and turns in its last
+# bar onto an A7 whose C#-E-G pickup lifts the loop back to its opening A.
+# The lead leaves every other half bar open: this plays under words.
+# fmt: off
+
+COUNCIL_BARS = 24
+COUNCIL_BEATS = COUNCIL_BARS * 4.0
+
+_COUNCIL_A_HEAD = [
+    (69, 1.5), (70, 0.5), (69, 1.0), (65, 1.0),  # Dm: the question
+    (62, 3.0), (None, 1.0),  # Bb: left hanging
+    (67, 1.5), (69, 0.5), (70, 1.0), (72, 1.0),  # Gm: asked again, higher
+    (73, 2.0), (69, 2.0),  # A: the leading tone, unanswered
+    (74, 1.5), (72, 0.5), (70, 1.0), (69, 1.0),  # Dm: stepping down
+    (70, 1.0), (65, 1.0), (67, 2.0),  # Bb
+]
+_COUNCIL_A_END = [
+    (70, 1.0), (69, 1.0), (67, 1.0), (64, 1.0),  # Gm A
+    (65, 1.0), (64, 1.0), (62, 2.0),  # Dm: settled, for now
+]
+_COUNCIL_A_LOOP = [
+    (70, 1.0), (69, 1.0), (67, 1.0), (65, 1.0),  # Gm
+    (64, 2.0), (61, 1.0), (64, 0.5), (67, 0.5),  # A7: pickup into the loop
+]
+_COUNCIL_B = [
+    (72, 1.5), (74, 0.5), (76, 1.0), (77, 1.0),  # F: the brighter room
+    (76, 2.0), (72, 2.0),  # C
+    (74, 1.5), (76, 0.5), (77, 1.0), (81, 1.0),  # Dm: reaching
+    (79, 2.0), (76, 2.0),  # Am
+    (77, 1.5), (76, 0.5), (74, 1.0), (70, 1.0),  # Bb: falling back
+    (72, 2.0), (69, 2.0),  # F
+    (70, 1.0), (72, 1.0), (74, 1.0), (76, 1.0),  # Gm: climbing to the edge
+    (73, 3.0), (None, 1.0),  # A: held breath
+]
+COUNCIL_MELODY = (
+    _COUNCIL_A_HEAD + _COUNCIL_A_END
+    + _COUNCIL_B
+    + _COUNCIL_A_HEAD + _COUNCIL_A_LOOP
+)
+
+_DM, _BB, _GM, _AMAJ = (57, 62, 65), (58, 62, 65), (58, 62, 67), (57, 61, 64)
+_FMAJ, _CMAJ, _AMIN, _A7 = (57, 60, 65), (55, 60, 64), (57, 60, 64), (55, 61, 64)
+_COUNCIL_CHART_A = [
+    (4, 38, _DM), (4, 34, _BB), (4, 43, _GM), (4, 45, _AMAJ),
+    (4, 38, _DM), (4, 34, _BB), (2, 43, _GM), (2, 45, _AMAJ), (4, 38, _DM),
+]
+_COUNCIL_CHART_B = [
+    (4, 41, _FMAJ), (4, 36, _CMAJ), (4, 38, _DM), (4, 45, _AMIN),
+    (4, 34, _BB), (4, 41, _FMAJ), (4, 43, _GM), (4, 45, _AMAJ),
+]
+_COUNCIL_CHART_A_LOOP = _COUNCIL_CHART_A[:6] + [(4, 43, _GM), (4, 45, _A7)]
+COUNCIL_CHART = _COUNCIL_CHART_A + _COUNCIL_CHART_B + _COUNCIL_CHART_A_LOOP
+
+# The harp's walk through each chord, one step an eighth: up to the octave
+# and back, so every bar opens on the bass's own note an octave up.
+_HARP_WALK = (0, 1, 2, 3, 2, 1, 2, 1)
+# fmt: on
+
+_COUNCIL_B_BARS = 8, 8  # bars 9-16
+_COUNCIL_B_LEVEL = 1.45
+_PAD_OVERLAP = 0.75  # beats each chord holds into the next, so the pad is legato
+
+
+def held_chords(chart, overlap: float, vel: float = 0.8) -> tuple:
+    """Each chord of the chart held for its whole span and a little past it."""
+    notes = []
+    at = 0.0
+    for beats, _root, chord in chart:
+        for midi in chord:
+            notes.append((at, midi, beats + overlap, vel))
+        at += beats
+    return tuple(notes)
+
+
+def bass_line(chart, vel: float = 0.9) -> tuple:
+    """The chart's roots, one held note a chord."""
+    notes = []
+    at = 0.0
+    for beats, root, _chord in chart:
+        notes.append((at, root, float(beats), vel))
+        at += beats
+    return tuple(notes)
+
+
+def broken_chords(chart, every: float, vel: float = 0.8) -> tuple:
+    """The harp walking the chord a step each `every` beats: the root an
+    octave up and then the voicing, each pluck left to ring."""
+    chords = _beat_chords(chart, COUNCIL_BEATS)
+    notes = []
+    at = 0.0
+    while at < COUNCIL_BEATS:
+        root, chord = chords[int(at)]
+        tones = (root + 12,) + chord
+        step = int(round(at * 2.0)) % len(_HARP_WALK)
+        on_beat = at == int(at)
+        midi = tones[_HARP_WALK[step]]
+        notes.append((at, midi, 2.0, vel if on_beat else vel * 0.75))
+        at += every
+    return tuple(notes)
+
+
+def _council_harp() -> tuple:
+    quarters = strain(broken_chords(COUNCIL_CHART, 1.0), 0, 8)
+    eighths = broken_chords(COUNCIL_CHART, 0.5)
+    return quarters + strain(eighths, 8, 16)
+
+
+def council() -> sequencer.Song:
+    def swell(notes: tuple) -> tuple:
+        return shade(notes, *_COUNCIL_B_BARS, _COUNCIL_B_LEVEL)
+
+    return sequencer.Song(
+        bpm=76.0,
+        beats=COUNCIL_BEATS,
+        tracks=(
+            sequencer.Track(
+                "reed_lead",
+                0.30,
+                rings_over(swell(seq(COUNCIL_MELODY, 0.8, COUNCIL_BEATS)), _SEAM_RING),
+            ),
+            sequencer.Track(
+                "hymn_pad", 0.22, swell(held_chords(COUNCIL_CHART, _PAD_OVERLAP))
+            ),
+            sequencer.Track("harp", 0.34, swell(_council_harp())),
+            sequencer.Track(
+                "soft_bass", 0.22, rings_over(bass_line(COUNCIL_CHART), _SEAM_RING)
+            ),
+        ),
+    )
+
+
 # name -> (song builder, peak dBFS). Music sits under every combat SFX peak
 # by contract — the Mix gate reads the margin off sfx.SFX and holds it.
 MUSIC: dict[str, tuple] = {
     "parade": (parade, -7.0),
     "advance": (advance, -6.0),
+    "council": (council, -18.0),
 }
+
+
+# A drumless track keeps time with one voice, and the onset reader cannot hear
+# that beat through a held pad and a bass's ripple — council's full mix reads
+# anywhere from 71 to 78 BPM as its gains move. So its tempo is read off the
+# voice that keeps it.
+TIMEKEEPER = {"council": "harp"}
 
 
 def render(name: str) -> np.ndarray:
     """A finished loop: authored, sequenced, levelled to its authored peak."""
     builder, peak_db = MUSIC[name]
     return sequencer.render(builder(), peak_db)
+
+
+def pulse(name: str) -> np.ndarray:
+    """What a track's tempo is read from: its render, or its timekeeper alone."""
+    if name not in TIMEKEEPER:
+        return render(name)
+    song = MUSIC[name][0]()
+    keeper = tuple(t for t in song.tracks if t.instrument == TIMEKEEPER[name])
+    return sequencer.mixdown(dataclasses.replace(song, tracks=keeper))

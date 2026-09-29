@@ -1,4 +1,4 @@
-"""The nine authored sound effects — the game's Sfx.NAMES contract.
+"""The fourteen authored sound effects — the game's Sfx.NAMES contract.
 
 Each effect is a hand-authored recipe over the dsp toolkit, the way each
 sprite in sprite_generator is a hand-authored voxel model: layered, seeded,
@@ -118,6 +118,85 @@ def torpedo() -> np.ndarray:
     return dsp.mix(thunk * 0.8, wash * 0.55, late)
 
 
+# -- story cinematics ---------------------------------------------------------
+# The dialogue scenes' voice: soft, bright and short, so a line typing out or a
+# camera flying between speakers never stands over the words being read.
+
+
+def text_blip() -> np.ndarray:
+    """A letter typing out: a soft sine chirp that lifts a little and is gone."""
+    t = 0.028
+    chirp = dsp.sine(dsp.sweep(1180.0, 1320.0, t), t)
+    body = dsp.mix(chirp, dsp.sine(dsp.sweep(2360.0, 2640.0, t), t) * 0.12)
+    return body * dsp.adsr(t, 0.003, 0.008, 0.5, 0.012)
+
+
+def window_open() -> np.ndarray:
+    """A message window unfolding: two bell tones stepping up a fifth."""
+    out = dsp.silence(0.15)
+    for i, f in enumerate((783.99, 1174.66)):
+        tone = dsp.mix(dsp.sine(f, 0.1), dsp.sine(f * 2.0, 0.1) * 0.18)
+        tone *= dsp.adsr(0.1, 0.004, 0.02, 0.55, 0.07)
+        start = dsp.samples(0.045 * i)
+        out[start : start + len(tone)] += tone * (0.75 if i == 0 else 0.9)
+    return out
+
+
+def cut_whoosh() -> np.ndarray:
+    """The camera flying to the next speaker: air that swells and passes."""
+    t = 0.4
+    air = dsp.noise(t, seed=111)
+    swell = 0.5 - 0.5 * np.cos(np.linspace(0.0, 2.0 * np.pi, dsp.samples(t)))
+    band = 700.0 + 1500.0 * swell
+    air = dsp.highpass(dsp.lowpass(dsp.lowpass(air, band), band), 180.0)
+    return air * swell**1.5
+
+
+def emote_pop() -> np.ndarray:
+    """A "!" bubble bursting over a head: a tiny pop and a springing boing."""
+    t = 0.16
+    pop = dsp.noise(0.012, seed=127) * dsp.decay(0.012, 0.002)
+    pop = dsp.bandpass(pop, 1500.0, 6000.0)
+    spring = 1.0 + 0.09 * dsp.sine(28.0, t) * dsp.decay(t, 0.05)
+    rise = dsp.sweep(440.0, 880.0, t, curve=0.35)
+    boing = dsp.mix(
+        dsp.sine(rise * spring, t), dsp.triangle(rise * spring * 2.0, t) * 0.15
+    )
+    boing *= dsp.adsr(t, 0.004, 0.03, 0.6, 0.09)
+    return dsp.mix(pop * 0.5, boing)
+
+
+def power_sting() -> np.ndarray:
+    """A Command Power breaking loose: a brass arpeggio climbing into a held,
+    shimmering D major under a timpani roll-off."""
+    t = 2.5
+    out = dsp.silence(t)
+    step = 0.075
+    for i, f in enumerate((293.66, 369.99, 440.0, 587.33, 739.99)):
+        length = 0.16
+        note = dsp.lowpass_poles(dsp.saw(f, length), 2800.0)
+        note *= dsp.adsr(length, 0.006, 0.05, 0.6, 0.06)
+        start = dsp.samples(step * i)
+        out[start : start + len(note)] += note * 0.45
+    held = t - step * 5
+    vib = 1.0 + 0.005 * dsp.sine(5.2, held) * np.linspace(0.0, 1.0, dsp.samples(held))
+    chord = dsp.mix(
+        *(
+            dsp.lowpass_poles(dsp.saw(f * vib, held), 2400.0)
+            for f in (146.83, 293.66, 369.99, 440.0)
+        )
+    )
+    chord *= dsp.adsr(held, 0.03, 0.25, 0.6, 1.1)
+    top = dsp.triangle(880.0 * vib, held) * dsp.adsr(held, 0.02, 0.3, 0.5, 1.0)
+    shimmer = dsp.noise(held, seed=131) * dsp.adsr(held, 0.05, 0.4, 0.25, 1.0)
+    shimmer = dsp.highpass(shimmer, 7000.0)
+    at = dsp.samples(step * 5)
+    out[at:] += chord * 0.3 + top * 0.35 + shimmer * 0.08
+    boom = dsp.sine(dsp.sweep(98.0, 70.0, 0.9), 0.9) * dsp.decay(0.9, 0.18)
+    out[at : at + len(boom)] += boom * 0.7
+    return dsp.soft_clip(out, drive=1.2)
+
+
 # name -> (builder, category, peak dBFS). UI sits a step under COMBAT.
 SFX: dict[str, tuple] = {
     "select": (select, UI, -8.0),
@@ -129,6 +208,11 @@ SFX: dict[str, tuple] = {
     "flak": (flak, COMBAT, -3.0),
     "rocket": (rocket, COMBAT, -3.5),
     "torpedo": (torpedo, COMBAT, -4.0),
+    "text_blip": (text_blip, UI, -16.0),
+    "window_open": (window_open, UI, -11.0),
+    "cut_whoosh": (cut_whoosh, UI, -13.0),
+    "emote_pop": (emote_pop, UI, -9.0),
+    "power_sting": (power_sting, UI, -5.0),
 }
 
 

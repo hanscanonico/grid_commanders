@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Deterministic sound pipeline for grid_commanders.
 
-Renders the game's nine sound effects (autoload/sfx.gd's Sfx.NAMES contract)
-and its two looping music tracks (autoload/music.gd's Music.NAMES) as
+Renders the game's fourteen sound effects (autoload/sfx.gd's Sfx.NAMES
+contract) and its three looping music tracks (autoload/music.gd's Music.NAMES) as
 authored recipes and song data: no RNG outside per-sound seeds, so every run
 reproduces the same bytes.
 
@@ -12,7 +12,7 @@ Outputs (under --out, default ./out):
                      assets/music/, an eighth of the PCM they replace
   soundboard.html    A/B audition page: the game's current sounds against
                      this run's, with the measurements beside each pair
-  musicboard.html    the same for the two marches; both players loop, so
+  musicboard.html    the same for the three tracks; every player loops, so
                      the seam is auditioned by just letting them play
 
 --only NAME [NAME ...] narrows a run to the named effects and tracks (and
@@ -128,6 +128,7 @@ def musicboard(
     for name, x in arrays.items():
         builder, _peak = music.MUSIC[name]
         song = builder()
+        pulse = x if name not in music.TIMEKEEPER else music.pulse(name)
         old_tag = "<em>missing</em>"
         for suffix, mime in ((".ogg", "audio/ogg"), (".wav", "audio/wav")):
             old_path = game / "assets/music" / f"{name}{suffix}"
@@ -140,16 +141,22 @@ def musicboard(
             f"<td>{_audio_tag(encoded[name], loop=True, mime='audio/ogg')}</td>"
             f'<td class="num">{seconds(len(x)):.1f}s'
             f"<br>peak {measure.peak_db(x):.1f} dB<br>rms {measure.rms_db(x):.1f} dB"
-            f"<br>tempo {measure.tempo_bpm(x):.1f} BPM"
+            f"<br>tempo {measure.tempo_bpm(pulse, *measure.tempo_band(song.bpm)):.1f}"
+            " BPM"
             f"<br>seam Δ {measure.loop_rms_delta_db(x):.1f} dB</td></tr>"
         )
     intro = (
-        "<p>Both players loop, so let a track run past its end: the seam is "
+        "<p>Every player loops, so let a track run past its end: the seam is "
         "the audition."
     )
-    if len(arrays) == len(music.MUSIC):
-        distance = measure.spectral_distance(arrays["parade"], arrays["advance"])
-        intro += f" Spectral distance between the two marches: {distance:.3f}."
+    names = list(arrays)
+    pairs = [(a, b) for i, a in enumerate(names) for b in names[i + 1 :]]
+    if pairs:
+        distances = ", ".join(
+            f"{a}/{b} {measure.spectral_distance(arrays[a], arrays[b]):.3f}"
+            for a, b in pairs
+        )
+        intro += f" Spectral distance between the tracks: {distances}."
     html = (
         f"<title>Musicboard</title><style>{_PAGE_STYLE}</style>"
         "<h1>Grid Commanders musicboard — current vs composed</h1>"
