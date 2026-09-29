@@ -470,6 +470,12 @@ func _set_acted(acted: bool) -> void:
 	tween.tween_property(_scrim_material, "shader_parameter/fade", 1.0, SCRIM_FADE_SECONDS)
 
 
+## Whether the acted scrim is up: the 3D board greys its model when this does,
+## so the two boards grey out on the same pass.
+func greyed() -> bool:
+	return _scrim_up
+
+
 ## A brief scale punch on the HP number whenever it changes, off `HP_PUNCH_SCALE`
 ## and back down — the impulse-and-decay shape `SHAKE_STEP_SECONDS` and
 ## `CURSOR_PULSE_SECONDS` already use for a beat that is not gameplay theatre.

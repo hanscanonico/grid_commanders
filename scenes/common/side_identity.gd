@@ -106,6 +106,16 @@ func atlas_row(team: int) -> int:
 	return _ROW_FOR_KEY.get(_theme_by_team[team].key, NEUTRAL_ROW)
 
 
+## The faction theme an atlas row is painted in — the inverse of `atlas_row`,
+## for a surface that only holds the row: the 3D board reads a property's owner
+## off the 2D board's paint, which already honours the fog's last-seen owner.
+static func theme_for_row(row: int) -> CommanderVisuals.FactionTheme:
+	for key: StringName in _ROW_FOR_KEY:
+		if _ROW_FOR_KEY[key] == row:
+			return CommanderVisuals.theme_for_key(key)
+	return CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
+
+
 ## The atlas row a *cell* is drawn in: its owner's faction row on a property, the
 ## untinted neutral row on ground that wears nobody's colours. `owner_row` is
 ## already an `atlas_row` answer, so this is where the tinted question is asked:

@@ -18,6 +18,8 @@ var map: MapData
 ## The campaign mission's card, which parks in a board corner and so has to be
 ## told where the cursor went.
 var mission_panel: MissionObjectivesPanel
+## The 3D board, which answers where a cell sits on screen while it is up.
+var board_3d: Board3D
 
 ## The transient jitter the animator lays over the board's docking shift. Set —
 ## and tweened — by `BattleAnimator.shake_camera` rather than written to the
@@ -74,6 +76,8 @@ func min_zoom() -> float:
 
 
 func screen_pos_for_cell(cell: Vector2i) -> Vector2:
+	if board_3d != null and board_3d.active:
+		return board_3d.screen_of(cell)
 	var world := BattleView.cell_center(cell) + Vector2(BattleView.TILE, -BattleView.TILE) / 2.0
 	return (world - _screen_center()) * camera.zoom + viewport_size() / 2.0 + Vector2(6, 0)
 
