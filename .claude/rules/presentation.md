@@ -705,14 +705,34 @@ forms named in the root index are in `docs/design_record.md`.
   their mark and snaps the bars. A press finishes the typing or moves on and cancel skips; `V` / `C`
   / `B` hold still under it and the HUD's layer is off the screen for its length.
   `tests/unit/test_cinema_shot_3d.gd` and `test_dialogue_staging.gd` pin the framing and the
-  staging. **Known gaps, left on purpose**:
+  staging. D6: **the cut-ins on the 3D board are a 3D battle stage** (user ruling, 2026-09-29,
+  asked: Re-Boot Camp style over an on-board swoop). With the board up, a combat or a capture that
+  passes the cut-in's own gate plays on `CutinStage3D` (`scenes/board3d/cutin/`) instead of the
+  flat band: an off-board set in the board's own world — the root viewport renders it at window
+  resolution, where a SubViewport would be 640x360 — with each side's ground meshed by the board's
+  mesher in the board's materials (`StagePlot3D`, a property's building standing behind in its
+  owner's theme) and a squad of the unit's models sized by `CutsceneSide.figures_for`
+  (`StageSquad3D`, posed by the pure `SquadFormation3D`). The seam does not move:
+  `animate_combat` / `animate_capture` ask `combat_cut_in_3d()` / `capture_cut_in_3d()` which
+  director plays, keep the gate, the streak pacing and the single return, and skip the flat punch;
+  the scenario driver asks the same helpers, so `--demo=cutin… --view=3d` and
+  `--demo=capture_cutin… --view=3d` pose the stage the game plays (`--cutin-at=` poses any moment).
+  `CombatCutin3D` and `CaptureCutin3D` are `CutsceneDirector`s on the flat directors' own sheets —
+  `CombatBeats` and `CaptureBeats`, which the flat capture cut-in now reads too — so a 3D volley
+  lands when the flat one does and the flat frames are byte-identical. Every visual is a function
+  of the clock: the lens (`CombatShots3D`, `CaptureShot3D`), the rounds (`CutinBallistics3D`),
+  the smoke, fire and spray rebuilt each frame by `CutinFx3D` under two soft shaders, and the
+  stage's own water, whose swell reads a `clock` uniform rather than engine time, so a posed frame
+  is the same frame every run — no tween, no particle. The plates are the flat cut-ins' look
+  (`CutinPlates3D`, `CaptureHud`); the shell's dim stays off while the stage has the lens, and
+  `V` / `C` / `B` hold still while it rolls. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
   `follow_cursor` still steps aside by the flat board's geometry, `V` pressed over the open pause
   menu flips the board but leaves the View row's label stale until the menu reopens, the 3D
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
-  by presentation keys on `TerrainType`, and the turn banner, the cut-ins, the map editor and the
-  menu backdrop stay 2D.
+  by presentation keys on `TerrainType`, and the turn banner, the map editor and the menu
+  backdrop stay 2D.
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
   no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
   slice's measurements, the packaging facts, the refutations, the known hit-area limits and the
