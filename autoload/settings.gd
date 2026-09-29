@@ -20,6 +20,10 @@ extends Node
 ## Persisted to user://settings.cfg with ConfigFile, beside SaveGame's
 ## user://save.json.
 
+## The board flipped between 2D and 3D. A battle in progress swaps its board on
+## the spot, so the preference is heard rather than read once at boot.
+signal board_view_changed
+
 const SETTINGS_PATH := "user://settings.cfg"
 ## Where an unreadable settings file is kept when one has to be written over. See
 ## `_set_aside`; nothing reads it back, and that is deliberate. Same name as
@@ -34,6 +38,7 @@ const MENU_ANIMATIONS_KEY := "menu_animations"
 const VOLUME_KEY := "volume"
 const END_TURN_CONFIRM_KEY := "end_turn_confirm"
 const FULLSCREEN_KEY := "fullscreen"
+const BOARD_3D_KEY := "board_3d"
 ## What a fresh install confirms with, and what `pin` stands a scripted launch
 ## back at.
 const DEFAULT_END_TURN_CONFIRM := true
@@ -49,6 +54,9 @@ const DEFAULT_BATTLE_ANIMATIONS := true
 ## capture is framed at the project's window size, and a machine whose player
 ## plays full-screen would otherwise photograph a different frame entirely.
 const DEFAULT_FULLSCREEN := false
+## The flat board is the default: it is what every capture and golden frame was
+## taken of, and the 3D board is something a player chooses.
+const DEFAULT_BOARD_3D := false
 ## The key F11 is bound to. Named here because this file both listens for it and
 ## owns what it changes.
 const FULLSCREEN_ACTION := &"toggle_fullscreen"
@@ -65,6 +73,9 @@ const NO_ANIM_ARG := "--no-battle-anim"
 ## just as un-persisted: how a capture or a scripted run stays quiet without
 ## spending the player's own volume.
 const MUTE_ARG := "--mute"
+## `--view=3d` or `--view=2d`: which board a launch is played on, never written
+## back — how a capture photographs the 3D board.
+const VIEW_ARG := "--view="
 
 ## How loud the game plays, quietest step last. The master bus is the whole
 ## surface — music and effects come down together — because the complaint this
@@ -107,7 +118,9 @@ const END_TURN_ROW := &"end_turn_confirm"
 ## the 640-wide frame, which `MenuCaptureDriver`'s gate refuses outright — so on
 ## that page the F11 key is the whole of this setting.
 const WINDOW_ROW := &"window"
-const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW, WINDOW_ROW]
+## The flat board or the 3D one. The V key flips it too, from inside a battle.
+const VIEW_ROW := &"view"
+const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW, WINDOW_ROW, VIEW_ROW]
 
 ## How fast moves and battles play out on screen. Never null. Callers read it at
 ## the moment they animate rather than caching it, so a mid-match change takes
@@ -143,6 +156,10 @@ var end_turn_confirm := DEFAULT_END_TURN_CONFIRM
 ## instant alt-tab a turn-based game is played with.
 var fullscreen := DEFAULT_FULLSCREEN
 
+## Whether the battle is drawn on the 3D board. Presentation only: the two boards
+## draw one match, and nothing under core/ or ai/ learns which one is up.
+var board_3d := DEFAULT_BOARD_3D
+
 ## Which first-match hints this player has already performed their way out of —
 ## `TutorialHints` ids, retired for good. MissionStrip reads it to pick what to
 ## teach next and stops drawing itself once it holds them all.
@@ -161,6 +178,7 @@ var _flag_wins := false
 ## that pin.
 var _anim_flag_wins := false
 var _volume_flag_wins := false
+var _view_flag_wins := false
 
 
 func _ready() -> void:
@@ -209,6 +227,15 @@ func set_volume(id: StringName) -> void:
 func set_fullscreen(enabled: bool) -> void:
 	fullscreen = enabled
 	_apply_window_mode()
+	if _persistent:
+		_save()
+
+
+## Flips the board between 2D and 3D, tells a running battle and writes it back,
+## on `set_fullscreen`'s terms.
+func set_board_3d(enabled: bool) -> void:
+	board_3d = enabled
+	board_view_changed.emit()
 	if _persistent:
 		_save()
 
@@ -275,6 +302,8 @@ func row_label(row: StringName) -> String:
 			return "End-turn check: %s" % ("On" if end_turn_confirm else "Off")
 		WINDOW_ROW:
 			return "Window: %s" % ("Fullscreen" if fullscreen else "Windowed")
+		VIEW_ROW:
+			return "View: %s" % ("3D" if board_3d else "2D")
 	push_error("Settings: %s names no value row" % row)
 	return ""
 
@@ -293,6 +322,8 @@ func cycle_row(row: StringName, step: int = 1) -> String:
 			set_end_turn_confirm(not end_turn_confirm)
 		WINDOW_ROW:
 			set_fullscreen(not fullscreen)
+		VIEW_ROW:
+			set_board_3d(not board_3d)
 	return row_label(row)
 
 
@@ -412,6 +443,10 @@ func pin(id: StringName) -> void:
 		_apply_volume()
 	if not _flag_wins:
 		speed = GameSpeed.by_id(id)
+	# Told rather than only set: a battle may already stand on the 3D board.
+	if not _view_flag_wins and board_3d != DEFAULT_BOARD_3D:
+		board_3d = DEFAULT_BOARD_3D
+		board_view_changed.emit()
 
 
 ## A missing or malformed file is not an error: the defaults simply stand, which
@@ -441,6 +476,9 @@ func _load() -> void:
 	var stored_full: Variant = config.get_value(SECTION, FULLSCREEN_KEY, fullscreen)
 	if stored_full is bool:
 		fullscreen = stored_full
+	var stored_3d: Variant = config.get_value(SECTION, BOARD_3D_KEY, board_3d)
+	if stored_3d is bool:
+		board_3d = stored_3d
 	# Stored as strings and read back as StringNames: ConfigFile has no
 	# StringName, and a hint id written by one version must still match the
 	# TutorialHints id in the next. An id nothing answers to any more is kept
@@ -462,6 +500,7 @@ func _save() -> void:
 	config.set_value(SECTION, VOLUME_KEY, String(volume))
 	config.set_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
 	config.set_value(SECTION, FULLSCREEN_KEY, fullscreen)
+	config.set_value(SECTION, BOARD_3D_KEY, board_3d)
 	var hints := PackedStringArray()
 	for id in retired_hints:
 		hints.append(String(id))
@@ -594,6 +633,12 @@ func apply_args(args: PackedStringArray) -> void:
 			_persistent = false
 			battle_animations = false
 			_anim_flag_wins = true
+		elif arg.begins_with(VIEW_ARG):
+			# Same terms as --no-battle-anim: this launch only, and it outranks a
+			# capture's pin, since asking for a capture of the 3D board is its use.
+			_persistent = false
+			board_3d = arg.get_slice("=", 1).strip_edges().to_lower() == "3d"
+			_view_flag_wins = true
 		elif arg == MUTE_ARG:
 			# Same terms as --no-battle-anim. _ready applies the volume once this
 			# walk is over, so nothing here has to touch the bus itself.

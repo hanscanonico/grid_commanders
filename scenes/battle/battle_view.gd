@@ -105,6 +105,10 @@ var mission_panel: MissionObjectivesPanel
 ## mobile chrome is never constructed at all. `setup` is what installs it.
 var mobile_dock: MobileDock
 
+## The same board in three dimensions, drawn from this one's nodes. Always
+## installed; built and shown only while the player has the 3D view up.
+var board_3d: Board3D
+
 ## Where the board sits on screen: the cursor's cell, the rung, the docking shift
 ## and the screen point of any cell. Handed the nodes it drives by `setup`, and
 ## the one writer of `camera.zoom` and `camera.offset` from there on.
@@ -190,6 +194,8 @@ func setup() -> void:
 	_paint_backdrop()
 	_spawn_unit_sprites()
 	board_camera.setup()
+	board_3d = Board3D.install(self, units_root.get_parent())
+	board_camera.board_3d = board_3d
 
 
 static func cell_center(cell: Vector2i) -> Vector2:

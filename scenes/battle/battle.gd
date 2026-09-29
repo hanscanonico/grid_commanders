@@ -600,7 +600,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"end_turn") and BattleLegend.commands_board(_legend_for(state)):
 		_request_end_turn()  # the bar's button by key: one gate, so they cannot disagree
 	elif not dir.is_empty():
-		var next: Vector2i = cursor_cell + DIR_ACTIONS[dir]
+		var next: Vector2i = cursor_cell + view.board_3d.turned(DIR_ACTIONS[dir])
 		if map.in_bounds(next):
 			set_cursor_cell(next)
 

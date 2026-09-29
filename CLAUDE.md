@@ -43,7 +43,8 @@ The index, by owning file in `.claude/rules/` (plan names drop their `-plan.html
   slices), capture-animation, range-preview,
   menu-revamp (`UiTheme`/`UiKit`), ux-recovery (U-01–U-26), mobile-builds (MB1–MB9), the field
   overlays, the zoom ladder and the animation milestone's nine slices, the next-ready-unit key
-  (`N`), and standing terrain being interactive while the ground plane carries ambient variety.
+  (`N`), standing terrain being interactive while the ground plane carries ambient variety, and
+  the 3D board (`V`, `scenes/board3d/`).
 - **campaign.md** — campaign-depth, campaign mode (the Five Flags campaign — its story is
   `docs/five_flags.md` — and the campaign layer's architecture).
 

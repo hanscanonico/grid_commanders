@@ -49,9 +49,9 @@ func handle(event: InputEvent) -> bool:
 		return true
 	_pinch_from = -1
 	if kind == TouchGestures.Kind.TAP:
-		_confirm(_cell_at(_world(_touch.tap_at)))
+		_confirm(_cell_under(_touch.tap_at))
 	elif kind == TouchGestures.Kind.PAN:
-		_walk(_touch.pan_cells)
+		_walk(_battle.view.board_3d.turned(_touch.pan_cells))
 	return true
 
 
@@ -59,19 +59,21 @@ func handle(event: InputEvent) -> bool:
 ## turned into a cell through, so the driven touch proof aims a finger at a cell
 ## the way a player does rather than spelling the transform a second time.
 func screen_of(cell: Vector2i) -> Vector2:
+	if _battle.view.board_3d.active:
+		return _battle.view.board_3d.screen_of_centre(cell)
 	return _battle.get_canvas_transform() * BattleView.cell_center(cell)
 
 
 func _moused(event: InputEvent) -> bool:
 	if event is InputEventMouseMotion:
-		var cell := _cell_at(_battle.get_global_mouse_position())
+		var cell := _cell_under((event as InputEventMouseMotion).position)
 		if _battle.map.in_bounds(cell) and cell != _battle.cursor_cell:
 			_battle.set_cursor_cell(cell)
 		return true
 	var click := event as InputEventMouseButton
 	if click == null or click.button_index != MOUSE_BUTTON_LEFT or not click.pressed:
 		return false
-	_confirm(_cell_at(_battle.get_global_mouse_position()))
+	_confirm(_cell_under(click.position))
 	return true
 
 
@@ -114,6 +116,14 @@ func _cell_px() -> float:
 ## on different cells.
 func _world(screen: Vector2) -> Vector2:
 	return _battle.get_canvas_transform().affine_inverse() * screen
+
+
+## The cell under a screen point on whichever board is up: the 3D board walks a
+## ray down onto its terrain, the flat one inverts its canvas transform.
+func _cell_under(screen: Vector2) -> Vector2i:
+	if _battle.view.board_3d.active:
+		return _battle.view.board_3d.pick(screen)
+	return _cell_at(_world(screen))
 
 
 func _cell_at(world: Vector2) -> Vector2i:
