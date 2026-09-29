@@ -83,6 +83,12 @@ func setup(view: BattleView) -> void:
 	_on_view_changed()
 
 
+## The window outlives the battle, so leaving one with the 3D board up must not
+## leave the next scene drawn with BOARD_ROOT culled.
+func _exit_tree() -> void:
+	get_viewport().canvas_cull_mask |= BOARD_ROOT
+
+
 ## V flips the board from anywhere in the battle — a watched match, a paused one,
 ## the computer's turn — and C and B turn the 3D one a quarter each way.
 func _unhandled_input(event: InputEvent) -> void:
