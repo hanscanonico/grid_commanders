@@ -138,6 +138,8 @@ var _sprites: Dictionary[Unit, UnitSprite] = {}
 ## Teams the computer plays, from `set_ai_teams`. The view only needs them to know
 ## whose controls it must not offer; Battle owns the list.
 var _ai_teams: Array[int] = []
+## The sprite the player has in hand — see `hold`.
+var _held: UnitSprite
 
 
 ## Builds the tile sets from data and paints the opening board. Call once, after
@@ -392,6 +394,20 @@ func release_sprite(unit: Unit) -> UnitSprite:
 	var sprite: UnitSprite = _sprites.get(unit)
 	_sprites.erase(unit)
 	return sprite
+
+
+## Puts `unit` in the player's hand and whatever was held before down; null puts
+## everything down. The held sprite marches on the spot (`UnitSprite.in_hand`).
+## Battle picks a unit up in `_select` and lets go in `clear_selection`, and the
+## pipeline lets go the moment an order is committed, so the unit carries it out
+## at rest. Held as the sprite rather than the unit, so putting it down never
+## depends on the view still tracking the unit it belonged to.
+func hold(unit: Unit) -> void:
+	if is_instance_valid(_held):
+		_held.in_hand = false
+	_held = _sprites.get(unit) if unit != null else null
+	if _held != null:
+		_held.in_hand = true
 
 
 ## Re-tints every sprite for the team about to play. Safe to call outside a fog

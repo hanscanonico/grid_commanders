@@ -398,4 +398,6 @@ max-public-methods: 22
 # 1196 -> 1194, tracking battle.gd down: what a launch with no match to play
 # does is BattleLaunchFailure's now. See the same entry in
 # tools/check_scripts.sh.
-max-file-lines: 1194
+# 1194 -> 1196, tracking battle.gd up: the unit in hand. See the same entry in
+# tools/check_scripts.sh.
+max-file-lines: 1196

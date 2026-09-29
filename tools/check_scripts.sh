@@ -270,8 +270,12 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # run's quit as well as the card that gives the player a way off a disabled
 # board — so the branch here is the disable and one call, two lines shorter than
 # the quit it replaced.
+# battle.gd 1194 -> 1196: the unit in hand marches on the spot. Picking a unit up
+# and putting everything down are Battle's (`_select`, `clear_selection`), so
+# each gained the one call that tells the view; which sprite is held and how it
+# marches are BattleView's and UnitSprite's, and there is nothing to extract.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1194
+scenes/battle/battle.gd 1196
 scenes/menu/main_menu.gd 785
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665

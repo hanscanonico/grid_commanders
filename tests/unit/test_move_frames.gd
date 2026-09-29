@@ -1,12 +1,14 @@
 extends GutTest
-## The board's move clip: the gait sheets a unit plays while it walks a path,
-## their cadence, and which way a step turns it.
+## The board's move clip: the gait sheets a unit plays while it walks a path or
+## is held in hand, their cadence, which way a step turns it, and which way the
+## map path's lunges and flinches push.
 ##
 ## In scope for the same reason test_ambient_frames.gd is: the sheet paths,
-## `BoardBeat.frame` and `UnitSprite.facing_for` are static and pure, and nothing
-## here builds a sprite. What is under test is the art contract — a clip
-## regenerated as the idle, or a sheet cut on a different grid, changes no code
-## and no other test unless one reads the pixels.
+## `BoardBeat.frame` and `still`, and `UnitSprite.facing_for`, `marches` and
+## `step_toward` are static and pure, and nothing here builds a sprite. What is
+## under test is the art contract — a clip regenerated as the idle, or a sheet
+## cut on a different grid, changes no code and no other test unless one reads
+## the pixels.
 
 const SPRITE_W := UnitSprite.SPRITE_W
 const SPRITE_H := UnitSprite.SPRITE_H
@@ -207,6 +209,38 @@ func test_a_step_turns_the_sprite_only_when_it_has_a_side() -> void:
 	assert_false(UnitSprite.facing_for(Vector2i(-1, 0), true), "a leftward step stayed mirrored")
 	assert_true(UnitSprite.facing_for(Vector2i(0, 1), true), "a downward step turned the sprite")
 	assert_false(UnitSprite.facing_for(Vector2i(0, -1), false), "an upward step turned the sprite")
+
+
+## A held unit marches, but a still board — a capture, Instant — keeps it parked,
+## so no smoke frame depends on which unit a scenario picked up. A walking unit
+## is never asked: Instant never walks one.
+func test_a_held_unit_marches_only_on_a_live_board() -> void:
+	assert_true(UnitSprite.marches(false, true, false), "a held unit stood still")
+	assert_false(UnitSprite.marches(false, true, true), "a held unit marched on a still board")
+	assert_false(UnitSprite.marches(false, false, false), "a parked unit marched")
+	assert_true(UnitSprite.marches(true, false, false), "a walking unit stopped its gait")
+
+
+func test_the_board_is_still_exactly_when_pinned_or_instant() -> void:
+	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
+	assert_false(BoardBeat.still(), "the default tier read as a still board")
+	BoardBeat.frozen = true
+	assert_true(BoardBeat.still(), "a pinned capture read as a live board")
+	BoardBeat.frozen = false
+	Settings.speed = GameSpeed.by_id(&"instant")
+	assert_true(BoardBeat.still(), "Instant read as a live board")
+
+
+## A push runs one pixel along the axis the other unit mostly lies on, whatever
+## the range — an artillery shot two across and one down still kicks sideways —
+## and a tie goes sideways, the axis the sheets face along.
+func test_a_push_runs_along_the_dominant_axis() -> void:
+	assert_eq(UnitSprite.step_toward(Vector2i(1, 0)), Vector2i(1, 0), "an adjacent step east")
+	assert_eq(UnitSprite.step_toward(Vector2i(0, -1)), Vector2i(0, -1), "an adjacent step north")
+	assert_eq(UnitSprite.step_toward(Vector2i(-2, 1)), Vector2i(-1, 0), "a lob two west, one south")
+	assert_eq(UnitSprite.step_toward(Vector2i(1, 3)), Vector2i(0, 1), "a lob one east, three south")
+	assert_eq(UnitSprite.step_toward(Vector2i(-2, 2)), Vector2i(-1, 0), "a diagonal tie")
+	assert_eq(UnitSprite.step_toward(Vector2i.ZERO), Vector2i.ZERO, "no delta pushed")
 
 
 ## True when any faction row of `column` is *drawn* differently between two

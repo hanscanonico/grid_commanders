@@ -125,6 +125,8 @@ func _drop_at(drop_cell: Vector2i) -> void:
 	var command := DropCommand.new(
 		_battle.selected, _battle.planned_path, drop_cell, _drop_option.passenger
 	)
+	# Down before the rider steps off, as `_fire_at` takes its targets down.
+	_battle.overlays.paint_move([])
 	_run_command.call(command, exit_to_menu)
 
 

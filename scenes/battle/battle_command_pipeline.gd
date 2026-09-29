@@ -32,6 +32,8 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	receipt.validation_error = command.validate(game)
 	if receipt.rejected():
 		return receipt
+	# The order is given, so whatever the player was holding carries it out at rest.
+	_battle.view.hold(null)
 	var standing_before := game.eliminated.size()
 	var acting_funds_before := int(game.funds.get(receipt.team_before, 0))
 
@@ -113,7 +115,7 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	elif command is DropCommand:
 		await _present_move(command, mover, watched_move)
 		if drop_passenger != null:
-			_battle.view.refresh_sprite(drop_passenger)
+			await _present_drop(command as DropCommand, drop_passenger)
 		_present_blocked_drop(command as DropCommand, watched_move)
 	elif mover != null:
 		await _present_move(command, mover, watched_move)
@@ -262,6 +264,21 @@ func _present_build(command: BuildCommand) -> void:
 	_battle.view.spawn_sprite_for(command.built_unit)
 	_battle.animator.animate_build(_battle.view.sprite_for(command.built_unit))
 	EventBus.unit_built.emit(command.built_unit)
+
+
+## The rider stepping off its transport onto the cell it was dropped on, rather
+## than appearing there. Only where the viewer sees both the hull it leaves and
+## the ground it lands on, so the step cannot trace a transport the fog hides; a
+## rider still aboard — a blocked drop, an ambushed one — is hidden by the
+## refresh and goes nowhere.
+func _present_drop(command: DropCommand, rider: Unit) -> void:
+	_battle.view.refresh_sprite(rider)
+	var sprite := _battle.view.sprite_for(rider)
+	if sprite == null or not sprite.visible:
+		return
+	if not _battle.perspective.can_see_unit(command.unit):
+		return
+	await _battle.animator.animate_step_off(sprite, command.unit.cell, rider.cell)
 
 
 ## The transport arrived and the passenger stayed aboard, because the drop cell

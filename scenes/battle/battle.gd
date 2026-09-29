@@ -697,6 +697,7 @@ func _select(unit: Unit) -> void:
 	# today; the flow below is untouched by it either way.
 	EventBus.unit_selected.emit(unit)
 	selected = unit
+	view.hold(unit)
 	move_range = MovementResolver.reachable(game, unit)
 	planned_path = [unit.cell]
 	_range_shown = false
@@ -709,6 +710,7 @@ func _select(unit: Unit) -> void:
 ## because BattlePowerFlow ends a firing on it, the way a committed command does.
 func clear_selection(refresh_board: bool = true) -> void:
 	selected = null
+	view.hold(null)
 	move_range = null
 	planned_path = []
 	targeting.clear()
