@@ -146,7 +146,7 @@ func _apply() -> void:
 	)
 	_hud.specks_at = _prop_head() + Vector2(0.0, 20.0)
 	_hud.specks_accent = _play.accent
-	_frame_banner()
+	_hud.frame_banner(_beats, _result, _play.t)
 	_hud.modulate.a = present
 	_hud.queue_redraw()
 
@@ -174,20 +174,6 @@ func _dust_windows() -> PackedFloat32Array:
 ## the specks fan out. Fixed for the whole cut-in so nothing anchored here drifts.
 func _prop_head() -> Vector2:
 	return Vector2(_play.band.size.x * CaptureStage.PROP_CENTER, _play.band.size.y * 0.34)
-
-
-func _frame_banner() -> void:
-	_hud.banner_p = _play.window(Vector2(_beats.banner.x, _beats.banner.x + 0.3))
-	_hud.banner_complete = _result.captured
-	if _result.captured:
-		_hud.banner_text = "CAPTURED!"
-		_hud.banner_sub = ""
-	else:
-		_hud.banner_text = "OCCUPYING"
-		var left := maxi(_result.points_after, 0)
-		_hud.banner_sub = "%d/%d LEFT" % [left, GameState.CAPTURE_POINTS]
-	if _play.t < _beats.banner.x or _play.t >= _beats.banner.y:
-		_hud.banner_p = 0.0
 
 
 ## The single panel pushes in slightly, with a decaying shake on every landing and

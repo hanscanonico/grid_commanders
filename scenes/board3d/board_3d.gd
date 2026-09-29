@@ -50,6 +50,7 @@ var _cinema: DialogueCinema3D
 var _sun: DirectionalLight3D
 var _stage: CutinStage3D
 var _combat: CombatCutin3D
+var _capture: CaptureCutin3D
 var _properties: Dictionary[Vector2i, Node3D] = {}
 var _property_rows: Dictionary[Vector2i, int] = {}
 var _clock := 0.0
@@ -155,6 +156,17 @@ func combat_cut_in() -> CombatCutin3D:
 		_combat.stage = cutin_stage()
 		add_child(_combat)
 	return _combat
+
+
+## The capture cut-in played on the stage, built on the first one.
+func capture_cut_in() -> CaptureCutin3D:
+	if _capture == null:
+		_capture = CaptureCutin3D.new()
+		_capture.name = "CaptureCutin3D"
+		_capture.view = _view
+		_capture.stage = cutin_stage()
+		add_child(_capture)
+	return _capture
 
 
 ## Whether a press went to the cinematic playing now — the one route a press
