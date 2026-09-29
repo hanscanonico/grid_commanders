@@ -16,8 +16,8 @@ extends RefCounted
 ## Properties are not built here: their buildings change colour on capture and
 ## are Board3D's nodes. Deterministic: the scatter is a hash of the cell.
 
-const GRASS := Color("#86b84a")
-const WOODS_FLOOR := Color("#5d9438")
+const GRASS := Color("#74a846")
+const WOODS_FLOOR := Color("#548a37")
 const ROAD := Color("#b9ab8e")
 const SAND := Color("#dcc58a")
 const EARTH := Color("#8a6440")
@@ -238,19 +238,39 @@ static func _wall(st: SurfaceTool, r: Rect2, side: int, lo: float, hi: float, c:
 	match side:
 		0:
 			MeshKit.quad(
-				st, Vector3(x1, lo, z0), Vector3(x0, lo, z0), Vector3(x0, hi, z0), Vector3(x1, hi, z0), c
+				st,
+				Vector3(x1, lo, z0),
+				Vector3(x0, lo, z0),
+				Vector3(x0, hi, z0),
+				Vector3(x1, hi, z0),
+				c
 			)
 		1:
 			MeshKit.quad(
-				st, Vector3(x1, lo, z1), Vector3(x1, lo, z0), Vector3(x1, hi, z0), Vector3(x1, hi, z1), c
+				st,
+				Vector3(x1, lo, z1),
+				Vector3(x1, lo, z0),
+				Vector3(x1, hi, z0),
+				Vector3(x1, hi, z1),
+				c
 			)
 		2:
 			MeshKit.quad(
-				st, Vector3(x0, lo, z1), Vector3(x1, lo, z1), Vector3(x1, hi, z1), Vector3(x0, hi, z1), c
+				st,
+				Vector3(x0, lo, z1),
+				Vector3(x1, lo, z1),
+				Vector3(x1, hi, z1),
+				Vector3(x0, hi, z1),
+				c
 			)
 		3:
 			MeshKit.quad(
-				st, Vector3(x0, lo, z0), Vector3(x0, lo, z1), Vector3(x0, hi, z1), Vector3(x0, hi, z0), c
+				st,
+				Vector3(x0, lo, z0),
+				Vector3(x0, lo, z1),
+				Vector3(x0, hi, z1),
+				Vector3(x0, hi, z0),
+				c
 			)
 
 
@@ -285,7 +305,13 @@ static func _trees(st: SurfaceTool, cell: Vector2i, base: Vector3) -> void:
 		var foot := base + Vector3(spot.x, 0, spot.y)
 		MeshKit.column(st, MeshKit.at(foot), 0.035, 0.03, 0.08 * size, 5, TRUNK)
 		MeshKit.column(
-			st, MeshKit.at(foot + Vector3(0, 0.06 * size, 0)), 0.15 * size, 0, 0.26 * size, 6, foliage
+			st,
+			MeshKit.at(foot + Vector3(0, 0.06 * size, 0)),
+			0.15 * size,
+			0,
+			0.26 * size,
+			6,
+			foliage
 		)
 		MeshKit.column(
 			st,
@@ -301,9 +327,7 @@ static func _trees(st: SurfaceTool, cell: Vector2i, base: Vector3) -> void:
 ## A shoulder a unit stands on, and two snow-capped peaks rising off its back.
 static func _mountain(st: SurfaceTool, cell: Vector2i, base: Vector3) -> void:
 	var turn := _noise(cell, 50) * 360.0
-	MeshKit.column(
-		st, MeshKit.at(base, turn), 0.47, 0.3, BoardSpace3D.MOUNTAIN_SHOULDER, 7, ROCK
-	)
+	MeshKit.column(st, MeshKit.at(base, turn), 0.47, 0.3, BoardSpace3D.MOUNTAIN_SHOULDER, 7, ROCK)
 	var peaks: Array[Vector4] = [Vector4(-0.2, -0.17, 0.25, 0.64), Vector4(0.19, -0.2, 0.21, 0.5)]
 	for n in peaks.size():
 		var p := peaks[n]

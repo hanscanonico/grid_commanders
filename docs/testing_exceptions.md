@@ -32,7 +32,7 @@ hand them, so a match starts here the way the command line starts it.
 | `MatchConfig`'s staging | `test_match_config.gd` | reachable without a scene, and where `take()` clearing is held |
 | `CommanderPicks` (`scenes/common/`) | `test_commander_picks.gd` | the one rule that a general commands a single army, stated Node-free and database-free so the picker, the menu adapter and `--co=` all inherit it rather than each restating it |
 | `BattleSetup` | `test_seats_flag.gd`, `test_sides_flag.gd`, `test_resume_setup.gd`, `test_launch_failure.gd` | takes a request and the databases, hands back plain simulation objects with no `Node` and no scene path |
-| `Settings` | `test_audio_settings.gd`, `test_settings_pin.gd`, `test_end_turn_confirm.gd`, `test_menu_animations.gd`, `test_fullscreen_setting.gd` | `--speed=`, `--mute` and `--no-battle-anim` are launch flags this autoload owns, and `pin` is what a captured frame depends on; the volume ladder (`VOLUME_STEPS`, `volume_index`) is static and pure, and every preference case runs on a fresh `autoload/settings.gd` instance rather than the singleton, so nothing here writes `user://settings.cfg` |
+| `Settings` | `test_audio_settings.gd`, `test_settings_pin.gd`, `test_end_turn_confirm.gd`, `test_menu_animations.gd`, `test_fullscreen_setting.gd`, `test_board_view_setting.gd` | `--speed=`, `--mute`, `--no-battle-anim` and `--view=` are launch flags this autoload owns, and `pin` is what a captured frame depends on; the volume ladder (`VOLUME_STEPS`, `volume_index`) is static and pure, and every preference case runs on a fresh `autoload/settings.gd` instance rather than the singleton, so nothing here writes `user://settings.cfg` |
 
 ## The autoloads a headless run already stands up
 
@@ -72,6 +72,7 @@ suites pin.
 | `FastForward`, `CutscenePlayback` | `test_fast_forward.gd` | `held` / `rate` is a static read of the `InputMap` and the clock's `advance` is arithmetic over its own fields, so the whole held-key rate path is checked without a cut-in |
 | `MobileProfile.touch` | `test_mobile_profile.gd` | pure over the arguments handed in and the engine's feature tag, like `CmdArgs`, so the gate the touch chrome is built behind is checked without an exported package |
 | `UnitModels3D.mesh_for`, `PropertyModels3D.mesh_for` | `test_unit_models_3d.gd` | a model's mesh is a Resource built from a type id and a faction theme with no `Node` made, so the geometry contract the 3D board places every model by — the footprint inside its cell, the height per domain, the owner's colour — is checked without a scene; `build`, which does make nodes, stays out of the suite |
+| `BoardSpace3D` (`scenes/board3d/`) | `test_board_space_3d.gd` | Node-free statics over `MapData`: where a flat-board position lands in 3D, the height a unit stands at while it walks, the surface a pointer ray is tested against and the quarter-turn the arrow keys are turned through — the arithmetic both boards must agree on, checked without a scene |
 
 ## Content registries and resolved identity
 

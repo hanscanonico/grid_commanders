@@ -18,9 +18,9 @@ const DIVE_DEPTH := 0.13
 ## How much darker a greyed unit draws, and how its colour is washed toward grey.
 const GREYED_TINT := Color(0.46, 0.46, 0.5)
 const ROTOR_SPIN := 22.0
-const BADGE_HEIGHT := 0.55
-const BADGE_SIDE := 0.24
-const BADGE_PX := 22
+const BADGE_HEIGHT := 0.42
+const BADGE_SIDE := 0.3
+const BADGE_PX := 16
 
 var map: MapData
 var sprites_root: Node2D
@@ -74,7 +74,9 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 		var here := BoardSpace3D.plane_of(sprite.position)
 		model.yaw = 0.0 if here.x < map.width / 2.0 else PI
 	model.row = sprite.atlas_row
-	model.node = UnitModels3D.build(sprite.unit.type.id, SideIdentity.theme_for_row(sprite.atlas_row))
+	model.node = UnitModels3D.build(
+		sprite.unit.type.id, SideIdentity.theme_for_row(sprite.atlas_row)
+	)
 	var body := model.node.get_node("Body") as GeometryInstance3D
 	model.material = body.material_override as StandardMaterial3D
 	model.rotor = model.node.get_node_or_null("Rotor")
@@ -127,9 +129,7 @@ func _tint(model: Model, sprite: UnitSprite) -> void:
 	if sprite.greyed():
 		tint = Color(tint.r * GREYED_TINT.r, tint.g * GREYED_TINT.g, tint.b * GREYED_TINT.b, alpha)
 	var faded := alpha < 0.999
-	var mode := (
-		BaseMaterial3D.TRANSPARENCY_ALPHA if faded else BaseMaterial3D.TRANSPARENCY_DISABLED
-	)
+	var mode := BaseMaterial3D.TRANSPARENCY_ALPHA if faded else BaseMaterial3D.TRANSPARENCY_DISABLED
 	if model.material.transparency != mode:
 		model.material.transparency = mode
 	model.material.albedo_color = tint
@@ -156,9 +156,9 @@ func _badge(colour: Color) -> Label3D:
 	var label := Label3D.new()
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.fixed_size = true
-	label.pixel_size = 0.0022
+	label.pixel_size = 0.001
 	label.font_size = BADGE_PX
-	label.outline_size = 8
+	label.outline_size = 6
 	label.modulate = colour
 	label.outline_modulate = Color.BLACK
 	label.no_depth_test = true

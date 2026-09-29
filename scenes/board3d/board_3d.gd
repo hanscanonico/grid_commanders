@@ -25,8 +25,8 @@ const SOLID := 8
 const DEFAULT_BIT := 1
 ## The overlay texture's resolution, capped so a four-army board stays inside
 ## what a phone's GPU will allocate.
-const OVERLAY_PX_PER_CELL := 64
-const OVERLAY_MAX_PX := 4096
+const OVERLAY_PX_PER_CELL := 48
+const OVERLAY_MAX_PX := 2048
 const TERRAIN_SHADER := preload("res://scenes/board3d/terrain_3d.gdshader")
 const BACKGROUND := Color("#1a2130")
 const TABLE := Color("#262d3b")

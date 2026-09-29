@@ -37,8 +37,8 @@ void fragment() {
 		float ripple = sin(world_pos.x * 6.5 + TIME * 1.5) * sin(world_pos.z * 5.5 - TIME * 1.2);
 		float glint = smoothstep(0.82, 0.98, ripple);
 		col = col * (1.0 + 0.07 * ripple) + vec3(0.18, 0.22, 0.25) * glint;
-		ROUGHNESS = 0.3;
-		SPECULAR = 0.6;
+		ROUGHNESS = 0.55;
+		SPECULAR = 0.3;
 	} else {
 		ROUGHNESS = 0.9;
 		SPECULAR = 0.2;

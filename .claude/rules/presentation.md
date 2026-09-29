@@ -636,6 +636,44 @@ forms named in the root index are in `docs/design_record.md`.
   phase-keyed texture variety, mountain scenery, future biome dressing — stays flat in the ground
   plane the way `TerrainAutotiles.variant`/`stands_in_cutin()` already draw it. The moment a
   decorative tree "stands" the height a property does, a player will try to capture it.
+- **The 3D board** (no plan artifact; this entry is its record, 2026-09-29) — the battle drawn a
+  second way, flipped with the flat board by `V`, the pause menu's **View** row or `--view=3d`.
+  User rulings: **full 3D models** for units and buildings (the pixel sprites are not drawn on it)
+  and a **crisp full-resolution** render, not pixelated. Everything is under `scenes/board3d/` and
+  none of it touches `core/` or `ai/`. D1: **it is a view of the flat board, never of the sim.**
+  `Board3D` keeps the flat board running and takes it off the screen with the window's
+  `canvas_cull_mask` — the Battle node draws on `Board3D.BOARD_ROOT`, the layers it replaces on
+  `SOLID` — and copies results rather than asking rules: terrain from `MapData` once, a property's
+  owner off `TerrainLayer`'s atlas row (so a capture made in fog keeps its last-seen colour here
+  too), units off their `UnitSprite`s (`UnitMirror3D` — every walk, lunge, fade, scrim and scripted
+  beat plays on both boards by construction, and `UnitSprite.greyed()` is the one read it added),
+  fog off `FogLayer`'s painted cells, and the flat marks — ranges, the threat lens, the path arrow,
+  pips, flashes, callouts — rendered from above by a `SubViewport` sharing the window's `World2D`
+  and laid on every upward face by `terrain_3d.gdshader`. **A new flat-board node that stands for a
+  solid thing goes on `SOLID`; one left on the default bit is drawn into the overlay texture**, and
+  one added under the Battle node at runtime (the meteor) is projected that way for free.
+  D2: **the flat board stays the default and the authority on framing.** `Settings.board_3d` is a
+  device preference beside the window mode, `pin` stands it back (and says so through
+  `board_view_changed`, since a battle may already stand on the 3D board) unless `--view=` spoke,
+  so every golden frame and smoke capture is the flat board. `BoardCamera3D` follows the 2D
+  cursor and the rung `BattleZoom` settled on — a zoom key, a pinch and `N` reach both boards by
+  one route — and orbits in quarter turns (`C` / `B`); `BoardSpace3D.turned` turns the arrow keys
+  and a touch pan with it, so up always walks away from the camera. It **glides**, because the
+  whole-texel rule behind A3 is about sampling pixel art, and **lands when `BoardBeat.still()`**, so
+  no capture depends on its shutter frame. D3: **one seam per question the flat board already
+  answered.** `BoardPointer._cell_under` asks `Board3D.pick` (a ray walked down onto each cell's
+  `BoardSpace3D.pick_top`, a mountain answering its shoulder); `BoardCamera.screen_pos_for_cell`
+  asks `Board3D.screen_of`, read off a **probe camera posed where the lens will come to rest**, so a
+  menu opened mid-glide lands beside its cell. D4: **models are code**: `MeshKit`'s flat-shaded
+  primitives merged into one mesh per unit or building (`UnitModels3D`, `PropertyModels3D`, their
+  footprint and height contract pinned by `tests/unit/test_unit_models_3d.gd`), faction colour
+  from `SideIdentity.theme_for_row`, and one material per unit the mirror tints in place.
+  `scenes/board3d/model_gallery.tscn` is the dev sheet to look at them. The ground's variety is
+  per-sub-square shade, flat, by the standing-terrain rule below. **Known gaps, left on purpose**:
+  an attacker does not turn to face its target (the flat board never did either), a damage callout
+  and a flash are projected flat onto the ground rather than stood up, the campaign card's
+  `follow_cursor` still steps aside by the flat board's geometry, and the cut-ins, the map editor
+  and the menu backdrop stay 2D.
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
   no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
   slice's measurements, the packaging facts, the refutations, the known hit-area limits and the

@@ -16,8 +16,12 @@ func _init() -> void:
 	var st := MeshKit.begin()
 	for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
 		var tip := Vector3(corner.x * 0.5, 0, corner.y * 0.5)
-		var along_x := Vector3(tip.x - corner.x * ARM / 2.0, BAR / 2.0, tip.z - corner.y * BAR / 2.0)
-		var along_z := Vector3(tip.x - corner.x * BAR / 2.0, BAR / 2.0, tip.z - corner.y * ARM / 2.0)
+		var along_x := Vector3(
+			tip.x - corner.x * ARM / 2.0, BAR / 2.0, tip.z - corner.y * BAR / 2.0
+		)
+		var along_z := Vector3(
+			tip.x - corner.x * BAR / 2.0, BAR / 2.0, tip.z - corner.y * ARM / 2.0
+		)
 		MeshKit.box(st, MeshKit.at(along_x), Vector3(ARM, BAR, BAR), COLOUR)
 		MeshKit.box(st, MeshKit.at(along_z), Vector3(BAR, BAR, ARM), COLOUR)
 	mesh = st.commit()
