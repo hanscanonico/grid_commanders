@@ -29,6 +29,7 @@ SITEMAP_URLS = [SITE + "/", SITE + "/play/"]
 OG_SIZE = (1200, 630)
 DESCRIPTION_MAX = 160
 FORBIDDEN = "advance wars"
+MANIFEST_HREF = "/manifest.json"
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SITE = ROOT / "deploy" / "web" / "site"
@@ -81,6 +82,8 @@ def check_game_head(html: str, where: str) -> None:
         fail("%s: the game page's canonical is %r, expected %s/play/" % (where, href, SITE))
     if re.search(r'<meta\s+name="robots"[^>]*noindex', html, re.IGNORECASE):
         fail("%s: the game page is noindex — it is meant to be found" % where)
+    if '<link rel="manifest" href="%s">' % MANIFEST_HREF not in html:
+        fail("%s: the game page does not link %s" % (where, MANIFEST_HREF))
 
 
 def check_landing(html: str, where: str) -> None:
@@ -136,17 +139,47 @@ def check_landing(html: str, where: str) -> None:
             )
 
 
-def check_og_image(path: Path) -> None:
+def png_size(path: Path) -> tuple[int, int] | None:
     if not path.is_file():
         fail("%s: missing" % path)
-        return
+        return None
     header = path.read_bytes()[:24]
     if header[:8] != b"\x89PNG\r\n\x1a\n":
         fail("%s: not a PNG" % path)
-        return
-    size = struct.unpack(">II", header[16:24])
-    if size != OG_SIZE:
+        return None
+    return struct.unpack(">II", header[16:24])
+
+
+def check_og_image(path: Path) -> None:
+    size = png_size(path)
+    if size and size != OG_SIZE:
         fail("%s: is %dx%d, the sharing card wants %dx%d" % (path, *size, *OG_SIZE))
+
+
+def check_manifest(path: Path) -> None:
+    """What a phone reads when the game is added to its home screen."""
+    if not path.is_file():
+        fail("%s: missing" % path)
+        return
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as error:
+        fail("%s: does not parse — %s" % (path, error))
+        return
+    if data.get("display") != "fullscreen":
+        fail("%s: display is %r, expected fullscreen" % (path, data.get("display")))
+    if data.get("start_url") != "/play/":
+        fail("%s: start_url is %r, expected /play/" % (path, data.get("start_url")))
+    # An installed page is launched full screen only when it offers both sizes.
+    sizes = set()
+    for icon in data.get("icons", []):
+        src = icon.get("src", "")
+        size = png_size(path.parent / src.lstrip("/"))
+        if size and "%dx%d" % size != icon.get("sizes"):
+            fail("%s: %s is %dx%d, the manifest says %s" % (path, src, *size, icon.get("sizes")))
+        sizes.add(icon.get("sizes"))
+    if not {"192x192", "512x512"} <= sizes:
+        fail("%s: needs a 192x192 and a 512x512 icon, has %s" % (path, sorted(sizes)))
 
 
 def check_robots(path: Path) -> None:
@@ -187,11 +220,12 @@ def main(argv: list[str]) -> int:
     check_og_image(SOURCE_SITE / "og-battle.png")
     check_robots(SOURCE_SITE / "robots.txt")
     check_sitemap(SOURCE_SITE / "sitemap.xml")
+    check_manifest(SOURCE_SITE / "manifest.json")
     check_game_head(head_include(), "export_presets.cfg html/head_include")
 
     if argv:
         exported = Path(argv[0])
-        for name in ("index.html", "og-battle.png", "robots.txt", "sitemap.xml"):
+        for name in ("index.html", "og-battle.png", "robots.txt", "sitemap.xml", "manifest.json"):
             if not (exported / name).is_file():
                 fail("%s: the exported site has no %s" % (exported, name))
         game = exported / "play" / "index.html"
