@@ -23,6 +23,9 @@ const ROTOR_HUB: Dictionary[StringName, Vector3] = {
 	&"b_copter": Vector3(0.0, 0.225, 0.0),
 	&"t_copter": Vector3(-0.02, 0.29, 0.0),
 }
+## A foot unit's model is three soldiers; a cut-in squad posts them one per
+## figure instead, blown up to stand beside a vehicle.
+const LONE_SOLDIER_SCALE := 2.0
 
 static var _meshes: Dictionary[String, ArrayMesh] = {}
 static var _rotors: Dictionary[StringName, ArrayMesh] = {}
@@ -38,14 +41,30 @@ static func mesh_for(type_id: StringName, theme: CommanderVisuals.FactionTheme) 
 	return _meshes[key]
 
 
+## One figure of a cut-in squad: a foot unit's lone soldier, any other unit's
+## whole body.
+static func figure_mesh_for(type_id: StringName, theme: CommanderVisuals.FactionTheme) -> ArrayMesh:
+	if type_id != &"infantry" and type_id != &"mech":
+		return mesh_for(type_id, theme)
+	var key := "%s|%s|lone" % [type_id, theme.key]
+	if not _meshes.has(key):
+		var st := MeshKit.begin()
+		_soldier(st, Vector3.ZERO, LONE_SOLDIER_SCALE, theme, type_id == &"mech")
+		_meshes[key] = st.commit()
+	return _meshes[key]
+
+
 ## A fresh model: a `Body` and, on a helicopter, a `Rotor` spinning about its
 ## own Y. Every part shares one material made for this call alone, because the
-## board tints it in place.
-static func build(type_id: StringName, theme: CommanderVisuals.FactionTheme) -> Node3D:
+## board tints it in place. `lone` builds a cut-in figure (`figure_mesh_for`).
+static func build(
+	type_id: StringName, theme: CommanderVisuals.FactionTheme, lone: bool = false
+) -> Node3D:
 	var root := Node3D.new()
 	root.name = String(type_id)
 	var material := MeshKit.vertex_material()
-	_part(root, "Body", mesh_for(type_id, theme), material, Vector3.ZERO)
+	var body := figure_mesh_for(type_id, theme) if lone else mesh_for(type_id, theme)
+	_part(root, "Body", body, material, Vector3.ZERO)
 	if ROTOR_HUB.has(type_id):
 		_part(root, "Rotor", _rotor_mesh(type_id), material, ROTOR_HUB[type_id])
 	return root

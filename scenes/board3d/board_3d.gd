@@ -47,6 +47,10 @@ var _fog_dirty := true
 var _owners_dirty := true
 var _prop_material: ShaderMaterial
 var _cinema: DialogueCinema3D
+var _sun: DirectionalLight3D
+var _stage: CutinStage3D
+var _combat: CombatCutin3D
+var _capture: CaptureCutin3D
 var _properties: Dictionary[Vector2i, Node3D] = {}
 var _property_rows: Dictionary[Vector2i, int] = {}
 var _clock := 0.0
@@ -100,7 +104,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		or event.is_action_pressed(&"turn_view_left")
 		or event.is_action_pressed(&"turn_view_right")
 	)
-	if view_key and _cinema != null and _cinema.rolling:
+	if view_key and (_cinema != null and _cinema.rolling or _stage != null and _stage.rolling):
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed(&"toggle_view"):
@@ -127,6 +131,39 @@ func turned(direction: Vector2i) -> Vector2i:
 ## the board is up.
 func cinema() -> DialogueCinema3D:
 	return _cinema
+
+
+## The set the 3D cut-ins are played on, built on the first one. Asked only
+## while the board is up.
+func cutin_stage() -> CutinStage3D:
+	if _stage == null:
+		_stage = CutinStage3D.new()
+		add_child(_stage)
+		var ground: Array[Material] = [ground_material(false, null, null, Vector2.ONE)]
+		_stage.setup(_camera.camera, _sun, _hud_layer(), _view.db, ground)
+	return _stage
+
+
+## The combat cut-in played on the stage, built on the first one.
+func combat_cut_in() -> CombatCutin3D:
+	if _combat == null:
+		_combat = CombatCutin3D.new()
+		_combat.name = "CombatCutin3D"
+		_combat.view = _view
+		_combat.stage = cutin_stage()
+		add_child(_combat)
+	return _combat
+
+
+## The capture cut-in played on the stage, built on the first one.
+func capture_cut_in() -> CaptureCutin3D:
+	if _capture == null:
+		_capture = CaptureCutin3D.new()
+		_capture.name = "CaptureCutin3D"
+		_capture.view = _view
+		_capture.stage = cutin_stage()
+		add_child(_capture)
+	return _capture
 
 
 ## Whether a press went to the cinematic playing now — the one route a press
@@ -197,6 +234,8 @@ func _on_view_changed() -> void:
 		return
 	if not on:
 		_cinema.cut()
+		if _stage != null:
+			_stage.leave()
 	_camera.camera.current = on
 	_environment.environment = _make_environment() if on else null
 	_overlay.render_target_update_mode = (
@@ -227,8 +266,12 @@ func _process(delta: float) -> void:
 			_view.board_camera.shake_offset
 		)
 	_units.sync(delta, _camera.camera.global_basis)
-	_cursor.visible = _view.cursor.visible and not _cinema.rolling
+	_cursor.visible = _view.cursor.visible and not _cinema.rolling and not _stage_on_air()
 	_cursor.follow(delta, focus, _clock)
+
+
+func _stage_on_air() -> bool:
+	return _stage != null and _stage.on_air
 
 
 func _focus() -> Vector3:
@@ -282,7 +325,7 @@ func _build() -> void:
 	_cinema.name = "DialogueCinema3D"
 	# The layer the HUD's bars are drawn on: a cinematic takes the chrome off the
 	# screen along with them.
-	_cinema.setup(_camera, _map, _view.hud_top.get_parent() as CanvasLayer)
+	_cinema.setup(_camera, _map, _hud_layer())
 	add_child(_cinema)
 
 
@@ -306,12 +349,28 @@ func _build_overlay() -> void:
 	)
 
 
+## The HUD's bars' layer: a cinematic or a cut-in on the stage takes the chrome
+## off the screen along with them.
+func _hud_layer() -> CanvasLayer:
+	return _view.hud_top.get_parent() as CanvasLayer
+
+
 func _terrain_material(water: bool) -> ShaderMaterial:
+	return ground_material(water, _overlay.get_texture(), _fog_texture, Vector2(_map.size()))
+
+
+## The ground's material: the mesh's own colours, with `overlay`'s flat marks
+## and `fog`'s cells laid over the `cells` of a board. The cut-in stage wears it
+## with neither, so its ground is the board's ground and nothing on it.
+static func ground_material(
+	water: bool, overlay: Texture2D, fog: Texture2D, cells: Vector2
+) -> ShaderMaterial:
 	var material := ShaderMaterial.new()
 	material.shader = TERRAIN_SHADER
-	material.set_shader_parameter(&"overlay", _overlay.get_texture())
-	material.set_shader_parameter(&"fog_cells", _fog_texture)
-	material.set_shader_parameter(&"map_cells", Vector2(_map.size()))
+	material.set_shader_parameter(&"overlay", overlay)
+	material.set_shader_parameter(&"fog_cells", fog)
+	material.set_shader_parameter(&"map_cells", cells)
+	material.set_shader_parameter(&"overlay_strength", 1.0 if overlay != null else 0.0)
 	material.set_shader_parameter(&"water", water)
 	return material
 
@@ -339,6 +398,7 @@ func _add_table() -> void:
 
 func _add_sun() -> void:
 	var sun := DirectionalLight3D.new()
+	_sun = sun
 	# Low from the west-north-west, so a shadow falls to the right of what casts
 	# it — beside it on screen, where a sun behind the camera would hide it.
 	sun.rotation_degrees = Vector3(-48, -115, 0)

@@ -337,50 +337,50 @@ func _draw_dust(arena: Rect2) -> void:
 
 
 func _draw_plates() -> void:
-	if plate_p <= 0.0:
+	draw_plates(self, unit, terrain, accent, plate_p)
+
+
+## The two plates — the unit's name and CAPTURE over the band, the terrain and
+## its stars under it — sliding in as `p` goes 0 -> 1. Static so the 3D capture
+## cut-in's overlay wears the same plates the flat one does.
+static func draw_plates(
+	canvas: Control, p_unit: Unit, p_terrain: TerrainType, p_accent: Color, p: float
+) -> void:
+	if p <= 0.0:
 		return
-	var slide := -40.0 * (1.0 - plate_p)
-	draw_set_transform(Vector2(slide, 0.0))
-	CutscenePlates.draw_frames(self, size, plate_p)
-	_draw_name_row(Rect2(0.0, 0.0, size.x, CutscenePlates.TOP_H))
-	_draw_terrain_row(Rect2(0.0, size.y - CutscenePlates.BOT_H, size.x, CutscenePlates.BOT_H))
-	draw_set_transform(Vector2.ZERO)
+	var slide := -40.0 * (1.0 - p)
+	canvas.draw_set_transform(Vector2(slide, 0.0))
+	CutscenePlates.draw_frames(canvas, canvas.size, p)
+	_draw_name_row(canvas, p_unit, p_accent, p)
+	var bottom := canvas.size.y - CutscenePlates.BOT_H
+	CutscenePlates.draw_terrain_row(
+		canvas,
+		canvas.get_theme_font(&"font", &"Label"),
+		bottom,
+		p_terrain.display_name.to_upper(),
+		TERRAIN_ROW_X,
+		1.0,
+		TERRAIN_STAR_GAP,
+		p_terrain.defense_stars,
+		p
+	)
+	canvas.draw_set_transform(Vector2.ZERO)
 
 
-func _draw_name_row(plate: Rect2) -> void:
-	var font := get_theme_font(&"font", &"Label")
-	draw_rect(Rect2(16.0, plate.position.y + 6.0, 4.0, 13.0), Color(accent, plate_p))
-	var title := unit.type.display_name.to_upper()
-	draw_string(
-		font,
-		Vector2(26.0, plate.position.y + 18.0),
-		title,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		12,
-		Color(1.0, 1.0, 1.0, plate_p)
+static func _draw_name_row(canvas: Control, p_unit: Unit, p_accent: Color, p: float) -> void:
+	var font := canvas.get_theme_font(&"font", &"Label")
+	canvas.draw_rect(Rect2(16.0, 6.0, 4.0, 13.0), Color(p_accent, p))
+	var title := p_unit.type.display_name.to_upper()
+	canvas.draw_string(
+		font, Vector2(26.0, 18.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1.0, 1.0, 1.0, p)
 	)
 	var name_width := font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-	draw_string(
+	canvas.draw_string(
 		font,
-		Vector2(26.0 + name_width + 12.0, plate.position.y + 17.0),
+		Vector2(26.0 + name_width + 12.0, 17.0),
 		"CAPTURE",
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		10,
-		Color(CutscenePalette.GOLD, plate_p)
-	)
-
-
-func _draw_terrain_row(plate: Rect2) -> void:
-	CutscenePlates.draw_terrain_row(
-		self,
-		get_theme_font(&"font", &"Label"),
-		plate.position.y,
-		terrain.display_name.to_upper(),
-		TERRAIN_ROW_X,
-		1.0,
-		TERRAIN_STAR_GAP,
-		terrain.defense_stars,
-		plate_p
+		Color(CutscenePalette.GOLD, p)
 	)

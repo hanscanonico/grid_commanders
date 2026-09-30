@@ -152,6 +152,8 @@ func run(mode: String) -> bool:
 ##
 ## One suffix off CUT_IN_SUFFIXES, then an optional `:<attacker>:<defender>`;
 ## anything else fails the run rather than falling back to the plain variant.
+## `--cutin-at=<seconds>` poses any other moment of the clock, and `--view=3d`
+## poses the 3D stage, asked of the animator the way a played exchange asks.
 ##
 ## The exchange is resolved directly rather than driven through the targeting
 ## flow, because the flow deliberately suppresses the cut-in while capturing
@@ -199,6 +201,12 @@ func _stage_cut_in(spec: String) -> void:
 	var pose := KO_POSE if lethal else CUT_IN_POSE
 	if parts[0].ends_with(VOLLEY_SUFFIX):
 		pose = VOLLEY_POSE
+	var staged := _battle.animator.combat_cut_in_3d()
+	if CmdArgs.has(CmdArgs.user(), "--cutin-at"):
+		pose = float(CmdArgs.value(CmdArgs.user(), "--cutin-at"))
+	if staged != null:
+		staged.pose_at(result, attacker, defender, pose)
+		return
 	_battle.animator.cutscene.pose_at(result, attacker, defender, pose)
 	_check_cut_in_rows(attacker, defender)
 	_check_cut_in_cover(result, attacker, defender)
@@ -210,6 +218,8 @@ func _stage_cut_in(spec: String) -> void:
 ##   --demo=capture_cutin_partial   an occupying capture over its OCCUPYING tag
 ##   --demo=capture_cutin_skip      walks a skip across the whole clock (a test)
 ##   --demo=capture_cutin_iron_commander  the same city, taken by Iron off Verdant
+##
+## `--cutin-at=<seconds>` poses any other moment, and `--view=3d` the 3D stage.
 ##
 ## One suffix off CAPTURE_CUT_IN_SUFFIXES, `_partial` leading where it composes;
 ## anything else fails the run rather than falling back to the plain variant.
@@ -247,9 +257,14 @@ func _stage_capture_cut_in(mode: String) -> void:
 	_battle.view.sync_sprites()
 	if mode.ends_with(SKIP_SUFFIX):
 		await _spam_capture_skip(result, unit, cell)
-	_battle.animator.capture_cutscene.pose_at(
-		result, unit, cell, CAPTURE_PARTIAL_POSE if partial else CAPTURE_CUT_IN_POSE
-	)
+	var pose := CAPTURE_PARTIAL_POSE if partial else CAPTURE_CUT_IN_POSE
+	var staged := _battle.animator.capture_cut_in_3d()
+	if CmdArgs.has(CmdArgs.user(), "--cutin-at"):
+		pose = float(CmdArgs.value(CmdArgs.user(), "--cutin-at"))
+	if staged != null:
+		staged.pose_at(result, unit, cell, pose)
+		return
+	_battle.animator.capture_cutscene.pose_at(result, unit, cell, pose)
 	_check_capture_cut_in_rows(unit, cell)
 
 
@@ -259,7 +274,10 @@ func _stage_capture_cut_in(mode: String) -> void:
 ## three mashes, the flip and the banner. Each run must emit `finished` exactly
 ## once and land the punched-in camera back at its resting zoom.
 func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> void:
-	var cutscene := _battle.animator.capture_cutscene
+	var staged := _battle.animator.capture_cut_in_3d()
+	var cutscene: CutsceneDirector = staged
+	if staged == null:
+		cutscene = _battle.animator.capture_cutscene
 	var camera := _battle.camera
 	var tree := _battle.get_tree()
 	var resting := camera.zoom
@@ -267,8 +285,11 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 		var finishes := [0]
 		var tally := func() -> void: finishes[0] += 1
 		cutscene.finished.connect(tally)
-		_punch_board()
-		cutscene.play(result, unit, cell)  # deliberately not awaited
+		if staged != null:
+			staged.play(result, unit, cell)  # deliberately not awaited
+		else:
+			_punch_board()
+			_battle.animator.capture_cutscene.play(result, unit, cell)
 		for frame in delay:
 			await tree.process_frame
 		for spam in 3:
@@ -280,6 +301,9 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 			_fail(
 				"capture cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]]
 			)
+			return
+		if staged != null and (staged.stage.on_air or staged.stage.rolling):
+			_fail("3D capture cut-in skipped after %d frame(s) kept the stage" % delay)
 			return
 		if not camera.zoom.is_equal_approx(resting):
 			_fail(
@@ -312,6 +336,8 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 ## quits non-zero here.
 func _spam_skip(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	var cutscene := _battle.animator.cutscene
+	var staged := _battle.animator.combat_cut_in_3d()
+	var director: CutsceneDirector = staged if staged != null else cutscene
 	var camera := _battle.camera
 	var tree := _battle.get_tree()
 	var resting := camera.zoom
@@ -321,23 +347,29 @@ func _spam_skip(result: CombatSnapshot.CombatResult, attacker: Unit, defender: U
 		# after the first emission, so the very failure this is looking for — an
 		# exit that fires twice — would be the one it could not see.
 		var tally := func() -> void: finishes[0] += 1
-		cutscene.finished.connect(tally)
+		director.finished.connect(tally)
 		# Punch the board the way the animator would, so the skip has a flinch to
 		# land: the cut-in owns easing it back out off its own clock, and a skip
 		# must pin it home like every other value it drives.
 		_punch_board()
-		cutscene.play(result, attacker, defender)  # deliberately not awaited
+		if staged != null:
+			staged.play(result, attacker, defender)  # deliberately not awaited
+		else:
+			cutscene.play(result, attacker, defender)
 		for frame in delay:
 			await tree.process_frame
 		# Spammed, not pressed once: a second skip after the exit has run must be
 		# a no-op rather than a second `finished`.
 		for spam in 3:
-			cutscene.skip()
+			director.skip()
 			await tree.process_frame
 		await tree.process_frame  # the exit lands on the frame after the skip
-		cutscene.finished.disconnect(tally)
+		director.finished.disconnect(tally)
 		if finishes[0] != 1:
 			_fail("cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]])
+			return
+		if staged != null and (staged.stage.on_air or staged.stage.rolling):
+			_fail("3D cut-in skipped after %d frame(s) kept the stage" % delay)
 			return
 		if not camera.zoom.is_equal_approx(resting):
 			_fail(

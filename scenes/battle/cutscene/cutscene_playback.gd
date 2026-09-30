@@ -226,8 +226,10 @@ func end() -> void:
 ## behind the band, the board's flinch easing out, and the letterbox with its
 ## faction line. `present` is the director's own wipe curve — the shell does not
 ## decide when a cut-in is on screen, only what it looks like while it is.
-func frame(present: float, wipe_out: Vector2) -> void:
-	_dim.color.a = DIM_ALPHA * present
+## `dim` scales the darkening behind the band: a stage that fills the band
+## itself takes none of it.
+func frame(present: float, wipe_out: Vector2, dim: float = 1.0) -> void:
+	_dim.color.a = DIM_ALPHA * present * dim
 	_restore_zoom(wipe_out)
 	var bar := bar_h * present
 	_top_bar.size = Vector2(view_size.x, bar)
