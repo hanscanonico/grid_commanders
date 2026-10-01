@@ -37,15 +37,7 @@ func _init() -> void:
 	_solid = _layer(MeshKit.vertex_material())
 	_smoke = _layer(_soft(false, 1.4))
 	_smoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var glow := StandardMaterial3D.new()
-	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	glow.vertex_color_use_as_albedo = true
-	glow.vertex_color_is_srgb = true
-	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glow.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	glow.cull_mode = BaseMaterial3D.CULL_DISABLED
-	glow.disable_fog = true
-	_glow = _layer(glow)
+	_glow = _layer(glow_material())
 	_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_fire = _layer(_soft(true, 2.2))
 	_fire.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -175,6 +167,20 @@ func light(index: int, at: Vector3, energy: float, colour: Color) -> void:
 	lamp.position = at
 	lamp.light_energy = energy
 	lamp.light_color = colour
+
+
+## What the glow layer draws with: the vertex colour, added over the frame, lit
+## by nothing and seen from both sides.
+static func glow_material() -> StandardMaterial3D:
+	var glow := StandardMaterial3D.new()
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glow.vertex_color_use_as_albedo = true
+	glow.vertex_color_is_srgb = true
+	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glow.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	glow.cull_mode = BaseMaterial3D.CULL_DISABLED
+	glow.disable_fog = true
+	return glow
 
 
 ## A ball with smooth normals, so the soft shader's rim falls off evenly

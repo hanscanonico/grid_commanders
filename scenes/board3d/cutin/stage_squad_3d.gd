@@ -12,6 +12,7 @@ extends Node3D
 
 ## A figure's hit flash, as emission over its own colours.
 const FLASH_ENERGY := 0.55
+const FLASH_COLOUR := Color("#fff4dc")
 ## A casualty and a wreck char toward this.
 const CHAR := Color(0.28, 0.27, 0.27)
 const ROTOR_SPIN := 26.0
@@ -88,7 +89,9 @@ func setup(
 	for slot in posted:
 		var figure := UnitModels3D.build(type.id, theme, true)
 		var body := figure.get_node("Body") as GeometryInstance3D
-		_materials.append(body.material_override as StandardMaterial3D)
+		_materials.append(
+			MeshKit.flashable(body.material_override as StandardMaterial3D, FLASH_COLOUR)
+		)
 		_rotors.append(figure.get_node_or_null("Rotor"))
 		_figures.append(figure)
 		add_child(figure)
@@ -185,7 +188,4 @@ func _paint(slot: int, shown: float, charred: float) -> void:
 	if material.transparency != mode:
 		material.transparency = mode
 	var lit := flash > 0.0 and slot < standing
-	material.emission_enabled = lit
-	if lit:
-		material.emission = Color("#fff4dc")
-		material.emission_energy_multiplier = FLASH_ENERGY * flash
+	material.emission_energy_multiplier = FLASH_ENERGY * flash if lit else 0.0

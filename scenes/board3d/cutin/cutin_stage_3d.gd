@@ -37,6 +37,7 @@ var _db: TerrainDB
 var _materials: Array[Material] = []
 var _dressing: Node3D
 var _water: ShaderMaterial
+var _kept: Array[Material] = []
 
 
 ## `board_lens` gets the lens back on `leave`; the board's own sun is put out
@@ -68,6 +69,7 @@ func setup(
 	add_child(camera)
 	add_child(StageBackdrop3D.build())
 	_add_lights()
+	_keep_shaders()
 	_dressing = Node3D.new()
 	_dressing.name = "Dressing"
 	add_child(_dressing)
@@ -170,6 +172,25 @@ func _environment() -> Environment:
 	env.fog_density = 0.0045
 	env.fog_sky_affect = 0.0
 	return env
+
+
+## Holds one of each kind of material a cut-in builds and frees with its
+## dressing. Godot drops a material's shader with the last material using it, so
+## without these every play would build them again, each a stalled frame on the
+## web — and the warm-up's work would be gone before the first play.
+func _keep_shaders() -> void:
+	var fading := MeshKit.flashable(MeshKit.vertex_material(), Color.BLACK)
+	fading.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_kept = [
+		MeshKit.flashable(MeshKit.vertex_material(), Color.BLACK),
+		fading,
+		CaptureRig3D.flag_material(),
+		CutinFx3D.glow_material(),
+	]
+	# A material builds its shader only once asked for its RID, which a mesh
+	# normally does; never asked, it would hold nothing.
+	for material in _kept:
+		material.get_rid()
 
 
 ## A warm key from the lens's front left, casting, and a cool fill from behind

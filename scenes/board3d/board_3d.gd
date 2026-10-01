@@ -222,6 +222,7 @@ func _on_view_changed() -> void:
 	var on := Settings.board_3d
 	if on and not _built:
 		_build()
+		_warm_cut_ins.call_deferred()
 	active = on
 	visible = on
 	set_process(on)
@@ -293,6 +294,14 @@ func _mark_owners() -> void:
 
 
 # --- building the board ------------------------------------------------------
+
+
+## Deferred past the frame that built the board, so the whole scene is in place
+## and a flip straight back to 2D has had its say. A capture poses its own cut-in
+## on the stage, which the stand-ins would draw over, so it goes without.
+func _warm_cut_ins() -> void:
+	if active and not BattleScenarioDriver.requested():
+		CutinWarmup3D.run(self, _view)
 
 
 func _build() -> void:
