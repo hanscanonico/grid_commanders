@@ -184,3 +184,13 @@ static func vertex_material() -> StandardMaterial3D:
 	material.vertex_color_is_srgb = true
 	material.roughness = 0.85
 	return material
+
+
+## `material` with its emission on and dark, so a flash only raises the energy.
+## Switching emission on at the flash would swap the material's shader, and each
+## swap stalls the frame it lands on.
+static func flashable(material: StandardMaterial3D, colour: Color) -> StandardMaterial3D:
+	material.emission_enabled = true
+	material.emission = colour
+	material.emission_energy_multiplier = 0.0
+	return material

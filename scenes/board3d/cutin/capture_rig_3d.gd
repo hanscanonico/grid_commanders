@@ -81,6 +81,9 @@ func setup(
 	name = "CaptureRig3D"
 	_terrain_id = terrain_id
 	_buildings = buildings
+	for building in _buildings:
+		var body := building.get_node("Body") as MeshInstance3D
+		MeshKit.flashable(body.material_override as StandardMaterial3D, Color.WHITE)
 	_stand_buildings()
 	_before = before
 	_after = after
@@ -99,6 +102,13 @@ func setup(
 ## mashes.
 func door() -> Vector3:
 	return Vector3(0.0, 0.0, PAD_HALF * _main_scale())
+
+
+## What a flag's strips draw with: the model material, seen from both sides.
+static func flag_material() -> StandardMaterial3D:
+	var material := MeshKit.vertex_material()
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return material
 
 
 func _main_scale() -> float:
@@ -137,10 +147,7 @@ func pose(
 		body.mesh = mesh
 		_buildings[i].scale = jolt * _rest_scales[i]
 		var material := body.material_override as StandardMaterial3D
-		material.emission_enabled = glow > 0.0
-		if glow > 0.0:
-			material.emission = Color.WHITE
-			material.emission_energy_multiplier = FLASH_ENERGY * glow
+		material.emission_energy_multiplier = FLASH_ENERGY * glow
 	_fly(_old_flag, CaptureShot3D.old_flag(beats, captured, t), t)
 	_fly(_new_flag, CaptureShot3D.new_flag(beats, captured, t), t)
 	_fx.begin(eye)
@@ -179,8 +186,7 @@ func _build_flag(theme: CommanderVisuals.FactionTheme) -> Node3D:
 	var flag := Node3D.new()
 	flag.name = "Flag"
 	add_child(flag)
-	var material := MeshKit.vertex_material()
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var material := flag_material()
 	var strip_w := FLAG_SIZE.x / FLAG_STRIPS
 	for i in FLAG_STRIPS:
 		var st := MeshKit.begin()

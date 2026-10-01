@@ -725,7 +725,19 @@ forms named in the root index are in `docs/design_record.md`.
   stage's own water, whose swell reads a `clock` uniform rather than engine time, so a posed frame
   is the same frame every run — no tween, no particle. The plates are the flat cut-ins' look
   (`CutinPlates3D`, `CaptureHud`); the shell's dim stays off while the stage has the lens, and
-  `V` / `C` / `B` hold still while it rolls. **Known gaps, left on purpose**:
+  `V` / `C` / `B` hold still while it rolls. **The stage is drawn once, unseen, before it plays**
+  (2026-09-30): a browser builds a shader the first time a frame needs it and stalls that frame,
+  so the first 3D combat on the web ran 7.3 s for its 2.5 (8.4 s on a cold software GPU).
+  `CutinWarmup3D` plays stand-ins over the board's first second up, each quarter second held for
+  a frame and then drawn by `RenderingServer.force_draw(false)`, a frame never shown — held a
+  frame first because a material takes a new look only as a frame ends, and a warm-up drawn in
+  one frame built barely half. It steps aside for a real cut-in, a flip back to 2D or the battle
+  closing, and does not run with battle animations off.
+  `CutinStage3D` keeps one of each material a play builds and frees, since Godot drops a
+  material's shader with the last material using it, which undid the warm-up and re-stalled every
+  play at its first hit; a new throwaway material kind joins `_keep_shaders`. A flash raises the
+  energy of an emission left on (`MeshKit.flashable`) rather than switching emission on, the
+  switch being a shader swap. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
   `follow_cursor` still steps aside by the flat board's geometry, `V` pressed over the open pause

@@ -64,6 +64,16 @@ func hold(at: float) -> void:
 	_play.root.show()
 
 
+## How long the posed cut-in runs, in seconds of its own clock.
+func length() -> float:
+	return _total()
+
+
+## Takes a held frame off the screen without changing what it wears.
+func put_away() -> void:
+	_play.root.hide()
+
+
 ## Fast-forwards every remaining beat to its end state. Never aborts: the clock is
 ## simply set to the end, the final tableau is applied, and the same exit runs —
 ## which is what makes a skip at any beat land on the right board.
