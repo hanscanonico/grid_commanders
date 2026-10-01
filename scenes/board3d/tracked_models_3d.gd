@@ -7,7 +7,8 @@ extends RefCounted
 ## What tells them apart at board scale is stated in their shapes: the medium
 ## tank is the biggest hull with the thickest gun, the APC the lowest with an
 ## open bay, the artillery's barrel the tallest thing on the land roster, and
-## the anti-air's guns one dark mount raised steeply.
+## the anti-air's four guns one dark mount raised steeply. Every gun ends in
+## `UnitParts3D.gun`'s dark muzzle ring.
 
 ## Every road wheel's hub, whatever the track it runs on.
 const ROAD_WHEEL := 0.042
@@ -17,12 +18,12 @@ const MD_TANK_GUN := 0.046
 ## The howitzer's trunnion, elevation and muzzle reach from it: the gun is built
 ## from them and the cut-in's muzzle flash is placed by them.
 const HOWITZER_PIVOT := Vector3(-0.19, 0.21, 0)
-const HOWITZER_ELEVATION := 53.0
+const HOWITZER_ELEVATION := 56.0
 const HOWITZER_REACH := 0.68
 ## The anti-air's quad mount: where its guns pivot, their elevation and length.
-const AA_MOUNT := Vector3(-0.01, 0.25, 0)
-const AA_ELEVATION := 45.0
-const AA_REACH := 0.17
+const AA_MOUNT := Vector3(-0.01, 0.215, 0)
+const AA_ELEVATION := 40.0
+const AA_REACH := 0.235
 ## The tank's deck: its hull a step under the medium tank's, so the tiers part.
 const TANK_DECK := 0.18
 
@@ -90,27 +91,37 @@ static func _tracks(
 
 
 ## A low, long hull: a raised cab at the front with a slit visor, and behind it
-## an open bay ribbed across its dark floor.
+## an open bay sunk well under the cab, its gunmetal floor open to the sky and
+## its walls ribbed with posts as the sprite's are, and a door in the stern.
 static func _apc(st: SurfaceTool, r: FactionRamp3D) -> void:
-	_tracks(st, 0.79, 0.12, 0.14, 0.215, r)
+	_tracks(st, 0.79, 0.11, 0.14, 0.215, r)
 	var low := UnitParts3D.rect(-0.4, 0.4, -0.19, 0.19)
 	var high := UnitParts3D.rect(-0.39, 0.34, -0.18, 0.18)
-	UnitParts3D.loft(st, Transform3D.IDENTITY, low, 0.08, high, 0.17, r.base)
-	MeshKit.block(st, MeshKit.at(Vector3(-0.15, 0.17, 0)), Vector3(0.48, 0.006, 0.34), r.dark)
+	UnitParts3D.loft(st, Transform3D.IDENTITY, low, 0.075, high, 0.105, r.base)
+	var floor_top := 0.105
+	var rim := 0.165
+	var bay := MeshKit.at(Vector3(-0.15, floor_top, 0))
+	MeshKit.block(st, bay, Vector3(0.46, 0.006, 0.32), UnitPalette3D.GUNMETAL)
 	for z in [-0.165, 0.165]:
-		MeshKit.block(st, MeshKit.at(Vector3(-0.15, 0.17, z)), Vector3(0.48, 0.045, 0.03), r.base)
-	MeshKit.block(st, MeshKit.at(Vector3(-0.375, 0.17, 0)), Vector3(0.03, 0.045, 0.36), r.base)
-	for x in [-0.31, -0.22, -0.13, -0.04, 0.05]:
-		MeshKit.box(st, MeshKit.at(Vector3(x, 0.205, 0)), Vector3(0.03, 0.02, 0.33), r.base)
+		var wall := MeshKit.at(Vector3(-0.15, floor_top, z))
+		MeshKit.block(st, wall, Vector3(0.48, rim - floor_top, 0.03), r.base)
+	var stern := MeshKit.at(Vector3(-0.375, floor_top, 0))
+	MeshKit.block(st, stern, Vector3(0.03, rim - floor_top, 0.36), r.base)
+	for x in [-0.32, -0.25, -0.18, -0.11, -0.04]:
+		for z in [-0.165, 0.165]:
+			MeshKit.block(st, MeshKit.at(Vector3(x, rim, z)), Vector3(0.018, 0.035, 0.03), r.light)
+	var door := MeshKit.at(Vector3(-0.394, 0.085, 0))
+	MeshKit.block(st, door, Vector3(0.012, 0.065, 0.17), r.dark)
 	var cab_low := UnitParts3D.rect(0.08, 0.36, -0.17, 0.17)
 	var cab_high := UnitParts3D.rect(0.08, 0.25, -0.15, 0.15)
-	UnitParts3D.loft(st, Transform3D.IDENTITY, cab_low, 0.17, cab_high, 0.265, r.base)
-	var slit := MeshKit.at(Vector3(0.305, 0.235, 0)) * Transform3D(Basis(Vector3.BACK, 0.94))
+	UnitParts3D.loft(st, Transform3D.IDENTITY, cab_low, floor_top, cab_high, 0.225, r.base)
+	var slit := MeshKit.at(Vector3(0.305, 0.19, 0)) * Transform3D(Basis(Vector3.BACK, 0.94))
 	MeshKit.box(st, slit, Vector3(0.012, 0.035, 0.24), UnitPalette3D.GLASS)
 	for z in [-0.07, 0.07]:
-		MeshKit.block(st, MeshKit.at(Vector3(0.15, 0.265, z)), Vector3(0.08, 0.015, 0.09), r.light)
+		MeshKit.block(st, MeshKit.at(Vector3(0.15, 0.225, z)), Vector3(0.08, 0.012, 0.09), r.light)
 
 
+## A turret in the middle of the hull with a gun ending on the cell's edge.
 static func _tank(st: SurfaceTool, r: FactionRamp3D) -> void:
 	_tracks(st, 0.72, 0.13, 0.16, 0.23, r)
 	var low := UnitParts3D.rect(-0.35, 0.35, -0.2, 0.2)
@@ -123,18 +134,18 @@ static func _tank(st: SurfaceTool, r: FactionRamp3D) -> void:
 	MeshKit.column(st, cupola, 0.045, 0.04, 0.025, 6, r.light)
 	var gun := MeshKit.at(Vector3(0.1, TANK_DECK + 0.06, 0))
 	MeshKit.box(st, gun, Vector3(0.05, 0.06, 0.08), UnitPalette3D.GUNMETAL)
-	UnitParts3D.barrel(st, gun, 0.29, TANK_GUN, UnitPalette3D.STEEL)
+	UnitParts3D.gun(st, gun, 0.26, TANK_GUN, UnitPalette3D.STEEL)
 
 
-## Out to the cell's edge: a taller hull skirted over its six-wheeled tracks, a
-## stepped two-tier turret and a thick gun ending in a boxy muzzle brake.
+## Out to the cell's ends: a taller hull skirted over its six-wheeled tracks, a
+## stepped two-tier turret and a thick gun ending in a boxy steel muzzle brake.
 static func _md_tank(st: SurfaceTool, r: FactionRamp3D) -> void:
-	_tracks(st, 0.84, 0.15, 0.18, 0.25, r, 6)
+	_tracks(st, 0.84, 0.15, 0.17, 0.24, r, 6)
 	for side: float in [-1.0, 1.0]:
-		var skirt := MeshKit.at(Vector3(0, 0.135, side * 0.35))
+		var skirt := MeshKit.at(Vector3(0, 0.135, side * 0.335))
 		MeshKit.box(st, skirt, Vector3(0.8, 0.06, 0.02), r.base)
-	var low := UnitParts3D.rect(-0.42, 0.42, -0.25, 0.25)
-	var high := UnitParts3D.rect(-0.4, 0.28, -0.24, 0.24)
+	var low := UnitParts3D.rect(-0.42, 0.42, -0.24, 0.24)
+	var high := UnitParts3D.rect(-0.4, 0.28, -0.23, 0.23)
 	UnitParts3D.loft(st, Transform3D.IDENTITY, low, 0.1, high, 0.235, r.base)
 	var t_low := PackedVector2Array(
 		[
@@ -164,49 +175,50 @@ static func _md_tank(st: SurfaceTool, r: FactionRamp3D) -> void:
 	MeshKit.block(st, MeshKit.at(Vector3(-0.3, 0.235, 0)), Vector3(0.08, 0.06, 0.26), r.base)
 	var gun := MeshKit.at(Vector3(0.15, 0.285, 0))
 	MeshKit.box(st, gun, Vector3(0.06, 0.09, 0.12), UnitPalette3D.GUNMETAL)
-	UnitParts3D.barrel(st, gun, 0.24, MD_TANK_GUN, UnitPalette3D.STEEL)
-	var brake := MeshKit.at(Vector3(0.395, 0.285, 0))
-	MeshKit.box(st, brake, Vector3(0.05, 0.11, 0.12), UnitPalette3D.GUNMETAL)
+	UnitParts3D.gun(st, gun, 0.27, MD_TANK_GUN, UnitPalette3D.STEEL)
+	var brake := MeshKit.at(Vector3(0.385, 0.285, 0))
+	MeshKit.box(st, brake, Vector3(0.05, 0.11, 0.12), UnitPalette3D.STEEL)
+	var face := MeshKit.at(Vector3(0.408, 0.285, 0))
+	MeshKit.box(st, face, Vector3(0.006, 0.11, 0.12), UnitPalette3D.GUNMETAL)
 
 
 ## One very long barrel raised steeply from an open box mount over the rear
-## third, so it rises over the low hull higher than anything else on land.
+## third, so it rises over the low hull higher than anything else on land, a
+## thick cradle sleeve over its first third.
 static func _artillery(st: SurfaceTool, r: FactionRamp3D) -> void:
 	_tracks(st, 0.66, 0.12, 0.14, 0.2, r)
 	var low := UnitParts3D.rect(-0.31, 0.32, -0.18, 0.18)
 	var high := UnitParts3D.rect(-0.3, 0.22, -0.17, 0.17)
 	UnitParts3D.loft(st, Transform3D.IDENTITY, low, 0.08, high, 0.155, r.base)
 	var mount := Vector3(HOWITZER_PIVOT.x, 0.155, 0)
-	MeshKit.block(st, MeshKit.at(mount), Vector3(0.18, 0.02, 0.18), UnitPalette3D.GUNMETAL)
+	var frame := UnitPalette3D.STEEL_MID
+	MeshKit.block(st, MeshKit.at(mount), Vector3(0.18, 0.02, 0.18), frame)
 	for z in [-0.08, 0.08]:
-		var cheek := MeshKit.at(mount + Vector3(0, 0, z))
-		MeshKit.block(st, cheek, Vector3(0.16, 0.08, 0.025), UnitPalette3D.GUNMETAL)
-	var back := MeshKit.at(mount + Vector3(-0.08, 0, 0))
-	MeshKit.block(st, back, Vector3(0.025, 0.05, 0.18), UnitPalette3D.GUNMETAL)
-	var gun := UnitParts3D.pitch(HOWITZER_PIVOT, HOWITZER_ELEVATION)
-	MeshKit.tube(st, gun * MeshKit.at(Vector3(0.04, 0, 0)), 0.045, 0.16, 8, UnitPalette3D.GUNMETAL)
-	var breech := gun * MeshKit.at(Vector3(-0.04, 0, 0))
-	UnitParts3D.barrel(st, breech, HOWITZER_REACH + 0.04, 0.03, UnitPalette3D.STEEL)
-	var mouth := gun * MeshKit.at(Vector3(HOWITZER_REACH - 0.02, 0, 0))
-	MeshKit.tube(st, mouth, 0.038, 0.04, 6, UnitPalette3D.GUNMETAL)
+		MeshKit.block(st, MeshKit.at(mount + Vector3(0, 0, z)), Vector3(0.16, 0.08, 0.025), frame)
+	MeshKit.block(st, MeshKit.at(mount + Vector3(-0.08, 0, 0)), Vector3(0.025, 0.05, 0.18), frame)
+	var howitzer := UnitParts3D.pitch(HOWITZER_PIVOT, HOWITZER_ELEVATION)
+	var sleeve := HOWITZER_REACH * 0.3
+	var cradle := howitzer * MeshKit.at(Vector3(sleeve / 2.0 - 0.04, 0, 0))
+	MeshKit.tube(st, cradle, 0.05, sleeve + 0.08, 8, frame)
+	var breech := howitzer * MeshKit.at(Vector3(-0.04, 0, 0))
+	UnitParts3D.gun(st, breech, HOWITZER_REACH + 0.04, 0.03, UnitPalette3D.STEEL)
 
 
-## A 2×2 block of short steel barrels raised to 45° out of one dark gunmetal
-## mount — a quad, where the artillery has one long tube — and a small radar
-## dish behind.
+## A 2×2 block of steel barrels raised out of one dark gunmetal mount — a quad,
+## where the artillery has one long tube — long enough to stand well clear of
+## it, and a small radar dish laid flat on the turret's rear.
 static func _anti_air(st: SurfaceTool, r: FactionRamp3D) -> void:
 	_tracks(st, 0.68, 0.12, 0.15, 0.22, r)
 	var low := UnitParts3D.rect(-0.33, 0.33, -0.19, 0.19)
 	var high := UnitParts3D.rect(-0.31, 0.2, -0.18, 0.18)
-	UnitParts3D.loft(st, Transform3D.IDENTITY, low, 0.08, high, 0.18, r.base)
-	MeshKit.column(st, MeshKit.at(Vector3(-0.04, 0.18, 0)), 0.13, 0.12, 0.03, 8, r.base)
-	var mount := MeshKit.at(Vector3(-0.04, 0.21, 0))
-	MeshKit.block(st, mount, Vector3(0.15, 0.08, 0.17), UnitPalette3D.GUNMETAL)
+	UnitParts3D.loft(st, Transform3D.IDENTITY, low, 0.08, high, 0.16, r.base)
+	MeshKit.column(st, MeshKit.at(Vector3(-0.04, 0.16, 0)), 0.13, 0.12, 0.02, 8, r.base)
+	var mount := MeshKit.at(Vector3(-0.05, 0.18, 0))
+	MeshKit.block(st, mount, Vector3(0.12, 0.07, 0.16), UnitPalette3D.GUNMETAL)
 	for z in [-0.042, 0.042]:
-		for lift in [-0.034, 0.034]:
+		for lift in [-0.03, 0.03]:
 			var pivot := AA_MOUNT + Vector3(0, 0, z)
 			var gun := UnitParts3D.pitch(pivot, AA_ELEVATION) * MeshKit.at(Vector3(0, lift, 0))
-			UnitParts3D.barrel(st, gun, AA_REACH, 0.0, UnitPalette3D.STEEL)
-	UnitParts3D.mast(st, MeshKit.at(Vector3(-0.25, 0.18, 0)), 0.1, 0.0, UnitPalette3D.STEEL)
-	var dish := MeshKit.at(Vector3(-0.25, 0.27, 0)) * Transform3D(Basis(Vector3.BACK, 0.5))
-	MeshKit.column(st, dish, 0.012, 0.06, 0.03, 8, UnitPalette3D.GUNMETAL)
+			UnitParts3D.gun(st, gun, AA_REACH, 0.0, UnitPalette3D.STEEL)
+	var dish := MeshKit.at(Vector3(-0.16, 0.18, 0)) * Transform3D(Basis(Vector3.BACK, 0.35))
+	MeshKit.column(st, dish, 0.02, 0.06, 0.02, 8, UnitPalette3D.GUNMETAL)

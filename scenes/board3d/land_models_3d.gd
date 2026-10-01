@@ -15,10 +15,17 @@ const MECH_SCALE := 1.5
 const RIFLEMAN_SCALE := 1.3
 ## How much broader a mech trooper stands than a rifleman.
 const HEAVY_BULK := 1.15
-## A mech trooper's tube: its tilt up off his shoulder, and how far ahead of the
-## shoulder its warhead's tip stands.
-const BAZOOKA_TILT := 15.0
-const BAZOOKA_REACH := 0.16
+## A mech trooper's tube, carried on his shoulder: its tilt up, how far ahead of
+## the shoulder its warhead's tip stands, and its tube's and warhead's lengths.
+const BAZOOKA_TILT := 12.0
+const BAZOOKA_REACH := 0.13
+const BAZOOKA_TUBE := 0.145
+const BAZOOKA_WARHEAD := 0.043
+## Where the tube rests: on the shoulder, its top level with the helmet.
+const BAZOOKA_REST := 0.222
+## A rifle held across the chest: its length, and how steeply it is slanted.
+const RIFLE_LENGTH := 0.17
+const RIFLE_SLANT := 32.0
 ## The rocket rack's hinge and raise, and its bottom tier's length, rise and
 ## width; each tier above is `ROCKET_SETBACK` shorter and `ROCKET_TAPER` narrower.
 const ROCKET_RACK := Vector3(-0.355, 0.13, 0)
@@ -41,7 +48,7 @@ static func build(st: SurfaceTool, type_id: StringName, r: FactionRamp3D) -> boo
 			for pos in [Vector3(0.12, 0, 0), Vector3(-0.12, 0, -0.2), Vector3(-0.1, 0, 0.2)]:
 				soldier(st, pos, RIFLEMAN_SCALE, r, false)
 		&"mech":
-			for pos in [Vector3(0.1, 0, -0.13), Vector3(-0.1, 0, 0.14)]:
+			for pos in [Vector3(0.13, 0, -0.15), Vector3(-0.13, 0, 0.15)]:
 				soldier(st, pos, MECH_SCALE, r, true)
 		&"recon":
 			_recon(st, r)
@@ -60,7 +67,7 @@ static func build(st: SurfaceTool, type_id: StringName, r: FactionRamp3D) -> boo
 static func muzzle_of(type_id: StringName, lone: float) -> Vector3:
 	match type_id:
 		&"mech":
-			var tube := UnitParts3D.pitch(Vector3(0, 0.2, _shoulder(true)), BAZOOKA_TILT)
+			var tube := UnitParts3D.pitch(Vector3(0, BAZOOKA_REST, _shoulder(true)), BAZOOKA_TILT)
 			return tube * Vector3(BAZOOKA_REACH, 0, 0) * lone
 		&"rockets":
 			return UnitParts3D.pitch(ROCKET_RACK, ROCKET_RAISE) * _rack_mouth(1)
@@ -74,15 +81,18 @@ static func _shoulder(heavy: bool) -> float:
 	return 0.062 * (HEAVY_BULK if heavy else 1.0)
 
 
-## One soldier at `pos`, scaled `s`; `heavy` is a mech trooper — broader, booted
-## heavier, packed bigger, shouldering a tube where a rifleman holds a rifle.
+## One soldier at `pos`, scaled `s`, mid-stride so his two legs part from the
+## board's side-on view; `heavy` is a mech trooper — broader, booted heavier,
+## packed bigger, shouldering a tube where a rifleman holds a rifle.
 static func soldier(st: SurfaceTool, pos: Vector3, s: float, r: FactionRamp3D, heavy: bool) -> void:
 	var xf := Transform3D(Basis.from_scale(Vector3.ONE * s), pos)
 	var bulk := HEAVY_BULK if heavy else 1.0
-	var leg := Vector3(0.05, 0.085, 0.036) if heavy else Vector3(0.042, 0.08, 0.03)
-	var stance := 0.03 if heavy else 0.026
-	for z in [-stance, stance]:
-		MeshKit.block(st, xf * MeshKit.at(Vector3(0, 0, z)), leg, UnitPalette3D.RUBBER)
+	var leg := Vector3(0.032, 0.08, 0.034) * bulk
+	var boot := Vector3(0.05, 0.022, 0.042) * (1.3 if heavy else 1.0)
+	for stride: float in [-1.0, 1.0]:
+		var foot := Vector3(stride * 0.034, 0, stride * 0.014)
+		MeshKit.block(st, xf * MeshKit.at(foot), leg, r.dark)
+		MeshKit.block(st, xf * MeshKit.at(foot + Vector3(0.008, 0, 0)), boot, UnitPalette3D.RUBBER)
 	var torso := Vector3(0.075 * bulk, 0.1, 0.1 * bulk)
 	MeshKit.block(st, xf * MeshKit.at(Vector3(0, 0.075, 0)), torso, r.base)
 	var shoulder := _shoulder(heavy)
@@ -94,22 +104,25 @@ static func soldier(st: SurfaceTool, pos: Vector3, s: float, r: FactionRamp3D, h
 	MeshKit.ball(st, xf * MeshKit.at(Vector3(-0.006, 0.222, 0)), 0.04, 3, 8, r.light)
 	MeshKit.block(st, xf * MeshKit.at(Vector3(0.0, 0.2, 0)), Vector3(0.1, 0.012, 0.09), r.light)
 	if heavy:
-		_bazooka(st, xf * UnitParts3D.pitch(Vector3(0, 0.2, shoulder), BAZOOKA_TILT))
+		_bazooka(st, xf * UnitParts3D.pitch(Vector3(0, BAZOOKA_REST, shoulder), BAZOOKA_TILT))
 	else:
-		var rifle := (
-			xf * MeshKit.at(Vector3(0.03, 0.12, -0.04), -20) * UnitParts3D.pitch(Vector3.ZERO, 20)
-		)
-		UnitParts3D.barrel(st, rifle, 0.2, 0.01, UnitPalette3D.STEEL)
+		_rifle(st, xf * UnitParts3D.pitch(Vector3(-0.06, 0.07, 0.062), RIFLE_SLANT))
+
+
+## A rifle slanted across the chest from the frame's origin, its gunmetal stock
+## at the low end so the weapon has a back as well as a muzzle.
+static func _rifle(st: SurfaceTool, xf: Transform3D) -> void:
+	UnitParts3D.barrel(st, xf, RIFLE_LENGTH, 0.01, UnitPalette3D.STEEL)
+	var stock := xf * MeshKit.at(Vector3(0.025, -0.006, 0))
+	MeshKit.box(st, stock, Vector3(0.06, 0.034, 0.026), UnitPalette3D.GUNMETAL)
 
 
 ## A shoulder tube pivoting at the frame's origin, its warhead forward.
 static func _bazooka(st: SurfaceTool, xf: Transform3D) -> void:
-	var tube := xf * MeshKit.at(Vector3(BAZOOKA_REACH - 0.23, 0, 0))
-	UnitParts3D.barrel(st, tube, 0.17, 0.026, UnitPalette3D.STEEL)
-	MeshKit.tube(st, tube * MeshKit.at(Vector3(0.17, 0, 0)), 0.032, 0.02, 6, UnitPalette3D.RUBBER)
-	UnitParts3D.nose(
-		st, tube * MeshKit.at(Vector3(0.18, 0, 0)), 0.03, 0.05, 6, UnitPalette3D.ORDNANCE_TIP
-	)
+	var tube := xf * MeshKit.at(Vector3(BAZOOKA_REACH - BAZOOKA_TUBE - BAZOOKA_WARHEAD, 0, 0))
+	UnitParts3D.gun(st, tube, BAZOOKA_TUBE, 0.026, UnitPalette3D.STEEL)
+	var warhead := tube * MeshKit.at(Vector3(BAZOOKA_TUBE, 0, 0))
+	UnitParts3D.nose(st, warhead, 0.03, BAZOOKA_WARHEAD, 6, UnitPalette3D.ORDNANCE_TIP)
 
 
 # --- wheeled -----------------------------------------------------------------
@@ -121,6 +134,8 @@ static func _wheel(st: SurfaceTool, pos: Vector3, radius: float, width: float) -
 	MeshKit.tube(st, MeshKit.at(pos, 90), radius * 0.55, width + 0.012, 6, UnitPalette3D.STEEL)
 
 
+## A light car: a steel cabin box over a roll cage with a machine gun on it,
+## a windscreen stood up in front and a short whip antenna at the back.
 static func _recon(st: SurfaceTool, r: FactionRamp3D) -> void:
 	for x in [-0.2, 0.2]:
 		for z in [-0.2, 0.2]:
@@ -131,16 +146,15 @@ static func _recon(st: SurfaceTool, r: FactionRamp3D) -> void:
 	for z in [-0.16, 0.16]:
 		MeshKit.box(st, MeshKit.at(Vector3(-0.02, 0.17, z)), Vector3(0.56, 0.02, 0.03), r.dark)
 	var cabin := MeshKit.at(Vector3(0.03, 0.22, 0))
-	MeshKit.block(st, cabin, Vector3(0.16, 0.055, 0.22), UnitPalette3D.LIVERY)
+	MeshKit.block(st, cabin, Vector3(0.16, 0.055, 0.22), UnitPalette3D.STEEL_LIGHT)
 	var shield := MeshKit.at(Vector3(0.125, 0.25, 0)) * Transform3D(Basis(Vector3.BACK, 0.52))
 	MeshKit.box(st, shield, Vector3(0.012, 0.07, 0.2), UnitPalette3D.GLASS)
 	MeshKit.column(st, MeshKit.at(Vector3(-0.13, 0.22, 0)), 0.065, 0.055, 0.035, 8, r.dark)
-	UnitParts3D.barrel(st, MeshKit.at(Vector3(-0.1, 0.245, 0)), 0.2, 0.014, UnitPalette3D.STEEL)
-	MeshKit.block(
-		st, MeshKit.at(Vector3(-0.15, 0.255, 0)), Vector3(0.06, 0.03, 0.05), UnitPalette3D.GUNMETAL
-	)
+	var receiver := MeshKit.at(Vector3(-0.02, 0.275, 0))
+	MeshKit.block(st, receiver, Vector3(0.06, 0.035, 0.05), UnitPalette3D.GUNMETAL)
+	UnitParts3D.barrel(st, MeshKit.at(Vector3(0.0, 0.295, 0)), 0.16, 0.0, UnitPalette3D.GUNMETAL)
 	var whip := MeshKit.at(Vector3(-0.25, 0.22, -0.11))
-	UnitParts3D.mast(st, whip, 0.15, 0.006, UnitPalette3D.STEEL)
+	UnitParts3D.mast(st, whip, 0.09, 0.0, UnitPalette3D.STEEL)
 
 
 ## A six-wheeled truck out to the cell's edge: chassis, wheels and a cab at the
@@ -159,7 +173,8 @@ static func _truck(st: SurfaceTool, r: FactionRamp3D) -> void:
 
 
 ## A stepped rack of three tube tiers, each set back from the one below, every
-## tier grooved on its top and sides so its rows read from the board's 52°.
+## tier grooved on its top and sides so its rows read from the board's 52°, and
+## open at both ends. Mid steel, so its wide top stays under the missiles' white.
 static func _rockets(st: SurfaceTool, r: FactionRamp3D) -> void:
 	_truck(st, r)
 	MeshKit.block(
@@ -180,10 +195,11 @@ static func _rockets(st: SurfaceTool, r: FactionRamp3D) -> void:
 		for side: float in [-1.0, 1.0]:
 			var seam := mid * MeshKit.at(Vector3(0, 0, side * width / 2.0))
 			MeshKit.box(st, seam, Vector3(run, 0.014, 0.008), UnitPalette3D.RUBBER)
-		for col in 3:
-			var mouth := mid * MeshKit.at(Vector3(length / 2.0, 0, (col - 1) * width / 3.0))
-			var bore := Vector3(0.008, rise * 0.64, width / 3.0 - 0.025)
-			MeshKit.box(st, mouth, bore, UnitPalette3D.RUBBER)
+		for face: float in [-1.0, 1.0]:
+			for col in 3:
+				var mouth := Vector3(face * length / 2.0, 0, (col - 1) * width / 3.0)
+				var bore := Vector3(0.008, rise * 0.64, width / 3.0 - 0.025)
+				MeshKit.box(st, mid * MeshKit.at(mouth), bore, UnitPalette3D.RUBBER)
 
 
 ## The middle of `tier`'s row of mouths, in the rack's frame: its front face.
@@ -196,6 +212,8 @@ static func _missiles(st: SurfaceTool, r: FactionRamp3D) -> void:
 	var rail := UnitParts3D.pitch(MISSILE_RAIL, MISSILE_RAISE)
 	var bed := rail * MeshKit.at(Vector3(0.2, 0.01, 0))
 	MeshKit.box(st, bed, Vector3(0.4, 0.03, 0.26), UnitPalette3D.GUNMETAL)
+	var cap := rail * MeshKit.at(Vector3(0.0, 0.03, 0))
+	MeshKit.box(st, cap, Vector3(0.03, 0.07, 0.28), UnitPalette3D.GUNMETAL)
 	MeshKit.block(
 		st, MeshKit.at(Vector3(-0.08, 0.1, 0)), Vector3(0.05, 0.14, 0.08), UnitPalette3D.GUNMETAL
 	)

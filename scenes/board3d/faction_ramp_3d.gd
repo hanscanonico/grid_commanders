@@ -13,11 +13,16 @@ extends RefCounted
 ## How far toward straight up (or down) a face must look to take the light (or
 ## dark) tone: a sloped glacis still reads as a flank, a deck as a top.
 const FACING := 0.6
+## How much lighter the lit tone is than the army's base, in OKHSL lightness,
+## its hue and saturation the base's own. The theme's light shade is a paler
+## tint, and the board's sun lifts a top face further still, so a top painted
+## in it read salmon and periwinkle where the sprites are red and blue.
+const LIGHT_STEP := 0.08
 ## The brightest an army's lit tone may be, in relative luminance, under the
 ## board's sun. A lit tone past it washes toward white on a top face, so the
 ## whole ramp is lowered by one factor until its light tone sits on the
-## ceiling. Only the Gilded Concord's yellow reaches it (0.85 against the other
-## armies' 0.45–0.56), which deepens it from lemon toward the sprites' ochre.
+## ceiling. Only the Gilded Concord's yellow reaches it (0.87 against the other
+## armies' 0.39–0.51), which deepens it from lemon toward the sprites' ochre.
 const LIT_CEILING := 0.62
 
 static var _ramps: Dictionary[StringName, FactionRamp3D] = {}
@@ -28,9 +33,11 @@ var dark: Color
 
 
 func _init(theme: CommanderVisuals.FactionTheme) -> void:
-	var lower := minf(1.0, LIT_CEILING / maxf(theme.color_light.get_luminance(), 0.001))
+	var hue := theme.color
+	var lit := Color.from_ok_hsl(hue.ok_hsl_h, hue.ok_hsl_s, hue.ok_hsl_l + LIGHT_STEP)
+	var lower := minf(1.0, LIT_CEILING / maxf(lit.get_luminance(), 0.001))
 	base = _scaled(theme.color, lower)
-	light = _scaled(theme.color_light, lower)
+	light = _scaled(lit, lower)
 	dark = _scaled(theme.color_dark, lower)
 
 

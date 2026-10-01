@@ -21,6 +21,8 @@ const ROTOR_SPIN := 22.0
 const BADGE_HEIGHT := 0.42
 const BADGE_SIDE := 0.3
 const BADGE_PX := 16
+## How many frames the shadow's primer stands before the lens.
+const PRIMER_FRAMES := 3
 
 var map: MapData
 var sprites_root: Node2D
@@ -30,6 +32,8 @@ var sprites_root: Node2D
 ## be read back out of a typed key.
 var _models: Dictionary[int, Model] = {}
 var _clock := 0.0
+var _primer: MeshInstance3D
+var _primed := 0
 
 
 ## Everything the mirror keeps about one model between frames.
@@ -46,10 +50,16 @@ class Model:
 	var phase := 0.0
 
 
+func _ready() -> void:
+	_primer = AirShadow3D.primer()
+	add_child(_primer)
+
+
 ## Poses every model off its sprite. `lens` is the camera's basis: the badges
 ## sit to its right and left of a unit whichever way the board is turned.
 func sync(delta: float, lens: Basis) -> void:
 	_clock += delta
+	_prime()
 	var seen: Dictionary[int, bool] = {}
 	for child in sprites_root.get_children():
 		var sprite := child as UnitSprite
@@ -67,6 +77,20 @@ func sync(delta: float, lens: Basis) -> void:
 			_models.erase(id)
 
 
+## Holds the air shadow's primer a step before the lens for its first frames,
+## so the shadow's shader is built as the board comes up, not when the first
+## aircraft is bought or flies out of the fog.
+func _prime() -> void:
+	var lens := get_viewport().get_camera_3d()
+	if _primer == null or lens == null:
+		return
+	_primer.global_position = lens.global_position - lens.global_basis.z
+	_primed += 1
+	if _primed > PRIMER_FRAMES:
+		_primer.queue_free()
+		_primer = null
+
+
 func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	var model := Model.new()
 	if old != null:
@@ -82,7 +106,7 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	var body := model.node.get_node("Body") as GeometryInstance3D
 	model.material = body.material_override as StandardMaterial3D
 	if sprite.unit.type.domain == UnitType.AIR:
-		model.shadow = AirShadow3D.attach(model.node)
+		model.shadow = AirShadow3D.attach(model.node, sprite.unit.type.id)
 	model.phase = float(sprite.unit.cell.x * 7 + sprite.unit.cell.y * 3)
 	model.hp = _badge(Color.WHITE)
 	model.fuel = _badge(UiTheme.AMMO)

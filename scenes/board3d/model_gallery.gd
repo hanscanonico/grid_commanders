@@ -144,7 +144,7 @@ func _place_unit(id: StringName, theme: CommanderVisuals.FactionTheme, cell: Vec
 	add_child(_at(model, cell))
 	if AIR.has(id):
 		model.position.y = BoardSpace3D.AIR_ALTITUDE
-		AirShadow3D.lay(AirShadow3D.attach(model), model.position.y, 0.0)
+		AirShadow3D.lay(AirShadow3D.attach(model, id), model.position.y, 0.0)
 
 
 func _at(node: Node3D, pos: Vector3) -> Node3D:
