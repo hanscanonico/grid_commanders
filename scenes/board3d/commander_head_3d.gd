@@ -16,6 +16,12 @@ const INK := CommanderFigure3D.INK
 const KIT := CommanderFigure3D.KIT
 const GOLD := CommanderFigure3D.GOLD
 const GLASS := CommanderFigure3D.GLASS
+## The look key a portrait still sets: the face drawn for a close-up, with eye
+## whites, irises and a catch of light. Board, story-scene and cut-in figures
+## never set it — at their size the plain ink eyes read better.
+const CLOSE_UP := &"close_up"
+const EYE_WHITE := Color8(246, 241, 230)
+const CATCHLIGHT := Color8(255, 255, 255)
 
 
 static func build(
@@ -31,6 +37,8 @@ static func build(
 	var wears: Array[StringName] = [look[&"acc"], look[&"acc2"]]
 	var covered := wears.has(&"eyepatch")
 	_face(st, xf, skin, hair, look[&"facial"], covered)
+	if look.get(CLOSE_UP, false):
+		_close_eyes(st, xf, covered)
 	var style: StringName = look[&"style"]
 	if _covers_crown(wears) and (style == &"curly" or style == &"spiky"):
 		style = &"short"
@@ -84,6 +92,20 @@ static func _face(
 		&"mustache":
 			_mustache(st, xf, hair)
 	MeshKit.box(st, _at(xf, 0, 0.042, mouth_z), Vector3(0.05, 0.009, 0.01), CommanderFigure3D.MOUTH)
+
+
+## Whites, an iris and a catchlight laid over each ink eye, and an ink lid along
+## its top: the eye the pixel bust paints, at a size only a portrait shows.
+static func _close_eyes(st: SurfaceTool, xf: Transform3D, patched: bool) -> void:
+	for side: float in [-1.0, 1.0]:
+		if patched and side < 0.0:
+			continue
+		var x := 0.048 * side
+		MeshKit.box(st, _at(xf, x, EYE, FACE - 0.004), Vector3(0.04, 0.042, 0.006), EYE_WHITE)
+		MeshKit.box(st, _at(xf, x, EYE - 0.003, FACE - 0.008), Vector3(0.024, 0.034, 0.006), INK)
+		var glint := _at(xf, x - 0.006, EYE + 0.006, FACE - 0.012)
+		MeshKit.box(st, glint, Vector3(0.008, 0.008, 0.004), CATCHLIGHT)
+		MeshKit.box(st, _at(xf, x, EYE + 0.02, FACE - 0.01), Vector3(0.046, 0.008, 0.008), INK)
 
 
 static func _mustache(st: SurfaceTool, xf: Transform3D, hair: Color) -> void:
