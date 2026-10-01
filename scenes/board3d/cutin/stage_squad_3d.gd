@@ -61,7 +61,6 @@ var _muzzle := Vector3.ZERO
 var _height := 0.3
 var _figures: Array[Node3D] = []
 var _materials: Array[StandardMaterial3D] = []
-var _rotors: Array[Node3D] = []
 
 
 ## Stands `p_posted` figures of `p_type` on `plot` in `theme`, `p_standing` of
@@ -92,7 +91,6 @@ func setup(
 		_materials.append(
 			MeshKit.flashable(body.material_override as StandardMaterial3D, FLASH_COLOUR)
 		)
-		_rotors.append(figure.get_node_or_null("Rotor"))
 		_figures.append(figure)
 		add_child(figure)
 	pose()
@@ -128,8 +126,7 @@ func pose() -> void:
 		figure.scale = Vector3.ONE * _scale
 		figure.visible = fall.w > 0.0 and alpha > 0.0
 		_paint(slot, fall.w * alpha, maxf(char_by, run * 0.8))
-		if _rotors[slot] != null:
-			_rotors[slot].rotation.y = clock * ROTOR_SPIN
+		UnitModels3D.turn_rotors(figure, clock * ROTOR_SPIN)
 
 
 ## Whether this squad marches in rather than rolling, flying or sailing.

@@ -12,6 +12,10 @@ const TONE := Color("101218")
 ## How far the shadow stands off the ground, so it never fights the surface.
 const LIFT := 0.012
 const FLAT := 0.001
+## The silhouette is drawn this much smaller, about the cell's centre: dark and
+## solid at full size it read as a second aircraft parked on the ground, and
+## the widest flyer's shadow spilled to its cell's edge.
+const SPREAD := 0.75
 
 
 ## Lays a shadow under `model`, a `UnitModels3D.build` aircraft, and stops its
@@ -24,7 +28,7 @@ static func attach(model: Node3D) -> MeshInstance3D:
 	var shadow := MeshInstance3D.new()
 	shadow.name = "Shadow"
 	shadow.mesh = (model.get_node("Body") as MeshInstance3D).mesh
-	shadow.scale = Vector3(1.0, FLAT, 1.0)
+	shadow.scale = Vector3(SPREAD, FLAT, SPREAD)
 	shadow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

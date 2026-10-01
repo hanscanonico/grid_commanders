@@ -11,6 +11,9 @@ const PROPERTY_TOP := 0.85
 const AIR_TOP := 0.32
 const SEA_TOP := 0.45
 const SEA_KEEL := -0.06
+## The sub rides sunk, only its hull's top third clear of the water, so its
+## keel runs deeper than a surface ship's.
+const SUB_KEEL := -0.1
 const LAND_TOP := 0.42
 const LAND_LOWEST_TOP := 0.22
 ## The artillery's one long barrel is its identity, raised steeply over its hull
@@ -47,7 +50,8 @@ func test_every_unit_has_a_model_inside_its_cell() -> void:
 				assert_gte(aabb.position.y, -TOLERANCE, "%s dips below its belly" % what)
 				assert_lte(top, AIR_TOP + TOLERANCE, "%s is too tall" % what)
 			UnitType.SEA:
-				assert_gte(aabb.position.y, SEA_KEEL - TOLERANCE, "%s draws too deep" % what)
+				var keel := SUB_KEEL if unit_type.id == &"sub" else SEA_KEEL
+				assert_gte(aabb.position.y, keel - TOLERANCE, "%s draws too deep" % what)
 				assert_lte(top, SEA_TOP + TOLERANCE, "%s is too tall" % what)
 			_:
 				assert_gte(aabb.position.y, -TOLERANCE, "%s sinks into the ground" % what)
@@ -55,34 +59,83 @@ func test_every_unit_has_a_model_inside_its_cell() -> void:
 				assert_between(top, LAND_LOWEST_TOP, ceiling + TOLERANCE, "%s height" % what)
 
 
-func _land(id: StringName) -> AABB:
+func _model(id: StringName) -> AABB:
 	return UnitModels3D.mesh_for(id, _theme(&"meridian")).get_aabb()
 
 
-func test_the_artillery_barrel_is_the_tallest_thing_on_land() -> void:
-	var aabb := _land(&"artillery")
+func test_the_artillery_barrel_is_the_tallest_thing_on_model() -> void:
+	var aabb := _model(&"artillery")
 	var artillery := aabb.end.y
 	var muzzle := UnitModels3D.muzzle_for(&"artillery", aabb)
 	assert_almost_eq(muzzle.y, artillery, 0.03, "the cut-in fires from the barrel's top")
 	for unit_type in Fixture.unit_db().all():
 		if unit_type.domain == UnitType.LAND and unit_type.id != &"artillery":
-			assert_lt(_land(unit_type.id).end.y, artillery, String(unit_type.id))
+			assert_lt(_model(unit_type.id).end.y, artillery, String(unit_type.id))
 
 
 ## The tiers part by bulk: a recon under a tank under a medium tank, which
 ## reaches the cell's edge and carries the thicker gun; the tank's gun stays
 ## short of the cell's edge, and the APC rides lower than the tank.
 func test_the_land_tiers_part_by_bulk() -> void:
-	var recon := _land(&"recon")
-	var tank := _land(&"tank")
-	var md_tank := _land(&"md_tank")
+	var recon := _model(&"recon")
+	var tank := _model(&"tank")
+	var md_tank := _model(&"md_tank")
 	assert_lt(recon.size.x, tank.size.x, "recon is shorter than the tank")
 	assert_lt(tank.size.x, md_tank.size.x, "tank is shorter than the medium tank")
 	assert_lt(tank.end.y, md_tank.end.y, "tank is lower than the medium tank")
 	assert_lt(tank.end.x, md_tank.end.x, "the tank's gun is the shorter")
 	assert_almost_eq(md_tank.end.x, UNIT_HALF, TOLERANCE, "the medium tank reaches the edge")
 	assert_gte(TrackedModels3D.MD_TANK_GUN, TrackedModels3D.TANK_GUN * 1.55, "the thicker gun")
-	assert_lt(_land(&"apc").end.y, tank.end.y, "the APC rides lower than the tank")
+	assert_lt(_model(&"apc").end.y, tank.end.y, "the APC rides lower than the tank")
+
+
+## The bomber is the biggest thing in the air: the widest span of any
+## aircraft, and at least the review's fifteen percent past the fighter's.
+func test_the_bomber_spans_widest_in_the_air() -> void:
+	var bomber := _model(&"bomber").size.z
+	for id: StringName in [&"fighter", &"b_copter", &"t_copter"]:
+		assert_lt(_model(id).size.z, bomber, String(id))
+	assert_gte(bomber, _model(&"fighter").size.z * 1.15, "the bomber's span over the fighter's")
+
+
+## The transport is the tandem: one rotor over its cab, one on a raised pylon
+## at its tail, where the gunship turns one.
+func test_the_transport_flies_on_tandem_rotors() -> void:
+	var tandem: Array = AirModels3D.ROTOR_HUBS[&"t_copter"]
+	assert_eq(tandem.size(), 2)
+	assert_gt(tandem[0].x, 0.0, "the fore rotor rides over the cab")
+	assert_lt(tandem[1].x, 0.0, "the aft rotor rides over the tail")
+	assert_gt(tandem[1].y, tandem[0].y, "the aft rotor stands on its raised pylon")
+	assert_eq(AirModels3D.ROTOR_HUBS[&"b_copter"].size(), 1)
+
+
+## The battleship fills the cell's length, the cruiser runs about four-fifths
+## of it and the sub a little more, and the sub's hull is mostly under water.
+func test_the_ships_part_by_length_and_the_sub_rides_sunk() -> void:
+	var battleship := _model(&"battleship").size.x
+	assert_almost_eq(battleship, 2.0 * UNIT_HALF, TOLERANCE, "the battleship fills the cell")
+	assert_almost_eq(_model(&"cruiser").size.x / battleship, 0.8, 0.04, "the cruiser's length")
+	assert_almost_eq(_model(&"sub").size.x / battleship, 0.85, 0.04, "the sub's length")
+	var clear := SeaModels3D.SUB_HULL_CENTRE + SeaModels3D.SUB_HULL_RISE
+	assert_gt(clear, 0.0, "the sub's hull breaks the surface")
+	assert_lte(clear / (2.0 * SeaModels3D.SUB_HULL_RISE), 0.36, "only its top third clears")
+
+
+## Heavy turret guns stand far enough apart that two read as two, not as one
+## grey stripe: the gap between them is itself a visible part.
+func test_a_turret_gun_stands_clear_of_its_neighbour() -> void:
+	var gap := SeaModels3D.GUN_SPACING - SeaModels3D.GUN_THICKNESS
+	assert_gte(gap, UnitParts3D.MIN_THICKNESS / 2.0, "the gap between a turret's guns")
+	assert_gte(SeaModels3D.GUN_THICKNESS, UnitParts3D.MIN_THICKNESS * 1.4, "a heavy gun")
+
+
+## A cut-in figure's shot leaves from somewhere on the figure, so a muzzle a
+## builder states cannot drift off a gun it has since moved.
+func test_every_muzzle_is_on_its_figure() -> void:
+	for unit_type in Fixture.unit_db().all():
+		var aabb := UnitModels3D.figure_mesh_for(unit_type.id, _theme(&"meridian")).get_aabb()
+		var muzzle := UnitModels3D.muzzle_for(unit_type.id, aabb)
+		assert_true(aabb.grow(TOLERANCE).has_point(muzzle), String(unit_type.id))
 
 
 func test_every_property_has_a_model_inside_its_cell() -> void:

@@ -19,6 +19,10 @@ const MD_TANK_GUN := 0.046
 const HOWITZER_PIVOT := Vector3(-0.19, 0.21, 0)
 const HOWITZER_ELEVATION := 53.0
 const HOWITZER_REACH := 0.68
+## The anti-air's quad mount: where its guns pivot, their elevation and length.
+const AA_MOUNT := Vector3(-0.01, 0.25, 0)
+const AA_ELEVATION := 45.0
+const AA_REACH := 0.17
 ## The tank's deck: its hull a step under the medium tank's, so the tiers part.
 const TANK_DECK := 0.18
 
@@ -41,11 +45,15 @@ static func build(st: SurfaceTool, type_id: StringName, r: FactionRamp3D) -> boo
 
 
 ## Where a hull's shot leaves it, in the model's frame, when that is not the
-## front of its footprint: `Vector3.INF` for every hull but the artillery's.
+## front of its footprint: `Vector3.INF` for the hulls whose gun is there.
 static func muzzle_of(type_id: StringName) -> Vector3:
-	if type_id != &"artillery":
-		return Vector3.INF
-	return UnitParts3D.pitch(HOWITZER_PIVOT, HOWITZER_ELEVATION) * Vector3(HOWITZER_REACH, 0, 0)
+	match type_id:
+		&"artillery":
+			var howitzer := UnitParts3D.pitch(HOWITZER_PIVOT, HOWITZER_ELEVATION)
+			return howitzer * Vector3(HOWITZER_REACH, 0, 0)
+		&"anti_air":
+			return UnitParts3D.pitch(AA_MOUNT, AA_ELEVATION) * Vector3(AA_REACH, 0, 0)
+	return Vector3.INF
 
 
 ## Two tracks under a hull, with `wheels` steel road-wheel hubs a side and a
@@ -196,10 +204,9 @@ static func _anti_air(st: SurfaceTool, r: FactionRamp3D) -> void:
 	MeshKit.block(st, mount, Vector3(0.15, 0.08, 0.17), UnitPalette3D.GUNMETAL)
 	for z in [-0.042, 0.042]:
 		for lift in [-0.034, 0.034]:
-			var gun := (
-				UnitParts3D.pitch(Vector3(-0.01, 0.25, z), 45) * MeshKit.at(Vector3(0, lift, 0))
-			)
-			UnitParts3D.barrel(st, gun, 0.17, 0.0, UnitPalette3D.STEEL)
+			var pivot := AA_MOUNT + Vector3(0, 0, z)
+			var gun := UnitParts3D.pitch(pivot, AA_ELEVATION) * MeshKit.at(Vector3(0, lift, 0))
+			UnitParts3D.barrel(st, gun, AA_REACH, 0.0, UnitPalette3D.STEEL)
 	UnitParts3D.mast(st, MeshKit.at(Vector3(-0.25, 0.18, 0)), 0.1, 0.0, UnitPalette3D.STEEL)
 	var dish := MeshKit.at(Vector3(-0.25, 0.27, 0)) * Transform3D(Basis(Vector3.BACK, 0.5))
 	MeshKit.column(st, dish, 0.012, 0.06, 0.03, 8, UnitPalette3D.GUNMETAL)

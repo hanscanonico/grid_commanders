@@ -42,7 +42,6 @@ class Model:
 	var plane := Vector2.ZERO
 	var hp: Label3D
 	var fuel: Label3D
-	var rotor: Node3D
 	var shadow: Node3D
 	var phase := 0.0
 
@@ -82,7 +81,6 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	)
 	var body := model.node.get_node("Body") as GeometryInstance3D
 	model.material = body.material_override as StandardMaterial3D
-	model.rotor = model.node.get_node_or_null("Rotor")
 	if sprite.unit.type.domain == UnitType.AIR:
 		model.shadow = AirShadow3D.attach(model.node)
 	model.phase = float(sprite.unit.cell.x * 7 + sprite.unit.cell.y * 3)
@@ -122,8 +120,8 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 		AirShadow3D.lay(model.shadow, height, ground)
 		model.shadow.visible = sprite.modulate.a >= 0.999
 	_tint(model, sprite)
-	if model.rotor != null:
-		model.rotor.rotate_y(delta * ROTOR_SPIN)
+	if domain == UnitType.AIR:
+		UnitModels3D.turn_rotors(node, _clock * ROTOR_SPIN + model.phase)
 
 
 ## The sprite's fade, hit flash and acted scrim, carried onto the one material

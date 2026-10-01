@@ -16,6 +16,7 @@ extends RefCounted
 ## cut-in squad posts them one per figure instead, blown up to stand beside a
 ## vehicle.
 const LONE_SOLDIER_SCALE := 2.0
+const ROTOR_PART := "Rotor%d"
 
 static var _meshes: Dictionary[String, ArrayMesh] = {}
 static var _warned: Dictionary[StringName, bool] = {}
@@ -45,18 +46,26 @@ static func figure_mesh_for(type_id: StringName, theme: CommanderVisuals.Faction
 	return _meshes[key]
 
 
-## Where a figure's shot leaves it, in the model's frame: the front of its
-## footprint at seven-tenths of its height, unless its gun stands elsewhere.
+## Where a figure's shot leaves it, in the model's frame: its gun's mouth when
+## its builder knows where that is, else the front of its footprint at
+## seven-tenths of its height. Asked of the cut-in's figure, so a mech answers
+## for its lone trooper.
 static func muzzle_for(type_id: StringName, aabb: AABB) -> Vector3:
-	var muzzle := TrackedModels3D.muzzle_of(type_id)
-	if muzzle.is_finite():
-		return muzzle
+	for muzzle: Vector3 in [
+		TrackedModels3D.muzzle_of(type_id),
+		LandModels3D.muzzle_of(type_id, LONE_SOLDIER_SCALE),
+		AirModels3D.muzzle_of(type_id),
+		SeaModels3D.muzzle_of(type_id),
+	]:
+		if muzzle.is_finite():
+			return muzzle
 	return Vector3(aabb.end.x, aabb.position.y + aabb.size.y * 0.7, 0.0)
 
 
-## A fresh model: a `Body` and, on a helicopter, a `Rotor` spinning about its
-## own Y. Every part shares one material made for this call alone, because the
-## board tints it in place. `lone` builds a cut-in figure (`figure_mesh_for`).
+## A fresh model: a `Body` and, on a helicopter, a part per rotor (`Rotor0`
+## fore, `Rotor1` aft on a tandem) that `turn_rotors` spins. Every part shares
+## one material made for this call alone, because the board tints it in place.
+## `lone` builds a cut-in figure (`figure_mesh_for`).
 static func build(
 	type_id: StringName, theme: CommanderVisuals.FactionTheme, lone: bool = false
 ) -> Node3D:
@@ -65,10 +74,21 @@ static func build(
 	var material := MeshKit.vertex_material()
 	var body := figure_mesh_for(type_id, theme) if lone else mesh_for(type_id, theme)
 	_part(root, "Body", body, material, Vector3.ZERO)
-	if AirModels3D.ROTOR_HUB.has(type_id):
-		var hub: Vector3 = AirModels3D.ROTOR_HUB[type_id]
-		_part(root, "Rotor", AirModels3D.rotor_mesh(type_id), material, hub)
+	var hubs: Array = AirModels3D.ROTOR_HUBS.get(type_id, [])
+	for i in hubs.size():
+		_part(root, ROTOR_PART % i, AirModels3D.rotor_mesh(type_id), material, hubs[i])
 	return root
+
+
+## Turns every rotor of `model`, a `build` result, to `angle` about its hub. A
+## tandem pair counter-rotates, as a real one does, so its blades never cross.
+static func turn_rotors(model: Node3D, angle: float) -> void:
+	var i := 0
+	var rotor := model.get_node_or_null(ROTOR_PART % i) as Node3D
+	while rotor != null:
+		rotor.rotation.y = angle if i % 2 == 0 else -angle
+		i += 1
+		rotor = model.get_node_or_null(ROTOR_PART % i) as Node3D
 
 
 static func _part(

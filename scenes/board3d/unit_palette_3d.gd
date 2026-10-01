@@ -30,3 +30,10 @@ const LIVERY := Color("c9ced4")
 const SKIN := Color("e3b58e")
 ## The battleship's planked deck, its tell among the ships.
 const DECK := Color("b9b3a3")
+## The cruiser's steel deck: a second value under its hull, grey where the
+## battleship's is planked.
+const PLATING := Color("7d858e")
+## Foam on the water: the sub's wake, the white line the sprites draw it by.
+const WAKE := Color("eef3f6")
+## A jet's nozzle glow.
+const EXHAUST := Color("ff9a3c")
