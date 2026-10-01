@@ -12,8 +12,9 @@ extends RefCounted
 ## bodies from `UnitParts3D`'s shapes, in `FactionRamp3D`'s army tones and
 ## `UnitPalette3D`'s role colours.
 
-## A foot unit's model is three soldiers; a cut-in squad posts them one per
-## figure instead, blown up to stand beside a vehicle.
+## A foot unit's model is a few soldiers — three riflemen, two mech troopers; a
+## cut-in squad posts them one per figure instead, blown up to stand beside a
+## vehicle.
 const LONE_SOLDIER_SCALE := 2.0
 
 static var _meshes: Dictionary[String, ArrayMesh] = {}
@@ -42,6 +43,15 @@ static func figure_mesh_for(type_id: StringName, theme: CommanderVisuals.Faction
 		LandModels3D.soldier(st, Vector3.ZERO, LONE_SOLDIER_SCALE, ramp, type_id == &"mech")
 		_meshes[key] = ramp.commit(st)
 	return _meshes[key]
+
+
+## Where a figure's shot leaves it, in the model's frame: the front of its
+## footprint at seven-tenths of its height, unless its gun stands elsewhere.
+static func muzzle_for(type_id: StringName, aabb: AABB) -> Vector3:
+	var muzzle := TrackedModels3D.muzzle_of(type_id)
+	if muzzle.is_finite():
+		return muzzle
+	return Vector3(aabb.end.x, aabb.position.y + aabb.size.y * 0.7, 0.0)
 
 
 ## A fresh model: a `Body` and, on a helicopter, a `Rotor` spinning about its

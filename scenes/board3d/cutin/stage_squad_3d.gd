@@ -80,9 +80,9 @@ func setup(
 	facing = -float(plot.side)
 	_scale = FIGURE_SCALE.get(type.domain, 1.0)
 	var aabb := UnitModels3D.figure_mesh_for(type.id, theme).get_aabb()
+	_muzzle = UnitModels3D.muzzle_for(type.id, aabb)
 	aabb = AABB(aabb.position * _scale, aabb.size * _scale)
 	_spacing = maxf(maxf(aabb.size.x, aabb.size.z) + 0.3, 0.75)
-	_muzzle = Vector3(aabb.end.x, aabb.position.y + aabb.size.y * 0.7, 0.0) / _scale
 	_height = aabb.size.y
 	var slots := SquadFormation3D.SLOTS
 	_anchor = plot.squad_anchor((slots[slots.size() - 1].x - slots[0].x) * 0.5 * _spacing)

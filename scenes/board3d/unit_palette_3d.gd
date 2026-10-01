@@ -24,6 +24,9 @@ const ORDNANCE_TIP := Color("f0a42a")
 ## A rotor blade: mid steel, so a spinning rotor reads as a disc over the
 ## ground shadow rather than as ink lines merged with it.
 const ROTOR := Color("78818b")
+## A panel the sprites paint white: a recon's cabin roof. Light, so it carries
+## on a top face at 52° on every army, the Iron Dominion's included.
+const LIVERY := Color("c9ced4")
 const SKIN := Color("e3b58e")
 ## The battleship's planked deck, its tell among the ships.
 const DECK := Color("b9b3a3")

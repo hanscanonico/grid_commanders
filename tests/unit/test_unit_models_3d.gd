@@ -13,6 +13,9 @@ const SEA_TOP := 0.45
 const SEA_KEEL := -0.06
 const LAND_TOP := 0.42
 const LAND_LOWEST_TOP := 0.22
+## The artillery's one long barrel is its identity, raised steeply over its hull
+## higher than anything else on land: the one land unit past `LAND_TOP`.
+const ARTILLERY_TOP := 0.8
 ## A mesh stores its vertex colours a byte a channel.
 const COLOUR_STEP := 1.5 / 255.0
 
@@ -48,7 +51,38 @@ func test_every_unit_has_a_model_inside_its_cell() -> void:
 				assert_lte(top, SEA_TOP + TOLERANCE, "%s is too tall" % what)
 			_:
 				assert_gte(aabb.position.y, -TOLERANCE, "%s sinks into the ground" % what)
-				assert_between(top, LAND_LOWEST_TOP, LAND_TOP + TOLERANCE, "%s height" % what)
+				var ceiling := ARTILLERY_TOP if unit_type.id == &"artillery" else LAND_TOP
+				assert_between(top, LAND_LOWEST_TOP, ceiling + TOLERANCE, "%s height" % what)
+
+
+func _land(id: StringName) -> AABB:
+	return UnitModels3D.mesh_for(id, _theme(&"meridian")).get_aabb()
+
+
+func test_the_artillery_barrel_is_the_tallest_thing_on_land() -> void:
+	var aabb := _land(&"artillery")
+	var artillery := aabb.end.y
+	var muzzle := UnitModels3D.muzzle_for(&"artillery", aabb)
+	assert_almost_eq(muzzle.y, artillery, 0.03, "the cut-in fires from the barrel's top")
+	for unit_type in Fixture.unit_db().all():
+		if unit_type.domain == UnitType.LAND and unit_type.id != &"artillery":
+			assert_lt(_land(unit_type.id).end.y, artillery, String(unit_type.id))
+
+
+## The tiers part by bulk: a recon under a tank under a medium tank, which
+## reaches the cell's edge and carries the thicker gun; the tank's gun stays
+## short of the cell's edge, and the APC rides lower than the tank.
+func test_the_land_tiers_part_by_bulk() -> void:
+	var recon := _land(&"recon")
+	var tank := _land(&"tank")
+	var md_tank := _land(&"md_tank")
+	assert_lt(recon.size.x, tank.size.x, "recon is shorter than the tank")
+	assert_lt(tank.size.x, md_tank.size.x, "tank is shorter than the medium tank")
+	assert_lt(tank.end.y, md_tank.end.y, "tank is lower than the medium tank")
+	assert_lt(tank.end.x, md_tank.end.x, "the tank's gun is the shorter")
+	assert_almost_eq(md_tank.end.x, UNIT_HALF, TOLERANCE, "the medium tank reaches the edge")
+	assert_gte(TrackedModels3D.MD_TANK_GUN, TrackedModels3D.TANK_GUN * 1.55, "the thicker gun")
+	assert_lt(_land(&"apc").end.y, tank.end.y, "the APC rides lower than the tank")
 
 
 func test_every_property_has_a_model_inside_its_cell() -> void:

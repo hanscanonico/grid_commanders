@@ -692,7 +692,12 @@ forms named in the root index are in `docs/design_record.md`.
   (steel weapons, rubber running gear, gunmetal mounts, slate glass, white ordnance with an amber
   tip, mid-steel rotors), held clear of every army's ramp and pinned by the test. Barrels, masts
   and rotor blades come out no thinner than `UnitParts3D.MIN_THICKNESS`. The bodies are split by
-  domain (`LandModels3D`, `AirModels3D`, `SeaModels3D`) behind `UnitModels3D`. An aircraft flies
+  domain (`LandModels3D`, `AirModels3D`, `SeaModels3D`) behind `UnitModels3D`, the tracked hulls
+  in `TrackedModels3D` under `LandModels3D`. **The land tiers part by bulk**: a recon under a tank
+  under a medium tank, which with the trucks reaches the cell's edge; the APC rides lower than the
+  tank, and the artillery's barrel is the one land part allowed past the land ceiling — the
+  sprite's identity is that tube, raised over everything — each separation pinned by the same test.
+  An aircraft flies
   `BoardSpace3D.AIR_ALTITUDE` over the ground under it (`fly_at`), low enough to read inside its
   own cell, and lays a solid silhouette straight down (`AirShadow3D`) in place of its sun shadow,
   which lands a cell away — the flat board's "only what is airborne casts, solid" read in 3D; the
