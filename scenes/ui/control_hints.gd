@@ -74,6 +74,8 @@ const TOUCH_CHIPS: Dictionary = {
 	RANGE_CHIP: "RANGE",
 	OBJECTIVES_CHIP: "MISSION",
 	NEXT_CHIP: "",
+	VIEW_3D_CHIP: "3D",
+	VIEW_2D_CHIP: "2D",
 	END_TURN_CHIP: "END TURN",
 }
 
@@ -89,6 +91,13 @@ const TOUCH_CHIPS: Dictionary = {
 ## is in TOUCH_CHIPS with the rest, so `chip_for` is the one way to print any of
 ## them and the button drops the key a finger has not got.
 const END_TURN_CHIP := "E · END TURN"
+
+## The view chip's two faces: which board is up, beside the key that flips it. It
+## stands over End Turn on the bottom bar, and so is out of CHIPS for the reason
+## End Turn is: the top bar is full at four (UiTheme.HUD_GAP). The main menu prints
+## it too, so the board can be chosen before a match.
+const VIEW_3D_CHIP := "V · 3D"
+const VIEW_2D_CHIP := "V · 2D"
 
 ## The touch dock's copy (mobile plan MB3). Its own block because the dock is a
 ## row of buttons rather than a legend: each chip says what it *does* instead of

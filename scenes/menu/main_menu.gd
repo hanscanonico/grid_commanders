@@ -284,8 +284,7 @@ func _build_header() -> Control:
 	icon.texture = load(ICON_PATH) if ResourceLoader.exists(ICON_PATH) else null
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	icon.custom_minimum_size = Vector2(32, 32)
-	# IGNORE_SIZE so the 128px launcher icon honours the 32px cell instead of
-	# ballooning the header to its own texture size.
+	# IGNORE_SIZE: the 128px launcher icon honours the 32px cell, not its own size.
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_frame.add_child(icon)
@@ -314,6 +313,7 @@ func _build_header() -> Control:
 	titles.add_child(tagline)
 
 	row.add_child(titles)
+	row.add_child(ViewChip.for_menu())
 	return row
 
 

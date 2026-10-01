@@ -42,7 +42,6 @@ func test_replay_drops_auto_with_the_save_rows() -> void:
 				&"sound",
 				&"end_turn_confirm",
 				&"window",
-				&"view",
 				&"quit",
 				&"cancel",
 			]
