@@ -698,17 +698,17 @@ forms named in the root index are in `docs/design_record.md`.
   tank, and the artillery's barrel is the one land part allowed past the land ceiling — the
   sprite's identity is that tube, raised over everything — each separation pinned by the same test.
   **So do the air and sea tiers**: the bomber spans widest in the air, the transport flies on a
-  tandem pair (`AirModels3D.ROTOR_HUBS` lists every rotor a type turns, and `UnitModels3D` builds
-  and `turn_rotors` spins them — counter-rotating — for the board, the cut-in squads and the
-  gallery alike), the battleship fills the cell's length with the cruiser at four-fifths and the
+  tandem pair (`AirModels3D.ROTOR_HUBS` lists every rotor a type turns; `UnitModels3D.build`
+  makes them for the board, the cut-in squads and the gallery alike, and `turn_rotors` spins them
+  counter-rotating), the battleship fills the cell's length with the cruiser at four-fifths and the
   sub at a little more, and the sub's hull is sunk to its top third under a white wake. **Where a
   cut-in figure fires from is its builder's answer**: `UnitModels3D.muzzle_for` asks each domain's
   `muzzle_of`, computed from the constants the gun is built from, and only falls back to the
   front of the footprint for a gun that sits there. An aircraft flies
   `BoardSpace3D.AIR_ALTITUDE` over the ground under it (`fly_at`), low enough to read inside its
-  own cell, and lays a solid silhouette straight down (`AirShadow3D`, drawn at `SPREAD` of the
-  body about the cell's centre, so it reads as a shadow rather than a second unit) in place of its
-  sun shadow,
+  own cell — over a mountain it still reads about half a cell north, the peaks setting that floor —
+  and lays a solid silhouette straight down (`AirShadow3D`, drawn at `SPREAD` of the body about
+  the cell's centre, so it reads as a shadow rather than a second unit) in place of its sun shadow,
   which lands a cell away — the flat board's "only what is airborne casts, solid" read in 3D; the
   cut-in stage keeps its own cruise height and sun shadows. The ground's variety is
   per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board is a staged story scene, not a card** (user

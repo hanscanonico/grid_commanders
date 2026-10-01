@@ -17,6 +17,11 @@ const FLAT := 0.001
 ## the widest flyer's shadow spilled to its cell's edge.
 const SPREAD := 0.75
 
+## One material for every shadow, never freed: Godot drops a shader with its
+## last material, and rebuilding it stalls the web build when an aircraft
+## appears after the last one died.
+static var _material: StandardMaterial3D
+
 
 ## Lays a shadow under `model`, a `UnitModels3D.build` aircraft, and stops its
 ## parts casting from the sun. Returns the shadow for `lay` to pose.
@@ -30,10 +35,11 @@ static func attach(model: Node3D) -> MeshInstance3D:
 	shadow.mesh = (model.get_node("Body") as MeshInstance3D).mesh
 	shadow.scale = Vector3(SPREAD, FLAT, SPREAD)
 	shadow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = TONE
-	shadow.material_override = material
+	if _material == null:
+		_material = StandardMaterial3D.new()
+		_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_material.albedo_color = TONE
+	shadow.material_override = _material
 	model.add_child(shadow)
 	return shadow
 

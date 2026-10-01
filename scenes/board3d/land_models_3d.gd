@@ -20,10 +20,12 @@ const HEAVY_BULK := 1.15
 const BAZOOKA_TILT := 15.0
 const BAZOOKA_REACH := 0.16
 ## The rocket rack's hinge and raise, and its bottom tier's length, rise and
-## width; each tier above is set back and narrowed.
+## width; each tier above is `ROCKET_SETBACK` shorter and `ROCKET_TAPER` narrower.
 const ROCKET_RACK := Vector3(-0.355, 0.13, 0)
 const ROCKET_RAISE := 25.0
 const ROCKET_TIER := Vector3(0.36, 0.05, 0.28)
+const ROCKET_SETBACK := 0.06
+const ROCKET_TAPER := 0.02
 ## The missile rail's hinge and raise, and a missile's lift off it, body and tip.
 const MISSILE_RAIL := Vector3(-0.35, 0.13, 0)
 const MISSILE_RAISE := 32.0
@@ -52,8 +54,6 @@ static func build(st: SurfaceTool, type_id: StringName, r: FactionRamp3D) -> boo
 	return true
 
 
-## One soldier at `pos`, scaled `s`; `heavy` is a mech trooper — broader, booted
-## heavier, packed bigger, shouldering a tube where a rifleman holds a rifle.
 ## Where a launcher's shot leaves it, in the model's frame: the rocket rack's
 ## middle row of mouths, the missiles' tips, a mech trooper's warhead for one
 ## trooper scaled `lone`; `Vector3.INF` for the rest.
@@ -63,8 +63,7 @@ static func muzzle_of(type_id: StringName, lone: float) -> Vector3:
 			var tube := UnitParts3D.pitch(Vector3(0, 0.2, _shoulder(true)), BAZOOKA_TILT)
 			return tube * Vector3(BAZOOKA_REACH, 0, 0) * lone
 		&"rockets":
-			var mouth := Vector3(ROCKET_TIER.x - 0.06, ROCKET_TIER.y * 1.5, 0)
-			return UnitParts3D.pitch(ROCKET_RACK, ROCKET_RAISE) * mouth
+			return UnitParts3D.pitch(ROCKET_RACK, ROCKET_RAISE) * _rack_mouth(1)
 		&"missiles":
 			var tip := Vector3(MISSILE_BODY + MISSILE_TIP, MISSILE_LIFT, 0)
 			return UnitParts3D.pitch(MISSILE_RAIL, MISSILE_RAISE) * tip
@@ -75,6 +74,8 @@ static func _shoulder(heavy: bool) -> float:
 	return 0.062 * (HEAVY_BULK if heavy else 1.0)
 
 
+## One soldier at `pos`, scaled `s`; `heavy` is a mech trooper — broader, booted
+## heavier, packed bigger, shouldering a tube where a rifleman holds a rifle.
 static func soldier(st: SurfaceTool, pos: Vector3, s: float, r: FactionRamp3D, heavy: bool) -> void:
 	var xf := Transform3D(Basis.from_scale(Vector3.ONE * s), pos)
 	var bulk := HEAVY_BULK if heavy else 1.0
@@ -167,9 +168,10 @@ static func _rockets(st: SurfaceTool, r: FactionRamp3D) -> void:
 	var pod := UnitParts3D.pitch(ROCKET_RACK, ROCKET_RAISE)
 	var rise := ROCKET_TIER.y
 	for tier in 3:
-		var length := ROCKET_TIER.x - 0.06 * tier
-		var width := ROCKET_TIER.z - 0.02 * tier
-		var mid := pod * MeshKit.at(Vector3(length / 2.0, rise * (tier + 0.5), 0))
+		var mouths := _rack_mouth(tier)
+		var length := mouths.x
+		var width := ROCKET_TIER.z - ROCKET_TAPER * tier
+		var mid := pod * MeshKit.at(Vector3(length / 2.0, mouths.y, 0))
 		MeshKit.box(st, mid, Vector3(length, rise, width), UnitPalette3D.STEEL)
 		var run := length - 0.02
 		for z in [-width / 6.0, width / 6.0]:
@@ -182,6 +184,11 @@ static func _rockets(st: SurfaceTool, r: FactionRamp3D) -> void:
 			var mouth := mid * MeshKit.at(Vector3(length / 2.0, 0, (col - 1) * width / 3.0))
 			var bore := Vector3(0.008, rise * 0.64, width / 3.0 - 0.025)
 			MeshKit.box(st, mouth, bore, UnitPalette3D.RUBBER)
+
+
+## The middle of `tier`'s row of mouths, in the rack's frame: its front face.
+static func _rack_mouth(tier: int) -> Vector3:
+	return Vector3(ROCKET_TIER.x - ROCKET_SETBACK * tier, ROCKET_TIER.y * (tier + 0.5), 0)
 
 
 static func _missiles(st: SurfaceTool, r: FactionRamp3D) -> void:
