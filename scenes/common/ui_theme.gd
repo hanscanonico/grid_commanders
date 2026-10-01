@@ -143,7 +143,8 @@ const HUD_PAD := 7
 ## themselves, and a key legend cut mid-word is the worse of the two. The bar is
 ## full at 4: the campaign board measures it — four chips, the longest faction
 ## name and IDLE's legend at ControlHints.MAX_CHARS — so a fifth chip or a longer
-## legend is a group that has to give, not another pixel here.
+## legend is a group that has to give, not another pixel here. So the view chip
+## is not on it: it stands over End Turn on the bottom bar, which is no wider for it.
 const HUD_GAP := 4
 ## The separations *inside* a bar's groups — a commander block's rows, a stat
 ## line's icons — as opposed to HUD_GAP, which is between the groups. Four

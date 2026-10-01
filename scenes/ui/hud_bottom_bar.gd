@@ -170,7 +170,18 @@ func _build_commander(row: HBoxContainer) -> void:
 	meter_row.add_child(_fire_button)
 
 
+## End Turn, under the view chip. Stacked rather than side by side because neither
+## bar has the width for one more group (UiTheme.HUD_GAP), and this bar has the
+## height for a second line where End Turn stands.
 func _build_end_turn(row: HBoxContainer) -> void:
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", UiTheme.HUD_GAP_TIGHT)
+	stack.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(stack)
+	var view_chip := ViewChip.build()
+	view_chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	stack.add_child(view_chip)
+
 	_end_turn_button = Button.new()
 	_end_turn_button.text = ControlHints.chip_for(ControlHints.END_TURN_CHIP)
 	_end_turn_button.focus_mode = Control.FOCUS_NONE
@@ -180,7 +191,7 @@ func _build_end_turn(row: HBoxContainer) -> void:
 	UiTheme.apply_button(_end_turn_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BODY)
 	_end_turn_button.disabled = true  # until a state says the board is the player's
 	_end_turn_button.pressed.connect(end_turn_pressed.emit)
-	row.add_child(_end_turn_button)
+	stack.add_child(_end_turn_button)
 
 
 func _build_unit(row: HBoxContainer) -> void:

@@ -1,6 +1,6 @@
 extends GutTest
 ## The board view: flat or 3D, a device preference like the window mode beside it,
-## offered as a pause-menu row and flipped from inside a battle by V.
+## flipped by V or the view chip, and never offered as a pause-menu row.
 ##
 ## Read off fresh instances of the script rather than the live autoload, pinned or
 ## flagged before anything is set, which latches the preference file shut — so
@@ -15,17 +15,27 @@ func _pinned_settings() -> Variant:
 	return fresh
 
 
-func test_a_fresh_install_plays_on_the_flat_board() -> void:
+func test_a_fresh_install_plays_on_the_3d_board() -> void:
 	var fresh = autofree(SETTINGS_SCRIPT.new())
-	assert_false(fresh.board_3d, "the flat board every capture was taken of is the default")
+	assert_true(fresh.board_3d, "the 3D board is what a new player starts on")
 
 
-func test_the_row_says_which_board_is_up_and_flips_it() -> void:
-	var fresh = _pinned_settings()
-	assert_eq(fresh.row_label(Settings.VIEW_ROW), "View: 2D")
-	assert_eq(fresh.cycle_row(Settings.VIEW_ROW, 1), "View: 3D")
-	assert_true(fresh.board_3d, "the row moved the setting, not only the label")
-	assert_eq(fresh.cycle_row(Settings.VIEW_ROW, -1), "View: 2D")
+## Every save wrote the old key whether or not the player touched the view, so a
+## stored false there is the old default speaking, not a choice.
+func test_the_old_key_is_left_unread() -> void:
+	var config := ConfigFile.new()
+	config.set_value(Settings.SECTION, "board_3d", false)
+	assert_true(
+		Settings.stored_view(config, Settings.DEFAULT_BOARD_3D),
+		"a stored board_3d=false does not shadow the 3D default"
+	)
+
+
+func test_the_view_key_round_trips() -> void:
+	for chosen: bool in [false, true]:
+		var config := ConfigFile.new()
+		config.set_value(Settings.SECTION, Settings.BOARD_VIEW_KEY, chosen)
+		assert_eq(Settings.stored_view(config, not chosen), chosen, "a choice made now persists")
 
 
 func test_a_flip_is_announced_so_a_running_battle_can_swap_boards() -> void:
@@ -53,12 +63,12 @@ func test_the_view_flag_outranks_a_capture_pin() -> void:
 	assert_true(fresh.board_3d, "asking for a capture of the 3D board is what the flag is for")
 
 
-func test_it_is_a_value_row_the_pause_menu_offers() -> void:
-	assert_true(Settings.VIEW_ROW in Settings.VALUE_ROWS)
+func test_the_pause_menu_has_no_view_row() -> void:
 	var ids: Array = BattleMenus.map_actions(Fixture.state(Fixture.NEUTRAL_BASE)).map(
 		func(row: Dictionary) -> StringName: return row["id"]
 	)
-	assert_eq(ids.count(Settings.VIEW_ROW), 1, "exactly one View row")
+	assert_false(&"view" in ids, "the switch is the on-screen chip now")
+	assert_false(&"view" in Settings.VALUE_ROWS)
 
 
 func test_the_view_keys_are_bound() -> void:
