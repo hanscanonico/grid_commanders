@@ -753,6 +753,31 @@ forms named in the root index are in `docs/design_record.md`.
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
   by presentation keys on `TerrainType`, and the turn banner, the map editor and the menu
   backdrop stay 2D.
+- **3D commander portraits** (user request, 2026-10-01: "create portraits in 3D for 3D modes") —
+  while `Settings.board_3d` is on, every field that shows a general draws a 3D still of their
+  figure instead of the pixel bust. **One provider, one seam**: `CommanderPortraits3D`
+  (`scenes/board3d/`) shoots the stills and `CommanderBust._place` is the only place that asks it
+  (`showing`, `still_for`) — the card, the select roster, the HUD chip, the info sheet, the power
+  banner, the speech column and the victory lockup all build on `CommanderBust`, so none of them
+  decides. `CommanderVisuals.portrait_for` / `face_for` stay the pixel authority, untouched.
+  **The still stands in for its drawing**: `PortraitShot3D` lays an orthographic lens over the
+  bust's 110x134 grid (the chip is `FACE_SHOT` of it) and the still is laid out at the drawing's
+  size by the same `fits_whole_bust` / `art_scale` rules, so a field frames both alike; the figure
+  stands in the generator's inked window (`backdrop.WINDOW`) on the army's dark tone. It is the
+  board's own figure, with one portrait-only addition: `CommanderHead3D.CLOSE_UP` on the look adds
+  eye whites, irises, catchlights and lids, and nothing on the board, in a story scene or in a
+  cut-in sets it. **Crisp**: rendered at five pixels a texel (eight for the chip), MSAA, read back
+  with mipmaps and sampled linear. **Stills, cached**: each (general, drawing) is shot once with
+  `force_draw` (an occluded window draws nothing otherwise), to an 8 ms budget a frame and at least
+  one, the transforms handed to the renderer directly since a node's own reach it only at the
+  frame's flush; the studio frees itself once nothing waits. A field shows its bare tint until its
+  still lands, and asks for none before it is laid out — which drawing it needs is not known yet.
+  The vertex material is held for the game's life so its shader is never rebuilt. The empty seat
+  is the plain officer as a hologram, where the pixel art draws a silhouette. **Live switch**:
+  `CommanderBust` listens to `board_view_changed`. A headless run never shoots and draws the
+  pixel art. **Known gaps**: the prop is mostly out of shot (the pixel bust shows it whole), there
+  is no idle motion, the window carries no treatment band, and the first still of a session builds
+  the figure's shader (a single stall, measured ~0.2 s on desktop; not measured on the web).
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
   no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
   slice's measurements, the packaging facts, the refutations, the known hit-area limits and the

@@ -10,7 +10,10 @@ extends Panel
 ## The field owns which general it is showing, because which of the two drawings
 ## that general gets is a function of the size a container hands over — known a
 ## frame after the bust is built — so the texture is chosen at placement time and
-## a rebind and a resize reach the same answer.
+## a rebind and a resize reach the same answer. Which picture of that drawing —
+## the pixel art, or the 3D still while the 3D view is chosen — is asked of
+## `CommanderPortraits3D` on the same placement, so a flip of the view repaints
+## every field on screen.
 
 var _commander: CommanderType = null
 var _art: TextureRect = null
@@ -26,6 +29,7 @@ func _init(field_size: Vector2 = Vector2.ZERO) -> void:
 	_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_art)
 	resized.connect(_place)
+	Settings.board_view_changed.connect(_place)
 
 
 ## Points the field at a general and paints its faction behind them.
@@ -48,12 +52,34 @@ func bind(commander: CommanderType, tint: Color) -> void:
 ## falls to its top: a clipped bust should lose the chest, not the chin.
 func _place() -> void:
 	var shape := size.max(custom_minimum_size)
-	if CommanderVisuals.fits_whole_bust(shape):
-		_art.texture = CommanderVisuals.portrait_for(_commander)
-	else:
-		_art.texture = CommanderVisuals.face_for(_commander)
-	var drawn := Vector2i(_art.texture.get_size())
+	var drawn := _show(shape)
+	_art.visible = drawn != Vector2i.ZERO
+	if not _art.visible:
+		return
 	_art.size = Vector2(drawn * CommanderVisuals.art_scale(shape, drawn))
 	_art.position = Vector2(
 		roundf((shape.x - _art.size.x) * 0.5), maxf(0.0, roundf((shape.y - _art.size.y) * 0.5))
 	)
+
+
+## Puts the general's drawing on the art and answers the size it is laid out
+## at. A 3D still stands in for its drawing at the drawing's size, and answers
+## zero while it is still being shot — `_place` runs again once it is. A field
+## not laid out yet asks for none: which drawing it needs is not known until its
+## container sizes it, and a still shot for the wrong one is a wasted frame.
+func _show(shape: Vector2) -> Vector2i:
+	var whole := CommanderVisuals.fits_whole_bust(shape)
+	if CommanderPortraits3D.showing():
+		_art.texture_filter = CommanderPortraits3D.FILTER
+		if not Rect2(Vector2.ZERO, shape).has_area():
+			return Vector2i.ZERO
+		_art.texture = CommanderPortraits3D.still_for(_commander, whole, _place)
+		if _art.texture == null:
+			return Vector2i.ZERO
+		return CommanderVisuals.PORTRAIT_SIZE if whole else CommanderVisuals.FACE_SIZE
+	_art.texture_filter = CommanderVisuals.ART_FILTER
+	if whole:
+		_art.texture = CommanderVisuals.portrait_for(_commander)
+	else:
+		_art.texture = CommanderVisuals.face_for(_commander)
+	return Vector2i(_art.texture.get_size())
