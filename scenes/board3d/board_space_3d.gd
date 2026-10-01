@@ -26,8 +26,10 @@ const DECK_TOP := 0.05
 const MOUNTAIN_SHOULDER := 0.24
 ## Where the diorama's sides end.
 const SLAB_BOTTOM := -0.55
-## The height aircraft fly at, above every peak's shoulder.
-const AIR_ALTITUDE := 0.72
+## How high an aircraft flies over the ground under it: low enough that from
+## the board camera its fuselage still reads inside its own cell, and high
+## enough over a mountain's shoulder to clear the peaks.
+const AIR_ALTITUDE := 0.47
 ## How high a pointer ray still meets a mountain: most of its peaks' height, so
 ## a click on a peak picks the mountain rather than the cell behind it.
 const MOUNTAIN_PICK := 0.5
@@ -91,6 +93,12 @@ static func stand_at(map: MapData, plane: Vector2) -> float:
 	var h01 := _stand_of(map, origin + Vector2i(0, 1))
 	var h11 := _stand_of(map, origin + Vector2i(1, 1))
 	return lerpf(lerpf(h00, h10, t.x), lerpf(h01, h11, t.x), t.y)
+
+
+## The height an aircraft flies at over any point of the plane: `AIR_ALTITUDE`
+## over the ground it is above, climbing and descending with it as it eases.
+static func fly_at(map: MapData, plane: Vector2) -> float:
+	return stand_at(map, plane) + AIR_ALTITUDE
 
 
 ## The surface a pointer ray is tested against on `cell`: what a player sees as

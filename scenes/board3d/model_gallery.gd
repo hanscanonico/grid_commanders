@@ -140,8 +140,11 @@ func _place_unit(id: StringName, theme: CommanderVisuals.FactionTheme, cell: Vec
 		water.mesh = plane
 		water.material_override = _flat(WATER)
 		add_child(_at(water, cell + Vector3(0, 0.002, 0)))
-	var lift := Vector3(0, 0.35, 0) if AIR.has(id) else Vector3.ZERO
-	add_child(_at(UnitModels3D.build(id, theme), cell + lift))
+	var model := UnitModels3D.build(id, theme)
+	add_child(_at(model, cell))
+	if AIR.has(id):
+		model.position.y = BoardSpace3D.AIR_ALTITUDE
+		AirShadow3D.lay(AirShadow3D.attach(model), model.position.y, 0.0)
 
 
 func _at(node: Node3D, pos: Vector3) -> Node3D:

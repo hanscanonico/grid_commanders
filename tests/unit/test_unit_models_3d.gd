@@ -13,6 +13,8 @@ const SEA_TOP := 0.45
 const SEA_KEEL := -0.06
 const LAND_TOP := 0.42
 const LAND_LOWEST_TOP := 0.22
+## A mesh stores its vertex colours a byte a channel.
+const COLOUR_STEP := 1.5 / 255.0
 
 
 func _theme(key: StringName) -> CommanderVisuals.FactionTheme:
@@ -96,3 +98,80 @@ func test_an_unknown_id_still_gets_a_model() -> void:
 	var theme := _theme(&"gold")
 	assert_gt(UnitModels3D.mesh_for(&"no_such_unit", theme).get_surface_count(), 0)
 	assert_gt(PropertyModels3D.mesh_for(&"no_such_building", theme).get_surface_count(), 0)
+
+
+func _armies() -> Array[FactionRamp3D]:
+	var ramps: Array[FactionRamp3D] = []
+	for key in CommanderVisuals.FACTION_ORDER:
+		ramps.append(FactionRamp3D.of(_theme(key)))
+	ramps.append(FactionRamp3D.of(_theme(CommanderVisuals.NEUTRAL_KEY)))
+	return ramps
+
+
+## Running gear under every army's darkest tone and a weapon over every army's
+## lit tone, so neither melts into its hull — the Iron Dominion's above all.
+func test_the_parts_vocabulary_clears_every_army() -> void:
+	var rubber := UnitPalette3D.RUBBER.get_luminance()
+	var steel := UnitPalette3D.STEEL.get_luminance()
+	for ramp in _armies():
+		assert_lt(rubber, ramp.dark.get_luminance(), "rubber under %s's dark" % ramp.dark)
+		assert_gt(steel, ramp.light.get_luminance(), "steel over %s's light" % ramp.light)
+
+
+func test_an_army_ramp_steps_from_dark_through_base_to_light() -> void:
+	for ramp in _armies():
+		assert_lt(ramp.dark.get_luminance(), ramp.base.get_luminance())
+		assert_lt(ramp.base.get_luminance(), ramp.light.get_luminance())
+		assert_lte(ramp.light.get_luminance(), FactionRamp3D.LIT_CEILING + 0.001)
+
+
+## One rule places the three tones: a face painted base looks up and wears the
+## light tone, looks down and wears the dark, and keeps base on the flanks.
+func test_the_ramp_places_its_tones_by_facing() -> void:
+	var ramp := FactionRamp3D.of(_theme(&"iron"))
+	var st := MeshKit.begin()
+	MeshKit.box(st, MeshKit.at(Vector3.ZERO), Vector3.ONE * 0.2, ramp.base)
+	MeshKit.box(st, MeshKit.at(Vector3.UP), Vector3.ONE * 0.2, UnitPalette3D.STEEL)
+	var arrays := ramp.commit(st).surface_get_arrays(0)
+	var colours: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	for i in colours.size():
+		var expected := ramp.base
+		if vertices[i].y > 0.5:
+			expected = UnitPalette3D.STEEL
+		elif normals[i].y > 0.5:
+			expected = ramp.light
+		elif normals[i].y < -0.5:
+			expected = ramp.dark
+		var seen := colours[i]
+		var off := maxf(
+			absf(seen.r - expected.r), maxf(absf(seen.g - expected.g), absf(seen.b - expected.b))
+		)
+		assert_lt(off, COLOUR_STEP, "vertex %d facing %s wears %s" % [i, normals[i], seen])
+
+
+func _thin_aabb(build: Callable) -> AABB:
+	var st := MeshKit.begin()
+	build.call(st)
+	return st.commit().get_aabb()
+
+
+## A barrel or a mast asked for thinner than the minimum comes out at it, in a
+## scaled frame as well as a plain one.
+func test_a_thin_part_cannot_be_authored() -> void:
+	var least := UnitParts3D.MIN_THICKNESS - TOLERANCE
+	var plain := MeshKit.at(Vector3.ZERO)
+	var shrunk := Transform3D(Basis.from_scale(Vector3.ONE * 0.5), Vector3.ZERO)
+	for xf: Transform3D in [plain, shrunk]:
+		var barrel := _thin_aabb(
+			func(st: SurfaceTool) -> void: UnitParts3D.barrel(st, xf, 0.3, 0.001, Color.WHITE)
+		)
+		assert_gte(barrel.size.y, least, "a barrel's height")
+		assert_gte(barrel.size.z, least, "a barrel's width")
+		var mast := _thin_aabb(
+			func(st: SurfaceTool) -> void: UnitParts3D.mast(st, xf, 0.3, 0.001, Color.WHITE)
+		)
+		assert_gte(mast.size.x, least, "a mast's depth")
+		assert_gte(mast.size.z, least, "a mast's width")
+	assert_gte(AirModels3D.BLADE_CHORD, UnitParts3D.MIN_THICKNESS, "a rotor blade's chord")

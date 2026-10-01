@@ -43,6 +43,7 @@ class Model:
 	var hp: Label3D
 	var fuel: Label3D
 	var rotor: Node3D
+	var shadow: Node3D
 	var phase := 0.0
 
 
@@ -82,6 +83,8 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	var body := model.node.get_node("Body") as GeometryInstance3D
 	model.material = body.material_override as StandardMaterial3D
 	model.rotor = model.node.get_node_or_null("Rotor")
+	if sprite.unit.type.domain == UnitType.AIR:
+		model.shadow = AirShadow3D.attach(model.node)
 	model.phase = float(sprite.unit.cell.x * 7 + sprite.unit.cell.y * 3)
 	model.hp = _badge(Color.WHITE)
 	model.fuel = _badge(UiTheme.AMMO)
@@ -102,10 +105,11 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 	if sprite.moving and step.length() > 0.0005:
 		model.yaw = lerp_angle(model.yaw, atan2(-step.y, step.x), 1.0 - exp(-delta * TURN_RATE))
 	var domain := sprite.unit.type.domain
-	var height := BoardSpace3D.stand_at(map, plane)
+	var ground := BoardSpace3D.stand_at(map, plane)
+	var height := ground
 	var roll := 0.0
 	if domain == UnitType.AIR:
-		height = BoardSpace3D.AIR_ALTITUDE + sin(_clock * 2.0 + model.phase) * AIR_BOB
+		height = BoardSpace3D.fly_at(map, plane) + sin(_clock * 2.0 + model.phase) * AIR_BOB
 	elif domain == UnitType.SEA:
 		roll = deg_to_rad(SEA_ROLL_DEG) * sin(_clock * 1.3 + model.phase)
 		if sprite.unit.dived:
@@ -114,6 +118,9 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 		height += absf(sin(_clock * 9.0)) * HELD_HOP
 	node.position = Vector3(plane.x, height, plane.y)
 	node.rotation = Vector3(roll, model.yaw, 0)
+	if model.shadow != null:
+		AirShadow3D.lay(model.shadow, height, ground)
+		model.shadow.visible = sprite.modulate.a >= 0.999
 	_tint(model, sprite)
 	if model.rotor != null:
 		model.rotor.rotate_y(delta * ROTOR_SPIN)
