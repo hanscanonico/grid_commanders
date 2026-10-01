@@ -9,10 +9,12 @@ extends RefCounted
 
 ## The battleship's turret guns: their thickness across the flats, how far
 ## apart a pair stands — wide enough that two read as two at board scale — and
-## their length. Long and slim, so a turret reads as a housing with two guns.
+## their length. Long and slim, so a turret reads as a housing with two guns,
+## and short enough that a muzzle ends over the hull rather than past the bow
+## or the stern.
 const GUN_THICKNESS := 0.055
 const GUN_SPACING := 0.1
-const GUN_LENGTH := 0.18
+const GUN_LENGTH := 0.15
 ## The cruiser's one forward gun: at the weapons' least thickness, and shorter.
 const CRUISER_GUN_LENGTH := 0.12
 ## Where a turret's guns leave it, ahead of and above the turret's own origin.

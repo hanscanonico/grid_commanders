@@ -262,7 +262,7 @@ static func _b_copter(st: SurfaceTool, r: FactionRamp3D) -> void:
 		Vector3(0.05, 0.03, 0.05),
 		UnitPalette3D.GUNMETAL
 	)
-	UnitParts3D.barrel(st, MeshKit.at(CHIN_GUN), CHIN_GUN_LENGTH, 0.012, UnitPalette3D.STEEL)
+	UnitParts3D.gun(st, MeshKit.at(CHIN_GUN), CHIN_GUN_LENGTH, 0.012, UnitPalette3D.STEEL)
 	_masts(st, &"b_copter", 0.075)
 
 

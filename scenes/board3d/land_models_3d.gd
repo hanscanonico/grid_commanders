@@ -152,7 +152,7 @@ static func _recon(st: SurfaceTool, r: FactionRamp3D) -> void:
 	MeshKit.column(st, MeshKit.at(Vector3(-0.13, 0.22, 0)), 0.065, 0.055, 0.035, 8, r.dark)
 	var receiver := MeshKit.at(Vector3(-0.02, 0.275, 0))
 	MeshKit.block(st, receiver, Vector3(0.06, 0.035, 0.05), UnitPalette3D.GUNMETAL)
-	UnitParts3D.barrel(st, MeshKit.at(Vector3(0.0, 0.295, 0)), 0.16, 0.0, UnitPalette3D.GUNMETAL)
+	UnitParts3D.gun(st, MeshKit.at(Vector3(0.0, 0.295, 0)), 0.16, 0.0, UnitPalette3D.GUNMETAL)
 	var whip := MeshKit.at(Vector3(-0.25, 0.22, -0.11))
 	UnitParts3D.mast(st, whip, 0.09, 0.0, UnitPalette3D.STEEL)
 

@@ -134,13 +134,13 @@ func test_the_ships_part_by_length_and_the_sub_rides_sunk() -> void:
 
 ## Heavy turret guns stand far enough apart that two read as two, not as one
 ## grey stripe: the gap between them is itself a visible part. They are heavier
-## than the least gun, and longer than they are thick by far, so a pair reads as
-## two guns and not as two crates.
+## than the least gun, and well over twice as long as they are thick — the
+## crates they once read as were under twice — so a pair reads as two guns.
 func test_a_turret_gun_stands_clear_of_its_neighbour() -> void:
 	var gap := SeaModels3D.GUN_SPACING - SeaModels3D.GUN_THICKNESS
 	assert_gte(gap, UnitParts3D.MIN_THICKNESS / 2.0, "the gap between a turret's guns")
 	assert_gt(SeaModels3D.GUN_THICKNESS, UnitParts3D.MIN_THICKNESS, "a heavy gun")
-	assert_gte(SeaModels3D.GUN_LENGTH, SeaModels3D.GUN_THICKNESS * 3.0, "a gun, not a crate")
+	assert_gte(SeaModels3D.GUN_LENGTH, SeaModels3D.GUN_THICKNESS * 2.5, "a gun, not a crate")
 
 
 ## A cut-in figure's shot leaves from somewhere on the figure, so a muzzle a
