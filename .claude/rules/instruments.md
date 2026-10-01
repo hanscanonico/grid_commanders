@@ -51,7 +51,10 @@ root index are in `docs/design_record.md`.
   D2: **engine-bundle metadata tricks are refuted** — `LSUIElement` and `LSBackgroundOnly`
   clones each still stole focus 3/3;
   do not re-litigate without new evidence. D3: an interactive (tty) launch still `exec`s Godot
-  directly and comes up focused; only tty-less launches get the restore watcher. D1: the sweep's
+  directly and comes up focused; only tty-less launches get the restore watcher. **A tty-less
+  launch is also silent** (user request, 2026-10-01): the launcher adds `--audio-driver Dummy`
+  unless the caller names a driver or sets `GODOT_GUI_AUDIO=1`, since an agent's run played its
+  music at whoever sat at the desk; a tty launch keeps its sound. D1: the sweep's
   captures staying byte-identical is the merge bar for any change here — it is what keeps the two
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
   honest as the roster moves. That bar is a command rather than a procedure since COM-110:
