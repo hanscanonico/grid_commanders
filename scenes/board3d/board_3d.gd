@@ -298,9 +298,10 @@ func _mark_owners() -> void:
 
 ## Deferred past the frame that built the board, so the whole scene is in place
 ## and a flip straight back to 2D has had its say. A capture poses its own cut-in
-## on the stage, which the stand-ins would draw over, so it goes without.
+## on the stage, which the stand-ins would draw over, so it goes without; so does
+## a player with battle animations off, who would pay the stalls for nothing.
 func _warm_cut_ins() -> void:
-	if active and not BattleScenarioDriver.requested():
+	if active and Settings.battle_animations and not BattleScenarioDriver.requested():
 		CutinWarmup3D.run(self, _view)
 
 

@@ -731,7 +731,8 @@ forms named in the root index are in `docs/design_record.md`.
   `CutinWarmup3D` plays stand-ins over the board's first second up, each quarter second held for
   a frame and then drawn by `RenderingServer.force_draw(false)`, a frame never shown — held a
   frame first because a material takes a new look only as a frame ends, and a warm-up drawn in
-  one frame built barely half. It steps aside for a real cut-in or a flip back to 2D.
+  one frame built barely half. It steps aside for a real cut-in, a flip back to 2D or the battle
+  closing, and does not run with battle animations off.
   `CutinStage3D` keeps one of each material a play builds and frees, since Godot drops a
   material's shader with the last material using it, which undid the warm-up and re-stalled every
   play at its first hit; a new throwaway material kind joins `_keep_shaders`. A flash raises the

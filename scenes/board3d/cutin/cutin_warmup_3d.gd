@@ -71,11 +71,16 @@ static func _draw(board: Board3D, director: CutsceneDirector, pose: Callable) ->
 
 ## Waits out a frame, and any story scene — its frames are the ones the shader
 ## builds would stall — then answers whether the stage is still the warm-up's: the
-## board not flipped back to 2D and no real cut-in playing on it.
+## board still up, not flipped back to 2D, and no real cut-in playing on it.
+## Leaving the battle frees the board under a waiting warm-up, and a static
+## coroutine resumes all the same.
 static func _still_ours(board: Board3D) -> bool:
-	await board.get_tree().process_frame
-	while board.cinema().rolling:
-		await board.get_tree().process_frame
+	var tree := board.get_tree()
+	await tree.process_frame
+	while is_instance_valid(board) and board.cinema().rolling:
+		await tree.process_frame
+	if not is_instance_valid(board) or not board.is_inside_tree():
+		return false
 	return board.active and not board.cutin_stage().rolling
 
 
