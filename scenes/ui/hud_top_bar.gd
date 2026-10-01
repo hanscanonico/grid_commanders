@@ -14,7 +14,7 @@ extends PanelContainer
 ## passive — not `power_name`, which belongs beside the meter it charges
 ## (SPEC "Content — read it from COMMANDERS").
 ##
-## The three lens chips are the one thing here a player can press. See
+## The lens chips and the view chip are the one thing here a player can press. See
 ## `UiKit.action_chip`: they answer the mouse with the key they already name, so a
 ## board that is otherwise fully playable with the mouse no longer advertises
 ## three affordances a mouse cannot reach.
@@ -97,6 +97,9 @@ func _build() -> void:
 	var next_word := ControlHints.chip_for(ControlHints.NEXT_CHIP)
 	if next_word != "":
 		row.add_child(UiTheme.hud_label(next_word, UiTheme.SIZE_STAT, UiTheme.INK_3))
+	# The board's view, the one way to flip it on a phone: the pause menu no
+	# longer carries it.
+	row.add_child(ViewChip.build())
 	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 	# The key legend, and the whole of it: whichever keys do something in the
 	# interaction the player is currently in. It replaced a lone "ESC · MENU" that

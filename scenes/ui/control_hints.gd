@@ -59,10 +59,17 @@ const OBJECTIVES_CHIP := "O · MISSION"
 ## is not a way of looking at the board — so the bar prints it unlit throughout.
 const NEXT_CHIP := "N · NEXT"
 
+## The view chip's two faces: which board is up, beside the key that flips it. The
+## main menu prints it too, so the board can be chosen before a match.
+const VIEW_3D_CHIP := "V · 3D"
+const VIEW_2D_CHIP := "V · 2D"
+
 ## Every chip the top bar may print, so the two rules they are held to — each fits
 ## beside a legend already running at MAX_CHARS, each is ASCII — are checked over
 ## the set rather than over a list a new chip has to be remembered into.
-const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHIP]
+const CHIPS: Array[String] = [
+	THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHIP, VIEW_3D_CHIP, VIEW_2D_CHIP
+]
 
 ## What each chip says on a touch build, where naming the key is naming something
 ## the device has not got. A chip is a button, so what is left is the word it does
@@ -74,6 +81,8 @@ const TOUCH_CHIPS: Dictionary = {
 	RANGE_CHIP: "RANGE",
 	OBJECTIVES_CHIP: "MISSION",
 	NEXT_CHIP: "",
+	VIEW_3D_CHIP: "3D",
+	VIEW_2D_CHIP: "2D",
 	END_TURN_CHIP: "END TURN",
 }
 

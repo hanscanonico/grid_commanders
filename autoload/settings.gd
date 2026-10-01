@@ -38,7 +38,10 @@ const MENU_ANIMATIONS_KEY := "menu_animations"
 const VOLUME_KEY := "volume"
 const END_TURN_CONFIRM_KEY := "end_turn_confirm"
 const FULLSCREEN_KEY := "fullscreen"
-const BOARD_3D_KEY := "board_3d"
+## The view's key. Not the "board_3d" it was first stored under: every save wrote
+## that one whether or not the player had touched the view, so a stored "false"
+## there is the old default rather than a choice, and is left unread.
+const BOARD_VIEW_KEY := "board_view_3d"
 ## What a fresh install confirms with, and what `pin` stands a scripted launch
 ## back at.
 const DEFAULT_END_TURN_CONFIRM := true
@@ -54,9 +57,11 @@ const DEFAULT_BATTLE_ANIMATIONS := true
 ## capture is framed at the project's window size, and a machine whose player
 ## plays full-screen would otherwise photograph a different frame entirely.
 const DEFAULT_FULLSCREEN := false
-## The flat board is the default: it is what every capture and golden frame was
-## taken of, and the 3D board is something a player chooses.
-const DEFAULT_BOARD_3D := false
+## A fresh install plays on the 3D board.
+const DEFAULT_BOARD_3D := true
+## What `pin` stands a scripted launch back at: the flat board every capture and
+## golden frame is taken of, unless `--view=` asked for the other one.
+const PINNED_BOARD_3D := false
 ## The key F11 is bound to. Named here because this file both listens for it and
 ## owns what it changes.
 const FULLSCREEN_ACTION := &"toggle_fullscreen"
@@ -118,9 +123,7 @@ const END_TURN_ROW := &"end_turn_confirm"
 ## the 640-wide frame, which `MenuCaptureDriver`'s gate refuses outright — so on
 ## that page the F11 key is the whole of this setting.
 const WINDOW_ROW := &"window"
-## The flat board or the 3D one. The V key flips it too, from inside a battle.
-const VIEW_ROW := &"view"
-const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW, WINDOW_ROW, VIEW_ROW]
+const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW, WINDOW_ROW]
 
 ## How fast moves and battles play out on screen. Never null. Callers read it at
 ## the moment they animate rather than caching it, so a mid-match change takes
@@ -302,8 +305,6 @@ func row_label(row: StringName) -> String:
 			return "End-turn check: %s" % ("On" if end_turn_confirm else "Off")
 		WINDOW_ROW:
 			return "Window: %s" % ("Fullscreen" if fullscreen else "Windowed")
-		VIEW_ROW:
-			return "View: %s" % ("3D" if board_3d else "2D")
 	push_error("Settings: %s names no value row" % row)
 	return ""
 
@@ -322,8 +323,6 @@ func cycle_row(row: StringName, step: int = 1) -> String:
 			set_end_turn_confirm(not end_turn_confirm)
 		WINDOW_ROW:
 			set_fullscreen(not fullscreen)
-		VIEW_ROW:
-			set_board_3d(not board_3d)
 	return row_label(row)
 
 
@@ -444,9 +443,16 @@ func pin(id: StringName) -> void:
 	if not _flag_wins:
 		speed = GameSpeed.by_id(id)
 	# Told rather than only set: a battle may already stand on the 3D board.
-	if not _view_flag_wins and board_3d != DEFAULT_BOARD_3D:
-		board_3d = DEFAULT_BOARD_3D
+	if not _view_flag_wins and board_3d != PINNED_BOARD_3D:
+		board_3d = PINNED_BOARD_3D
 		board_view_changed.emit()
+
+
+## The view `config` holds, or `fallback` when it holds none. Only BOARD_VIEW_KEY
+## counts; the old key is the old default, not a choice.
+static func stored_view(config: ConfigFile, fallback: bool) -> bool:
+	var stored: Variant = config.get_value(SECTION, BOARD_VIEW_KEY, fallback)
+	return stored if stored is bool else fallback
 
 
 ## A missing or malformed file is not an error: the defaults simply stand, which
@@ -476,9 +482,7 @@ func _load() -> void:
 	var stored_full: Variant = config.get_value(SECTION, FULLSCREEN_KEY, fullscreen)
 	if stored_full is bool:
 		fullscreen = stored_full
-	var stored_3d: Variant = config.get_value(SECTION, BOARD_3D_KEY, board_3d)
-	if stored_3d is bool:
-		board_3d = stored_3d
+	board_3d = stored_view(config, board_3d)
 	# Stored as strings and read back as StringNames: ConfigFile has no
 	# StringName, and a hint id written by one version must still match the
 	# TutorialHints id in the next. An id nothing answers to any more is kept
@@ -500,7 +504,7 @@ func _save() -> void:
 	config.set_value(SECTION, VOLUME_KEY, String(volume))
 	config.set_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
 	config.set_value(SECTION, FULLSCREEN_KEY, fullscreen)
-	config.set_value(SECTION, BOARD_3D_KEY, board_3d)
+	config.set_value(SECTION, BOARD_VIEW_KEY, board_3d)
 	var hints := PackedStringArray()
 	for id in retired_hints:
 		hints.append(String(id))

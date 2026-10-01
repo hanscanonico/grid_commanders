@@ -84,7 +84,9 @@ func test_every_named_chip_is_in_the_set() -> void:
 		ControlHints.THREAT_CHIP,
 		ControlHints.RANGE_CHIP,
 		ControlHints.OBJECTIVES_CHIP,
-		ControlHints.NEXT_CHIP
+		ControlHints.NEXT_CHIP,
+		ControlHints.VIEW_3D_CHIP,
+		ControlHints.VIEW_2D_CHIP
 	]:
 		assert_true(chip in ControlHints.CHIPS, "chip missing from CHIPS: %s" % chip)
 

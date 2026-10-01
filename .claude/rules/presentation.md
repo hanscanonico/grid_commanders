@@ -637,7 +637,7 @@ forms named in the root index are in `docs/design_record.md`.
   plane the way `TerrainAutotiles.variant`/`stands_in_cutin()` already draw it. The moment a
   decorative tree "stands" the height a property does, a player will try to capture it.
 - **The 3D board** (no plan artifact; this entry is its record, 2026-09-29) — the battle drawn a
-  second way, flipped with the flat board by `V`, the pause menu's **View** row or `--view=3d`.
+  second way, flipped with the flat board by `V`, the on-screen view chip or `--view=3d`.
   User rulings: **full 3D models** for units and buildings (the pixel sprites are not drawn on it)
   and a **crisp full-resolution** render, not pixelated. Everything is under `scenes/board3d/` and
   none of it touches `core/` or `ai/`. D1: **it is a view of the flat board, never of the sim.**
@@ -652,10 +652,18 @@ forms named in the root index are in `docs/design_record.md`.
   and laid on every upward face by `terrain_3d.gdshader`. **A new flat-board node that stands for a
   solid thing goes on `SOLID`; one left on the default bit is drawn into the overlay texture**, and
   one added under the Battle node at runtime (the meteor) is projected that way for free.
-  D2: **the flat board stays the default and the authority on framing.** `Settings.board_3d` is a
-  device preference beside the window mode, `pin` stands it back (and says so through
-  `board_view_changed`, since a battle may already stand on the 3D board) unless `--view=` spoke,
-  so every golden frame and smoke capture is the flat board. `BoardCamera3D` frames the 2D
+  D2: **the 3D board is the player's default; the flat board is the capture's and the authority
+  on framing** (user request, 2026-10-01, superseding "the flat board stays the default").
+  `Settings.board_3d` is a device preference beside the window mode, starting at `DEFAULT_BOARD_3D`
+  and stored under `board_view_3d` — the old `board_3d` key was written on every save whether or
+  not the player chose, so it is left unread. `pin` stands it back at `PINNED_BOARD_3D`, flat (and
+  says so through `board_view_changed`, since a battle may already stand on the 3D board) unless
+  `--view=` spoke, so every golden frame and smoke capture is the flat board. **The switch is on
+  the screen, not in the pause menu**: `ViewChip` (`scenes/ui/view_chip.gd`) is an
+  `UiKit.action_chip` on the battle's top bar and the main menu's header that reads the view and
+  relabels on `board_view_changed`. Its press is `V`, so in a battle it holds still wherever `V`
+  does (`Board3D` answers it); the main menu has no board, so there the chip answers `V` itself —
+  both through `Settings.set_board_3d`. `BoardCamera3D` frames the 2D
   cursor at the rung `BattleZoom` settled on — a zoom key, a pinch and `N` reach both boards by
   one route — and orbits in quarter turns (`C` / `B`); `BoardSpace3D.turned` turns the arrow keys
   and a touch pan with it, so up always walks away from the camera. **It frames with slack, never
@@ -740,8 +748,7 @@ forms named in the root index are in `docs/design_record.md`.
   switch being a shader swap. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
-  `follow_cursor` still steps aside by the flat board's geometry, `V` pressed over the open pause
-  menu flips the board but leaves the View row's label stale until the menu reopens, the 3D
+  `follow_cursor` still steps aside by the flat board's geometry, the 3D
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
   by presentation keys on `TerrainType`, and the turn banner, the map editor and the menu
   backdrop stay 2D.

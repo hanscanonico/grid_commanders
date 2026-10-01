@@ -796,10 +796,11 @@ mouse, keyboard, or controller throughout.
 - `F11` fills the screen; a second press puts the window back. It answers from anywhere — board,
   menu or banner — and the pause menu's **Window** row is the same setting, remembered for this
   machine either way
-- `V` flips the battle between the flat board and the 3D one, from anywhere in a match; `C` and
-  `B` turn the 3D board a quarter each way, and the arrow keys turn with it, so up always walks away
-  from the camera. The pause menu's **View** row is the same setting, remembered for this machine;
-  `--view=3d` asks for it on one launch without writing it down
+- `V` flips the battle between the 3D board (the default) and the flat one, from anywhere in a
+  match or on the main menu; `C` and `B` turn the 3D board a quarter each way, and the arrow keys
+  turn with it, so up always walks away from the camera. The **V · 3D** chip on the battle's top bar
+  and on the main menu is the same switch, remembered for this machine; `--view=2d` / `--view=3d`
+  asks for a board on one launch without writing it down
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight
   its movement range; move the cursor within range to preview the path — a red arrow laid squarely
   along the cells the unit would walk, its head on the one it would stop on — then confirm a
