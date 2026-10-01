@@ -1,7 +1,7 @@
 class_name Board3D
 extends Node3D
 ## The battle drawn in three dimensions: a second board over the same match,
-## flipped with the flat one by V or the view chip on the top bar.
+## flipped with the flat one by V or the view chip over End Turn.
 ##
 ## It is a view of the 2D board, never of the sim. The flat board keeps drawing
 ## underneath — taken off the screen by the window's canvas cull mask, not

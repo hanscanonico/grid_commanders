@@ -660,10 +660,11 @@ forms named in the root index are in `docs/design_record.md`.
   says so through `board_view_changed`, since a battle may already stand on the 3D board) unless
   `--view=` spoke, so every golden frame and smoke capture is the flat board. **The switch is on
   the screen, not in the pause menu**: `ViewChip` (`scenes/ui/view_chip.gd`) is an
-  `UiKit.action_chip` on the battle's top bar and the main menu's header that reads the view and
-  relabels on `board_view_changed`. Its press is `V`, so in a battle it holds still wherever `V`
-  does (`Board3D` answers it); the main menu has no board, so there the chip answers `V` itself —
-  both through `Settings.set_board_3d`. `BoardCamera3D` frames the 2D
+  `UiKit.action_chip` that reads the view and relabels on `board_view_changed`, over the
+  battle's End Turn (neither bar has a group's width to spare) and on the main menu's header. Its
+  press is `V`, so in a battle it holds still wherever `V` does (`Board3D` answers it); the main
+  menu has no board, so there the chip answers `V` itself — both through `Settings.set_board_3d`.
+  `BoardCamera3D` frames the 2D
   cursor at the rung `BattleZoom` settled on — a zoom key, a pinch and `N` reach both boards by
   one route — and orbits in quarter turns (`C` / `B`); `BoardSpace3D.turned` turns the arrow keys
   and a touch pan with it, so up always walks away from the camera. **It frames with slack, never

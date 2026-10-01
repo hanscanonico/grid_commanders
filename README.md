@@ -798,7 +798,7 @@ mouse, keyboard, or controller throughout.
   machine either way
 - `V` flips the battle between the 3D board (the default) and the flat one, from anywhere in a
   match or on the main menu; `C` and `B` turn the 3D board a quarter each way, and the arrow keys
-  turn with it, so up always walks away from the camera. The **V · 3D** chip on the battle's top bar
+  turn with it, so up always walks away from the camera. The **V · 3D** chip over End Turn
   and on the main menu is the same switch, remembered for this machine; `--view=2d` / `--view=3d`
   asks for a board on one launch without writing it down
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight

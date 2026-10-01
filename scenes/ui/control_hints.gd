@@ -59,17 +59,10 @@ const OBJECTIVES_CHIP := "O · MISSION"
 ## is not a way of looking at the board — so the bar prints it unlit throughout.
 const NEXT_CHIP := "N · NEXT"
 
-## The view chip's two faces: which board is up, beside the key that flips it. The
-## main menu prints it too, so the board can be chosen before a match.
-const VIEW_3D_CHIP := "V · 3D"
-const VIEW_2D_CHIP := "V · 2D"
-
 ## Every chip the top bar may print, so the two rules they are held to — each fits
 ## beside a legend already running at MAX_CHARS, each is ASCII — are checked over
 ## the set rather than over a list a new chip has to be remembered into.
-const CHIPS: Array[String] = [
-	THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHIP, VIEW_3D_CHIP, VIEW_2D_CHIP
-]
+const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHIP]
 
 ## What each chip says on a touch build, where naming the key is naming something
 ## the device has not got. A chip is a button, so what is left is the word it does
@@ -98,6 +91,13 @@ const TOUCH_CHIPS: Dictionary = {
 ## is in TOUCH_CHIPS with the rest, so `chip_for` is the one way to print any of
 ## them and the button drops the key a finger has not got.
 const END_TURN_CHIP := "E · END TURN"
+
+## The view chip's two faces: which board is up, beside the key that flips it. It
+## stands over End Turn on the bottom bar, and so is out of CHIPS for the reason
+## End Turn is: the top bar is full at four (UiTheme.HUD_GAP). The main menu prints
+## it too, so the board can be chosen before a match.
+const VIEW_3D_CHIP := "V · 3D"
+const VIEW_2D_CHIP := "V · 2D"
 
 ## The touch dock's copy (mobile plan MB3). Its own block because the dock is a
 ## row of buttons rather than a legend: each chip says what it *does* instead of

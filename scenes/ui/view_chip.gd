@@ -1,7 +1,7 @@
 class_name ViewChip
 extends Node
 ## The 2D/3D switch, on the screen rather than in a menu: a chip that reads which
-## board is up and flips it, printed on the battle's top bar and on the main menu.
+## board is up and flips it, printed over the battle's End Turn and on the main menu.
 ##
 ## The chip itself is `UiKit.action_chip`'s, so a press is the V key and goes where
 ## V goes. In a battle that is Board3D, which holds the key still under a story
@@ -52,6 +52,8 @@ func _relabel() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(ACTION):
+	# A node under a hidden page still hears keys: V flips nothing behind a
+	# sub-panel that has covered the chip.
+	if event.is_action_pressed(ACTION) and _chip.is_visible_in_tree():
 		Settings.set_board_3d(not Settings.board_3d)
 		get_viewport().set_input_as_handled()
