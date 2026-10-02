@@ -653,7 +653,7 @@ func confirm_at(cell: Vector2i) -> void:
 				else:
 					_reject("Occupied.", cell)
 			else:
-				_reject("Out of reach.", cell)
+				_reject(MoveRefusal.words(game, selected, move_range, cell), cell)
 		State.TARGETING, State.DROP_TARGETING:
 			targeting.confirm_at(cell)
 		State.POWER_TARGETING:
@@ -823,10 +823,10 @@ func _on_move_animation_done() -> void:
 		var special := _pending_special_actions
 		_pending_special_actions = []
 		special.append(BattleMenus.CANCEL)
-		action_menu.open(special, view.board_camera.screen_pos_for_cell(dest))
+		action_menu.open_beside(special, view.board_camera, dest)
 		return
 	var actions := targeting.arm(selected, planned_path)
-	action_menu.open(actions, view.board_camera.screen_pos_for_cell(dest))
+	action_menu.open_beside(actions, view.board_camera, dest, targeting.targets())
 
 
 func _on_menu_action(action: StringName) -> void:
@@ -957,7 +957,7 @@ func _request_end_turn() -> void:
 	# is ReadyUnits' answer either way, which is what N and Review still walk.
 	if Settings.end_turn_confirm and not ready.is_empty():
 		state = State.CONFIRM
-		end_turn_guard.open(game.day, ready, view.identity.theme(game.current_team))
+		end_turn_guard.open(game, ready, view.identity.theme(game.current_team))
 		return
 	_commit_end_turn()
 

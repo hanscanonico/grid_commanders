@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"artillery"
 display_name = "Artillery"
+role = "Shells foes from a safe distance."
 symbol = "g"
 cost = 6000
 move_points = 5

@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"apc"
 display_name = "APC"
+role = "Moves foot soldiers and refills adjacent units."
 symbol = "p"
 cost = 5000
 move_points = 6

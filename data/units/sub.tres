@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"sub"
 display_name = "Sub"
+role = "Dives to hide. Hunts ships."
 symbol = "s"
 cost = 20000
 move_points = 5

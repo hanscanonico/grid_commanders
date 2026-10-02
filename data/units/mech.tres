@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"mech"
 display_name = "Mech"
+role = "Slow foot soldier with a bazooka. Captures."
 symbol = "m"
 cost = 3000
 move_points = 2
