@@ -15,6 +15,9 @@ const SEA := &"sea"
 
 @export var id: StringName
 @export var display_name: String
+## What the unit is for, in one short line of player-facing words — the build
+## menu's card prints it. Text, never a rule: nothing in core/ or ai/ reads it.
+@export var role: String = ""
 ## Single character representing this unit in .txt map [units] sections.
 @export var symbol: String
 @export var cost: int = 0

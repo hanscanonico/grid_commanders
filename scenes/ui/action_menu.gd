@@ -15,6 +15,8 @@ signal action_chosen(action: StringName)
 
 ## How far the menu stays off the edges of the board band.
 const MARGIN := 4.0
+## The detail card's inner padding.
+const DETAIL_PAD := 5
 ## Which way each direction action walks the highlight.
 const ROW_ACTIONS: Dictionary = {
 	&"cursor_up": -1,
@@ -49,18 +51,55 @@ var _top := 0
 ## TouchGestures spends a pan a cell at a time.
 var _row_pitch := 0.0
 var _scroll_rest := 0.0
+## Where an `open_beside` menu lines up; null for a menu opened on its point.
+var _anchor: PanelAnchor
+## Each row's card text ("" for none) and the card that shows the armed row's.
+var _details: Array[String] = []
+var _detail_card: PanelContainer
+var _detail_label: Label
 
 
 func _ready() -> void:
 	add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
+	_detail_card = PanelContainer.new()
+	_detail_card.top_level = true  # beside the menu, never laid out inside it
+	_detail_card.add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
+	_detail_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
+	_detail_card.add_child(UiKit.pad(_detail_label, DETAIL_PAD, DETAIL_PAD))
+	UiTheme.make_decoration(_detail_card)
+	_detail_card.hide()
+	add_child(_detail_card)
 
 
-## actions: [{id, label, disabled?: bool, icon?: Texture2D, cycle?: Callable}, ...]
+## actions: [{id, label, disabled?: bool, icon?: Texture2D, cycle?: Callable,
+## detail?: String}, ...]
 ## At least one entry must be enabled (menus always include Cancel).
+## `detail` is a card shown beside the menu while the row is armed; a disabled row
+## that carries one can still be armed, to be read, though never chosen.
 ## `icon` draws to the left of the label; rows that omit it in an illustrated
 ## menu get a spacer so every label still starts in the same column. `cycle` makes
 ## the row a value row — see VALUE_ACTIONS.
 func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
+	_fill(actions)
+	position = screen_pos
+	_anchor = null
+	show()
+	_place()
+
+
+## `open`, beside `cell` rather than on it: a tile clear of the cell and on the
+## side away from `away`, the cells the choice is about — a unit's targets — so
+## the menu never covers what the player is deciding on (see PanelAnchor).
+func open_beside(
+	actions: Array[Dictionary], camera: BoardCamera, cell: Vector2i, away: Array[Vector2i] = []
+) -> void:
+	_fill(actions)
+	_anchor = PanelAnchor.beside(camera, cell, away)
+	show()
+	_place()
+
+
+func _fill(actions: Array[Dictionary]) -> void:
 	for child in rows.get_children():
 		rows.remove_child(child)
 		child.queue_free()
@@ -68,6 +107,7 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 	_labels.clear()
 	_disabled.clear()
 	_cycles.clear()
+	_details.clear()
 	var spacer := _spacer_icon(actions)
 	for entry: Dictionary in actions:
 		var button := Button.new()
@@ -90,6 +130,7 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 		_labels.append(entry.label)
 		_disabled.append(is_disabled)
 		_cycles.append(entry.get("cycle", Callable()))
+		_details.append(entry.get("detail", ""))
 	_capacity = _ids.size()
 	_top = 0
 	_row_pitch = 0.0
@@ -97,9 +138,6 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 	_index = -1
 	_step_index(1)
 	_update_labels()
-	position = screen_pos
-	show()
-	_place()
 
 
 func close() -> void:
@@ -238,7 +276,7 @@ func _spacer_icon(actions: Array[Dictionary]) -> Texture2D:
 func _step_index(delta: int) -> void:
 	for attempt in _ids.size():
 		_index = wrapi(_index + delta, 0, _ids.size())
-		if not _disabled[_index]:
+		if _armable(_index):
 			return
 
 
@@ -252,6 +290,28 @@ func _update_labels() -> void:
 		UiTheme.apply_button(
 			button, UiTheme.ButtonVariant.SECONDARY if i == _index else UiTheme.ButtonVariant.GHOST
 		)
+	_show_detail()
+
+
+func _armable(i: int) -> bool:
+	return not _disabled[i] or _details[i] != ""
+
+
+## The armed row's card, beside the menu on whichever side has room.
+func _show_detail() -> void:
+	var text := _details[_index] if _index >= 0 and _index < _details.size() else ""
+	_detail_card.visible = text != ""
+	if text == "":
+		return
+	_detail_label.text = text
+	_detail_card.reset_size()
+	var card := _detail_card.get_combined_minimum_size()
+	var band := MobileDock.board_band(get_viewport().get_visible_rect().size).grow(-MARGIN)
+	var x := position.x + size.x + MARGIN
+	if x + card.x > band.end.x:
+		x = position.x - card.x - MARGIN
+	var at := Vector2(x, position.y)
+	_detail_card.position = at.clamp(band.position, (band.end - card).max(band.position))
 
 
 ## Settles the menu inside the *board band* — the strip the docked HUD bars leave
@@ -278,9 +338,13 @@ func _place() -> void:
 	if size.y > band.size.y:
 		_cut_to(band.size.y - 2.0 * MARGIN)
 		reset_size()
-	var top_left := band.position + Vector2(MARGIN, MARGIN)
-	var max_pos := (band.end - size - Vector2(MARGIN, MARGIN)).max(top_left)
-	position = position.clamp(top_left, max_pos)
+	if _anchor != null:
+		position = _anchor.place(size, band.grow(-MARGIN))
+	else:
+		var top_left := band.position + Vector2(MARGIN, MARGIN)
+		var max_pos := (band.end - size - Vector2(MARGIN, MARGIN)).max(top_left)
+		position = position.clamp(top_left, max_pos)
+	_show_detail()
 
 
 ## Narrows the menu to the rows that fit `room`, measured off the built list
@@ -323,7 +387,7 @@ func _arm_inside_window() -> void:
 	var from := _top if step > 0 else _top + _capacity - 1
 	for i in _capacity:
 		var candidate := from + i * step
-		if not _disabled[candidate]:
+		if _armable(candidate):
 			_index = candidate
 			_update_labels()
 			return

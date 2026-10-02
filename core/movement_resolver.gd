@@ -110,6 +110,34 @@ static func can_stop(
 	return _can_stop_on(state, unit, state.unit_at(cell), unit.team, visible)
 
 
+## Why `unit` may not end a move on `cell`, read off `reach` — the mover's own
+## fill (`reachable` with its defaults) — rather than worked out again: "" when it
+## may. A cell outside the fill was left out for one of three reasons, and this
+## tells them apart in the fill's own order: ground the unit cannot enter, a
+## budget too short, or — when neither holds — the one wall left, an enemy the
+## mover can see. A hidden enemy never reaches that arm: the fill planned through
+## it, so its cell is inside `reach` and the answer cannot probe fog.
+static func destination_error(
+	state: GameState, unit: Unit, reach: MoveRange, cell: Vector2i
+) -> String:
+	if reach.can_stop_at(cell):
+		return ""
+	if reach.has(cell):
+		return "destination is occupied"
+	var terrain := state.map.terrain_at(cell)
+	if terrain == null:
+		return "path leaves the map"
+	var step := step_cost(state, unit, terrain)
+	if step == TerrainType.IMPASSABLE:
+		return "path crosses impassable terrain"
+	var budget := move_budget(state, unit)
+	for dir in DIRECTIONS:
+		var from := cell - dir
+		if reach.has(from) and reach.costs[from] + step <= budget:
+			return "destination is held by an enemy"
+	return "path exceeds movement points"
+
+
 ## The rule itself, over the occupancy and the sight the caller already has: the
 ## fill asks it once per cell and holds one `visible` for the whole walk.
 ##

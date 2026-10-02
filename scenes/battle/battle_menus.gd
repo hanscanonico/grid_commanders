@@ -127,6 +127,7 @@ static func build_actions(
 					"label": "%s  %d" % [unit_type.display_name, price],
 					"disabled": game.funds[team] < price,
 					"icon": UnitSprite.tile_texture_for(unit_type, row),
+					"detail": UnitBrief.text(game, unit_db, unit_type, price, game.funds[team]),
 				}
 			)
 		)
@@ -177,7 +178,8 @@ static func build_actions(
 ## commands are already written, and a planner handed one would think it owned a
 ## turn the recording is playing. The Briefing row goes with them too: a mission's
 ## words belong to the mission being played, and a recording is watched from
-## outside the war it was recorded in.
+## outside the war it was recorded in. And the way out says "Stop Watching": with
+## nothing a save could keep, "Without Saving" warned of a loss there is not.
 ##
 ## Briefing is offered only inside a campaign, asked of CampaignSession, because
 ## outside one there is nothing to re-read. It stays on a paused computer turn —
@@ -223,7 +225,8 @@ static func map_actions(
 	if savable:
 		actions.append({"id": &"save", "label": "Save"})
 		actions.append({"id": &"save_and_quit", "label": "Save & Main Menu"})
-	actions.append({"id": &"quit", "label": "Main Menu Without Saving"})
+	var leave := "Main Menu Without Saving" if savable else "Stop Watching"
+	actions.append({"id": &"quit", "label": leave})
 	actions.append(CANCEL)
 	return actions
 
@@ -254,8 +257,12 @@ static func auto_actions(difficulty_db: DifficultyDB) -> Array[Dictionary]:
 ## "throw the match away" under the Enter the player is already pressing — and it
 ## carries the plain `cancel` id, so the row, Esc and a click past it all mean the
 ## same thing.
-static func abandon_confirm_actions() -> Array[Dictionary]:
+##
+## Over a replay the same two rows speak of watching (playtest SK-28): there is no
+## match being played there and nothing a save could keep.
+static func abandon_confirm_actions(watching: bool = false) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	actions.append({"id": &"cancel", "label": "Keep Playing"})
-	actions.append({"id": &"abandon", "label": "Leave Without Saving"})
+	actions.append({"id": &"cancel", "label": "Keep Watching" if watching else "Keep Playing"})
+	var leave := "Stop Watching" if watching else "Leave Without Saving"
+	actions.append({"id": &"abandon", "label": leave})
 	return actions

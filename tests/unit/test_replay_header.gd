@@ -30,7 +30,7 @@ func test_a_header_that_is_not_one_says_which_part_is_missing() -> void:
 ## disposable, so the line under it is the whole migration policy — an older
 ## format is refused, out loud, rather than read.
 func test_an_older_format_is_refused_rather_than_read() -> void:
-	assert_eq(ReplayCodec.FORMAT, 4)
+	assert_eq(ReplayCodec.FORMAT, 5)
 	assert_string_contains(ReplayCodec.header_error({"replay": 1, "opening": {}}), "format 1")
 
 

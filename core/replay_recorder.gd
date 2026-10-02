@@ -103,6 +103,17 @@ func after_apply(state: GameState) -> void:
 	_seq += 1
 
 
+## Ends the recording of a match that was decided, on the verdict its end card
+## read. Writes nothing for a match nobody moved in: that one claimed no slot, and
+## a verdict is no reason to claim one now.
+func conclude(state: GameState, result: String) -> void:
+	var line := ReplayCodec.closing(state.day, result)
+	if _open_sink.is_null():
+		_lines.append(line)
+	elif _sink != null:
+		_sink.append(line)
+
+
 ## Which file this match is recording into, empty while there is not one yet: a
 ## recorder writing to memory has no file, and one with a sink has none until the
 ## first command claims a slot — see the class note above.

@@ -8,34 +8,31 @@ extends RefCounted
 ## without a file on disk — and a storage failure is never mistaken for a
 ## malformed save.
 ##
-## Version 2 adds the commander block: which general each side is playing, how
-## much charge their meter holds, and whether their Command Power is up. Version 3
-## adds one flag per unit: whether a submarine is submerged. Version 4 adds the
-## match roster — which armies the board seated — because a match stopped being a
-## duel by definition. Version 5 adds the grouping: which armies stood together,
-## because a roster stopped implying who was fighting whom. Version 6 adds the
-## fallen, because an army leaving the board stopped being the end of the match.
-## Version 7 adds each army's home HQ, which pins where every army began against a
-## later edit of the map file it names: the board still derives the same answer, so
-## carrying it is what lets a save whose board has since moved be *refused* rather
-## than silently re-homed. Version 8 records whether an acted unit spent its own
-## action or was exhausted by another's, so a refresh power is exact mid-turn.
-## Version 9 carries the name a board gave a unit, so a mission that is about one
-## unit can still find it after a resume. Version 10 carries which seats a player
-## has handed to the computer mid-match through the pause menu's Auto row, and at
-## what tier, because that fact can now change after the match began instead of
-## only at setup. Version 11 carries the tier each computer seat was launched at,
-## because difficulty stopped being one match-wide setting. All ten are purely additive, so older
-## saves are still read
-## rather than rejected — a save with no commander block loads with both sides
-## neutral, one with no dive flag loads with every boat on the surface, one with no
-## roster loads as the duel it was, one with no grouping loads as the free-for-all
-## it was, one with no casualty list loads with every army it names still standing,
-## and one with no home HQs takes them from the map it names. An older save with no
-## refresh flag treats every acted unit as ineligible, one with no tags loads
-## with every unit unnamed, and one with no Auto tiers loads with no seat the
-## computer plays on Auto's behalf, and one with no seat tiers resumes with every computer
-## seat on the one tier it records. New saves are always written at the current version.
+## Version 2 adds the commander block: which general each side is playing, how much charge their
+## meter holds, and whether their Command Power is up. Version 3 adds one flag per unit: whether
+## a submarine is submerged. Version 4 adds the match roster — which armies the board seated —
+## because a match stopped being a duel by definition. Version 5 adds the grouping: which armies
+## stood together, because a roster stopped implying who was fighting whom. Version 6 adds the
+## fallen, because an army leaving the board stopped being the end of the match. Version 7 adds
+## each army's home HQ, which pins where every army began against a later edit of the map file
+## it names: the board still derives the same answer, so carrying it is what lets a save whose
+## board has since moved be *refused* rather than silently re-homed. Version 8 records whether
+## an acted unit spent its own action or was exhausted by another's, so a refresh power is exact
+## mid-turn. Version 9 carries the name a board gave a unit, so a mission that is about one unit
+## can still find it after a resume. Version 10 carries which seats a player has handed to the
+## computer mid-match through the pause menu's Auto row, and at what tier, because that fact can
+## now change after the match began instead of only at setup. Version 11 carries the tier each
+## computer seat was launched at, because difficulty stopped being one match-wide setting. All
+## ten are purely additive, so older saves are still read rather than rejected — a save with no
+## commander block loads with both sides neutral, one with no dive flag loads with every boat on
+## the surface, one with no roster loads as the duel it was, one with no grouping loads as the
+## free-for-all it was, one with no casualty list loads with every army it names still standing,
+## and one with no home HQs takes them from the map it names. An older save with no refresh flag
+## treats every acted unit as ineligible, one with no tags loads with every unit unnamed, one
+## with no Auto tiers loads with no seat the computer plays on Auto's behalf, and one with no
+## seat tiers resumes with every computer seat on the one tier it records. New saves are always
+## written at the current version. The board a save carries (`SaveBoard`) is no version's: it is
+## optional at all.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -114,8 +111,7 @@ class Summary:
 
 
 ## The whole match as a plain Dictionary: sim state plus the match setup (AI
-## sides and difficulty tier). The map itself is stored by path and reloaded from
-## res:// on the way back in, so saves stay small and follow map edits.
+## sides and difficulty tier). Which board travels with it is `SaveBoard`'s.
 ##
 ## `difficulty` is an id rather than the tier's numbers on purpose: retuning a
 ## tier should reach saved matches too, exactly as retuning a commander does.
@@ -172,7 +168,7 @@ static func encode(
 		# the one place in this file that knew how many sides there are, so a third army's
 		# treasury went through a save round-trip and came back empty (COM-55).
 		funds[str(team)] = state.funds[team]
-	return {
+	var envelope := {
 		"version": VERSION,
 		"map_path": state.map_path,
 		"teams": state.teams.duplicate(),
@@ -194,6 +190,8 @@ static func encode(
 		"capture_progress": progress,
 		"units": units,
 	}
+	SaveBoard.carry(envelope, state.map, state.map_path)
+	return envelope
 
 
 ## Rebuilds a match from a parsed save. Returns null (with a pushed error
@@ -217,7 +215,7 @@ static func decode(
 		# rather than as no save at all (COM-121).
 		push_error("SaveCodec: %s" % error)
 		return null
-	var map := MapData.load_from_file(String(data["map_path"]), terrain_db)
+	var map := SaveBoard.load_map(data, terrain_db)
 	if map == null:
 		return null  # MapData already reported why
 	# Only askable now: what counts as a legal cell is the board's to say, and the
@@ -497,6 +495,7 @@ static func validate(data: Dictionary) -> String:
 			),
 		func() -> String: return _unit_tags_error(data, version),
 		func() -> String: return _funds_error(data),
+		func() -> String: return SaveBoard.error(data),
 	]
 	for check: Callable in checks:
 		var error: String = check.call()

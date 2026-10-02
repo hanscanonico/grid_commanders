@@ -238,6 +238,11 @@ forms named in the root index are in `docs/design_record.md`.
   the fill to walk is still the rejected answer. Everything else is presentation, gated by the same
   `perspective.can_see_unit` fog rule targeting uses and then masked to scouted ground by
   `BattlePerspective._viewer_safe`; `make screenshot` stays byte-stable.
+  **The fire paint is an opaque red edge round the fired-at set, with no fill** (playtest ED-24,
+  2026-10-02): a translucent wash took its hue from the ground — orange on grass, purple on water
+  and bridges — and tinted the mint reach under it, so `BattleOverlays.paint_attack` keys each
+  cell's tile to its eight neighbours and draws only the outline. A denser wash is the rejected
+  answer: it hid the reach and the targets' sprites.
 - **Field overlays** (no plan artifact; the *Field Overlays* design handoff, and this entry is its
   record) — the threat lens, the arrowed movement path and the capture pip. **Nothing under `core/`
   or `ai/` was touched, because the handoff's rules helpers already existed**: its `threat()` /

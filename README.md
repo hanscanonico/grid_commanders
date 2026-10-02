@@ -877,7 +877,7 @@ mouse, keyboard, or controller throughout.
 - Choosing Fire enters targeting: attackable enemies get a red overlay and a panel previews the
   attack and counter damage; confirm on a target to resolve combat, or cancel back to the menu.
   The preview speaks HP out of 10 like every other HP display — "Deal 5–6 HP / Take 2–3 HP",
-  with "Target 10 → 4–5 HP · 55% · luck included" underneath, where the dimmed percentage is
+  with "Target 10 » 4–5 HP · damage 55% before luck" underneath, where the dimmed percentage is
   the luck-free damage kept as secondary detail so a chip attack worth less than a displayed HP
   still shows what it took off. Every bound is the luck range the attack will roll inside — the
   attacker's answers for the opening roll too, since a lucky shot weakens or removes the counter —
@@ -1312,8 +1312,10 @@ at the next command boundary and opens the map menu, exactly as it does during a
 without the two save rows, because a recording is a match already played and writing it to the one
 save slot would come back as a hot-seat game nobody was sitting at — and without the Auto row, since
 a playback seats no computer for it to hand a turn to. While it is paused, `S` takes
-one more command and stops again, and Enter lets it run. When it ends, the victory screen's first
-action reads **Restart** and plays the recording again rather than starting a match on its board.
+one more command and stops again, and Enter lets it run. An `Esc` that skips a banner or a cut-in
+asks for that pause too. When it ends, the victory screen's first action reads **Watch Again** and
+plays the recording again rather than starting a match on its board; a recording that stops before
+anybody won ends on **End of recording**, with no verdict.
 The board is drawn **omniscient** whatever fog the match was played under: the match is over, so
 there is nobody left to hide it from, and a fogged AI-versus-AI match watched through one army's
 eyes is mostly a black rectangle.
@@ -1322,7 +1324,10 @@ A replay is **an opening board and the commands that were applied to it** — ne
 a series of states. The opening line is a save envelope verbatim (so it carries the roster, the
 grouping, each commander's charge and the RNG state, and a match resumed from a save records
 correctly from wherever it was picked up); every line after it is one applied command, appended as
-it happens, so a crash costs the last line rather than the file. A twenty-day match is about 100 KB.
+it happens, so a crash costs the last line rather than the file. A finished match ends on one more
+line, the verdict its end card read, which is how the Replays page tells a whole match from the
+slice a save-and-quit left (each row names the days it holds and how it ended). A twenty-day match
+is about 100 KB.
 A recording of a **campaign mission** names its war and its mission up top, because a scripted beat
 is recorded as the beat's own name and the mission is what that name means; one whose mission this
 build no longer ships is refused by name before it starts rather than stopping at the moment the
