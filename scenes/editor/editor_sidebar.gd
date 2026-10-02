@@ -206,6 +206,10 @@ func _build_size() -> Control:
 	col.add_theme_constant_override("separation", 2)
 	_width_value = UiKit.micro_label("")
 	_height_value = UiKit.micro_label("")
+	# The micro-label's faint ink reads as a disabled control beside two live
+	# buttons; the number is the one thing in the row worth reading.
+	_width_value.add_theme_color_override("font_color", UiTheme.WHITE)
+	_height_value.add_theme_color_override("font_color", UiTheme.WHITE)
 	col.add_child(UiKit.stepper("W", _width_value, func(step: int) -> void: _step(step, 0)))
 	col.add_child(UiKit.stepper("H", _height_value, func(step: int) -> void: _step(step, 1)))
 	return col

@@ -65,8 +65,8 @@ func _ready() -> void:
 	resized.connect(_reframe)
 
 
-## Points the board at the draft it is painting, opening at the closest rung to
-## the one a match opens on.
+## Points the board at the draft it is painting, opening on the furthest-out
+## rung — the whole board in view, so nothing of it starts off screen.
 func show_document(doc: MapDocument, db: TerrainDB, units: UnitDB) -> void:
 	_doc = doc
 	_db = db
@@ -94,7 +94,7 @@ func _reframe() -> void:
 	if _doc == null:
 		return
 	_rungs = BattleZoom.rungs_for(BattleZoom.floor_for(size, _world_px()))
-	_rung = opening_rung(_rungs) if _rung < 0 else clampi(_rung, 0, _rungs.size() - 1)
+	_rung = clampi(_rung, 0, _rungs.size() - 1)
 	var tile := tile_px()
 	var board := Vector2(_doc.size()) * tile
 	_origin = Vector2(
@@ -226,15 +226,6 @@ func _identity() -> SideIdentity:
 ## which is exactly what saving it and launching it will do.
 static func preview_of(doc: MapDocument, db: TerrainDB) -> MapData:
 	return MapData.parse(doc.to_text(), db)
-
-
-## Which rung a board opens on: the one a match opens on where the board can hold
-## it, and the furthest-out rung — the whole-board view — where it cannot.
-static func opening_rung(rungs: PackedFloat64Array) -> int:
-	for i in rungs.size():
-		if rungs[i] >= BattleZoom.DEFAULT_ZOOM:
-			return i
-	return 0
 
 
 ## Where the board's top-left sits on one axis: centred while the whole board
