@@ -21,6 +21,8 @@ const ROTOR_SPIN := 22.0
 const BADGE_HEIGHT := 0.42
 const BADGE_SIDE := 0.3
 const BADGE_PX := 16
+## How many frames the shadow's primer stands before the lens.
+const PRIMER_FRAMES := 3
 
 var map: MapData
 var sprites_root: Node2D
@@ -30,6 +32,8 @@ var sprites_root: Node2D
 ## be read back out of a typed key.
 var _models: Dictionary[int, Model] = {}
 var _clock := 0.0
+var _primer: MeshInstance3D
+var _primed := 0
 
 
 ## Everything the mirror keeps about one model between frames.
@@ -42,14 +46,20 @@ class Model:
 	var plane := Vector2.ZERO
 	var hp: Label3D
 	var fuel: Label3D
-	var rotor: Node3D
+	var shadow: Node3D
 	var phase := 0.0
+
+
+func _ready() -> void:
+	_primer = AirShadow3D.primer()
+	add_child(_primer)
 
 
 ## Poses every model off its sprite. `lens` is the camera's basis: the badges
 ## sit to its right and left of a unit whichever way the board is turned.
 func sync(delta: float, lens: Basis) -> void:
 	_clock += delta
+	_prime()
 	var seen: Dictionary[int, bool] = {}
 	for child in sprites_root.get_children():
 		var sprite := child as UnitSprite
@@ -67,6 +77,20 @@ func sync(delta: float, lens: Basis) -> void:
 			_models.erase(id)
 
 
+## Holds the air shadow's primer a step before the lens for its first frames,
+## so the shadow's shader is built as the board comes up, not when the first
+## aircraft is bought or flies out of the fog.
+func _prime() -> void:
+	var lens := get_viewport().get_camera_3d()
+	if _primer == null or lens == null:
+		return
+	_primer.global_position = lens.global_position - lens.global_basis.z
+	_primed += 1
+	if _primed > PRIMER_FRAMES:
+		_primer.queue_free()
+		_primer = null
+
+
 func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	var model := Model.new()
 	if old != null:
@@ -81,7 +105,8 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	)
 	var body := model.node.get_node("Body") as GeometryInstance3D
 	model.material = body.material_override as StandardMaterial3D
-	model.rotor = model.node.get_node_or_null("Rotor")
+	if sprite.unit.type.domain == UnitType.AIR:
+		model.shadow = AirShadow3D.attach(model.node, sprite.unit.type.id)
 	model.phase = float(sprite.unit.cell.x * 7 + sprite.unit.cell.y * 3)
 	model.hp = _badge(Color.WHITE)
 	model.fuel = _badge(UiTheme.AMMO)
@@ -102,10 +127,11 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 	if sprite.moving and step.length() > 0.0005:
 		model.yaw = lerp_angle(model.yaw, atan2(-step.y, step.x), 1.0 - exp(-delta * TURN_RATE))
 	var domain := sprite.unit.type.domain
-	var height := BoardSpace3D.stand_at(map, plane)
+	var ground := BoardSpace3D.stand_at(map, plane)
+	var height := ground
 	var roll := 0.0
 	if domain == UnitType.AIR:
-		height = BoardSpace3D.AIR_ALTITUDE + sin(_clock * 2.0 + model.phase) * AIR_BOB
+		height = BoardSpace3D.fly_at(map, plane) + sin(_clock * 2.0 + model.phase) * AIR_BOB
 	elif domain == UnitType.SEA:
 		roll = deg_to_rad(SEA_ROLL_DEG) * sin(_clock * 1.3 + model.phase)
 		if sprite.unit.dived:
@@ -114,9 +140,12 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 		height += absf(sin(_clock * 9.0)) * HELD_HOP
 	node.position = Vector3(plane.x, height, plane.y)
 	node.rotation = Vector3(roll, model.yaw, 0)
+	if model.shadow != null:
+		AirShadow3D.lay(model.shadow, height, ground)
+		model.shadow.visible = sprite.modulate.a >= 0.999
 	_tint(model, sprite)
-	if model.rotor != null:
-		model.rotor.rotate_y(delta * ROTOR_SPIN)
+	if domain == UnitType.AIR:
+		UnitModels3D.turn_rotors(node, _clock * ROTOR_SPIN + model.phase)
 
 
 ## The sprite's fade, hit flash and acted scrim, carried onto the one material

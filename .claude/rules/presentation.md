@@ -684,7 +684,42 @@ forms named in the root index are in `docs/design_record.md`.
   primitives merged into one mesh per unit or building (`UnitModels3D`, `PropertyModels3D`, their
   footprint and height contract pinned by `tests/unit/test_unit_models_3d.gd`), faction colour
   from `SideIdentity.theme_for_row`, and one material per unit the mirror tints in place.
-  `scenes/board3d/model_gallery.tscn` is the dev sheet to look at them. The ground's variety is
+  `scenes/board3d/model_gallery.tscn` is the dev sheet to look at them. **A unit's colours are
+  placed by rule, not per model** (Claude Design review, 2026-10-01): `FactionRamp3D` derives an
+  army's three tones from its theme without editing it — the lit one is the base raised
+  `LIGHT_STEP` in lightness alone, so a top keeps the army's saturation, and the whole ramp is
+  lowered to `LIT_CEILING`, which only deepens gold — and re-tones every face painted `base` by
+  which way it looks (light up, dark down, base on the flanks); every other part wears its role's
+  colour from `UnitPalette3D` (steel weapons, rubber running gear, gunmetal mounts, slate glass,
+  white ordnance with an amber tip, mid-steel rotors), held clear of every army's ramp and pinned
+  by the test. **White is ordnance's and an aircraft's livery alone**: no other part is lighter
+  than `STEEL_LIGHT` (a vehicle's light panel), and cream is the battleship's deck alone.
+  Weapons and rotor blades come out no thinner than `UnitParts3D.MIN_THICKNESS`, masts and
+  antennae than the thinner `MAST_THICKNESS`, and every gun ends in `UnitParts3D.gun`'s dark
+  muzzle ring. The bodies are split by
+  domain (`LandModels3D`, `AirModels3D`, `SeaModels3D`) behind `UnitModels3D`, the tracked hulls
+  in `TrackedModels3D` under `LandModels3D`. **The land tiers part by bulk**: a recon under a tank
+  under a medium tank, which with the trucks reaches the cell's edge; the APC rides lower than the
+  tank, and the artillery's barrel is the one land part allowed past the land ceiling — the
+  sprite's identity is that tube, raised over everything — each separation pinned by the same test.
+  **So do the air and sea tiers**: the bomber spans widest in the air, the transport flies on a
+  tandem pair (`AirModels3D.ROTOR_HUBS` lists every rotor a type turns; `UnitModels3D.build`
+  makes them for the board, the cut-in squads and the gallery alike, and `turn_rotors` spins them
+  counter-rotating), the battleship fills the cell's length with the cruiser at four-fifths and the
+  sub at a little more, and the sub's hull is sunk to its top third under a white wake. **Where a
+  cut-in figure fires from is its builder's answer**: `UnitModels3D.muzzle_for` asks each domain's
+  `muzzle_of`, computed from the constants the gun is built from, and only falls back to the
+  front of the footprint for a gun that sits there. An aircraft flies
+  `BoardSpace3D.AIR_ALTITUDE` over the ground under it (`fly_at`), low enough to read inside its
+  own cell — over a mountain it still reads about half a cell north, the peaks setting that floor —
+  and lays its silhouette straight down (`AirShadow3D`, drawn at `SPREAD` of the body about the
+  cell's centre) in place of its sun shadow, which lands a cell away — the flat board's "only what
+  is airborne casts" read in 3D, but as a darkening that keeps `SHADE` of the ground under it
+  rather than the flat board's solid tone, which here read as a second aircraft. Every flyer's
+  silhouette is a tile of one atlas drawn by one never-freed multiply material, and
+  `UnitMirror3D` stands a speck of it before the lens for the board's first frames, so its shader
+  is built as the board comes up, never when the first aircraft appears. The cut-in stage keeps
+  its own cruise height and sun shadows. The ground's variety is
   per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
   request, 2026-09-29: "cinematics like in Final Fantasy with music, dialogs"). A scripted beat's
   lines, the briefing read again, a Command Power's activation and — new — a fresh mission's opening

@@ -86,3 +86,19 @@ func test_every_terrain_stands_inside_the_pointer_march() -> void:
 			top, BoardSpace3D.SEA_TOP, BoardSpace3D.MOUNTAIN_SHOULDER, String(terrain.id)
 		)
 		assert_true(BoardSpace3D.ground_top(terrain.id) > BoardSpace3D.SLAB_BOTTOM)
+
+
+func test_an_aircraft_flies_its_altitude_over_whatever_is_under_it() -> void:
+	var map := _map(ROW)
+	for x in [0.5, 1.5, 2.5]:
+		var plane := Vector2(x, 0.5)
+		var ground := BoardSpace3D.stand_at(map, plane)
+		assert_eq(BoardSpace3D.fly_at(map, plane), ground + BoardSpace3D.AIR_ALTITUDE)
+
+
+## Seen down the board camera's pitch, an aircraft's belly at the top of its bob
+## still lands inside its own cell rather than over the next one north.
+func test_an_aircraft_reads_inside_its_own_cell() -> void:
+	var top := BoardSpace3D.AIR_ALTITUDE + UnitMirror3D.AIR_BOB
+	var shift := top / tan(deg_to_rad(BoardCamera3D.PITCH_DEG))
+	assert_lt(shift, 0.5, "the belly reads %.2f cells north of the cell centre" % shift)
