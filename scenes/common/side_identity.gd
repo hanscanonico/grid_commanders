@@ -61,6 +61,7 @@ const _MIRROR_ORDER: Array[StringName] = [&"aurora", &"meridian", &"iron", &"ver
 
 var _theme_by_team: Dictionary[int, CommanderVisuals.FactionTheme] = {}
 var _name_by_team: Dictionary[int, String] = {}
+var _short_by_team: Dictionary[int, String] = {}
 
 
 ## The identity for a running match, read straight from its commander picks.
@@ -89,12 +90,20 @@ func theme(team: int) -> CommanderVisuals.FactionTheme:
 
 ## What a side is called — its faction name (kept even when the colour is a
 ## borrowed classic), or "First Army"/"Second Army" for a commander-less side.
+## A later side of a faction already on the board carries a numeral after the
+## name ("Meridian Coalition II"), so no two sides are ever called the same.
 ## Team 0 is the neutral property owner, the one non-side this is asked about
 ## (the terrain panel labels who owns a tile).
 func display_name(team: int) -> String:
 	if team == MapData.NEUTRAL:
 		return "Neutral"
 	return _name_by_team.get(team, "Team %d" % team)
+
+
+## The name cut to its first word, numeral kept — "Meridian II" — for a surface
+## that has no room for the whole of `display_name`.
+func short_name(team: int) -> String:
+	return _short_by_team.get(team, display_name(team).get_slice(" ", 0))
 
 
 ## The units/terrain atlas row a side draws in. Team 0 (a neutral property
@@ -136,6 +145,7 @@ static func terrain_row(terrain: TerrainType, owner_row: int) -> int:
 ## resolve to the same colour and the same picks always resolve the same.
 func _resolve(commanders: Dictionary) -> void:
 	var used: Dictionary[StringName, bool] = {}  # theme key -> true, for every side already placed
+	var fielded: Dictionary[StringName, int] = {}  # faction key -> sides of it placed so far
 	var roster := _seat_order(commanders)
 	for slot in roster.size():
 		var team: int = roster[slot]
@@ -146,9 +156,12 @@ func _resolve(commanders: Dictionary) -> void:
 		used[worn.key] = true
 		_theme_by_team[team] = worn
 		# The faction's own name, even when the colour it wears is a borrowed
-		# classic — a mirror keeps both sides named for the faction and leans on
-		# the slot numeral and commander to tell them apart.
-		_name_by_team[team] = faction.display
+		# classic, with the mirror's numeral after it so the turn banner and the
+		# owner labels can tell the sides apart without the colour.
+		fielded[faction.key] = fielded.get(faction.key, 0) + 1
+		var numeral := _mirror_numeral(fielded[faction.key])
+		_name_by_team[team] = faction.display + numeral
+		_short_by_team[team] = faction.display.get_slice(" ", 0) + numeral
 	for slot in roster.size():
 		var team: int = roster[slot]
 		if _theme_by_team.has(team):
@@ -189,6 +202,12 @@ func _fallback(
 	# `BattleView._last_seen_owner` maps an atlas row back to a team, so two sides
 	# sharing row 0 would make it name the wrong owner.
 	return CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
+
+
+## "" for the first side of a faction, " II" for the second, and so on.
+func _mirror_numeral(count: int) -> String:
+	const NUMERALS: Array[String] = ["", " II", " III", " IV"]
+	return NUMERALS[count - 1] if count <= NUMERALS.size() else " %d" % count
 
 
 func _ordinal_army_name(slot: int) -> String:

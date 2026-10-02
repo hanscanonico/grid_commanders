@@ -90,7 +90,7 @@ func test_iron_mirror_is_slate_plus_blue() -> void:
 	assert_eq(identity.atlas_row(1), 3)
 	assert_eq(identity.atlas_row(2), 2, "the borrowed side draws in the borrowed row's art")
 	assert_eq(identity.display_name(1), IRON, "both mirror sides keep the faction name")
-	assert_eq(identity.display_name(2), IRON)
+	assert_eq(identity.display_name(2), IRON + " II", "the later side carries a numeral")
 
 
 func test_aurora_mirror_is_blue_plus_red() -> void:
@@ -121,7 +121,7 @@ func test_gold_mirror_borrows_blue() -> void:
 	assert_eq(_key(identity, 2), &"aurora", "the mirror order still tries the classics first")
 	assert_eq(identity.atlas_row(1), 5)
 	assert_eq(identity.atlas_row(2), 2)
-	assert_eq(identity.display_name(2), GOLD)
+	assert_eq(identity.display_name(2), GOLD + " II")
 
 
 # --- generic sides resolve after factions, never steal a colour --------------
