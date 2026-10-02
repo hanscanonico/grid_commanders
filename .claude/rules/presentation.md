@@ -625,8 +625,10 @@ forms named in the root index are in `docs/design_record.md`.
   window mode back at their defaults, so no preference stored on the capturing machine reaches a
   frame — the window most of all, a full-screen machine otherwise framing every capture at its own
   monitor. **The window mode is a pause-menu row and the `F11` key, and on the main menu it is the
-  key alone**: that page's options row is full at four controls, a fifth putting the setup panel
-  past the 640-wide frame and the menu capture gate refusing it outright. Hidden under
+  key and the Settings page, never the options row**: that row is full at four controls, a fifth
+  putting the setup panel past the 640-wide frame and the menu capture gate refusing it outright.
+  The Settings page (`MenuSettingsPage`, SK-14) is the pause menu's own rows —
+  `Settings.value_actions`, in the same `ActionMenu` — less Speed, which the panel already holds. Hidden under
   `MobileProfile` — `Settings.offered_rows()` is the one answer to whether this device has a window
   to stand anywhere but full, and the row, the key and the `DisplayServer` call all sit behind it.
   `--reset-hints` is the one `Settings` flag that deliberately writes. The key legend
@@ -725,7 +727,10 @@ forms named in the root index are in `docs/design_record.md`.
   `UnitMirror3D` stands a speck of it before the lens for the board's first frames, so its shader
   is built as the board comes up, never when the first aircraft appears. The cut-in stage keeps
   its own cruise height and sun shadows. The ground's variety is
-  per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
+  per-sub-square shade, flat, by the standing-terrain rule below; the sea's is the shader's
+  alone — one flat blue moved by world-space noise, so no cell seam or per-cell repeat shows on
+  the board or the cut-in stage. A property nobody owns wears bare stone on the 3D board
+  (`Board3D`), not row 0's grey, which sat a step off Iron's charcoal at full zoom-out. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
   request, 2026-09-29: "cinematics like in Final Fantasy with music, dialogs"). A scripted beat's
   lines, the briefing read again, a Command Power's activation and — new — a fresh mission's opening
   (its title card over the board, then its briefing) play through `DialogueCinema3D` whenever the 3D
@@ -831,7 +836,11 @@ forms named in the root index are in `docs/design_record.md`.
   is never *constructed* on desktop. D8: touch targets grow their **hit** rectangles, never their
   drawn heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor
   rung. D9: the planner is not a mobile task. **Landscape only** (user decision) and
-  **`aspect="keep"`**; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
+  **`aspect="keep"`** — an upright window on a touch build is covered by `RotateCard`
+  (`scenes/ui/rotate_card.gd`, installed by `Settings`) until it turns, and a desktop window that
+  is merely tall never gets one. A touch build's `UiKit.action_chip` stands on a plate
+  (`UiTheme.touch_chip_plate`) drawn inside its bar, so a chip reads as a button without D8's
+  drawn height moving; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
   by measurement rather than by assumption. D7's mechanism is **refuted** — a feature-tagged autoload
   override does not clear an autoload on 4.7.1, the engine reading each `autoload/*` property raw, so
   unregistering the editor addon's runtime belongs to the addon that registers it. D4's safe-area

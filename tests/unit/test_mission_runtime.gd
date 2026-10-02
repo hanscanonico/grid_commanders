@@ -224,7 +224,7 @@ func test_each_star_is_named_and_says_whether_it_was_earned() -> void:
 	state.set_owner(Vector2i(1, 0), 1)
 	state.day = 4
 	var inside := runtime.evaluate(state, _tally)
-	assert_eq(_award_texts(inside), ["Mission complete", "Finish by day 4"])
+	assert_eq(_award_texts(inside), ["Mission complete.", "Finish by day 4."])
 	assert_true(inside.awards[1].earned, "day 4 is inside par 4")
 	assert_eq(inside.stars, 2)
 	assert_eq(inside.day, 4, "the debrief's scoreboard reads the day off the outcome")
@@ -232,7 +232,7 @@ func test_each_star_is_named_and_says_whether_it_was_earned() -> void:
 	var late := runtime.evaluate(state, _tally)
 	assert_false(late.awards[1].earned)
 	assert_eq(late.stars, 1, "the missed star is still named")
-	assert_eq(_award_texts(late), ["Mission complete", "Finish by day 4"])
+	assert_eq(_award_texts(late), ["Mission complete.", "Finish by day 4."])
 
 
 func test_every_star_a_mission_offers_is_named() -> void:
@@ -263,7 +263,7 @@ func test_a_bonus_never_revealed_is_still_a_named_star() -> void:
 	state.set_owner(Vector2i(2, 0), 1)
 	var outcome := runtime.evaluate(state, _tally)
 	assert_eq(outcome.awards.size(), runtime.max_stars(), "the sheet names every star")
-	assert_eq(outcome.awards.back().text, "Hidden objective")
+	assert_eq(outcome.awards.back().text, "Hidden objective.")
 	assert_false(outcome.awards.back().earned, "a bonus never judged cannot be earned")
 	assert_eq(outcome.stars, 1)
 
@@ -277,6 +277,6 @@ func test_a_revealed_bonus_is_named_in_its_own_words() -> void:
 	state.set_owner(Vector2i(1, 0), 1)
 	state.set_owner(Vector2i(2, 0), 1)
 	var outcome := runtime.evaluate(state, _tally)
-	assert_eq(_award_texts(outcome), ["Mission complete", "Hold the depot"])
+	assert_eq(_award_texts(outcome), ["Mission complete.", "Hold the depot"])
 	assert_true(outcome.awards.back().earned)
 	assert_eq(outcome.stars, 2)

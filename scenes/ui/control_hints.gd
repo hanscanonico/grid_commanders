@@ -86,6 +86,7 @@ const TOUCH_CHIPS: Dictionary = {
 	VIEW_3D_CHIP: "3D",
 	VIEW_2D_CHIP: "2D",
 	END_TURN_CHIP: "END TURN",
+	START_PROMPT: "TAP TO START",
 }
 
 ## End Turn's key, printed on the bottom bar's button rather than in a legend —
@@ -107,6 +108,10 @@ const END_TURN_CHIP := "E · END TURN"
 ## it too, so the board can be chosen before a match.
 const VIEW_3D_CHIP := "V · 3D"
 const VIEW_2D_CHIP := "V · 2D"
+
+## The main menu's blinking prompt, which a phone reads as a tap rather than a
+## button it has not got.
+const START_PROMPT := "PRESS START"
 
 ## The touch dock's copy (mobile plan MB3). Its own block because the dock is a
 ## row of buttons rather than a legend: each chip says what it *does* instead of

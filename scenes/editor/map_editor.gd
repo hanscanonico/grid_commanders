@@ -41,6 +41,9 @@ const LEGEND_KEYS := (
 const LEGEND_TOUCH := (
 	"TAP  PAINT   DRAG  PAN   PINCH  ZOOM   " + "BRUSHES  TOOLS   ERASE  WHOLE CELL   BACK  MENU"
 )
+const LEGEND_TOUCH_STROKE := (
+	"TAP  PAINT   DRAG  PAINT   PINCH  ZOOM   " + "BRUSHES  TOOLS   ERASE  WHOLE CELL   BACK  MENU"
+)
 
 ## How wide the two columns stand. Wide enough for the longest terrain and unit
 ## name in the display face beside its swatch.
@@ -75,6 +78,7 @@ var _save_dialog: EditorSaveDialog
 var _leave_guard: EditorLeaveGuard
 var _toolbar: EditorToolbar
 var _status: Label
+var _legend: Label
 var _brush := Brush.TERRAIN
 ## The seat the last press on a chip named. Kept because a chip pressed while it
 ## is already in hand means something else than one that changes the seat: the
@@ -472,6 +476,14 @@ func _on_resize_asked(board_size: Vector2i) -> void:
 	_say_cursor()
 
 
+## A touch build's drag either walks the board or paints a run of cells.
+func _toggle_drag_paint() -> void:
+	_touch.drag_paints = not _touch.drag_paints
+	_toolbar.show_drag_paint(_touch.drag_paints)
+	_legend.text = LEGEND_TOUCH_STROKE if _touch.drag_paints else LEGEND_TOUCH
+	_hand_the_board_back()
+
+
 # --- input on the board ------------------------------------------------------
 
 
@@ -541,7 +553,8 @@ func _build() -> void:
 	_status = UiKit.key_legend("")
 	main.add_child(_status)
 	var legend := LEGEND_TOUCH if MobileProfile.active() else LEGEND_KEYS % _undo_key()
-	main.add_child(UiKit.key_legend(legend))
+	_legend = UiKit.key_legend(legend)
+	main.add_child(_legend)
 
 	_build_pages()
 	_show_brush()
@@ -600,7 +613,7 @@ func _build_pages() -> void:
 	_sheet.configure(columns)
 	_sheet.closed.connect(_hand_the_board_back)
 	_sheet.erase_asked.connect(func() -> void: _arm(Brush.ERASE))
-	_touch = EditorTouch.new(_board, _paint_once, _look_at)
+	_touch = EditorTouch.new(_board, _apply_at, _end_stroke, _look_at)
 
 
 func _build_header() -> Control:
@@ -610,6 +623,7 @@ func _build_header() -> Control:
 	_toolbar.redo_asked.connect(func() -> void: _step_history(true))
 	_toolbar.erase_asked.connect(func() -> void: _arm(Brush.ERASE))
 	_toolbar.brushes_asked.connect(func() -> void: _sheet.begin())
+	_toolbar.drag_paint_asked.connect(_toggle_drag_paint)
 	_toolbar.open_asked.connect(_ask_open)
 	_toolbar.save_asked.connect(_ask_save)
 	return _toolbar

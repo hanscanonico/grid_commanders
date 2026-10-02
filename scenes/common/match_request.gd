@@ -41,6 +41,10 @@ const DAYS_UNSET := 0
 ## The board. A path, already resolved: `--map=` accepts a catalog *name*, and
 ## resolving it is the CLI adapter's job so everything downstream sees a path.
 var map_path := DEFAULT_MAP_PATH
+## The board's own text, for a rematch on a board the player drew: the match just
+## played on the board it carried (`SaveBoard`), which the file at `map_path` may no
+## longer be. Empty for every other launch, which loads `map_path`.
+var map_text := ""
 ## Teams played by the computer. Blue by default; `--hotseat` clears it and
 ## `--watch` fills it with both.
 var ai_teams: Array[int] = [2]
@@ -176,6 +180,7 @@ static func from_match(
 ) -> MatchRequest:
 	var request := MatchRequest.new()
 	request.map_path = game.map_path
+	request.map_text = SaveBoard.text_of(game.map, game.map_path)
 	request.ai_teams = ai_teams_in.duplicate()
 	request.fog_enabled = game.fog_enabled
 	request.difficulty = difficulty_in
@@ -223,6 +228,7 @@ func apply_cmdline(args: PackedStringArray) -> void:
 			)
 		else:
 			map_path = resolved
+			map_text = ""  # a board named on the line is that file, not one carried
 	if CmdArgs.has(args, "--days"):
 		days_cap = maxi(1, int(CmdArgs.value(args, "--days")))
 	if CmdArgs.has(args, "--replay"):

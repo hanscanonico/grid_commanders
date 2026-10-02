@@ -37,7 +37,9 @@ const TRUDGE_STEPS := 3.0
 const SETTLE_DIP := 0.06
 const SETTLE_BAND := 0.18
 ## How high aircraft cruise over their ground, how far they bob and how fast.
-const CRUISE := 1.35
+## High enough that a flight framed from below its wing reads against the sky
+## with the ground well under it, not skimming the horizon.
+const CRUISE := 2.2
 const HOVER_SWING := 0.07
 const HOVER_RATE := 2.3
 const HOVER_PHASE := 1.1

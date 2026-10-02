@@ -15,7 +15,7 @@ signal action_chosen(action: StringName)
 
 ## How far the menu stays off the edges of the board band.
 const MARGIN := 4.0
-## The detail card's inner padding.
+## The detail card's inner padding, and the heading's inset from the frame.
 const DETAIL_PAD := 5
 ## Which way each direction action walks the highlight.
 const ROW_ACTIONS: Dictionary = {
@@ -39,6 +39,8 @@ var _ids: Array[StringName] = []
 var _labels: Array[String] = []
 var _disabled: Array[bool] = []
 var _cycles: Array[Callable] = []
+## Value rows a confirm hands out rather than steps — see `open`.
+var _chooses: Array[bool] = []
 var _index := 0
 ## One highlight step per directional gesture; see DirectionalInput.
 var _dirs := DirectionalInput.new()
@@ -57,10 +59,21 @@ var _anchor: PanelAnchor
 var _details: Array[String] = []
 var _detail_card: PanelContainer
 var _detail_label: Label
+## The line over the rows, for a menu whose choice needs one said first, and the
+## inset row it stands in.
+var _heading: Label
+var _heading_row: MarginContainer
 
 
 func _ready() -> void:
 	add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
+	var column := VBoxContainer.new()
+	add_child(column)
+	_heading = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
+	_heading_row = UiKit.pad(_heading, DETAIL_PAD, 0)
+	_heading_row.hide()
+	column.add_child(_heading_row)
+	rows.reparent(column)
 	_detail_card = PanelContainer.new()
 	_detail_card.top_level = true  # beside the menu, never laid out inside it
 	_detail_card.add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
@@ -78,9 +91,14 @@ func _ready() -> void:
 ## that carries one can still be armed, to be read, though never chosen.
 ## `icon` draws to the left of the label; rows that omit it in an illustrated
 ## menu get a spacer so every label still starts in the same column. `cycle` makes
-## the row a value row — see VALUE_ACTIONS.
-func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
+## the row a value row — see VALUE_ACTIONS — and `chooses` keeps it one whose
+## confirm and click are handed out as its id rather than stepping it: a value
+## that costs something to change is stepped with the arrows and only taken when
+## asked for. `heading`, when given, is printed over the rows.
+func open(actions: Array[Dictionary], screen_pos: Vector2, heading: String = "") -> void:
 	_fill(actions)
+	_heading.text = heading
+	_heading_row.visible = heading != ""
 	position = screen_pos
 	_anchor = null
 	show()
@@ -94,6 +112,7 @@ func open_beside(
 	actions: Array[Dictionary], camera: BoardCamera, cell: Vector2i, away: Array[Vector2i] = []
 ) -> void:
 	_fill(actions)
+	_heading_row.hide()
 	_anchor = PanelAnchor.beside(camera, cell, away)
 	show()
 	_place()
@@ -107,6 +126,7 @@ func _fill(actions: Array[Dictionary]) -> void:
 	_labels.clear()
 	_disabled.clear()
 	_cycles.clear()
+	_chooses.clear()
 	_details.clear()
 	var spacer := _spacer_icon(actions)
 	for entry: Dictionary in actions:
@@ -130,6 +150,7 @@ func _fill(actions: Array[Dictionary]) -> void:
 		_labels.append(entry.label)
 		_disabled.append(is_disabled)
 		_cycles.append(entry.get("cycle", Callable()))
+		_chooses.append(entry.get("chooses", false))
 		_details.append(entry.get("detail", ""))
 	_capacity = _ids.size()
 	_top = 0
@@ -201,15 +222,15 @@ func _unhandled_input(event: InputEvent) -> void:
 ## menu belonged to — and the rows left behind would otherwise still act, on a
 ## selection that is gone.
 ##
-## A value row is never handed out as a chosen action: it answers a confirm the
-## way it answers a right press, below.
+## A value row is never handed out as a chosen action — it answers a confirm the
+## way it answers a right press, below — unless it `chooses`.
 func choose(id: StringName) -> void:
 	if not visible:
 		return
 	var i := _ids.find(id)
 	if i >= 0 and _disabled[i]:
 		return
-	if i >= 0 and _cycles[i].is_valid():
+	if i >= 0 and _cycles[i].is_valid() and not _chooses[i]:
 		_step_value(i, 1)
 		return
 	action_chosen.emit(id)

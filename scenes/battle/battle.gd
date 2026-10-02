@@ -288,6 +288,7 @@ func _ready() -> void:
 	if _replay != null:
 		_replay_runner = BattleReplayRunner.new(self, _replay)
 	BattleCampaign.open_board(game, request.campaign_resume == &"")
+	exit.opened_from(request)
 	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()
 	view.setup()
@@ -924,10 +925,8 @@ func _handle_map_action(action: StringName) -> void:
 	if await BattleCampaign.run_row(self, action):
 		return  # Briefing and Objectives: the campaign's rows are the campaign's
 	if action == &"auto":
-		# Its own submenu, the same shape "quit" opens "abandon" into below: the
-		# context is Battle's to set, the rows and the handoff are BattleAuto's.
 		_menu_context = &"auto"
-		_battle_auto.open_menu()
+		_battle_auto.take_row()
 		return
 	if action == &"save":
 		exit.save_match()
@@ -1034,9 +1033,10 @@ func _open_map_menu() -> void:
 	# whether its rows answer to left and right, and this is the menu that carries
 	# the device settings they step.
 	var card := view.mission_panel.is_up()  # the Objectives row's label; the card owns it
+	var auto := _battle_auto.stepper()
 	action_menu.open(
 		BattleMenus.map_actions(
-			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db, card
+			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db, card, auto
 		),
 		view.board_camera.screen_pos_for_cell(cursor_cell)
 	)

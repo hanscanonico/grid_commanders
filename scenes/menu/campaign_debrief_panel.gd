@@ -142,14 +142,19 @@ func _fill_stars(awards: Array[MissionRuntime.Award], animate: bool) -> void:
 		_star_tween.tween_property(row, "modulate:a", 1.0, _STAR_FADE)
 
 
+## A row of the star sheet. The sheet is one block centred on the page and its
+## rows are set flush left inside it, the glyph in a column as wide as the wider
+## of the two stars, so the stars stand in one column and the words start at one
+## edge however long each line is.
 func _star_row(text: String, lit: bool) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
-	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var glyph := Label.new()
 	glyph.text = "★" if lit else "☆"
 	glyph.add_theme_font_override("font", UiTheme.display())
 	glyph.add_theme_font_size_override("font_size", UiTheme.SIZE_SUBTITLE)
+	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph.custom_minimum_size.x = _star_column()
 	glyph.add_theme_color_override("font_color", UiTheme.SELECT_GOLD if lit else UiTheme.INK_3)
 	row.add_child(glyph)
 	var label := Label.new()
@@ -160,6 +165,16 @@ func _star_row(text: String, lit: bool) -> HBoxContainer:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(label)
 	return row
+
+
+## How wide the sheet's glyph column is: whichever of the two stars sets wider.
+static func _star_column() -> float:
+	var face := UiTheme.display()
+	var size := UiTheme.SIZE_SUBTITLE
+	return maxf(
+		face.get_string_size("★", HORIZONTAL_ALIGNMENT_LEFT, -1, size).x,
+		face.get_string_size("☆", HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	)
 
 
 ## The numbers, three lines: how long it took against par, what it cost and what

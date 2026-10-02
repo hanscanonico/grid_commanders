@@ -16,11 +16,11 @@ func _mission() -> MissionDefinition:
 	return mission
 
 
-func test_the_line_names_the_ground_the_foe_the_par_and_the_best() -> void:
+func test_the_line_names_the_foe_the_par_and_the_best() -> void:
 	var line := CampaignHubPanel.row_detail(
 		_mission(), _commanders, CampaignState.MissionRecord.new(2, 9)
 	)
-	assert_string_contains(line, "ASH REACH", "the location leads the line")
+	assert_false(line.contains("ASH REACH"), "where it is fought is the briefing's to say")
 	assert_string_contains(line, "VS RADEK MORN", "the first hostile seat's commander")
 	assert_string_contains(line, "PAR 12", "the day the mission is rated on")
 	assert_string_contains(line, "BEST 9", "the day this player already reached")
@@ -36,7 +36,7 @@ func test_an_unrated_mission_says_no_par() -> void:
 func test_an_unplayed_mission_says_no_best() -> void:
 	var line := CampaignHubPanel.row_detail(_mission(), _commanders, null)
 	assert_false(line.contains("BEST"), "no record, no best day")
-	assert_string_contains(line, "ASH REACH", "the rest of the line still reads")
+	assert_string_contains(line, "VS RADEK MORN", "the rest of the line still reads")
 
 
 func test_an_ally_is_never_the_face_the_row_is_set_against() -> void:
@@ -160,3 +160,37 @@ func test_a_war_rated_out_of_one_asks_for_one_star() -> void:
 func test_a_war_with_no_missions_asks_for_none() -> void:
 	var campaign := CampaignDefinition.new()
 	assert_eq(CampaignHubPanel.star_span(campaign), 0, "no rows, no cell")
+
+
+func _general_of(key: StringName) -> StringName:
+	for commander: CommanderType in _commanders.all():
+		if CommanderVisuals.theme_for(commander).key == key:
+			return commander.id
+	return &""
+
+
+func test_the_briefing_board_wears_the_battles_liveries() -> void:
+	var mission := _mission()
+	mission.commanders = {1: _general_of(&"iron"), 2: _general_of(&"meridian")}
+	var identity := CampaignHubPanel.livery(mission, 2, _commanders)
+	assert_eq(identity.theme(1).key, &"iron", "the player's army in its own faction's colour")
+	assert_eq(identity.theme(2).key, &"meridian", "and the foe in theirs")
+
+
+func test_a_mirror_on_the_briefing_borrows_the_battles_colour() -> void:
+	var mission := _mission()
+	var iron := _general_of(&"iron")
+	mission.commanders = {1: iron, 2: iron}
+	var identity := CampaignHubPanel.livery(mission, 2, _commanders)
+	var battle := SideIdentity.resolve({1: _commanders.by_id(iron), 2: _commanders.by_id(iron)})
+	assert_eq(identity.theme(2).key, battle.theme(2).key, "the same borrowed classic")
+	assert_ne(identity.theme(2).key, &"iron")
+
+
+func test_a_seat_the_mission_closes_wears_nobodys_colours() -> void:
+	var mission := _mission()
+	mission.seats = [1, 3]
+	mission.commanders = {1: _general_of(&"iron"), 3: _general_of(&"gold")}
+	var identity := CampaignHubPanel.livery(mission, 4, _commanders)
+	assert_eq(identity.atlas_row(2), SideIdentity.NEUTRAL_ROW)
+	assert_eq(identity.theme(3).key, &"gold")
