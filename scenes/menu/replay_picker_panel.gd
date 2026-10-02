@@ -5,15 +5,17 @@ extends Control
 ## reason: a Back has to land on the setup exactly as it was left.
 ##
 ## Every match records itself (replay plan D5), so this page is the only place a
-## player meets that fact. It reads `ReplayFile.list()`, which parses one line per
-## file and no commands at all, and hands back the path of whatever was picked. It
-## never opens a recording, never starts a battle and never touches `core/`.
+## player meets that fact. It reads `ReplayFile.list()`, which parses a file's
+## first and last lines and no command between, and hands back the path of
+## whatever was picked. It never opens a recording, never starts a battle and
+## never touches `core/`.
 ##
-## A recording is three facts — the board, the table and when it was played — and
-## the page sets them as three, in the campaign hub's row shape: a headline over a
-## micro detail line, with the stamp in a right-hand column so the dates line up
-## down the list. One padded string across a row read as a table missing its
-## columns.
+## A recording is four facts — the board, the table, how far it got and when it
+## was played — and the page sets them as such, in the campaign hub's row shape: a
+## headline over a micro detail line, then the days it holds over how it ended, and
+## the stamp in a right-hand column so the dates line up down the list. One padded
+## string across a row read as a table missing its columns. The days and the
+## ending are what tell apart the slices of one match saved and continued.
 
 signal picked(path: String)
 signal cancelled
@@ -200,17 +202,23 @@ func _row_face(summary: ReplayFile.Summary) -> Control:
 		table.clip_text = true
 		words.add_child(table)
 	face.add_child(words)
+	face.add_child(_column(_holdings(summary)))
 
 	var stamp := _stamp(summary)
 	if not stamp.is_empty():
-		var when := VBoxContainer.new()
-		when.add_theme_constant_override("separation", 0)
-		when.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		when.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		for line in stamp:
-			when.add_child(_detail(line, HORIZONTAL_ALIGNMENT_RIGHT))
-		face.add_child(when)
+		face.add_child(_column(stamp))
 	return face
+
+
+## A right-aligned stack of quiet lines: the stamp, and what the recording holds.
+func _column(lines: PackedStringArray) -> VBoxContainer:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 0)
+	column.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for line in lines:
+		column.add_child(_detail(line, HORIZONTAL_ALIGNMENT_RIGHT))
+	return column
 
 
 ## One of a row's quiet lines, in the kit's micro dress. Unclipped: a clipped
@@ -236,6 +244,16 @@ func _row_lines(summary: ReplayFile.Summary) -> PackedStringArray:
 	if summary.label.is_empty():
 		return PackedStringArray([MapCatalog.display_name(summary.map_path)])
 	return parts
+
+
+## The days the recording covers over how it ended: the verdict a finished match
+## closed on, or "Unfinished" for one saved and left.
+func _holdings(summary: ReplayFile.Summary) -> PackedStringArray:
+	var days := "Day %d" % summary.day
+	if summary.last_day > summary.day:
+		days = "Days %d-%d" % [summary.day, summary.last_day]
+	var ending := summary.result if summary.result != "" else "Unfinished"
+	return PackedStringArray([days, ending])
 
 
 ## When it was played, as the day over the time — a recording stamps itself

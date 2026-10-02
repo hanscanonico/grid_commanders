@@ -128,6 +128,48 @@ func test_summarize_names_a_replay_without_parsing_a_command() -> void:
 	assert_eq(summary.day, 4)
 
 
+## One match saved and continued records a slice per sitting, and the rows were
+## told apart by a timestamp alone (playtest SK-12): a summary says which days a
+## slice holds and that nobody finished it.
+func test_summarize_says_which_days_an_unfinished_recording_holds() -> void:
+	var file := ReplayFile.open_slot("0001", DIR)
+	file.append(ReplayCodec.header(_opening(), "a match", "0001"))
+	file.append({"n": 0, "d": 4, "c": "end_turn", "ck": 11})
+	file.append({"n": 1, "d": 6, "c": "end_turn", "ck": 22})
+	file.close()
+	var summary := ReplayFile.summarize(file.path())
+	assert_eq(summary.day, 4)
+	assert_eq(summary.last_day, 6)
+	assert_eq(summary.result, "", "no closing line: nobody won this slice")
+
+
+func test_a_finished_recording_closes_on_its_verdict() -> void:
+	var state := _state()
+	var recorder := ReplayRecorder.new(func() -> ReplayFile: return ReplayFile.open_slot("9", DIR))
+	recorder.begin(state, [2] as Array[int])
+	recorder.before_apply(state, EndTurnCommand.new())
+	recorder.after_apply(state)
+	state.day = 7
+	recorder.conclude(state, "Victory!")
+	recorder.close()
+
+	var summary := ReplayFile.list(DIR)[0]
+	assert_eq(summary.last_day, 7)
+	assert_eq(summary.result, "Victory!")
+	var replay := ReplayFile.read(summary.path)
+	assert_eq(replay.result, "Victory!")
+	assert_eq(replay.entries.size(), 1, "the closing line is not a command to play")
+
+
+func test_a_verdict_alone_claims_no_slot() -> void:
+	var state := _state()
+	var recorder := ReplayRecorder.new(func() -> ReplayFile: return ReplayFile.open_slot("9", DIR))
+	recorder.begin(state, [2] as Array[int])
+	recorder.conclude(state, "Victory!")
+	recorder.close()
+	assert_eq(ReplayFile.list(DIR).size(), 0)
+
+
 func test_listing_puts_the_newest_first() -> void:
 	_write_one("0001", "first")
 	_write_one("0002", "second")
