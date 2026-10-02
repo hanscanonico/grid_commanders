@@ -66,8 +66,8 @@ static func draw_stars(
 ## both sides' rows grow toward the seam. `star_gap` is the space left between
 ## the name and the first star.
 ##
-## `note` closes the row where the stars printed are not the unit's to have —
-## a word rather than a redrawn row, because the tile really does have them.
+## `stars` is how many are lit — the cover the unit fought with — and `note`
+## closes the row where the tile has stars the unit did not get.
 static func draw_terrain_row(
 	canvas: CanvasItem,
 	font: Font,

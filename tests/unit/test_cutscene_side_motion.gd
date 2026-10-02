@@ -159,10 +159,19 @@ func test_a_standing_figure_is_neither_knocked_nor_falling() -> void:
 	assert_eq(CutsceneSide.topple_jerk(0.0, 0.2), 0.0)
 
 
-## The defence row's one decision: the tile keeps its own stars, so the word is
+## The defence row's note: a tile whose stars the unit does not get says so, so the word is
 ## what tells a player the unit standing over them is not getting any. A bare
 ## zero beside MOUNTAIN would trade one misread for another.
 func test_the_defence_row_qualifies_stars_the_unit_does_not_get() -> void:
 	assert_eq(CutsceneSide.terrain_note(0, 4), CutsceneSide.NO_COVER_NOTE, "a flier over a peak")
 	assert_eq(CutsceneSide.terrain_note(4, 4), "", "a footsoldier on the same peak")
 	assert_eq(CutsceneSide.terrain_note(0, 0), "", "bare ground gives everyone nothing")
+
+
+## The row lights the cover the shot resolved with, never the tile's own stars:
+## an aircraft over a plain was printed one star beside NO COVER.
+func test_the_defence_row_lights_only_the_cover_the_unit_fought_with() -> void:
+	assert_eq(CutsceneSide.lit_stars(0, 1), 0, "a flier over a plain lights none")
+	assert_eq(CutsceneSide.lit_stars(0, 4), 0, "nor over a peak")
+	assert_eq(CutsceneSide.lit_stars(4, 4), 4, "a footsoldier on the peak lights all four")
+	assert_eq(CutsceneSide.lit_stars(5, 4), 4, "never more than the tile has")

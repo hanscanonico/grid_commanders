@@ -31,10 +31,13 @@ const SHOULDER_LOOK := 0.62
 const RECEIVER := Vector3(-3.0, 1.35, 5.4)
 const RECEIVER_PUSH := Vector3(0.25, 0.0, -0.55)
 const RECEIVER_LOOK := Vector3(0.45, -0.1, 0.0)
-## Over an aircraft the lens drops to just under it, so the flight is seen
-## against the sky rather than against the ground below.
+## Over an aircraft the lens drops to just under it as it fires, so the flight
+## stays in frame looking down on its target; and well under it as it is hit,
+## looking up, so the flight is seen against the sky with the ground below it —
+## a lens level with a flight flattens its altitude into the horizon.
 const AIRBORNE := 0.9
 const UNDER_WING := 0.3
+const UNDER_FLIGHT := 1.1
 ## When the lens leaves the firer for the target: this far into the round's
 ## flight, so the round is seen leaving and seen landing.
 const HANDOFF := 0.45
@@ -112,14 +115,16 @@ func jolt(t: float) -> float:
 
 func _fire(kind: Shot, at: float, from: Vector3, toward: Vector3) -> void:
 	var out := signf(from.x - toward.x)
-	var eye := from + Vector3(-SHOULDER.x * out, _rise(from, SHOULDER.y), SHOULDER.z)
+	var eye := from + Vector3(-SHOULDER.x * out, _rise(from, SHOULDER.y, UNDER_WING), SHOULDER.z)
 	var push := Vector3(-SHOULDER_PUSH.x * out, SHOULDER_PUSH.y, SHOULDER_PUSH.z)
 	_add(kind, at, eye, eye + push, from.lerp(toward, SHOULDER_LOOK))
 
 
 func _hit(kind: Shot, at: float, target: Vector3, from: Vector3, lob: float) -> void:
 	var out := signf(target.x - from.x)
-	var eye := target + Vector3(RECEIVER.x * out, _rise(target, RECEIVER.y), RECEIVER.z)
+	var eye := (
+		target + Vector3(RECEIVER.x * out, _rise(target, RECEIVER.y, UNDER_FLIGHT), RECEIVER.z)
+	)
 	eye += Vector3(out * -0.3, 0.1, 0.6) * lob
 	var push := Vector3(RECEIVER_PUSH.x * out, RECEIVER_PUSH.y, RECEIVER_PUSH.z)
 	var look := (
@@ -136,10 +141,10 @@ func _add(kind: Shot, at: float, eye_from: Vector3, eye_to: Vector3, look: Vecto
 	_looks.append(look)
 
 
-## How far above a subject the lens stands: `over` for one on the ground, just
-## under one in the air.
-static func _rise(subject: Vector3, over: float) -> float:
-	return -UNDER_WING if subject.y > AIRBORNE else over
+## How far above a subject the lens stands: `over` for one on the ground,
+## `under` below one in the air.
+static func _rise(subject: Vector3, over: float, under: float) -> float:
+	return -under if subject.y > AIRBORNE else over
 
 
 static func _handoff(travel: Vector2) -> float:

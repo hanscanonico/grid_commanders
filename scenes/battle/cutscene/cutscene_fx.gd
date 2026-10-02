@@ -25,6 +25,17 @@ const KO_TAG := "K.O."
 ## CutscenePalette.GOLD, which is the colour the plates and the meter are set in.
 const FLASH_GOLD := Color(0.988, 0.847, 0.353)
 const KO_RED := Color(0.902, 0.302, 0.243)
+## A damage callout's two lines — the tag over the number — as baselines and
+## sizes in its own frame; how far it keeps off the plates; and the tag's plate.
+const TAG_Y := -18.0
+const TAG_PX := 15
+const AMOUNT_Y := 8.0
+const AMOUNT_PX := 26
+const CALLOUT_INSET := 4.0
+const TAG_PAD := Vector2(5.0, 1.0)
+const TAG_PLATE_ALPHA := 0.85
+## Half the outline `stroked` draws round every string.
+const OUTLINE_PX := 2.0
 ## A rocket's three body colours and how far it pitches off level, in radians.
 const ROCKET_HULL := Color(0.910, 0.925, 0.937)
 const ROCKET_FIN := Color(0.667, 0.702, 0.729)
@@ -240,8 +251,10 @@ func _draw() -> void:
 		_draw_impact()
 	if blast_p > 0.0 and blast_p < 1.0:
 		_draw_blast()
-	_draw_callout(atk_at, atk_amount, atk_tag, atk_p)
-	_draw_callout(def_at, def_amount, def_tag, def_p)
+	var font := get_theme_font(&"font", &"Label")
+	var band := CutscenePlates.arena(size)
+	draw_callout(self, font, atk_at, atk_amount, atk_tag, atk_p, band)
+	draw_callout(self, font, def_at, def_amount, def_tag, def_p, band)
 
 
 ## When each barrel of this rank lights and when each figure's rounds leave, laid
@@ -832,23 +845,69 @@ func _draw_smoke() -> void:
 
 
 ## The damage that landed, rising and fading over the side it landed on. Scaled
-## through a quick overshoot so it punches rather than drifts.
-func _draw_callout(at: Vector2, amount: int, tag: String, progress: float) -> void:
+## through a quick overshoot so it punches rather than drifts, and held inside
+## `band` — the arena between the plates — so a number over a tall squad or a
+## flight is never printed under the header. The tag sits on a plate of its own:
+## it is small, and a kill puts it over the brightest smoke of the cut-in.
+## Static, so the 3D stage prints the same callout over its own band.
+static func draw_callout(
+	canvas: CanvasItem,
+	font: Font,
+	at: Vector2,
+	amount: int,
+	tag: String,
+	progress: float,
+	band: Rect2
+) -> void:
 	if progress <= 0.0 or progress >= 1.0:
 		return
-	var font := get_theme_font(&"font", &"Label")
 	var rise := ramp(progress, [0.0, 0.3, 1.0], [10.0, -8.0, -26.0])
 	var punch := ramp(progress, [0.0, 0.25, 1.0], [0.4, 1.2, 1.0])
 	var alpha := ramp(progress, [0.0, 0.15, 0.7, 1.0], [0.0, 1.0, 1.0, 0.0])
+	var span := _callout_span(font, tag != "", amount > 0)
 	var origin := at + Vector2(0.0, rise)
-	draw_set_transform(origin, 0.0, Vector2(punch, punch))
+	origin.y = minf(origin.y, band.end.y - CALLOUT_INSET - span.y * punch)
+	origin.y = maxf(origin.y, band.position.y + CALLOUT_INSET - span.x * punch)
+	canvas.draw_set_transform(origin, 0.0, Vector2(punch, punch))
 	if tag != "":
 		var tag_tint := KO_RED if tag == KO_TAG else FLASH_GOLD
-		stroked_centered(self, font, Vector2(0.0, -18.0), tag, 15, Color(tag_tint, alpha))
+		_draw_tag_plate(canvas, font, tag, Color(tag_tint, alpha))
+		stroked_centered(canvas, font, Vector2(0.0, TAG_Y), tag, TAG_PX, Color(tag_tint, alpha))
 	if amount > 0:
 		var text := "-%d" % amount
-		stroked_centered(self, font, Vector2(0.0, 8.0), text, 26, Color(1.0, 1.0, 1.0, alpha))
-	draw_set_transform(Vector2.ZERO)
+		stroked_centered(
+			canvas, font, Vector2(0.0, AMOUNT_Y), text, AMOUNT_PX, Color(1.0, 1.0, 1.0, alpha)
+		)
+	canvas.draw_set_transform(Vector2.ZERO)
+
+
+## How far a callout reaches above and below its origin, unscaled: x the top of
+## its highest line, y the bottom of its lowest, outline and tag plate included.
+static func _callout_span(font: Font, has_tag: bool, has_amount: bool) -> Vector2:
+	var span := Vector2(INF, -INF)
+	if has_tag:
+		span.x = TAG_Y - font.get_ascent(TAG_PX) - TAG_PAD.y
+		span.y = TAG_Y + font.get_descent(TAG_PX) + TAG_PAD.y
+	if has_amount:
+		span.x = minf(span.x, AMOUNT_Y - font.get_ascent(AMOUNT_PX) - OUTLINE_PX)
+		span.y = maxf(span.y, AMOUNT_Y + OUTLINE_PX)
+	if span.x > span.y:
+		return Vector2.ZERO
+	return span
+
+
+## The dark plate under a callout's tag, edged in the tag's own colour.
+static func _draw_tag_plate(canvas: CanvasItem, font: Font, tag: String, tint: Color) -> void:
+	var width := font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_PX).x
+	var ascent := font.get_ascent(TAG_PX)
+	var plate := Rect2(
+		-width * 0.5 - TAG_PAD.x,
+		TAG_Y - ascent - TAG_PAD.y,
+		width + TAG_PAD.x * 2.0,
+		ascent + font.get_descent(TAG_PX) + TAG_PAD.y * 2.0
+	)
+	canvas.draw_rect(plate, Color(CutscenePalette.PLATE, TAG_PLATE_ALPHA * tint.a))
+	canvas.draw_rect(plate, tint, false, 1.0)
 
 
 func _draw_vs() -> void:
