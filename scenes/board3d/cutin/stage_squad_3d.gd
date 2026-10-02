@@ -48,6 +48,9 @@ var alpha := 1.0
 var char_by := 0.0
 
 var type: UnitType
+## A sub fought under the water rides low, its sail all that shows; a surfaced
+## one is lifted to show its hull (`SeaModels3D.surfaced_rise`).
+var dived := false
 var posted := 0
 var standing := 0
 ## +1 faces +X (the left side, firing right), -1 faces -X.
@@ -112,7 +115,7 @@ func pose() -> void:
 		local.x += kick - shove * 0.08 - fall.x
 		var attitude := SquadFormation3D.attitude(domain, clock, slot, progress)
 		var ground := _ground_at(local)
-		var height := ground + lift - fall.y
+		var height := ground + _ride() + lift - fall.y
 		if domain == UnitType.AIR:
 			height = ground + SquadFormation3D.cruise_height(clock, slot) + lift - fall.y
 		var figure := _figures[slot]
@@ -159,12 +162,16 @@ func body_points() -> PackedVector3Array:
 ## not judder.
 func focus() -> Vector3:
 	var cruise := SquadFormation3D.CRUISE if type.domain == UnitType.AIR else 0.0
-	return transform * (_anchor + Vector3.UP * (cruise + _height * 0.5))
+	return transform * (_anchor + Vector3.UP * (cruise + _ride() + _height * 0.5))
 
 
 ## How tall one figure stands.
 func figure_height() -> float:
 	return _height
+
+
+func _ride() -> float:
+	return 0.0 if dived else SeaModels3D.surfaced_rise(type.id) * _scale
 
 
 func _ground_at(local: Vector3) -> float:
