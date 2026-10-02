@@ -176,7 +176,7 @@ unless = SubResource("Cond_1")
 [sub_resource type="Resource" id="Line_27"]
 script = ExtResource("9")
 speaker = &"cassian_rook"
-text = "Ten towns flying Aurora's colours and the Exchange's ledgers in the back of my cars. The Concord can't lend a coin on this coast until somebody gives them back."
+text = "Ten towns flying Aurora's colours and their loan books in the back of my cars. The Concord can't lend a coin on this coast until somebody gives them back."
 
 [sub_resource type="Resource" id="Line_28"]
 script = ExtResource("9")
