@@ -82,8 +82,14 @@ static func name_error(name: String) -> String:
 	if bare.length() > MAX_NAME_LENGTH:
 		return "That name is too long — %d letters at most." % MAX_NAME_LENGTH
 	if MapCatalog.resolvable_names().has(bare):
-		return "A map that ships with the game is already called '%s'." % bare
+		return "A map that ships with the game is already called '%s'." % shown(bare)
 	return ""
+
+
+## How `name` reads to the player — the title every picker and page shows,
+## rather than the filename it is kept under.
+static func shown(name: String) -> String:
+	return MapCatalog.display_name(path_for(name))
 
 
 ## Whether the player already has a board under this name.
@@ -121,9 +127,9 @@ static func load_map(name: String, db: TerrainDB) -> MapData:
 ## name, and silence would tell them a board they can still see was removed.
 static func delete(name: String) -> String:
 	if not exists(name):
-		return "There is no map called '%s'." % slug(name)
+		return "There is no map called '%s'." % shown(name)
 	if DirAccess.remove_absolute(ProjectSettings.globalize_path(path_for(name))) != OK:
-		return "'%s' could not be deleted." % slug(name)
+		return "'%s' could not be deleted." % shown(name)
 	return ""
 
 
@@ -132,17 +138,17 @@ static func delete(name: String) -> String:
 ## were not looking at. Returns "" on success, else why not.
 static func rename(from: String, to: String) -> String:
 	if not exists(from):
-		return "There is no map called '%s'." % slug(from)
+		return "There is no map called '%s'." % shown(from)
 	var error := name_error(to)
 	if error != "":
 		return error
 	if slug(to) == slug(from):
 		return ""
 	if exists(to):
-		return "You already have a map called '%s'." % slug(to)
+		return "You already have a map called '%s'." % shown(to)
 	var dir := DirAccess.open(MapCatalog.USER_DIR)
 	if dir == null or dir.rename(path_for(from), path_for(to)) != OK:
-		return "'%s' could not be renamed." % slug(from)
+		return "'%s' could not be renamed." % shown(from)
 	return ""
 
 
@@ -152,9 +158,9 @@ static func rename(from: String, to: String) -> String:
 ## success, else why not.
 static func copy_to(from: String, to: String) -> String:
 	if not exists(from):
-		return "There is no map called '%s'." % slug(from)
+		return "There is no map called '%s'." % shown(from)
 	if exists(to):
-		return "You already have a map called '%s'." % slug(to)
+		return "You already have a map called '%s'." % shown(to)
 	return _write(to, FileAccess.get_file_as_string(path_for(from)))
 
 
@@ -182,7 +188,7 @@ static func _write(name: String, text: String) -> String:
 		return "The folder your maps are kept in cannot be opened."
 	var handle := FileAccess.open(path_for(name), FileAccess.WRITE)
 	if handle == null:
-		return "'%s' could not be written (error %d)." % [slug(name), FileAccess.get_open_error()]
+		return "'%s' could not be written (error %d)." % [shown(name), FileAccess.get_open_error()]
 	handle.store_string(text)
 	handle.close()
 	return ""

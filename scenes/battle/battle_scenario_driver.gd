@@ -471,7 +471,7 @@ func _stage_leave_routes() -> void:
 ## its own, so the eleven-row build menu used to leave its slab standing behind
 ## every short menu opened afterwards — over the board, every turn.
 ##
-## Walked in that order — build menu, Cancel, then a unit's own Wait/Cancel —
+## Walked in that order — build menu, Cancel, then a unit's own short menu —
 ## because the stale size belongs to the *sequence*: either menu opened on its own
 ## photographs perfectly well, which is why `buildmenu` never caught it. Measured
 ## rather than eyeballed for the same reason leave_confirm is; the leftover panel is
@@ -481,23 +481,23 @@ func _stage_menu_after_build_menu() -> void:
 	_battle.confirm_at(Vector2i(3, 2))  # the tallest and widest menu in the game
 	await _until_state(Battle.State.MENU)
 	var build_menu := _battle.action_menu.get_global_rect().size
+	var build_rows := _battle.action_menu.rows.get_child_count()
 	_battle.action_menu.choose(&"cancel")
 	await _until_state(Battle.State.IDLE)
 	_battle.confirm_at(Vector2i(4, 3))  # select the red infantry
-	_battle.confirm_at(Vector2i(4, 3))  # stay put -> Wait / Cancel, the shortest menu
+	_battle.confirm_at(Vector2i(4, 3))  # stay put -> a short menu (Wait, Cancel, a dead Fire)
 	await _until_state(Battle.State.MENU)
 	_check_in_band("unit menu", _battle.action_menu)
 	var shown := _battle.action_menu.rows.get_child_count()
-	if shown != 2:
-		_fail("the infantry's menu drew %d rows, not the two the comparison rests on" % shown)
+	if shown * 2 > build_rows:
+		_fail("the infantry's menu drew %d rows of the build menu's %d" % [shown, build_rows])
 		return
 	# Both axes: the build menu is the widest menu as well as the tallest — every row
 	# carries an icon and a price — so a panel that only shrank in height would still
 	# hang off to the side of the two words under it.
 	var unit_menu := _battle.action_menu.get_global_rect().size
 	if unit_menu.x >= build_menu.x or unit_menu.y >= build_menu.y:
-		var sizes := [unit_menu, build_menu]
-		_fail("the two-row unit menu measures %s, no smaller than the build menu's %s" % sizes)
+		_fail("the unit menu, %s, is no smaller than the build menu's %s" % [unit_menu, build_menu])
 
 
 ## Every id in `wanted` is on the menu, read off the rows the menu was built from.

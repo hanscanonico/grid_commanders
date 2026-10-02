@@ -28,6 +28,21 @@ func test_every_shipped_name_fits_its_cell() -> void:
 		assert_lte(width, MapPicker.THUMB.x, name)
 
 
+## A player may call a board up to `UserMaps.MAX_NAME_LENGTH` letters, and the
+## cell sets it whole: smaller, then over two lines, never cut to "Renamed Str…".
+func test_a_long_custom_name_fits_its_cell() -> void:
+	var font := UiTheme.display()
+	assert_eq(MapPicker.cell_name_lines("Boot Camp"), 1, "a shipped name keeps its one line")
+	var shorter := "Renamed Strait"
+	assert_eq(MapPicker.cell_name_lines(shorter), 1, "a name the title face fits stays one line")
+	var longest := MapCatalog.display_name(UserMaps.path_for("renamed_strait_test_copy_22x"))
+	assert_eq(MapPicker.cell_name_lines(longest), MapPicker.NAME_LINES_MAX)
+	for name in [shorter, longest]:
+		var size := MapPicker.cell_name_size(name)
+		var width := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		assert_lte(width, MapPicker.cell_name_lines(name) * MapPicker.THUMB.x, name)
+
+
 ## A duel says nothing about its seats; a board that deals more than two says how
 ## many, because that is what a player scrolling the list is choosing between.
 func test_only_a_board_past_a_duel_names_its_seats() -> void:

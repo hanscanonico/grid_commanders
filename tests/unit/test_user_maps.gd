@@ -159,6 +159,19 @@ func test_removing_a_board_that_is_not_there_says_so() -> void:
 	assert_ne(UserMaps.copy_to("never_existed", "somewhere"), "")
 
 
+## A refusal names the board the way the picker titles it, never by its filename.
+func test_a_refusal_names_the_board_as_the_player_reads_it() -> void:
+	assert_eq(_save("strait test", BOARD), "")
+	assert_eq(_save("keep me", BOARD), "")
+	assert_string_contains(UserMaps.rename("strait test", "keep me"), "'Keep Me'")
+	assert_string_contains(UserMaps.delete("never_existed"), "'Never Existed'")
+	var shipped: String = MapCatalog.paths()[0]
+	assert_string_contains(
+		UserMaps.name_error(shipped.get_file().trim_suffix(".txt")),
+		"'%s'" % MapCatalog.display_name(shipped)
+	)
+
+
 ## Match Setup lands on the board the player just drew, and only once: coming back
 ## to the menu a second time is not having just saved it.
 func test_the_board_last_saved_is_handed_over_once() -> void:

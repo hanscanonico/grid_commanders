@@ -524,8 +524,9 @@ forms named in the root index are in `docs/design_record.md`.
   overlay washes are its sibling, `scenes/battle/overlay_palette.gd` (`OverlayPalette`) — a
   translucent wash over art is a different vocabulary from the shell's opaque chrome, so neither
   belongs on `UiTheme` and both are declared once where they are painted. **The picker's Random cell
-  is a menu action, not a selection state** — it rolls on `pressed` (a map cell selects on *focus*
-  for keyboard preview, so a roll on focus would re-roll on every arrow pass) through the pure
+  is a menu action, not a selection state** — it rolls on `pressed`, as every map cell selects on
+  `pressed` (focus only highlights since the 2026-10-02 playtest: a focus-select traded the board
+  in hand for any cell a walk to the seats crossed, SK-03's class) through the pure
   static `MapPicker.random_index` and then calls the ordinary `select(index)`, so the request always
   names a concrete board and nothing outside the picker learns Random exists. Map thumbnails
   (`scenes/menu/map_thumbnail.gd`) draw from `TerrainAutotiles` × `SideIdentity.atlas_row` —

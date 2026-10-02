@@ -253,6 +253,7 @@ func _blockers(host: Control) -> Array[Rect2]:
 	while node != null:
 		var parent := node.get_parent() as Control
 		if parent == null:
+			_add_buttons_beside(node, rects)
 			break
 		for child in parent.get_children():
 			var control := child as Control
@@ -260,3 +261,22 @@ func _blockers(host: Control) -> Array[Rect2]:
 				rects.append(control.get_global_rect())
 		node = parent
 	return rects
+
+
+## The other panels on the host's plane — the controls beside its topmost Control
+## under the same layer — count only by what can be pressed in them: a bar's bare
+## chrome is free ground for a finger, a button standing in it is a neighbour like
+## any other. The touch dock is the bar's sibling, and its chips grew up over the
+## lower half of End Turn and took its taps without this.
+static func _add_buttons_beside(top: Node, rects: Array[Rect2]) -> void:
+	var layer := top.get_parent()
+	if layer == null:
+		return
+	for child in layer.get_children():
+		var panel := child as Control
+		if panel == null or panel == top or not panel.visible:
+			continue
+		for found in panel.find_children("*", "BaseButton", true, false):
+			var button := found as BaseButton
+			if button.is_visible_in_tree():
+				rects.append(button.get_global_rect())
