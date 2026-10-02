@@ -215,7 +215,7 @@ func _apply() -> void:
 
 	if _commander.has_power():
 		_power_box.visible = true
-		_power_cost_label.text = "%s  %d" % [_duration_tag(), _commander.power_cost]
+		_power_cost_label.text = "LASTS %s · CHARGE %d" % [_duration_tag(), _commander.power_cost]
 		_power_name_label.text = _commander.power_name
 		_power_text_label.text = _commander.power_text
 	else:
@@ -225,7 +225,7 @@ func _apply() -> void:
 ## Whether the power lasts only the owner's turn or through the round — the one
 ## number a player needs beyond cost to weigh timing.
 func _duration_tag() -> String:
-	return "ROUND" if _commander.power_duration == CommanderType.Duration.ROUND else "THIS TURN"
+	return "A ROUND" if _commander.power_duration == CommanderType.Duration.ROUND else "THIS TURN"
 
 
 # --- small builders ----------------------------------------------------------

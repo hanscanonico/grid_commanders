@@ -101,8 +101,25 @@ static func fire_due(battle: Battle) -> void:
 ## reruns after every committed command and turn change — and what the mission
 ## still wants changes exactly there, when ground turns over or a beat reveals an
 ## objective.
+##
+## A unit the mission names is marked as well, so the car an objective is about
+## is not one of three plain APCs. Only where the viewer can see it: unlike the
+## ground, a unit's whereabouts are what fog hides.
 static func refresh_marks(battle: Battle) -> void:
-	battle.overlays.show_objective_marks(objective_cells(battle.game))
+	var cells := objective_cells(battle.game)
+	for unit: Unit in battle.game.units:
+		if unit_name(unit) != "" and battle.perspective.can_see_unit(unit):
+			if not cells.has(unit.cell):
+				cells.append(unit.cell)
+	battle.overlays.show_objective_marks(cells)
+
+
+## What this mission calls `unit` — the words its objectives use for it — or ""
+## outside a campaign and for a unit it does not name.
+static func unit_name(unit: Unit) -> String:
+	if unit == null or not CampaignSession.active():
+		return ""
+	return CampaignSession.mission.unit_name(unit.tag)
 
 
 ## Every square this mission still wants, for the board to ring. Empty for a

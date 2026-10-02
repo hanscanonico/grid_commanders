@@ -35,10 +35,15 @@ extends RefCounted
 const MIN_SIZE := Vector2i(8, 5)
 const MAX_SIZE := Vector2i(49, 32)
 
+## The roster read when a caller hands none in — loaded once, since the shelf
+## asks this of every board it lists.
+static var _default_units: UnitDB = null
+
 
 ## Everything wrong with `map`, in reading order: its size, then its seats, then
-## the board itself. Empty when it plays.
-static func defects(map: MapData) -> Array[MapDefect]:
+## the board itself. Empty when it plays. `unit_db` names the starting units;
+## null reads the shipped roster.
+static func defects(map: MapData, unit_db: UnitDB = null) -> Array[MapDefect]:
 	var found: Array[MapDefect] = []
 	_append(found, _size_defect(map))
 	found.append_array(_seat_defects(map))
@@ -46,13 +51,14 @@ static func defects(map: MapData) -> Array[MapDefect]:
 	_append(found, _spare_hq_defect(map))
 	_append(found, _hq_connection_defect(map))
 	_append(found, _unit_on_property_defect(map))
+	_append(found, _starting_unit_defect(map, _units_or_default(unit_db)))
 	_append(found, _dock_defect(map))
 	return found
 
 
 ## The same reading as words alone, for a caller with no board to point at.
-static func errors(map: MapData) -> Array[String]:
-	return _sentences(defects(map))
+static func errors(map: MapData, unit_db: UnitDB = null) -> Array[String]:
+	return _sentences(defects(map, unit_db))
 
 
 ## The same reading of a draft that is not saved yet, taken through the text it
@@ -60,7 +66,9 @@ static func errors(map: MapData) -> Array[String]:
 ## a board, so a draft is judged as the board it becomes rather than by a second
 ## copy of these rules. Text a parse refuses is one error and no more: nothing
 ## below can be asked of a board that does not exist.
-static func draft_defects(doc: MapDocument, db: TerrainDB) -> Array[MapDefect]:
+static func draft_defects(
+	doc: MapDocument, db: TerrainDB, unit_db: UnitDB = null
+) -> Array[MapDefect]:
 	var map := MapData.parse(doc.to_text(), db)
 	if map == null:
 		var refused: Array[MapDefect] = [
@@ -69,12 +77,20 @@ static func draft_defects(doc: MapDocument, db: TerrainDB) -> Array[MapDefect]:
 			)
 		]
 		return refused
-	return defects(map)
+	return defects(map, unit_db)
 
 
 ## The same reading as words alone.
-static func draft_errors(doc: MapDocument, db: TerrainDB) -> Array[String]:
-	return _sentences(draft_defects(doc, db))
+static func draft_errors(doc: MapDocument, db: TerrainDB, unit_db: UnitDB = null) -> Array[String]:
+	return _sentences(draft_defects(doc, db, unit_db))
+
+
+static func _units_or_default(unit_db: UnitDB) -> UnitDB:
+	if unit_db != null:
+		return unit_db
+	if _default_units == null:
+		_default_units = UnitDB.load_default()
+	return _default_units
 
 
 static func _sentences(defects_found: Array[MapDefect]) -> Array[String]:
@@ -231,6 +247,44 @@ static func _unit_on_property_defect(map: MapData) -> MapDefect:
 				[cell] as Array[Vector2i]
 			)
 	return null
+
+
+## What `GameState.create` refuses about a starting unit, asked first so a board
+## this passes always seats: a kind the roster does not hold, two units on one
+## cell, and a unit on ground its move class has no cost for — the terrain's own
+## `is_passable`, the question the state asks.
+static func _starting_unit_defect(map: MapData, unit_db: UnitDB) -> MapDefect:
+	var taken := {}
+	for entry: Dictionary in map.starting_units:
+		var cell: Vector2i = entry.cell
+		var on: Array[Vector2i] = [cell]
+		var type := unit_db.by_symbol(entry.symbol)
+		if type == null:
+			return MapDefect.at(
+				"The unit at %s is of no known kind ('%s')." % [cell, entry.symbol], on
+			)
+		if taken.has(cell):
+			return MapDefect.at("Two units start on %s; only one may stand there." % [cell], on)
+		taken[cell] = true
+		var terrain := map.terrain_at(cell)
+		if not terrain.is_passable(type.move_class):
+			return MapDefect.at(
+				(
+					"%s %s cannot stand on %s at %s."
+					% [
+						_article(type.display_name),
+						type.display_name,
+						terrain.display_name.to_lower(),
+						cell
+					]
+				),
+				on
+			)
+	return null
+
+
+static func _article(noun: String) -> String:
+	return "An" if noun.left(1).to_upper() in ["A", "E", "I", "O", "U"] else "A"
 
 
 ## A dock is only a dock if something can sail out of it, and two docks on two

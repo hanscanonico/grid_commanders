@@ -339,16 +339,11 @@ func _winner_sentence() -> String:
 	var side := _battle.game.winners()
 	if side.size() <= 1:
 		return "%s wins" % _battle.view.identity.display_name(_result_winner)
-	# Distinct names, because two allies may share a faction — a mirror keeps both
-	# sides named for it and leans on the livery to tell them apart (SideIdentity).
-	# "Meridian Coalition & Meridian Coalition win!" is not a sentence.
+	# SideIdentity never names two sides alike — a later side of a shared faction
+	# carries a numeral — so every ally is listed.
 	var names := PackedStringArray()
 	for team: int in side:
-		var name := _battle.view.identity.display_name(team)
-		if not names.has(name):
-			names.append(name)
-	if names.size() == 1:
-		return "%s wins" % names[0]
+		names.append(_battle.view.identity.display_name(team))
 	return "%s win" % " & ".join(names)
 
 

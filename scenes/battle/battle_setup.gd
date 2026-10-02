@@ -136,7 +136,9 @@ static func build(
 		map_path = MatchRequest.DEFAULT_MAP_PATH
 		result.map = MapData.load_from_file(map_path, terrain_db)
 	if result.map == null:
-		return _refuse(failure, "The board %s cannot be loaded." % map_path)
+		return _refuse_board(
+			failure, "The board %s cannot be loaded." % MapCatalog.display_name(map_path), map_path
+		)
 	# The launch's per-seat tiers go on before the side specs do, so a Lab
 	# `--red=<co>:<tier>` still wins for the seat it names: that grammar states one
 	# seat outright, where these are the match's own tier for each of them.
@@ -152,7 +154,7 @@ static func build(
 	# leaves no match, and `Battle` disables itself rather than inventing one.
 	result.game = GameState.create(result.map, unit_db, chart, commanders, request.seats)
 	if result.game == null:
-		return _refuse(failure, "No match can be seated on %s." % map_path)
+		return _refuse_board(failure, _unseatable(result.map, map_path, unit_db), map_path)
 	result.game.map_path = map_path
 	result.game.fog_enabled = request.fog_enabled
 	# How the armies group is the match's choice, not the board's (plan D1). Empty
@@ -224,6 +226,23 @@ static func build(
 static func _refuse(failure: Failure, message: String) -> BuiltMatch:
 	push_error("battle: %s" % message)
 	return _record(failure, message)
+
+
+## `_refuse` about a board: the player reads its name, the log its file.
+static func _refuse_board(failure: Failure, message: String, map_path: String) -> BuiltMatch:
+	push_error("battle: %s (%s)" % [message, map_path])
+	return _record(failure, message)
+
+
+## Why a board that loaded seats no match, from the validator when the board is
+## at fault — a board the editor saved before it learned a rule — and otherwise
+## the seating the launch asked for.
+static func _unseatable(map: MapData, map_path: String, unit_db: UnitDB) -> String:
+	var name := MapCatalog.display_name(map_path)
+	var errors := MapValidator.errors(map, unit_db)
+	if errors.is_empty():
+		return "No match can be seated on %s with the seats chosen." % name
+	return "No match can be seated on %s. %s" % [name, errors[0]]
 
 
 ## `_refuse` for the refusals whose detail the reader that found it has already

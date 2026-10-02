@@ -33,6 +33,11 @@ signal end_turn_pressed
 ## is resupplied.
 const ALARM_NO_AMMO := "NO AMMO"
 
+## Where the unit under the cursor stands in the turn, from the viewer's seat.
+## READY is said only of a unit the viewer can order right now; an enemy's, an
+## ally's, or the viewer's own over somebody else's turn says neither.
+enum Status { NONE, READY, WAITED }
+
 const CLASS_LABELS: Dictionary = {
 	TerrainType.FOOT: "Foot",
 	TerrainType.BOOT: "Boot",
@@ -87,8 +92,9 @@ var _unit_name: Label
 var _unit_alarm: Label
 var _unit_sub: Label
 var _pips: HpPips
-var _fuel_label: Label
-var _ammo_label: Label
+## Fuel and ammunition, one label so the pair shrinks as one line into whatever
+## width the bar has left rather than pushing the chrome beside it off the screen.
+var _supply_label: Label
 
 var _terrain: TerrainChip
 
@@ -152,7 +158,10 @@ func _build_commander(row: HBoxContainer) -> void:
 	meter_row.add_child(_meter_frame)
 	# The fill is a child of the trough rather than a ProgressBar so the meter is
 	# one flat rectangle inside a hard ink frame, with no engine-drawn rounding.
+	# Anchored across the trough, its right edge moved to the charge ratio, so the
+	# trough lays the fill out rather than the fill being sized by hand.
 	_meter_fill = Panel.new()
+	_meter_fill.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_meter_fill.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.AMMO))
 	_meter_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_meter_frame.add_child(_meter_fill)
@@ -195,10 +204,19 @@ func _build_end_turn(row: HBoxContainer) -> void:
 
 
 func _build_unit(row: HBoxContainer) -> void:
+	# The unit third is the one whose words vary in length, so it is the third that
+	# gives way: held inside a clipping frame with no minimum width of its own, its
+	# rows are cut at the frame's edge however long they run, and the commander,
+	# the tile and End Turn always keep their place on the screen.
+	var frame := Control.new()
+	frame.clip_contents = true
+	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(frame)
 	var block := HBoxContainer.new()
 	block.add_theme_constant_override("separation", UiTheme.HUD_GAP)
-	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(block)
+	block.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	frame.add_child(block)
 
 	_unit_icon = TextureRect.new()
 	_unit_icon.custom_minimum_size = Vector2(UiTheme.HUD_UNIT_ICON, UiTheme.HUD_UNIT_ICON)
@@ -226,9 +244,7 @@ func _build_unit(row: HBoxContainer) -> void:
 	_unit_alarm = UiTheme.hud_label(ALARM_NO_AMMO, UiTheme.SIZE_STAT, UiTheme.DANGER)
 	_unit_alarm.visible = false
 	head.add_child(_unit_alarm)
-	_unit_sub = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
-	_unit_sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_unit_sub.clip_text = true
+	_unit_sub = _shrinking_label()
 	head.add_child(_unit_sub)
 
 	var stats := HBoxContainer.new()
@@ -236,10 +252,18 @@ func _build_unit(row: HBoxContainer) -> void:
 	data.add_child(stats)
 	_pips = HpPips.new()
 	stats.add_child(_pips)
-	_fuel_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.PAPER_2)
-	stats.add_child(_fuel_label)
-	_ammo_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.PAPER_2)
-	stats.add_child(_ammo_label)
+	_supply_label = _shrinking_label(UiTheme.PAPER_2)
+	stats.add_child(_supply_label)
+
+
+## A line that takes the width its row has left and ends in an ellipsis when that
+## is not enough, so it reads as going on rather than as stopping mid-word.
+func _shrinking_label(color: Color = UiTheme.INK_3) -> Label:
+	var label := UiTheme.hud_label("", UiTheme.SIZE_STAT, color)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	return label
 
 
 func _build_terrain(row: HBoxContainer) -> void:
@@ -288,9 +312,7 @@ func show_commander(
 		return
 
 	var ratio := 1.0 if co_state.power_active or co_state.is_ready() else co_state.charge_ratio()
-	_meter_fill.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-	_meter_fill.size = Vector2(UiTheme.HUD_METER.x * ratio, UiTheme.HUD_METER.y)
-	_meter_fill.position = Vector2.ZERO
+	_meter_fill.set_anchor_and_offset(SIDE_RIGHT, ratio, 0.0)
 	# Amber is the charge colour in this design system; the active state takes the
 	# capture green so a running power reads differently from a full one.
 	_meter_fill.add_theme_stylebox_override(
@@ -314,11 +336,13 @@ func show_commander(
 ## Whether the End Turn button may be pressed. `offered` is BattleLegend's answer
 ## about the board's own context, so the button is live in exactly the two rest
 ## states the player commands from and dead over a computer turn, a handoff, an
-## open menu or a cut-in.
-func show_end_turn(offered: bool) -> void:
+## open menu or a cut-in. `playable` is false while a recording is watched, where
+## no turn is ever the viewer's to end, so the button is not on the bar at all.
+func show_end_turn(offered: bool, playable: bool = true) -> void:
 	if not _built:
 		return
 	_end_turn_button.disabled = not offered
+	_end_turn_button.visible = playable
 
 
 # --- the unit and terrain thirds ----------------------------------------------
@@ -326,7 +350,8 @@ func show_end_turn(offered: bool) -> void:
 
 ## Single entry point per hovered tile; `unit` is null on an empty or fogged
 ## tile, and that is what blanks the right two thirds. `carrying` names the cargo
-## when the unit is a loaded transport.
+## when the unit is a loaded transport, and `title` what a mission calls the unit
+## (BattleCampaign's answer), "" for one it does not name.
 ##
 ## `range_band` is the ring the unit really fires in — AttackRange's answer,
 ## resolved by BattleView, never the pair printed on the unit type. A doctrine may
@@ -338,19 +363,29 @@ func show_end_turn(offered: bool) -> void:
 func show_tile(
 	terrain: TerrainType,
 	owner_team: int,
-	active_team: int,
+	status: Status,
 	capture_left: int = -1,
 	unit: Unit = null,
 	carrying: String = "",
 	allegiance: String = "",
 	range_band: Vector2i = Vector2i.ZERO,
-	cover_stars: int = 0
+	cover_stars: int = 0,
+	title: String = ""
 ) -> void:
 	if not _built:
 		return
-	_show_unit(
-		unit, carrying, active_team, allegiance, range_band, cover_stars, terrain.defense_stars
-	)
+	_show_unit(unit, title, status)
+	if unit != null:
+		_unit_sub.text = _order_line(
+			unit,
+			title,
+			carrying,
+			status,
+			allegiance,
+			range_band,
+			cover_stars,
+			terrain.defense_stars
+		)
 	_show_terrain(terrain, owner_team, capture_left)
 
 
@@ -365,15 +400,7 @@ func unit_order_line() -> String:
 	return _unit_sub.text
 
 
-func _show_unit(
-	unit: Unit,
-	carrying: String,
-	active_team: int,
-	allegiance: String,
-	range_band: Vector2i,
-	cover_stars: int,
-	tile_stars: int
-) -> void:
+func _show_unit(unit: Unit, title: String, status: Status) -> void:
 	# The block itself stays in the row — it is the expanding child holding the
 	# terrain chip against the right edge — so an empty tile blanks its contents
 	# rather than hiding the block.
@@ -384,20 +411,20 @@ func _show_unit(
 	_unit_icon.texture = UnitSprite.tile_texture_for(unit.type, identity.atlas_row(unit.team))
 	# The board's own exhausted scrim, borrowed rather than redefined: a unit
 	# that has acted looks the same in the bar as it does on the tile.
-	var waited := unit.acted and unit.team == active_team
-	_unit_icon.material = UnitSprite.acted_scrim() if waited else null
-	_unit_name.text = unit.type.display_name
+	_unit_icon.material = UnitSprite.acted_scrim() if status == Status.WAITED else null
+	_unit_name.text = title if title != "" else unit.type.display_name
 	_unit_alarm.visible = _out_of_ammo(unit)
-	_unit_sub.text = _order_line(
-		unit, carrying, waited, allegiance, range_band, cover_stars, tile_stars
-	)
 	_pips.set_hp(unit.displayed_hp())
-	_fuel_label.text = "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
-	_ammo_label.visible = unit.type.max_ammo > 0
+	_supply_label.text = _supply_line(unit)
+
+
+func _supply_line(unit: Unit) -> String:
+	var fuel := "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
+	if unit.type.max_ammo <= 0:
+		return fuel
 	if chart != null and chart.has_secondary(unit.type.id):
-		_ammo_label.text = "MAIN %d/%d · MG ∞" % [unit.ammo, unit.type.max_ammo]
-	else:
-		_ammo_label.text = "AMMO %d/%d" % [unit.ammo, unit.type.max_ammo]
+		return "%s  MAIN %d/%d · MG ∞" % [fuel, unit.ammo, unit.type.max_ammo]
+	return "%s  AMMO %d/%d" % [fuel, unit.ammo, unit.type.max_ammo]
 
 
 ## Whether every weapon this unit owns has run dry — the same fact the refused
@@ -418,8 +445,9 @@ func _out_of_ammo(unit: Unit) -> bool:
 ## the old panel carried.
 func _order_line(
 	unit: Unit,
+	title: String,
 	carrying: String,
-	waited: bool,
+	status: Status,
 	allegiance: String,
 	range_band: Vector2i,
 	cover_stars: int,
@@ -431,7 +459,15 @@ func _order_line(
 	# than the tile's. Empty for the viewer's own units, which need no telling.
 	if allegiance != "":
 		parts.append(allegiance.to_upper())
-	parts.append(String(CLASS_LABELS.get(unit.type.move_class, "")).to_upper())
+	# A unit the mission names wears that name in the title, so the type it is
+	# moves down here. A class that only repeats the title — a Lander moves as a
+	# Lander — is left off rather than said twice.
+	var type_name := unit.type.display_name.to_upper()
+	if title != "":
+		parts.append(type_name)
+	var move_class := String(CLASS_LABELS.get(unit.type.move_class, "")).to_upper()
+	if move_class != type_name:
+		parts.append(move_class)
 	if range_band.x > 1:
 		parts.append("RNG %d-%d" % [range_band.x, range_band.y])
 	# The terrain chip still reads the tile's own stars, because the tile really
@@ -444,7 +480,8 @@ func _order_line(
 		parts.append("LOW FUEL")
 	if carrying != "":
 		parts.append("CARRYING %s" % carrying.to_upper())
-	parts.append("WAITED" if waited else "READY")
+	if status != Status.NONE:
+		parts.append("WAITED" if status == Status.WAITED else "READY")
 	return " · ".join(parts)
 
 

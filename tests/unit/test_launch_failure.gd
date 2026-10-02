@@ -12,6 +12,20 @@ extends GutTest
 ## was relocated or authored by hand must refuse exactly as an authored one does.
 const MISSING_BOARD := "res://maps/no_such_board.txt"
 
+## A duel that loads clean and seats nobody: a Cruiser parked on a field.
+const STRANDED_HULL := """[terrain]
+..........
+.QB....BQ.
+..........
+..........
+..........
+[owners]
+1 1 1
+2 8 1
+[units]
+2 c 9 2
+"""
+
 
 func _built(request: MatchRequest, failure: BattleSetup.Failure) -> BattleSetup.BuiltMatch:
 	return BattleSetup.build(
@@ -49,9 +63,33 @@ func test_a_skirmish_falls_back_to_the_default_board() -> void:
 func test_a_campaign_mission_refuses_a_board_it_cannot_load() -> void:
 	var failure := BattleSetup.Failure.new()
 	assert_null(_built(_mission(MISSING_BOARD).to_request(), failure))
-	assert_string_contains(failure.message, MISSING_BOARD, "and it names the board")
+	assert_string_contains(failure.message, "No Such Board", "and it names the board")
+	assert_false(failure.message.contains("://"), "by its name, never its file")
 	assert_push_error("cannot read map file")  # MapData, and no second read after it
-	assert_push_error("The board %s cannot be loaded" % MISSING_BOARD)
+	assert_push_error("cannot be loaded. (%s)" % MISSING_BOARD)
+
+
+## A board that loads and still seats nobody — a hull on a field, saved before
+## the editor refused one — says which board and why, not where its file is (ED-11).
+func test_a_board_that_cannot_seat_says_why_by_name() -> void:
+	var path := "user://test_launch_stranded_hull.txt"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(STRANDED_HULL)
+	file.close()
+	var request := MatchRequest.new()
+	request.map_path = path
+	var failure := BattleSetup.Failure.new()
+	assert_null(_built(request, failure))
+	DirAccess.remove_absolute(path)
+	assert_eq(
+		failure.message,
+		(
+			"No match can be seated on Test Launch Stranded Hull. "
+			+ "A Cruiser cannot stand on plains at (9, 2)."
+		)
+	)
+	assert_push_error("cruiser cannot stand on plains")  # GameState
+	assert_push_error("No match can be seated")
 
 
 ## The guard reads one fact, set by the one conversion — never the board's path.
