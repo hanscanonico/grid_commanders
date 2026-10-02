@@ -15,7 +15,7 @@ signal action_chosen(action: StringName)
 
 ## How far the menu stays off the edges of the board band.
 const MARGIN := 4.0
-## The detail card's inner padding.
+## The detail card's inner padding, and the heading's inset from the frame.
 const DETAIL_PAD := 5
 ## Which way each direction action walks the highlight.
 const ROW_ACTIONS: Dictionary = {
@@ -59,8 +59,10 @@ var _anchor: PanelAnchor
 var _details: Array[String] = []
 var _detail_card: PanelContainer
 var _detail_label: Label
-## The line over the rows, for a menu whose choice needs one said first.
+## The line over the rows, for a menu whose choice needs one said first, and the
+## inset row it stands in.
 var _heading: Label
+var _heading_row: MarginContainer
 
 
 func _ready() -> void:
@@ -68,8 +70,9 @@ func _ready() -> void:
 	var column := VBoxContainer.new()
 	add_child(column)
 	_heading = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
-	_heading.hide()
-	column.add_child(_heading)
+	_heading_row = UiKit.pad(_heading, DETAIL_PAD, 0)
+	_heading_row.hide()
+	column.add_child(_heading_row)
 	rows.reparent(column)
 	_detail_card = PanelContainer.new()
 	_detail_card.top_level = true  # beside the menu, never laid out inside it
@@ -95,7 +98,7 @@ func _ready() -> void:
 func open(actions: Array[Dictionary], screen_pos: Vector2, heading: String = "") -> void:
 	_fill(actions)
 	_heading.text = heading
-	_heading.visible = heading != ""
+	_heading_row.visible = heading != ""
 	position = screen_pos
 	_anchor = null
 	show()
@@ -109,7 +112,7 @@ func open_beside(
 	actions: Array[Dictionary], camera: BoardCamera, cell: Vector2i, away: Array[Vector2i] = []
 ) -> void:
 	_fill(actions)
-	_heading.hide()
+	_heading_row.hide()
 	_anchor = PanelAnchor.beside(camera, cell, away)
 	show()
 	_place()
