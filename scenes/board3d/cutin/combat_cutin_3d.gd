@@ -160,7 +160,10 @@ func _squad_for(unit: Unit, plot: StagePlot3D, before: int, after: int, died: bo
 	var posted := CutsceneSide.figures_for(before)
 	var standing := posted if died else CutsceneSide.figures_for(after)
 	var theme := SideIdentity.theme_for_row(view.identity.atlas_row(unit.team))
-	return stage.squad(unit.type, theme, maxi(posted, 1), standing, plot)
+	var squad := stage.squad(unit.type, theme, maxi(posted, 1), standing, plot)
+	squad.dived = unit.dived
+	squad.pose()
+	return squad
 
 
 func _plate(unit: Unit, weapon: StringName, cover: int) -> CutinPlates3D.Plate:
@@ -170,7 +173,7 @@ func _plate(unit: Unit, weapon: StringName, cover: int) -> CutinPlates3D.Plate:
 	plate.accent = accent_of(unit.team)
 	plate.weapon = String(weapon)
 	plate.terrain = terrain.display_name.to_upper()
-	plate.stars = terrain.defense_stars
+	plate.stars = CutsceneSide.lit_stars(cover, terrain.defense_stars)
 	plate.note = CutsceneSide.terrain_note(cover, terrain.defense_stars)
 	return plate
 

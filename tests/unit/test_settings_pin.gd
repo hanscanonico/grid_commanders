@@ -68,3 +68,25 @@ func test_an_explicit_speed_outranks_the_pin() -> void:
 	fresh.apply_args(PackedStringArray([Settings.SPEED_ARG + String(wanted)]))
 	fresh.pin(GameSpeed.DEFAULT_ID)
 	assert_eq(fresh.speed.id, wanted, "the pin declines the tier the flag already chose")
+
+
+## The menu captures promise the tutorial board leads, so a pinned launch forgets
+## whatever match this machine last set up (SK-13).
+func test_a_pinned_launch_forgets_the_remembered_match_setup() -> void:
+	var fresh = autofree(SETTINGS_SCRIPT.new())
+	fresh.match_setup = {MenuSetupMemory.MAP_KEY: "res://maps/foursquare.txt"}
+	fresh.pin(GameSpeed.DEFAULT_ID)
+	assert_eq(fresh.match_setup, {}, "the remembered setup is forgotten")
+
+
+## The main menu's Settings page lists the pause menu's rows, less the one it
+## already holds a control for (SK-14).
+func test_value_actions_offers_the_value_rows_less_the_ones_excepted() -> void:
+	var fresh = autofree(SETTINGS_SCRIPT.new())
+	var ids: Array[StringName] = []
+	for action: Dictionary in fresh.value_actions([Settings.SPEED_ROW] as Array[StringName]):
+		ids.append(action["id"])
+		assert_true((action["cycle"] as Callable).is_valid(), "%s steps" % action["id"])
+	var expected: Array[StringName] = fresh.offered_rows().duplicate()
+	expected.erase(Settings.SPEED_ROW)
+	assert_eq(ids, expected)

@@ -50,6 +50,9 @@ func _build() -> void:
 ## the player never subtracts, and carries the luck-free attack percentage as the
 ## secondary detail plan D4 allows it to be — a chip attack worth less than a
 ## displayed HP reads "Deal 0 HP" up top, and this is where it says it landed.
+## The percentage is the forecast's luck-free damage — after HP, cover and
+## doctrine, not the chart's base number — and it says so, because a bare
+## percentage read as a hit chance.
 ##
 ## The turnstile is `»` and not `→`: `»` is the vendored face's own glyph, where
 ## U+2192 comes off the `UiMarks` fallback and its 8-pixel grid, and the line
@@ -74,7 +77,7 @@ func show_forecast(forecast: CombatSnapshot.Forecast) -> void:
 		else "No counter"
 	)
 	_outcome_label.text = (
-		"Target %d » %s HP · %d%% · luck included"
+		"Target %d » %s HP · damage %d%% before luck"
 		% [
 			forecast.defender_hp_before,
 			_hp_span(forecast.defender_hp_after_min, forecast.defender_hp_after_max),

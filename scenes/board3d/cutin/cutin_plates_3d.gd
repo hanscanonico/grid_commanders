@@ -42,16 +42,20 @@ func _ready() -> void:
 
 func _draw() -> void:
 	var font := get_theme_font(&"font", &"Label")
+	if plate_p > 0.0:
+		CutscenePlates.draw_frames(self, size, plate_p)
+		_draw_name_row(font, left, false)
+		_draw_name_row(font, right, true)
+		var bottom := size.y - CutscenePlates.BOT_H
+		_draw_terrain_row(font, left, false, bottom)
+		_draw_terrain_row(font, right, true, bottom)
+	# Over the plates, and held inside the band between them: the flat cut-in's
+	# own callout.
+	var band := CutscenePlates.arena(size)
 	for callout in callouts:
-		_draw_callout(font, callout)
-	if plate_p <= 0.0:
-		return
-	CutscenePlates.draw_frames(self, size, plate_p)
-	_draw_name_row(font, left, false)
-	_draw_name_row(font, right, true)
-	var bottom := size.y - CutscenePlates.BOT_H
-	_draw_terrain_row(font, left, false, bottom)
-	_draw_terrain_row(font, right, true, bottom)
+		CutsceneFx.draw_callout(
+			self, font, callout.at, callout.amount, callout.tag, callout.progress, band
+		)
 
 
 ## An x measured from a side's outer edge.
@@ -129,26 +133,3 @@ func _draw_terrain_row(font: Font, plate: Plate, mirror: bool, y: float) -> void
 		plate_p,
 		plate.note
 	)
-
-
-## The flat cut-in's damage number: it punches in, rises and fades.
-func _draw_callout(font: Font, callout: Callout) -> void:
-	var p := callout.progress
-	if p <= 0.0 or p >= 1.0:
-		return
-	var rise := CutsceneFx.ramp(p, [0.0, 0.3, 1.0], [10.0, -8.0, -26.0])
-	var punch := CutsceneFx.ramp(p, [0.0, 0.25, 1.0], [0.4, 1.2, 1.0])
-	var alpha := CutsceneFx.ramp(p, [0.0, 0.15, 0.7, 1.0], [0.0, 1.0, 1.0, 0.0])
-	draw_set_transform(callout.at + Vector2(0.0, rise), 0.0, Vector2(punch, punch))
-	if callout.tag != "":
-		var tag_tint := (
-			CutsceneFx.KO_RED if callout.tag == CutsceneFx.KO_TAG else CutsceneFx.FLASH_GOLD
-		)
-		CutsceneFx.stroked_centered(
-			self, font, Vector2(0.0, -18.0), callout.tag, 15, Color(tag_tint, alpha)
-		)
-	if callout.amount > 0:
-		CutsceneFx.stroked_centered(
-			self, font, Vector2(0.0, 8.0), "-%d" % callout.amount, 26, Color(Color.WHITE, alpha)
-		)
-	draw_set_transform(Vector2.ZERO)

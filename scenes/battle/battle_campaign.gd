@@ -185,15 +185,16 @@ static func _say_briefing(battle: Battle) -> void:
 ## one of ours — so Battle's map handler has a single arm for all of them and a
 ## campaign row is written where the rest of this battle's campaign side is.
 ##
-## Objectives makes the card's own O key sayable from the menu: it is that same
-## call (`MissionObjectivesPanel.toggle`), so the key and the row drive one
-## state and the card stays its owner.
+## Objectives makes the card's own O key sayable from the menu: it sets the same
+## up/down state the key flips (`MissionObjectivesPanel.set_up`), so the key and
+## the row drive one state and the card stays its owner.
 static func run_row(battle: Battle, action: StringName) -> bool:
 	if action == &"briefing":
 		await _say_briefing(battle)
 		return true
 	if action == &"objectives":
-		battle.view.mission_panel.toggle(battle.game)
+		var panel := battle.view.mission_panel
+		panel.set_up(not panel.is_up(), battle.game)
 		return true
 	return false
 

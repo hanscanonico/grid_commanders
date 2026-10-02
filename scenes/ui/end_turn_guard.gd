@@ -41,26 +41,57 @@ func _ready() -> void:
 
 
 ## Opens over the board with Review armed, so the Enter that reached End Turn
-## cannot fall through onto the destructive choice. Unit coordinates use the
-## board's own zero-based cells, matching map data and the ticket's notation.
-func open(day: int, ready_units: Array[Unit], side_theme: CommanderVisuals.FactionTheme) -> void:
+## cannot fall through onto the destructive choice.
+func open(
+	game: GameState, ready_units: Array[Unit], side_theme: CommanderVisuals.FactionTheme
+) -> void:
 	if not _built:
 		_build()
-	_title_label.text = "END DAY %d?" % day
+	_title_label.text = "END DAY %d?" % game.day
 	_count_label.text = "%d READY" % ready_units.size()
 	_body_label.text = (
 		"One unit can still act."
 		if ready_units.size() == 1
 		else "%d units can still act." % ready_units.size()
 	)
-	var lines := PackedStringArray()
-	for unit in ready_units:
-		lines.append("%s at (%d,%d)" % [unit.type.display_name, unit.cell.x, unit.cell.y])
-	_unit_label.text = "\n".join(lines)
+	_unit_label.text = "\n".join(unit_lines(game, ready_units))
 	UiTheme.apply_button(_review_button, UiTheme.ButtonVariant.PRIMARY, side_theme)
 	_list.scroll_vertical = 0
 	show()
 	_review_button.grab_focus.call_deferred()
+
+
+## The ready units in words the board shows rather than in grid cells it never
+## prints: what the mission calls a unit, else its type, and the ground it stands
+## on — "Mech on your Base". Units that would read the same are counted once
+## ("3 Infantry on Plains"), in the order Review walks them.
+static func unit_lines(game: GameState, ready_units: Array[Unit]) -> PackedStringArray:
+	var counts: Dictionary[String, int] = {}
+	for unit in ready_units:
+		var named := BattleCampaign.unit_name(unit)
+		var who := named if named != "" else unit.type.display_name
+		var line := (
+			"%s %s %s" % [who, "over" if unit.type.domain == &"air" else "on", _ground(game, unit)]
+		)
+		counts[line] = counts.get(line, 0) + 1
+	var lines := PackedStringArray()
+	for line: String in counts:
+		lines.append(line if counts[line] == 1 else "%d %s" % [counts[line], line])
+	return lines
+
+
+## The ground under a unit, and for a property whose it is. The unit is the
+## viewer's own, so its cell and the flag on it are in sight.
+static func _ground(game: GameState, unit: Unit) -> String:
+	var terrain := game.map.terrain_at(unit.cell)
+	if not terrain.is_property:
+		return terrain.display_name
+	var owner := game.owner_at(unit.cell)
+	if owner == unit.team:
+		return "your " + terrain.display_name
+	if owner == MapData.NEUTRAL:
+		return "a neutral " + terrain.display_name
+	return ("an allied " if game.allied(owner, unit.team) else "an enemy ") + terrain.display_name
 
 
 func close() -> void:

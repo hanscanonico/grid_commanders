@@ -288,6 +288,7 @@ func _ready() -> void:
 	if _replay != null:
 		_replay_runner = BattleReplayRunner.new(self, _replay)
 	BattleCampaign.open_board(game, request.campaign_resume == &"")
+	exit.opened_from(request)
 	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()
 	view.setup()
@@ -653,7 +654,7 @@ func confirm_at(cell: Vector2i) -> void:
 				else:
 					_reject("Occupied.", cell)
 			else:
-				_reject("Out of reach.", cell)
+				_reject(MoveRefusal.words(game, selected, move_range, cell), cell)
 		State.TARGETING, State.DROP_TARGETING:
 			targeting.confirm_at(cell)
 		State.POWER_TARGETING:
@@ -823,10 +824,10 @@ func _on_move_animation_done() -> void:
 		var special := _pending_special_actions
 		_pending_special_actions = []
 		special.append(BattleMenus.CANCEL)
-		action_menu.open(special, view.board_camera.screen_pos_for_cell(dest))
+		action_menu.open_beside(special, view.board_camera, dest)
 		return
 	var actions := targeting.arm(selected, planned_path)
-	action_menu.open(actions, view.board_camera.screen_pos_for_cell(dest))
+	action_menu.open_beside(actions, view.board_camera, dest, targeting.targets())
 
 
 func _on_menu_action(action: StringName) -> void:
@@ -924,10 +925,8 @@ func _handle_map_action(action: StringName) -> void:
 	if await BattleCampaign.run_row(self, action):
 		return  # Briefing and Objectives: the campaign's rows are the campaign's
 	if action == &"auto":
-		# Its own submenu, the same shape "quit" opens "abandon" into below: the
-		# context is Battle's to set, the rows and the handoff are BattleAuto's.
 		_menu_context = &"auto"
-		_battle_auto.open_menu()
+		_battle_auto.take_row()
 		return
 	if action == &"save":
 		exit.save_match()
@@ -957,7 +956,7 @@ func _request_end_turn() -> void:
 	# is ReadyUnits' answer either way, which is what N and Review still walk.
 	if Settings.end_turn_confirm and not ready.is_empty():
 		state = State.CONFIRM
-		end_turn_guard.open(game.day, ready, view.identity.theme(game.current_team))
+		end_turn_guard.open(game, ready, view.identity.theme(game.current_team))
 		return
 	_commit_end_turn()
 
@@ -1034,9 +1033,10 @@ func _open_map_menu() -> void:
 	# whether its rows answer to left and right, and this is the menu that carries
 	# the device settings they step.
 	var card := view.mission_panel.is_up()  # the Objectives row's label; the card owns it
+	var auto := _battle_auto.stepper()
 	action_menu.open(
 		BattleMenus.map_actions(
-			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db, card
+			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db, card, auto
 		),
 		view.board_camera.screen_pos_for_cell(cursor_cell)
 	)

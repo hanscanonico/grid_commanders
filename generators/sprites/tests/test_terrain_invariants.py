@@ -60,7 +60,8 @@ SHEET_GRAIN = {
     "autotiles/coast.png": 19,
     "autotiles/shoals.png": 7,
     "autotiles/woods.png": 168,
-    "autotiles/bridges.png": 3,
+    # the dry deck stands on the field, so it carries the plains grain
+    "autotiles/bridges.png": 7,
     "autotiles/sea.png": 0,
     "autotiles/sea_b.png": 0,
     "autotiles/plains.png": 15,
@@ -75,10 +76,7 @@ TILE_SOURCES = {
     "autotiles/coast.png": lambda: [autotile.coast_tile(m) for m in range(16)],
     "autotiles/shoals.png": lambda: [autotile.shoal_tile(m) for m in range(16)],
     "autotiles/woods.png": lambda: [autotile.woods_tile(m) for m in range(16)],
-    "autotiles/bridges.png": lambda: [
-        autotile.bridge_tile(True),
-        autotile.bridge_tile(False),
-    ],
+    "autotiles/bridges.png": autotile.bridge_tiles,
     "autotiles/sea.png": lambda: [
         terrain.sea(phase, 0) for phase in range(len(terrain.SEA_PHASES))
     ],

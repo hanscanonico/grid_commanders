@@ -5,9 +5,9 @@ extends Control
 ## Both lists are the same thing to the editor, because a board is a board —
 ## `MapDocument.from_map` seeds a draft from any of them. What differs is the
 ## name it comes with: a board of the author's own opens under its own name and
-## saves straight back over itself, while a shipped one opens nameless, since
-## `UserMaps` refuses a name the game already ships and an author who found that
-## out at the save dialog would have painted a whole board first.
+## saves straight back over itself, while a shipped one opens under a copy's
+## name, since `UserMaps` refuses a name the game already ships and an author who
+## found that out at the save dialog would have painted a whole board first.
 
 ## The board to open, by file path.
 signal chosen(path: String)
@@ -79,7 +79,9 @@ func _build() -> void:
 			cancelled.emit()
 	)
 	main.add_child(back)
-	main.add_child(UiKit.key_legend("ENTER  OPEN      ESC  BACK"))
+	var legend := UiKit.key_legend("ENTER  OPEN      ESC  BACK")
+	legend.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	main.add_child(legend)
 
 
 func _add_group(caption: String) -> void:

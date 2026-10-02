@@ -19,10 +19,20 @@ extends RefCounted
 const MAIN_MENU_SCENE := "res://scenes/menu/main_menu.tscn"
 
 var _battle: Battle
+## The day this match was last written to its slot, 0 while it never was — what
+## the leave-without-saving confirmation says is lost.
+var _saved_day := 0
 
 
 func _init(battle: Battle) -> void:
 	_battle = battle
+
+
+## A match resumed from its save starts on the day that save holds.
+func opened_from(request: MatchRequest) -> void:
+	var resumed := request.resume and SaveGame.has_save(SaveGame.SAVE_PATH)
+	if resumed or request.campaign_resume != &"":
+		_saved_day = _battle.game.day
 
 
 ## Writes the single save slot and says on the banner what it just stored, or that
@@ -52,6 +62,7 @@ func save_match() -> bool:
 	# overwrote the last save with. Same words the menu's Continue caption will read
 	# back, through the one formatter (SaveCodec.describe).
 	_battle.present_banner("Saved %s" % SaveCodec.describe(game.day, game.map_path))
+	_saved_day = game.day
 	return true
 
 
@@ -67,6 +78,7 @@ func _save_mission(game: GameState) -> bool:
 		_battle.present_banner("Save failed — still in the match")
 		return false
 	_battle.present_banner("Saved %s — Day %d" % [CampaignSession.mission.title, game.day])
+	_saved_day = game.day
 	return true
 
 
@@ -87,10 +99,12 @@ func save_and_leave() -> void:
 ## than another menu is its rows; see BattleMenus.abandon_confirm_actions for why
 ## the safe one leads.
 func confirm_abandon() -> void:
+	var watching := _battle.replay_path != ""
 	_battle.state = Battle.State.MENU
 	_battle.action_menu.open(
-		BattleMenus.abandon_confirm_actions(_battle.replay_path != ""),
-		_battle.view.board_camera.screen_pos_for_cell(_battle.cursor_cell)
+		BattleMenus.abandon_confirm_actions(watching),
+		_battle.view.board_camera.screen_pos_for_cell(_battle.cursor_cell),
+		BattleMenus.abandon_consequence(watching, _saved_day)
 	)
 
 

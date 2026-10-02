@@ -436,7 +436,7 @@ py=~/.cache/grid_commanders/venv-sprites/bin/python
 | `autotiles/rivers.png`, `autotiles/shoals.png` | 16-variant connection sheets, each with a second time frame (see below) |
 | `autotiles/rivers_b.png` | the same 16 channels one time frame later: only the flow glints have moved (see below) |
 | `autotiles/shoals_b.png` | the same 16 shores one time frame later: only the foam scallop has moved (see below) |
-| `autotiles/bridges.png` | the two bridge deck orientations, E-W then N-S |
+| `autotiles/bridges.png` | the two bridge deck orientations, E-W then N-S, a row per bed: river, sea, dry ground |
 | `autotiles/sea.png` | the three sea phase variants, phase 0 first (see below) |
 | `autotiles/sea_b.png` | the same three phases in the same order, one time frame later: only the glints have moved (see below) |
 | `autotiles/plains.png` | the eight plains phase variants, phase 0 first (see below) |
@@ -531,7 +531,7 @@ rather than crossing two bands at a right angle, which is what had a beach
 reading as a beige square in a blue picture frame; a shoal takes the same
 diagonal `corners` mask a coast does. Each connection sheet lays out masks 0-15
 row-major (bit order N=1, E=2, S=4, W=8); `bridges.png` carries its two
-decks side by side. Mask 15 on the woods sheet is the atlas tile exactly, so only a wood's fringe
+decks side by side, over a river, the sea and dry ground in its three rows. Mask 15 on the woods sheet is the atlas tile exactly, so only a wood's fringe
 leaves the base sheet. A river is cut into a bank rather than laid on the
 grass — silt, its shaded outer edge and a wet lip at the waterline, all mixed
 from the same ground constants the plains and shoal tones come from — a run

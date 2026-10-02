@@ -164,7 +164,7 @@ text = "Iona held that river for eleven years. I trained half the officers who d
 [sub_resource type="Resource" id="Line_29"]
 script = ExtResource("10")
 speaker = &"gideon_holt"
-text = "Three bridges, one still standing, and a field marshal's fuel depot nobody has billed us for yet, which I'm told makes this a good day."
+text = "Three bridges, one still standing, and nobody has billed us for the other two yet, which I'm told makes this a good day."
 
 [sub_resource type="Resource" id="Line_30"]
 script = ExtResource("10")

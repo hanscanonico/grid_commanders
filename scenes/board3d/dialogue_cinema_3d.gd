@@ -128,6 +128,9 @@ class Take:
 	var actor := &""
 	var post := Vector2i.ZERO
 	var projected := false
+	## The open cell beside the post they stand on to speak, or the post itself
+	## when none was free.
+	var stand := Vector2i.ZERO
 	## A wide shot's focus on the ground, and how far back it stands.
 	var focus := Vector3.ZERO
 	var reach := 0.0
@@ -440,6 +443,8 @@ func _takes_of(cast: DialogueCast) -> Array[Take]:
 		takes.append(_title_take(cast))
 	var sides: Dictionary[StringName, int] = {}
 	var said: Dictionary[StringName, int] = {}
+	var stands: Dictionary[StringName, Vector2i] = {}
+	var taken := cast.occupied.duplicate()
 	var previous: Take = null
 	for line: MissionLine in cast.lines:
 		if line == null:
@@ -451,6 +456,12 @@ func _takes_of(cast: DialogueCast) -> Array[Take]:
 			_frame_wide(take, cast.subject)
 		else:
 			_stage_speaker(take, line, cast, sides, said, previous)
+			if not stands.has(take.actor):
+				stands[take.actor] = DialogueStaging.stand_cell(
+					_map, take.post, _toward_lens(), taken
+				)
+				taken[stands[take.actor]] = true
+			take.stand = stands[take.actor]
 		var travels := previous == null or previous.kind != take.kind or previous.post != take.post
 		take.glide = GLIDE_SECONDS / _rate() if travels and not still else 0.0
 		var entrance := ENTER_SECONDS if take.steps_out else SETTLE_SECONDS
@@ -526,23 +537,30 @@ func _frame_wide(take: Take, subject: Array[Vector2i]) -> void:
 
 
 ## The actor `take` is said by, stood on the board the first time they are
-## needed: on their post's edge nearest the lens, stepping out of the building
-## behind them, or projected there over a disc of light.
+## needed: on the open cell beside their post `DialogueStaging` found, stepping
+## out of the building toward it, or projected there over a disc of light. With
+## no open cell they stand on the post's edge nearest the lens.
 func _cast(take: Take) -> Actor:
 	if _actors.has(take.actor):
 		return _actors[take.actor]
 	var actor := Actor.new()
 	var toward := Vector3(sin(_bearing()), 0.0, cos(_bearing()))
 	var ground := _ground(take.post)
+	var stands_aside := take.kind == Kind.SPEAKER and take.stand != take.post
+	if stands_aside:
+		actor.mark = _ground(take.stand)
+		toward = Vector3(actor.mark.x - ground.x, 0.0, actor.mark.z - ground.z).normalized()
+	else:
+		actor.mark = ground + toward * MARK
 	actor.door = ground + toward * DOOR
-	actor.mark = ground + toward * MARK
 	actor.figure = CommanderActor3D.make(take.speaker)
 	var tint := CommanderVisuals.theme_for(take.speaker).color_light
 	if take.projected:
 		actor.projected = true
 		actor.scale = HOLO_SCALE
 		actor.figure.set_hologram(tint)
-		actor.mark += Vector3(cos(_bearing()), 0.0, -sin(_bearing())) * HOLO_BESIDE
+		if not stands_aside:
+			actor.mark += Vector3(cos(_bearing()), 0.0, -sin(_bearing())) * HOLO_BESIDE
 		actor.door = actor.mark
 		actor.out_at = _clock
 		actor.light = Projector3D.make(tint, HOLO_RADIUS, HOLO_BEAM, false)
@@ -680,6 +698,11 @@ func _ramp(span: Vector2) -> float:
 ## The bearing the board is looked at from, in whole quarter turns.
 func _bearing() -> float:
 	return _camera.quarters * PI / 2.0
+
+
+## The board step from a cell toward the lens.
+func _toward_lens() -> Vector2i:
+	return BoardSpace3D.turned(Vector2i(0, 1), _camera.quarters)
 
 
 static func _rate() -> float:

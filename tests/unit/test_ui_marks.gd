@@ -1,5 +1,5 @@
 extends GutTest
-## The six marks neither pixel face draws, baked from pixel masks into a bitmap
+## The seven marks neither pixel face draws, baked from pixel masks into a bitmap
 ## face. It is a pure static answer like `UiTheme.stat()` and `PathArrow.segments`
 ## and the whole of it is read without a scene: the masks are data, the baked face
 ## reports its own glyphs, and the load-bearing claim is the wiring — that every
@@ -28,13 +28,13 @@ func test_the_baked_face_draws_every_mark() -> void:
 		)
 
 
-## The six the shell actually prints. Named here rather than counted, so dropping
+## The seven the shell actually prints. Named here rather than counted, so dropping
 ## one from the sheet fails instead of shrinking the promise — membership only,
 ## since the order they bake in is the sheet's business.
 func test_the_sheet_covers_what_the_shell_prints() -> void:
-	for mark in ["✓", "✗", "★", "☆", "→", "∞"]:
+	for mark in ["✓", "✗", "★", "☆", "→", "∞", "◐"]:
 		assert_true(UiMarks.MARKS.has(mark), "%s left the sheet" % mark)
-	assert_eq(UiMarks.MARKS.size(), 6)
+	assert_eq(UiMarks.MARKS.size(), 7)
 
 
 ## An open star is a filled one with a hollow in it, and the hollow has to be

@@ -12,7 +12,8 @@ extends RefCounted
 ##
 ## The sheets are sprite_generator's autotile contract (spritegen/autotile.py):
 ## 16 variants row-major on a 4x4 grid indexed by connection bits N=1 E=2 S=4
-## W=8, and the bridge sheet's two cells are the E-W deck then the N-S deck.
+## W=8, and the bridge sheet holds a row per `BridgeBed`, each the E-W
+## deck then the N-S deck.
 ## Mask 0 on the road and river sheets is their E-W fallback bar; the coast
 ## sheet's mask 0 is plain open sea, which is why a coasted cell only ever
 ## wears a mask with land in it. The woods sheet's mask 15 is the base tile:
@@ -68,9 +69,10 @@ const FRAME_B_PATHS: Dictionary[int, String] = {
 }
 
 ## How many cells each family's sheet holds: a connection set's 16 masks, the
-## bridge sheet's two decks, the phases of the phase-keyed sheets.
+## bridge sheet's two decks over each of its beds, the phases of the phase-keyed
+## sheets.
 const CONNECTION_VARIANTS := 16
-const BRIDGE_VARIANTS := 2
+const BRIDGE_DECKS := 2
 const SEA_PHASES := 3
 const PLAINS_PHASES := 8
 const MOUNTAIN_PHASES := 3
@@ -117,6 +119,15 @@ const _SHOAL_WATER: Array[StringName] = [&"sea", &"river", &"reef", &"bridge"]
 ## What a wood's canopy runs on into. Only more wood: everything else is ground
 ## the tree line has to end against.
 const _WOODS_JOINS: Array[StringName] = [&"woods"]
+
+## What a bridge stands over, its sheet's row: the river every deck was first
+## drawn across, open sea, and dry ground for a deck no water meets — a lone
+## bridge on a field drew a river's stubs into the grass (playtest ED-21).
+enum BridgeBed { RIVER, SEA, DRY }
+## A bridge's variant carries its bed above the four deck bits.
+const _BED_SHIFT := 4
+## What reads as sea under a deck: the open water a causeway crosses.
+const _SEA_BEDS: Array[StringName] = [&"sea", &"reef", &"shoal"]
 
 const _STEPS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 const _STEP_BITS: Array[int] = [BIT_N, BIT_E, BIT_S, BIT_W]
@@ -176,7 +187,23 @@ static func variant(map: MapData, cell: Vector2i) -> int:
 	var p_family := family(map, cell)
 	if PHASE_COUNTS.has(p_family):
 		return phase(cell, PHASE_COUNTS[p_family])
+	if p_family == Family.BRIDGES:
+		return mask(map, cell) | (bridge_bed(map, cell) << _BED_SHIFT)
 	return mask(map, cell)
+
+
+## What the bridge at `cell` stands over, read off the cells around it: the sea
+## when any is open water, else a river when one is, else dry ground when only
+## land meets it. A bridge among nothing but bridges keeps the river deck.
+static func bridge_bed(map: MapData, cell: Vector2i) -> BridgeBed:
+	var around: Array[StringName] = []
+	for step in _STEPS:
+		around.append(terrain_id(map, cell + step))
+	if around.any(func(id: StringName) -> bool: return _SEA_BEDS.has(id)):
+		return BridgeBed.SEA
+	if around.has(&"river") or around.count(&"bridge") == around.size():
+		return BridgeBed.RIVER
+	return BridgeBed.DRY
 
 
 ## Which of a phase-keyed family's `count` phases `cell` draws. A hash of the
@@ -203,7 +230,7 @@ static func sheet_path(p_family: int, p_frame: int = 0) -> String:
 
 ## Every cell family `p_family`'s sheet holds, which is what BattleView
 ## registers a tile for. Stated here rather than counted by the caller, because
-## a bridge's variant is a mask and a phase is an index, and only this file may
+## a bridge's variant is a deck and a bed and a phase is an index, and only this file may
 ## know which sheet is which.
 static func sheet_cells(p_family: int) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
@@ -212,8 +239,9 @@ static func sheet_cells(p_family: int) -> Array[Vector2i]:
 			cells.append(atlas_coords(p_family, index))
 		return cells
 	if p_family == Family.BRIDGES:
-		for deck in BRIDGE_VARIANTS:
-			cells.append(Vector2i(deck, 0))
+		for bed in BridgeBed.size():
+			for deck in BRIDGE_DECKS:
+				cells.append(Vector2i(deck, bed))
 		return cells
 	for connection in CONNECTION_VARIANTS:
 		cells.append(atlas_coords(p_family, connection))
@@ -221,10 +249,11 @@ static func sheet_cells(p_family: int) -> Array[Vector2i]:
 
 
 ## Where variant `p_variant` sits on family `p_family`'s sheet: connection mask
-## m at grid (m % 4, m / 4), a phase or a deck along the sheet's one row.
+## m at grid (m % 4, m / 4), a phase along the sheet's one row, a deck along
+## its bed's row.
 static func atlas_coords(p_family: int, p_variant: int) -> Vector2i:
 	if p_family == Family.BRIDGES:
-		return Vector2i(0 if p_variant & BIT_E != 0 else 1, 0)
+		return Vector2i(0 if p_variant & BIT_E != 0 else 1, p_variant >> _BED_SHIFT)
 	if PHASE_COUNTS.has(p_family):
 		return Vector2i(p_variant, 0)
 	return Vector2i(p_variant & 3, p_variant >> 2)

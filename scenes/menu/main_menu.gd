@@ -31,6 +31,9 @@ const TAGLINE := "TURN-BASED TACTICS · PICK YOUR GROUND"
 ## (SeatStrip._rebuild) and is tighter than this, which reads as a grouping the
 ## panel does not have. 5 until COM-254 grew every caption in it by two pixels.
 const PANEL_ROW_GAP := 4
+## Air under the rail's last line: the setup panel runs to the frame's foot, and
+## Quit pinned flush with it sat on the screen's last pixels (SK-30).
+const FOOTER_AIR := 6
 
 ## Everything the select page hides behind itself when it opens, so no focus or
 ## click leaks to the buttons underneath.
@@ -119,6 +122,10 @@ func _ready() -> void:
 	# board in the roster, and the setup panel's title bar parents its header label.
 	_map_picker = MapPicker.new()
 	_map_picker.configure(_terrain_db)
+	# Held before the panel's first deal remembers over it; a capture's pin has
+	# already emptied it, so a photographed menu leads with the tutorial board.
+	var remembered := Settings.match_setup
+	_fog_on = MenuSetupMemory.fog(remembered)
 	_difficulties = DifficultyDB.load_default().all()
 	_speed_tiers = GameSpeed.ordered()
 	_posed = shot_path != ""
@@ -140,27 +147,27 @@ func _ready() -> void:
 		func() -> void: get_tree().change_scene_to_file(BATTLE_SCENE)
 	)
 
-	# Where the slot comes from stays this page's: the disk, or a posed one when a
-	# capture owns it, so a photographed menu never depends on what this machine
-	# has saved.
-	_continue.refresh(
-		(
-			_capture_driver.posed_slot(_map_picker.maps())
-			if _capture_driver.poses_slot()
-			else SaveGame.status()
-		)
-	)
+	# The disk, or a posed slot when a capture owns it, so a photographed menu never
+	# depends on what this machine has saved.
+	if _capture_driver.poses_slot():
+		_continue.refresh(_capture_driver.posed_slot(_map_picker.maps()))
+	else:
+		_continue.refresh_from_disk()
 	_start_button.pressed.connect(func() -> void: _open_select(_seat_strip.ai_teams()))
 	# The strip is the only writer of who plays what, so the rule that a table with
 	# no computer at it has no difficulty to tune follows it rather than a mode
 	# flag — and follows it the moment a seat changes, not only once Start is
 	# pressed, so the panel can never disagree with the match in hand.
 	_seat_strip.changed.connect(_refresh_seats)
+	var recalled := MenuSetupMemory.map_index(remembered, _map_picker.maps())
+	if recalled >= 0:
+		_map_picker.show_map(recalled)
 	_map_picker.map_selected.connect(_on_map_selected)
 	# The map picker chooses a board while it is being built, before the strip and
 	# the footer chips exist, so the selection is re-read once everything does —
 	# the roster is the board's answer and both of them are downstream of it.
 	_deal_seats_for_map()
+	_seat_strip.seat_table(MenuSetupMemory.table(remembered))
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
 	_editor_button.pressed.connect(func() -> void: get_tree().change_scene_to_file(EDITOR_SCENE))
@@ -485,7 +492,11 @@ func _build_action_stack() -> Control:
 	_seat_refusal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_seat_refusal)
 
-	_continue = ContinueSlot.new(col, func() -> void: _start([] as Array[int], true, {}))
+	_continue = ContinueSlot.new(
+		col,
+		func() -> void: _start([] as Array[int], true, {}),
+		func(campaign_id: StringName) -> bool: return _campaign_flow.resume_saved(campaign_id)
+	)
 	col.add_child(_build_secondary_group())
 
 	var spacer := Control.new()
@@ -500,7 +511,7 @@ func _build_action_stack() -> Control:
 	col.add_child(_chips)
 
 	_press_start = Label.new()
-	_press_start.text = "PRESS START"
+	_press_start.text = ControlHints.chip_for(ControlHints.START_PROMPT)
 	_press_start.add_theme_font_override("font", UiTheme.stat())
 	_press_start.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	_press_start.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
@@ -513,14 +524,17 @@ func _build_action_stack() -> Control:
 		_quit_button = UiKit.text_link("Quit")
 		col.add_child(_quit_button)
 		_quit_button.pressed.connect(get_tree().quit)
+	var air := Control.new()
+	air.custom_minimum_size = Vector2(0, FOOTER_AIR)
+	col.add_child(air)
 	return col
 
 
-## The three ways off this page, tight against one another so they read as one
+## The four ways off this page, tight against one another so they read as one
 ## group a step below Continue: an authored war, the recordings of matches
-## already played, and authoring a board — which is the one thing here that is not
-## playing the game (COM-263). Chrome-less, because none of them starts the match
-## this page sets up.
+## already played, authoring a board — which is the one thing here that is not
+## playing the game (COM-263) — and the device's settings (SK-14). Chrome-less,
+## because none of them starts the match this page sets up.
 func _build_secondary_group() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 1)
@@ -530,6 +544,9 @@ func _build_secondary_group() -> Control:
 	col.add_child(_replay_button)
 	_editor_button = UiKit.action_button("Map Editor", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_editor_button)
+	var settings := UiKit.action_button("Settings", "", UiTheme.ButtonVariant.GHOST, null)
+	col.add_child(settings)
+	MenuSettingsPage.attach(self, _menu_root, settings)
 	return col
 
 
@@ -578,6 +595,7 @@ func _on_speed_selected(index: int) -> void:
 
 func _on_fog_toggled(pressed: bool) -> void:
 	_fog_on = pressed
+	MenuSetupMemory.remember(_map_picker.selected_map(), _fog_on, _seat_strip)
 
 
 ## Battle animations, like speed, is a standing device preference: it writes
@@ -605,6 +623,7 @@ func _refresh_seats() -> void:
 	# here is an army that will not be on the map, so its livery leaves the footer
 	# in the same tap (open-seats plan D4).
 	_refresh_chips(_seat_strip.seats())
+	MenuSetupMemory.remember(_map_picker.selected_map(), _fog_on, _seat_strip)
 
 
 func _on_map_selected(_index: int) -> void:
@@ -755,31 +774,8 @@ func setup_context_ready() -> bool:
 			passed = false
 	# Deliberately not short-circuiting, like the driver's own frame check: one
 	# failed run should name every promise that broke, not just the first.
-	passed = _difficulty_follows_mode() and passed
+	# Who is at the table is state, so the strip walks it rather than the frame
+	# photographing one side of it.
+	passed = _seat_strip.tier_rule_holds() and passed
 	passed = _map_picker.caption_budget_holds() and passed
-	return passed
-
-
-## Who is at the table is state, so the gate walks it rather than photographing
-## one side of it: a seat nobody but a person is in has no computer to tune and its
-## tier chip goes inert, and seating a computer there brings it back. The posed
-## all-human table is restored before the frame is written.
-func _difficulty_follows_mode() -> bool:
-	var passed := true
-	if not _seat_strip.ai_teams().is_empty():
-		push_error("main menu setup context: the all-human table is not the posed state")
-		passed = false
-	var last := _seat_strip.seat_count() - 1
-	_seat_strip.set_human(last, false)
-	if not _seat_strip.tier_operable(last):
-		push_error("main menu setup context: the tier stays disabled with a CPU seated")
-		passed = false
-	if _seat_strip.seat_difficulty().is_empty():
-		push_error("main menu setup context: a CPU seat names no tier")
-		passed = false
-	_seat_strip.set_human(last, true)
-	if _seat_strip.tier_operable(last):
-		push_error("main menu setup context: the tier remains operable with nobody to tune")
-		passed = false
-	_refresh_seats()
 	return passed

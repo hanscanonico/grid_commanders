@@ -80,3 +80,35 @@ func test_seat_already_on_auto_keeps_the_row() -> void:
 	var auto_tiers := {game.current_team: &"normal"}
 	var rows := BattleMenus.map_actions(game, false, true, ai_teams, auto_tiers, difficulty_db)
 	assert_true(_ids(rows).has(&"auto"), "a seat the player lent out may be taken back")
+
+
+## Playtest SK-18: the Auto row read "Auto: Off" and answered nothing to left and
+## right, two rows under a Speed row that steps. It now steps through the seat's
+## own `auto_step` and only hands over on Enter, and it says what it is for.
+func test_auto_row_steps_under_left_and_right_and_says_what_it_does() -> void:
+	var picked: Array[int] = []
+	var step := func(by: int) -> String:
+		picked.append(by)
+		return "Auto: Easy"
+	var rows := BattleMenus.map_actions(_game(), true, true, [], {}, difficulty_db, true, step)
+	var auto: Dictionary = rows.filter(func(row: Dictionary) -> bool: return row["id"] == &"auto")[0]
+	assert_eq(auto["label"], "Auto: Off")
+	assert_true(auto["chooses"], "Enter takes the level shown rather than stepping it")
+	assert_eq((auto["cycle"] as Callable).call(1), "Auto: Easy")
+	assert_eq(picked, [1] as Array[int])
+	assert_string_contains(auto["detail"], BattleMenus.AUTO_HEADING)
+
+
+func test_auto_ladder_is_the_lists_own_order() -> void:
+	var ladder := BattleMenus.auto_ladder(difficulty_db)
+	var listed := _ids(BattleMenus.auto_actions(difficulty_db))
+	listed.erase(&"cancel")
+	assert_eq(ladder, listed, "the arrows walk the rungs the list offers, Off first")
+	assert_eq(BattleMenus.auto_label(ladder[0], difficulty_db), "Auto: Off")
+
+
+## Playtest SK-29: the leave confirmation named no consequence.
+func test_leaving_unsaved_names_what_is_lost() -> void:
+	assert_eq(BattleMenus.abandon_consequence(false, 3), "Progress since your Day 3 save is lost.")
+	assert_string_contains(BattleMenus.abandon_consequence(false, 0), "never saved")
+	assert_eq(BattleMenus.abandon_consequence(true, 3), "", "a replay loses nothing")

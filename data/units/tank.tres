@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"tank"
 display_name = "Tank"
+role = "Quick all-rounder for the front line."
 symbol = "t"
 cost = 7000
 move_points = 6

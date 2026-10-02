@@ -10,24 +10,29 @@ func _map(path: String) -> MapData:
 
 func test_the_teaching_board_wears_its_badge() -> void:
 	var map := _map(MapCatalog.TUTORIAL_MAP_PATH)
-	var cell_name := MapPicker.cell_name(map, false)
-	assert_string_contains(cell_name, MapCatalog.display_name(map.source_path))
-	assert_string_contains(cell_name, "Tutorial")
-	assert_false(cell_name.contains("✓"), "an unselected cell wears no tick")
+	assert_eq(MapPicker.cell_name(map), MapCatalog.display_name(map.source_path))
+	assert_string_contains(MapPicker.cell_badge(map), "Tutorial")
 
 
-## The tick leads, because a cell's label is clipped to the cell and the boards
-## with the longest names are the ones a trailing tick would fall off.
-func test_the_selected_cell_is_ticked() -> void:
-	var map := _map(MapCatalog.TUTORIAL_MAP_PATH)
-	assert_true(MapPicker.cell_name(map, true).begins_with("✓"))
+## The name has the cell's whole width, so every shipped board's name is read in
+## full rather than cut to "Foursquare…" (playtest SK-31).
+func test_every_shipped_name_fits_its_cell() -> void:
+	for map in MapCatalog.ordered(Fixture.terrain_db()):
+		var name := MapPicker.cell_name(map)
+		var width := (
+			UiTheme
+			. display()
+			. get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_BODY)
+			. x
+		)
+		assert_lte(width, MapPicker.THUMB.x, name)
 
 
 ## A duel says nothing about its seats; a board that deals more than two says how
 ## many, because that is what a player scrolling the list is choosing between.
 func test_only_a_board_past_a_duel_names_its_seats() -> void:
 	for map in MapCatalog.ordered(Fixture.terrain_db()):
-		var marked := MapPicker.cell_name(map, false).contains("· %dP" % map.player_count())
+		var marked := MapPicker.cell_badge(map).contains("%dP" % map.player_count())
 		assert_eq(marked, map.player_count() > 2, map.source_path)
 
 
@@ -116,9 +121,27 @@ func test_a_board_the_player_drew_is_badged_custom() -> void:
 	assert_eq(UserMaps.save(name, text), "", "the scratch board saved")
 	var map := UserMaps.load_map(name, Fixture.terrain_db())
 	assert_true(MapPicker.is_custom(map), "a board in user://maps is the player's own")
-	var cell_name := MapPicker.cell_name(map, false)
-	assert_string_contains(cell_name, "Custom")
-	assert_false(cell_name.contains("Tutorial"), "a copy of the teaching board does not teach")
+	var badge := MapPicker.cell_badge(map)
+	assert_string_contains(badge, "Custom")
+	assert_false(badge.contains("Tutorial"), "a copy of the teaching board does not teach")
+	assert_eq(UserMaps.delete(name), "", "the scratch board cleaned up")
+
+
+## The player's own boards lead the shelf, where they are one glance away rather
+## than the last of thirty-odd cells (playtest ED-08), and the shelf still opens on
+## the teaching board.
+func test_the_players_own_boards_lead_the_shelf() -> void:
+	var name := "test_picker_leading_board"
+	var text := FileAccess.get_file_as_string(MapCatalog.TUTORIAL_MAP_PATH)
+	assert_eq(UserMaps.save(name, text), "", "the scratch board saved")
+	var shelf := MapPicker.roster(Fixture.terrain_db())
+	var custom := 0
+	while custom < shelf.size() and MapPicker.is_custom(shelf[custom]):
+		custom += 1
+	assert_gt(custom, 0, "the shelf opens on a board of theirs")
+	for i in range(custom, shelf.size()):
+		assert_false(MapPicker.is_custom(shelf[i]), "none of theirs after a shipped board")
+	assert_true(MapCatalog.teaches(shelf[MapPicker.home_index(shelf)].source_path))
 	assert_eq(UserMaps.delete(name), "", "the scratch board cleaned up")
 
 

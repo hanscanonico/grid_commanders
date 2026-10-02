@@ -238,6 +238,11 @@ forms named in the root index are in `docs/design_record.md`.
   the fill to walk is still the rejected answer. Everything else is presentation, gated by the same
   `perspective.can_see_unit` fog rule targeting uses and then masked to scouted ground by
   `BattlePerspective._viewer_safe`; `make screenshot` stays byte-stable.
+  **The fire paint is an opaque red edge round the fired-at set, with no fill** (playtest ED-24,
+  2026-10-02): a translucent wash took its hue from the ground — orange on grass, purple on water
+  and bridges — and tinted the mint reach under it, so `BattleOverlays.paint_attack` keys each
+  cell's tile to its eight neighbours and draws only the outline. A denser wash is the rejected
+  answer: it hid the reach and the targets' sprites.
 - **Field overlays** (no plan artifact; the *Field Overlays* design handoff, and this entry is its
   record) — the threat lens, the arrowed movement path and the capture pip. **Nothing under `core/`
   or `ai/` was touched, because the handoff's rules helpers already existed**: its `threat()` /
@@ -620,8 +625,10 @@ forms named in the root index are in `docs/design_record.md`.
   window mode back at their defaults, so no preference stored on the capturing machine reaches a
   frame — the window most of all, a full-screen machine otherwise framing every capture at its own
   monitor. **The window mode is a pause-menu row and the `F11` key, and on the main menu it is the
-  key alone**: that page's options row is full at four controls, a fifth putting the setup panel
-  past the 640-wide frame and the menu capture gate refusing it outright. Hidden under
+  key and the Settings page, never the options row**: that row is full at four controls, a fifth
+  putting the setup panel past the 640-wide frame and the menu capture gate refusing it outright.
+  The Settings page (`MenuSettingsPage`, SK-14) is the pause menu's own rows —
+  `Settings.value_actions`, in the same `ActionMenu` — less Speed, which the panel already holds. Hidden under
   `MobileProfile` — `Settings.offered_rows()` is the one answer to whether this device has a window
   to stand anywhere but full, and the row, the key and the `DisplayServer` call all sit behind it.
   `--reset-hints` is the one `Settings` flag that deliberately writes. The key legend
@@ -725,7 +732,10 @@ forms named in the root index are in `docs/design_record.md`.
   `UnitMirror3D` stands a speck of it before the lens for the board's first frames, so its shader
   is built as the board comes up, never when the first aircraft appears. The cut-in stage keeps
   its own cruise height and sun shadows. The ground's variety is
-  per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
+  per-sub-square shade, flat, by the standing-terrain rule below; the sea's is the shader's
+  alone — one flat blue moved by world-space noise, so no cell seam or per-cell repeat shows on
+  the board or the cut-in stage. A property nobody owns wears bare stone on the 3D board
+  (`Board3D`), not row 0's grey, which sat a step off Iron's charcoal at full zoom-out. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
   request, 2026-09-29: "cinematics like in Final Fantasy with music, dialogs"). A scripted beat's
   lines, the briefing read again, a Command Power's activation and — new — a fresh mission's opening
   (its title card over the board, then its briefing) play through `DialogueCinema3D` whenever the 3D
@@ -741,7 +751,10 @@ forms named in the root index are in `docs/design_record.md`.
   flies to a speaker the first time (`CinemaPose3D.glide`, a crane's arc, with a whoosh) and cuts
   between medium and closer shots after (`CinemaShot3D.actor`, the open third facing into the
   board); a general with no army on the board is projected as a hologram on a `Projector3D` at the
-  viewer's post; the narrator speaks over an establishing shot. The story theme (`council`) comes in
+  viewer's post; **every figure stands on open ground beside its post** — never inside a building,
+  a peak, a wood, water, a unit the viewer sees or another general, and with nothing in front of
+  it toward the lens where a cell allows (`DialogueStaging.stand_cell`, playtest CA-11); the
+  narrator speaks over an establishing shot. The story theme (`council`) comes in
   for the scene and the match's own track comes back after it (`Music.current`). A power is a limit
   break: under a flash and `power_sting` the general stands in a sparking pillar of light, raises a
   fist, two shockwaves roll out to the rim and the power's name slams in; the card is still bound so
@@ -829,7 +842,11 @@ forms named in the root index are in `docs/design_record.md`.
   is never *constructed* on desktop. D8: touch targets grow their **hit** rectangles, never their
   drawn heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor
   rung. D9: the planner is not a mobile task. **Landscape only** (user decision) and
-  **`aspect="keep"`**; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
+  **`aspect="keep"`** — an upright window on a touch build is covered by `RotateCard`
+  (`scenes/ui/rotate_card.gd`, installed by `Settings`) until it turns, and a desktop window that
+  is merely tall never gets one. A touch build's `UiKit.action_chip` stands on a plate
+  (`UiTheme.touch_chip_plate`) drawn inside its bar, so a chip reads as a button without D8's
+  drawn height moving; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
   by measurement rather than by assumption. D7's mechanism is **refuted** — a feature-tagged autoload
   override does not clear an autoload on 4.7.1, the engine reading each `autoload/*` property raw, so
   unregistering the editor addon's runtime belongs to the addon that registers it. D4's safe-area
