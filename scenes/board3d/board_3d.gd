@@ -228,11 +228,13 @@ func _resting_probe() -> Camera3D:
 
 ## Tells the camera where it frames the board: the band the HUD bars leave, cut
 ## below the tutorial strip while it shows, and whether the rung is the floor
-## that shows all of the board.
+## that shows all of the board. The strip's own `visible`, not its tree's: a
+## cut-in or a story scene hides the whole HUD layer, and the board behind it
+## must not re-frame and glide back when the layer returns.
 func _frame_lens() -> void:
 	var band := MobileDock.board_band(get_viewport().get_visible_rect().size)
 	var strip := _view.mission_strip
-	if strip != null and strip.is_visible_in_tree():
+	if strip != null and strip.visible:
 		var below := strip.get_global_rect().end.y
 		band = Rect2(band.position.x, below, band.size.x, band.end.y - below)
 	_camera.band = band
