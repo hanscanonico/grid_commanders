@@ -111,6 +111,12 @@ func test_roundtrip_preserves_rng_sequence() -> void:
 ## handle offers reads clean while nothing lands, so `save` answers for itself by
 ## re-reading the temp. That is why none of the tests below stand on `store_string`'s
 ## bool or on `get_error()` — neither one sees a full disk.
+func test_a_save_is_dated_and_an_empty_slot_is_not() -> void:
+	assert_eq(SaveGame.saved_at(TEST_PATH), 0, "nothing saved, no date")
+	assert_true(SaveGame.save(_first_steps_state(), [] as Array[int], TEST_PATH))
+	assert_gt(SaveGame.saved_at(TEST_PATH), 0)
+
+
 func test_save_to_an_unwritable_path_reports_failure() -> void:
 	var state := _first_steps_state()
 	assert_false(SaveGame.save(state, [] as Array[int], "user://no_such_dir/save.json"))
