@@ -8,9 +8,27 @@ extends RefCounted
 ## the menu is a *setup* page, and whether there is a match to come back to is a
 ## different question from which board and how much fog.
 ##
-## The slot is handed its `SaveGame.Slot` rather than fetching one, so whether
-## that is the disk or a posed capture stays the menu's decision; this class
-## reads no autoload and no command line.
+## Whether the row is read off the disk (`refresh_from_disk`) or handed a posed
+## slot (`refresh`) stays the menu's decision; this class reads no autoload and no
+## command line.
+##
+## Two things can be waiting: the skirmish slot, and a campaign mission saved
+## mid-battle into its war's profile. Continue offers whichever was saved last
+## and its caption says which — "Day 4 · Scrimmage" or "Five Flags 02 · Day 1" —
+## and a campaign mission is resumed by the campaign's own Resume, never by a
+## second way of loading one. The skirmish slot itself is never written by a
+## campaign, so what it holds keeps one meaning.
+
+
+## A campaign mission waiting on the board it was saved with.
+class Waiting:
+	extends RefCounted
+
+	var campaign_id: StringName
+	## "Five Flags 02 · Day 1".
+	var label: String
+	var saved_at: int
+
 
 ## The air the card keeps around the button and the line under it.
 const CARD_PAD := 3
@@ -28,10 +46,16 @@ var _button: Button
 var _caption: Label
 var _tip: Tooltip
 var _on_resume: Callable
+## The campaign mission Continue resumes instead of the slot, or null.
+var _waiting: Waiting
+## Hands a war's id to the campaign's own Resume, which answers whether it found
+## a board to resume.
+var _on_resume_mission: Callable
 
 
-func _init(into: VBoxContainer, on_resume: Callable) -> void:
+func _init(into: VBoxContainer, on_resume: Callable, on_resume_mission: Callable) -> void:
 	_on_resume = on_resume
+	_on_resume_mission = on_resume_mission
 	# One card, not two floating rows. The button and the line under it are a title
 	# and its subtitle — "Continue" alone says nothing about which match — and a
 	# caption left standing loose in the action column read as another orphan of the
@@ -85,10 +109,54 @@ func button() -> Button:
 ## codec's own words rather than in the codec's log.
 func refresh(slot: SaveGame.Slot) -> void:
 	_slot = slot
+	_waiting = null
 	_render()
 
 
+## `refresh` off this machine's disk: the skirmish slot, and the campaign mission
+## saved last, which Continue offers in the slot's place when it is the later of
+## the two.
+func refresh_from_disk() -> void:
+	_slot = SaveGame.status()
+	_waiting = null
+	var mission := waiting_mission()
+	var slot_named := _slot.state == SaveGame.Slot.State.READABLE
+	if mission != null and (not slot_named or mission.saved_at > SaveGame.saved_at()):
+		_waiting = mission
+	_render()
+
+
+## The campaign mission saved most recently across every war, or null.
+static func waiting_mission() -> Waiting:
+	var latest: Waiting = null
+	for campaign: CampaignDefinition in CampaignDB.load_default().all():
+		var mission := campaign.mission(CampaignProfile.saved_mission(campaign.id))
+		if mission == null:
+			continue
+		var summary := SaveCodec.summarize(CampaignProfile.load_battle(campaign.id))
+		var waiting := Waiting.new()
+		waiting.campaign_id = campaign.id
+		waiting.label = (
+			"%s %02d · Day %d"
+			% [
+				campaign.title,
+				campaign.missions.find(mission) + 1,
+				summary.day if summary != null else 1
+			]
+		)
+		waiting.saved_at = CampaignProfile.saved_at(campaign.id)
+		if latest == null or waiting.saved_at > latest.saved_at:
+			latest = waiting
+	return latest
+
+
 func _render() -> void:
+	if _waiting != null:
+		_button.disabled = false
+		_caption.text = _waiting.label
+		_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL)
+		_tip.set_copy("Resume the campaign mission", "Picks up the board it was saved on")
+		return
 	if _slot.state == SaveGame.Slot.State.ABSENT:
 		_refuse("No saved match", "Nothing saved yet", "Save in battle from the map menu")
 		return
@@ -123,6 +191,12 @@ func _refuse(caption: String, tip: String, detail: String) -> void:
 ## boots the battle scene onto the fresh match the request also states, on
 ## whatever board the picker is showing, with nothing said (COM-121).
 func _press() -> void:
+	# A board that went missing since the menu opened is not offered again: the
+	# disk is read afresh, and the row says what is left.
+	if _waiting != null:
+		if not _on_resume_mission.call(_waiting.campaign_id):
+			refresh_from_disk()
+		return
 	var chart: DamageChart = load(DamageChart.DEFAULT_PATH)
 	var loaded := SaveGame.load_game(
 		TerrainDB.load_default(),

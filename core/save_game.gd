@@ -9,7 +9,7 @@ extends RefCounted
 ## failures with separate messages.
 ##
 ## The public surface is small and stays that way: `save`, `load_game`, `status`,
-## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use — plus `TEMP_SUFFIX`
+## `has_save`, `saved_at`, `SAVE_PATH`, and `VERSION` are what callers use — plus `TEMP_SUFFIX`
 ## and `BACKUP_SUFFIX`, which are public only so a test can name the siblings a save
 ## stages beside a slot rather than spelling them a second time. Which on-disk
 ## versions exist and which still load is SaveCodec's to say — see its header.
@@ -118,6 +118,14 @@ static func status(path: String = SAVE_PATH) -> Slot:
 	if reason != "":
 		return Slot.unreadable(reason)
 	return Slot.readable(SAVE_CODEC_SCRIPT.summarize(json.data))
+
+
+## When the slot's save was written, in seconds since the epoch, or 0 when there
+## is none — so the menu's Continue can tell it from a campaign's saved mission
+## and offer whichever the player left last.
+static func saved_at(path: String = SAVE_PATH) -> int:
+	var slot := _slot_path(path)
+	return 0 if slot.is_empty() else FileAccess.get_modified_time(slot)
 
 
 ## `difficulty` trails `path` so every existing caller keeps working; a save

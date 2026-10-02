@@ -140,16 +140,12 @@ func _ready() -> void:
 		func() -> void: get_tree().change_scene_to_file(BATTLE_SCENE)
 	)
 
-	# Where the slot comes from stays this page's: the disk, or a posed one when a
-	# capture owns it, so a photographed menu never depends on what this machine
-	# has saved.
-	_continue.refresh(
-		(
-			_capture_driver.posed_slot(_map_picker.maps())
-			if _capture_driver.poses_slot()
-			else SaveGame.status()
-		)
-	)
+	# The disk, or a posed slot when a capture owns it, so a photographed menu never
+	# depends on what this machine has saved.
+	if _capture_driver.poses_slot():
+		_continue.refresh(_capture_driver.posed_slot(_map_picker.maps()))
+	else:
+		_continue.refresh_from_disk()
 	_start_button.pressed.connect(func() -> void: _open_select(_seat_strip.ai_teams()))
 	# The strip is the only writer of who plays what, so the rule that a table with
 	# no computer at it has no difficulty to tune follows it rather than a mode
@@ -485,7 +481,11 @@ func _build_action_stack() -> Control:
 	_seat_refusal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_seat_refusal)
 
-	_continue = ContinueSlot.new(col, func() -> void: _start([] as Array[int], true, {}))
+	_continue = ContinueSlot.new(
+		col,
+		func() -> void: _start([] as Array[int], true, {}),
+		func(campaign_id: StringName) -> bool: return _campaign_flow.resume_saved(campaign_id)
+	)
 	col.add_child(_build_secondary_group())
 
 	var spacer := Control.new()

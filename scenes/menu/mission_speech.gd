@@ -55,13 +55,17 @@ static func paragraph(text: String, dim: bool = false, width: int = WIDTH) -> La
 	return label
 
 
-## The speaker's name over their words, in their faction's colour.
-static func name_of(commander: CommanderType, width: int) -> Label:
+## The speaker's name over their words, in their faction's colour as it reads on
+## `ground` — the slate every dark panel that speaks a line is drawn on, unless a
+## caller prints it on something else.
+static func name_of(
+	commander: CommanderType, width: int, ground: Color = UiTheme.SLATE_800
+) -> Label:
 	var label := Label.new()
 	label.text = commander.display_name.to_upper()
 	label.add_theme_font_override("font", UiTheme.stat(true))
 	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	label.add_theme_color_override("font_color", CommanderVisuals.theme_for(commander).color)
+	label.add_theme_color_override("font_color", CommanderVisuals.name_color(commander, ground))
 	label.custom_minimum_size = Vector2(width, 0)
 	return label
 

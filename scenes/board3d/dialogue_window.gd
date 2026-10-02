@@ -25,8 +25,6 @@ const NARRATION_WIDTH := 330
 ## Words are set a step above body copy: they are read across a cinematic, not
 ## at a panel's distance.
 const WORDS_SIZE := UiTheme.SIZE_SUBTITLE
-## A speaker's name is lifted off their army's colour to read on the blue.
-const NAME_LIFT := 0.35
 const TAIL := Vector2(12, 8)
 const CURSOR := Vector2(7, 5)
 const CURSOR_BOB_HZ := 3.0
@@ -80,9 +78,7 @@ func say(speaker: CommanderType, words: String) -> void:
 	_face_slot.visible = not narrated
 	if not narrated:
 		_face_slot.add_child(MissionSpeech.bust_of(speaker, FACE))
-		_name = MissionSpeech.name_of(speaker, 0)
-		var army := CommanderVisuals.theme_for(speaker).color
-		_name.add_theme_color_override("font_color", army.lightened(NAME_LIFT))
+		_name = MissionSpeech.name_of(speaker, 0, FIELD_TOP)
 		_copy.add_child(_name)
 		_copy.move_child(_name, 0)
 	_words.custom_minimum_size.x = NARRATION_WIDTH if narrated else WORDS_WIDTH
