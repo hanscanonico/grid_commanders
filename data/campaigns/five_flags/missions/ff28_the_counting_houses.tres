@@ -181,7 +181,7 @@ text = "Ten towns flying Aurora's colours and their loan books in the back of my
 [sub_resource type="Resource" id="Line_28"]
 script = ExtResource("9")
 speaker = &"dane_ferrow"
-text = "Vault's counted and every coin of it went into your cars, Chancellor. Write that down somewhere, because nobody at home will believe it."
+text = "Not one coin on this coast's gone into my pockets, Chancellor. Write that down somewhere, because nobody at home will believe it."
 requires = SubResource("Cond_1")
 
 [sub_resource type="Resource" id="Line_29"]
