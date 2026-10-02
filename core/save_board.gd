@@ -21,8 +21,17 @@ const KEY := "map_text"
 
 ## Adds the board to a save's envelope when it is one the player drew.
 static func carry(envelope: Dictionary, map: MapData, map_path: String) -> void:
-	if UserMaps.owns(map_path) and map != null and not map.source_text.is_empty():
-		envelope[KEY] = map.source_text
+	var text := text_of(map, map_path)
+	if not text.is_empty():
+		envelope[KEY] = text
+
+
+## The board's own text when it is one the player drew, else "": what a save, a
+## recording or a rematch request carries so it does not depend on the file.
+static func text_of(map: MapData, map_path: String) -> String:
+	if UserMaps.owns(map_path) and map != null:
+		return map.source_text
+	return ""
 
 
 ## "" when the carried board, if any, is text, else why the save is refused.
@@ -37,10 +46,15 @@ static func error(data: Dictionary) -> String:
 ## The board a save resumes on: the one it carries, else the file its path names.
 ## Null (with a pushed error) when neither gives a board.
 static func load_map(data: Dictionary, terrain_db: TerrainDB) -> MapData:
-	var map_path := String(data["map_path"])
-	if not data.has(KEY):
+	return load_board(String(data["map_path"]), String(data.get(KEY, "")), terrain_db)
+
+
+## The board `text` describes, named `map_path`; the file `map_path` names when no
+## text was carried. Null (with a pushed error) when neither gives a board.
+static func load_board(map_path: String, text: String, terrain_db: TerrainDB) -> MapData:
+	if text.is_empty():
 		return MapData.load_from_file(map_path, terrain_db)
-	var map := MapData.parse(String(data[KEY]), terrain_db)
+	var map := MapData.parse(text, terrain_db)
 	if map != null:
 		map.source_path = map_path
 	return map
