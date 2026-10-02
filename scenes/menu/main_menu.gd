@@ -118,13 +118,13 @@ func _ready() -> void:
 	Music.play(&"parade")
 
 	_terrain_db = TerrainDB.load_default()
-	# Built and stocked before the page is drawn: the backdrop bakes the fullest
-	# board in the roster, and the setup panel's title bar parents its header label.
-	_map_picker = MapPicker.new()
-	_map_picker.configure(_terrain_db)
 	# Held before the panel's first deal remembers over it; a capture's pin has
 	# already emptied it, so a photographed menu leads with the tutorial board.
 	var remembered := Settings.match_setup
+	# Built and stocked before the page is drawn: the backdrop bakes the fullest
+	# board in the roster, and the setup panel's title bar parents its header label.
+	_map_picker = MapPicker.new()
+	_map_picker.configure(_terrain_db, MenuSetupMemory.map_path(remembered))
 	_fog_on = MenuSetupMemory.fog(remembered)
 	_difficulties = DifficultyDB.load_default().all()
 	_speed_tiers = GameSpeed.ordered()
@@ -159,9 +159,6 @@ func _ready() -> void:
 	# flag — and follows it the moment a seat changes, not only once Start is
 	# pressed, so the panel can never disagree with the match in hand.
 	_seat_strip.changed.connect(_refresh_seats)
-	var recalled := MenuSetupMemory.map_index(remembered, _map_picker.maps())
-	if recalled >= 0:
-		_map_picker.show_map(recalled)
 	_map_picker.map_selected.connect(_on_map_selected)
 	# The map picker chooses a board while it is being built, before the strip and
 	# the footer chips exist, so the selection is re-read once everything does —

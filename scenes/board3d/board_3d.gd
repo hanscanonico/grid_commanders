@@ -28,6 +28,11 @@ const DEFAULT_BIT := 1
 const OVERLAY_PX_PER_CELL := 48
 const OVERLAY_MAX_PX := 2048
 const TERRAIN_SHADER := preload("res://scenes/board3d/terrain_3d.gdshader")
+## A property with a unit on it lowers to this share of its height, so the unit
+## stands over its roofs rather than inside its walls and a docked hull clears
+## the port's crane and shed; the roofs, low, still say whose it is.
+const OCCUPIED_HEIGHT := 0.3
+const SETTLE_RATE := 10.0
 const BACKGROUND := Color("#1a2130")
 const TABLE := Color("#262d3b")
 
@@ -293,6 +298,7 @@ func _process(delta: float) -> void:
 		_frame_lens()
 		_camera.follow(delta, focus, _view.camera.zoom.x, _view.board_camera.shake_offset)
 	_units.sync(delta, _camera.camera.global_basis)
+	_settle_properties(delta)
 	_cursor.visible = _view.cursor.visible and not _cinema.rolling and not _stage_on_air()
 	_cursor.follow(delta, focus, _clock)
 
@@ -479,14 +485,28 @@ func _refresh_owners() -> void:
 		if _property_rows.get(cell, -2) == row:
 			continue
 		_property_rows[cell] = row
-		if _properties.has(cell):
-			_properties[cell].queue_free()
 		var building := PropertyModels3D.build(_map.terrain_at(cell).id, property_theme(row))
+		if _properties.has(cell):
+			building.scale = _properties[cell].scale
+			_properties[cell].queue_free()
 		_dress(building)
 		var centre := BoardSpace3D.cell_centre(cell)
 		building.position = Vector3(centre.x, BoardSpace3D.LAND_TOP, centre.y)
 		add_child(building)
 		_properties[cell] = building
+
+
+## Lowers each property a unit is seen on and raises it again once it leaves.
+func _settle_properties(delta: float) -> void:
+	var occupied := _units.standing_cells()
+	var ease := 1.0 if BoardBeat.still() else 1.0 - exp(-delta * SETTLE_RATE)
+	for cell: Vector2i in _properties:
+		var building := _properties[cell]
+		var height := OCCUPIED_HEIGHT if occupied.has(cell) else 1.0
+		if building.scale.y == height:
+			continue
+		var settled := lerpf(building.scale.y, height, ease)
+		building.scale.y = height if absf(settled - height) < 0.001 else settled
 
 
 ## Puts a building on the ground's own material, so the fog darkens it and a

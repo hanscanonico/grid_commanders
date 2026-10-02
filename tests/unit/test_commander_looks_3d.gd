@@ -47,6 +47,30 @@ func test_an_unknown_general_is_the_neutral_officer() -> void:
 	assert_eq(neutral[&"prop"], &"none")
 
 
+## Platinum over pale skin tied to within a luma point and drew a cream block
+## (playtest SK-26): every mass now clears its cheek, dropping down its own
+## rungs as the bust's does.
+func test_every_hair_mass_stands_off_its_face() -> void:
+	for id: StringName in CommanderLooks3D.LOOKS:
+		var look := CommanderLooks3D.look_of(id)
+		var gap := absf(
+			CommanderLooks3D.luma(look[&"hair_color"]) - CommanderLooks3D.luma(look[&"skin_color"])
+		)
+		assert_gte(gap, CommanderLooks3D.SKIN_CONTRAST, String(id))
+
+
+func test_a_mass_clear_of_its_face_keeps_its_own_colour() -> void:
+	var gideon := CommanderLooks3D.look_of(&"gideon_holt")
+	assert_eq(gideon[&"hair_color"], Color8(189, 189, 189), "grey over tan stays grey")
+	var lyra := CommanderLooks3D.look_of(&"lyra_quill")
+	assert_almost_eq(
+		CommanderLooks3D.luma(lyra[&"hair_color"]),
+		CommanderLooks3D.luma(Color8(231, 224, 204)) * CommanderLooks3D.HAIR_RUNGS[1],
+		0.5,
+		"platinum over pale skin drops to its shade rung, as her bust's does"
+	)
+
+
 func test_every_figure_stands_on_the_ground_inside_its_cell() -> void:
 	for commander in _generals():
 		var look := CommanderLooks3D.look_of(commander.id)

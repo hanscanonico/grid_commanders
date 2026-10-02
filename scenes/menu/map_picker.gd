@@ -4,8 +4,11 @@ extends VBoxContainer
 ## roster with its teaching board first (MapCatalog.ordered) — the dropdown is
 ## gone (MN2). The selected cell gets the raised cream surface, the meridian
 ## border and a ✓; scroll follows keyboard focus so every board is reachable
-## without a mouse. A static caption beneath the viewport carries the
-## decision-critical facts, so a cell carries no tooltip repeating them.
+## without a mouse. Focus only highlights a cell and a press selects it, so
+## walking focus through the grid to reach the seats or Start never trades the
+## board in hand for whichever cell the walk crossed (the class of SK-03). A
+## static caption beneath the viewport carries the decision-critical facts, so a
+## cell carries no tooltip repeating them.
 ##
 ## The boards the player drew themselves come first, beside Random, badged
 ## Custom and otherwise ordinary cells: the same live thumbnail, the same
@@ -42,6 +45,8 @@ const GRID_GAP := 8
 const GRID_COLUMNS := 4
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
+## The most lines a cell's name may take — a second only for a player's long name.
+const NAME_LINES_MAX := 2
 ## A cell's picture: the shelf's width shared `GRID_COLUMNS` ways with the gutters
 ## taken out, less this frame's own inset. Every cell is this size — the Random
 ## cell draws a die in it — so the grid's rows and gutters are one shape whichever
@@ -102,8 +107,9 @@ var _manage_link: Button
 
 ## Parses the roster and draws the widget. Called before the picker is in the
 ## tree, like every other code-built control here; `reserve_caption` is the one
-## measurement that has to wait for the tree.
-func configure(db: TerrainDB) -> void:
+## measurement that has to wait for the tree. `remembered_path` is the board the
+## last setup was left on, which `_open_on` weighs against a board just drawn.
+func configure(db: TerrainDB, remembered_path: String = "") -> void:
 	_terrain_db = db
 	_maps = roster(db)
 	add_theme_constant_override("separation", 3)
@@ -128,6 +134,7 @@ func configure(db: TerrainDB) -> void:
 	_map_scroll.custom_minimum_size = Vector2(0, _cell_height() + 0.5 * _picture_height())
 	_map_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_map_scroll.follow_focus = true
 	add_child(_map_scroll)
 
 	_grid = GridContainer.new()
@@ -160,9 +167,20 @@ func configure(db: TerrainDB) -> void:
 	UiKit.touchable(_manage_link)
 	facts.add_child(_manage_link)
 	add_child(facts)
+	_open_on(remembered_path)
+
+
+## The board the shelf opens on: the one the player has just saved in the editor,
+## else the one the last setup was left on, else the teaching board. One rule in
+## one place, so the editor's hand-over and the menu's memory cannot both select
+## and leave whichever ran last to win.
+func _open_on(remembered_path: String) -> void:
 	var just_drawn := UserMaps.take_last_saved()
-	if just_drawn == "" or not select_path(UserMaps.path_for(just_drawn)):
-		select(home_index(_maps))
+	if just_drawn != "" and select_path(UserMaps.path_for(just_drawn)):
+		return
+	if remembered_path != "" and select_path(remembered_path):
+		return
+	select(home_index(_maps))
 
 
 ## The player's own boards lead the shelf, so the board it opens on can sit below
@@ -363,6 +381,26 @@ static func cell_name(map: MapData) -> String:
 	return MapCatalog.display_name(map.source_path)
 
 
+## The size a cell sets `name` at: the body face when it fits the picture's width,
+## as every shipped name does, else the title face — a name the player chose may
+## run to `UserMaps.MAX_NAME_LENGTH`, and one that still overruns there wraps onto
+## a second line (`cell_name_lines`) rather than being cut short.
+static func cell_name_size(name: String) -> int:
+	if _name_width(name, UiTheme.SIZE_BODY) <= THUMB.x:
+		return UiTheme.SIZE_BODY
+	return UiTheme.SIZE_TITLE
+
+
+## How many lines a cell gives `name`: one, or two for a name too wide for one
+## even at the smaller size.
+static func cell_name_lines(name: String) -> int:
+	return 1 if _name_width(name, cell_name_size(name)) <= THUMB.x else NAME_LINES_MAX
+
+
+static func _name_width(name: String, font_size: int) -> float:
+	return UiTheme.display().get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+
+
 ## The tag on a cell's picture: its teaching or Custom badge and its army count
 ## past a duel, or "" for a plain duel board.
 static func cell_badge(map: MapData) -> String:
@@ -436,8 +474,14 @@ func _cell_height() -> float:
 ## picture no longer crosses it. The thumbnail is a truthful miniature — real
 ## terrain, real property colours — of the board this cell launches (plan D5).
 func _make_map_cell(index: int, map: MapData) -> Button:
+	var name := cell_name(map)
+	var name_size := cell_name_size(name)
+	var lines := cell_name_lines(name)
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(THUMB.x + 2 * CARD_PAD, _cell_height())
+	var name_height := lines * UiTheme.display().get_height(name_size)
+	button.custom_minimum_size = Vector2(
+		THUMB.x + 2 * CARD_PAD, maxf(_cell_height(), _picture_height() + name_height + 1)
+	)
 
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 1)
@@ -459,19 +503,25 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	if badge != "":
 		thumb.add_child(_picture_tag(badge, Control.PRESET_BOTTOM_RIGHT, UiTheme.SLATE_800))
 
-	# Clipped, because the name is the player's to choose: a board they called
-	# something long would otherwise set its label at full width and paint straight
-	# across the cells beside it. The header still carries the whole name.
+	# Clipped as a backstop, because the name is the player's to choose: one that
+	# overruns even two lines would otherwise paint across the cells beside it.
 	var name_label := ListRow.clipped(Label.new())
-	name_label.text = cell_name(map)
+	name_label.text = name
+	name_label.custom_minimum_size.x = THUMB.x
+	if lines > 1:
+		# A clipped label claims no height of its own, so the two lines are reserved,
+		# set close enough that both fit inside that reservation.
+		name_label.custom_minimum_size.y = name_height
+		name_label.add_theme_constant_override("line_spacing", 0)
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		name_label.max_lines_visible = lines
 	name_label.add_theme_font_override("font", UiTheme.display())
-	name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
+	name_label.add_theme_font_size_override("font_size", name_size)
 	name_label.add_theme_color_override("font_color", UiTheme.INK)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(name_label)
 	UiTheme.make_decoration(content)
 
-	button.focus_entered.connect(select.bind(index))
 	button.pressed.connect(select.bind(index))
 	_map_cells.append(button)
 	_map_marks.append(name_label)
@@ -548,8 +598,6 @@ func _make_random_cell() -> Button:
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", box)
 	button.add_theme_stylebox_override("focus", UiTheme.focus_box())
-	# On press alone: a map cell selects on focus so the keyboard can preview the
-	# roster, and a roll on focus would draw a new board on every arrow pass.
 	button.pressed.connect(_roll_map)
 	return button
 
@@ -658,7 +706,7 @@ func _ask_manage() -> void:
 	if body == null:
 		return
 	var field := UiKit.text_field("Name", UserMaps.MAX_NAME_LENGTH, CONFIRM_BUTTON_W)
-	field.text = _user_name_of(map)
+	field.text = MapCatalog.display_name(map.source_path)
 	field.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	body.add_child(field)
 	var notice := _notice_line(body)

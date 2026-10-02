@@ -16,7 +16,7 @@ import re
 import unittest
 
 from game import GAME, scrape
-from portraitgen import hair, head
+from portraitgen import hair, head, light
 from portraitgen.roster import FACES
 
 LOOKS_FILE = GAME / "scenes/board3d/commander_looks_3d.gd"
@@ -74,6 +74,21 @@ class TheBasesMirrorThePainters(unittest.TestCase):
 
     def test_hair_bases(self):
         self.assertEqual(_table("HAIR_BASES"), dict(hair.HAIR_BASES))
+
+
+_CONTRAST = re.compile(r"const SKIN_CONTRAST := ([\d.]+)")
+_RUNGS = re.compile(r"const HAIR_RUNGS: Array\[float\] = \[(.*?)\]")
+
+
+class TheHairStandOffMirrorsTheBust(unittest.TestCase):
+    def test_the_contrast_is_the_busts(self):
+        contrast = float(scrape(LOOKS_FILE, _CONTRAST).group(1))
+        self.assertEqual(contrast, hair.SKIN_CONTRAST)
+
+    def test_the_rungs_are_the_ladders_base_shade_and_deep(self):
+        rungs = [float(r) for r in scrape(LOOKS_FILE, _RUNGS).group(1).split(",")]
+        ladder = dict(zip(("contour", *light.BANDS), light.LADDER, strict=True))
+        self.assertEqual(rungs, [ladder["base"], ladder["shade"], ladder["deep"]])
 
 
 if __name__ == "__main__":

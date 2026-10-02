@@ -37,6 +37,8 @@ const SUB_FIN_CLEAR := 0.022
 ## Where the hull meets the water: the wake runs down each flank at this
 ## half-beam and closes in a V at the bow.
 const SUB_WATERLINE := 0.106
+## A surface hull's keel, below the waterline at the origin.
+const KEEL := -0.06
 ## How far a surfaced sub is lifted when it stands alone and close to the lens,
 ## as a cut-in figure: enough to bring its round hull's top half out of the
 ## water. On the board it rides low and only the sail reads; blown up beside a
@@ -112,7 +114,7 @@ static func _hull(
 			Vector2(-l + 0.03, b * 0.6),
 		]
 	)
-	UnitParts3D.loft(st, Transform3D.IDENTITY, keel, -0.06, mid, 0.02, r.dark)
+	UnitParts3D.loft(st, Transform3D.IDENTITY, keel, KEEL, mid, 0.02, r.dark)
 	UnitParts3D.loft(st, Transform3D.IDENTITY, mid, 0.02, top, deck, r.base)
 
 
