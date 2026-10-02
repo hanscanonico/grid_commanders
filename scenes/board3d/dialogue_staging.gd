@@ -10,6 +10,9 @@ extends RefCounted
 ## acknowledgement or a refusal opens the line: "I stayed" is no "aye", and "at
 ## once" mid-sentence is no order taken. Pure, so the same words are always
 ## acted the same way — a replay speaks and gestures exactly as the match did.
+##
+## It also says where a general stands to speak: on open ground beside their
+## post, never inside a building, a peak, a wood, a unit or another general.
 
 ## The emote that pops over a speaker's head as their line opens, or none.
 const EXCLAIM := &"!"
@@ -20,6 +23,55 @@ const NO_EMOTE := &""
 const _LAUGHS: Array[String] = ["ha!", "haha", "ha ha", "heh"]
 const _SALUTES: Array[String] = ["yes, sir", "yes sir", "understood", "at once", "aye"]
 const _REFUSALS: Array[String] = ["no.", "no,", "never", "not a chance"]
+## How many rings of cells round their post a general looks through for ground
+## to stand on.
+const STAND_REACH := 2
+
+
+## The cell a general stands on beside `post`, looked at from `toward_lens` (the
+## board step toward the camera). Open ground in the nearest ring that has any:
+## dry, with nothing standing on it and no unit or general in `taken`. Within a
+## ring, a cell with nothing in front of it toward the lens wins, then the lens's
+## side of the post, then the nearer cell. `post` when no cell in reach is open.
+static func stand_cell(
+	map: MapData, post: Vector2i, toward_lens: Vector2i, taken: Dictionary[Vector2i, bool]
+) -> Vector2i:
+	for ring in range(1, STAND_REACH + 1):
+		var best := post
+		var best_rank := Vector3i(-1, 0, 0)
+		for dy in range(-ring, ring + 1):
+			for dx in range(-ring, ring + 1):
+				var offset := Vector2i(dx, dy)
+				var cell := post + offset
+				if maxi(absi(dx), absi(dy)) != ring or not _open(map, cell, taken):
+					continue
+				var in_view := 0 if _hides(map, cell + toward_lens, taken) else 1
+				var facing := offset.x * toward_lens.x + offset.y * toward_lens.y
+				var rank := Vector3i(in_view, facing, -(absi(dx) + absi(dy)))
+				if rank > best_rank:
+					best = cell
+					best_rank = rank
+		if best != post:
+			return best
+	return post
+
+
+## Ground a figure can stand on: on the board, dry, nothing standing on it.
+static func _open(map: MapData, cell: Vector2i, taken: Dictionary[Vector2i, bool]) -> bool:
+	if not map.in_bounds(cell) or taken.has(cell):
+		return false
+	var terrain := map.terrain_at(cell)
+	return (
+		not terrain.stands_in_cutin()
+		and BoardSpace3D.stand_top(terrain.id) >= BoardSpace3D.LAND_TOP
+	)
+
+
+## Whether something on `cell` would stand between a figure and the lens.
+static func _hides(map: MapData, cell: Vector2i, taken: Dictionary[Vector2i, bool]) -> bool:
+	if not map.in_bounds(cell):
+		return false
+	return taken.has(cell) or map.terrain_at(cell).stands_in_cutin()
 
 
 ## The clip a speaker plays while saying `words` (an `ActorPose3D` clip name).
