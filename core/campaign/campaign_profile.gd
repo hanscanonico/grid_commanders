@@ -91,6 +91,24 @@ static func load_in_progress(campaign_id: StringName) -> InProgress:
 	return InProgress.new(CampaignSaveCodec.battle_of(data), CampaignSaveCodec.tally_of(data))
 
 
+## The mission whose board the profile holds, or "" — what a mid-mission save
+## left to resume. Off the same accepted profile every reader here answers about.
+static func saved_mission(campaign_id: StringName) -> StringName:
+	var data := _read(campaign_id)
+	if CampaignSaveCodec.battle_of(data).is_empty():
+		return &""
+	return StringName(data.get("active_mission", ""))
+
+
+## When the profile was last written, in seconds since the epoch, or 0 when there
+## is none. A profile holding a board was last written by the save that put it
+## there — winning or losing the mission writes the board away — so this is when
+## that mission was saved, which is what the menu's Continue weighs it by.
+static func saved_at(campaign_id: StringName) -> int:
+	var path := _slot_path(path_for(campaign_id))
+	return FileAccess.get_modified_time(path) if FileAccess.file_exists(path) else 0
+
+
 ## The profile as it sits on disk *once the codec has accepted it*, or an empty
 ## dictionary. A file `load_progress` would refuse holds no mission anybody may
 ## resume either, so every reader here answers about the same profile that one
