@@ -140,7 +140,7 @@ longer exists.
   (the AI Judgement plan's R3).
 - **S2 `focus_fire_bonus` — focus fire.** Boosts a target other ready friendlies
   could still add damage to. **Un-shipped: `0.0` on all three tiers**, so
-  `_focus_bonus` and `_follow_up_damage` never run in a played match — they
+  `_focus_bonus` and `AIPlanningContext.follow_up_damage` never run in a played match — they
   execute only under the tests that build a profile carrying the dial. Read the
   code as a capability the ladder can re-test in one edit, never as behaviour
   anyone has met. It is off because the superseded probes in §6 found the bias

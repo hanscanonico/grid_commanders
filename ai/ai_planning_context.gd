@@ -156,6 +156,42 @@ func besieged_home_hqs() -> Array[Vector2i]:
 	return _besieged_home_hqs
 
 
+## Summed forecast damage other ready friendlies could deal `enemy` this turn.
+## Reach is AttackRange's one Manhattan over-estimate, the same one the commander
+## powers weigh with; forecasts are luck-free and draw no RNG.
+func follow_up_damage(attacker: Unit, enemy: Unit) -> int:
+	var total := 0
+	for friendly in friendly_units:
+		if friendly == attacker or friendly.acted or friendly.carrier != null:
+			continue
+		if friendly.type.max_range <= 0:
+			continue
+		if not AttackRange.can_fire(state, friendly, enemy):
+			continue  # no chart entry, no loaded weapon, or the target is dived
+		if Grid.manhattan(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
+			continue
+		# Priced from friendly.cell, not the cell the follow-up would actually fire
+		# from — the same enemy.cell approximation ThreatMap.incoming_damage makes,
+		# and exact for every doctrine but Alina Ward's combined_arms_pct. Inert
+		# today (focus_fire_bonus ships at 0.0).
+		var forecast := CombatResolver.forecast(state, friendly, friendly.cell, enemy)
+		if forecast.can_attack:
+			total += forecast.attack_damage
+	return total
+
+
+## True when killing `enemy` ends the match for our side: it is its army's
+## last unit and every other army still in the match is an ally of ours. The
+## rout and victory rules GameState runs when a unit comes off the board.
+func wins_by_killing(enemy: Unit) -> bool:
+	if state.units_of(enemy.team).size() != 1:
+		return false
+	for other in state.active_teams():
+		if other != enemy.team and not state.allied(team, other):
+			return false
+	return true
+
+
 ## The threat map for the current turn, built on first use and rebuilt whenever
 ## the day, planning team, or visible enemy set changes. Within the AI's own turn
 ## only the enemy set can change, when an enemy dies to a counter.

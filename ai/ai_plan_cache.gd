@@ -143,6 +143,7 @@ func _drop_what_changed(context: AIPlanningContext, conditions: Dictionary[Unit,
 	var touched: Array[Vector2i] = []
 	var enemy_moved := false
 	var present: Dictionary[Unit, bool] = {}
+	var rosters_moved: Dictionary[int, bool] = {}
 	for unit in state.units:
 		present[unit] = true
 		var now := _condition(unit)
@@ -152,6 +153,8 @@ func _drop_what_changed(context: AIPlanningContext, conditions: Dictionary[Unit,
 		var arrived := not _units.has(unit)
 		if not arrived and _units[unit] == now:
 			continue
+		if arrived:
+			rosters_moved[unit.team] = true
 		var was: Vector2i = unit.cell if arrived else _units[unit][0]
 		touched.append(was)
 		touched.append(unit.cell)
@@ -160,9 +163,12 @@ func _drop_what_changed(context: AIPlanningContext, conditions: Dictionary[Unit,
 	for unit: Unit in _units:
 		if present.has(unit):
 			continue
+		rosters_moved[unit.team] = true
 		touched.append(_units[unit][0])
 		if _note_change(unit, context, true):
 			enemy_moved = true
+	if _roster_decides_a_win(context, rosters_moved):
+		return false
 	if _enemies != context.visible_enemies:
 		enemy_moved = true
 		# Who is left to walk at, and which of our home HQs is under somebody, are
@@ -177,6 +183,21 @@ func _drop_what_changed(context: AIPlanningContext, conditions: Dictionary[Unit,
 		return false
 	_drop_inside(state, touched)
 	return true
+
+
+## Whether a kill wins the match is read off a hostile army's whole roster
+## (AIPlanningContext.wins_by_killing), so an army whose unit count moved to
+## where the next kill could empty it — or could no longer — reaches every shot
+## on the board, and the falling of an army changes who is left to beat.
+static func _roster_decides_a_win(
+	context: AIPlanningContext, rosters_moved: Dictionary[int, bool]
+) -> bool:
+	for team: int in rosters_moved:
+		if context.state.allied(team, context.team):
+			continue
+		if context.state.units_of(team).size() <= 2:
+			return true
+	return false
 
 
 ## Files one changed unit under what its change reaches, and answers whether it
