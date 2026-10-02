@@ -93,3 +93,10 @@ func test_the_mission_card_names_no_key_on_touch() -> void:
 		assert_eq(ControlHints.chip_for(chip, false), chip, "the desktop card moved: %s" % chip)
 		var word := ControlHints.chip_for(chip, true)
 		assert_true(word.begins_with("MISSION"), "the touch card names a key: %s" % word)
+
+
+## A phone has no START button: the menu's prompt asks for a tap there and keeps
+## the desktop's words everywhere else.
+func test_the_start_prompt_asks_a_phone_for_a_tap() -> void:
+	assert_eq(ControlHints.chip_for(ControlHints.START_PROMPT, false), "PRESS START")
+	assert_eq(ControlHints.chip_for(ControlHints.START_PROMPT, true), "TAP TO START")

@@ -511,7 +511,7 @@ func _build_action_stack() -> Control:
 	col.add_child(_chips)
 
 	_press_start = Label.new()
-	_press_start.text = "PRESS START"
+	_press_start.text = ControlHints.chip_for(ControlHints.START_PROMPT)
 	_press_start.add_theme_font_override("font", UiTheme.stat())
 	_press_start.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	_press_start.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
