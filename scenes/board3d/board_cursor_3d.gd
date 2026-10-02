@@ -18,16 +18,20 @@ const PULSE := 0.05
 
 func _init() -> void:
 	var st := MeshKit.begin()
-	for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
-		var tip := Vector3(corner.x * 0.5, 0, corner.y * 0.5)
-		var along_x := Vector3(
-			tip.x - corner.x * ARM / 2.0, BAR / 2.0, tip.z - corner.y * BAR / 2.0
-		)
-		var along_z := Vector3(
-			tip.x - corner.x * BAR / 2.0, BAR / 2.0, tip.z - corner.y * ARM / 2.0
-		)
-		_bar(st, along_x, Vector3(ARM, BAR, BAR))
-		_bar(st, along_z, Vector3(BAR, BAR, ARM))
+	# Every dark shell goes in before any cream: with no depth test the later
+	# triangles draw over the earlier, so the cream bars read as one unbroken
+	# L inside a dark rim rather than two boxes with a seam where they meet.
+	for pass_rim: float in [RIM, 0.0]:
+		for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+			var tip := Vector3(corner.x * 0.5, 0, corner.y * 0.5)
+			var along_x := Vector3(
+				tip.x - corner.x * ARM / 2.0, BAR / 2.0, tip.z - corner.y * BAR / 2.0
+			)
+			var along_z := Vector3(
+				tip.x - corner.x * BAR / 2.0, BAR / 2.0, tip.z - corner.y * ARM / 2.0
+			)
+			_bar(st, along_x, Vector3(ARM, BAR, BAR), pass_rim)
+			_bar(st, along_z, Vector3(BAR, BAR, ARM), pass_rim)
 	mesh = st.commit()
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -39,11 +43,10 @@ func _init() -> void:
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
-## The dark shell goes in first: with no depth test the later triangles draw
-## over it, leaving a dark rim round the cream on every side the camera sees.
-static func _bar(st: SurfaceTool, centre: Vector3, size: Vector3) -> void:
-	MeshKit.box(st, MeshKit.at(centre), size + Vector3.ONE * RIM * 2.0, OUTLINE)
-	MeshKit.box(st, MeshKit.at(centre), size, COLOUR)
+## One bar: grown by `rim` on every side in the dark, or bare in the cream.
+static func _bar(st: SurfaceTool, centre: Vector3, size: Vector3, rim: float) -> void:
+	var colour := OUTLINE if rim > 0.0 else COLOUR
+	MeshKit.box(st, MeshKit.at(centre), size + Vector3.ONE * rim * 2.0, colour)
 
 
 ## Jumps to `goal` with no glide — the first frame after a flip.
