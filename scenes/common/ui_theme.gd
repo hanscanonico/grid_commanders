@@ -611,8 +611,8 @@ static func header_box(fill := HARD_BORDER) -> StyleBoxFlat:
 ## dividers), so a segment itself is borderless.
 static func segment_box(active: bool, accent: Color) -> StyleBoxFlat:
 	var box := flat(accent if active else PAPER)
-	box.content_margin_top = 1
-	box.content_margin_bottom = 1
+	box.content_margin_top = 2
+	box.content_margin_bottom = 2
 	box.content_margin_left = 2
 	box.content_margin_right = 2
 	return box
