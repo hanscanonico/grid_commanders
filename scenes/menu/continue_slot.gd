@@ -86,6 +86,10 @@ func _init(into: VBoxContainer, on_resume: Callable, on_resume_mission: Callable
 	# card one line taller on exactly the boards with the longest names.
 	_caption = UiKit.help_label("")
 	_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# A touch build prints a refusal's reason here too, and a codec's reason is
+	# wider than the column: trimmed, it cannot push the menu off the canvas, and
+	# the tip still carries it whole.
+	_caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	body.add_child(_caption)
 	# The tip hangs off the button itself: a disabled control still answers the
 	# pointer, so the one control here that can be disabled is also the one place
@@ -158,7 +162,7 @@ func _render() -> void:
 		_tip.set_copy("Resume the campaign mission", "Picks up the board it was saved on")
 		return
 	if _slot.state == SaveGame.Slot.State.ABSENT:
-		_refuse("No saved match", "Nothing saved yet", "Save in battle from the map menu")
+		_refuse("No saved match", "Nothing saved yet", "Save during a battle")
 		return
 	# The codec's words when the slot itself will not read, the press's when the save
 	# was nameable and would not open.
