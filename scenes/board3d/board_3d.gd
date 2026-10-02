@@ -474,7 +474,10 @@ func _settle_properties(delta: float) -> void:
 	for cell: Vector2i in _properties:
 		var building := _properties[cell]
 		var height := OCCUPIED_HEIGHT if occupied.has(cell) else 1.0
-		building.scale.y = lerpf(building.scale.y, height, ease)
+		if building.scale.y == height:
+			continue
+		var settled := lerpf(building.scale.y, height, ease)
+		building.scale.y = height if absf(settled - height) < 0.001 else settled
 
 
 ## Puts a building on the ground's own material, so the fog darkens it and a

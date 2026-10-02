@@ -121,9 +121,6 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	)
 	var body := model.node.get_node("Body") as MeshInstance3D
 	model.material = body.material_override as StandardMaterial3D
-	# A faded model writes its depth, so it draws as one silhouette rather than
-	# showing its own far side through itself.
-	model.material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
 	model.top = body.mesh.get_aabb().end.y
 	if BattleCampaign.unit_name(sprite.unit) != "":
 		model.mark = UnitMark3D.make()
@@ -202,6 +199,12 @@ func _tint(model: Model, sprite: UnitSprite) -> void:
 	var mode := BaseMaterial3D.TRANSPARENCY_ALPHA if faded else BaseMaterial3D.TRANSPARENCY_DISABLED
 	if model.material.transparency != mode:
 		model.material.transparency = mode
+		# A faded model writes its depth, so it draws as one silhouette rather
+		# than showing its own far side through itself. Only while faded, so an
+		# opaque model keeps the one shader every other board part shares.
+		model.material.depth_draw_mode = (
+			BaseMaterial3D.DEPTH_DRAW_ALWAYS if faded else BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
+		)
 	model.material.albedo_color = tint
 
 
