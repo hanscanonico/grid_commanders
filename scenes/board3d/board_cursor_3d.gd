@@ -3,8 +3,12 @@ extends MeshInstance3D
 ## The cursor on the 3D board: four corner brackets standing just off the cell's
 ## surface, gliding after the 2D cursor it mirrors and breathing slowly so it can
 ## be found on a busy board. Unshaded, so neither the sun nor the fog dims it.
+## Two-tone: each cream bar sits inside a dark one, so it reads on a cream dock
+## as well as on grass or sea.
 
 const COLOUR := Color("#fff6d8")
+const OUTLINE := Color("#1b1f29")
+const RIM := 0.022
 const ARM := 0.26
 const BAR := 0.055
 const LIFT := 0.02
@@ -22,8 +26,8 @@ func _init() -> void:
 		var along_z := Vector3(
 			tip.x - corner.x * BAR / 2.0, BAR / 2.0, tip.z - corner.y * ARM / 2.0
 		)
-		MeshKit.box(st, MeshKit.at(along_x), Vector3(ARM, BAR, BAR), COLOUR)
-		MeshKit.box(st, MeshKit.at(along_z), Vector3(BAR, BAR, ARM), COLOUR)
+		_bar(st, along_x, Vector3(ARM, BAR, BAR))
+		_bar(st, along_z, Vector3(BAR, BAR, ARM))
 	mesh = st.commit()
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -33,6 +37,13 @@ func _init() -> void:
 	material.render_priority = 1
 	material_override = material
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## The dark shell goes in first: with no depth test the later triangles draw
+## over it, leaving a dark rim round the cream on every side the camera sees.
+static func _bar(st: SurfaceTool, centre: Vector3, size: Vector3) -> void:
+	MeshKit.box(st, MeshKit.at(centre), size + Vector3.ONE * RIM * 2.0, OUTLINE)
+	MeshKit.box(st, MeshKit.at(centre), size, COLOUR)
 
 
 ## Jumps to `goal` with no glide — the first frame after a flip.

@@ -720,7 +720,10 @@ forms named in the root index are in `docs/design_record.md`.
   `UnitMirror3D` stands a speck of it before the lens for the board's first frames, so its shader
   is built as the board comes up, never when the first aircraft appears. The cut-in stage keeps
   its own cruise height and sun shadows. The ground's variety is
-  per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
+  per-sub-square shade, flat, by the standing-terrain rule below; the sea's is the shader's
+  alone — one flat blue moved by world-space noise, so no cell seam or per-cell repeat shows on
+  the board or the cut-in stage. A property nobody owns wears bare stone on the 3D board
+  (`Board3D`), not row 0's grey, which sat a step off Iron's charcoal at full zoom-out. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
   request, 2026-09-29: "cinematics like in Final Fantasy with music, dialogs"). A scripted beat's
   lines, the briefing read again, a Command Power's activation and — new — a fresh mission's opening
   (its title card over the board, then its briefing) play through `DialogueCinema3D` whenever the 3D
