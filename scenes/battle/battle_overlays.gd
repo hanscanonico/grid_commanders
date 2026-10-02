@@ -57,12 +57,14 @@ var capture_pips: CapturePips
 ## the objective it marks is met.
 var objective_marks: ObjectiveMarks
 
+static var _fire_tiles: TileSet
+
 
 ## Builds the tile sets and paints the layers from OverlayPalette. Call once,
 ## after the node fields are set.
 func setup() -> void:
 	move_layer.tile_set = _build_overlay_tile_set()
-	attack_layer.tile_set = _build_fire_tile_set()
+	attack_layer.tile_set = _fire_tile_set()
 	threat_layer.tile_set = _build_threat_tile_set()
 	move_layer.modulate = OverlayPalette.MOVE
 	attack_layer.modulate = OverlayPalette.ATTACK
@@ -165,45 +167,44 @@ func _build_threat_tile_set() -> TileSet:
 ## One tile per neighbour mask (see FIRE_NEIGHBOURS), generated like the threat
 ## stripes. A side is edged where its neighbour is not fired at, and a corner
 ## texel also where only the diagonal is missing, so the edge turns an inside
-## corner without a notch.
-func _build_fire_tile_set() -> TileSet:
-	var image := Image.create(TILE * 16, TILE * 16, false, Image.FORMAT_RGBA8)
-	for mask in 256:
-		var origin := Vector2i(mask % 16, mask / 16) * TILE
-		for y in TILE:
-			for x in TILE:
-				if _fire_edge(mask, x, y):
-					image.set_pixelv(origin + Vector2i(x, y), Color.WHITE)
+## corner without a notch. Built once per run: the 256-tile atlas is the same for
+## every battle.
+static func _fire_tile_set() -> TileSet:
+	if _fire_tiles != null:
+		return _fire_tiles
 	var tile_set := TileSet.new()
 	tile_set.tile_size = Vector2i(TILE, TILE)
 	var atlas := TileSetAtlasSource.new()
-	atlas.texture = ImageTexture.create_from_image(image)
+	atlas.texture = ImageTexture.create_from_image(fire_atlas_image())
 	atlas.texture_region_size = Vector2i(TILE, TILE)
 	for mask in 256:
 		atlas.create_tile(Vector2i(mask % 16, mask / 16))
 	tile_set.add_source(atlas, ATLAS_SOURCE_ID)
+	_fire_tiles = tile_set
 	return tile_set
 
 
-## Whether texel (x, y) of the tile for `mask` is edge. A side texel asks its one
-## neighbour; a corner texel asks the two sides and the diagonal between them.
-static func _fire_edge(mask: int, x: int, y: int) -> bool:
-	var open := ~mask
+static func fire_atlas_image() -> Image:
+	var image := Image.create(TILE * 16, TILE * 16, false, Image.FORMAT_RGBA8)
 	var last := TILE - 1
-	var side := (
-		(y == 0 and open & 1)
-		or (x == last and open & 2)
-		or (y == last and open & 4)
-		or (x == 0 and open & 8)
-	)
-	if side:
-		return true
-	if x == last and y == 0:
-		return open & 16 != 0
-	if x == last and y == last:
-		return open & 32 != 0
-	if x == 0 and y == last:
-		return open & 64 != 0
-	if x == 0 and y == 0:
-		return open & 128 != 0
-	return false
+	var sides: Array[Rect2i] = [
+		Rect2i(0, 0, TILE, 1),
+		Rect2i(last, 0, 1, TILE),
+		Rect2i(0, last, TILE, 1),
+		Rect2i(0, 0, 1, TILE),
+	]
+	var corners: Array[Vector2i] = [
+		Vector2i(last, 0),
+		Vector2i(last, last),
+		Vector2i(0, last),
+		Vector2i(0, 0),
+	]
+	for mask in 256:
+		var origin := Vector2i(mask % 16, mask / 16) * TILE
+		var open := ~mask
+		for bit in 4:
+			if open & (1 << bit):
+				image.fill_rect(Rect2i(origin + sides[bit].position, sides[bit].size), Color.WHITE)
+			if open & (1 << (bit + 4)):
+				image.set_pixelv(origin + corners[bit], Color.WHITE)
+	return image

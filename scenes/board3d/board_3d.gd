@@ -465,6 +465,11 @@ func _refresh_fog() -> void:
 	_fog_texture.update(_fog_image)
 
 
+## The theme a property in atlas `row` is built in, here and in the cut-ins.
+static func property_theme(row: int) -> CommanderVisuals.FactionTheme:
+	return _unclaimed if row == SideIdentity.NEUTRAL_ROW else SideIdentity.theme_for_row(row)
+
+
 ## Rebuilds each property whose paint changed on the flat board: a capture, a
 ## fog-deferred flip landing, a scripted defection. The row is the flat board's
 ## answer, so a capture made out of sight keeps its last-seen colours here too.
@@ -476,10 +481,7 @@ func _refresh_owners() -> void:
 		_property_rows[cell] = row
 		if _properties.has(cell):
 			_properties[cell].queue_free()
-		var theme := (
-			_unclaimed if row == SideIdentity.NEUTRAL_ROW else SideIdentity.theme_for_row(row)
-		)
-		var building := PropertyModels3D.build(_map.terrain_at(cell).id, theme)
+		var building := PropertyModels3D.build(_map.terrain_at(cell).id, property_theme(row))
 		_dress(building)
 		var centre := BoardSpace3D.cell_centre(cell)
 		building.position = Vector3(centre.x, BoardSpace3D.LAND_TOP, centre.y)
