@@ -211,3 +211,23 @@ func test_each_campaign_keeps_its_own_file() -> void:
 	assert_eq(CampaignProfile.load_progress(PROBE).stars_for(&"one"), 3, "untouched")
 	assert_ne(CampaignProfile.path_for(PROBE), CampaignProfile.path_for(other))
 	CampaignProfile.erase(other)
+
+
+## What the menu's Continue reads: the mission a saved board belongs to, and when
+## it was saved, so a campaign mission left mid-battle is offered beside a
+## skirmish save rather than found only from its own card.
+func test_the_saved_mission_is_the_one_whose_board_the_profile_holds() -> void:
+	assert_eq(CampaignProfile.saved_mission(PROBE), &"", "no profile, nothing saved")
+	assert_eq(CampaignProfile.saved_at(PROBE), 0, "and no time to weigh it by")
+	var state := CampaignState.begin(campaign)
+	state.active_mission = &"two"
+	assert_true(CampaignProfile.save_progress(state, {"version": 8, "day": 3}))
+	assert_eq(CampaignProfile.saved_mission(PROBE), &"two")
+	assert_gt(CampaignProfile.saved_at(PROBE), 0, "the write is dated")
+
+
+func test_a_profile_with_no_board_has_no_saved_mission() -> void:
+	var state := CampaignState.begin(campaign)
+	state.active_mission = &"two"
+	assert_true(CampaignProfile.save_progress(state))
+	assert_eq(CampaignProfile.saved_mission(PROBE), &"", "a mission begun but never saved")
