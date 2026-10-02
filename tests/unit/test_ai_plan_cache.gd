@@ -167,6 +167,20 @@ const LONG_COLUMN := """
 2 i 45 0
 """
 
+## An infantry between a neutral city and a 1-HP enemy infantry, and far east of
+## it our tank beside a wounded enemy artillery, the only other unit that army
+## has. The tank's kill comes first; it leaves the infantry nine tiles off as the
+## enemy's last unit, so the shot the capture outbid now wins the match.
+const LAST_STAND := """
+[terrain]
+C..........
+[units]
+1 i 1 0
+2 i 2 0
+1 t 9 0
+2 g 10 0
+"""
+
 var diff: PlanCacheDiff
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -199,6 +213,16 @@ func test_a_death_rescores_a_unit_that_never_saw_the_fight() -> void:
 	)
 	assert_string_contains(played[0], "AttackCommand", "the tank kills the westmost enemy")
 	assert_string_contains(played[1], "b_copter", "and the copter answers for the change")
+
+
+## An army's roster shrinking to one unit. The kill that empties it wins the
+## match, which is a fact about the whole army rather than the ground around it.
+func test_an_army_down_to_its_last_unit_rescores_every_shot_at_it() -> void:
+	var played := _agreeing_commands(
+		LAST_STAND, AIProfile.load_default(), 2, "last stand", _wound_the_last_stand
+	)
+	assert_string_contains(played[0], "AttackCommand", "the tank kills the artillery")
+	assert_string_contains(played[1], "AttackCommand", "and the infantry takes the win")
 
 
 ## Ground changing hands. It re-prices every goal on the board: the tank is
@@ -578,6 +602,11 @@ func _resync(cache: AIPlanCache, context: AIPlanningContext, state: GameState) -
 ## One shot short of dead, so the tank's attack is what takes it off the board.
 func _wound_the_westmost_enemy(state: GameState) -> void:
 	state.unit_at(Vector2i(0, 0)).hp = 10
+
+
+func _wound_the_last_stand(state: GameState) -> void:
+	state.unit_at(Vector2i(2, 0)).hp = Unit.MIN_HP
+	state.unit_at(Vector2i(10, 0)).hp = 30
 
 
 func _wound_the_tank(state: GameState) -> void:

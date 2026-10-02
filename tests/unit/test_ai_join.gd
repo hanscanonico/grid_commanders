@@ -20,8 +20,9 @@ const TWO_WOUNDED_TWINS := (
 ## The tie, built to be exact. Our 40-HP tank at (2, 0) can spend one step to
 ## kill the 20-HP enemy tank — worth 7 000 x 20/100 — or one step to merge into
 ## the 30-HP twin behind it, worth join_weight x 7 000 x 40/100. At 0.5 the two
-## come to the same number, down to the step each of them pays.
-const A_KILL_AND_A_MERGE := "[terrain]\n.....\n[units]\n1 t 1 0\n1 t 2 0\n2 t 4 0"
+## come to the same number, down to the step each of them pays. The enemy keeps
+## an infantry across the water, so the kill does not win the match outright.
+const A_KILL_AND_A_MERGE := "[terrain]\n.....SS.\n[units]\n1 t 1 0\n1 t 2 0\n2 t 4 0\n2 i 7 0"
 
 const TWIN := Vector2i(1, 0)
 const OUR_TANK := Vector2i(2, 0)

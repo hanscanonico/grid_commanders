@@ -16,6 +16,9 @@ extends RefCounted
 ## could have moved under, so the planner still answers exactly what it always
 ## did.
 
+## Internal HP per displayed pip — the divisor of Unit.displayed_hp.
+const PIP_HP := 10
+
 var profile: AIProfile
 
 var _cache: AIPlanCache
@@ -137,13 +140,13 @@ func _consider_attacks(
 			if not defend_bonus.has(enemy):
 				defend_bonus[enemy] = _defend_bonus(state, unit, enemy)
 			if profile.focus_fire_bonus > 0.0 and not follow_up_damage.has(enemy):
-				follow_up_damage[enemy] = _follow_up_damage(context, unit, enemy)
+				follow_up_damage[enemy] = context.follow_up_damage(unit, enemy)
 			var forecast := CombatResolver.forecast(state, unit, dest, enemy)
 			# The cover is the one term here that belongs to the shot rather than to
 			# the destination: the counter it invites is fire this cell has already
 			# been priced against, and that counter is this enemy's.
 			var score: float = (
-				_attack_score(unit, enemy, forecast)
+				_attack_score(context, unit, enemy, forecast)
 				+ _focus_bonus(enemy, forecast, follow_up_damage.get(enemy, 0))
 				+ defend_bonus[enemy]
 				+ _cover_score(state, unit, dest, incoming + forecast.counter_damage)
@@ -155,13 +158,23 @@ func _consider_attacks(
 
 
 ## Expected damage value (target cost x damage fraction, kill-boosted) minus
-## discounted counter risk against our own cost.
-func _attack_score(unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast) -> float:
+## discounted counter risk against our own cost. A kill takes at least one
+## displayed pip, because a unit fights and captures on its pips: one at 1 HP is
+## a full pip of infantry, not a hundredth of one. A kill that wins the match
+## outranks every score, since no other move is worth more than winning.
+func _attack_score(
+	context: AIPlanningContext, unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast
+) -> float:
 	if not forecast.can_attack:
 		return -INF
 	var damage := mini(forecast.attack_damage, enemy.hp)
+	var kills := forecast.attack_damage >= enemy.hp
+	if kills:
+		if context.wins_by_killing(enemy):
+			return INF
+		damage = maxi(damage, PIP_HP)
 	var value := _unit_value(enemy) * damage / 100.0
-	if forecast.attack_damage >= enemy.hp:
+	if kills:
 		value *= profile.kill_bonus
 	var risk := 0.0
 	if forecast.counter_damage > 0:
@@ -224,10 +237,10 @@ func _cover_score(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int
 ## How much more attractive `enemy` is because other ready friendlies could
 ## still pile onto it this turn. Zero when focus fire is off or this shot kills.
 ##
-## `raw_follow_up` is `_follow_up_damage`'s answer for `(unit, enemy)` — a
-## function of neither `dest` nor the forecast — so the caller prices it once
-## per enemy rather than asking again for every destination this unit could
-## fire from.
+## `raw_follow_up` is `AIPlanningContext.follow_up_damage`'s answer for
+## `(unit, enemy)` — a function of neither `dest` nor the forecast — so the
+## caller prices it once per enemy rather than asking again for every
+## destination this unit could fire from.
 func _focus_bonus(enemy: Unit, forecast: CombatSnapshot.Forecast, raw_follow_up: int) -> float:
 	if profile.focus_fire_bonus <= 0.0:
 		return 0.0
@@ -239,31 +252,6 @@ func _focus_bonus(enemy: Unit, forecast: CombatSnapshot.Forecast, raw_follow_up:
 		return 0.0
 	var value := _unit_value(enemy) * mini(forecast.attack_damage, enemy.hp) / 100.0
 	return profile.focus_fire_bonus * value * float(follow_up) / float(remaining)
-
-
-## Summed forecast damage other ready friendlies could deal `enemy` this turn.
-## Reach is AttackRange's one Manhattan over-estimate, the same one the commander
-## powers weigh with; forecasts are luck-free and draw no RNG.
-func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) -> int:
-	var state := context.state
-	var total := 0
-	for friendly in context.friendly_units:
-		if friendly == attacker or friendly.acted or friendly.carrier != null:
-			continue
-		if friendly.type.max_range <= 0:
-			continue
-		if not AttackRange.can_fire(state, friendly, enemy):
-			continue  # no chart entry, no loaded weapon, or the target is dived
-		if Grid.manhattan(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
-			continue
-		# Priced from friendly.cell, not the cell the follow-up would actually fire
-		# from — the same enemy.cell approximation ThreatMap.incoming_damage makes,
-		# and exact for every doctrine but Alina Ward's combined_arms_pct. Inert
-		# today (focus_fire_bonus ships at 0.0).
-		var forecast := CombatResolver.forecast(state, friendly, friendly.cell, enemy)
-		if forecast.can_attack:
-			total += forecast.attack_damage
-	return total
 
 
 ## What a property is worth to take or to hold: the base price, multiplied for a
