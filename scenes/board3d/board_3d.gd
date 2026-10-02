@@ -93,7 +93,7 @@ func setup(view: BattleView) -> void:
 	]:
 		solid.visibility_layer = SOLID
 	view.fog_repainted.connect(_mark_fog)
-	view.terrain_layer.changed.connect(_mark_owners)
+	view.property_flipped.connect(_mark_owners)
 	Settings.board_view_changed.connect(_on_view_changed)
 	set_process(false)
 	visible = false
@@ -321,7 +321,9 @@ func _mark_fog() -> void:
 	_fog_dirty = true
 
 
-func _mark_owners() -> void:
+## Wired to the flip, not the tile layer: a TileMapLayer's `changed` does not
+## fire for `set_cell`, so a capture would keep the building's old colours.
+func _mark_owners(_cell: Vector2i) -> void:
 	_owners_dirty = true
 
 
@@ -471,6 +473,11 @@ func _refresh_fog() -> void:
 	_fog_texture.update(_fog_image)
 
 
+## The theme a property in atlas `row` is built in, here and in the cut-ins.
+static func property_theme(row: int) -> CommanderVisuals.FactionTheme:
+	return _unclaimed if row == SideIdentity.NEUTRAL_ROW else SideIdentity.theme_for_row(row)
+
+
 ## Rebuilds each property whose paint changed on the flat board: a capture, a
 ## fog-deferred flip landing, a scripted defection. The row is the flat board's
 ## answer, so a capture made out of sight keeps its last-seen colours here too.
@@ -480,10 +487,7 @@ func _refresh_owners() -> void:
 		if _property_rows.get(cell, -2) == row:
 			continue
 		_property_rows[cell] = row
-		var theme := (
-			_unclaimed if row == SideIdentity.NEUTRAL_ROW else SideIdentity.theme_for_row(row)
-		)
-		var building := PropertyModels3D.build(_map.terrain_at(cell).id, theme)
+		var building := PropertyModels3D.build(_map.terrain_at(cell).id, property_theme(row))
 		if _properties.has(cell):
 			building.scale = _properties[cell].scale
 			_properties[cell].queue_free()

@@ -32,9 +32,9 @@ signal end_turn_pressed
 ## A team-tinted cell's paint actually changed in `repaint_property` — a
 ## capture completing, or a fog-deferred one finally reaching the viewer.
 ## Relayed rather than acted on here, the same reason the two presses above
-## are: the flourish over it belongs to BattleAnimator and the pennant it
-## flashes to BattleOverlays, and this view only decides what the board itself
-## shows.
+## are: the flourish over it belongs to BattleAnimator, the pennant it flashes
+## to BattleOverlays and the rebuilt 3D building to Board3D, and this view only
+## decides what the board itself shows.
 signal property_flipped(cell: Vector2i)
 
 ## `refresh_fog` has repainted the fog layer. The 3D board copies the layer on

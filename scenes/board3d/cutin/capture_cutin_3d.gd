@@ -62,7 +62,7 @@ func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> 
 	_play.accent = accent_of(unit.team)
 	var terrain := view.map.terrain_at(cell)
 	var ground := _ground_of(terrain, unit.type)
-	var before := SideIdentity.theme_for_row(view.identity.atlas_row(result.owner_before))
+	var before := Board3D.property_theme(view.identity.atlas_row(result.owner_before))
 	var after := SideIdentity.theme_for_row(view.identity.atlas_row(unit.team))
 	stage.clear()
 	var left := stage.plot(ground, ground, before, -1)

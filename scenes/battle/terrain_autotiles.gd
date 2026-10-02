@@ -160,8 +160,7 @@ static func family(map: MapData, cell: Vector2i) -> Family:
 
 
 ## The connection mask `cell` wears on its family's sheet. For a bridge the
-## mask is its deck orientation: E|W beside a road or another bridge, N|S
-## otherwise.
+## mask is its deck orientation — see `_deck_mask`.
 static func mask(map: MapData, cell: Vector2i) -> int:
 	match terrain_id(map, cell):
 		&"road":
@@ -169,8 +168,7 @@ static func mask(map: MapData, cell: Vector2i) -> int:
 		&"river":
 			return _joins_mask(map, cell, _RIVER_JOINS)
 		&"bridge":
-			var road_side := _joins_mask(map, cell, _ROAD_JOINS)
-			return (BIT_E | BIT_W) if road_side & (BIT_E | BIT_W) != 0 else (BIT_N | BIT_S)
+			return _deck_mask(map, cell)
 		&"sea":
 			return _land_mask(map, cell)
 		&"shoal":
@@ -192,18 +190,70 @@ static func variant(map: MapData, cell: Vector2i) -> int:
 	return mask(map, cell)
 
 
-## What the bridge at `cell` stands over, read off the cells around it: the sea
-## when any is open water, else a river when one is, else dry ground when only
-## land meets it. A bridge among nothing but bridges keeps the river deck.
+## What the bridge at `cell` stands over: the sea when any cell around it is
+## open water, else a river when one is, else dry ground when other land meets
+## it. A deck that meets only bridges and road — the middle of a wide causeway —
+## takes the bed of the nearest bridge in its run that does meet something, and a
+## run of nothing but bridges keeps the river deck.
 static func bridge_bed(map: MapData, cell: Vector2i) -> BridgeBed:
-	var around: Array[StringName] = []
-	for step in _STEPS:
-		around.append(terrain_id(map, cell + step))
-	if around.any(func(id: StringName) -> bool: return _SEA_BEDS.has(id)):
+	var seen: Dictionary[Vector2i, bool] = {cell: true}
+	var ring: Array[Vector2i] = [cell]
+	var met_ground := false
+	while not ring.is_empty():
+		var beds: Array[int] = []
+		var next: Array[Vector2i] = []
+		for at in ring:
+			for step in _STEPS:
+				var near := at + step
+				if not map.in_bounds(near):
+					continue
+				var id := terrain_id(map, near)
+				if id != &"bridge":
+					met_ground = true
+					beds.append(_bed_beside(id))
+				elif not seen.has(near):
+					seen[near] = true
+					next.append(near)
+		for bed: int in [BridgeBed.SEA, BridgeBed.RIVER, BridgeBed.DRY]:
+			if beds.has(bed):
+				return bed as BridgeBed
+		ring = next
+	return BridgeBed.DRY if met_ground else BridgeBed.RIVER
+
+
+## The bed one non-bridge neighbour asks for; -1 for road, which a deck lands on
+## over any bed and so says nothing about it.
+static func _bed_beside(id: StringName) -> int:
+	if _SEA_BEDS.has(id):
 		return BridgeBed.SEA
-	if around.has(&"river") or around.count(&"bridge") == around.size():
+	if id == &"river":
 		return BridgeBed.RIVER
-	return BridgeBed.DRY
+	return -1 if id == &"road" else BridgeBed.DRY
+
+
+## A deck runs along the axis whose straight run of bridges lands on road at more
+## of its ends, so a block of bridges spans the crossing rather than across it. A
+## tie — a lone deck, or one with no road in line — runs E-W beside a road or
+## bridge east or west and N-S otherwise.
+static func _deck_mask(map: MapData, cell: Vector2i) -> int:
+	var across := _road_ends(map, cell, Vector2i.RIGHT)
+	var along := _road_ends(map, cell, Vector2i.DOWN)
+	if across != along:
+		return (BIT_E | BIT_W) if across > along else (BIT_N | BIT_S)
+	var road_side := _joins_mask(map, cell, _ROAD_JOINS)
+	return (BIT_E | BIT_W) if road_side & (BIT_E | BIT_W) != 0 else (BIT_N | BIT_S)
+
+
+## How many ends of the straight bridge run through `cell` along `axis` meet road.
+static func _road_ends(map: MapData, cell: Vector2i, axis: Vector2i) -> int:
+	var ends := 0
+	for step: Vector2i in [axis, -axis]:
+		var at := cell + step
+		while map.in_bounds(at) and terrain_id(map, at) == &"bridge":
+			at += step
+		if map.in_bounds(at) and terrain_id(map, at) == &"road":
+			ends += 1
+	return ends
 
 
 ## Which of a phase-keyed family's `count` phases `cell` draws. A hash of the

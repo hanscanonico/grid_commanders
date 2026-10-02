@@ -134,9 +134,7 @@ func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) 
 func _plot_for(unit: Unit, side: int) -> StagePlot3D:
 	var terrain := view.map.terrain_at(unit.cell)
 	var owner_row := view.identity.atlas_row(view.game.owner_at(unit.cell))
-	return stage.plot(
-		terrain, _ground_for(terrain, unit), SideIdentity.theme_for_row(owner_row), side
-	)
+	return stage.plot(terrain, _ground_for(terrain, unit), Board3D.property_theme(owner_row), side)
 
 
 ## What a squad stands on: the cell's own terrain where its art is a surface,
