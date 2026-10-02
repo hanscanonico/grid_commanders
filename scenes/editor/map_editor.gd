@@ -32,9 +32,11 @@ const DIR_ACTIONS: Dictionary = {
 
 ## What the page says the board answers to. Two legends because a touch build has
 ## no arrows and a desktop one has no second finger; which is printed is
-## `MobileProfile`'s answer, never a caller's.
+## `MobileProfile`'s answer, never a caller's. The undo key is the platform's own
+## (`_undo_key`), though Ctrl+Z undoes on every platform.
 const LEGEND_KEYS := (
-	"ARROWS  MOVE     ENTER  APPLY     CTRL+Z  UNDO     " + "+/-  ZOOM     ESC/BACK  MENU"
+	"ARROWS  MOVE     ENTER  APPLY     TAB  BRUSHES     %s  UNDO     "
+	+ "+/-  ZOOM     ESC/BACK  MENU"
 )
 const LEGEND_TOUCH := (
 	"TAP  PAINT   DRAG  PAN   PINCH  ZOOM   " + "BRUSHES  TOOLS   ERASE  WHOLE CELL   BACK  MENU"
@@ -125,11 +127,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"cancel"):
 		_ask_leave()
 		return
-	if event.is_action_pressed(&"zoom_in"):
-		_board.zoom_step(1)
+	# The wheel zooms only over the board (`_on_board_input`): a list scrolled
+	# past its end hands its wheel on, and it landed here.
+	if event is InputEventMouseButton:
 		return
-	if event.is_action_pressed(&"zoom_out"):
-		_board.zoom_step(-1)
+	if _zoom_key(event):
+		return
+	# A focused control answers Enter and the arrows itself; the board taking
+	# them too would press a button and paint in one keystroke.
+	if get_viewport().gui_get_focus_owner() != null:
 		return
 	if event.is_action_pressed(&"confirm"):
 		_paint_once(_board.cursor_cell)
@@ -140,21 +146,34 @@ func _unhandled_input(event: InputEvent) -> void:
 		_say_cursor()
 
 
-## Undo and redo off the keyboard. Read before the board's own actions, because
-## a bare Z is `confirm` and Godot matches an action whatever modifiers are held
-## on top of it — so Ctrl+Z would paint before it could ever undo.
+func _zoom_key(event: InputEvent) -> bool:
+	if event.is_action_pressed(&"zoom_in"):
+		_board.zoom_step(1)
+	elif event.is_action_pressed(&"zoom_out"):
+		_board.zoom_step(-1)
+	else:
+		return false
+	return true
+
+
+## Undo and redo off the keyboard, under Ctrl or Command on every platform. Read
+## before the board's own actions, because a bare Z is `confirm` and Godot
+## matches an action whatever modifiers are held on top of it — so a modified Z
+## is swallowed here whatever it asked for, and never paints.
 func _history_key(event: InputEvent) -> bool:
 	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo or not key.is_command_or_control_pressed():
+	if key == null or not (key.ctrl_pressed or key.meta_pressed or key.alt_pressed):
 		return false
-	match key.keycode:
-		KEY_Z:
-			_step_history(key.shift_pressed)
-		KEY_Y:
-			_step_history(true)
-		_:
-			return false
+	if key.keycode != KEY_Z and key.keycode != KEY_Y:
+		return false
+	if key.pressed and not key.echo and not key.alt_pressed:
+		_step_history(key.keycode == KEY_Y or key.shift_pressed)
 	return true
+
+
+## The undo key as the legend prints it: Command on a Mac, Control elsewhere.
+static func _undo_key() -> String:
+	return "CMD+Z" if OS.get_name() == "macOS" else "CTRL+Z"
 
 
 ## Whether a full-screen page stands over the board. The board keeps no state
@@ -177,9 +196,10 @@ func _open(board_size: Vector2i) -> void:
 	_adopt(MapDocument.blank(board_size.x, board_size.y, _db))
 
 
-## Opens a board that already exists. A shipped one opens nameless: `UserMaps`
-## refuses a name the game already ships, and finding that out at the save dialog
-## costs the author a whole board's work.
+## Opens a board that already exists, under the name the picker shows it by. A
+## shipped one opens as a free copy's name: `UserMaps` refuses a name the game
+## already ships, and finding that out at the save dialog costs the author a
+## whole board's work.
 func _open_path(path: String) -> void:
 	var map := MapData.load_from_file(path, _db)
 	if map == null:
@@ -188,7 +208,9 @@ func _open_path(path: String) -> void:
 	var doc := MapDocument.from_map(map, _db)
 	var shipped := not path.begins_with(MapCatalog.USER_DIR)
 	if shipped:
-		doc.map_name = ""
+		doc.map_name = UserMaps.copy_name(doc.map_name).capitalize()
+	else:
+		doc.map_name = MapCatalog.display_name(path)
 	_adopt(doc)
 	if shipped:
 		_status.text = "OPENED AS A COPY — SAVE IT UNDER A NAME OF YOUR OWN"
@@ -211,6 +233,7 @@ func _adopt(doc: MapDocument) -> void:
 ## as they read a stroke that had just been laid.
 func _step_history(forward: bool) -> void:
 	var moved := _history.redo(_doc) if forward else _history.undo(_doc)
+	_hand_the_board_back()
 	_show_history()
 	if not moved:
 		_status.text = "NOTHING TO REDO" if forward else "NOTHING TO UNDO"
@@ -345,10 +368,11 @@ func _on_saved(map_name: String, description: String) -> void:
 		_doc.description = previous
 		_save_dialog.refuse(error)
 		return
-	_doc.map_name = UserMaps.slug(map_name)
+	_doc.map_name = map_name.strip_edges()
 	_dirty = false
 	_save_dialog.close()
 	_hand_the_board_back()
+	_strip.show_defects(_defects, true)
 	_status.text = "SAVED AS %s" % _doc.map_name.to_upper()
 	if _guarded_save:
 		_guarded_save = false
@@ -444,6 +468,7 @@ func _on_resize_asked(board_size: Vector2i) -> void:
 	_stroke_changed = true
 	_end_stroke()
 	_board.fit_cursor()
+	_hand_the_board_back()
 	_say_cursor()
 
 
@@ -451,9 +476,9 @@ func _on_resize_asked(board_size: Vector2i) -> void:
 
 
 ## The mouse's half of painting: a press paints and arms the drag, a release
-## disarms it, and motion under a held button keeps painting. Every mouse button
-## is swallowed, so a right-click on the board cannot read as the cancel it also
-## is and walk the author out of their draft.
+## disarms it, motion under a held button keeps painting, and the wheel zooms.
+## Every mouse button is swallowed, so a right-click on the board cannot read as
+## the cancel it also is and walk the author out of their draft.
 func _on_board_input(event: InputEvent) -> void:
 	if _touch != null:
 		if _touch.handle(event):
@@ -462,6 +487,7 @@ func _on_board_input(event: InputEvent) -> void:
 	var click := event as InputEventMouseButton
 	if click != null:
 		_board.accept_event()
+		_zoom_key(click)
 		if click.button_index != MOUSE_BUTTON_LEFT:
 			return
 		_hand_the_board_back()
@@ -514,7 +540,8 @@ func _build() -> void:
 
 	_status = UiKit.key_legend("")
 	main.add_child(_status)
-	main.add_child(UiKit.key_legend(LEGEND_TOUCH if MobileProfile.active() else LEGEND_KEYS))
+	var legend := LEGEND_TOUCH if MobileProfile.active() else LEGEND_KEYS % _undo_key()
+	main.add_child(UiKit.key_legend(legend))
 
 	_build_pages()
 	_show_brush()

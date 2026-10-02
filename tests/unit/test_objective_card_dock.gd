@@ -11,14 +11,15 @@ const VIEWPORT := Vector2(640, 360)
 const CARD := Vector2(168, 60)
 const LEFT := 0
 const RIGHT := 1
+const BOTTOM_LEFT := 2
 
 ## The board laid out so cell (0, 0) is the left card's own top-left corner: every
 ## cell of the card's footprint is then a small non-negative cell.
 var _origin := Vector2(4, UiTheme.HUD_TOP_H + 4)
 
 
-func _dock(cell: Vector2i, current: int) -> int:
-	return MissionObjectivesPanel.dock_for(cell, CELL, _origin, VIEWPORT, CARD, current)
+func _dock(cell: Vector2i, current: int, goals: Array[Vector2i] = []) -> int:
+	return MissionObjectivesPanel.dock_for(cell, goals, CELL, _origin, VIEWPORT, CARD, current)
 
 
 ## Well clear of both corners: eight cells right of the left card's edge and below
@@ -67,5 +68,63 @@ func test_card_at_home_ignores_the_far_corner() -> void:
 func test_overlapping_corners_hold_whichever_dock_the_card_is_in() -> void:
 	var narrow := Vector2(200, 150)
 	var both := Vector2i(2, 1)
-	assert_eq(MissionObjectivesPanel.dock_for(both, CELL, _origin, narrow, CARD, LEFT), LEFT)
-	assert_eq(MissionObjectivesPanel.dock_for(both, CELL, _origin, narrow, CARD, RIGHT), RIGHT)
+	var none: Array[Vector2i] = []
+	assert_eq(MissionObjectivesPanel.dock_for(both, none, CELL, _origin, narrow, CARD, LEFT), LEFT)
+	assert_eq(
+		MissionObjectivesPanel.dock_for(both, none, CELL, _origin, narrow, CARD, RIGHT), RIGHT
+	)
+
+
+## The ground the mission still wants is no place for the card either: it leaves
+## a corner sitting on a goal square for one that covers none (playtest CA-01, the
+## west gate under the card on The Lantern Hall).
+func test_card_steps_off_the_ground_the_mission_wants() -> void:
+	var gate: Array[Vector2i] = [Vector2i(1, 2)]
+	assert_eq(_dock(_clear_cell(), LEFT, gate), RIGHT)
+
+
+## Goals under both top corners send it under them, to the bottom of the band.
+func test_card_drops_to_the_bottom_when_both_top_corners_hold_goals() -> void:
+	var goals: Array[Vector2i] = [Vector2i(1, 2), _right_cell()]
+	assert_eq(_dock(_clear_cell(), LEFT, goals), BOTTOM_LEFT)
+
+
+## Where every corner covers something, the cursor is what it must not cover.
+func test_the_cursor_outweighs_any_goal() -> void:
+	var goals: Array[Vector2i] = [Vector2i(1, 2), _right_cell()]
+	var bottom := Vector2i(1, int((VIEWPORT.y - UiTheme.HUD_BOTTOM_H - _origin.y) / CELL) - 1)
+	var right_bottom := Vector2i(_right_cell().x, bottom.y)
+	goals.append(right_bottom)
+	assert_ne(_dock(bottom, LEFT, goals), BOTTOM_LEFT)
+
+
+## Goals half-way down both edges of the band: a card tall enough that its top and
+## bottom corners overlap across the middle covers one of them wherever it sits.
+func _mid_goals() -> Array[Vector2i]:
+	return [Vector2i(1, 8), Vector2i(_right_cell().x, 8)]
+
+
+func _compact(card: Vector2, goals: Array[Vector2i]) -> bool:
+	return MissionObjectivesPanel.compact_for(_clear_cell(), goals, CELL, _origin, VIEWPORT, card)
+
+
+## Every corner of a tall card covers a goal, so it falls back to the compact form
+## rather than parking on the cheapest one (playtest CA-01, the review of the west
+## gate on The Lantern Hall and Morn's HQ on Five Flags).
+func test_card_falls_back_to_compact_when_every_corner_covers_a_goal() -> void:
+	assert_true(_compact(Vector2(168, 200), _mid_goals()))
+
+
+## The same goals leave a short card's top corners clear, so it keeps its rows.
+func test_card_keeps_its_rows_while_a_corner_is_clear() -> void:
+	assert_false(_compact(Vector2(168, 60), _mid_goals()))
+
+
+## The cursor counts as much as a goal: a card it and the goals shut out of every
+## corner is printed compact too.
+func test_the_cursor_can_shut_the_last_clear_corner() -> void:
+	var goals: Array[Vector2i] = [Vector2i(1, 2), _right_cell()]
+	var bottom := Vector2i(1, int((VIEWPORT.y - UiTheme.HUD_BOTTOM_H - _origin.y) / CELL) - 1)
+	goals.append(Vector2i(_right_cell().x, bottom.y))
+	assert_false(_compact(CARD, goals))
+	assert_true(MissionObjectivesPanel.compact_for(bottom, goals, CELL, _origin, VIEWPORT, CARD))

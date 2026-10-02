@@ -242,3 +242,26 @@ func test_an_objective_the_menu_does_not_name_is_worded_freely() -> void:
 	]:
 		objective.text = "Take whatever reads best."
 		assert_eq(objective.wording_error(), "", "%s is not gated" % objective.get_class())
+
+
+# --- what a met reading means before the verdict ----------------------------
+
+
+## The card ticks a met condition as done. A kept one — the ally still in the
+## field, the square held its days — is only how things stand until the mission
+## ends, and a tick on day one read as a star already won (playtest CA-17).
+func test_only_a_kept_condition_holds_until_the_verdict() -> void:
+	assert_true(AllySurvivesObjective.new().holds_until_verdict())
+	assert_true(HoldCellObjective.new().holds_until_verdict())
+	for objective: MissionObjective in [
+		CaptureCellObjective.new(),
+		OwnPropertiesObjective.new(),
+		ReachCellObjective.new(),
+		DestroyUnitObjective.new(),
+		DefeatTeamObjective.new(),
+		SurviveUntilDayObjective.new(),
+		ProtectUnitObjective.new(),
+		LossLimitObjective.new(),
+		DayDeadlineObjective.new(),
+	]:
+		assert_false(objective.holds_until_verdict(), "%s is a deed, not a vigil" % objective)

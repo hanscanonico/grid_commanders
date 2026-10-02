@@ -202,8 +202,8 @@ func _present_capture(command: CaptureCommand, watched: bool, animate_path: bool
 	if not animate_path:
 		_battle.set_cursor_cell(dest)
 	await _battle.animator.animate_capture(command.result, command.unit, dest)
+	EventBus.capture_ordered.emit(dest, command.unit.team)
 	if command.result != null and command.result.captured:
-		EventBus.property_captured.emit(dest, command.unit.team)
 		_battle.view.repaint_property(dest)
 	await _settle_move(command, command.unit, watched)
 
