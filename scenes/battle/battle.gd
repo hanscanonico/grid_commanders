@@ -994,10 +994,10 @@ func _commit_end_turn() -> void:
 	_run_command(EndTurnCommand.new(), _back_to_rest, false)
 
 
-## Locks input and shows the already-decided winner. Public because the AI turn
-## runner reaches the same terminal flow as a human command.
-func enter_victory() -> void:
-	_outcome.enter_victory()
+## Locks input and shows the already-decided winner, or `recorded`: the verdict a
+## playback closed on when the board did not decide it. Public for the runners.
+func enter_victory(recorded: String = "") -> void:
+	_outcome.enter_victory(recorded)
 
 
 ## A production property of ours standing empty. Which terrains those are is the

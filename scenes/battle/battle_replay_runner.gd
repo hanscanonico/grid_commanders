@@ -38,10 +38,9 @@ func run() -> void:
 		var command := _replay.next_command(_battle.game)
 		if command == null:
 			# A match decided off the board — a mission's objectives, a spectated
-			# match's day cap — reaches its end with no winner on it, so the
-			# verdict it closed on is read out here instead.
-			var verdict := _replay.result()
-			await _finish(verdict if verdict != "" else "Recording ends here")
+			# match's day cap — reaches its end with no winner on it, so the end
+			# card is handed the verdict it closed on.
+			await _finish("Recording ends here", _replay.result())
 			return
 		var receipt := await _battle.execute_command(command, true)
 		if receipt.rejected():
@@ -70,7 +69,7 @@ func run() -> void:
 ## Says why the replay stopped and lands on the lockup. A recording that ran to a
 ## decision shows that decision; one that stops early shows "End of recording" on
 ## the day it reached, with no verdict — see `BattleOutcome._result_text`.
-func _finish(reason: String) -> void:
-	if _battle.game.winner == 0:
+func _finish(reason: String, verdict: String = "") -> void:
+	if _battle.game.winner == 0 and verdict == "":
 		await _battle.present_banner(reason)
-	_battle.enter_victory()
+	_battle.enter_victory(verdict)

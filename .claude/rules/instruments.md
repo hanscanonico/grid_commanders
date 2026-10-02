@@ -135,10 +135,12 @@ root index are in `docs/design_record.md`.
   recording**, never a draw (playtest SK-05), and an Esc that skips its banner or cut-in still asks
   for the pause. A finished match's recording ends on a **closing line** (`ReplayCodec.closing`,
   format 5) — the verdict its end card read, presentation text like the header's `label` — so the
-  Replays page can say which days a slice holds and whether it was finished. D5: omniscient viewer,
-  always-on recording into ten rotating slots under `user://replays/`, appended per command so a crash costs the last line rather than the file — and
-  the slot is claimed by the **first command**, never the boot, because the slots rotate and a match
-  nobody played must not evict one somebody did. D6: **the analyser asks the rules, never the
+  Replays page can say which days a slice holds and whether it was finished, and a playback of a
+  match the board did not decide (a day cap, a mission's objectives) ends on that verdict. D5:
+  omniscient viewer, always-on recording into ten rotating slots under `user://replays/`, appended
+  per command so a crash costs the last line rather than the file — and the slot is claimed by the
+  **first command**, never the boot, because the slots rotate and a match nobody played must not
+  evict one somebody did. D6: **the analyser asks the rules, never the
   planner** —
   counterfactuals come from `AttackRange` / `MovementResolver` / `CombatResolver.forecast_at`, no
   why-hook is threaded out of `ai/`, and a finding is evidence rather than a gate, so

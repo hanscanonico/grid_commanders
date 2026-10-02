@@ -48,6 +48,10 @@ var _result_winner := 0
 ## mid-match through the Auto row must not change what the end card calls the
 ## result.
 var _seated_ai: Array[int] = []
+## The verdict a playback's closing line read, for a recorded match the board did
+## not decide — a mission's objectives, a spectated match's day cap. Empty for one
+## nobody finished, and for every match being played.
+var _recorded_verdict := ""
 var _input_guard_until_ms := 0
 var _action_armed := false
 
@@ -128,10 +132,11 @@ func _all_seats_ai() -> bool:
 
 ## Idempotent: a rout resolved inside _begin_turn is seen again by whatever was
 ## driving that turn, and the match is only won once however many callers notice.
-func enter_victory() -> void:
+func enter_victory(recorded: String = "") -> void:
 	if _battle.state == Battle.State.VICTORY:
 		return
 	_battle.state = Battle.State.VICTORY
+	_recorded_verdict = recorded
 	if _result_winner == 0:
 		_result_winner = _battle.game.winner
 	_battle.animator.hide_banner()
@@ -282,6 +287,8 @@ func _result_text() -> String:
 		)
 	if _recording_unfinished():
 		return "End of recording"
+	if _recorded_verdict != "":
+		return _recorded_verdict
 	if _result_winner == 0:
 		return "Draw"
 	var human := _human_team()
@@ -294,7 +301,7 @@ func _result_text() -> String:
 ## left, or one the board stopped matching. It has no verdict to give: calling it
 ## a draw (playtest SK-05) said the armies had tied when the player had quit.
 func _recording_unfinished() -> bool:
-	return _battle.replay_path != "" and _result_winner == 0
+	return _battle.replay_path != "" and _result_winner == 0 and _recorded_verdict == ""
 
 
 ## The seat the people at the table play, and 0 when "did *you* win?" has no
