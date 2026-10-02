@@ -84,3 +84,12 @@ func test_every_chip_has_a_touch_word() -> void:
 func test_the_touch_bar_leaves_next_to_the_dock() -> void:
 	assert_eq(ControlHints.chip_for(ControlHints.NEXT_CHIP, true), "")
 	assert_eq(ControlHints.chip_for(ControlHints.THREAT_CHIP, true), "THREAT")
+
+
+## The mission card names O for its whole list; a phone has no O and opens that
+## list from the bar's MISSION chip, so the card names that instead.
+func test_the_mission_card_names_no_key_on_touch() -> void:
+	for chip in [ControlHints.ALL_TERMS_CHIP, ControlHints.HIDE_TERMS_CHIP]:
+		assert_eq(ControlHints.chip_for(chip, false), chip, "the desktop card moved: %s" % chip)
+		var word := ControlHints.chip_for(chip, true)
+		assert_true(word.begins_with("MISSION"), "the touch card names a key: %s" % word)

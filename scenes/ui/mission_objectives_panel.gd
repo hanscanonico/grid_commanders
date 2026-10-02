@@ -345,8 +345,10 @@ func _lay_out(form: Form) -> void:
 		_group("LOSE", mission.failures, short)
 		_bonus_group(mission, short)
 		if form != Form.FULL:
-			var key := "O · ALL TERMS" if short else "O · HIDE"
-			_rows.add_child(UiTheme.hud_label(key, UiTheme.SIZE_STAT, UiTheme.INK_3))
+			var key := ControlHints.ALL_TERMS_CHIP if short else ControlHints.HIDE_TERMS_CHIP
+			_rows.add_child(
+				UiTheme.hud_label(ControlHints.chip_for(key), UiTheme.SIZE_STAT, UiTheme.INK_3)
+			)
 	if changed or (form == Form.FULL and _row_labels.size() != _fits_rows):
 		modulate.a = 0.0
 
@@ -367,7 +369,9 @@ func _count_row(mission: MissionDefinition) -> void:
 		row.add_child(
 			UiTheme.hud_label("%d/%d" % [met, live.size()], UiTheme.SIZE_STAT, UiTheme.AMMO)
 		)
-	var words := "O · ALL TERMS" if live.is_empty() else "· O · ALL TERMS"
+	var words := ControlHints.chip_for(ControlHints.ALL_TERMS_CHIP)
+	if not live.is_empty():
+		words = "· " + words
 	var key := UiTheme.hud_label(words, UiTheme.SIZE_STAT, UiTheme.INK_3)
 	_row_labels.append(key)
 	row.add_child(key)
