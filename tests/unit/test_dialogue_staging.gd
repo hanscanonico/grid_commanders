@@ -65,3 +65,50 @@ func test_every_gesture_is_a_clip_the_actor_plays() -> void:
 		for beat in 2:
 			var clip := DialogueStaging.gesture_for(line, beat)
 			assert_true(ActorPose3D.CLIPS.has(clip), "'%s' plays %s" % [line, clip])
+
+
+# --- where a general stands ---------------------------------------------------
+
+const LENS_SOUTH := Vector2i(0, 1)
+const CENTRE := Vector2i(1, 1)
+
+
+func _stand(rows: String, toward: Vector2i = LENS_SOUTH, taken: Array[Vector2i] = []) -> Vector2i:
+	var map := MapData.parse("[terrain]\n" + rows, Fixture.terrain_db())
+	var cells: Dictionary[Vector2i, bool] = {}
+	for cell in taken:
+		cells[cell] = true
+	return DialogueStaging.stand_cell(map, CENTRE, toward, cells)
+
+
+func test_a_general_steps_off_their_building_toward_the_lens() -> void:
+	assert_eq(_stand("...\n.C.\n..."), Vector2i(1, 2))
+	assert_eq(_stand("...\n.C.\n...", Vector2i(1, 0)), Vector2i(2, 1), "the lens turned east")
+
+
+## Ff01's hologram stood inside the headquarters: every cell that has something
+## standing on it, and water, is refused, however far from the lens the one
+## open cell is.
+func test_buildings_peaks_woods_and_water_are_never_stood_on() -> void:
+	assert_eq(_stand("MF.\n~C_\nCSM"), Vector2i(2, 0))
+
+
+## Ff39's hologram stood through Iris Colt and an artillery barrel.
+func test_a_unit_or_another_general_keeps_their_cell() -> void:
+	assert_eq(_stand("...\n.C.\n...", LENS_SOUTH, [Vector2i(1, 2)]), Vector2i(0, 2))
+
+
+## Ff39's mountain stood in front of Alina Ward in her close-up.
+func test_a_cell_with_a_peak_in_front_of_it_gives_way_to_a_clear_one() -> void:
+	assert_eq(_stand("...\n.C.\n...\n.M."), Vector2i(0, 2))
+
+
+func test_a_crowded_post_looks_one_ring_further_out() -> void:
+	var map := MapData.parse("[terrain]\n.....\n.MMM.\n.MCM.\n.MMM.\n.....", Fixture.terrain_db())
+	var post := Vector2i(2, 2)
+	var stand := DialogueStaging.stand_cell(map, post, LENS_SOUTH, {})
+	assert_eq(stand, Vector2i(2, 4))
+
+
+func test_with_nowhere_open_a_general_keeps_their_post() -> void:
+	assert_eq(_stand("MMM\nMCM\nMMM"), CENTRE)

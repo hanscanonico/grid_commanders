@@ -21,6 +21,8 @@ var posts: Dictionary[StringName, Vector2i] = {}
 var subject: Array[Vector2i] = []
 ## The viewer's own post, where a voice with no seat on this board is heard.
 var home := NOWHERE
+## Every cell the viewer sees a unit on, which no general may stand in.
+var occupied: Dictionary[Vector2i, bool] = {}
 ## Waits for a press after each line rather than timing out: the briefing, read
 ## again because the player asked for it.
 var untimed := false
@@ -42,6 +44,9 @@ static func of_lines(battle: Battle, spoken: Array[MissionLine]) -> DialogueCast
 		if post != NOWHERE:
 			cast.posts[commander.id] = post
 	cast.home = post_of(battle, battle.perspective.viewing_team())
+	for unit in battle.game.units:
+		if battle.perspective.can_see_unit(unit):
+			cast.occupied[unit.cell] = true
 	return cast
 
 
