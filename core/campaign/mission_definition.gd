@@ -57,6 +57,10 @@ extends Resource
 ## The day count a perfect run is expected to finish inside; 0 disables the
 ## speed star.
 @export var par_day: int = 0
+## What the mission calls the units its board names, as `Unit.tag -> name` — "the
+## Iron delegation's car" — so the unit panel says the words the objectives say
+## rather than "APC". Read by presentation only, like the tag it is keyed by.
+@export var unit_names: Dictionary = {}
 
 @export_group("The script")
 ## The beats that happen during the fight, in the order they are due: each waits
@@ -344,6 +348,26 @@ func _events_error(map: MapData, unit_db: UnitDB) -> String:
 	var tag_error := UnitTag.duplicate_error(named)
 	if tag_error != "":
 		return "mission '%s': %s" % [id, tag_error]
+	return _unit_names_error(named)
+
+
+## The name this mission gives the unit tagged `tag`, or "" for a unit it does not
+## name.
+func unit_name(tag: StringName) -> String:
+	if tag == &"":
+		return ""
+	return String(unit_names.get(tag, ""))
+
+
+## Why a name in `unit_names` could never be shown, or "": it is keyed by a tag
+## none of the `named` units — the board's and the script's — carries, or it
+## names nothing.
+func _unit_names_error(named: Array[StringName]) -> String:
+	for tag: Variant in unit_names:
+		if not named.has(StringName(str(tag))):
+			return "mission '%s' names unit '%s', which no unit it deals carries" % [id, tag]
+		if str(unit_names[tag]).strip_edges() == "":
+			return "mission '%s' gives unit '%s' an empty name" % [id, tag]
 	return ""
 
 

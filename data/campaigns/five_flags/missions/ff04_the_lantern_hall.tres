@@ -327,6 +327,11 @@ failures = Array[Resource]([SubResource("Objective_2"), SubResource("Objective_3
 bonus_objectives = Array[Resource]([SubResource("Objective_5")])
 events = Array[Resource]([SubResource("Event_1"), SubResource("Event_2"), SubResource("Event_3"), SubResource("Event_4"), SubResource("Event_5")])
 par_day = 6
+unit_names = {
+&"delegate_aurora": "Aurora delegation's car",
+&"delegate_iron": "Iron delegation's car",
+&"delegate_verdant": "Verdant delegation's car"
+}
 briefing = Array[Resource]([SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10"), SubResource("Line_11"), SubResource("Line_12")])
 victory = Array[Resource]([SubResource("Line_13"), SubResource("Line_14"), SubResource("Line_15")])
 defeat = Array[Resource]([SubResource("Line_16"), SubResource("Line_17")])
