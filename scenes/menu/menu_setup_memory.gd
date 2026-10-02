@@ -22,17 +22,12 @@ static func remember(map: MapData, fog_on: bool, strip: SeatStrip) -> void:
 	Settings.set_match_setup({MAP_KEY: map.source_path, FOG_KEY: fog_on, TABLE_KEY: strip.table()})
 
 
-## Where the remembered board sits on the shelf, or -1 when nothing is remembered
-## or the board is gone — a deleted user map, a renamed file — so the picker keeps
-## the board it leads with.
-static func map_index(setup: Dictionary, maps: Array[MapData]) -> int:
+## The remembered board's file, or "" when nothing sound is remembered. The
+## picker looks it up on its shelf and keeps the board it leads with when the file
+## is gone — a deleted user map, a renamed file.
+static func map_path(setup: Dictionary) -> String:
 	var path: Variant = setup.get(MAP_KEY, "")
-	if not path is String or path == "":
-		return -1
-	for i in maps.size():
-		if maps[i].source_path == path:
-			return i
-	return -1
+	return path if path is String else ""
 
 
 static func fog(setup: Dictionary) -> bool:

@@ -186,7 +186,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # three battle menus share one ActionMenu, a PanelContainer grows to fit its rows
 # and never shrinks back on its own, and the eleven-row build menu used to leave its
 # panel standing behind every short menu opened after it. So the scenario opens the
-# build menu, cancels, and opens a two-row unit menu, then measures that one against
+# build menu, cancels, and opens a unit's short menu, then measures that one against
 # the one before it on both axes. `buildmenu` and `supply` each photograph one of
 # those two menus perfectly well on its own, which is exactly why neither ever saw
 # the bug. Note the name: a `menu_` prefix is reserved above for the main-menu

@@ -64,6 +64,9 @@ func _ready() -> void:
 	add_child(_menu)
 	_menu.hide()
 	_menu.action_chosen.connect(_on_chosen)
+	# A stepped row can widen the panel ("Sound: Half"), so it re-centres on every
+	# resize rather than only where it opened.
+	_menu.resized.connect(_centre)
 	hide()
 
 
@@ -82,6 +85,10 @@ func open() -> void:
 	var rows := Settings.value_actions([Settings.SPEED_ROW])
 	rows.append(_BACK)
 	_menu.open(rows, Vector2.ZERO)
+	_centre()
+
+
+func _centre() -> void:
 	_menu.position = ((get_viewport_rect().size - _menu.size) / 2.0).round()
 
 

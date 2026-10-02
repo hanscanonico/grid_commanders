@@ -214,3 +214,29 @@ func _push_click(at: Vector2, down: bool) -> void:
 	click.position = at
 	click.global_position = at
 	get_tree().root.push_input(click, true)
+
+
+## A chip on a panel of its own grows over a sibling panel's bare chrome but never
+## over a button standing in it: the touch dock sits under the bottom bar on the
+## same layer, and its chips took the lower half of End Turn's taps.
+func test_a_chip_never_grows_over_a_button_on_a_sibling_panel() -> void:
+	var bar := Control.new()
+	bar.position = Vector2(0, 100)
+	bar.size = Vector2(200, 30)
+	_plane.add_child(bar)
+	var end_turn := Button.new()
+	end_turn.position = Vector2(100, 4)
+	end_turn.size = Vector2(40, 20)
+	bar.add_child(end_turn)
+	var dock := Control.new()
+	dock.position = Vector2(0, 130)
+	dock.size = Vector2(200, 20)
+	_plane.add_child(dock)
+	var chip := Button.new()
+	chip.position = Vector2(100, 2)
+	chip.size = Vector2(40, 16)
+	dock.add_child(UiKit.touchable(chip))
+	await _settle()
+	var reach := _area_over(chip).get_global_rect()
+	assert_false(reach.intersects(end_turn.get_global_rect()), "the chip stops short of End Turn")
+	assert_gt(reach.size.y, chip.size.y, "and still grows where nothing stands")
