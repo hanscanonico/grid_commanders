@@ -211,14 +211,7 @@ static func map_actions(
 	if CampaignSession.active():
 		var card := "On" if objectives_up else "Off"
 		actions.append({"id": &"objectives", "label": "Objectives: %s" % card})
-	for row: StringName in Settings.offered_rows():
-		actions.append(
-			{
-				"id": row,
-				"label": Settings.row_label(row),
-				"cycle": func(step: int) -> String: return Settings.cycle_row(row, step),
-			}
-		)
+	actions.append_array(Settings.value_actions())
 	var auto_eligible := game.current_team not in ai_teams or auto_tiers.has(game.current_team)
 	if savable and difficulty_db != null and auto_eligible:
 		var auto_label := "Off"
