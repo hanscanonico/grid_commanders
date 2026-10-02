@@ -546,7 +546,7 @@ func _build_outcome() -> BattleOutcome:
 func _unhandled_input(event: InputEvent) -> void:
 	var dir := _dirs.step(event, DIR_ACTIONS.keys())
 	if animator.consume_banner_skip(event):
-		get_viewport().set_input_as_handled()
+		_ai_runner.spend_skip(event)
 		return
 	if state == State.HANDOFF:
 		# Only "I'm ready" gets through while the device is being passed over.

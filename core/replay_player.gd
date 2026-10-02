@@ -53,6 +53,11 @@ func label() -> String:
 	return _replay.label
 
 
+## The verdict the recorded match closed on, or "" for one nobody finished.
+func result() -> String:
+	return _replay.result
+
+
 ## Why the mission this recording names cannot be found, or "" — which is every
 ## recording of a skirmish, and every one whose mission still ships. Asked before
 ## a single command is handed out, because a mission that has been renamed or
