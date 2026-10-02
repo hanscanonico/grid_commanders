@@ -741,7 +741,10 @@ forms named in the root index are in `docs/design_record.md`.
   flies to a speaker the first time (`CinemaPose3D.glide`, a crane's arc, with a whoosh) and cuts
   between medium and closer shots after (`CinemaShot3D.actor`, the open third facing into the
   board); a general with no army on the board is projected as a hologram on a `Projector3D` at the
-  viewer's post; the narrator speaks over an establishing shot. The story theme (`council`) comes in
+  viewer's post; **every figure stands on open ground beside its post** — never inside a building,
+  a peak, a wood, water, a unit the viewer sees or another general, and with nothing in front of
+  it toward the lens where a cell allows (`DialogueStaging.stand_cell`, playtest CA-11); the
+  narrator speaks over an establishing shot. The story theme (`council`) comes in
   for the scene and the match's own track comes back after it (`Music.current`). A power is a limit
   break: under a flash and `power_sting` the general stands in a sparking pillar of light, raises a
   fist, two shockwaves roll out to the rim and the power's name slams in; the card is still bound so
