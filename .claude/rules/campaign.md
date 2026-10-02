@@ -93,6 +93,12 @@ root index are in `docs/design_record.md`.
   **`O` lowers and raises the card** — a lens key like `T` and `R`, stated as a top-bar chip that is
   off the bar entirely outside a campaign, with the card's up/down state the **panel's own** rather
   than `Battle`'s; every mission opens with it up, deliberately not a device preference.
+  **The card stays inside the band between the bars and off the ground the mission still wants**
+  (playtest CA-01): a list too tall for the band prints short — each group's first open condition
+  and a count of the rest — and O opens the whole list, wider, before it lowers the card; the
+  pause menu's row only raises or lowers it. It parks in whichever band corner covers neither the
+  cursor nor a square `BattleCampaign.objective_cells` names. A met condition the side must keep
+  until the verdict (`MissionObjective.holds_until_verdict`) wears `◐`, never a tick.
   **The card says what to do and the board says where**: all 317 objective strings were rewritten to
   one convention — the verb names the mechanic, a failure states the loss in the present, every
   number is read from the resource's own field — which `docs/campaign_authoring.md` owns, while the

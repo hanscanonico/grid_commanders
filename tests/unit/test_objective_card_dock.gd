@@ -11,14 +11,15 @@ const VIEWPORT := Vector2(640, 360)
 const CARD := Vector2(168, 60)
 const LEFT := 0
 const RIGHT := 1
+const BOTTOM_LEFT := 2
 
 ## The board laid out so cell (0, 0) is the left card's own top-left corner: every
 ## cell of the card's footprint is then a small non-negative cell.
 var _origin := Vector2(4, UiTheme.HUD_TOP_H + 4)
 
 
-func _dock(cell: Vector2i, current: int) -> int:
-	return MissionObjectivesPanel.dock_for(cell, CELL, _origin, VIEWPORT, CARD, current)
+func _dock(cell: Vector2i, current: int, goals: Array[Vector2i] = []) -> int:
+	return MissionObjectivesPanel.dock_for(cell, goals, CELL, _origin, VIEWPORT, CARD, current)
 
 
 ## Well clear of both corners: eight cells right of the left card's edge and below
@@ -67,5 +68,31 @@ func test_card_at_home_ignores_the_far_corner() -> void:
 func test_overlapping_corners_hold_whichever_dock_the_card_is_in() -> void:
 	var narrow := Vector2(200, 150)
 	var both := Vector2i(2, 1)
-	assert_eq(MissionObjectivesPanel.dock_for(both, CELL, _origin, narrow, CARD, LEFT), LEFT)
-	assert_eq(MissionObjectivesPanel.dock_for(both, CELL, _origin, narrow, CARD, RIGHT), RIGHT)
+	var none: Array[Vector2i] = []
+	assert_eq(MissionObjectivesPanel.dock_for(both, none, CELL, _origin, narrow, CARD, LEFT), LEFT)
+	assert_eq(
+		MissionObjectivesPanel.dock_for(both, none, CELL, _origin, narrow, CARD, RIGHT), RIGHT
+	)
+
+
+## The ground the mission still wants is no place for the card either: it leaves
+## a corner sitting on a goal square for one that covers none (playtest CA-01, the
+## west gate under the card on The Lantern Hall).
+func test_card_steps_off_the_ground_the_mission_wants() -> void:
+	var gate: Array[Vector2i] = [Vector2i(1, 2)]
+	assert_eq(_dock(_clear_cell(), LEFT, gate), RIGHT)
+
+
+## Goals under both top corners send it under them, to the bottom of the band.
+func test_card_drops_to_the_bottom_when_both_top_corners_hold_goals() -> void:
+	var goals: Array[Vector2i] = [Vector2i(1, 2), _right_cell()]
+	assert_eq(_dock(_clear_cell(), LEFT, goals), BOTTOM_LEFT)
+
+
+## Where every corner covers something, the cursor is what it must not cover.
+func test_the_cursor_outweighs_any_goal() -> void:
+	var goals: Array[Vector2i] = [Vector2i(1, 2), _right_cell()]
+	var bottom := Vector2i(1, int((VIEWPORT.y - UiTheme.HUD_BOTTOM_H - _origin.y) / CELL) - 1)
+	var right_bottom := Vector2i(_right_cell().x, bottom.y)
+	goals.append(right_bottom)
+	assert_ne(_dock(bottom, LEFT, goals), BOTTOM_LEFT)

@@ -180,8 +180,8 @@ func _run_panel() -> String:
 	# this scenario exists to capture byte-stable.
 	#
 	# The key lowers it and the pause menu's row raises it, which is the one claim
-	# worth driving: the two run the same toggle on the card's own state, so a row
-	# that grew a second copy of it would leave the card down here.
+	# worth driving: the two drive the card's own up/down state, so a row that grew
+	# a second copy of it would leave the card down here.
 	panel.toggle(_battle.game)
 	if panel.visible:
 		return "the objective panel stayed up after O lowered it"
@@ -189,8 +189,10 @@ func _run_panel() -> String:
 	if not panel.visible:
 		return "the objective panel did not come back up from the pause menu's row"
 	# The card measures and places itself a frame after its rows were added, like
-	# the teaching strip and the seat strip.
-	await _battle.get_tree().process_frame
+	# the teaching strip and the seat strip — and a list too tall for the band takes
+	# a second frame to be printed short.
+	for frame in 2:
+		await _battle.get_tree().process_frame
 	var error := panel.layout_error()
 	if error != "":
 		return error

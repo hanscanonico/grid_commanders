@@ -21,18 +21,30 @@ extends PanelContainer
 ## Floats over the board rather than docking, like the teaching strip and unlike
 ## the two bars: the bars' heights are what the board's viewport is computed
 ## against and must not move, while this card comes and goes with the campaign.
-## It sits in the top-left corner under the top bar, out of the middle of the
-## board it describes, and swallows the pointer so a click on it cannot fall
-## through to a cell rendered behind it.
+## It parks in a corner of the band between the two bars and never leaves it, and
+## swallows the pointer so a click on it cannot fall through to a cell rendered
+## behind it.
+##
+## A mission whose terms do not fit that band is printed short — each group's
+## first open condition and a count of the rest — and O opens the whole list,
+## wider, before it lowers the card (playtest CA-01: eight rows ran over the
+## bottom bar and hid the gate they named).
 
-## The two corners under the top bar the card may sit in. It opens in the left one
-## and steps aside to the right one while the cursor is under it, because the fight
-## being in the top-left is exactly when hiding the card is the wrong answer.
+## The four corners of the band the card may sit in, in the order it prefers
+## them. It opens top-left and steps to the first corner that covers neither the
+## cursor nor the ground the mission still wants, because the fight being under
+## the card is exactly when hiding the card is the wrong answer.
 const _DOCK_LEFT := 0
 const _DOCK_RIGHT := 1
+const _DOCK_BOTTOM_LEFT := 2
+const _DOCK_BOTTOM_RIGHT := 3
+const _DOCKS: Array[int] = [_DOCK_LEFT, _DOCK_RIGHT, _DOCK_BOTTOM_LEFT, _DOCK_BOTTOM_RIGHT]
+## What covering the cursor costs a corner against covering one goal square: the
+## cursor is where the player is looking, so it outweighs every goal at once.
+const _CURSOR_COST := 100
 
-## How far the card sits from the top bar and the left edge, and how far its rows
-## sit inside it.
+## How far the card sits from the band's edges, and how far its rows sit inside
+## it.
 const _MARGIN := 4
 const _PAD := 5
 ## The gap between a row's mark, its words and its readout.
@@ -43,12 +55,22 @@ const _ROW_GAP := 4
 ## of it on the next — chrome that jumps between boards is chrome the player
 ## stops reading past.
 const _WIDTH := 168
-## The card's three marks, and they mean one thing each: ✓ met, · open, ✗ lost.
+## The width of the whole list a long mission opens on O: wide enough that its
+## sentences wrap to two lines and the list fits the band.
+const _WIDE_WIDTH := 280
+## The card's marks, and they mean one thing each: ✓ met, · open, ✗ lost, and ◐
+## holding — a condition true now that the board can still take back before the
+## verdict, which a tick would read as a star already won (playtest CA-17).
 ## A failure reads the same way round as a condition: its mark lights when it has
 ## fired, which is the last thing the panel ever draws before the mission ends.
 const _MET := "✓"
 const _OPEN := "·"
 const _LOST := "✗"
+const _ONGOING := "◐"
+
+## What the card prints: every condition at its own width, each group cut to its
+## first open condition, or every condition at the wide width.
+enum Form { FULL, SHORT, ALL }
 
 ## Whether there is a mission to describe, and whether the player has its card up.
 ## The top bar's chip is the one listener: the card covers board a player may need
@@ -63,9 +85,30 @@ var _where_label: Label
 ## every one of them opens with the card up and the player lowers it when it is in
 ## the way.
 var _up := true
+## Whether the player asked O for the whole of a long mission's list.
+var _expanded := false
+## Whether this mission's full list has been measured taller than the band. Kept
+## for the mission, because a reveal only ever adds conditions.
+var _long := false
+## How many conditions the full list was last measured to fit with; a different
+## count is measured again before it is shown.
+var _fits_rows := -1
+## How wide the whole list is drawn, widened past `_WIDE_WIDTH` only when a list
+## does not fit the band even there.
+var _all_width := _WIDE_WIDTH
 ## Which corner the card is currently parked in. Presentation and nothing else:
 ## not a preference, not remembered across missions, and the player never sets it.
 var _dock := _DOCK_LEFT
+## The last board geometry the cursor reported, kept so a redraw that changes the
+## card's size or the goal squares can choose its corner again without a cursor
+## move. A zero cell size means nothing has been reported yet.
+var _cursor_cell := Vector2i.ZERO
+var _cell_size := 0
+var _board_origin := Vector2.ZERO
+## The squares the mission still wants, from `BattleCampaign.objective_cells`, the
+## collector the board's own marks are painted from.
+var _goal_cells: Array[Vector2i] = []
+var _game: GameState
 var _title_label: Label
 var _rows: VBoxContainer
 ## The words of each condition currently on the card, so `layout_error` measures
@@ -84,40 +127,44 @@ func _ready() -> void:
 func refresh(game: GameState) -> void:
 	if not _built:
 		return
+	_game = game
 	var available := CampaignSession.active()
 	visible = available and _up
 	card_changed.emit(available, _up)
 	if not visible:
 		return
-	var mission := CampaignSession.mission
-	_title_label.text = mission.title
-	_where_label.text = mission.location
-	_where_label.visible = mission.location != ""
-	for child in _rows.get_children():
-		child.queue_free()
-		_rows.remove_child(child)
-	_row_labels.clear()
-	_group("WIN", mission.objectives, game)
-	_group("LOSE", mission.failures, game)
-	_bonus_group(mission, game)
+	_goal_cells = BattleCampaign.objective_cells(game)
+	_lay_out()
 	_place()
 
 
 ## Whether the player has the card up, for the pause menu's row to say which way
 ## it will go. The up/down state stays this card's own: the row reads it here and
-## flips it through `toggle`, the same call O makes, so the key and the row can
-## never disagree.
+## sets it through `set_up`, so the key and the row can never disagree.
 func is_up() -> bool:
 	return _up
 
 
-## O and the pause menu's Objectives row raise and lower the card. It is redrawn
-## on the way up rather than merely shown, because the board it describes has been
+## The O key. A card that fits goes down and comes back up; a long mission's
+## short card opens its whole list first, and that lowers next. It is redrawn on
+## the way up rather than merely shown, because the board it describes has been
 ## played on while it was down — `refresh` does nothing beyond the chip while the
 ## card is lowered, which is what keeps a card nobody is looking at off every
 ## command's path.
 func toggle(game: GameState) -> void:
-	_up = not _up
+	if _up and _long and not _expanded:
+		_expanded = true
+	else:
+		_up = not _up
+		_expanded = false
+	refresh(game)
+
+
+## The pause menu's Objectives row, which says On or Off and so only ever raises
+## or lowers the card.
+func set_up(up: bool, game: GameState) -> void:
+	_up = up
+	_expanded = false
 	refresh(game)
 
 
@@ -127,44 +174,48 @@ func toggle(game: GameState) -> void:
 func follow_cursor(
 	cell: Vector2i, cell_size: int, board_origin: Vector2, viewport: Vector2
 ) -> void:
-	if not visible:
-		return
-	var dock := dock_for(cell, cell_size, board_origin, viewport, size, _dock)
-	if dock == _dock:
-		return
-	_dock = dock
-	_place()
+	_cursor_cell = cell
+	_cell_size = cell_size
+	_board_origin = board_origin
+	if visible:
+		_redock(viewport)
 
 
-## Which corner the card belongs in with the cursor on `cell`. Geometry only: it
-## reads no mission and no session, so where the card sits can never depend on what
-## it says. Static and argument-taking so the rule is checked without a scene, the
-## shape `SeatStrip.normalised_sides` and `TransitionInput` are.
+## Which corner the card belongs in with the cursor on `cursor_cell` and the
+## mission still wanting `goal_cells`. Geometry only: it reads no mission and no
+## session, so where the card sits can never depend on how it is worded. Static
+## and argument-taking so the rule is checked without a scene, the shape
+## `SeatStrip.normalised_sides` and `TransitionInput` are.
 ##
-## The card dodges to the right corner while the cursor is under its left one, and
-## comes home once the cursor is under neither — so a cursor still working the
-## top-left keeps the card away, and one that follows it into the right corner
-## sends it home rather than being covered there.
+## Home wins whenever it covers nothing. Otherwise the card stays where it is
+## unless another corner covers strictly less — so a cursor still working the
+## top-left keeps the card away, one that follows it into the right corner sends
+## it home, and a card covered wherever it sits is not handed back and forth.
 static func dock_for(
 	cursor_cell: Vector2i,
+	goal_cells: Array[Vector2i],
 	cell_size: int,
 	board_origin: Vector2,
 	viewport: Vector2,
 	card_size: Vector2,
 	current_dock: int
 ) -> int:
-	var cursor := Rect2(
-		board_origin + Vector2(cursor_cell) * float(cell_size), Vector2.ONE * float(cell_size)
-	)
-	var covers_left := cursor.intersects(
-		Rect2(_dock_position(_DOCK_LEFT, viewport, card_size), card_size)
-	)
-	var covers_right := cursor.intersects(
-		Rect2(_dock_position(_DOCK_RIGHT, viewport, card_size), card_size)
-	)
-	if current_dock == _DOCK_LEFT:
-		return _DOCK_RIGHT if covers_left and not covers_right else _DOCK_LEFT
-	return _DOCK_LEFT if not covers_left else _DOCK_RIGHT
+	var costs: Array[int] = []
+	for dock in _DOCKS:
+		var card := Rect2(_dock_position(dock, viewport, card_size), card_size)
+		var cost := 0
+		if card.intersects(_cell_rect(cursor_cell, cell_size, board_origin)):
+			cost += _CURSOR_COST
+		for cell in goal_cells:
+			if card.intersects(_cell_rect(cell, cell_size, board_origin)):
+				cost += 1
+		costs.append(cost)
+	if costs[_DOCK_LEFT] == 0:
+		return _DOCK_LEFT
+	var least: int = costs.min()
+	if costs[current_dock] == least:
+		return current_dock
+	return costs.find(least)
 
 
 ## Why the open card is not laid out, or "". The sweep's own bar is a file size,
@@ -218,40 +269,79 @@ func _build() -> void:
 	_built = true
 
 
+## Which form the card prints in: the full list until it has been measured too
+## tall for the band, then the short one unless the player asked for it all.
+func _form() -> Form:
+	if not _long:
+		return Form.FULL
+	return Form.ALL if _expanded else Form.SHORT
+
+
+## Rebuilds the rows in the current form from the last board handed over. A full
+## list not yet measured at this many conditions is laid out unseen, so a list too
+## tall for the band never shows for the frame it takes to find that out.
+func _lay_out() -> void:
+	var mission := CampaignSession.mission
+	var form := _form()
+	custom_minimum_size.x = _all_width if form == Form.ALL else _WIDTH
+	_title_label.text = mission.title
+	_where_label.text = mission.location
+	_where_label.visible = mission.location != "" and form != Form.SHORT
+	for child in _rows.get_children():
+		child.queue_free()
+		_rows.remove_child(child)
+	_row_labels.clear()
+	var short := form == Form.SHORT
+	_group("WIN", mission.objectives, short)
+	_group("LOSE", mission.failures, short)
+	_bonus_group(mission, short)
+	if form != Form.FULL:
+		var key := "O · ALL TERMS" if short else "O · HIDE"
+		_rows.add_child(UiTheme.hud_label(key, UiTheme.SIZE_STAT, UiTheme.INK_3))
+	if form == Form.FULL and _row_labels.size() != _fits_rows:
+		modulate.a = 0.0
+
+
 ## One heading and the conditions under it, or nothing at all when a mission
 ## names none — a card with an empty BONUS heading advertises a star that does
 ## not exist. A heading whose every condition is still hidden is that same empty
 ## heading, so the filter comes first: on a LOSE group especially, naming the
 ## group alone would tell the player a trap is coming.
-func _group(heading: String, objectives: Array[MissionObjective], game: GameState) -> void:
+##
+## The short form keeps the first condition still open and counts the rest.
+func _group(heading: String, objectives: Array[MissionObjective], short: bool) -> void:
 	var live := _live(objectives)
 	if live.is_empty():
 		return
 	_rows.add_child(UiTheme.hud_label(heading, UiTheme.SIZE_STAT, UiTheme.INK_3))
-	for objective: MissionObjective in live:
-		_rows.add_child(_condition_row(objective, game))
+	var shown := _first_open(live) if short else live
+	for objective: MissionObjective in shown:
+		_rows.add_child(_condition_row(objective))
+	_more_row(live.size() - shown.size())
 
 
 ## The bonus stars, with the par day the runtime is also judging: the one
 ## condition on the card that is not a `MissionObjective`, printed here because
 ## the player is racing a clock nothing else on screen names. A clock still
-## running is open rather than satisfied, so it wears `_OPEN` in the amber its
-## readout beside it already uses, and `_LOST` once par has gone by.
-func _bonus_group(mission: MissionDefinition, game: GameState) -> void:
+## running is a condition held rather than one won, so it wears `_ONGOING` in the
+## amber its readout beside it already uses, and `_LOST` once par has gone by.
+func _bonus_group(mission: MissionDefinition, short: bool) -> void:
 	var live := _live(mission.bonus_objectives)
 	if live.is_empty() and mission.par_day <= 0:
 		return
 	_rows.add_child(UiTheme.hud_label("BONUS", UiTheme.SIZE_STAT, UiTheme.INK_3))
-	for objective: MissionObjective in live:
-		_rows.add_child(_condition_row(objective, game))
+	var shown := _first_open(live) if short else live
+	for objective: MissionObjective in shown:
+		_rows.add_child(_condition_row(objective))
+	_more_row(live.size() - shown.size())
 	if mission.par_day <= 0:
 		return
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", _ROW_GAP)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var inside := game.day <= mission.par_day
+	var inside := _game.day <= mission.par_day
 	row.add_child(
-		_first_line(_OPEN if inside else _LOST, UiTheme.AMMO if inside else UiTheme.INK_3)
+		_first_line(_ONGOING if inside else _LOST, UiTheme.AMMO if inside else UiTheme.INK_3)
 	)
 	var words := UiTheme.hud_label(
 		"Finish by day %d." % mission.par_day, UiTheme.SIZE_STAT, UiTheme.WHITE
@@ -260,7 +350,7 @@ func _bonus_group(mission: MissionDefinition, game: GameState) -> void:
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_row_labels.append(words)
 	row.add_child(words)
-	row.add_child(_first_line("day %d/%d" % [game.day, mission.par_day], UiTheme.AMMO))
+	row.add_child(_first_line("day %d/%d" % [_game.day, mission.par_day], UiTheme.AMMO))
 	_rows.add_child(row)
 
 
@@ -276,26 +366,47 @@ func _live(objectives: Array[MissionObjective]) -> Array[MissionObjective]:
 	return live
 
 
+## The one condition the short form keeps from a group: the first not yet met,
+## or the first of all once every one is.
+func _first_open(live: Array[MissionObjective]) -> Array[MissionObjective]:
+	var mission := CampaignSession.mission
+	for objective: MissionObjective in live:
+		if not objective.is_met(_game, mission.player_team, CampaignSession.tally):
+			return [objective]
+	return live.slice(0, 1)
+
+
+## How many conditions the short form left out of a group, or nothing.
+func _more_row(hidden: int) -> void:
+	if hidden > 0:
+		_rows.add_child(UiTheme.hud_label("+%d MORE" % hidden, UiTheme.SIZE_STAT, UiTheme.INK_3))
+
+
 ## A mark, the authored words, and whatever the objective says about its own
 ## progress. Amber for the readout, which is this design system's "your attention
-## here" — the same token the charge meter fills with.
-func _condition_row(objective: MissionObjective, game: GameState) -> Control:
+## here" — the same token the charge meter fills with. A met condition the side
+## has to keep until the verdict is marked as held, in that same amber.
+func _condition_row(objective: MissionObjective) -> Control:
 	var team := CampaignSession.mission.player_team
 	var tally := CampaignSession.tally
-	var met := objective.is_met(game, team, tally)
+	var met := objective.is_met(_game, team, tally)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", _ROW_GAP)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var mark := _MET if met else _OPEN
-	row.add_child(_first_line(mark, UiTheme.CAPTURE if met else UiTheme.INK_3))
+	if met and objective.holds_until_verdict():
+		row.add_child(_first_line(_ONGOING, UiTheme.AMMO))
+	else:
+		row.add_child(
+			_first_line(_MET if met else _OPEN, UiTheme.CAPTURE if met else UiTheme.INK_3)
+		)
 	var words := UiTheme.hud_label(objective.text, UiTheme.SIZE_STAT, UiTheme.WHITE)
 	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_row_labels.append(words)
 	row.add_child(words)
 
-	var readout := objective.readout(game, team, tally)
+	var readout := objective.readout(_game, team, tally)
 	if readout != "":
 		row.add_child(_first_line(readout, UiTheme.AMMO))
 	return row
@@ -310,17 +421,77 @@ func _first_line(text: String, color: Color) -> Label:
 	return label
 
 
-## Parks the card under the top bar, in whichever corner `_dock` names. Its lines
-## change with every command, so it measures a frame late through `UiKit.settled`,
-## which owns that wait.
-func _place() -> void:
+## Measures the card a frame late through `UiKit.settled`, which owns that wait,
+## and parks it. A card whose rows have not yet been sorted at its own width is
+## measured again a frame later, up to `tries` frames.
+func _place(tries := 4) -> void:
 	if not await UiKit.settled(self):
 		return
-	position = _dock_position(_dock, get_viewport_rect().size, size)
+	if _laid_out() or tries <= 1:
+		_fit()
+	else:
+		_place(tries - 1)
 
 
-## Where a card of this size sits in either corner — the one statement of both,
-## so the dodge decision and the placement can never disagree about the footprint.
+## Whether every condition's words have been given their final width. A row
+## sorted before the card was is still as wide as its words on one line, and a
+## label not sorted at all stands one pixel wide, a word to a line — either way
+## the card measures a height it will not have.
+func _laid_out() -> bool:
+	var inner := size.x - 2.0 * _PAD
+	for label in _row_labels:
+		if label.size.x <= 1.0 or label.get_parent_control().size.x > inner + 0.5:
+			return false
+	return true
+
+
+## Parks the card if it fits the band between the bars, or prints it in a form
+## that will. A full list taller than the band switches the mission to the short
+## form for good; a whole list that still does not fit takes the band's width.
+func _fit() -> void:
+	if not visible or _game == null or not CampaignSession.active():
+		return
+	var viewport := get_viewport_rect().size
+	var band := MobileDock.board_band(viewport)
+	var room := band.size.y - 2.0 * _MARGIN
+	var form := _form()
+	if form == Form.FULL and size.y > room:
+		_long = true
+	elif form == Form.ALL and size.y > room and _all_width < band.size.x - 2.0 * _MARGIN:
+		_all_width = int(band.size.x) - 2 * _MARGIN
+	else:
+		if form == Form.FULL:
+			_fits_rows = _row_labels.size()
+		modulate.a = 1.0
+		_redock(viewport)
+		return
+	_lay_out()
+	_place()
+
+
+## Parks the card in its corner, choosing that corner again first when the cursor
+## has reported where it is.
+func _redock(viewport: Vector2) -> void:
+	if _cell_size > 0:
+		_dock = dock_for(
+			_cursor_cell, _goal_cells, _cell_size, _board_origin, viewport, size, _dock
+		)
+	position = _dock_position(_dock, viewport, size)
+
+
+## Where a card of this size sits in each corner of the band between the bars —
+## the one statement of every footprint, so the choice of corner and the placement
+## can never disagree about it.
 static func _dock_position(dock: int, viewport: Vector2, card_size: Vector2) -> Vector2:
-	var x := viewport.x - card_size.x - _MARGIN if dock == _DOCK_RIGHT else float(_MARGIN)
-	return Vector2(x, UiTheme.HUD_TOP_H + _MARGIN)
+	var band := MobileDock.board_band(viewport).grow(-_MARGIN)
+	var right := dock == _DOCK_RIGHT or dock == _DOCK_BOTTOM_RIGHT
+	var bottom := dock == _DOCK_BOTTOM_LEFT or dock == _DOCK_BOTTOM_RIGHT
+	return Vector2(
+		band.end.x - card_size.x if right else band.position.x,
+		band.end.y - card_size.y if bottom else band.position.y
+	)
+
+
+## A board square's footprint on screen, in the flat board's geometry.
+static func _cell_rect(cell: Vector2i, cell_size: int, board_origin: Vector2) -> Rect2:
+	return Rect2(board_origin + Vector2(cell) * float(cell_size), Vector2.ONE * float(cell_size))
