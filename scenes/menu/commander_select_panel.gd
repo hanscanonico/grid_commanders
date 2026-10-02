@@ -136,7 +136,7 @@ func begin(seats: Array[int], ai_seats: Array[int] = []) -> void:
 	_build_chips()
 	show()
 	_refresh_chips()
-	_set_faction(0)
+	_set_faction(_default_faction())
 	_grab_first_mini()
 
 
@@ -296,19 +296,13 @@ func _build_right_column() -> VBoxContainer:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 6)
 	_no_co_button = _action_button("No Commander")
-	# Selects, never locks: "No Commander" is one more thing to browse to, and it is
-	# confirmed like every other pick (COM-7). Locking on the press made it the one
-	# control on the page that took a side in a single step, and left Enter meaning
-	# two different things depending on where focus happened to be.
-	_no_co_button.focus_entered.connect(_preview_neutral)
+	# Selects, never locks: No Commander is confirmed like every other pick (COM-7).
+	# It acts on the press alone, as the map picker's Random does — Tab crosses it
+	# on the way to Confirm Pick, and a pick that changed on that pass was lost.
 	_no_co_button.pressed.connect(_preview_neutral)
 	actions.add_child(_no_co_button)
 	_random_button = _action_button("Random")
-	# Same shape as "No Commander": browsing to it rolls the pick, confirming it
-	# locks like any other. A press re-rolls, so landing on Random more than once
-	# (Tab past it, or pressing it again) offers a fresh draw rather than the same
-	# name every time.
-	_random_button.focus_entered.connect(_preview_random)
+	# Same shape: a press rolls, a second press re-rolls, and focus alone does nothing.
 	_random_button.pressed.connect(_preview_random)
 	actions.add_child(_random_button)
 	var spacer := Control.new()
@@ -350,6 +344,20 @@ func _set_faction(index: int) -> void:
 		_preview_neutral()
 		return
 	_preview(free[0])
+
+
+## The tab a seat opens on: the first faction, in listing order, that no earlier
+## seat already commands, so pressing Enter through the walk fields different
+## armies rather than every seat on the first tab. Every faction holds more
+## generals than a board has seats, so a faction nobody wears always has one free.
+func _default_faction() -> int:
+	var worn: Dictionary[StringName, bool] = {}
+	for i in _slot:
+		worn[CommanderVisuals.key_for_faction(_db.by_id(_picks[i]).faction)] = true
+	for i in _faction_keys.size():
+		if not worn.has(_faction_keys[i]):
+			return i
+	return 0
 
 
 ## The faction's members no earlier seat is already commanding, in roster order.
@@ -620,7 +628,7 @@ func _confirm() -> void:
 	if _slot + 1 < _picks.size():
 		_slot += 1
 		_refresh_chips()
-		_set_faction(0)
+		_set_faction(_default_faction())
 		_grab_first_mini()
 		return
 	var chosen: Dictionary = {}
@@ -645,8 +653,9 @@ func _back() -> void:
 ## Enter is read here rather than left to the focused control because browsing
 ## already *is* selecting — every tab and portrait previews on focus_entered, so
 ## whatever the player is looking at is the pick, and the focused control's own
-## ui_accept would merely re-run what focus already did. Back is the one
-## exception: it is a destination, not a selection, so Enter on it goes back.
+## ui_accept would merely re-run what focus already did. The three action buttons
+## other than Confirm are the exception: they act only when pressed, so Enter on
+## one presses it — Back goes back, No Commander and Random change the pick.
 ##
 ## `_input`, not `_shortcut_input`, and the release is swallowed with the press.
 ## Both halves are load-bearing: shortcuts are walked after the GUI, and a Button
@@ -659,10 +668,14 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_back()
 		accept_event()
-	elif event.is_action("ui_accept") and _focus_owner() != _back_button:
+	elif event.is_action("ui_accept") and _focus_owner() not in _pressed_only():
 		if event.is_action_pressed("ui_accept"):
 			_confirm()
 		accept_event()
+
+
+func _pressed_only() -> Array[Control]:
+	return [_back_button, _no_co_button, _random_button]
 
 
 func _focus_owner() -> Control:
@@ -718,14 +731,13 @@ func _refresh_chips() -> void:
 		)
 
 
-## What a chip calls a seat, asked of the identity that owns the answer and
-## shortened to its first word for the terse form — never re-derived from the
+## What a chip calls a seat, asked of the identity that owns the answer, in its
+## long or its short form — never re-derived from the
 ## theme key, because a mirror side keeps its faction's name while its colour is
 ## borrowed (faction-identity D3), and a chip reading the key would then
 ## contradict the commander card beside it.
 func _seat_name(identity: SideIdentity, seat: int, terse: bool) -> String:
-	var full := identity.display_name(seat)
-	return full.get_slice(" ", 0) if terse else full
+	return identity.short_name(seat) if terse else identity.display_name(seat)
 
 
 func _seat_role(seat: int, terse: bool) -> String:
