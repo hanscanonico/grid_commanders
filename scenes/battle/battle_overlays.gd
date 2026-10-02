@@ -175,7 +175,7 @@ static func _fire_tile_set() -> TileSet:
 	var tile_set := TileSet.new()
 	tile_set.tile_size = Vector2i(TILE, TILE)
 	var atlas := TileSetAtlasSource.new()
-	atlas.texture = ImageTexture.create_from_image(fire_atlas_image())
+	atlas.texture = ImageTexture.create_from_image(_fire_atlas_image())
 	atlas.texture_region_size = Vector2i(TILE, TILE)
 	for mask in 256:
 		atlas.create_tile(Vector2i(mask % 16, mask / 16))
@@ -184,7 +184,9 @@ static func _fire_tile_set() -> TileSet:
 	return tile_set
 
 
-static func fire_atlas_image() -> Image:
+## The 16x16 grid of fire-edge tiles: each open side a one-texel line, each open
+## diagonal its corner texel.
+static func _fire_atlas_image() -> Image:
 	var image := Image.create(TILE * 16, TILE * 16, false, Image.FORMAT_RGBA8)
 	var last := TILE - 1
 	var sides: Array[Rect2i] = [
