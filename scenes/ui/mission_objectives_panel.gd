@@ -28,7 +28,9 @@ extends PanelContainer
 ## A mission whose terms do not fit that band is printed short — each group's
 ## first open condition and a count of the rest — and O opens the whole list,
 ## wider, before it lowers the card (playtest CA-01: eight rows ran over the
-## bottom bar and hid the gate they named).
+## bottom bar and hid the gate they named). And a card with no corner clear of the
+## cursor and the goal squares shrinks to its title and a count, because in a band
+## that short the corners of a card of even a few rows overlap across the middle.
 
 ## The four corners of the band the card may sit in, in the order it prefers
 ## them. It opens top-left and steps to the first corner that covers neither the
@@ -69,8 +71,9 @@ const _LOST := "✗"
 const _ONGOING := "◐"
 
 ## What the card prints: every condition at its own width, each group cut to its
-## first open condition, or every condition at the wide width.
-enum Form { FULL, SHORT, ALL }
+## first open condition, every condition at the wide width, or the title and how
+## many of the win conditions are met.
+enum Form { FULL, SHORT, ALL, COMPACT }
 
 ## Whether there is a mission to describe, and whether the player has its card up.
 ## The top bar's chip is the one listener: the card covers board a player may need
@@ -90,6 +93,14 @@ var _expanded := false
 ## Whether this mission's full list has been measured taller than the band. Kept
 ## for the mission, because a reveal only ever adds conditions.
 var _long := false
+## Whether the card is printed compact because no corner of the band holds its
+## full or short form clear of the cursor and the goal squares.
+var _compact := false
+## The full or short form's size when it was last laid out, which is what decides
+## `_compact` again as the cursor moves while the compact form is the one shown.
+var _natural_size := Vector2.ZERO
+## The form currently laid out, so a change of form is measured unseen.
+var _shown := Form.FULL
 ## How many conditions the full list was last measured to fit with; a different
 ## count is measured again before it is shown.
 var _fits_rows := -1
@@ -134,7 +145,7 @@ func refresh(game: GameState) -> void:
 	if not visible:
 		return
 	_goal_cells = BattleCampaign.objective_cells(game)
-	_lay_out()
+	_lay_out(_form())
 	_place()
 
 
@@ -145,14 +156,14 @@ func is_up() -> bool:
 	return _up
 
 
-## The O key. A card that fits goes down and comes back up; a long mission's
-## short card opens its whole list first, and that lowers next. It is redrawn on
+## The O key. A card that fits goes down and comes back up; a short or compact
+## card opens its whole list first, and that lowers next. It is redrawn on
 ## the way up rather than merely shown, because the board it describes has been
 ## played on while it was down — `refresh` does nothing beyond the chip while the
 ## card is lowered, which is what keeps a card nobody is looking at off every
 ## command's path.
 func toggle(game: GameState) -> void:
-	if _up and _long and not _expanded:
+	if _up and (_long or _compact) and not _expanded:
 		_expanded = true
 	else:
 		_up = not _up
@@ -200,6 +211,40 @@ static func dock_for(
 	card_size: Vector2,
 	current_dock: int
 ) -> int:
+	var costs := _dock_costs(cursor_cell, goal_cells, cell_size, board_origin, viewport, card_size)
+	if costs[_DOCK_LEFT] == 0:
+		return _DOCK_LEFT
+	var least: int = costs.min()
+	if costs[current_dock] == least:
+		return current_dock
+	return costs.find(least)
+
+
+## Whether a card of `card_size` covers the cursor or a goal square in every
+## corner, so it has to be printed compact to keep off the ground the mission is
+## about. Geometry only, for the reason `dock_for` is.
+static func compact_for(
+	cursor_cell: Vector2i,
+	goal_cells: Array[Vector2i],
+	cell_size: int,
+	board_origin: Vector2,
+	viewport: Vector2,
+	card_size: Vector2
+) -> bool:
+	var costs := _dock_costs(cursor_cell, goal_cells, cell_size, board_origin, viewport, card_size)
+	return costs.min() > 0
+
+
+## What each corner covers, in `_DOCKS` order: `_CURSOR_COST` for the cursor and
+## one for each goal square.
+static func _dock_costs(
+	cursor_cell: Vector2i,
+	goal_cells: Array[Vector2i],
+	cell_size: int,
+	board_origin: Vector2,
+	viewport: Vector2,
+	card_size: Vector2
+) -> Array[int]:
 	var costs: Array[int] = []
 	for dock in _DOCKS:
 		var card := Rect2(_dock_position(dock, viewport, card_size), card_size)
@@ -210,12 +255,7 @@ static func dock_for(
 			if card.intersects(_cell_rect(cell, cell_size, board_origin)):
 				cost += 1
 		costs.append(cost)
-	if costs[_DOCK_LEFT] == 0:
-		return _DOCK_LEFT
-	var least: int = costs.min()
-	if costs[current_dock] == least:
-		return current_dock
-	return costs.find(least)
+	return costs
 
 
 ## Why the open card is not laid out, or "". The sweep's own bar is a file size,
@@ -269,37 +309,69 @@ func _build() -> void:
 	_built = true
 
 
-## Which form the card prints in: the full list until it has been measured too
-## tall for the band, then the short one unless the player asked for it all.
+## Which form the card prints in: the whole list when the player asked for it,
+## the compact one while no corner is clear, and otherwise the full list until it
+## has been measured too tall for the band, then the short one.
 func _form() -> Form:
-	if not _long:
-		return Form.FULL
-	return Form.ALL if _expanded else Form.SHORT
+	if _expanded:
+		return Form.ALL
+	if _compact:
+		return Form.COMPACT
+	return Form.SHORT if _long else Form.FULL
 
 
-## Rebuilds the rows in the current form from the last board handed over. A full
-## list not yet measured at this many conditions is laid out unseen, so a list too
-## tall for the band never shows for the frame it takes to find that out.
-func _lay_out() -> void:
+## Rebuilds the rows in `form` from the last board handed over. A change of form,
+## or a full list not yet measured at this many conditions, is laid out unseen, so
+## a card in the wrong corner or too tall for the band never shows for the frame
+## it takes to find that out.
+func _lay_out(form: Form) -> void:
 	var mission := CampaignSession.mission
-	var form := _form()
-	custom_minimum_size.x = _all_width if form == Form.ALL else _WIDTH
+	var changed := form != _shown
+	_shown = form
+	var compact := form == Form.COMPACT
+	custom_minimum_size.x = _all_width if form == Form.ALL else (0 if compact else _WIDTH)
 	_title_label.text = mission.title
 	_where_label.text = mission.location
-	_where_label.visible = mission.location != "" and form != Form.SHORT
+	_where_label.visible = mission.location != "" and form != Form.SHORT and not compact
 	for child in _rows.get_children():
 		child.queue_free()
 		_rows.remove_child(child)
 	_row_labels.clear()
-	var short := form == Form.SHORT
-	_group("WIN", mission.objectives, short)
-	_group("LOSE", mission.failures, short)
-	_bonus_group(mission, short)
-	if form != Form.FULL:
-		var key := "O · ALL TERMS" if short else "O · HIDE"
-		_rows.add_child(UiTheme.hud_label(key, UiTheme.SIZE_STAT, UiTheme.INK_3))
-	if form == Form.FULL and _row_labels.size() != _fits_rows:
+	if compact:
+		_count_row(mission)
+	else:
+		var short := form == Form.SHORT
+		_group("WIN", mission.objectives, short)
+		_group("LOSE", mission.failures, short)
+		_bonus_group(mission, short)
+		if form != Form.FULL:
+			var key := "O · ALL TERMS" if short else "O · HIDE"
+			_rows.add_child(UiTheme.hud_label(key, UiTheme.SIZE_STAT, UiTheme.INK_3))
+	if changed or (form == Form.FULL and _row_labels.size() != _fits_rows):
 		modulate.a = 0.0
+
+
+## The compact form's one line: how many win conditions are met, and the key
+## that opens them all.
+func _count_row(mission: MissionDefinition) -> void:
+	var live := _live(mission.objectives)
+	var met := 0
+	for objective: MissionObjective in live:
+		if objective.is_met(_game, mission.player_team, CampaignSession.tally):
+			met += 1
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", _ROW_GAP)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not live.is_empty():
+		row.add_child(UiTheme.hud_label("WIN", UiTheme.SIZE_STAT, UiTheme.INK_3))
+		row.add_child(
+			UiTheme.hud_label("%d/%d" % [met, live.size()], UiTheme.SIZE_STAT, UiTheme.AMMO)
+		)
+	var words := "O · ALL TERMS" if live.is_empty() else "· O · ALL TERMS"
+	var key := UiTheme.hud_label(words, UiTheme.SIZE_STAT, UiTheme.INK_3)
+	_row_labels.append(key)
+	row.add_child(key)
+	_rows.add_child(row)
 
 
 ## One heading and the conditions under it, or nothing at all when a mission
@@ -447,36 +519,61 @@ func _laid_out() -> bool:
 
 ## Parks the card if it fits the band between the bars, or prints it in a form
 ## that will. A full list taller than the band switches the mission to the short
-## form for good; a whole list that still does not fit takes the band's width.
+## form for good; a whole list that still does not fit takes the band's width; and
+## a full or short card with no corner clear of the cursor and the goals is printed
+## compact.
 func _fit() -> void:
 	if not visible or _game == null or not CampaignSession.active():
 		return
 	var viewport := get_viewport_rect().size
 	var band := MobileDock.board_band(viewport)
 	var room := band.size.y - 2.0 * _MARGIN
-	var form := _form()
+	var form := _shown
+	var natural := form == Form.FULL or form == Form.SHORT
 	if form == Form.FULL and size.y > room:
 		_long = true
 	elif form == Form.ALL and size.y > room and _all_width < band.size.x - 2.0 * _MARGIN:
 		_all_width = int(band.size.x) - 2 * _MARGIN
+	elif natural and _covered_everywhere(viewport, size):
+		_natural_size = size
+		_compact = true
 	else:
+		if natural:
+			_natural_size = size
+			_compact = false
 		if form == Form.FULL:
 			_fits_rows = _row_labels.size()
 		modulate.a = 1.0
 		_redock(viewport)
 		return
-	_lay_out()
+	_lay_out(_form())
 	_place()
 
 
 ## Parks the card in its corner, choosing that corner again first when the cursor
-## has reported where it is.
+## has reported where it is — and first of all choosing between the compact form
+## and the full or short one, which a cursor move can change either way.
 func _redock(viewport: Vector2) -> void:
+	if not _expanded and _natural_size != Vector2.ZERO:
+		var compact := _covered_everywhere(viewport, _natural_size)
+		if compact != _compact:
+			_compact = compact
+			_lay_out(_form())
+			_place()
+			return
 	if _cell_size > 0:
 		_dock = dock_for(
 			_cursor_cell, _goal_cells, _cell_size, _board_origin, viewport, size, _dock
 		)
 	position = _dock_position(_dock, viewport, size)
+
+
+## `compact_for` over the board geometry the cursor last reported; never true
+## before it has reported any.
+func _covered_everywhere(viewport: Vector2, card_size: Vector2) -> bool:
+	if _cell_size <= 0:
+		return false
+	return compact_for(_cursor_cell, _goal_cells, _cell_size, _board_origin, viewport, card_size)
 
 
 ## Where a card of this size sits in each corner of the band between the bars —

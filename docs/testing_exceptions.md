@@ -158,7 +158,7 @@ subclass whose suite calls only its statics:
 | `UnitSprite` (`Sprite2D`) | `test_figure_sheet.gd`, `test_ambient_frames.gd`, `test_move_frames.gd`, `test_anim_manifest.gd` | `texture_for`, `figure_texture_for`, `facing_for`, and the `UNITS_ATLAS_*` sheet paths against the cell metrics (`SPRITE_W`, `SPRITE_H`, `SPRITE_OVERFLOW`, `CELL_GROUND_PX`) — atlas regions and file names, so a sheet regenerated on one side of a clip is caught without a sprite |
 | `MapPicker` (`VBoxContainer`) | `test_map_picker.gd` | `cell_name`, `caption_text`, `armies_label`, `fullest`, `is_custom`, `random_index` — the picker's words, all pure over a `MapData` |
 | `ActionMenu` (`PanelContainer`) | `test_action_menu_icon.gd`, `test_action_menu_window.gd` | `icon_cap`, and `visible_window` / `rows_that_fit` — the scrolling window a build menu becomes in the band a touch build leaves it |
-| `MissionObjectivesPanel` (`PanelContainer`) | `test_objective_card_dock.gd` | `dock_for` — which corner the objectives card parks in, geometry and nothing else |
+| `MissionObjectivesPanel` (`PanelContainer`) | `test_objective_card_dock.gd` | `dock_for` and `compact_for` — which corner the objectives card parks in and when it prints compact, geometry and nothing else |
 | `MobileDock` (`PanelContainer`) | `test_mobile_dock.gd` | `chrome_h`, `height`, `board_lift_px` — the mobile plan's D5, that a desktop build's pixels do not move, stated as arithmetic |
 | `TouchTarget` (`Control`) | `test_touch_target.gd` | `inflation` — how far a control drawn smaller than a finger may grow, and where two neighbours have to stop |
 

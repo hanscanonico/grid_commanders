@@ -36,6 +36,9 @@ const TURN_WAIT_FRAMES := 1800
 ## it. Wall clock rather than frames: what is being watched for is a runner that
 ## keeps planning, and the lockup arms its own buttons on a real half-second timer.
 const SETTLE_MS := 1500
+## How many frames the objective card may take to settle on a form: measured,
+## printed short, printed compact, each a frame late.
+const SETTLE_FRAMES := 12
 ## Five Flags' opening mission: the objective card, a scripted beat landing on
 ## the board and the map menu are all posed on it. Its bonus town is the depot the
 ## event frame hands the player, because capturing it does not end the mission —
@@ -189,10 +192,14 @@ func _run_panel() -> String:
 	if not panel.visible:
 		return "the objective panel did not come back up from the pause menu's row"
 	# The card measures and places itself a frame after its rows were added, like
-	# the teaching strip and the seat strip — and a list too tall for the band takes
-	# a second frame to be printed short.
-	for frame in 2:
+	# the teaching strip and the seat strip — and a list too tall for the band, or
+	# one with no corner clear of the goals, takes more frames to be printed short.
+	for frame in SETTLE_FRAMES:
 		await _battle.get_tree().process_frame
+		if frame > 0 and panel.modulate.a >= 1.0:
+			break
+	if panel.modulate.a < 1.0:
+		return "the objective panel was still being measured %d frames up" % SETTLE_FRAMES
 	var error := panel.layout_error()
 	if error != "":
 		return error

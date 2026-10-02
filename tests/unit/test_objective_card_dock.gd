@@ -96,3 +96,35 @@ func test_the_cursor_outweighs_any_goal() -> void:
 	var right_bottom := Vector2i(_right_cell().x, bottom.y)
 	goals.append(right_bottom)
 	assert_ne(_dock(bottom, LEFT, goals), BOTTOM_LEFT)
+
+
+## Goals half-way down both edges of the band: a card tall enough that its top and
+## bottom corners overlap across the middle covers one of them wherever it sits.
+func _mid_goals() -> Array[Vector2i]:
+	return [Vector2i(1, 8), Vector2i(_right_cell().x, 8)]
+
+
+func _compact(card: Vector2, goals: Array[Vector2i]) -> bool:
+	return MissionObjectivesPanel.compact_for(_clear_cell(), goals, CELL, _origin, VIEWPORT, card)
+
+
+## Every corner of a tall card covers a goal, so it falls back to the compact form
+## rather than parking on the cheapest one (playtest CA-01, the review of the west
+## gate on The Lantern Hall and Morn's HQ on Five Flags).
+func test_card_falls_back_to_compact_when_every_corner_covers_a_goal() -> void:
+	assert_true(_compact(Vector2(168, 200), _mid_goals()))
+
+
+## The same goals leave a short card's top corners clear, so it keeps its rows.
+func test_card_keeps_its_rows_while_a_corner_is_clear() -> void:
+	assert_false(_compact(Vector2(168, 60), _mid_goals()))
+
+
+## The cursor counts as much as a goal: a card it and the goals shut out of every
+## corner is printed compact too.
+func test_the_cursor_can_shut_the_last_clear_corner() -> void:
+	var goals: Array[Vector2i] = [Vector2i(1, 2), _right_cell()]
+	var bottom := Vector2i(1, int((VIEWPORT.y - UiTheme.HUD_BOTTOM_H - _origin.y) / CELL) - 1)
+	goals.append(Vector2i(_right_cell().x, bottom.y))
+	assert_false(_compact(CARD, goals))
+	assert_true(MissionObjectivesPanel.compact_for(bottom, goals, CELL, _origin, VIEWPORT, CARD))

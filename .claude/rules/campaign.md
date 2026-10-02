@@ -97,7 +97,10 @@ root index are in `docs/design_record.md`.
   (playtest CA-01): a list too tall for the band prints short — each group's first open condition
   and a count of the rest — and O opens the whole list, wider, before it lowers the card; the
   pause menu's row only raises or lowers it. It parks in whichever band corner covers neither the
-  cursor nor a square `BattleCampaign.objective_cells` names. A met condition the side must keep
+  cursor nor a square `BattleCampaign.objective_cells` names, and when no corner is clear it prints
+  **compact** — the title and `WIN n/m · O · ALL TERMS` — because in a band that short the corners
+  of a card of a few rows overlap across the middle (`compact_for` is the rule, and the player's own
+  O for the whole list is the one form that may still cover a goal). A met condition the side must keep
   until the verdict (`MissionObjective.holds_until_verdict`) wears `◐`, never a tick.
   **The card says what to do and the board says where**: all 317 objective strings were rewritten to
   one convention — the verb names the mechanic, a failure states the loss in the present, every
