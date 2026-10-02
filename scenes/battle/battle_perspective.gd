@@ -64,6 +64,12 @@ func _init(p_game: GameState, p_omniscient: bool = false) -> void:
 	_viewing_team = p_game.teams[0]  # until the first refresh names the real viewer
 
 
+## Whether the viewer is watching a recording rather than playing it — the one
+## seat from which nothing on the board is ever theirs to command.
+func watching_replay() -> bool:
+	return _omniscient
+
+
 ## Recomputes the read model after a committed action or turn change. A hot-seat
 ## handoff hides every cell and unit, including the incoming team's own pieces.
 func refresh(viewing_team: int, blacked_out: bool) -> void:

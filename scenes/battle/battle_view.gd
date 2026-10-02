@@ -642,7 +642,9 @@ func refresh_range_lens(on: bool) -> void:
 ## and both read the one context rather than each judging the turn for itself.
 func refresh_keys(context: StringName) -> void:
 	hud_top.show_keys(ControlHints.legend_for(context))
-	hud_bottom.show_end_turn(BattleLegend.commands_board(context))
+	hud_bottom.show_end_turn(
+		BattleLegend.commands_board(context), not perspective.watching_replay()
+	)
 	if mobile_dock != null:
 		mobile_dock.refresh(context)
 
@@ -683,14 +685,31 @@ func refresh_panel(cell: Vector2i) -> void:
 	hud_bottom.show_tile(
 		map.terrain_at(cell),
 		owner,
-		game.current_team,
+		_status_of(hovered),
 		capture_left,
 		hovered,
 		carrying,
 		_allegiance_of(hovered),
 		_range_band_of(hovered),
-		_cover_stars_of(hovered, cell)
+		_cover_stars_of(hovered, cell),
+		BattleCampaign.unit_name(hovered)
 	)
+
+
+## Where `unit` stands in the turn, as the viewer may be told it. WAITED is a fact
+## the board already shows with its scrim, whoever's unit it is; READY promises an
+## order, so it is said only of a unit the viewer could give one to right now.
+func _status_of(unit: Unit) -> HudBottomBar.Status:
+	if unit == null or unit.team != game.current_team:
+		return HudBottomBar.Status.NONE
+	if unit.acted:
+		return HudBottomBar.Status.WAITED
+	var commandable := (
+		unit.team == perspective.viewing_team()
+		and unit.team not in _ai_teams
+		and not perspective.watching_replay()
+	)
+	return HudBottomBar.Status.READY if commandable else HudBottomBar.Status.NONE
 
 
 ## One word for whose side a unit is on, from the *viewer's* seat: "Ally" for

@@ -23,6 +23,8 @@ var _day_label: Label
 var _chip: Panel
 var _faction_label: Label
 var _doctrine_label: Label
+## The side's doctrine as handed over; the label shows it only while it fits.
+var _doctrine := ""
 var _funds_label: Label
 var _threat_chip: Button
 var _range_chip: Button
@@ -48,16 +50,15 @@ func _build() -> void:
 
 	_faction_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	row.add_child(_faction_label)
-	# The doctrine takes whatever width is left and clips rather than pushing the
-	# funds out of place: a fixed-height bar cannot wrap, and the number on the
-	# right has to sit still. A cut line ends in an ellipsis, so it reads as a
-	# sentence that goes on rather than as one that stops mid-word, and it keeps
-	# HUD_CLIP_GAP clear of the funds however narrow the row leaves it — a cut edge
-	# butted up against the next group is what makes the two read as one word.
+	# The doctrine takes whatever width is left without pushing the funds out of
+	# place: a fixed-height bar cannot wrap, and the number on the right has to sit
+	# still. It is shown whole or not at all — a doctrine cut to "DIRECT U…" says
+	# nothing, and the Commanders sheet has it in full — and it keeps HUD_CLIP_GAP
+	# clear of the funds, so the two never butt up and read as one word.
 	_doctrine_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	_doctrine_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_doctrine_label.clip_text = true
-	_doctrine_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_doctrine_label.resized.connect(_fit_doctrine)
 	row.add_child(_doctrine_label)
 	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_CLIP_GAP))
 
@@ -128,8 +129,19 @@ func show_turn(
 		"panel", UiTheme.bordered(side_theme.color_light, UiTheme.HARD_BORDER)
 	)
 	_faction_label.text = faction.to_upper()
-	_doctrine_label.text = doctrine
+	_doctrine = doctrine
+	_fit_doctrine()
 	_funds_label.text = UiTheme.thousands(funds)
+
+
+## Prints the doctrine if the width the row leaves holds all of it, else nothing.
+## The label clips, so its width never depends on its text and this cannot feed
+## back into the layout it reads.
+func _fit_doctrine() -> void:
+	var font := _doctrine_label.get_theme_font("font")
+	var font_size := _doctrine_label.get_theme_font_size("font_size")
+	var width := font.get_string_size(_doctrine, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	_doctrine_label.text = _doctrine if width <= _doctrine_label.size.x else ""
 
 
 ## Lights the threat chip while the lens is up. Colour only — the text never
