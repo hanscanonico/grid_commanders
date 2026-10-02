@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"missiles"
 display_name = "Missiles"
+role = "Long-range cover against aircraft."
 symbol = "M"
 cost = 12000
 move_points = 4

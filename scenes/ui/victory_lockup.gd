@@ -79,23 +79,41 @@ func _build() -> void:
 	_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rows.add_child(_sub)
 
-	# Rematch leads in the shell's own primary fill, the way the main menu's Start
-	# does, and never in the winner's colour: the livery is the band's job, and a
-	# button that changed hue with the result would read as a different button.
-	rematch_button = _action(rows, UiTheme.ButtonVariant.PRIMARY, "")
-	watch_button = _action(rows, UiTheme.ButtonVariant.SECONDARY, "Watch Replay")
+	rematch_button = _action(rows, "")
+	watch_button = _action(rows, "Watch Replay")
 	watch_button.hide()
-	menu_button = _action(rows, UiTheme.ButtonVariant.SECONDARY, "")
+	menu_button = _action(rows, "")
 
 
-func _action(rows: VBoxContainer, variant: UiTheme.ButtonVariant, text: String) -> Button:
+## Every way out is drawn alike until it holds focus, and only the focused one
+## takes the shell's primary fill inside the menus' focus ring (playtest CA-03).
+## A lead button filled in advance read as already chosen: the card opens with
+## nothing focused, so a player who pressed Down off a red Retry was still on it.
+## The fill is the shell's and never the winner's colour — the livery is the
+## band's job, and a button that changed hue with the result would read as a
+## different button.
+func _action(rows: VBoxContainer, text: String) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size.x = _ACTION_W
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	UiTheme.apply_button(button, variant)
+	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY)
+	var lead := UiTheme.menu_identity().theme(1)
+	var focus := UiTheme.focus_box()
+	focus.bg_color = lead.color
+	button.add_theme_stylebox_override("focus", focus)
+	button.add_theme_color_override("font_focus_color", lead.ink)
 	rows.add_child(button)
 	return button
+
+
+## The ways out a press can reach, top to bottom — the hidden replay row left out.
+func actions() -> Array[Button]:
+	var shown: Array[Button] = []
+	for button: Button in [rematch_button, watch_button, menu_button]:
+		if button.visible:
+			shown.append(button)
+	return shown
 
 
 ## The result, as BattleOutcome worded it. `rematch_text` because a playback has

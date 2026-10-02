@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"cruiser"
 display_name = "Cruiser"
+role = "Guards the fleet from aircraft and subs."
 symbol = "c"
 cost = 18000
 move_points = 6

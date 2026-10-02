@@ -60,12 +60,14 @@ func test_a_resume_plays_the_saved_match() -> void:
 	assert_eq(built.game.map_path, FIRST_STEPS, "the save's board, not the one the menu held")
 
 
-## The save the menu named is real and unloadable, so there is no match to play.
-## Building the fresh one the request also states hands the player a different
+## The save is real and unloadable, so there is no match to play. The menu no
+## longer offers one whose board is gone, but a resume that asks anyway is refused:
+## building the fresh match the request also states hands the player a different
 ## match under the label of the one they asked for.
 func test_a_resume_whose_save_cannot_be_read_refuses_the_match() -> void:
 	_saved_match(MISSING_BOARD)
-	assert_not_null(SaveGame.status(TEST_PATH).summary, "the menu could name it, so it is offered")
+	var slot := SaveGame.status(TEST_PATH)
+	assert_eq(slot.state, SaveGame.Slot.State.UNREADABLE, "a board that is gone is not offered")
 	assert_null(_resumed(), "and the boundary refuses it rather than starting something else")
 	assert_push_error("cannot read map file")  # MapData, on the board the save names
 	assert_push_error("the saved match cannot be read")

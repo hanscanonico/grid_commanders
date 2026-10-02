@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"bomber"
 display_name = "Bomber"
+role = "Bombs land and sea units. No air attack."
 symbol = "b"
 cost = 22000
 move_points = 7

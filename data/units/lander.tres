@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"lander"
 display_name = "Lander"
+role = "Ferries land units across the sea."
 symbol = "l"
 cost = 12000
 move_points = 6

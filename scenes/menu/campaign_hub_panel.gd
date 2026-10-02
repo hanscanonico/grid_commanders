@@ -63,9 +63,23 @@ const _SPEECH_H := 96
 ## terms run longer than that still covers the shot's last rows; the shot is
 ## centred in what is left, so a shorter band leaves dark rather than a seam.
 const _BOARD_FOOT := 206
+## How far a band may stand over `_BOARD_FOOT` before the board is fitted above
+## it: the ordinary three-term band already reaches 5px past the foot, into the
+## scrim's darkest rows, and its board stays as it was measured.
+const _BOARD_SLACK := 12
+## The air left between the board and a band that did stand taller.
+const _BOARD_GAP := 4
+## The keys that step the story a line at a time, as the commander sheet's cards
+## step: the briefing's buttons sit side by side, so up and down have nothing
+## else to do while it is up.
+const SCROLL_ACTIONS: Dictionary = {
+	&"cursor_up": -1,
+	&"ui_up": -1,
+	&"cursor_down": 1,
+	&"ui_down": 1,
+}
 
 var _title: Label
-var _subtitle: Label
 var _war: VBoxContainer
 ## The war's own header — title, tally, the war so far — down while a briefing is
 ## up so the board behind it is not read through the campaign's scoreboard.
@@ -82,6 +96,16 @@ var _brief_where: Label
 var _brief_picture: HBoxContainer
 var _brief_you: HBoxContainer
 var _brief_body: VBoxContainer
+## The story's scroll and the band it is docked in. Up and down step the one, and
+## the other's top edge is where the board behind the briefing has to end.
+var _brief_scroll: ScrollContainer
+var _brief_band: Control
+## Everything laid over the board that ends where the board does.
+var _board_layers: Array[Control] = []
+## The board the open briefing is read over, kept so it can be baked again to a
+## new foot once the page has been laid out.
+var _board_map: MapData
+var _dirs := DirectionalInput.new()
 var _brief_terms: VBoxContainer
 var _deploy_button: Button
 var _back_button: Button
@@ -113,13 +137,6 @@ func begin(campaign: CampaignDefinition, progress: CampaignState) -> void:
 	if progress.active_mission != &"" and not CampaignProfile.load_battle(campaign.id).is_empty():
 		_resume_mission = progress.active_mission
 	_title.text = campaign.title.to_upper()
-	# Out of the missions this war still offers, not out of the list: a road the
-	# route did not take can never be cleared, and a count nobody can finish is a
-	# campaign that always reads unfinished.
-	_subtitle.text = (
-		"%d of %d cleared · %d stars"
-		% [progress.records.size(), progress.offered_count(campaign), progress.total_stars()]
-	)
 	_fill_war()
 	_route.show_war(campaign, progress, war_theme(campaign, _commanders))
 	_fill()
@@ -157,6 +174,11 @@ func _shown_row() -> Button:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	var scrolled := _dirs.step(event, SCROLL_ACTIONS.keys())
+	if _brief_view.visible and not scrolled.is_empty():
+		get_viewport().set_input_as_handled()
+		_scroll_story(SCROLL_ACTIONS[scrolled])
+		return
 	if not TransitionInput.dismissed_by_cancel(self, event):
 		return
 	if _brief_view.visible:
@@ -180,11 +202,10 @@ func _build() -> void:
 	_header.add_theme_constant_override("separation", 5)
 	main.add_child(_header)
 
+	# The war's tally is the route's standing, at the right of the track, and is
+	# said nowhere else on the page.
 	_title = UiKit.page_title()
 	_header.add_child(_title)
-
-	_subtitle = UiKit.page_note("")
-	_header.add_child(_subtitle)
 
 	_war = VBoxContainer.new()
 	_war.add_theme_constant_override("separation", 1)
@@ -223,9 +244,9 @@ func _build_board() -> Control:
 	_board_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_board_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_board_art.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_board_art.offset_bottom = -_BOARD_FOOT
 	_board_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(_board_art)
+	_board_layers.append(_board_art)
 
 	var gradient := Gradient.new()
 	gradient.set_color(0, UiTheme.veil(_SCRIM_TOP))
@@ -238,15 +259,16 @@ func _build_board() -> Control:
 	scrim.texture = wash
 	scrim.stretch_mode = TextureRect.STRETCH_SCALE
 	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scrim.offset_bottom = -_BOARD_FOOT
 	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(scrim)
+	_board_layers.append(scrim)
 
 	# The faces are pinned to the shot's own corners rather than stacked above it:
 	# in the flow they sat in the middle of the board they are standing on. Who
 	# you are reads from the left, who you face from the right.
 	_brief_you = _shot_corner(layer, "margin_left", BoxContainer.ALIGNMENT_BEGIN)
 	_brief_picture = _shot_corner(layer, "margin_right", BoxContainer.ALIGNMENT_END)
+	_set_board_foot(_BOARD_FOOT)
 	return layer
 
 
@@ -255,7 +277,7 @@ func _shot_corner(
 ) -> HBoxContainer:
 	var corner := MarginContainer.new()
 	corner.set_anchors_preset(Control.PRESET_FULL_RECT)
-	corner.offset_bottom = -_BOARD_FOOT
+	_board_layers.append(corner)
 	corner.add_theme_constant_override(side, UiTheme.PAGE_MARGIN)
 	corner.add_theme_constant_override("margin_top", UiTheme.PAGE_MARGIN)
 	corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -316,21 +338,22 @@ func _build_briefing(parent: VBoxContainer) -> void:
 	band.add_theme_stylebox_override("panel", box)
 	band.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	parent.add_child(band)
+	_brief_band = band
 
 	var docked := VBoxContainer.new()
 	docked.add_theme_constant_override("separation", 5)
 	band.add_child(docked)
 
-	var frame := ScrollContainer.new()
-	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	frame.follow_focus = true
-	frame.custom_minimum_size.y = _SPEECH_H
-	docked.add_child(_column(frame))
+	_brief_scroll = ScrollContainer.new()
+	_brief_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_brief_scroll.follow_focus = true
+	_brief_scroll.custom_minimum_size.y = _SPEECH_H
+	docked.add_child(_column(_brief_scroll))
 
 	_brief_body = VBoxContainer.new()
 	_brief_body.add_theme_constant_override("separation", 4)
 	_brief_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_child(_brief_body)
+	_brief_scroll.add_child(_brief_body)
 
 	# The terms sit outside the scroll, between the dialogue and Deploy: what the
 	# player is agreeing to has to be on the page at the moment they agree to it.
@@ -517,6 +540,10 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	if not open:
 		face.add_child(ListRow.cell("NOT TAKEN" if skipped else "LOCKED", _locked_ink()))
 		return face
+	# The mission the profile holds a saved board for says so on its row, in the
+	# word its briefing's button will say, so a saved game is found from the list.
+	if mission.id == _resume_mission:
+		face.add_child(ListRow.cell("RESUME", UiTheme.DANGER))
 	if mission.fog_enabled:
 		face.add_child(ListRow.cell("FOG", UiTheme.AMMO))
 	if mission.difficulty != Difficulty.DEFAULT_ID:
@@ -571,9 +598,11 @@ static func star_width(count: int) -> float:
 	)
 
 
-## A row's second line: where the fight is, who it is against, the day it is
-## rated on and the day this player already reached. Every part is omitted when
-## the mission does not state it, so a row says only what it has.
+## A row's second line: who the fight is against, the day it is rated on and the
+## day this player already reached. Every part is omitted when the mission does
+## not state it, so a row says only what it has. Where the fight is belongs to the
+## briefing, under its title: beside the other three it ran past the row on half
+## the war's missions and cut the best day off a cleared one.
 ##
 ## Static and argument-taking so it can be read without the page and without a
 ## profile on disk — `CampaignPickerPanel.row_text`'s shape, for its reason.
@@ -581,8 +610,6 @@ static func row_detail(
 	mission: MissionDefinition, commanders: CommanderDB, record: CampaignState.MissionRecord
 ) -> String:
 	var parts: Array[String] = []
-	if mission.location != "":
-		parts.append(mission.location.to_upper())
 	var foe := _antagonist(mission, commanders)
 	if foe != null:
 		parts.append("VS %s" % foe.display_name.to_upper())
@@ -616,7 +643,9 @@ func _open_briefing(slot: int) -> void:
 	for line: MissionLine in MissionLine.spoken(mission.briefing, _progress):
 		_brief_body.add_child(MissionSpeech.render(line, _commanders))
 	_fill_terms(mission)
+	_brief_scroll.scroll_vertical = 0
 	_show_briefing()
+	_fit_board_above_band(mission)
 
 
 ## What the mission is won and lost on, drawn where scrolling cannot take it
@@ -662,7 +691,8 @@ func _fill_picture(mission: MissionDefinition) -> void:
 		for child in strip.get_children():
 			strip.remove_child(child)
 			child.queue_free()
-	_fill_board(MapData.load_from_file(mission.map_path, _terrain))
+	_board_map = MapData.load_from_file(mission.map_path, _terrain)
+	_fill_board(mission, _BOARD_FOOT)
 	var you := protagonist(mission, _commanders)
 	if you != null:
 		_brief_you.add_child(_card(you, "YOU"))
@@ -677,15 +707,65 @@ func _fill_picture(mission: MissionDefinition) -> void:
 ## in the shot — where the fight is is what a briefing is for — at the largest
 ## whole tile the page can hold, so it is never scaled up past the pixels it was
 ## baked with. A board with no file behind it leaves the page on its plain veil
-## rather than on the last mission's ground.
-func _fill_board(map: MapData) -> void:
+## rather than on the last mission's ground. The armies wear the liveries the
+## battle will dress them in, not the menu's seat colours.
+##
+## `foot` is the height of the page the board stays out of.
+func _fill_board(mission: MissionDefinition, foot: float) -> void:
+	_set_board_foot(foot)
+	var map := _board_map
 	if map == null:
 		_board_art.texture = null
 		return
 	var view := get_viewport_rect().size
-	var fit := minf(view.x / float(map.width), (view.y - _BOARD_FOOT) / float(map.height))
+	var fit := minf(view.x / float(map.width), (view.y - foot) / float(map.height))
 	var tile := clampi(floori(fit), _BOARD_TILE_MIN, _BOARD_TILE_MAX)
-	_board_art.texture = MapThumbnail.bake(map, UiTheme.menu_identity(map.player_count()), tile)
+	var identity := livery(mission, map.player_count(), _commanders)
+	_board_art.texture = MapThumbnail.bake(map, identity, tile)
+
+
+func _set_board_foot(foot: float) -> void:
+	for layer: Control in _board_layers:
+		layer.offset_bottom = -foot
+
+
+## A mission whose terms run long stands the band taller than `_BOARD_FOOT`
+## allows for, and the band then covered the board's lower rows — on The Lantern
+## Hall, half the board. Once the page is laid out the board is baked again to end
+## above the band instead, smaller, so the whole of it is still read. Every other
+## briefing keeps the board it opened with.
+func _fit_board_above_band(mission: MissionDefinition) -> void:
+	await get_tree().process_frame
+	if _showing != mission.id or not _brief_view.visible:
+		return
+	var foot := get_viewport_rect().size.y - _brief_band.get_global_rect().position.y
+	if foot > _BOARD_FOOT + _BOARD_SLACK:
+		_fill_board(mission, foot + _BOARD_GAP)
+
+
+## Steps the story a line at a time, measured off the font the story is set in —
+## the commander sheet's rule. ScrollContainer clamps, so a story that fits, or an
+## edge, simply does not move.
+func _scroll_story(delta: int) -> void:
+	var step := maxi(int(UiTheme.display().get_height(UiTheme.SIZE_BODY)), 1)
+	_brief_scroll.scroll_vertical += delta * step
+
+
+## The liveries this mission's armies fight in: its casting resolved over the
+## seats that play, which is what `SideIdentity.for_game` resolves for the match
+## the mission boots — so a mirror's borrowed colour is borrowed here too.
+##
+## Static and argument-taking so it can be read without the page, like `allies`.
+static func livery(
+	mission: MissionDefinition, board_seats: int, commanders: CommanderDB
+) -> SideIdentity:
+	var playing: Array[int] = mission.seats.duplicate()
+	if playing.is_empty():
+		playing.assign(range(1, board_seats + 1))
+	var picks := {}
+	for team: int in playing:
+		picks[team] = commanders.by_id(mission.commanders.get(team, &""))
+	return SideIdentity.resolve(picks)
 
 
 ## The commander the player commands as: the one seated on `player_team`.

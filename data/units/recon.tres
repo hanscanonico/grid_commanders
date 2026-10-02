@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"recon"
 display_name = "Recon"
+role = "Fast scout that sees far. Hunts foot soldiers."
 symbol = "r"
 cost = 4000
 move_points = 8

@@ -1,6 +1,6 @@
 class_name UiMarks
 extends RefCounted
-## The six marks the shell prints that neither pixel face draws: ✓ ✗ ★ ☆ → ∞.
+## The seven marks the shell prints that neither pixel face draws: ✓ ✗ ★ ☆ → ∞ ◐.
 ##
 ## They are drawn here rather than loaded because the only fallback behind them
 ## was the machine's own system font, which a browser does not hand the engine —
@@ -87,6 +87,19 @@ const MARKS := {
 		".##.##..",
 		"........",
 		"........",
+	],
+	## Half filled: a condition that holds now and can still be lost before the
+	## mission ends, so it is neither the tick of one done nor the dot of one open.
+	"◐":
+	[
+		"........",
+		"..###...",
+		".###.#..",
+		"####..#.",
+		"####..#.",
+		"####..#.",
+		".###.#..",
+		"..###...",
 	],
 }
 

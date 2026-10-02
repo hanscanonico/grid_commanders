@@ -59,6 +59,13 @@ const OBJECTIVES_CHIP := "O · MISSION"
 ## is not a way of looking at the board — so the bar prints it unlit throughout.
 const NEXT_CHIP := "N · NEXT"
 
+## The mission card's own line for the same key: O opens the whole list of a card
+## printed short or compact, and lowers the whole list again. Printed on the card
+## rather than the bar, so out of CHIPS, and in TOUCH_CHIPS because a phone opens
+## the list from the bar's MISSION chip, not from a key.
+const ALL_TERMS_CHIP := "O · ALL TERMS"
+const HIDE_TERMS_CHIP := "O · HIDE"
+
 ## Every chip the top bar may print, so the two rules they are held to — each fits
 ## beside a legend already running at MAX_CHARS, each is ASCII — are checked over
 ## the set rather than over a list a new chip has to be remembered into.
@@ -74,9 +81,12 @@ const TOUCH_CHIPS: Dictionary = {
 	RANGE_CHIP: "RANGE",
 	OBJECTIVES_CHIP: "MISSION",
 	NEXT_CHIP: "",
+	ALL_TERMS_CHIP: "MISSION · ALL TERMS",
+	HIDE_TERMS_CHIP: "MISSION · HIDE",
 	VIEW_3D_CHIP: "3D",
 	VIEW_2D_CHIP: "2D",
 	END_TURN_CHIP: "END TURN",
+	START_PROMPT: "TAP TO START",
 }
 
 ## End Turn's key, printed on the bottom bar's button rather than in a legend —
@@ -98,6 +108,10 @@ const END_TURN_CHIP := "E · END TURN"
 ## it too, so the board can be chosen before a match.
 const VIEW_3D_CHIP := "V · 3D"
 const VIEW_2D_CHIP := "V · 2D"
+
+## The main menu's blinking prompt, which a phone reads as a tap rather than a
+## button it has not got.
+const START_PROMPT := "PRESS START"
 
 ## The touch dock's copy (mobile plan MB3). Its own block because the dock is a
 ## row of buttons rather than a legend: each chip says what it *does* instead of

@@ -21,13 +21,29 @@ const ATLAS_SOURCE_ID := 0
 ## Period of the threat lens's diagonal stripes, half on and half off. Must divide
 ## TILE — see `_build_threat_tile_set`.
 const THREAT_STRIPE := 4
+## The eight neighbours a fire cell's edge is keyed to, one bit each, in the
+## order the atlas columns count them.
+const FIRE_NEIGHBOURS: Array[Vector2i] = [
+	Vector2i(0, -1),
+	Vector2i(1, 0),
+	Vector2i(0, 1),
+	Vector2i(-1, 0),
+	Vector2i(1, -1),
+	Vector2i(1, 1),
+	Vector2i(-1, 1),
+	Vector2i(-1, -1),
+]
 
 ## Reachable cells, in mint.
 var move_layer: TileMapLayer
 ## Cells that can be fired into: the R fire ring, the pickable targets while an
-## attack is being aimed, and the square under an aimed Command Power. Solid, with
-## the atlas's bright one-pixel border. The three never share the board — a power
-## is aimed with no unit selected — which is what lets one layer say all three.
+## attack is being aimed, and the square under an aimed Command Power. An opaque
+## edge round the whole set and no fill: a translucent wash took its hue from the
+## ground (orange on grass, purple on water) and tinted the mint reach under it,
+## where an opaque edge is one red on any ground and leaves the cells it rings,
+## and the sprites on them, as they are.
+## The three never share the board — a power is aimed with no unit selected —
+## which is what lets one layer say all three.
 var attack_layer: TileMapLayer
 ## The threat lens. Its own layer rather than a second use of `attack_layer`,
 ## because that one is already two things at once and a lens sharing it would
@@ -46,7 +62,7 @@ var objective_marks: ObjectiveMarks
 ## after the node fields are set.
 func setup() -> void:
 	move_layer.tile_set = _build_overlay_tile_set()
-	attack_layer.tile_set = move_layer.tile_set
+	attack_layer.tile_set = _build_fire_tile_set()
 	threat_layer.tile_set = _build_threat_tile_set()
 	move_layer.modulate = OverlayPalette.MOVE
 	attack_layer.modulate = OverlayPalette.ATTACK
@@ -60,9 +76,20 @@ func paint_move(cells: Array[Vector2i]) -> void:
 	_paint(move_layer, cells)
 
 
-## Highlights the cells a unit — or an aimed Command Power — may fire at.
+## Highlights the cells a unit — or an aimed Command Power — may fire at. Each
+## cell takes the tile drawn for which of its neighbours are fired at too, so the
+## edge runs round the set and never between two of its cells.
 func paint_attack(cells: Array[Vector2i]) -> void:
-	_paint(attack_layer, cells)
+	attack_layer.clear()
+	var fired := {}
+	for cell in cells:
+		fired[cell] = true
+	for cell in cells:
+		var mask := 0
+		for bit in FIRE_NEIGHBOURS.size():
+			if fired.has(cell + FIRE_NEIGHBOURS[bit]):
+				mask |= 1 << bit
+		attack_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i(mask % 16, mask / 16))
 
 
 ## Shades every cell a side hostile to the viewer could bring under fire.
@@ -133,3 +160,50 @@ func _build_threat_tile_set() -> TileSet:
 	atlas.create_tile(Vector2i.ZERO)
 	tile_set.add_source(atlas, ATLAS_SOURCE_ID)
 	return tile_set
+
+
+## One tile per neighbour mask (see FIRE_NEIGHBOURS), generated like the threat
+## stripes. A side is edged where its neighbour is not fired at, and a corner
+## texel also where only the diagonal is missing, so the edge turns an inside
+## corner without a notch.
+func _build_fire_tile_set() -> TileSet:
+	var image := Image.create(TILE * 16, TILE * 16, false, Image.FORMAT_RGBA8)
+	for mask in 256:
+		var origin := Vector2i(mask % 16, mask / 16) * TILE
+		for y in TILE:
+			for x in TILE:
+				if _fire_edge(mask, x, y):
+					image.set_pixelv(origin + Vector2i(x, y), Color.WHITE)
+	var tile_set := TileSet.new()
+	tile_set.tile_size = Vector2i(TILE, TILE)
+	var atlas := TileSetAtlasSource.new()
+	atlas.texture = ImageTexture.create_from_image(image)
+	atlas.texture_region_size = Vector2i(TILE, TILE)
+	for mask in 256:
+		atlas.create_tile(Vector2i(mask % 16, mask / 16))
+	tile_set.add_source(atlas, ATLAS_SOURCE_ID)
+	return tile_set
+
+
+## Whether texel (x, y) of the tile for `mask` is edge. A side texel asks its one
+## neighbour; a corner texel asks the two sides and the diagonal between them.
+static func _fire_edge(mask: int, x: int, y: int) -> bool:
+	var open := ~mask
+	var last := TILE - 1
+	var side := (
+		(y == 0 and open & 1)
+		or (x == last and open & 2)
+		or (y == last and open & 4)
+		or (x == 0 and open & 8)
+	)
+	if side:
+		return true
+	if x == last and y == 0:
+		return open & 16 != 0
+	if x == last and y == last:
+		return open & 32 != 0
+	if x == 0 and y == last:
+		return open & 64 != 0
+	if x == 0 and y == 0:
+		return open & 128 != 0
+	return false

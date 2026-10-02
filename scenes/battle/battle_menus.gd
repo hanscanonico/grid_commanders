@@ -23,6 +23,12 @@ extends RefCounted
 ## rather than an exception to it: whoever owns the answer is who gets asked.
 
 const CANCEL := {"id": &"cancel", "label": "Cancel"}
+## The Auto ladder's first rung: the seat is the player's own.
+const AUTO_OFF := &"off"
+## What the Auto row and its list are for, said where they are (playtest SK-18):
+## "Auto: Off" alone never said it hands the army over.
+const AUTO_HEADING := "Let the computer play your side"
+const AUTO_DETAIL := AUTO_HEADING + ".\nL/R picks a level, Enter hands it over."
 
 ## What a refused Fire row says after its verb. `UNARMED` is deliberately absent:
 ## a transport has no shot to explain, so it keeps getting no row at all, while
@@ -127,6 +133,7 @@ static func build_actions(
 					"label": "%s  %d" % [unit_type.display_name, price],
 					"disabled": game.funds[team] < price,
 					"icon": UnitSprite.tile_texture_for(unit_type, row),
+					"detail": UnitBrief.text(game, unit_db, unit_type, price, game.funds[team]),
 				}
 			)
 		)
@@ -162,6 +169,11 @@ static func build_actions(
 ## Speed row's own reasoning: read fresh off `auto_tiers` rather than kept
 ## anywhere else, so it can never show a tier the seat is not actually
 ## playing at.
+##
+## Its value steps under left and right like the device rows' do, through
+## `auto_step` (BattleAuto's), but the step is only a pick: handing an army over
+## ends the player's turn, so it `chooses` — Enter takes the level the row shows,
+## and Enter on the level already playing opens the list instead.
 ##
 ## `commandable` is false when this opens over a turn that is not the player's —
 ## the pause they may take while the computer plays. The two rows that would *act*
@@ -199,7 +211,8 @@ static func map_actions(
 	ai_teams: Array[int] = [],
 	auto_tiers: Dictionary = {},
 	difficulty_db: DifficultyDB = null,
-	objectives_up: bool = true
+	objectives_up: bool = true,
+	auto_step: Callable = Callable()
 ) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	if commandable:
@@ -212,20 +225,15 @@ static func map_actions(
 	if CampaignSession.active():
 		var card := "On" if objectives_up else "Off"
 		actions.append({"id": &"objectives", "label": "Objectives: %s" % card})
-	for row: StringName in Settings.offered_rows():
-		actions.append(
-			{
-				"id": row,
-				"label": Settings.row_label(row),
-				"cycle": func(step: int) -> String: return Settings.cycle_row(row, step),
-			}
-		)
+	actions.append_array(Settings.value_actions())
 	var auto_eligible := game.current_team not in ai_teams or auto_tiers.has(game.current_team)
 	if savable and difficulty_db != null and auto_eligible:
-		var auto_label := "Off"
-		if auto_tiers.has(game.current_team):
-			auto_label = difficulty_db.by_id(auto_tiers[game.current_team]).display_name
-		actions.append({"id": &"auto", "label": "Auto: %s" % auto_label})
+		var tier: StringName = auto_tiers.get(game.current_team, AUTO_OFF)
+		var row := {"id": &"auto", "label": auto_label(tier, difficulty_db), "detail": AUTO_DETAIL}
+		if auto_step.is_valid():
+			row["cycle"] = auto_step
+			row["chooses"] = true
+		actions.append(row)
 	if commandable:
 		actions.append({"id": &"end_turn", "label": "End Turn"})
 	if savable:
@@ -243,11 +251,28 @@ static func map_actions(
 ## changes nothing under an accidental Enter.
 static func auto_actions(difficulty_db: DifficultyDB) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	actions.append({"id": &"off", "label": "Off"})
-	for tier in difficulty_db.all():
-		actions.append({"id": tier.id, "label": tier.display_name})
+	for tier: StringName in auto_ladder(difficulty_db):
+		actions.append({"id": tier, "label": _tier_words(tier, difficulty_db)})
 	actions.append(CANCEL)
 	return actions
+
+
+## The rungs the Auto row steps along, in the list's own order: Off, then every
+## tier the computer plays at.
+static func auto_ladder(difficulty_db: DifficultyDB) -> Array[StringName]:
+	var ladder: Array[StringName] = [AUTO_OFF]
+	for tier in difficulty_db.all():
+		ladder.append(tier.id)
+	return ladder
+
+
+## The Auto row's words at `tier`, before a step and after one.
+static func auto_label(tier: StringName, difficulty_db: DifficultyDB) -> String:
+	return "Auto: %s" % _tier_words(tier, difficulty_db)
+
+
+static func _tier_words(tier: StringName, difficulty_db: DifficultyDB) -> String:
+	return "Off" if tier == AUTO_OFF else difficulty_db.by_id(tier).display_name
 
 
 ## Rows for the second press "Main Menu Without Saving" asks for. Leaving is the
@@ -272,3 +297,15 @@ static func abandon_confirm_actions(watching: bool = false) -> Array[Dictionary]
 	var leave := "Stop Watching" if watching else "Leave Without Saving"
 	actions.append({"id": &"abandon", "label": leave})
 	return actions
+
+
+## The line over that confirmation: what leaving loses (playtest SK-29). Named by
+## the day of the match's last save when there is one — `saved_day`, 0 for a
+## match never written — because the slot is single and "since your last save"
+## alone does not say how much that is. A replay loses nothing and says nothing.
+static func abandon_consequence(watching: bool, saved_day: int) -> String:
+	if watching:
+		return ""
+	if saved_day > 0:
+		return "Progress since your Day %d save is lost." % saved_day
+	return "This match was never saved: all of it is lost."
