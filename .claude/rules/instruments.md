@@ -129,12 +129,18 @@ root index are in `docs/design_record.md`.
   `replay_step` (S) takes exactly one more command and re-parks on the board rather than under that
   menu, and the menu itself drops the two save rows (`BattleMenus.map_actions`'s `savable`) because a
   playback seats no computer — saved and resumed, a recorded AI match would come back as a hot-seat
-  one. For the same reason the victory lockup's rematch button reads **Restart** over a playback and
-  re-stages `MatchRequest.from_replay` off `Battle.replay_path` rather than deriving a live match
-  from the recorded board. D5: omniscient viewer, always-on recording into ten rotating slots under
-  `user://replays/`, appended per command so a crash costs the last line rather than the file — and
-  the slot is claimed by the **first command**, never the boot, because the slots rotate and a match
-  nobody played must not evict one somebody did. D6: **the analyser asks the rules, never the
+  one. For the same reason the victory lockup's rematch button reads **Watch Again** over a
+  playback and re-stages `MatchRequest.from_replay` off `Battle.replay_path` rather than deriving a
+  live match from the recorded board; a playback that runs out before anybody won reads **End of
+  recording**, never a draw (playtest SK-05), and an Esc that skips its banner or cut-in still asks
+  for the pause. A finished match's recording ends on a **closing line** (`ReplayCodec.closing`,
+  format 5) — the verdict its end card read, presentation text like the header's `label` — so the
+  Replays page can say which days a slice holds and whether it was finished, and a playback of a
+  match the board did not decide (a day cap, a mission's objectives) ends on that verdict. D5:
+  omniscient viewer, always-on recording into ten rotating slots under `user://replays/`, appended
+  per command so a crash costs the last line rather than the file — and the slot is claimed by the
+  **first command**, never the boot, because the slots rotate and a match nobody played must not
+  evict one somebody did. D6: **the analyser asks the rules, never the
   planner** —
   counterfactuals come from `AttackRange` / `MovementResolver` / `CombatResolver.forecast_at`, no
   why-hook is threaded out of `ai/`, and a finding is evidence rather than a gate, so

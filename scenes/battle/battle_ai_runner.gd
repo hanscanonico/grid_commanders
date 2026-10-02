@@ -79,6 +79,20 @@ func handle_input(event: InputEvent) -> void:
 		_battle.confirm_at(_battle.cursor_cell)
 
 
+## Spends a press that cut a banner or a story line short. Over a turn nobody at
+## this table plays — the computer's, or any turn of a replay — an Esc there is
+## still the pause it asks for between commands, so it skips *and* is answered at
+## the next `pause_gate` rather than lost under the banner (playtest SK-19).
+func spend_skip(event: InputEvent) -> void:
+	_battle.get_viewport().set_input_as_handled()
+	if event.is_action_pressed(&"cancel") and _watched_turn():
+		_battle.request_pause()
+
+
+func _watched_turn() -> bool:
+	return _battle.replay_path != "" or _battle.game.current_team in _battle.ai_teams
+
+
 ## True when the team on turn left `ai_teams` while this pause was held — the
 ## player took their own Auto-controlled seat back through the pause menu's
 ## Auto row. Checked at every `pause_gate()` return, board settled either way,

@@ -48,6 +48,10 @@ var _result_winner := 0
 ## mid-match through the Auto row must not change what the end card calls the
 ## result.
 var _seated_ai: Array[int] = []
+## The verdict a playback's closing line read, for a recorded match the board did
+## not decide — a mission's objectives, a spectated match's day cap. Empty for one
+## nobody finished, and for every match being played.
+var _recorded_verdict := ""
 var _input_guard_until_ms := 0
 var _action_armed := false
 
@@ -128,10 +132,11 @@ func _all_seats_ai() -> bool:
 
 ## Idempotent: a rout resolved inside _begin_turn is seen again by whatever was
 ## driving that turn, and the match is only won once however many callers notice.
-func enter_victory() -> void:
+func enter_victory(recorded: String = "") -> void:
 	if _battle.state == Battle.State.VICTORY:
 		return
 	_battle.state = Battle.State.VICTORY
+	_recorded_verdict = recorded
 	if _result_winner == 0:
 		_result_winner = _battle.game.winner
 	_battle.animator.hide_banner()
@@ -140,9 +145,13 @@ func enter_victory() -> void:
 	# mid-turn is still being animated then, and progress written before the
 	# player has seen the result is progress they cannot connect to anything.
 	CampaignSession.record(_battle.game)
+	var result := _result_text()
+	if _battle.recorder != null:
+		_battle.recorder.conclude(_battle.game, result)
 	Music.stop()  # the theme fades out under the fanfare
-	Sfx.play(&"fanfare")
-	victory_screen.announce(_result_text(), _day_text(), _action_word(), _menu_word())
+	if not _recording_unfinished():
+		Sfx.play(&"fanfare")  # a recording that just stops has nothing to cheer
+	victory_screen.announce(result, _day_text(), _action_word(), _menu_word())
 	victory_screen.offer_replay(_has_recording())
 	_bind_victory_commander()
 	victory_screen.show()
@@ -161,14 +170,14 @@ func enter_victory() -> void:
 
 
 ## What pressing the action button does, which is what the word on it has to
-## name: a playback has no match to play again, so it restarts the recording; a
+## name: a playback has no match to play again, so it watches the recording again; a
 ## campaign mission is retried through the session, never rematched as the
 ## skirmish its finished board looks like — and one already won is replayed, since
 ## "Retry" over "Mission complete!" says it was not; everything else plays itself
 ## again.
 func _action_word() -> String:
 	if _battle.replay_path != "":
-		return "Restart"
+		return "Watch Again"
 	if not CampaignSession.active():
 		return "Rematch"
 	var outcome := CampaignSession.outcome
@@ -276,12 +285,23 @@ func _result_text() -> String:
 			if outcome.status == MissionRuntime.Status.SUCCESS
 			else "Mission failed"
 		)
+	if _recording_unfinished():
+		return "End of recording"
+	if _recorded_verdict != "":
+		return _recorded_verdict
 	if _result_winner == 0:
 		return "Draw"
 	var human := _human_team()
 	if human != 0:
 		return "Victory!" if _battle.game.allied(human, _result_winner) else "Defeat"
 	return "%s!" % _winner_sentence()
+
+
+## A playback that ran out of commands before anybody won — a match saved and
+## left, or one the board stopped matching. It has no verdict to give: calling it
+## a draw (playtest SK-05) said the armies had tied when the player had quit.
+func _recording_unfinished() -> bool:
+	return _battle.replay_path != "" and _result_winner == 0 and _recorded_verdict == ""
 
 
 ## The seat the people at the table play, and 0 when "did *you* win?" has no

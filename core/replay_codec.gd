@@ -45,7 +45,9 @@ extends RefCounted
 ## 3: the checkpoint digest reads `Unit.refreshable`.
 ## 4: the scripted-event line, and the campaign and mission the header names it
 ## against.
-const FORMAT := 4
+## 5: the closing line a finished match ends on, so a recording without one is
+## one that stopped before anybody won.
+const FORMAT := 5
 
 ## `DropCommand` with no passenger named — "the first loaded", which is what
 ## `DropCommand._rider` does with a null and what every single-slot transport
@@ -115,6 +117,8 @@ class Replay:
 	## these two *are* derived from: an event line resolves its beat against them.
 	var campaign: StringName = &""
 	var mission: StringName = &""
+	## The verdict the closing line read out, or "" for a match nobody finished.
+	var result: String = ""
 	var entries: Array[Dictionary] = []
 
 
@@ -152,6 +156,19 @@ static func header_error(line: Dictionary) -> String:
 	if format != FORMAT:
 		return "replay format %d, and this build reads %d" % [format, FORMAT]
 	return ""
+
+
+## The line a recording of a finished match ends on: the day it was decided and
+## the verdict its end card read. Presentation text like the header's `label` —
+## nothing is derived from it — and absent from a recording that stopped before
+## anybody won, which is how the replays page tells a slice of a match from a
+## whole one.
+static func closing(day: int, result: String) -> Dictionary:
+	return {"end": result, "d": day}
+
+
+static func is_closing(line: Dictionary) -> bool:
+	return line.has("end")
 
 
 # --- one command -------------------------------------------------------------
