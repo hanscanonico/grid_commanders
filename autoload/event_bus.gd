@@ -20,5 +20,7 @@ extends Node
 signal unit_selected(unit: Unit)
 signal unit_moved(unit: Unit)
 signal unit_built(unit: Unit)
-signal property_captured(cell: Vector2i, team: int)
+## A Capture order, whether or not it finished the property this turn: issuing it
+## is what a player learning to capture has learned.
+signal capture_ordered(cell: Vector2i, team: int)
 signal turn_started(team: int, day: int)

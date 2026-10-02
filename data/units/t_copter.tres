@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"t_copter"
 display_name = "T-Copter"
+role = "Flies foot soldiers over any ground."
 symbol = "H"
 cost = 5000
 move_points = 6

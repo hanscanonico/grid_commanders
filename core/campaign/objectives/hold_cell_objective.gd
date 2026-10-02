@@ -45,3 +45,9 @@ func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if bounds_error != "":
 		return bounds_error
 	return MissionBoardCheck.property_cell(map, cell, "hold objective names")
+
+
+## The count restarts the day the square is lost, so a finished hold still has
+## to be kept until the verdict.
+func holds_until_verdict() -> bool:
+	return true

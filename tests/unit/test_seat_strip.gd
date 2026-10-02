@@ -97,3 +97,38 @@ func test_a_board_that_seats_fewer_than_four_refuses_the_whole_preset_row() -> v
 	assert_eq(SeatStrip.preset_refusal(SeatStrip.PRESET_SEATS), "")
 	for dealt in range(SeatStrip.MIN_FILLED, SeatStrip.PRESET_SEATS):
 		assert_ne(SeatStrip.preset_refusal(dealt), "", "%d seats offers no preset" % dealt)
+
+
+## SK-22: the preset row lights the table in hand. Each preset, applied as it is
+## written, is itself.
+func test_every_preset_matches_its_own_table() -> void:
+	for i in SeatStrip.PRESETS.size():
+		var who: Array[int] = []
+		who.assign(SeatStrip.PRESETS[i]["seats"])
+		var sides: Array[int] = []
+		sides.assign(SeatStrip.PRESETS[i]["sides"])
+		assert_eq(SeatStrip.preset_matching(who, sides), i, SeatStrip.PRESETS[i]["label"])
+
+
+## A table is its seating and grouping, not who plays each seat or which letters
+## the sides wear: two people in a 2v2, on sides C and D, is still the 2v2. A closed
+## seat's leftover side is not part of the table.
+func test_a_preset_matches_by_grouping_not_by_who_plays_or_which_letter() -> void:
+	var two_v_two := SeatStrip.preset_matching(
+		[HUMAN, HUMAN, CPU, CPU] as Array[int], [2, 3, 2, 3] as Array[int]
+	)
+	assert_eq(SeatStrip.PRESETS[two_v_two]["label"], "2v2")
+	var duel := SeatStrip.preset_matching(
+		[CPU, EMPTY, HUMAN, EMPTY] as Array[int], [0, 0, 1, 0] as Array[int]
+	)
+	assert_eq(SeatStrip.PRESETS[duel]["label"], "Duel")
+
+
+## A grouping no preset writes lights none, and neither does a board that is not
+## four seats.
+func test_a_table_no_preset_writes_lights_none() -> void:
+	assert_eq(
+		SeatStrip.preset_matching([HUMAN, CPU, CPU, CPU] as Array[int], [0, 1, 1, 0] as Array[int]),
+		-1
+	)
+	assert_eq(SeatStrip.preset_matching([HUMAN, CPU] as Array[int], [0, 1] as Array[int]), -1)

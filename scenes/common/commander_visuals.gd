@@ -118,6 +118,12 @@ const EMBLEM_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 ## Commander" still reads as a deliberate, styled choice rather than a blank.
 const NEUTRAL_KEY := &"neutral"
 
+## The floor a speaker's name holds against the panel it is printed on: WCAG's
+## bar for large text, which a bold capital name is.
+const NAME_CONTRAST := 3.0
+## How finely `name_color` walks a colour toward its floor.
+const NAME_STEPS := 20
+
 ## The order every surface lists the factions in — the select page's tab row
 ## first among them. The Iron Dominion, the campaigns' antagonist, closes the
 ## row. Listing order only: the atlas row a faction is baked into
@@ -224,6 +230,31 @@ static func theme_for(commander: CommanderType) -> FactionTheme:
 	if commander == null or commander.faction.is_empty():
 		return theme_for_key(NEUTRAL_KEY)
 	return theme_for_key(key_for_faction(commander.faction))
+
+
+## The faction colour a general's name is printed in over `ground`. Each army's
+## own colour where it already reads, and stepped toward white (toward black on
+## a light ground) until it clears `NAME_CONTRAST` where it does not: the Iron
+## Dominion's slate is a field colour, and as text on a dark panel (1.7:1) it
+## vanished. Aurora and Verdant sit just under the floor there and lift a little.
+## `lift` lightens the army's colour first, for a surface that sets every name
+## paler than the field colour; the floor then applies to the lifted colour.
+static func name_color(commander: CommanderType, ground: Color, lift: float = 0.0) -> Color:
+	var base := theme_for(commander).color.lightened(lift)
+	var toward := Color.WHITE if contrast(ground, Color.BLACK) < 4.5 else Color.BLACK
+	var ink := base
+	var step := 0
+	while contrast(ink, ground) < NAME_CONTRAST and step < NAME_STEPS:
+		step += 1
+		ink = base.lerp(toward, float(step) / NAME_STEPS)
+	return ink
+
+
+## The WCAG contrast ratio between two colours, 1 (none) to 21 (black on white).
+static func contrast(a: Color, b: Color) -> float:
+	var la := a.srgb_to_linear().get_luminance()
+	var lb := b.srgb_to_linear().get_luminance()
+	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
 
 
 ## Every faction theme except neutral, in `FACTION_ORDER`. The selection page

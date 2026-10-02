@@ -238,6 +238,11 @@ forms named in the root index are in `docs/design_record.md`.
   the fill to walk is still the rejected answer. Everything else is presentation, gated by the same
   `perspective.can_see_unit` fog rule targeting uses and then masked to scouted ground by
   `BattlePerspective._viewer_safe`; `make screenshot` stays byte-stable.
+  **The fire paint is an opaque red edge round the fired-at set, with no fill** (playtest ED-24,
+  2026-10-02): a translucent wash took its hue from the ground — orange on grass, purple on water
+  and bridges — and tinted the mint reach under it, so `BattleOverlays.paint_attack` keys each
+  cell's tile to its eight neighbours and draws only the outline. A denser wash is the rejected
+  answer: it hid the reach and the targets' sprites.
 - **Field overlays** (no plan artifact; the *Field Overlays* design handoff, and this entry is its
   record) — the threat lens, the arrowed movement path and the capture pip. **Nothing under `core/`
   or `ai/` was touched, because the handoff's rules helpers already existed**: its `threat()` /
@@ -620,8 +625,10 @@ forms named in the root index are in `docs/design_record.md`.
   window mode back at their defaults, so no preference stored on the capturing machine reaches a
   frame — the window most of all, a full-screen machine otherwise framing every capture at its own
   monitor. **The window mode is a pause-menu row and the `F11` key, and on the main menu it is the
-  key alone**: that page's options row is full at four controls, a fifth putting the setup panel
-  past the 640-wide frame and the menu capture gate refusing it outright. Hidden under
+  key and the Settings page, never the options row**: that row is full at four controls, a fifth
+  putting the setup panel past the 640-wide frame and the menu capture gate refusing it outright.
+  The Settings page (`MenuSettingsPage`, SK-14) is the pause menu's own rows —
+  `Settings.value_actions`, in the same `ActionMenu` — less Speed, which the panel already holds. Hidden under
   `MobileProfile` — `Settings.offered_rows()` is the one answer to whether this device has a window
   to stand anywhere but full, and the row, the key and the `DisplayServer` call all sit behind it.
   `--reset-hints` is the one `Settings` flag that deliberately writes. The key legend
@@ -826,7 +833,11 @@ forms named in the root index are in `docs/design_record.md`.
   is never *constructed* on desktop. D8: touch targets grow their **hit** rectangles, never their
   drawn heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor
   rung. D9: the planner is not a mobile task. **Landscape only** (user decision) and
-  **`aspect="keep"`**; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
+  **`aspect="keep"`** — an upright window on a touch build is covered by `RotateCard`
+  (`scenes/ui/rotate_card.gd`, installed by `Settings`) until it turns, and a desktop window that
+  is merely tall never gets one. A touch build's `UiKit.action_chip` stands on a plate
+  (`UiTheme.touch_chip_plate`) drawn inside its bar, so a chip reads as a button without D8's
+  drawn height moving; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
   by measurement rather than by assumption. D7's mechanism is **refuted** — a feature-tagged autoload
   override does not clear an autoload on 4.7.1, the engine reading each `autoload/*` property raw, so
   unregistering the editor addon's runtime belongs to the addon that registers it. D4's safe-area

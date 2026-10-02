@@ -47,6 +47,11 @@ func arm(unit: Unit, path: Array[Vector2i]) -> Array[Dictionary]:
 	return BattleMenus.unit_actions(_battle.game, unit, path, fire.block, _drop_options)
 
 
+## The cells the Fire row would aim at — what the unit menu opens clear of.
+func targets() -> Array[Vector2i]:
+	return _attack_targets
+
+
 ## The Fire row: the cursor lands on the first target rather than where the move
 ## left it.
 func enter_fire() -> void:
@@ -101,7 +106,7 @@ func refresh_forecast(cell: Vector2i) -> void:
 	var path := _battle.planned_path
 	var dest: Vector2i = path[path.size() - 1]
 	_battle.view.update_damage_preview(
-		CombatResolver.forecast(_battle.game, _battle.selected, dest, target), cell
+		CombatResolver.forecast(_battle.game, _battle.selected, dest, target), cell, dest
 	)
 
 

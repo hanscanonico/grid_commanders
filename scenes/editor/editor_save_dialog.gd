@@ -18,8 +18,9 @@ signal cancelled
 ## The width the name and the pitch stand at. Narrower than the page on purpose:
 ## a caption stranded a page-width from its field reads as a separate control.
 const _ROW_WIDTH := 180
-## How long a pitch may be. The map list shows one line under a name.
-const MAX_DESCRIPTION := 72
+## How long a pitch may be: room for the longest one a shipped board carries
+## (110), so a board opened as a copy keeps its pitch whole.
+const MAX_DESCRIPTION := 120
 
 var _name_field: LineEdit
 var _description_field: LineEdit
@@ -58,6 +59,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		cancelled.emit()
 
 
+## Esc read ahead of the fields: a focused LineEdit takes it to stop editing,
+## which made the first press do nothing. Esc alone — `cancel` also binds keys a
+## name is typed with.
+func _input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if not visible or key == null or not key.pressed or key.echo or key.keycode != KEY_ESCAPE:
+		return
+	get_viewport().set_input_as_handled()
+	hide()
+	cancelled.emit()
+
+
 func _build() -> void:
 	UiKit.page_veil(self)
 	var main := UiKit.page_body(self, 6)
@@ -92,7 +105,9 @@ func _build() -> void:
 	)
 	actions.add_child(UiKit.touchable(back))
 	main.add_child(actions)
-	main.add_child(UiKit.key_legend("ENTER  SAVE      ESC  BACK"))
+	var legend := UiKit.key_legend("ENTER  SAVE      ESC  BACK")
+	legend.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	main.add_child(legend)
 
 
 func _labelled(caption: String, field: LineEdit) -> Control:
@@ -111,23 +126,22 @@ func _field(placeholder: String, max_length: int) -> LineEdit:
 	return UiKit.text_field(placeholder, max_length, _ROW_WIDTH)
 
 
-## What the name currently is, and whether it may be written: a refusal disables
-## Save, a name already in use warns that saving replaces that board, and a good
-## new name says the file it will become.
+## What the name currently is, and whether it may be written: an empty field is
+## a prompt rather than a fault, a refusal disables Save, a name already in use
+## warns that saving replaces that board, and a good new name says what it will
+## be saved as — in the author's words, since nothing is on disk yet.
 func _read_name() -> void:
-	var typed := _name_field.text
+	var typed := _name_field.text.strip_edges()
 	var error := UserMaps.name_error(typed)
 	_save_button.disabled = error != ""
-	if error != "":
+	if UserMaps.slug(typed).is_empty():
+		_say(error, UiTheme.NEUTRAL_LIGHT)
+	elif error != "":
 		_say(error, UiTheme.DANGER)
-		return
-	if UserMaps.exists(typed):
-		_say(
-			"This replaces the map you already have called '%s'." % UserMaps.slug(typed),
-			UiTheme.AMMO
-		)
-		return
-	_say("Saved as %s." % UserMaps.path_for(typed), UiTheme.NEUTRAL_LIGHT)
+	elif UserMaps.exists(typed):
+		_say("This replaces the map you already have called '%s'." % typed, UiTheme.AMMO)
+	else:
+		_say("Will save as '%s'." % typed, UiTheme.NEUTRAL_LIGHT)
 
 
 func _say(message: String, ink: Color) -> void:

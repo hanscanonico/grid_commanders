@@ -13,8 +13,9 @@ extends PanelContainer
 signal focused(cell: Vector2i)
 
 ## How many lines of complaint stand open; the rest scroll. The strip is chrome
-## under a board, so it may not grow into the board as the draft gets worse.
-const LINES := 2
+## under a board, so it may not grow into the board as the draft gets worse —
+## but a blank board's two complaints, each wrapping once, stand open in full.
+const LINES := 4
 ## A complaint's plate and its words, inset from the strip's outline.
 const ROW_INSET := 3
 ## The leading a complaint is set with, stated here rather than left to the
@@ -29,8 +30,9 @@ func _init() -> void:
 
 
 ## Says what is wrong now, replacing whatever it said before. An empty list is the
-## one line an author is working towards, so it is stated rather than left blank.
-func show_defects(defects: Array[MapDefect]) -> void:
+## one line an author is working towards, so it is stated rather than left blank,
+## and `saved` says the board is already on disk rather than asking for a save.
+func show_defects(defects: Array[MapDefect], saved: bool = false) -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -43,7 +45,10 @@ func show_defects(defects: Array[MapDefect]) -> void:
 	# letter a line.
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if defects.is_empty():
-		rows.add_child(_line("This board plays. Save it.", UiTheme.CAPTURE))
+		var verdict := (
+			"This board plays, and it is saved." if saved else "This board plays. Save it."
+		)
+		rows.add_child(_line(verdict, UiTheme.CAPTURE))
 	for defect in defects:
 		rows.add_child(_row(defect))
 	var frame := UiKit.vscroll()

@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"rockets"
 display_name = "Rockets"
+role = "Long-range fire on land and sea targets."
 symbol = "R"
 cost = 15000
 move_points = 5

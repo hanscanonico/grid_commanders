@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"infantry"
 display_name = "Infantry"
+role = "The cheapest unit. Captures cities and HQs."
 symbol = "i"
 cost = 1000
 move_points = 3

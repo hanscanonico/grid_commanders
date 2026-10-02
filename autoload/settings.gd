@@ -1,10 +1,11 @@
 extends Node
 ## Device preferences: what this machine likes, as opposed to what this match is.
-## Seven of them today — how fast the battle's theatre plays out, whether a
+## Eight of them today — how fast the battle's theatre plays out, whether a
 ## resolved attack cuts to the full-screen battle animation at all, whether the
 ## menus move at all, how loud the game is, whether ending the day stops to
-## confirm when units can still act, whether the game fills the screen, and which
-## of the first-match hints this player has already earned their way out of.
+## confirm when units can still act, whether the game fills the screen, which
+## of the first-match hints this player has already earned their way out of, and
+## the match the main menu last set up.
 ##
 ## Deliberately not MatchConfig and deliberately not in the save file: resuming a
 ## three-day-old save should play at the speed you like *today* and watch battles
@@ -66,6 +67,7 @@ const PINNED_BOARD_3D := false
 ## owns what it changes.
 const FULLSCREEN_ACTION := &"toggle_fullscreen"
 const HINTS_KEY := "hints_retired"
+const MATCH_SETUP_KEY := "match_setup"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
 ## the player chose.
@@ -118,10 +120,10 @@ const RESET_HINTS_ARG := "--reset-hints"
 const SPEED_ROW := &"speed"
 const SOUND_ROW := &"sound"
 const END_TURN_ROW := &"end_turn_confirm"
-## Windowed or full. Offered on the pause menu and nowhere else: the main menu's
-## own options row is full at four controls — a fifth puts the setup panel past
-## the 640-wide frame, which `MenuCaptureDriver`'s gate refuses outright — so on
-## that page the F11 key is the whole of this setting.
+## Windowed or full. Never on the main menu's own options row, which is full at
+## four controls — a fifth puts the setup panel past the 640-wide frame, which
+## `MenuCaptureDriver`'s gate refuses outright — so there it is the F11 key and the
+## menu's Settings page, which lists these same rows (`value_actions`).
 const WINDOW_ROW := &"window"
 const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW, WINDOW_ROW]
 
@@ -168,6 +170,12 @@ var board_3d := DEFAULT_BOARD_3D
 ## teach next and stops drawing itself once it holds them all.
 var retired_hints: Array[StringName] = []
 
+## The match the main menu last set up — `MenuSetupMemory`'s board, fog and
+## seats — so returning to the menu, or launching the game again, finds the table
+## as it was left. Only ever a pre-fill: what a match plays is still the request
+## the menu stages from what is on screen.
+var match_setup: Dictionary = {}
+
 ## False once anything has spoken for this launch, so nothing written later
 ## reaches the file.
 var _persistent := true
@@ -195,6 +203,8 @@ func _ready() -> void:
 	# A phone has no window to stand anywhere but full, so it never listens for
 	# the key either — the same gate the Window row is offered behind.
 	set_process_unhandled_input(_has_a_window())
+	# Landscape only: an upright phone is told to turn rather than shown a strip.
+	RotateCard.install(get_tree().root)
 
 
 ## F11 flips the window mode from any screen. It lives here rather than in the
@@ -252,6 +262,31 @@ func offered_rows() -> Array[StringName]:
 	var rows: Array[StringName] = VALUE_ROWS.duplicate()
 	rows.erase(WINDOW_ROW)
 	return rows
+
+
+## The value rows as menu rows, each stepped where it stands by its `cycle`, so
+## the pause menu and the main menu's Settings page offer one list. `except` drops
+## a row the page already holds a control of its own for.
+func value_actions(except: Array[StringName] = []) -> Array[Dictionary]:
+	var actions: Array[Dictionary] = []
+	for row: StringName in offered_rows():
+		if row in except:
+			continue
+		actions.append(
+			{
+				"id": row,
+				"label": row_label(row),
+				"cycle": func(step: int) -> String: return cycle_row(row, step),
+			}
+		)
+	return actions
+
+
+## Remembers the menu's setup and writes it back, on `set_speed`'s terms.
+func set_match_setup(setup: Dictionary) -> void:
+	match_setup = setup
+	if _persistent:
+		_save()
 
 
 ## Where `id` sits in VOLUME_STEPS; -1 when it names no step.
@@ -421,6 +456,9 @@ func pin_hints(all_retired: bool) -> void:
 ## "off" or "Quiet" could reach is the map menu's own Sound row and the toggles'
 ## own checkmarks in the frame.
 ##
+## The remembered match setup is forgotten for the reason the window stands
+## back: the menu captures promise the tutorial board leads.
+##
 ## The window stands back for the strongest reason of the lot: a full-screen
 ## machine frames every capture at its own monitor rather than at the project's
 ## window size, so the smoke sweep and `make screenshot` would photograph the
@@ -432,6 +470,7 @@ func pin_hints(all_retired: bool) -> void:
 func pin(id: StringName) -> void:
 	_persistent = false
 	end_turn_confirm = DEFAULT_END_TURN_CONFIRM
+	match_setup = {}
 	menu_animations = DEFAULT_MENU_ANIMATIONS
 	fullscreen = DEFAULT_FULLSCREEN
 	_apply_window_mode()
@@ -483,6 +522,9 @@ func _load() -> void:
 	if stored_full is bool:
 		fullscreen = stored_full
 	board_3d = stored_view(config, board_3d)
+	var stored_setup: Variant = config.get_value(SECTION, MATCH_SETUP_KEY, {})
+	if stored_setup is Dictionary:
+		match_setup = stored_setup
 	# Stored as strings and read back as StringNames: ConfigFile has no
 	# StringName, and a hint id written by one version must still match the
 	# TutorialHints id in the next. An id nothing answers to any more is kept
@@ -505,6 +547,7 @@ func _save() -> void:
 	config.set_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
 	config.set_value(SECTION, FULLSCREEN_KEY, fullscreen)
 	config.set_value(SECTION, BOARD_VIEW_KEY, board_3d)
+	config.set_value(SECTION, MATCH_SETUP_KEY, match_setup)
 	var hints := PackedStringArray()
 	for id in retired_hints:
 		hints.append(String(id))

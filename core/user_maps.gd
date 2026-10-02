@@ -1,7 +1,8 @@
 class_name UserMaps
 extends RefCounted
 ## Storage for the boards the player draws: reads, writes, renames, copies and
-## deletes files under `MapCatalog.USER_DIR`, and nothing else.
+## deletes files under `MapCatalog.USER_DIR`, remembers which it last saved, and
+## nothing else.
 ##
 ## Everything about *what* a board contains belongs to `MapData` and
 ## `MapDocument`, and whether it plays belongs to `MapValidator` — the same split
@@ -28,6 +29,26 @@ const MAX_NAME_LENGTH := 28
 ## `_99`, which is more copies of one board than anybody makes.
 const COPY_SUFFIX := "_copy"
 const COPY_NUMBER_ROOM := 3
+
+## The board `save` last wrote, until `take_last_saved` hands it over — how Match
+## Setup lands on a board the player has just drawn, without the editor and the
+## menu sharing anything but this file.
+static var _last_saved := ""
+
+
+## Whether `path` is a board the player drew rather than one the game ships —
+## a fact about where the file is, since `MapCatalog.USER_DIR` is the one writable
+## place a board can come from.
+static func owns(path: String) -> bool:
+	return path.begins_with(MapCatalog.USER_DIR)
+
+
+## The name of the board last saved, once: the second ask answers "". Copies and
+## renames made from Match Setup are not saves, so they never land here.
+static func take_last_saved() -> String:
+	var name := _last_saved
+	_last_saved = ""
+	return name
 
 
 ## The file `name` is kept in, whether or not anything is there yet.
@@ -75,17 +96,10 @@ static func exists(name: String) -> bool:
 ## Returns "" on success, else why not — a refused name and a disk that will not
 ## take the file are both the author's business, so neither is only a log line.
 static func save(name: String, text: String) -> String:
-	var error := name_error(name)
-	if error != "":
-		return error
-	if not _ensure_dir():
-		return "The folder your maps are kept in cannot be opened."
-	var handle := FileAccess.open(path_for(name), FileAccess.WRITE)
-	if handle == null:
-		return "'%s' could not be written (error %d)." % [slug(name), FileAccess.get_open_error()]
-	handle.store_string(text)
-	handle.close()
-	return ""
+	var error := _write(name, text)
+	if error == "":
+		_last_saved = slug(name)
+	return error
 
 
 ## The names the player has saved, alphabetically — what a picker lists.
@@ -141,7 +155,7 @@ static func copy_to(from: String, to: String) -> String:
 		return "There is no map called '%s'." % slug(from)
 	if exists(to):
 		return "You already have a map called '%s'." % slug(to)
-	return save(to, FileAccess.get_file_as_string(path_for(from)))
+	return _write(to, FileAccess.get_file_as_string(path_for(from)))
 
 
 ## A free name for a copy of `name`: the board's own with a `_copy` suffix, and a
@@ -157,6 +171,21 @@ static func copy_name(name: String) -> String:
 	while exists("%s_%d" % [stem, next]):
 		next += 1
 	return "%s_%d" % [stem, next]
+
+
+## The write itself, which a copy shares and which records nothing.
+static func _write(name: String, text: String) -> String:
+	var error := name_error(name)
+	if error != "":
+		return error
+	if not _ensure_dir():
+		return "The folder your maps are kept in cannot be opened."
+	var handle := FileAccess.open(path_for(name), FileAccess.WRITE)
+	if handle == null:
+		return "'%s' could not be written (error %d)." % [slug(name), FileAccess.get_open_error()]
+	handle.store_string(text)
+	handle.close()
+	return ""
 
 
 static func _ensure_dir() -> bool:
