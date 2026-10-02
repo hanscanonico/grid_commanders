@@ -60,7 +60,7 @@ func _ready() -> void:
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.unit_moved.connect(_on_unit_moved)
 	EventBus.unit_built.connect(_on_unit_built)
-	EventBus.property_captured.connect(_on_property_captured)
+	EventBus.capture_ordered.connect(_on_capture_ordered)
 	EventBus.turn_started.connect(_on_turn_started)
 
 
@@ -120,7 +120,9 @@ func _on_unit_built(unit: Unit) -> void:
 	_retire_for(unit.team, &"build")
 
 
-func _on_property_captured(_cell: Vector2i, team: int) -> void:
+## The order, not the flag coming down a day later: the step said what to press,
+## and a strip still asking for it after the press reads as a press that missed.
+func _on_capture_ordered(_cell: Vector2i, team: int) -> void:
 	_retire_for(team, &"capture")
 
 
