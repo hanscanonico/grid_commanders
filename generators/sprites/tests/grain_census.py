@@ -86,7 +86,7 @@ SHEETS: tuple[Sheet, ...] = (
     Sheet("shoals", "autotiles/shoals.png", 16, 4, "mask"),
     Sheet("shoals_b", "autotiles/shoals_b.png", 16, 4, "mask"),
     Sheet("woods", "autotiles/woods.png", 16, 4, "mask"),
-    Sheet("bridges", "autotiles/bridges.png", 2, 2, "deck"),
+    Sheet("bridges", "autotiles/bridges.png", 6, 2, "deck"),
     Sheet("sea", "autotiles/sea.png", 3, 3, "phase"),
     Sheet("sea_b", "autotiles/sea_b.png", 3, 3, "phase"),
     Sheet("plains", "autotiles/plains.png", 8, 8, "phase"),
