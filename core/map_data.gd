@@ -80,6 +80,9 @@ var symmetric := false
 var grouping := ""
 ## Where this map was read from; empty for maps parsed straight from a string.
 var source_path := ""
+## The text this map was parsed from, so a save can carry a board whose file may
+## not outlive it (`SaveBoard`).
+var source_text := ""
 ## Raw starting-unit entries: {team: int, symbol: String, cell: Vector2i,
 ## tag: StringName, carry: bool}. The tag is empty for a unit the board did not
 ## name, and `carry` is true only for a row marked `^` — see CARRY_MARK.
@@ -139,6 +142,7 @@ static func parse(text: String, db: TerrainDB) -> MapData:
 		push_error("MapData: map has no terrain rows")
 		return null
 	map._build_roster()
+	map.source_text = text
 	return map
 
 

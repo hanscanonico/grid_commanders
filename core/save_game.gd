@@ -9,7 +9,7 @@ extends RefCounted
 ## failures with separate messages.
 ##
 ## The public surface is small and stays that way: `save`, `load_game`, `status`,
-## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use — plus `TEMP_SUFFIX`
+## `has_save`, `saved_at`, `SAVE_PATH`, and `VERSION` are what callers use — plus `TEMP_SUFFIX`
 ## and `BACKUP_SUFFIX`, which are public only so a test can name the siblings a save
 ## stages beside a slot rather than spelling them a second time. Which on-disk
 ## versions exist and which still load is SaveCodec's to say — see its header.
@@ -103,7 +103,9 @@ static func _slot_path(path: String) -> String:
 ##
 ## READABLE is not a promise `load_game` will accept: naming a save loads no board,
 ## so a save describing one that has since moved is named here and refused there
-## (see SaveCodec.summarize). Whoever offers the slot has to be ready for that.
+## (see SaveCodec.summarize). Whoever offers the slot has to be ready for that. A
+## board that is not there at all is the one exception, asked here because asking
+## costs no parse: a save naming a file that is gone is never offered.
 static func status(path: String = SAVE_PATH) -> Slot:
 	var slot := _slot_path(path)
 	if slot.is_empty():
@@ -117,7 +119,17 @@ static func status(path: String = SAVE_PATH) -> Slot:
 	var reason := SAVE_CODEC_SCRIPT.validate(json.data)
 	if reason != "":
 		return Slot.unreadable(reason)
+	if SaveBoard.gone(json.data):
+		return Slot.unreadable("The map it was played on was renamed or deleted")
 	return Slot.readable(SAVE_CODEC_SCRIPT.summarize(json.data))
+
+
+## When the slot's save was written, in seconds since the epoch, or 0 when there
+## is none — so the menu's Continue can tell it from a campaign's saved mission
+## and offer whichever the player left last.
+static func saved_at(path: String = SAVE_PATH) -> int:
+	var slot := _slot_path(path)
+	return 0 if slot.is_empty() else FileAccess.get_modified_time(slot)
 
 
 ## `difficulty` trails `path` so every existing caller keeps working; a save

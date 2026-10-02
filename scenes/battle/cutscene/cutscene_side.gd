@@ -125,9 +125,11 @@ const SCUFF_REACH := 8.0
 const SCUFF_STEP := 12.0
 const SCUFF_FLAT := 0.34
 const SCUFF_MIN_REACH := 0.5
-## How high aircraft ride above their own ground, and the bob they hold there.
-## The phase step keeps a flight of four from pulsing in unison.
-const HOVER_HEIGHT := 34.0
+## How high aircraft ride above their own ground, and the bob they hold there:
+## high enough to lift the flight clear of the horizon into the sky, with its
+## shadow left on the ground far below. The phase step keeps a flight of four
+## from pulsing in unison.
+const HOVER_HEIGHT := 66.0
 const HOVER_SWING := 4.0
 const HOVER_RATE := 4.4
 const HOVER_PHASE := 1.1
@@ -190,10 +192,11 @@ const CHIP_TEXT := Color(1.0, 1.0, 1.0, 0.68)
 const PLATE_MARGIN := 26.0
 ## The space left between the terrain's name and its first defence star.
 const TERRAIN_STAR_GAP := 12.0
-## What closes the defence row when the stars on it are not this unit's to have.
-## The tile keeps its own stars, exactly as the bottom bar's terrain chip does
-## (HudBottomBar._order_line prints this same word for the same reason): a bare
-## zero beside the word MOUNTAIN trades one misread for another.
+## What closes the defence row when the tile's stars are not this unit's to have.
+## The row lights only the cover the shot resolved with (`lit_stars`), and the
+## word says why a peak lights none — the bottom bar's terrain chip prints the
+## same word (HudBottomBar._order_line): a bare zero beside the word MOUNTAIN
+## trades one misread for another.
 const NO_COVER_NOTE := "NO COVER"
 ## The matching hold-off from the seam, for the content that sits against it.
 const SEAM_MARGIN := 18.0
@@ -998,7 +1001,7 @@ func _draw_terrain_row(plate: Rect2) -> void:
 		_outward_px(PLATE_MARGIN),
 		_inward(1.0),
 		TERRAIN_STAR_GAP,
-		terrain.defense_stars,
+		lit_stars(cover_stars, terrain.defense_stars),
 		plate_p,
 		terrain_note(cover_stars, terrain.defense_stars)
 	)
@@ -1009,6 +1012,14 @@ func _draw_terrain_row(plate: Rect2) -> void:
 ## pure so the sweep can hold the drawn row to it without posing a frame.
 static func terrain_note(cover: int, stars: int) -> String:
 	return NO_COVER_NOTE if cover == 0 and stars > 0 else ""
+
+
+## How many of a tile's `stars` the row lights for a unit fighting with `cover`:
+## the cover the shot really resolved with, never more than the tile has. An
+## aircraft over a plain lights none, so its row cannot print a star beside the
+## word that says it gets none.
+static func lit_stars(cover: int, stars: int) -> int:
+	return clampi(cover, 0, stars)
 
 
 # --- mirroring helpers -------------------------------------------------------

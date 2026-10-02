@@ -553,8 +553,7 @@ func _expect_guard(guard: Control, team: int) -> String:
 	var count_copy := "%d READY" % ready.size()
 	if not copy.contains(count_copy):
 		return "ready-unit guard copy has no '%s'" % count_copy
-	for unit in ready:
-		var line := "%s at (%d,%d)" % [unit.type.display_name, unit.cell.x, unit.cell.y]
+	for line in EndTurnGuard.unit_lines(_battle.game, ready):
 		if not copy.contains(line):
 			return "ready-unit guard does not name '%s'" % line
 	for action in ["Review units", "End anyway"]:

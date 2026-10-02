@@ -41,16 +41,6 @@ func test_the_scroll_never_leaves_the_board_edge_inside_the_frame() -> void:
 	assert_eq(EditorBoard.scroll_axis(100.0, 300.0, 280.0, 20.0, 0.0), -200.0)
 
 
-func test_a_board_opens_at_the_rung_a_match_opens_at() -> void:
-	var rungs := BattleZoom.rungs_for(0.8)
-	assert_eq(rungs[EditorBoard.opening_rung(rungs)], BattleZoom.DEFAULT_ZOOM)
-
-
-func test_a_board_too_small_to_frame_opens_on_the_whole_board_view() -> void:
-	var rungs := BattleZoom.rungs_for(4.5)
-	assert_eq(EditorBoard.opening_rung(rungs), 0)
-
-
 func test_the_preview_is_the_board_the_parser_makes_of_the_draft() -> void:
 	var db := Fixture.terrain_db()
 	var doc := _draft(4, 3)

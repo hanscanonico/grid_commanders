@@ -19,3 +19,8 @@ func is_met(state: GameState, _player_team: int, _progress: MissionProgress) -> 
 
 func definition_error(map: MapData, _player_team: int, _unit_db: UnitDB) -> String:
 	return MissionBoardCheck.unseated_team(map, team, "ally-survives objective names")
+
+
+## Met from the opening, and lost the moment the army falls.
+func holds_until_verdict() -> bool:
+	return true

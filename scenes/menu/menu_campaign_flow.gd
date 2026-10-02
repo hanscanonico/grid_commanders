@@ -85,6 +85,21 @@ func open() -> void:
 	_picker.begin(CampaignDB.load_default().all())
 
 
+## The main menu's Continue, for a campaign mission saved mid-battle: the same
+## deploy the hub's Resume makes, so there is one way a saved mission is picked
+## back up. False, launching nothing, when the war holds no saved board.
+func resume_saved(campaign_id: StringName) -> bool:
+	var campaign := CampaignDB.load_default().by_id(campaign_id)
+	if campaign == null:
+		return false
+	var mission_id := CampaignProfile.saved_mission(campaign_id)
+	if mission_id == &"" or _progress_for(campaign).active_mission != mission_id:
+		return false
+	_campaign = campaign
+	_deploy(mission_id)
+	return true
+
+
 ## Coming back from a battle plays the debrief first — what the generals say
 ## about what just happened — and only then the hub. The session is read here
 ## and cleared once the debrief is done with it, because the words belong to the
@@ -273,8 +288,8 @@ func _pose_debrief(won: bool) -> void:
 	# missed star and the scoreboard beside it tell the same story.
 	var late_day := mission.par_day + 2
 	var awards: Array[MissionRuntime.Award] = [
-		MissionRuntime.Award.new("Mission complete", true),
-		MissionRuntime.Award.new("Finish by day %d" % mission.par_day, false),
+		MissionRuntime.Award.new("Mission complete.", true),
+		MissionRuntime.Award.new("Finish by day %d." % mission.par_day, false),
 	]
 	var outcome := MissionRuntime.Outcome.new(
 		MissionRuntime.Status.SUCCESS if won else MissionRuntime.Status.FAILURE,

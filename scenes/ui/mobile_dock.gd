@@ -138,6 +138,6 @@ func back_word() -> String:
 func _chip(text: String, action: StringName) -> Button:
 	var chip := UiKit.action_chip(text, action)
 	chip.add_theme_color_override("font_disabled_color", UiTheme.SLATE_700)
-	chip.size_flags_vertical = Control.SIZE_FILL
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_chips[action] = chip
 	return chip

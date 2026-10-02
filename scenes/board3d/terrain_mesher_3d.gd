@@ -96,7 +96,9 @@ static func top_of(map: MapData, cell: Vector2i) -> Top:
 	var shade := 0.95 + 0.1 * _noise(cell, 0)
 	match id:
 		&"sea", &"reef":
-			return Top.new(BoardSpace3D.SEA_TOP, _tint(SEA, shade), true)
+			# One flat blue: a shade per cell reads as tiles laid on the sea, and
+			# the water's movement is the shader's, continuous across the cells.
+			return Top.new(BoardSpace3D.SEA_TOP, SEA, true)
 		&"shoal":
 			return Top.new(BoardSpace3D.SHOAL_TOP, _tint(SAND, shade), false)
 		&"river":

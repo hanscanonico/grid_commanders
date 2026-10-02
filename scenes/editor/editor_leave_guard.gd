@@ -71,7 +71,9 @@ func _build() -> void:
 	_discard_button = _action("Leave", UiTheme.ButtonVariant.GHOST, discarded)
 	actions.add_child(UiKit.touchable(_discard_button))
 	main.add_child(actions)
-	main.add_child(UiKit.key_legend("ESC  KEEP EDITING"))
+	var legend := UiKit.key_legend("ESC  KEEP EDITING")
+	legend.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	main.add_child(legend)
 
 
 func _action(text: String, variant: UiTheme.ButtonVariant, answer: Signal) -> Button:

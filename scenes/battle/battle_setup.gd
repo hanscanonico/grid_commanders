@@ -120,7 +120,7 @@ static func build(
 		_seat_planners(result, unit_db)
 		return result
 	var map_path := request.map_path
-	result.map = MapData.load_from_file(map_path, terrain_db)
+	result.map = SaveBoard.load_board(map_path, request.map_text, terrain_db)
 	# Playing the default board instead is a skirmish's answer — the launch asked
 	# for a match and any board is one. A mission's board carries its objectives
 	# and its scripted beats, so the substitution would open a mission whose script

@@ -51,6 +51,14 @@ func readout(_state: GameState, _team: int, _progress: MissionProgress) -> Strin
 	return ""
 
 
+## Whether being met here is a state the side has to keep until the verdict
+## rather than a deed done once. "Keep the marshal in the field" opens true and a
+## held square stops counting the day it is lost, so a reading of either before
+## the mission ends is only how things stand; a capture or a kill is not.
+func holds_until_verdict() -> bool:
+	return false
+
+
 ## The squares this condition is about, for the board to mark. Empty for every
 ## objective that names no ground — a count of properties, a deadline, a marshal
 ## who has to live — and those are marked nowhere rather than marked wrongly.

@@ -80,9 +80,7 @@ func say(speaker: CommanderType, words: String) -> void:
 	_face_slot.visible = not narrated
 	if not narrated:
 		_face_slot.add_child(MissionSpeech.bust_of(speaker, FACE))
-		_name = MissionSpeech.name_of(speaker, 0)
-		var army := CommanderVisuals.theme_for(speaker).color
-		_name.add_theme_color_override("font_color", army.lightened(NAME_LIFT))
+		_name = MissionSpeech.name_of(speaker, 0, FIELD_TOP, NAME_LIFT)
 		_copy.add_child(_name)
 		_copy.move_child(_name, 0)
 	_words.custom_minimum_size.x = NARRATION_WIDTH if narrated else WORDS_WIDTH
