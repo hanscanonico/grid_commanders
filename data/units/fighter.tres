@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"fighter"
 display_name = "Fighter"
+role = "Rules the sky. Cannot hit the ground."
 symbol = "f"
 cost = 20000
 move_points = 9

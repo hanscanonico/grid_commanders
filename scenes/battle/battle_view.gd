@@ -747,23 +747,24 @@ func _cover_stars_of(unit: Unit, cell: Vector2i) -> int:
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing
 ## worth previewing under the cursor — hides the panel. What the lines say is the
-## panel's own; where they land is this view's, asked of `BoardCamera`.
-func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) -> void:
+## panel's own; where it lands is `PanelAnchor`'s: a tile clear of the target, on
+## the side away from the shooter at `from`, so the forecast never sits on the
+## fight it is about. `from` only matters with a forecast to show.
+func update_damage_preview(
+	forecast: CombatSnapshot.Forecast, cell: Vector2i, from: Vector2i = Vector2i.ZERO
+) -> void:
 	damage_preview.visible = forecast != null and forecast.can_attack
 	if not damage_preview.visible:
 		return
 	damage_preview.show_forecast(forecast)
 	# Measured rather than guessed: the panel is as wide and as tall as its own
-	# lines, and those vary with the numbers in them. It sits up and to the
-	# right of the tile, and flips to its left rather than run off the screen.
+	# lines, and those vary with the numbers in them. It rides just above the
+	# target's row, and the bars are opaque, so it is kept inside the board band.
 	var panel := damage_preview.get_combined_minimum_size()
-	var pos := board_camera.screen_pos_for_cell(cell) + Vector2(4.0, 6.0 - panel.y)
-	if pos.x + panel.x > board_camera.viewport_size().x - 4.0:
-		pos.x -= panel.x + 12.0
-	# The forecast is one of the three things still allowed to float over the map,
-	# but the bars are opaque: clamped into the board band it can never slide
-	# under one and lose the numbers it exists to show.
-	damage_preview.position = pos.max(Vector2(4, UiTheme.HUD_TOP_H + 4))
+	var away: Array[Vector2i] = [from]
+	var anchor := PanelAnchor.beside(board_camera, cell, away)
+	var band := MobileDock.board_band(board_camera.viewport_size()).grow(-4.0)
+	damage_preview.position = anchor.place(panel, band, panel.y - 6.0)
 
 
 # --- cursor ------------------------------------------------------------------

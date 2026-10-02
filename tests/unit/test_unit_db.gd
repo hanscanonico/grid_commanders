@@ -46,3 +46,10 @@ func test_units_sharing_a_price_are_ordered_by_id() -> void:
 
 func test_the_order_is_the_same_every_load() -> void:
 	assert_eq(_ids(unit_db.all()), _ids(UnitDB.load_default().all()))
+
+
+## The build menu's card prints each unit's role, so a unit added without one
+## would open a card with a blank line where "what it is for" belongs.
+func test_every_unit_says_what_it_is_for() -> void:
+	for type in unit_db.all():
+		assert_ne(type.role.strip_edges(), "", "%s has no role line" % type.id)

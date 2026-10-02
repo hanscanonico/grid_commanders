@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"anti_air"
 display_name = "Anti-Air"
+role = "Shreds aircraft and foot soldiers up close."
 symbol = "a"
 cost = 8000
 move_points = 6

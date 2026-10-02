@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"battleship"
 display_name = "Battleship"
+role = "Long-range guns that hit land and sea."
 symbol = "B"
 cost = 28000
 move_points = 5

@@ -14,10 +14,11 @@ extends RefCounted
 ## wash that ends wherever the river's own outline says it does.
 const MOVE := Color(0.35, 1, 0.8, 0.85)
 ## AttackOverlay: the fire ring, the pickable targets and an aimed power's
-## square, red. Lower than MOVE because the two washes multiply the same tile
-## and this one is read over enemy sprites — the fill lands about where it did
-## before the tile's alpha rose, with the harder edge the tile now carries.
-const ATTACK := Color(1, 0.35, 0.3, 0.45)
+## square — one red. Lower than MOVE because the two washes multiply the same
+## tile, but dense enough that the ground under it cannot turn it another colour:
+## at 0.45 it read orange on grass and purple on sea and bridges, two colours the
+## player was left to tell apart with no legend.
+const ATTACK := Color(1, 0.35, 0.3, 0.65)
 ## ThreatOverlay: the threat lens, the same red as ATTACK but faint — the
 ## stripe pattern is what keeps it from reading as the same paint.
 const THREAT := Color(1, 0.35, 0.3, 0.38)
