@@ -237,13 +237,16 @@ static func theme_for(commander: CommanderType) -> FactionTheme:
 ## a light ground) until it clears `NAME_CONTRAST` where it does not: the Iron
 ## Dominion's slate is a field colour, and as text on a dark panel (1.7:1) it
 ## vanished. Aurora and Verdant sit just under the floor there and lift a little.
-static func name_color(commander: CommanderType, ground: Color) -> Color:
-	var ink := theme_for(commander).color
+## `lift` lightens the army's colour first, for a surface that sets every name
+## paler than the field colour; the floor then applies to the lifted colour.
+static func name_color(commander: CommanderType, ground: Color, lift: float = 0.0) -> Color:
+	var base := theme_for(commander).color.lightened(lift)
 	var toward := Color.WHITE if contrast(ground, Color.BLACK) < 4.5 else Color.BLACK
+	var ink := base
 	var step := 0
 	while contrast(ink, ground) < NAME_CONTRAST and step < NAME_STEPS:
 		step += 1
-		ink = theme_for(commander).color.lerp(toward, float(step) / NAME_STEPS)
+		ink = base.lerp(toward, float(step) / NAME_STEPS)
 	return ink
 
 

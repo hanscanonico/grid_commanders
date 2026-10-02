@@ -4,6 +4,8 @@ extends GutTest
 ## that vanished as text on the dark panels and the blue dialogue window.
 
 const DIALOGUE_BLUE := Color("#3a5ac8")
+## The dialogue window's own lift off the army colour (`DialogueWindow.NAME_LIFT`).
+const DIALOGUE_LIFT := 0.35
 
 
 func _general_of(key: StringName) -> CommanderType:
@@ -25,11 +27,23 @@ func test_every_faction_clears_the_floor_on_the_dark_panel() -> void:
 
 func test_every_faction_clears_the_floor_on_the_dialogue_window() -> void:
 	for key: StringName in CommanderVisuals.FACTION_ORDER:
-		var ink := CommanderVisuals.name_color(_general_of(key), DIALOGUE_BLUE)
+		var ink := CommanderVisuals.name_color(_general_of(key), DIALOGUE_BLUE, DIALOGUE_LIFT)
 		assert_gte(
 			CommanderVisuals.contrast(ink, DIALOGUE_BLUE),
 			CommanderVisuals.NAME_CONTRAST,
 			"%s reads on the blue window" % key
+		)
+
+
+func test_the_floor_never_reads_worse_than_the_lift_it_starts_from() -> void:
+	for key: StringName in CommanderVisuals.FACTION_ORDER:
+		var general := _general_of(key)
+		var lifted := CommanderVisuals.theme_for(general).color.lightened(DIALOGUE_LIFT)
+		var ink := CommanderVisuals.name_color(general, DIALOGUE_BLUE, DIALOGUE_LIFT)
+		assert_gte(
+			CommanderVisuals.contrast(ink, DIALOGUE_BLUE),
+			CommanderVisuals.contrast(lifted, DIALOGUE_BLUE),
+			"%s keeps the window's lift" % key
 		)
 
 
