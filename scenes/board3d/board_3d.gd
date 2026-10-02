@@ -31,6 +31,13 @@ const TERRAIN_SHADER := preload("res://scenes/board3d/terrain_3d.gdshader")
 const BACKGROUND := Color("#1a2130")
 const TABLE := Color("#262d3b")
 
+## Nobody's buildings wear bare stone rather than the neutral grey, which sat a
+## step off Iron's charcoal at full zoom-out: an owned roof is an army's colour,
+## an unowned one plainly none.
+static var _unclaimed := CommanderVisuals.FactionTheme.new(
+	&"unclaimed", "", Color("#b7b3a9"), Color("#918d84"), Color("#d2cec5"), Color.BLACK
+)
+
 var active := false
 
 var _view: BattleView
@@ -450,9 +457,10 @@ func _refresh_owners() -> void:
 		_property_rows[cell] = row
 		if _properties.has(cell):
 			_properties[cell].queue_free()
-		var building := PropertyModels3D.build(
-			_map.terrain_at(cell).id, SideIdentity.theme_for_row(row)
+		var theme := (
+			_unclaimed if row == SideIdentity.NEUTRAL_ROW else SideIdentity.theme_for_row(row)
 		)
+		var building := PropertyModels3D.build(_map.terrain_at(cell).id, theme)
 		_dress(building)
 		var centre := BoardSpace3D.cell_centre(cell)
 		building.position = Vector3(centre.x, BoardSpace3D.LAND_TOP, centre.y)
