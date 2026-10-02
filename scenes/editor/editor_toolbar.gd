@@ -57,10 +57,13 @@ func configure(with_brushes: bool) -> void:
 	show_erase(false)
 
 
-## Lights Undo and Redo only while there is something behind or ahead.
+## Lights Undo and Redo only while there is something behind or ahead. A dark
+## one takes no focus either, or Tab would stop on a button that does nothing.
 func show_history(undo_ready: bool, redo_ready: bool) -> void:
 	_undo.disabled = not undo_ready
 	_redo.disabled = not redo_ready
+	_undo.focus_mode = Control.FOCUS_ALL if undo_ready else Control.FOCUS_NONE
+	_redo.focus_mode = Control.FOCUS_ALL if redo_ready else Control.FOCUS_NONE
 
 
 ## Whether the Erase brush is the one in hand. The row is a row of plates, so
