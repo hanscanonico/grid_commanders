@@ -210,12 +210,33 @@ func screen_of_centre(cell: Vector2i) -> Vector2:
 	return _resting_probe().unproject_position(_surface(cell))
 
 
+## The screen rect a cell's top covers as the camera will come to rest, so an
+## overlay can step aside of it the way it does of a flat-board cell.
+func screen_rect_of(cell: Vector2i) -> Rect2:
+	_resting_probe()
+	return _camera.screen_rect_of(cell, BoardSpace3D.pick_top(_map, cell))
+
+
 ## The probe re-posed on the cursor now: a menu often opens the same frame the
 ## cursor jumped (a tap on a base, a scripted confirm), before `_process` has
 ## moved the probe after it.
 func _resting_probe() -> Camera3D:
-	_camera.pose_probe(_focus(), _view.camera.zoom.x, float(MobileDock.board_lift_px()))
+	_frame_lens()
+	_camera.pose_probe(_focus(), _view.camera.zoom.x)
 	return _camera.probe
+
+
+## Tells the camera where it frames the board: the band the HUD bars leave, cut
+## below the tutorial strip while it shows, and whether the rung is the floor
+## that shows all of the board.
+func _frame_lens() -> void:
+	var band := MobileDock.board_band(get_viewport().get_visible_rect().size)
+	var strip := _view.mission_strip
+	if strip != null and strip.is_visible_in_tree():
+		var below := strip.get_global_rect().end.y
+		band = Rect2(band.position.x, below, band.size.x, band.end.y - below)
+	_camera.band = band
+	_camera.whole = _view.camera.zoom.x <= _view.board_camera.min_zoom() + 0.001
 
 
 func _on_view_changed() -> void:
@@ -243,7 +264,8 @@ func _on_view_changed() -> void:
 		SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
 	)
 	if on:
-		_camera.snap(_focus(), _view.camera.zoom.x, float(MobileDock.board_lift_px()))
+		_frame_lens()
+		_camera.snap(_focus(), _view.camera.zoom.x)
 		_cursor.snap(_focus())
 
 
@@ -259,13 +281,8 @@ func _process(delta: float) -> void:
 	if _cinema.rolling:
 		_cinema.advance(delta)
 	if not _cinema.directs_lens():
-		_camera.follow(
-			delta,
-			focus,
-			_view.camera.zoom.x,
-			float(MobileDock.board_lift_px()),
-			_view.board_camera.shake_offset
-		)
+		_frame_lens()
+		_camera.follow(delta, focus, _view.camera.zoom.x, _view.board_camera.shake_offset)
 	_units.sync(delta, _camera.camera.global_basis)
 	_cursor.visible = _view.cursor.visible and not _cinema.rolling and not _stage_on_air()
 	_cursor.follow(delta, focus, _clock)
