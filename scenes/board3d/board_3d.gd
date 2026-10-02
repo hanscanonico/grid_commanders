@@ -93,7 +93,7 @@ func setup(view: BattleView) -> void:
 	]:
 		solid.visibility_layer = SOLID
 	view.fog_repainted.connect(_mark_fog)
-	view.terrain_layer.changed.connect(_mark_owners)
+	view.property_flipped.connect(_mark_owners)
 	Settings.board_view_changed.connect(_on_view_changed)
 	set_process(false)
 	visible = false
@@ -321,7 +321,9 @@ func _mark_fog() -> void:
 	_fog_dirty = true
 
 
-func _mark_owners() -> void:
+## Wired to the flip, not the tile layer: a TileMapLayer's `changed` does not
+## fire for `set_cell`, so a capture would keep the building's old colours.
+func _mark_owners(_cell: Vector2i) -> void:
 	_owners_dirty = true
 
 
