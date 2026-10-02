@@ -38,14 +38,19 @@ const EXTENSION := ".jsonl"
 const KEEP := 10
 
 
-## Just enough of a replay to name it on a menu: read from the header line alone,
-## without parsing a single command.
+## Just enough of a replay to name it on a menu: read from the header line and
+## the last one, without parsing the commands between them.
 class Summary:
 	var path := ""
 	var label := ""
 	var recorded := ""
 	var map_path := ""
+	## The day the recording opens on and the last day it reaches, so the slices of
+	## one match saved and continued are told apart by what each holds.
 	var day: int = 0
+	var last_day: int = 0
+	## The verdict a finished match closed on, or "" for one nobody finished.
+	var result := ""
 
 
 var _file: FileAccess
@@ -140,6 +145,9 @@ static func read(file_path: String) -> ReplayCodec.Replay:
 	replay.mission = StringName(String(head.get("mission", "")))
 	for i in range(1, lines.size()):
 		var entry := _parse_line(lines[i])
+		if ReplayCodec.is_closing(entry):
+			replay.result = String(entry["end"])
+			continue
 		if entry.is_empty():
 			if i == lines.size() - 1:
 				# What an interrupted write leaves behind: the match up to here really
@@ -152,16 +160,15 @@ static func read(file_path: String) -> ReplayCodec.Replay:
 	return replay
 
 
-## Which board and when, without parsing a command. Null when the file is not a
-## replay — silently, because asking whether a file is worth naming on a menu is a
-## query, and a stray file in the directory is an ordinary answer rather than a
-## failure.
+## Which board, when, and how far it got, without parsing a command. Null when
+## the file is not a replay — silently, because asking whether a file is worth
+## naming on a menu is a query, and a stray file in the directory is an ordinary
+## answer rather than a failure.
 static func summarize(file_path: String) -> Summary:
-	var handle := FileAccess.open(file_path, FileAccess.READ)
-	if handle == null:
+	if not FileAccess.file_exists(file_path):
 		return null
-	var head := _parse_line(handle.get_line())
-	handle.close()
+	var lines := FileAccess.get_file_as_string(file_path).split("\n", false)
+	var head := _parse_line(lines[0]) if not lines.is_empty() else {}
 	if head.is_empty() or ReplayCodec.header_error(head) != "":
 		return null
 	var opening: Dictionary = head["opening"]
@@ -171,7 +178,21 @@ static func summarize(file_path: String) -> Summary:
 	summary.recorded = String(head.get("recorded", ""))
 	summary.map_path = String(opening.get("map_path", ""))
 	summary.day = int(opening.get("day", 0))
+	var last := _last_line(lines)
+	summary.last_day = int(last.get("d", summary.day))
+	if ReplayCodec.is_closing(last):
+		summary.result = String(last["end"])
 	return summary
+
+
+## The last line after the header that parses — a torn tail is skipped, as `read`
+## skips it — or an empty dictionary when there is none.
+static func _last_line(lines: PackedStringArray) -> Dictionary:
+	for i in range(lines.size() - 1, 0, -1):
+		var line := _parse_line(lines[i])
+		if not line.is_empty():
+			return line
+	return {}
 
 
 ## The recordings in a directory, newest first. Slot names sort chronologically
