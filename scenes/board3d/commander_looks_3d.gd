@@ -38,6 +38,15 @@ const LOOKS: Dictionary[StringName, String] = {
 	&"radek_morn": "medium darkbrown bald none none beard double bandolier hammer",
 }
 
+## How far a hair mass must stand off the cheek it frames, in luma on the 0–255
+## scale — `hair.py`'s SKIN_CONTRAST — and the rungs it may drop down to get
+## there: `light.py`'s LADDER at base, shade and deep, as multiples of the hair's
+## own colour. A mass that ties with its face takes the first rung that clears,
+## as the bust's mass does (`hair.mass_band`), so platinum over pale skin is the
+## warm grey the bust paints rather than one cream block with glasses on it.
+const SKIN_CONTRAST := 34.0
+const HAIR_RUNGS: Array[float] = [1.0, 0.68, 0.40]
+
 ## The plain officer an unknown id and the empty seat stand as.
 const NEUTRAL_LOOK := "medium brown short fieldcap none none v plain none"
 
@@ -76,8 +85,24 @@ static func look_of(id: StringName) -> Dictionary:
 	for i in COLUMNS.size():
 		look[COLUMNS[i]] = StringName(row[i])
 	look[&"skin_color"] = _rgb(SKIN_BASES[look[&"skin"]])
-	look[&"hair_color"] = _rgb(HAIR_BASES[look[&"hair"]])
+	look[&"hair_color"] = stood_off(_rgb(HAIR_BASES[look[&"hair"]]), look[&"skin_color"])
 	return look
+
+
+## `hair` at the first of `HAIR_RUNGS` whose luma clears `skin`'s by
+## `SKIN_CONTRAST`, or at the last when none does.
+static func stood_off(hair: Color, skin: Color) -> Color:
+	var tone := hair
+	for rung: float in HAIR_RUNGS:
+		tone = Color(hair.r * rung, hair.g * rung, hair.b * rung)
+		if absf(luma(tone) - luma(skin)) >= SKIN_CONTRAST:
+			break
+	return tone
+
+
+## The board generator's luminance, on the 0–255 scale.
+static func luma(c: Color) -> float:
+	return (0.299 * c.r + 0.587 * c.g + 0.114 * c.b) * 255.0
 
 
 static func _rgb(bytes: Vector3i) -> Color:

@@ -718,7 +718,18 @@ forms named in the root index are in `docs/design_record.md`.
   tandem pair (`AirModels3D.ROTOR_HUBS` lists every rotor a type turns; `UnitModels3D.build`
   makes them for the board, the cut-in squads and the gallery alike, and `turn_rotors` spins them
   counter-rotating), the battleship fills the cell's length with the cruiser at four-fifths and the
-  sub at a little more, and the sub's hull is sunk to its top third under a white wake. **Where a
+  sub at a little more, and the sub's hull is sunk to its top third under a white wake.
+  **Readability on the board is placement, not size** (playtest 2026-10-02, keeping those lengths):
+  a ship at rest swings back broadside to the lens (`UnitMirror3D.BROADSIDE_RATE`), so a hull that
+  sailed north is not a sliver; a hull on a port is lifted by its keel onto the quay; a dived sub
+  rides just awash (`DIVE_DEPTH`) and so draws as the whole translucent hull its sprite's faint
+  alpha asks for, every faded model writing its depth so it reads as one silhouette; a property a
+  unit is seen on lowers to `Board3D.OCCUPIED_HEIGHT` of its height while occupied — read off where
+  the shown models stand (`UnitMirror3D.standing_cells`), so a fogged unit lowers nothing — and
+  rises when it leaves; and a unit the mission names wears the goal diamond standing over its model
+  (`UnitMark3D`), the flat mark on its square being hidden under the model. A general's 3D hair
+  stands off the cheek as the bust's mass does — down `CommanderLooks3D.HAIR_RUNGS` until it clears
+  `SKIN_CONTRAST`, both held to the portrait generator by its mirror test. **Where a
   cut-in figure fires from is its builder's answer**: `UnitModels3D.muzzle_for` asks each domain's
   `muzzle_of`, computed from the constants the gun is built from, and only falls back to the
   front of the footprint for a gun that sits there. An aircraft flies
