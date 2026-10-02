@@ -130,6 +130,9 @@ var _who: Array[int] = []
 var _side: Array[int] = []
 var _rows: GridContainer
 var _presets: HBoxContainer
+## The preset buttons, in PRESETS order — held so the one the table in hand
+## matches can be lit on every repaint, like a segment's choice.
+var _preset_buttons: Array[Button] = []
 ## The liveries the seats will wear, resolved over the seats that **play** from
 ## the one authority the board and the footer chips also read (`SideIdentity`,
 ## faction-identity D1) — so P2's row is P2's colour rather than everyone's. No
@@ -329,6 +332,60 @@ func layout_error() -> String:
 	return ""
 
 
+## The table as the menu remembers it between visits (`MenuSetupMemory`): who sits
+## where, the sides, and each seat's tier by id — an id rather than an index, so a
+## tier added later cannot shift what a remembered seat plays at.
+func table() -> Dictionary:
+	var tiers: Array[String] = []
+	for i in _tier.size():
+		tiers.append(String(_tiers[_tier[i]].id) if _tier[i] < _tiers.size() else "")
+	return {"who": _who.duplicate(), "sides": _side.duplicate(), "tiers": tiers}
+
+
+## Sits a remembered `table` back down when it was set on a board dealing as many
+## seats as this one; any other table was a different match and is left alone.
+## Settled like any tap, so a stored seating this board cannot play is reopened
+## rather than trusted.
+func seat_table(remembered: Dictionary) -> void:
+	var who: Array = remembered.get("who", [])
+	var sides: Array = remembered.get("sides", [])
+	var tiers: Array = remembered.get("tiers", [])
+	if who.size() != _seats.size() or sides.size() != _seats.size():
+		return
+	for i in _seats.size():
+		_who[i] = clampi(int(who[i]), Seat.HUMAN, Seat.EMPTY)
+		_side[i] = clampi(int(sides[i]), 0, _seats.size() - 1)
+		_tier[i] = _tier_index(str(tiers[i]) if i < tiers.size() else "")
+		_tier_buttons[i].text = _tier_label(i)
+	_who = reopened_seats(_who, _closable())
+	_settle_seats()
+	changed.emit()
+
+
+## The COM-19 rule walked rather than photographed, for the setup-context
+## capture: a seat nobody but a person is in has no computer to tune and its tier
+## chip goes inert, and seating a computer there brings it back. Starts from, and
+## ends on, the all-human table that capture poses.
+func tier_rule_holds() -> bool:
+	var passed := true
+	if not ai_teams().is_empty():
+		push_error("main menu setup context: the all-human table is not the posed state")
+		passed = false
+	var last := seat_count() - 1
+	set_human(last, false)
+	if not tier_operable(last):
+		push_error("main menu setup context: the tier stays disabled with a CPU seated")
+		passed = false
+	if seat_difficulty().is_empty():
+		push_error("main menu setup context: a CPU seat names no tier")
+		passed = false
+	set_human(last, true)
+	if tier_operable(last):
+		push_error("main menu setup context: the tier remains operable with nobody to tune")
+		passed = false
+	return passed
+
+
 ## Seats or unseats a person at `index`. Public because the setup-context capture
 ## walks the table rather than photographing one arrangement of it — the same
 ## reason the difficulty rule is asked of the seats and not of a mode flag.
@@ -368,6 +425,40 @@ static func normalised_sides(sides_in: Array[int], count: int) -> Array[int]:
 		for i in count:
 			settled.append(i)
 	return settled
+
+
+## Which of PRESETS the table `who` / `sides` is, or -1 for none (SK-22). A table
+## is its seating and its grouping — which seats are filled and who stands with
+## whom — not who plays each seat, so a 2v2 with two people at it is still the
+## 2v2. Static and pure on `normalised_sides`' terms.
+static func preset_matching(who: Array[int], sides: Array[int]) -> int:
+	if who.size() != PRESET_SEATS:
+		return -1
+	var table := _grouping(who, sides)
+	for i in PRESETS.size():
+		var preset_who: Array[int] = []
+		preset_who.assign(PRESETS[i]["seats"])
+		var preset_sides: Array[int] = []
+		preset_sides.assign(PRESETS[i]["sides"])
+		if _grouping(preset_who, preset_sides) == table:
+			return i
+	return -1
+
+
+## Per seat, -1 for a closed one and otherwise its side, numbered in the order
+## the filled seats first stand on it — so two groupings that differ only in
+## their letters read the same.
+static func _grouping(who: Array[int], sides: Array[int]) -> Array[int]:
+	var numbered: Dictionary = {}
+	var grouping: Array[int] = []
+	for i in who.size():
+		if who[i] == Seat.EMPTY:
+			grouping.append(-1)
+			continue
+		if not numbered.has(sides[i]):
+			numbered[sides[i]] = numbered.size()
+		grouping.append(int(numbered[sides[i]]))
+	return grouping
 
 
 ## The seating `who_in` becomes once the roster has shrunk under it: closed seats
@@ -434,16 +525,21 @@ func _settle_seats() -> void:
 	for i in filled.size():
 		_side[filled[i]] = settled[i]
 	for i in _who_buttons.size():
-		var empty: Button = _who_buttons[i][Seat.EMPTY]
-		empty.disabled = not _can_close(i)
+		_set_live(_who_buttons[i][Seat.EMPTY], _can_close(i))
 	for i in _tier_buttons.size():
-		_tier_buttons[i].disabled = not tier_operable(i)
+		_set_live(_tier_buttons[i], tier_operable(i))
 	for i in _side_buttons.size():
 		var stands := _who[i] != Seat.EMPTY
 		for letter in _side_buttons[i].size():
-			var badge: Button = _side_buttons[i][letter]
-			badge.disabled = not stands or letter >= _seats.size()
+			_set_live(_side_buttons[i][letter], stands and letter < _seats.size())
 	_repaint_seats()
+
+
+## Greys a control and takes it out of the focus walk in one stroke: a keyboard
+## player who lands on a dead button presses Enter at nothing (SK-23).
+static func _set_live(button: Button, live: bool) -> void:
+	button.disabled = not live
+	button.focus_mode = Control.FOCUS_ALL if live else Control.FOCUS_NONE
 
 
 ## Every row painted twice over, in two vocabularies. **Who plays a seat and how
@@ -471,6 +567,24 @@ func _repaint_seats() -> void:
 		_seat_labels[i].add_theme_color_override(
 			"font_color", livery if _who[i] != Seat.EMPTY else UiTheme.NEUTRAL_DARK
 		)
+	var lit := preset_matching(_who, _side)
+	for i in _preset_buttons.size():
+		_paint_preset(_preset_buttons[i], i == lit)
+
+
+## A preset button in the panel's quiet dress, filled with the chrome accent when
+## it is the table in hand — the lit choice of the segmented runs above it.
+static func _paint_preset(button: Button, lit: bool) -> void:
+	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_SEGMENT)
+	if not lit:
+		return
+	var box := button.get_theme_stylebox("normal").duplicate() as StyleBoxFlat
+	box.bg_color = UiTheme.CONTROL_ACCENT
+	for state: StringName in [&"normal", &"hover", &"pressed"]:
+		button.add_theme_stylebox_override(state, box)
+	for state: StringName in [&"font_color", &"font_hover_color", &"font_pressed_color"]:
+		button.add_theme_color_override(state, UiTheme.WHITE)
+	button.add_theme_color_override(&"font_focus_color", UiTheme.WHITE)
 
 
 ## The liveries for the table as it now stands, over the seats that play — the
@@ -661,6 +775,15 @@ func _tier_label(index: int) -> String:
 	return _tiers[_tier[index] % _tiers.size()].display_name
 
 
+## Where the tier `id` sits in the menu order, or the default's place for an id
+## no tier answers to.
+func _tier_index(id: String) -> int:
+	for i in _tiers.size():
+		if String(_tiers[i].id) == id:
+			return i
+	return _default_tier()
+
+
 ## Which tier a fresh seat opens on: the shipped default, wherever it sits in the
 ## menu order, so a table nobody tunes is the match every launch played before a
 ## seat could carry a tier of its own.
@@ -691,6 +814,7 @@ func _refresh_presets() -> void:
 	for child in _presets.get_children():
 		_presets.remove_child(child)
 		child.queue_free()
+	_preset_buttons.clear()
 	# Only a four-seat board has more than one table worth a shortcut; every other
 	# board gets the same row, dead whole and answered by one line under it.
 	var reason := preset_refusal(_seats.size())
@@ -710,8 +834,9 @@ func _refresh_presets() -> void:
 		button.text = String(preset["label"])
 		# The segmented control's own size: a preset row sits directly under the
 		# seat/side segments it sets in one tap, at the same density.
-		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_SEGMENT)
-		button.disabled = not offered
+		_paint_preset(button, false)
+		_set_live(button, offered)
+		_preset_buttons.append(button)
 		Tooltip.attach(
 			button, String(preset["help"]) if offered else reason, "", Tooltip.Side.BOTTOM
 		)

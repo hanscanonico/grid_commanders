@@ -43,9 +43,11 @@ static func ordering(db: TerrainDB) -> Array[TerrainType]:
 	return terrains
 
 
-## Stocks the palette from the database and selects its first brush.
+## Stocks the palette from the database and puts open ground in hand, the
+## surface every board is drawn over.
 func configure(db: TerrainDB) -> void:
 	_terrains = ordering(db)
+	_selected = maxi(0, _terrains.find(db.ground()))
 	add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
 
 	var col := VBoxContainer.new()

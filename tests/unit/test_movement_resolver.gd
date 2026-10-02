@@ -155,3 +155,49 @@ func test_terrain_never_slows_an_aircraft() -> void:
 		MovementResolver.reachable(over_rough, over_rough.units[0]).cells().size(),
 		"the same helicopter should reach the same number of cells over either strip"
 	)
+
+
+## A refused destination says which of the fill's three walls stopped it, so the
+## board can tell a player why rather than call every refusal "out of reach".
+func test_destination_error_names_an_enemy_standing_on_a_reachable_cell() -> void:
+	var state := _state("[terrain]\n.....\n[units]\n1 i 0 0\n2 i 2 0")
+	var mover := state.units[0]
+	var reach := MovementResolver.reachable(state, mover)
+	assert_eq(
+		MovementResolver.destination_error(state, mover, reach, Vector2i(2, 0)),
+		"destination is held by an enemy"
+	)
+	assert_eq(MovementResolver.destination_error(state, mover, reach, Vector2i(1, 0)), "")
+
+
+func test_destination_error_names_ground_the_unit_cannot_enter() -> void:
+	var state := _state("[terrain]\n.SS\n[units]\n1 i 0 0\n1 l 1 0")
+	var rider := state.units[0]
+	var reach := MovementResolver.reachable(state, rider)
+	assert_eq(
+		MovementResolver.destination_error(state, rider, reach, Vector2i(1, 0)),
+		"path crosses impassable terrain",
+		"a Lander on open sea is on ground infantry cannot step onto"
+	)
+
+
+func test_destination_error_names_a_cell_past_the_budget() -> void:
+	var state := _state("[terrain]\n.......\n[units]\n1 i 0 0")
+	var mover := state.units[0]
+	var reach := MovementResolver.reachable(state, mover)
+	assert_eq(
+		MovementResolver.destination_error(state, mover, reach, Vector2i(6, 0)),
+		"path exceeds movement points"
+	)
+
+
+## An enemy the mover cannot see is planned through, so its cell answers as an
+## open one: the refusal reason must never be a fog probe.
+func test_destination_error_never_names_a_hidden_enemy() -> void:
+	var state := _state("[terrain]\n........\n[units]\n1 i 0 0\n2 i 3 0")
+	state.fog_enabled = true
+	var mover := state.units[0]
+	var reach := MovementResolver.reachable(state, mover)
+	var sight := Vision.visible_cells(state, mover.team)
+	assert_false(Vision.can_see_unit(state, mover.team, state.units[1], sight), "it is hidden")
+	assert_eq(MovementResolver.destination_error(state, mover, reach, Vector2i(3, 0)), "")

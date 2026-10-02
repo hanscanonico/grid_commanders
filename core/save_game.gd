@@ -103,7 +103,9 @@ static func _slot_path(path: String) -> String:
 ##
 ## READABLE is not a promise `load_game` will accept: naming a save loads no board,
 ## so a save describing one that has since moved is named here and refused there
-## (see SaveCodec.summarize). Whoever offers the slot has to be ready for that.
+## (see SaveCodec.summarize). Whoever offers the slot has to be ready for that. A
+## board that is not there at all is the one exception, asked here because asking
+## costs no parse: a save naming a file that is gone is never offered.
 static func status(path: String = SAVE_PATH) -> Slot:
 	var slot := _slot_path(path)
 	if slot.is_empty():
@@ -117,6 +119,8 @@ static func status(path: String = SAVE_PATH) -> Slot:
 	var reason := SAVE_CODEC_SCRIPT.validate(json.data)
 	if reason != "":
 		return Slot.unreadable(reason)
+	if SaveBoard.gone(json.data):
+		return Slot.unreadable("The map it was played on was renamed or deleted")
 	return Slot.readable(SAVE_CODEC_SCRIPT.summarize(json.data))
 
 

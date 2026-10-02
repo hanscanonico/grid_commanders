@@ -159,6 +159,29 @@ func test_removing_a_board_that_is_not_there_says_so() -> void:
 	assert_ne(UserMaps.copy_to("never_existed", "somewhere"), "")
 
 
+## Match Setup lands on the board the player just drew, and only once: coming back
+## to the menu a second time is not having just saved it.
+func test_the_board_last_saved_is_handed_over_once() -> void:
+	UserMaps.take_last_saved()
+	assert_eq(_save("Iron Gulf", BOARD), "")
+	assert_eq(UserMaps.take_last_saved(), "iron_gulf")
+	assert_eq(UserMaps.take_last_saved(), "", "the second ask finds nothing new")
+
+
+## A copy made from Match Setup is not a board drawn in the editor.
+func test_a_copy_is_not_a_save() -> void:
+	assert_eq(_save("gulf", BOARD), "")
+	UserMaps.take_last_saved()
+	_written.append("gulf_copy")
+	assert_eq(UserMaps.copy_to("gulf", "gulf_copy"), "")
+	assert_eq(UserMaps.take_last_saved(), "")
+
+
+func test_only_a_board_under_the_user_folder_is_the_players() -> void:
+	assert_true(UserMaps.owns(UserMaps.path_for("gulf")))
+	assert_false(UserMaps.owns(MapCatalog.TUTORIAL_MAP_PATH))
+
+
 func _save(name: String, text: String) -> String:
 	_written.append(UserMaps.slug(name))
 	return UserMaps.save(name, text)
