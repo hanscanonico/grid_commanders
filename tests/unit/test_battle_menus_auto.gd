@@ -1,7 +1,8 @@
 extends GutTest
 ## The pause menu's Auto row hands a seat to the computer, which only means
 ## something over a match still being played. A replay is already written, so
-## the row goes with the two save rows `savable` also drops.
+## the row goes with the two save rows `savable` also drops — and the way out
+## that stays speaks of watching rather than of a match left unsaved.
 
 var difficulty_db: DifficultyDB
 
@@ -49,6 +50,19 @@ func test_replay_drops_auto_with_the_save_rows() -> void:
 		),
 		"only the rows a recording cannot answer for go — the rest of the menu stays"
 	)
+
+
+## Playtest SK-28: "Main Menu Without Saving" and "Keep Playing" over a match
+## nobody is playing, and nothing a save could keep.
+func test_a_replay_leaves_in_watching_words() -> void:
+	var rows := BattleMenus.map_actions(_game(), false, false, [], {}, difficulty_db)
+	var quit: Dictionary = rows.filter(func(row: Dictionary) -> bool: return row["id"] == &"quit")[0]
+	assert_eq(quit["label"], "Stop Watching")
+	var confirm := BattleMenus.abandon_confirm_actions(true)
+	assert_eq(_ids(confirm), [&"cancel", &"abandon"] as Array[StringName], "the safe row leads")
+	assert_eq(confirm[0]["label"], "Keep Watching")
+	assert_eq(confirm[1]["label"], "Stop Watching")
+	assert_eq(BattleMenus.abandon_confirm_actions()[0]["label"], "Keep Playing")
 
 
 func test_paused_computer_turn_keeps_auto_gated_on_the_seat() -> void:

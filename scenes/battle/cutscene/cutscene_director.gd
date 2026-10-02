@@ -101,8 +101,11 @@ func _process(delta: float) -> void:
 		_finish()
 
 
+## Esc ends the cut-in and travels on: over a computer turn or a replay it is
+## also the pause (`BattleAiRunner.handle_input`), and on the player's own turn the
+## board is animating and lets it fall through.
 func _unhandled_input(event: InputEvent) -> void:
-	if _play.consume_skip(event):
+	if _play.consume_skip(event) and not event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
 
 
