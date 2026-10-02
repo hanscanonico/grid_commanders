@@ -37,6 +37,11 @@ signal end_turn_pressed
 ## shows.
 signal property_flipped(cell: Vector2i)
 
+## `refresh_fog` has repainted the fog layer. The 3D board copies the layer on
+## this, not on the layer's own `changed`, which a mid-match repaint does not
+## reliably raise — the 3D fog sat stale until the next turn.
+signal fog_repainted
+
 const TILE := 16
 ## Terrain atlas cells are 4x the world grid so the generated property
 ## buildings keep their detail; TerrainLayer is scaled down to compensate.
@@ -552,6 +557,7 @@ func refresh_fog() -> void:
 					repaint_property(cell)
 				else:
 					fog_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i.ZERO)
+	fog_repainted.emit()
 	for unit in game.units:
 		refresh_sprite(unit)
 

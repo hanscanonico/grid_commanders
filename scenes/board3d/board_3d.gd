@@ -80,7 +80,7 @@ func setup(view: BattleView) -> void:
 		view.cursor,
 	]:
 		solid.visibility_layer = SOLID
-	view.fog_layer.changed.connect(_mark_fog)
+	view.fog_repainted.connect(_mark_fog)
 	view.terrain_layer.changed.connect(_mark_owners)
 	Settings.board_view_changed.connect(_on_view_changed)
 	set_process(false)
