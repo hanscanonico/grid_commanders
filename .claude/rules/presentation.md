@@ -680,7 +680,12 @@ forms named in the root index are in `docs/design_record.md`.
   jump, a new day) — a camera centred on the cursor makes mouse hover chase itself, the cell under a
   still pointer sliding away as the view follows the cursor it just set. And it **keeps the board in the
   band**, as the flat board's camera limits do: its goal is held in from each edge as seen from the
-  side it looks from (`KEEP_*`), so an edge shows the diorama's rim, not half a screen of table. It **glides**, because the
+  side it looks from, so an edge shows the diorama's rim, not half a screen of table — across the
+  screen by `KEEP_ACROSS`, up and down it by the board's projected outline landing on the band's
+  edges (playtest 2026-10-02: a fraction of the reach let the near row slip under the bottom bar).
+  The band is `BoardCamera3D.band`, cut below the tutorial strip while it shows, and **the floor
+  rung frames the whole board** from whichever quarter it is seen, its reach measured off that
+  outline rather than read off the rung. It **glides**, because the
   whole-texel rule behind A3 is about sampling pixel art, and **lands when `BoardBeat.still()`**, so
   no capture depends on its shutter frame. D3: **one seam per question the flat board already
   answered.** `BoardPointer._cell_under` asks `Board3D.pick` (a ray walked down onto each cell's
@@ -738,7 +743,10 @@ forms named in the root index are in `docs/design_record.md`.
   `UnitMirror3D` stands a speck of it before the lens for the board's first frames, so its shader
   is built as the board comes up, never when the first aircraft appears. The cut-in stage keeps
   its own cruise height and sun shadows. The ground's variety is
-  per-sub-square shade, flat, by the standing-terrain rule below. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
+  per-sub-square shade, flat, by the standing-terrain rule below; the sea's is the shader's
+  alone — one flat blue moved by world-space noise, so no cell seam or per-cell repeat shows on
+  the board or the cut-in stage. A property nobody owns wears bare stone on the 3D board
+  (`Board3D`), not row 0's grey, which sat a step off Iron's charcoal at full zoom-out. D5: **dialogue on the 3D board is a staged story scene, not a card** (user
   request, 2026-09-29: "cinematics like in Final Fantasy with music, dialogs"). A scripted beat's
   lines, the briefing read again, a Command Power's activation and — new — a fresh mission's opening
   (its title card over the board, then its briefing) play through `DialogueCinema3D` whenever the 3D
@@ -754,7 +762,10 @@ forms named in the root index are in `docs/design_record.md`.
   flies to a speaker the first time (`CinemaPose3D.glide`, a crane's arc, with a whoosh) and cuts
   between medium and closer shots after (`CinemaShot3D.actor`, the open third facing into the
   board); a general with no army on the board is projected as a hologram on a `Projector3D` at the
-  viewer's post; the narrator speaks over an establishing shot. The story theme (`council`) comes in
+  viewer's post; **every figure stands on open ground beside its post** — never inside a building,
+  a peak, a wood, water, a unit the viewer sees or another general, and with nothing in front of
+  it toward the lens where a cell allows (`DialogueStaging.stand_cell`, playtest CA-11); the
+  narrator speaks over an establishing shot. The story theme (`council`) comes in
   for the scene and the match's own track comes back after it (`Music.current`). A power is a limit
   break: under a flash and `power_sting` the general stands in a sparking pillar of light, raises a
   fist, two shockwaves roll out to the rim and the power's name slams in; the card is still bound so
@@ -802,7 +813,8 @@ forms named in the root index are in `docs/design_record.md`.
   switch being a shader swap. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
-  `follow_cursor` still steps aside by the flat board's geometry, the 3D
+  `follow_cursor` still steps aside by the flat board's geometry (`Board3D.screen_rect_of` is the
+  cell's projected rect it can ask instead), the 3D
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
   by presentation keys on `TerrainType`, and the turn banner, the map editor and the menu
   backdrop stay 2D.
@@ -841,7 +853,11 @@ forms named in the root index are in `docs/design_record.md`.
   is never *constructed* on desktop. D8: touch targets grow their **hit** rectangles, never their
   drawn heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor
   rung. D9: the planner is not a mobile task. **Landscape only** (user decision) and
-  **`aspect="keep"`**; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
+  **`aspect="keep"`** — an upright window on a touch build is covered by `RotateCard`
+  (`scenes/ui/rotate_card.gd`, installed by `Settings`) until it turns, and a desktop window that
+  is merely tall never gets one. A touch build's `UiKit.action_chip` stands on a plate
+  (`UiTheme.touch_chip_plate`) drawn inside its bar, so a chip reads as a button without D8's
+  drawn height moving; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
   by measurement rather than by assumption. D7's mechanism is **refuted** — a feature-tagged autoload
   override does not clear an autoload on 4.7.1, the engine reading each `autoload/*` property raw, so
   unregistering the editor addon's runtime belongs to the addon that registers it. D4's safe-area

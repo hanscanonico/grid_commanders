@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="10"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("2")
@@ -116,10 +117,23 @@ script = ExtResource("9")
 speaker = &"iris_colt"
 text = "They're in the square and the mill. Guns on the road first. Nobody walks into that square until the artillery's fired."
 
+[sub_resource type="Resource" id="Cond_run_full"]
+script = ExtResource("12")
+flag = &"run:full"
+at_least = 1
+at_most = -1
+
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("9")
 speaker = &"iris_colt"
 text = "Square's ours. The mill too, if anyone's asking."
+requires = SubResource("Cond_run_full")
+
+[sub_resource type="Resource" id="Line_8b"]
+script = ExtResource("9")
+speaker = &"iris_colt"
+text = "Square's ours."
+unless = SubResource("Cond_run_full")
 
 [sub_resource type="Resource" id="Line_9"]
 script = ExtResource("9")
@@ -163,5 +177,5 @@ bonus_objectives = Array[Resource]([SubResource("Objective_2")])
 events = Array[Resource]([SubResource("Event_1"), SubResource("Event_2")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
-victory = Array[Resource]([SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10")])
+victory = Array[Resource]([SubResource("Line_8"), SubResource("Line_8b"), SubResource("Line_9"), SubResource("Line_10")])
 defeat = Array[Resource]([SubResource("Line_11"), SubResource("Line_12")])

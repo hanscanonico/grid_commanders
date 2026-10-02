@@ -96,7 +96,9 @@ static func top_of(map: MapData, cell: Vector2i) -> Top:
 	var shade := 0.95 + 0.1 * _noise(cell, 0)
 	match id:
 		&"sea", &"reef":
-			return Top.new(BoardSpace3D.SEA_TOP, _tint(SEA, shade), true)
+			# One flat blue: a shade per cell reads as tiles laid on the sea, and
+			# the water's movement is the shader's, continuous across the cells.
+			return Top.new(BoardSpace3D.SEA_TOP, SEA, true)
 		&"shoal":
 			return Top.new(BoardSpace3D.SHOAL_TOP, _tint(SAND, shade), false)
 		&"river":
@@ -132,11 +134,12 @@ static func _channel(map: MapData, cell: Vector2i, bank: Color) -> Top:
 
 ## Water under the whole deck, with banks only where the deck lands on dry
 ## ground — so a causeway of bridges across the sea stays open water beneath.
+## A deck no water meets stands on its field, as the flat board draws it.
 static func _bridge_bed(map: MapData, cell: Vector2i, bank: Color) -> Top:
-	var by_sea := false
-	for step in _STEPS:
-		var id := TerrainAutotiles.terrain_id(map, cell + step)
-		by_sea = by_sea or id == &"sea" or id == &"reef"
+	var bed := TerrainAutotiles.bridge_bed(map, cell)
+	if bed == TerrainAutotiles.BridgeBed.DRY:
+		return _field(cell, GRASS)
+	var by_sea := bed == TerrainAutotiles.BridgeBed.SEA
 	var level := BoardSpace3D.SEA_TOP if by_sea else BoardSpace3D.RIVER_TOP
 	var colour := SEA if by_sea else RIVER
 	var top := Top.new(level, colour, true)

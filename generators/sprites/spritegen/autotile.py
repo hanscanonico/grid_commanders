@@ -312,13 +312,31 @@ def river_tile(mask: int, salt: int = 0, frame: int = 0) -> Image.Image:
     return t
 
 
-def _bridge_h() -> Image.Image:
-    """Horizontal timber deck carried over a north-south river."""
-    t = river_tile(N | S)
+# What a bridge stands over, in the sheet's row order: the river it was first
+# drawn for, open sea for a causeway, and dry ground for a deck painted where no
+# water meets it — which drew a river's stubs into the grass when every deck
+# stood over a river (playtest ED-21).
+BRIDGE_BEDS = ("river", "sea", "dry")
+
+
+def _bridge_bed(bed: str) -> Image.Image:
+    """The ground under an E-W deck, its pier shadows already cast on it."""
+    if bed == "dry":
+        t = plains()
+        # the deck's shade on the grass along its shaded rail
+        _rect(t, 0, 44, 64, 2, mix(GRASS_DARK, (10, 30, 20), 0.3))
+        return t
+    t = river_tile(N | S) if bed == "river" else sea()
     # support shadows in the water above and below the deck
     for sy in (14, 46):
         _rect(t, 24, sy, 7, 4, mix(WATER, (10, 30, 60), 0.35))
         _rect(t, 34, sy, 7, 4, mix(WATER, (10, 30, 60), 0.35))
+    return t
+
+
+def _bridge_h(bed: str) -> Image.Image:
+    """Horizontal timber deck carried over `bed`."""
+    t = _bridge_bed(bed)
     # timber deck, slightly wider than the gravel road band it joins
     _rect(t, 0, 20, 64, 24, TIMBER)
     _rect(t, 0, 20, 64, 2, _lit(TIMBER, 0.25))  # lit rail
@@ -334,8 +352,8 @@ def _bridge_h() -> Image.Image:
     return t
 
 
-def bridge_tile(horizontal: bool = True) -> Image.Image:
-    t = _bridge_h()
+def bridge_tile(horizontal: bool = True, bed: str = "river") -> Image.Image:
+    t = _bridge_h(bed)
     return t if horizontal else t.transpose(Image.ROTATE_90)
 
 
@@ -567,8 +585,14 @@ def shoals_sheet(frame: int = 0) -> Image.Image:
 
 
 def bridge_sheet() -> Image.Image:
-    """Both deck orientations: E-W over a north-south river, then N-S."""
-    return sheet([bridge_tile(True), bridge_tile(False)], 2)
+    """A row per bed in `BRIDGE_BEDS` order, each the E-W deck then the N-S.
+    Row 0 is the river deck pair the sheet always held, byte for byte."""
+    return sheet(bridge_tiles(), 2)
+
+
+def bridge_tiles() -> list[Image.Image]:
+    """The bridge sheet's cells in sheet order."""
+    return [bridge_tile(ew, bed) for bed in BRIDGE_BEDS for ew in (True, False)]
 
 
 def mountain_sheet() -> Image.Image:

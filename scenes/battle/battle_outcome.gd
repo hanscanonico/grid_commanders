@@ -235,8 +235,12 @@ func _release_mouse_guard() -> void:
 
 
 ## Claims transition presses before Battle's board flow sees them. During the
-## guard they do nothing at all; afterwards the first fresh press only reveals
-## the visible focus state and cannot activate an action.
+## guard they do nothing at all; afterwards the first fresh press only arms the
+## card and cannot activate an action, so a key still held from the battle picks
+## nothing. The card shows no focus until then (VictoryLockup draws every button
+## alike), and the arming press lands where it points: Up from outside the column
+## reaches its last button, anything else its first — after which the arrows walk
+## the column as the GUI does.
 func consume_input(event: InputEvent) -> bool:
 	if not TransitionInput.is_press(event):
 		return false
@@ -244,7 +248,10 @@ func consume_input(event: InputEvent) -> bool:
 		return true
 	if not _action_armed:
 		_action_armed = true
-		victory_screen.rematch_button.grab_focus()
+		var shown := victory_screen.actions()
+		var from_below := event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"cursor_up")
+		var target: Button = shown.back() if from_below else shown.front()
+		target.grab_focus()
 		return true
 	return false
 

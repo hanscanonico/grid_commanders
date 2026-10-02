@@ -17,6 +17,7 @@ signal undo_asked
 signal redo_asked
 signal erase_asked
 signal brushes_asked
+signal drag_paint_asked
 signal open_asked
 signal save_asked
 
@@ -27,6 +28,9 @@ const _BUTTON_W := 44
 var _undo: Button
 var _redo: Button
 var _erase: Button
+## A touch build's switch between a drag that walks the board and one that paints;
+## null on a desktop build, where a held mouse button already paints a run.
+var _drag_paint: Button
 var _headline: Label
 
 
@@ -47,6 +51,8 @@ func configure(with_brushes: bool) -> void:
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(gap)
 	if with_brushes:
+		_drag_paint = _button("Drag Paint", func() -> void: drag_paint_asked.emit())
+		show_drag_paint(false)
 		_button("Brushes", func() -> void: brushes_asked.emit())
 	_button("Open", func() -> void: open_asked.emit())
 	_button("Save", func() -> void: save_asked.emit())
@@ -72,6 +78,12 @@ func show_history(undo_ready: bool, redo_ready: bool) -> void:
 func show_erase(active: bool) -> void:
 	var variant := UiTheme.ButtonVariant.PRIMARY if active else UiTheme.ButtonVariant.SECONDARY
 	UiTheme.apply_button(_erase, variant, null, UiTheme.SIZE_BUTTON)
+
+
+## Whether a drag paints, worn the way an armed Erase is.
+func show_drag_paint(active: bool) -> void:
+	var variant := UiTheme.ButtonVariant.PRIMARY if active else UiTheme.ButtonVariant.SECONDARY
+	UiTheme.apply_button(_drag_paint, variant, null, UiTheme.SIZE_BUTTON)
 
 
 ## What the draft is, in the corner of the row: its size and its seats.

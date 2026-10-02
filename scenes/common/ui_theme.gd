@@ -196,6 +196,9 @@ const MENU_ICON_ROW := MENU_ICON + 2 * BUTTON_PAD_V
 ## the zoom ladder's floor, so the chrome keeps the size it was designed at and
 ## UiKit.touchable lays the tap over it.
 const TOUCH_MIN := 44
+## The narrowest a plated touch chip is drawn, so a one-glyph chip (the dock's
+## zoom pair) stands as a plate rather than a sliver.
+const TOUCH_CHIP_MIN_W := 20
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
@@ -537,6 +540,29 @@ static func hud_chip(text: String, font_size: int, color: Color) -> Button:
 		chip.add_theme_stylebox_override(slot, StyleBoxEmpty.new())
 	hud_chip_ink(chip, color)
 	return chip
+
+
+## The plate a chip stands on in a touch build. A finger has no hover to find a
+## control by, so bare ink reads as a label; the plate says "press me" and stays
+## inside the bar's height (D8), the finger's rectangle being `UiKit.touchable`'s.
+## A disabled chip keeps no plate, since there is nothing there to press.
+static func touch_chip_plate(chip: Button) -> void:
+	var plate := _chip_plate(SLATE_700, NEUTRAL_DARK)
+	for slot in ["normal", "hover", "focus"]:
+		chip.add_theme_stylebox_override(slot, plate)
+	chip.add_theme_stylebox_override("pressed", _chip_plate(SLATE_900, NEUTRAL))
+	chip.custom_minimum_size.x = maxf(chip.custom_minimum_size.x, TOUCH_CHIP_MIN_W)
+
+
+static func _chip_plate(fill: Color, border: Color) -> StyleBoxFlat:
+	var box := flat(fill)
+	box.border_color = border
+	box.set_border_width_all(1)
+	box.content_margin_left = 5
+	box.content_margin_right = 5
+	box.content_margin_top = 1
+	box.content_margin_bottom = 1
+	return box
 
 
 ## The one ink a chip wears, in every state it can be in. Its own function

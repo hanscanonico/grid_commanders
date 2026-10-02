@@ -39,6 +39,17 @@ const SUB_FIN_CLEAR := 0.022
 const SUB_WATERLINE := 0.106
 ## A surface hull's keel, below the waterline at the origin.
 const KEEL := -0.06
+## How far a surfaced sub is lifted when it stands alone and close to the lens,
+## as a cut-in figure: enough to bring its round hull's top half out of the
+## water. On the board it rides low and only the sail reads; blown up beside a
+## cruiser, the sail alone reads as a box with a stick.
+const SUB_SURFACED_RISE := SUB_HULL_RISE * 0.7 - SUB_HULL_CENTRE
+
+
+## How far a ship's body rides above its board waterline when it is surfaced and
+## posed as a cut-in figure — zero for every hull already built to sit on it.
+static func surfaced_rise(type_id: StringName) -> float:
+	return SUB_SURFACED_RISE if type_id == &"sub" else 0.0
 
 
 ## Builds `type_id`'s body into `st`; false when it is not a ship.

@@ -229,7 +229,7 @@ text = "The gun was never the hammer. I am."
 [sub_resource type="Resource" id="Line_42"]
 script = ExtResource("6")
 speaker = &"gideon_holt"
-text = "One siege gun, captured and not for resale, with not a single shell left in the valley to fire from it, because I walked the rail line myself and checked."
+text = "One siege gun, captured and not for resale, and whatever powder's still lying about in the valley can stay there, because I'm not signing for it."
 
 [sub_resource type="Resource" id="Line_43"]
 script = ExtResource("6")

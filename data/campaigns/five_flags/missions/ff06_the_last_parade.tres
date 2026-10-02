@@ -204,7 +204,7 @@ text = "We're over. The trucks, the colours, everyone who could walk."
 [sub_resource type="Resource" id="Line_13"]
 script = ExtResource("11")
 speaker = &"gideon_holt"
-text = "The General held the bridge until the last truck crossed. I watched her through the glass. Then the bridge was Orlov's, and so was she."
+text = "The General stayed at the bridge. I watched her through the glass until the last truck crossed. Then the bridge was Orlov's, and so was she."
 
 [sub_resource type="Resource" id="Line_14"]
 script = ExtResource("11")

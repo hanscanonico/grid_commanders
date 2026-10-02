@@ -99,11 +99,9 @@ class TerrainPalette(unittest.TestCase):
                     self.assertLessEqual(
                         self._colours(builder(mask)), self.NATURE_CEILING
                     )
-        for ew in (True, False):
-            with self.subTest(sheet="bridge", ew=ew):
-                self.assertLessEqual(
-                    self._colours(autotile.bridge_tile(ew)), self.NATURE_CEILING
-                )
+        for i, deck in enumerate(autotile.bridge_tiles()):
+            with self.subTest(sheet="bridge", cell=i):
+                self.assertLessEqual(self._colours(deck), self.NATURE_CEILING)
 
     def test_property_tiles_hold_their_recorded_ceiling(self):
         for tid in sorted(terrain.PROPERTY):
@@ -227,13 +225,28 @@ class AutotileMasks(unittest.TestCase):
         self.assertEqual({ew[0, CELL // 2], ew[CELL - 1, CELL // 2]}, {TIMBER})
         self.assertEqual({ns[CELL // 2, 0], ns[CELL // 2, CELL - 1]}, {TIMBER})
         sheet = autotile.bridge_sheet()
-        self.assertEqual(sheet.size, (2 * (CELL + 2) + 2, CELL + 4))
-        for i, deck in enumerate(
-            (autotile.bridge_tile(True), autotile.bridge_tile(False))
-        ):
-            x = i * (CELL + 2) + 2
-            cut = sheet.crop((x, 2, x + CELL, 2 + CELL))
+        rows = len(autotile.BRIDGE_BEDS)
+        self.assertEqual(sheet.size, (2 * (CELL + 2) + 2, rows * (CELL + 2) + 2))
+        for i, deck in enumerate(autotile.bridge_tiles()):
+            x = (i % 2) * (CELL + 2) + 2
+            y = (i // 2) * (CELL + 2) + 2
+            cut = sheet.crop((x, y, x + CELL, y + CELL))
             self.assertEqual(cut.tobytes(), deck.convert("RGB").tobytes())
+
+    def test_a_bridge_over_the_sea_or_dry_ground_draws_no_river(self):
+        # ED-21: every deck stood over a river, so a causeway showed grass and
+        # river banks between its spans and a deck on a field showed blue stubs
+        for ew in (True, False):
+            river = set(opaque_pixels(autotile.bridge_tile(ew, "river")))
+            for bed in ("sea", "dry"):
+                with self.subTest(bed=bed, ew=ew):
+                    tile = set(opaque_pixels(autotile.bridge_tile(ew, bed)))
+                    self.assertNotIn(autotile.BANK_WET, tile)
+                    self.assertIn(autotile.BANK_WET, river)
+        sea = set(opaque_pixels(autotile.bridge_tile(True, "sea")))
+        self.assertNotIn(GRASS, sea)
+        dry = set(opaque_pixels(autotile.bridge_tile(True, "dry")))
+        self.assertNotIn(WATER, dry)
 
 
 class WoodsSeam(unittest.TestCase):
