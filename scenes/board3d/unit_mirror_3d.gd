@@ -13,8 +13,12 @@ const AIR_BOB := 0.035
 const SEA_ROLL_DEG := 2.5
 const HELD_HOP := 0.06
 const TURN_RATE := 12.0
-## A dived sub sits this far down, its sail at the waterline.
-const DIVE_DEPTH := 0.13
+## A dived sub sits this far down, its hull just awash, so the faint boat its
+## sprite draws reads here as a whole translucent hull rather than a sail tip.
+const DIVE_DEPTH := 0.04
+## A ship at rest swings back broadside to the lens at this rate, so its length
+## and its guns — what tells one hull from another — read across the screen.
+const BROADSIDE_RATE := 3.0
 ## How much darker a greyed unit draws, and how its colour is washed toward grey.
 const GREYED_TINT := Color(0.46, 0.46, 0.5)
 const ROTOR_SPIN := 22.0
@@ -47,6 +51,8 @@ class Model:
 	var hp: Label3D
 	var fuel: Label3D
 	var shadow: Node3D
+	var mark: Sprite3D
+	var top := 0.0
 	var phase := 0.0
 
 
@@ -69,7 +75,7 @@ func sync(delta: float, lens: Basis) -> void:
 		var model: Model = _models.get(sprite.get_instance_id())
 		if model == null or model.row != sprite.atlas_row:
 			model = _rebuild(sprite, model)
-		_pose(model, sprite, delta)
+		_pose(model, sprite, delta, lens)
 		_badges(model, sprite, lens)
 	for id: int in _models.keys():
 		if not seen.has(id):
@@ -91,6 +97,16 @@ func _prime() -> void:
 		_primer = null
 
 
+## The cells a unit is seen standing on (or flying over) now, read off where
+## each shown model is rather than off the sim, so a walk carries it along.
+func standing_cells() -> Dictionary[Vector2i, bool]:
+	var cells: Dictionary[Vector2i, bool] = {}
+	for model: Model in _models.values():
+		if model.node.visible:
+			cells[BoardSpace3D.cell_at(model.plane)] = true
+	return cells
+
+
 func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	var model := Model.new()
 	if old != null:
@@ -103,8 +119,15 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	model.node = UnitModels3D.build(
 		sprite.unit.type.id, SideIdentity.theme_for_row(sprite.atlas_row)
 	)
-	var body := model.node.get_node("Body") as GeometryInstance3D
+	var body := model.node.get_node("Body") as MeshInstance3D
 	model.material = body.material_override as StandardMaterial3D
+	# A faded model writes its depth, so it draws as one silhouette rather than
+	# showing its own far side through itself.
+	model.material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
+	model.top = body.mesh.get_aabb().end.y
+	if BattleCampaign.unit_name(sprite.unit) != "":
+		model.mark = UnitMark3D.make()
+		add_child(model.mark)
 	if sprite.unit.type.domain == UnitType.AIR:
 		model.shadow = AirShadow3D.attach(model.node, sprite.unit.type.id)
 	model.phase = float(sprite.unit.cell.x * 7 + sprite.unit.cell.y * 3)
@@ -116,7 +139,7 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 	return model
 
 
-func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
+func _pose(model: Model, sprite: UnitSprite, delta: float, lens: Basis) -> void:
 	var node := model.node
 	node.visible = sprite.visible
 	if not node.visible:
@@ -124,9 +147,13 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 	var plane := BoardSpace3D.plane_of(sprite.position)
 	var step := plane - model.plane
 	model.plane = plane
+	var domain := sprite.unit.type.domain
 	if sprite.moving and step.length() > 0.0005:
 		model.yaw = lerp_angle(model.yaw, atan2(-step.y, step.x), 1.0 - exp(-delta * TURN_RATE))
-	var domain := sprite.unit.type.domain
+	elif domain == UnitType.SEA and not sprite.moving:
+		var across := _broadside(model.yaw, lens)
+		var ease := 1.0 if BoardBeat.still() else 1.0 - exp(-delta * BROADSIDE_RATE)
+		model.yaw = lerp_angle(model.yaw, across, ease)
 	var ground := BoardSpace3D.stand_at(map, plane)
 	var height := ground
 	var roll := 0.0
@@ -136,6 +163,7 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 		roll = deg_to_rad(SEA_ROLL_DEG) * sin(_clock * 1.3 + model.phase)
 		if sprite.unit.dived:
 			height -= DIVE_DEPTH
+		height += _berth(ground)
 	if sprite.in_hand and not BoardBeat.still():
 		height += absf(sin(_clock * 9.0)) * HELD_HOP
 	node.position = Vector3(plane.x, height, plane.y)
@@ -146,6 +174,20 @@ func _pose(model: Model, sprite: UnitSprite, delta: float) -> void:
 	_tint(model, sprite)
 	if domain == UnitType.AIR:
 		UnitModels3D.turn_rotors(node, _clock * ROTOR_SPIN + model.phase)
+
+
+## How far a hull is raised as it comes alongside onto a port, whose quay
+## stands at dry ground's height: its keel set on the quay, so the whole hull
+## shows rather than half of it sunk in the concrete.
+static func _berth(ground: float) -> float:
+	var alongside := inverse_lerp(BoardSpace3D.SEA_TOP, BoardSpace3D.LAND_TOP, ground)
+	return -SeaModels3D.KEEL * clampf(alongside, 0.0, 1.0)
+
+
+## The heading nearer `yaw` of the two that lie along the lens's horizontal.
+static func _broadside(yaw: float, lens: Basis) -> float:
+	var across := atan2(-lens.x.z, lens.x.x)
+	return across if absf(angle_difference(yaw, across)) <= PI / 2.0 else across + PI
 
 
 ## The sprite's fade, hit flash and acted scrim, carried onto the one material
@@ -172,12 +214,17 @@ func _badges(model: Model, sprite: UnitSprite, lens: Basis) -> void:
 	model.fuel.visible = shown and sprite.fuel_label.visible
 	model.fuel.text = sprite.fuel_label.text
 	model.fuel.position = above - lens.x * BADGE_SIDE
+	if model.mark != null:
+		model.mark.visible = shown
+		UnitMark3D.place(model.mark, model.node.position, model.top, _clock)
 
 
 func _drop(model: Model) -> void:
 	model.node.queue_free()
 	model.hp.queue_free()
 	model.fuel.queue_free()
+	if model.mark != null:
+		model.mark.queue_free()
 
 
 func _badge(colour: Color) -> Label3D:
