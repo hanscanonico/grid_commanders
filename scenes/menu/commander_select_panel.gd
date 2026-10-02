@@ -732,10 +732,9 @@ func _refresh_chips() -> void:
 
 
 ## What a chip calls a seat, asked of the identity that owns the answer, in its
-## long or its short form — never re-derived from the
-## theme key, because a mirror side keeps its faction's name while its colour is
-## borrowed (faction-identity D3), and a chip reading the key would then
-## contradict the commander card beside it.
+## long or its short form — never re-derived from the theme key, because a mirror
+## side keeps its faction's name while its colour is borrowed (faction-identity
+## D3), and a chip reading the key would then contradict the commander card.
 func _seat_name(identity: SideIdentity, seat: int, terse: bool) -> String:
 	return identity.short_name(seat) if terse else identity.display_name(seat)
 
