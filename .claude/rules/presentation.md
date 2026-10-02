@@ -680,7 +680,12 @@ forms named in the root index are in `docs/design_record.md`.
   jump, a new day) — a camera centred on the cursor makes mouse hover chase itself, the cell under a
   still pointer sliding away as the view follows the cursor it just set. And it **keeps the board in the
   band**, as the flat board's camera limits do: its goal is held in from each edge as seen from the
-  side it looks from (`KEEP_*`), so an edge shows the diorama's rim, not half a screen of table. It **glides**, because the
+  side it looks from, so an edge shows the diorama's rim, not half a screen of table — across the
+  screen by `KEEP_ACROSS`, up and down it by the board's projected outline landing on the band's
+  edges (playtest 2026-10-02: a fraction of the reach let the near row slip under the bottom bar).
+  The band is `BoardCamera3D.band`, cut below the tutorial strip while it shows, and **the floor
+  rung frames the whole board** from whichever quarter it is seen, its reach measured off that
+  outline rather than read off the rung. It **glides**, because the
   whole-texel rule behind A3 is about sampling pixel art, and **lands when `BoardBeat.still()`**, so
   no capture depends on its shutter frame. D3: **one seam per question the flat board already
   answered.** `BoardPointer._cell_under` asks `Board3D.pick` (a ray walked down onto each cell's
@@ -797,7 +802,8 @@ forms named in the root index are in `docs/design_record.md`.
   switch being a shader swap. **Known gaps, left on purpose**:
   an attacker does not turn to face its target (the flat board never did either), a damage callout
   and a flash are projected flat onto the ground rather than stood up, the campaign card's
-  `follow_cursor` still steps aside by the flat board's geometry, the 3D
+  `follow_cursor` still steps aside by the flat board's geometry (`Board3D.screen_rect_of` is the
+  cell's projected rect it can ask instead), the 3D
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
   by presentation keys on `TerrainType`, and the turn banner, the map editor and the menu
   backdrop stay 2D.
