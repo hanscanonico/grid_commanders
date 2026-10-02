@@ -165,6 +165,14 @@ func configure(db: TerrainDB) -> void:
 		select(home_index(_maps))
 
 
+## The player's own boards lead the shelf, so the board it opens on can sit below
+## the viewport, and `configure`'s scroll ran before there was a layout to scroll.
+func _ready() -> void:
+	await get_tree().process_frame
+	if _selected_map < _map_cells.size():
+		_map_scroll.ensure_control_visible(_map_cells[_selected_map])
+
+
 ## The shelf: the boards this player drew, then the shipped roster in menu order.
 ## Theirs lead because a shipped roster of thirty-odd boards put them a long scroll
 ## away (playtest ED-08). A user map that will not parse, or that parses into a
