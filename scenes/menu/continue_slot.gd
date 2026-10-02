@@ -88,7 +88,7 @@ func _init(into: VBoxContainer, on_resume: Callable, on_resume_mission: Callable
 	_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# A touch build prints a refusal's reason here too, and a codec's reason is
 	# wider than the column: trimmed, it cannot push the menu off the canvas, and
-	# the tip still carries it whole.
+	# the tip still carries it whole. `_refuse` keeps the headline itself whole.
 	_caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	body.add_child(_caption)
 	# The tip hangs off the button itself: a disabled control still answers the
@@ -155,6 +155,7 @@ static func waiting_mission() -> Waiting:
 
 
 func _render() -> void:
+	_caption.custom_minimum_size.x = 0.0
 	if _waiting != null:
 		_button.disabled = false
 		_caption.text = _waiting.label
@@ -185,6 +186,13 @@ func _render() -> void:
 func _refuse(caption: String, tip: String, detail: String) -> void:
 	_button.disabled = true
 	_caption.text = UiKit.caption_with_reason(caption, detail)
+	# The headline is what the trim must spare: only a touch build's reason line
+	# may run past the column and end in an ellipsis.
+	var font := _caption.get_theme_font("font")
+	var size := _caption.get_theme_font_size("font_size")
+	_caption.custom_minimum_size.x = ceilf(
+		font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	)
 	_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
 	_tip.set_copy(tip, detail)
 
