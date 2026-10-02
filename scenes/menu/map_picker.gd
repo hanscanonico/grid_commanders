@@ -5,9 +5,9 @@ extends VBoxContainer
 ## gone (MN2). The selected cell gets the raised cream surface, the meridian
 ## border and a ✓; scroll follows keyboard focus so every board is reachable
 ## without a mouse. A static caption beneath the viewport carries the
-## decision-critical facts; each cell keeps the richer tooltip as optional detail.
+## decision-critical facts, so a cell carries no tooltip repeating them.
 ##
-## The boards the player drew themselves come after the shipped roster, badged
+## The boards the player drew themselves come first, beside Random, badged
 ## Custom and otherwise ordinary cells: the same live thumbnail, the same
 ## selection, the same launch — a user map is a map file like any other, so
 ## nothing downstream of here learns where it came from. The Manage map link
@@ -74,6 +74,9 @@ var _map_caption: Label
 var _map_scroll: ScrollContainer
 var _map_cells: Array[Button] = []
 var _map_marks: Array[Label] = []
+## Each cell's ✓, on its picture's corner rather than in its name, so the name has
+## the cell's whole width.
+var _map_ticks: Array[Control] = []
 ## The roll. Deliberately outside `_map_cells`, so the cell arrays stay aligned
 ## to `_maps` and nothing that walks the roster has to skip it: Random is an
 ## action that resolves to a board, never a selection state of its own.
@@ -102,7 +105,7 @@ var _manage_link: Button
 ## measurement that has to wait for the tree.
 func configure(db: TerrainDB) -> void:
 	_terrain_db = db
-	_maps = _roster()
+	_maps = roster(db)
 	add_theme_constant_override("separation", 3)
 	add_child(UiKit.section_header("Map"))
 
@@ -157,18 +160,22 @@ func configure(db: TerrainDB) -> void:
 	UiKit.touchable(_manage_link)
 	facts.add_child(_manage_link)
 	add_child(facts)
-	select(0)
+	var just_drawn := UserMaps.take_last_saved()
+	if just_drawn == "" or not select_path(UserMaps.path_for(just_drawn)):
+		select(home_index(_maps))
 
 
-## The shelf: the shipped roster in menu order, then the boards this player drew.
-## A user map that will not parse, or that parses into a board nobody could play,
-## is dropped with a pushed error rather than taking the menu down — the rule
-## `MapCatalog.ordered` holds for a shipped board, one step further on, because
-## a file in `user://maps` was written by a player and can be edited by hand.
-func _roster() -> Array[MapData]:
-	var maps := MapCatalog.ordered(_terrain_db)
+## The shelf: the boards this player drew, then the shipped roster in menu order.
+## Theirs lead because a shipped roster of thirty-odd boards put them a long scroll
+## away (playtest ED-08). A user map that will not parse, or that parses into a
+## board nobody could play, is dropped with a pushed error rather than taking the
+## menu down — the rule `MapCatalog.ordered` holds for a shipped board, one step
+## further on, because a file in `user://maps` was written by a player and can be
+## edited by hand.
+static func roster(db: TerrainDB) -> Array[MapData]:
+	var maps: Array[MapData] = []
 	for name in UserMaps.list():
-		var map := UserMaps.load_map(name, _terrain_db)
+		var map := UserMaps.load_map(name, db)
 		if map == null:
 			continue
 		var errors := MapValidator.errors(map)
@@ -176,7 +183,17 @@ func _roster() -> Array[MapData]:
 			maps.append(map)
 		else:
 			push_error("map picker: '%s' is not playable — %s" % [name, errors[0]])
+	maps.append_array(MapCatalog.ordered(db))
 	return maps
+
+
+## The board the shelf opens on when nothing asked for one: the teaching board,
+## wherever the player's own boards put it.
+static func home_index(maps: Array[MapData]) -> int:
+	for i in maps.size():
+		if MapCatalog.teaches(maps[i].source_path):
+			return i
+	return 0
 
 
 ## The cells for the shelf in hand: the roll first, then a cell per board.
@@ -220,6 +237,25 @@ func selected_map() -> MapData:
 	return _map_at(_selected_map)
 
 
+## Where the board read from `path` stands on the shelf, or -1 when it is not on it.
+func index_of(path: String) -> int:
+	for i in _maps.size():
+		if _maps[i].source_path == path:
+			return i
+	return -1
+
+
+## Selects the board read from `path`, for a caller that remembers a board across
+## a visit elsewhere. False, and the selection kept, when the shelf no longer
+## holds it.
+func select_path(path: String) -> bool:
+	var index := index_of(path)
+	if index < 0:
+		return false
+	select(index)
+	return true
+
+
 ## The facts line under the grid. Named in the menu's capture chrome and read
 ## back by its setup-context gate, which checks the selection off the screen
 ## rather than off the state that drew it.
@@ -235,7 +271,7 @@ func select(index: int) -> void:
 		return
 	_selected_map = index
 	for i in _map_cells.size():
-		_style_map_cell(_map_cells[i], _map_marks[i], i, i == index)
+		_style_map_cell(i, i == index)
 	if index < _map_cells.size():
 		_map_scroll.ensure_control_visible(_map_cells[index])
 	_refresh_facts()
@@ -255,7 +291,7 @@ func show_map(index: int) -> void:
 
 
 ## Header and persistent caption, read off the board itself so no hand-kept table
-## can drift from it. Tooltips repeat the facts but are never required to choose.
+## can drift from it.
 func _refresh_facts() -> void:
 	var map := selected_map()
 	_manage_link.visible = map != null and is_custom(map)
@@ -306,29 +342,30 @@ func caption_budget_holds() -> bool:
 # --- the words, without the widget -------------------------------------------
 
 
-## Whether a board is one the player drew. A fact about where the file is:
-## `MapCatalog.USER_DIR` is the one writable place a board can come from, so the
-## badge, the Remove link and the delete itself read the same answer.
+## Whether a board is one the player drew — `UserMaps`' answer, so the badge, the
+## Manage link and the delete itself read the same one.
 static func is_custom(map: MapData) -> bool:
-	return map.source_path.begins_with(MapCatalog.USER_DIR)
+	return UserMaps.owns(map.source_path)
 
 
-## The name a cell wears: the ✓ the selected cell alone carries, then the board,
-## its teaching or Custom badge and its army count past a duel.
-##
-## The tick leads rather than trails because a cell's label is clipped to the cell
-## (`ListRow.clipped`) and the boards with the longest names are exactly the ones
-## whose badge runs past the edge — a trailing tick was the first thing to go, on
-## the one cell that has to carry it.
-static func cell_name(map: MapData, selected: bool) -> String:
-	var name_text := MapCatalog.display_name(map.source_path)
+## The name a cell wears: the board's, and nothing else. The ✓ and the badges sit
+## on the picture instead, because beside the name they cut it short on a third of
+## the shelf ("Foursquare…", playtest SK-31).
+static func cell_name(map: MapData) -> String:
+	return MapCatalog.display_name(map.source_path)
+
+
+## The tag on a cell's picture: its teaching or Custom badge and its army count
+## past a duel, or "" for a plain duel board.
+static func cell_badge(map: MapData) -> String:
+	var parts: PackedStringArray = []
 	if MapCatalog.teaches(map.source_path):
-		name_text += " · Tutorial"
+		parts.append("Tutorial")
 	elif is_custom(map):
-		name_text += " · Custom"
+		parts.append("Custom")
 	if map.player_count() > 2:
-		name_text += " · %dP" % map.player_count()
-	return "✓ " + name_text if selected else name_text
+		parts.append("%dP" % map.player_count())
+	return " ".join(parts)
 
 
 ## The caption `_refresh_facts` shows for `map`, factored out so the budget check
@@ -393,15 +430,6 @@ func _cell_height() -> float:
 func _make_map_cell(index: int, map: MapData) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(THUMB.x + 2 * CARD_PAD, _cell_height())
-	# The cell is a single control describing itself, so it is its own trigger —
-	# the micro-label rule guards *group* controls, where hovering to reach a
-	# segment would fire an explanation of the group.
-	Tooltip.attach(
-		button,
-		map.description,
-		"%d×%d · %d properties" % [map.width, map.height, map.property_cells().size()],
-		Tooltip.Side.BOTTOM
-	)
 
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 1)
@@ -417,13 +445,17 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	thumb.setup(map, UiTheme.menu_identity(map.player_count()), THUMB)
 	thumb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	content.add_child(thumb)
+	var tick := _picture_tag("✓", Control.PRESET_TOP_LEFT, UiTheme.menu_identity().theme(1).color)
+	thumb.add_child(tick)
+	var badge := cell_badge(map)
+	if badge != "":
+		thumb.add_child(_picture_tag(badge, Control.PRESET_BOTTOM_RIGHT, UiTheme.SLATE_800))
 
 	# Clipped, because the name is the player's to choose: a board they called
 	# something long would otherwise set its label at full width and paint straight
-	# across the cells beside it. The header and the facts caption under the grid
-	# still carry the whole name.
+	# across the cells beside it. The header still carries the whole name.
 	var name_label := ListRow.clipped(Label.new())
-	name_label.text = cell_name(map, false)
+	name_label.text = cell_name(map)
 	name_label.add_theme_font_override("font", UiTheme.display())
 	name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	name_label.add_theme_color_override("font_color", UiTheme.INK)
@@ -435,7 +467,26 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	button.pressed.connect(select.bind(index))
 	_map_cells.append(button)
 	_map_marks.append(name_label)
+	_map_ticks.append(tick)
 	return button
+
+
+## A small tag pinned to a corner of a cell's picture, growing inward from it.
+func _picture_tag(text: String, corner: Control.LayoutPreset, fill: Color) -> Control:
+	var box := UiTheme.flat(fill)
+	box.content_margin_left = 1
+	box.content_margin_right = 1
+	var tag := PanelContainer.new()
+	tag.add_theme_stylebox_override("panel", box)
+	var label := UiTheme.hud_label(text.to_upper(), UiTheme.SIZE_STAT, UiTheme.WHITE)
+	tag.add_child(label)
+	tag.set_anchors_preset(corner)
+	var inward := Control.GROW_DIRECTION_END
+	if corner == Control.PRESET_BOTTOM_RIGHT:
+		inward = Control.GROW_DIRECTION_BEGIN
+	tag.grow_horizontal = inward
+	tag.grow_vertical = inward
+	return tag
 
 
 ## The roll's cell: the grid's first, so it is reachable without scrolling the
@@ -527,7 +578,10 @@ func _roll_map() -> void:
 	select(random_index(_maps, _selected_map, _rng))
 
 
-func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool) -> void:
+func _style_map_cell(index: int, selected: bool) -> void:
+	var cell := _map_cells[index]
+	var name_label := _map_marks[index]
+	_map_ticks[index].visible = selected
 	var meridian := UiTheme.menu_identity().theme(1)
 	var box := _map_cell_box(UiTheme.PAPER_RAISED if selected else Color(0, 0, 0, 0))
 	if selected:
@@ -539,7 +593,6 @@ func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool
 	cell.add_theme_stylebox_override("hover", hover)
 	cell.add_theme_stylebox_override("pressed", box)
 	cell.add_theme_stylebox_override("focus", UiTheme.focus_box())
-	name_label.text = cell_name(_maps[index], selected)
 	name_label.add_theme_color_override("font_color", UiTheme.INK if selected else UiTheme.NEUTRAL)
 
 
@@ -592,7 +645,7 @@ func _ask_manage() -> void:
 		return
 	var body := _open_page(
 		MapCatalog.display_name(map.source_path).to_upper(),
-		"The name is the file's, and what --map= calls this board."
+		"Rename it, copy it to draw a variant, or delete it."
 	)
 	if body == null:
 		return
@@ -745,12 +798,13 @@ func _close_confirm() -> void:
 ## select the wrong board.
 func _reload() -> void:
 	var wanted := _selected_map
-	_maps = _roster()
+	_maps = roster(_terrain_db)
 	for cell in _grid.get_children():
 		_grid.remove_child(cell)
 		cell.queue_free()
 	_map_cells.clear()
 	_map_marks.clear()
+	_map_ticks.clear()
 	_fill_grid()
 	# `show_map`'s wait, and for its reason: the fresh cells have no layout yet, so
 	# a scroll asked for on this frame lands on where the old shelf was.
