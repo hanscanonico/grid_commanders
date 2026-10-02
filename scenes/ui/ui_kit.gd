@@ -336,6 +336,8 @@ static func action_chip(text: String, action: StringName) -> Button:
 	# A chip is the smallest control in the game — 7 px of ink on a 23 px bar — so
 	# on a touch build it answers a finger-sized rectangle it does not draw. The
 	# bar's height is untouched, which is what leaves the zoom ladder where it is.
+	if MobileProfile.active():
+		UiTheme.touch_chip_plate(chip)
 	return touchable(chip)
 
 

@@ -203,6 +203,8 @@ func _ready() -> void:
 	# A phone has no window to stand anywhere but full, so it never listens for
 	# the key either — the same gate the Window row is offered behind.
 	set_process_unhandled_input(_has_a_window())
+	# Landscape only: an upright phone is told to turn rather than shown a strip.
+	RotateCard.install(get_tree().root)
 
 
 ## F11 flips the window mode from any screen. It lives here rather than in the

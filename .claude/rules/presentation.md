@@ -830,7 +830,11 @@ forms named in the root index are in `docs/design_record.md`.
   is never *constructed* on desktop. D8: touch targets grow their **hit** rectangles, never their
   drawn heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor
   rung. D9: the planner is not a mobile task. **Landscape only** (user decision) and
-  **`aspect="keep"`**; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
+  **`aspect="keep"`** — an upright window on a touch build is covered by `RotateCard`
+  (`scenes/ui/rotate_card.gd`, installed by `Settings`) until it turns, and a desktop window that
+  is merely tall never gets one. A touch build's `UiKit.action_chip` stands on a plate
+  (`UiTheme.touch_chip_plate`) drawn inside its bar, so a chip reads as a button without D8's
+  drawn height moving; `window/stretch/scale_mode` stays **absent** on Android and iOS alike, both
   by measurement rather than by assumption. D7's mechanism is **refuted** — a feature-tagged autoload
   override does not clear an autoload on 4.7.1, the engine reading each `autoload/*` property raw, so
   unregistering the editor addon's runtime belongs to the addon that registers it. D4's safe-area
