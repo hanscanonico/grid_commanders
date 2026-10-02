@@ -355,7 +355,7 @@ func seat_table(remembered: Dictionary) -> void:
 	for i in _seats.size():
 		_who[i] = clampi(int(who[i]), Seat.HUMAN, Seat.EMPTY)
 		_side[i] = clampi(int(sides[i]), 0, _seats.size() - 1)
-		_tier[i] = _tier_index(String(tiers[i]) if i < tiers.size() else "")
+		_tier[i] = _tier_index(str(tiers[i]) if i < tiers.size() else "")
 		_tier_buttons[i].text = _tier_label(i)
 	_who = reopened_seats(_who, _closable())
 	_settle_seats()

@@ -25,3 +25,9 @@ func test_fog_and_the_table_fall_back_on_anything_malformed() -> void:
 	assert_true(MenuSetupMemory.fog({MenuSetupMemory.FOG_KEY: true}))
 	assert_false(MenuSetupMemory.fog({MenuSetupMemory.FOG_KEY: "yes"}))
 	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: [1, 2]}), {})
+	var garbled_seats := {"who": "human,cpu", "sides": [0, 1], "tiers": []}
+	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: garbled_seats}), {}, "seats")
+	var garbled_sides := {"who": [0, 1], "sides": [0, {}], "tiers": []}
+	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: garbled_sides}), {}, "sides")
+	var kept := {"who": [0, 1], "sides": [0, 1], "tiers": ["normal", "hard"]}
+	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: kept}), kept, "a sound table")

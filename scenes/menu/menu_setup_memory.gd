@@ -40,6 +40,24 @@ static func fog(setup: Dictionary) -> bool:
 	return stored if stored is bool else false
 
 
+## The remembered seating, or an empty table unless its seats and sides are lists
+## of whole numbers and its tiers a list — `SeatStrip.seat_table` reads it by
+## those shapes.
 static func table(setup: Dictionary) -> Dictionary:
 	var stored: Variant = setup.get(TABLE_KEY, {})
-	return stored if stored is Dictionary else {}
+	if not stored is Dictionary:
+		return {}
+	var who: Variant = stored.get("who", [])
+	var sides: Variant = stored.get("sides", [])
+	if not (_whole_numbers(who) and _whole_numbers(sides) and stored.get("tiers", []) is Array):
+		return {}
+	return stored
+
+
+static func _whole_numbers(list: Variant) -> bool:
+	if not list is Array:
+		return false
+	for entry: Variant in list:
+		if not entry is int:
+			return false
+	return true
