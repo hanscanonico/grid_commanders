@@ -14,20 +14,49 @@ extends RefCounted
 ## turn or a turn already on Auto that the player put there.
 
 var _battle: Battle
+## The level the pause menu's Auto row shows, stepped there by left and right and
+## taken only by Enter. Starts each menu at what the seat is playing.
+var _pending: StringName = BattleMenus.AUTO_OFF
 
 
 func _init(battle: Battle) -> void:
 	_battle = battle
 
 
-## The Auto row itself, opened from the map menu. Its own submenu the same
-## shape "quit" opens "abandon" into: BattleMenus builds the rows, and this
-## leaves MENU up rather than the map menu's own rest_state().
-func open_menu() -> void:
+## The Auto row's `cycle`, reset to the seat's own level for the menu being
+## opened, so a pick left untaken in one menu is not waiting in the next.
+func stepper() -> Callable:
+	_pending = _seat_tier()
+	return _step
+
+
+func _step(step: int) -> String:
+	var ladder := BattleMenus.auto_ladder(_battle.difficulty_db)
+	_pending = ladder[wrapi(ladder.find(_pending) + step, 0, ladder.size())]
+	return BattleMenus.auto_label(_pending, _battle.difficulty_db)
+
+
+func _seat_tier() -> StringName:
+	return _battle.auto_tiers.get(_battle.game.current_team, BattleMenus.AUTO_OFF)
+
+
+## Enter on the Auto row: the level it shows, or — when that is the level already
+## playing — the list, for a player who has not found the arrows.
+func take_row() -> void:
+	if _pending == _seat_tier():
+		_open_menu()
+		return
+	await handle_action(_pending)
+
+
+## The list, the same shape "quit" opens "abandon" into: BattleMenus builds the
+## rows, and this leaves MENU up rather than the map menu's own rest_state().
+func _open_menu() -> void:
 	_battle.state = Battle.State.MENU
 	_battle.action_menu.open(
 		BattleMenus.auto_actions(_battle.difficulty_db),
-		_battle.view.board_camera.screen_pos_for_cell(_battle.cursor_cell)
+		_battle.view.board_camera.screen_pos_for_cell(_battle.cursor_cell),
+		BattleMenus.AUTO_HEADING
 	)
 
 
@@ -40,7 +69,7 @@ func handle_action(action: StringName) -> void:
 		_battle.state = _battle.rest_state()
 		return
 	var team := _battle.game.current_team
-	if action == &"off":
+	if action == BattleMenus.AUTO_OFF:
 		await _disable(team)
 	else:
 		await _enable(team, action)
