@@ -142,7 +142,8 @@ static func rename(from: String, to: String) -> String:
 	var error := name_error(to)
 	if error != "":
 		return error
-	if slug(to) == slug(from):
+	# By title, not filename: the Manage page opens on "Strait 2" for strait2.
+	if shown(to) == shown(from):
 		return ""
 	if exists(to):
 		return "You already have a map called '%s'." % shown(to)

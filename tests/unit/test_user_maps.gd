@@ -120,6 +120,17 @@ func test_renaming_moves_the_board_and_refuses_to_bury_another() -> void:
 	assert_true(UserMaps.exists("second_draft"))
 
 
+## The Manage page opens on the board's title, and "strait2" reads "Strait 2":
+## submitting that title unchanged must not move the file to "strait_2".
+func test_renaming_to_the_name_it_already_reads_as_leaves_it_alone() -> void:
+	assert_eq(_save("strait2", BOARD), "")
+	_written.append("strait_2")
+	assert_eq(UserMaps.shown("strait2"), "Strait 2")
+	assert_eq(UserMaps.rename("strait2", "Strait 2"), "")
+	assert_true(UserMaps.exists("strait2"), "the board stays filed where it was")
+	assert_false(UserMaps.exists("strait_2"))
+
+
 func test_duplicating_a_board_writes_the_same_text_under_a_free_name() -> void:
 	assert_eq(_save("gulf", BOARD), "")
 	var copy := UserMaps.copy_name("gulf")
