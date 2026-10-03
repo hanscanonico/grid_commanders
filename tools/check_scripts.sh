@@ -279,9 +279,10 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # and putting everything down are Battle's (`_select`, `clear_selection`), so
 # each gained the one call that tells the view; which sprite is held and how it
 # marches are BattleView's and UnitSprite's, and there is nothing to extract.
+# main_menu.gd 718 -> 682: the Rules section is one line, its help in the tooltips.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1196
-scenes/menu/main_menu.gd 718
+scenes/menu/main_menu.gd 682
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
 scenes/battle/battle_scenario_driver.gd 668

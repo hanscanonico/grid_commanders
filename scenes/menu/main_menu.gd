@@ -55,7 +55,6 @@ var _seat_refusal: Label
 ## Who sits where and who stands with whom (plan D6). The one authority on both,
 ## asked at launch rather than mirrored into menu state.
 var _seat_strip: SeatStrip
-var _setup_help_labels: Array[Label] = []
 ## The Continue row — the button, its caption, its tip and the press that opens
 ## the save — kept whole in its own collaborator. It is handed what the slot
 ## holds; where that comes from stays this page's decision.
@@ -379,29 +378,27 @@ func _build_seats_row() -> Control:
 	return col
 
 
-## The match's rules under one section header: pacing, then fog. Battle
+## The match's rules on one line: pacing, then fog. Each control's tooltip carries
+## its explanation, so the line gives the map picker its height. Battle
 ## animations and Menu motion are the device's, not the match's, so they are rows
 ## of the Settings page (`Settings.menu_page_actions`) rather than options here.
 func _build_options_row() -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
-	col.add_child(UiKit.section_header("Rules"))
 	var row := HBoxContainer.new()
 	# Wider than the gap inside a toggle: each ON/OFF belongs to the label it follows.
 	row.add_theme_constant_override("separation", 2 * UiKit.TOGGLE_GAP)
 	row.add_child(_build_speed_col())
-	row.add_child(
-		_toggle_col(
-			"Fog of war",
-			_fog_on,
-			"Hide the board beyond your units' sight",
-			"Off shows the whole map",
-			"Hides tiles beyond sight",
-			_on_fog_toggled
-		)
+	var fog := UiKit.toggle(
+		"Fog of war",
+		_fog_on,
+		"Hide the board beyond your units' sight",
+		"Off shows the whole map",
+		_on_fog_toggled
 	)
-	col.add_child(row)
-	return col
+	fog.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Level with the speed segment's buttons rather than its label above them.
+	fog.size_flags_vertical = Control.SIZE_SHRINK_END
+	row.add_child(fog)
+	return row
 
 
 func _build_speed_col() -> Control:
@@ -414,38 +411,20 @@ func _build_speed_col() -> Control:
 		speed_labels.append(_speed_tiers[i].display_name)
 		if _speed_tiers[i].id == Settings.speed.id:
 			speed_selected = i
-	var speed_detail := "Pacing only · outcomes never change"
 	var speed := UiKit.segment(
 		"Speed",
 		speed_labels,
 		speed_selected,
 		UiTheme.CONTROL_ACCENT,
 		"How fast moves and battles play out",
-		speed_detail,
+		"Pacing only · outcomes never change",
 		_on_speed_selected
 	)
-	# Shorter than the tip: the options share a row and the help lines set it.
-	speed.add_child(_option_help("Pacing, not outcomes"))
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# A segment clips rather than sizing to its label, so the tier run states the
 	# width it must stand at: an even share of this row set "Instant" as "Instan".
 	speed.custom_minimum_size = Vector2(UiKit.segment_min_width(speed_labels), 0)
 	return speed
-
-
-## One checkbox with the help line under it that explains it — the pair every
-## option on this panel is set as.
-func _toggle_col(
-	text: String, is_on: bool, tip: String, tip_detail: String, help: String, on_change: Callable
-) -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 2)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Packed to the bottom: the taller speed column sets this row's help baseline.
-	col.alignment = BoxContainer.ALIGNMENT_END
-	col.add_child(UiKit.toggle(text, is_on, tip, tip_detail, on_change))
-	col.add_child(_option_help(help))
-	return col
 
 
 ## The rail, read top to bottom: the primary action, the card that resumes a
@@ -524,15 +503,6 @@ func _build_secondary_group() -> Control:
 
 
 # --- small helpers -----------------------------------------------------------
-
-
-## One option's help line, registered so the capture gate measures every one of
-## them and refuses an empty one. The map caption is not one of these: its words
-## follow the selection, so it answers to its own reserved budget instead.
-func _option_help(text: String) -> Label:
-	var label := UiKit.help_label(text)
-	_setup_help_labels.append(label)
-	return label
 
 
 ## Whether the page's scenery moves: this boot's capture pose outranks the
@@ -662,8 +632,6 @@ func _chrome() -> Dictionary[String, Control]:
 		"Replays": _replay_button,
 		"Quit": _quit_button,
 	}
-	for i in _setup_help_labels.size():
-		chrome["option help %d" % (i + 1)] = _setup_help_labels[i]
 	# Every seat by name, the way the select page names its chips: a control the
 	# gate does not name is a control that can silently vanish, which is how the
 	# strip came to be photographed as bare panel.
@@ -705,10 +673,6 @@ func setup_context_ready() -> bool:
 	elif not _map_picker.caption().text.contains(map.description):
 		push_error("main menu setup context: selected map description is not visible")
 		passed = false
-	for label in _setup_help_labels:
-		if label.text.strip_edges() == "":
-			push_error("main menu setup context: an option-help line is empty")
-			passed = false
 	# Deliberately not short-circuiting, like the driver's own frame check: one
 	# failed run should name every promise that broke, not just the first.
 	# Who is at the table is state, so the strip walks it rather than the frame
