@@ -5,8 +5,10 @@ extends GutTest
 const TOLERANCE := 0.0001
 
 
+## Off the origin on purpose: a model's box is not centred on its root, and a
+## centred box would frame correctly even with the aim pinned to the origin.
 func _box() -> AABB:
-	return AABB(Vector3(-0.4, 0.0, -0.25), Vector3(0.8, 0.35, 0.5))
+	return AABB(Vector3(-0.2, 0.05, -0.4), Vector3(0.8, 0.35, 0.5))
 
 
 func test_the_lens_looks_down_at_the_flank_with_the_nose_toward_the_right() -> void:
@@ -23,13 +25,15 @@ func test_the_lens_aims_at_the_middle_of_the_model_as_it_is_seen() -> void:
 	var box := _box()
 	var frame := UnitStillShot3D.basis()
 	var aim := UnitStillShot3D.aim(box)
-	var low := INF
-	var high := -INF
+	var low := Vector2(INF, INF)
+	var high := Vector2(-INF, -INF)
 	for i in 8:
-		var across := frame.x.dot(box.get_endpoint(i) - aim)
-		low = minf(low, across)
-		high = maxf(high, across)
-	assert_almost_eq(low, -high, TOLERANCE, "centred across the frame")
+		var corner := box.get_endpoint(i) - aim
+		var at := Vector2(frame.x.dot(corner), frame.y.dot(corner))
+		low = low.min(at)
+		high = high.max(at)
+	assert_almost_eq(low.x, -high.x, TOLERANCE, "centred across the frame")
+	assert_almost_eq(low.y, -high.y, TOLERANCE, "centred up and down the frame")
 	var eye := UnitStillShot3D.eye(box)
 	assert_almost_eq(eye.distance_to(aim), UnitStillShot3D.LENS_DISTANCE, TOLERANCE)
 
