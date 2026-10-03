@@ -20,7 +20,9 @@ extends RefCounted
 ## to. The two autoloads it reads are Settings, for the device-preference rows'
 ## labels and the ladders they step along, and CampaignSession, for whether there
 ## is a briefing to re-read at all — and that is the same rule as everything above
-## rather than an exception to it: whoever owns the answer is who gets asked.
+## rather than an exception to it: whoever owns the answer is who gets asked. So
+## is a production row's picture: UnitIcons3D answers it for the view being
+## played, the board's pixel tile or a still of the 3D model.
 
 const CANCEL := {"id": &"cancel", "label": "Cancel"}
 ## The Auto ladder's first rung: the seat is the player's own.
@@ -132,7 +134,7 @@ static func build_actions(
 					"id": unit_type.id,
 					"label": "%s  %d" % [unit_type.display_name, price],
 					"disabled": game.funds[team] < price,
-					"icon": UnitSprite.tile_texture_for(unit_type, row),
+					"icon": UnitIcons3D.icon_for(unit_type, row),
 					"detail": UnitBrief.text(game, unit_db, unit_type, price, game.funds[team]),
 				}
 			)
