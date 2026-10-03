@@ -845,6 +845,20 @@ forms named in the root index are in `docs/design_record.md`.
   pixel art. **Known gaps**: the prop is mostly out of shot (the pixel bust shows it whole), there
   is no idle motion, the window carries no treatment band, and the first still of a session builds
   the figure's shader (a single stall, measured ~0.2 s on desktop; not measured on the web).
+- **3D unit icons in the buy menu** (user report, 2026-10-03: "when buying a unit in 3D mode we
+  still see the 2D sprites") — the portraits' mechanics for units. `UnitIcons3D`
+  (`scenes/board3d/`) is the one answer to a menu row's unit picture and `BattleMenus.build_actions`
+  the only place that asks it (`icon_for`): a still of the unit's `UnitModels3D` model in its army's
+  `SideIdentity.theme_for_row` while `showing()`, else `UnitSprite.tile_texture_for`, untouched.
+  `UnitStillShot3D` frames it — a three-quarter orthographic lens, nose to the right, fitted to the
+  model's box — and the still is **the icon slot in screen pixels** (`UiTheme.MENU_ICON` at the
+  window's scale, rendered `SUPERSAMPLE` times over and filtered down), so the menu's nearest
+  sampling draws it one pixel a pixel. Shot with `force_draw` to an 8 ms budget, cached per (unit,
+  army, size), the studio freed once nothing waits; a still not shot yet answers with the tile and
+  is queued, so a menu never waits, and `Board3D` warms the viewer's roster as the board comes up.
+  A menu is built on each open, so the next open asks the current view; one already open keeps its
+  icons through a `V` flip. A headless run never shoots. **Not yet retrofitted**: the HUD's unit
+  card and every other surface that shows a unit tile.
 - `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
   no-op under `keep`). **Long form: `docs/design_record.md` § `mobile-builds-plan.html`** — every
   slice's measurements, the packaging facts, the refutations, the known hit-area limits and the

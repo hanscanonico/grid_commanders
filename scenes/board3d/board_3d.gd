@@ -281,6 +281,15 @@ func _on_view_changed() -> void:
 		_frame_lens()
 		_camera.snap(_focus(), _view.camera.zoom.x)
 		_cursor.snap(_focus())
+		_warm_icons()
+
+
+## The viewer's army's roster shot while the board comes up, so the first build
+## menu opened shows 3D stills rather than the tiles they stand in for.
+func _warm_icons() -> void:
+	if _view.perspective != null:
+		var row := _view.identity.atlas_row(_view.perspective.viewing_team())
+		UnitIcons3D.warm(UnitDB.load_default().all(), row)
 
 
 func _process(delta: float) -> void:
