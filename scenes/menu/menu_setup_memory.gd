@@ -1,7 +1,7 @@
 class_name MenuSetupMemory
 extends RefCounted
-## The match the main menu last set up — the board, fog and the seat strip's
-## table — kept so a return from a match or the editor, or the next launch, finds
+## The match the main menu last set up — the board, fog, the seat strip's table
+## and each seat's general — kept so a return from a match or the editor, or the next launch, finds
 ## the setup as it was left (SK-13). `Settings.match_setup` holds it; this class
 ## words it and reads it back.
 ##
@@ -12,6 +12,7 @@ extends RefCounted
 const MAP_KEY := "map"
 const FOG_KEY := "fog"
 const TABLE_KEY := "table"
+const GENERALS_KEY := "generals"
 
 
 ## Writes the setup on screen back. Silent before there is a board or a strip to
@@ -19,7 +20,21 @@ const TABLE_KEY := "table"
 static func remember(map: MapData, fog_on: bool, strip: SeatStrip) -> void:
 	if map == null or strip == null:
 		return
-	Settings.set_match_setup({MAP_KEY: map.source_path, FOG_KEY: fog_on, TABLE_KEY: strip.table()})
+	var generals: Dictionary = {}
+	var picks := strip.generals.over(strip.seats())
+	for seat: int in picks:
+		generals[str(seat)] = String(picks[seat])
+	(
+		Settings
+		. set_match_setup(
+			{
+				MAP_KEY: map.source_path,
+				FOG_KEY: fog_on,
+				TABLE_KEY: strip.table(),
+				GENERALS_KEY: generals,
+			}
+		)
+	)
 
 
 ## The remembered board's file, or "" when nothing sound is remembered. The
@@ -47,6 +62,27 @@ static func table(setup: Dictionary) -> Dictionary:
 	if not (_whole_numbers(who) and _whole_numbers(sides) and stored.get("tiers", []) is Array):
 		return {}
 	return stored
+
+
+## seat -> commander id, the remembered generals `db` still ships, walked in seat
+## order so a general two seats claim stays with the earlier one. A seat whose
+## stored id names nobody — a renamed general, a hand-edited file — is left out,
+## which is a seat with no commander.
+static func generals(setup: Dictionary, db: CommanderDB) -> Dictionary:
+	var stored: Variant = setup.get(GENERALS_KEY, {})
+	var settled: Dictionary = {}
+	if not stored is Dictionary:
+		return settled
+	var seats: Array[int] = []
+	for key: Variant in stored:
+		if key is String and (key as String).is_valid_int() and stored[key] is String:
+			seats.append(int(key))
+	seats.sort()
+	for seat in seats:
+		var id := StringName(stored[str(seat)])
+		if db.has(id) and CommanderPicks.available(settled, seat, id):
+			settled[seat] = id
+	return settled
 
 
 static func _whole_numbers(list: Variant) -> bool:

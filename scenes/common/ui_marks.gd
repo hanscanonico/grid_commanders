@@ -1,6 +1,6 @@
 class_name UiMarks
 extends RefCounted
-## The seven marks the shell prints that neither pixel face draws: ✓ ✗ ★ ☆ → ∞ ◐.
+## The eight marks the shell prints that neither pixel face draws: ✓ ✗ ★ ☆ → ∞ ◐ ▸.
 ##
 ## They are drawn here rather than loaded because the only fallback behind them
 ## was the machine's own system font, which a browser does not hand the engine —
@@ -100,6 +100,18 @@ const MARKS := {
 		"####..#.",
 		".###.#..",
 		"..###...",
+	],
+	## A control that steps through its values on a press — the seat strip's tier chip.
+	"▸":
+	[
+		"........",
+		"........",
+		"..#.....",
+		"..##....",
+		"..###...",
+		"..##....",
+		"..#.....",
+		"........",
 	],
 }
 

@@ -256,6 +256,11 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # share of the editor, since everything the editor does is the editor's own
 # scene. Paid for honestly rather than by thinning a neighbour: there is nothing
 # left on this page whose removal would be a simplification rather than a loss.
+# main_menu.gd 785 -> 718: one setup surface (the menu setup rework). Start
+# launches with the strip's picks, so the seat-walking hand-off to the commander
+# page went; each seat's general is the strip's (SeatGeneralChip), the footer
+# seat chips it duplicated went, and the two motion toggles moved to the
+# Settings page as device preferences.
 # battle.gd 1195 -> 1192: the keys that reach a computer turn are the runner's
 # now (COM-267). Battle held an arm that answered three of them and refused the
 # zoom ladder, which moves the camera and no unit; BattleAiRunner.handle_input is
@@ -276,7 +281,7 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # marches are BattleView's and UnitSprite's, and there is nothing to extract.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1196
-scenes/menu/main_menu.gd 785
+scenes/menu/main_menu.gd 718
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
 scenes/battle/battle_scenario_driver.gd 668

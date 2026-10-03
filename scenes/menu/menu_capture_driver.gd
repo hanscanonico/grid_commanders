@@ -23,12 +23,12 @@ extends RefCounted
 ## it can be undone or not. It measures the caption on every board for the same
 ## reason: the reserved lines must hold for a board this frame does not show.
 ##
-## `--demo=menu_commander_select` opens the selection page the way `--co-select`
-## does, and is that page's place in the sweep: as it opens, on the seat the flow
-## opens on and the card the first tab focuses. It browses nowhere and presses
-## nothing, because Random draws with the global RNG and a frame the sweep
-## compares bytes of may not depend on a draw. The `--co-select` forms below stay
-## the hand-run way to photograph another seat or another general.
+## `--demo=menu_commander_select` opens the commander page the way `--co-select`
+## does, and is that page's place in the sweep: as it opens for seat 1, on the
+## card the first tab focuses. It browses nowhere and presses nothing, because
+## Random draws with the global RNG and a frame the sweep compares bytes of may
+## not depend on a draw. `--co-select=<commander_id>` below stays the hand-run
+## way to photograph another general.
 ##
 ## `--demo=menu_four_seats` selects a board that deals more than a duel, which is
 ## the one frame the picker's `· NP` suffix and a four-row seat strip can be seen
@@ -78,16 +78,13 @@ const DEMO_MODES: Array[String] = [
 	DEMO_CAMPAIGN_DEEP,
 	DEMO_COMMANDER_SELECT,
 ]
-## Dev captures of the selection page. Bare, it opens the page on seat 1;
-## `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
+## Dev captures of the commander page, opened for seat 1. Bare (`red`, the old
+## spelling of seat 1), it shows the card the first tab focuses;
 ## `--co-select=<commander_id>` browses to one named general — the roster's copy is
 ## not all one length, so a capture that only ever photographs the first card
-## proves nothing about the longest. The seat form matters for the same reason on
-## the other axis: the chip bar is widest at the *last* seat, where every chip
-## carries its full form.
+## proves nothing about the longest.
 const CO_SELECT_ARG := "--co-select"
 const CO_SELECT_FIRST_SEAT := "red"
-const CO_SELECT_SECOND_SEAT := "blue"
 ## Dev captures of the seat strip: `--menu-map=<name>` selects a board by the name
 ## MapCatalog knows it by, and `--menu-preset=<n>` applies one of SeatStrip.PRESETS
 ## by index. Together they photograph the strip at four seats in each grouping,
@@ -167,18 +164,11 @@ func poses_selection() -> bool:
 	return _co_select != "" or _demo == DEMO_COMMANDER_SELECT
 
 
-## Which seat a selection capture walks to, or 0 to stay on the one it opens on.
-func selection_seat() -> int:
-	if _co_select == CO_SELECT_SECOND_SEAT:
-		return 2
-	return int(_co_select) if _co_select.is_valid_int() else 0
-
-
-## Which general a selection capture browses to, or "" to leave the walk alone —
-## anything that is not a seat is read as a commander id, which `debug_preview`
-## refuses out loud if it names none.
+## Which general a selection capture browses to, or "" to leave the page as it
+## opens — anything but the bare flag is read as a commander id, which
+## `debug_preview` refuses out loud if it names none.
 func selection_commander() -> StringName:
-	if selection_seat() > 0 or _co_select == CO_SELECT_FIRST_SEAT:
+	if _co_select == CO_SELECT_FIRST_SEAT:
 		return &""
 	return StringName(_co_select)
 
@@ -292,7 +282,7 @@ func posed_slot(maps: Array[MapData]) -> SaveGame.Slot:
 
 ## Saves one frame and ends the run — a quit, or the batch's hand-off to the
 ## next scenario — after the chrome `chrome_source` names clears the frame check.
-## A `--co-select` capture photographs the selection page over a hidden menu, so
+## A `--co-select` capture photographs the commander page over a hidden menu, so
 ## it hands in that page's own chrome instead: the menu's geometry is not what
 ## that picture claims.
 ##

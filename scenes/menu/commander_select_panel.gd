@@ -1,10 +1,10 @@
 class_name CommanderSelectPanel
 extends Control
-## The dedicated commander selection page (readiness plan G2). Shown over the
-## main menu without tearing it down, so the map, fog, and seat choices behind it
-## survive a Back. The player walks the seats the board deals — edit, confirm,
-## on to the next — and only when the last one is locked are the picks handed back
-## for the match; nothing reaches MatchConfig before that.
+## The commander page (readiness plan G2): picks the general of ONE seat. Shown
+## over the main menu without tearing it down, so the map, fog and seat choices
+## behind it survive a Back. A seat row's general chip opens it; Confirm hands
+## that one pick back and Back hands nothing — the menu's Start launches the
+## match, never this page.
 ##
 ## One focused CommanderCard carries the full doctrine and power copy; four
 ## faction tabs and a peer portrait per member let the player browse, and a deliberate
@@ -20,14 +20,10 @@ extends Control
 ## and faction name back every tint.
 ##
 ## Pure presentation: it reads CommanderDB to list the roster and emits the chosen
-## ids, one per seat. It never starts the battle or touches core/.
+## id for its seat. It never starts the battle or touches core/.
 
 signal confirmed(picks: Dictionary)
 signal cancelled
-
-## How many seats a duel deals — the roster every board had before a map could
-## seat more, and what `begin` falls back to if it is handed nothing.
-const DUEL_SEATS := 2
 
 ## A roster tile's face field: the tile without the name band beneath it, and the
 ## drawing's own size rather than a number chosen here — under
@@ -45,7 +41,7 @@ const MINI_FACE := CommanderVisuals.PORTRAIT_SIZE
 const _NAME_LINES := 2
 ## The band's padding over and under those lines.
 const _NAME_PAD := 1
-## How far back a portrait an earlier seat already commands is faded, over the
+## How far back a portrait another seat already commands is faded, over the
 ## dead button it also becomes. A general commands one army (`CommanderPicks`),
 ## and the page says so by greying rather than by refusing a press — the same
 ## answer the seat strip gives a seat it will not close (COM-224).
@@ -65,24 +61,20 @@ var _faction_keys: Array[StringName] = []
 ## Every non-neutral commander, flat, for the Random pick to draw from.
 var _random_pool: Array[CommanderType] = []
 
-var _slot := 0
-var _picks: Array[StringName] = []
-## The seats being walked, in seat order — parallel to `_picks`. The seats that
-## *play*, which on a board with one closed is not `1..n`: a commander belongs to
-## an army, so a chip, a livery and the confirmed pick all key to the seat's own
-## number rather than to its place in the walk (open-seats plan D4).
-var _seats: Array[int] = []
-## Seats the computer plays, so a chip can say CPU rather than Player N.
-var _ai_seats: Array[int] = []
-## The commander currently previewed (not yet locked) for the active side.
+## The seat this page is picking for, by its own number (open-seats plan D4).
+var _seat := 1
+## Whether the computer plays that seat, so the title chip can say CPU.
+var _is_cpu := false
+## seat -> id for every *other* seat's general: the ones this seat may not take.
+var _taken: Dictionary = {}
+## The commander currently previewed (not yet confirmed) for the seat.
 var _current: CommanderType
 var _faction_index := 0
 
 var _card: CommanderCard
 var _title: Label
-var _chip_bar: HBoxContainer
-var _chips: Array[PanelContainer] = []
-var _chip_labels: Array[Label] = []
+var _chip: PanelContainer
+var _chip_label: Label
 var _tab_buttons: Array[Button] = []
 var _mini_frame: ScrollContainer
 var _mini_buttons: Array[Button] = []
@@ -117,44 +109,20 @@ func _group_roster() -> void:
 		_random_pool.append(commander)
 
 
-## Opens the page for a fresh set of picks, one per seat the match fills.
-## `ai_seats` only changes how a slot is labelled — CPU rather than Player N —
-## because every seat's commander is chosen here whoever ends up playing it.
-##
-## A caller naming no seats gets the duel every board was before one could be
-## closed, which is what keeps this page openable from a fixture or a capture that
-## has no strip to ask.
-func begin(seats: Array[int], ai_seats: Array[int] = []) -> void:
-	_ai_seats = ai_seats.duplicate()
-	_seats = seats.duplicate()
-	while _seats.size() < DUEL_SEATS:
-		_seats.append(_seats.size() + 1)
-	_slot = 0
-	_picks.clear()
-	for _i in _seats.size():
-		_picks.append(CommanderType.NEUTRAL_ID)
-	_build_chips()
+## Opens the page for one seat, browsing to the general it holds now. `taken` is
+## every other seat's general, seat-keyed, so a portrait another army already has
+## greys and names that seat. No Commander opens on the first faction nobody else
+## wears, so Enter straight through fields a general rather than nobody.
+func begin_seat(seat: int, current: StringName, taken: Dictionary, is_cpu: bool) -> void:
+	_seat = seat
+	_is_cpu = is_cpu
+	_taken = taken.duplicate()
 	show()
-	_refresh_chips()
-	_set_faction(_default_faction())
-	_grab_first_mini()
-
-
-## Dev capture only: locks each seat's current preview until `seat` is the one in
-## hand, so a screenshot can prove the confirm → next seat transition and the
-## chip/summary update. Seat-indexed rather than "Blue" because the walk is as
-## long as the board's roster now, and the widest chip bar is the *last* seat —
-## the state the top bar has to be photographed in to prove it fits.
-## Drives the same _confirm the Confirm button does. Not on any play path.
-func debug_advance_to_seat(seat: int) -> void:
-	if seat < 1 or seat > _picks.size():
-		push_error("No seat %d: this capture shows seat %d, not that one." % [seat, _slot + 1])
-		return
-	while _slot + 1 < seat:
-		var before := _slot
-		_confirm()
-		if _slot == before:
-			return
+	if CommanderPicks.is_general(current) and _db.has(current):
+		_focus_commander(current)
+	else:
+		_set_faction(_default_faction())
+		_grab_first_mini()
 
 
 ## Dev capture only: browses to one commander by id, through the same tab-and-focus
@@ -172,23 +140,19 @@ func debug_preview(id: StringName) -> void:
 	_focus_commander(id)
 
 
-## What a capture of this page measures itself against: the title, every seat
-## chip, and all three actions. The setup panel behind this one has had such a
-## gate since COM-5 — a page that renders a perfectly good picture with a control
-## off the right edge is exactly what a frame check is for — and this page had
-## none, which is how a top bar that grew from a fixed pair of chips to one per
-## seat shipped without anyone walking it at four.
+## What a capture of this page measures itself against: the title, the seat
+## chip, and every action. The setup panel behind this one has had such a gate
+## since COM-5 — a page that renders a perfectly good picture with a control off
+## the right edge is exactly what a frame check is for.
 func chrome() -> Dictionary[String, Control]:
-	var named: Dictionary[String, Control] = {
+	return {
 		"the select page title": _title,
+		"seat chip": _chip,
 		"No Commander": _no_co_button,
 		"Random": _random_button,
 		"Back": _back_button,
 		"Confirm Pick": _confirm_button,
 	}
-	for i in _chips.size():
-		named["seat chip %d" % (i + 1)] = _chips[i]
-	return named
 
 
 # --- build -------------------------------------------------------------------
@@ -235,18 +199,18 @@ func _build_topbar() -> HBoxContainer:
 	bar.add_theme_constant_override("separation", 6)
 
 	_title = UiKit.page_title("SELECT COMMANDER")
-	# Read from the left: this one heads a bar it shares with the seat chips
+	# Read from the left: this one heads a bar it shares with the seat chip
 	# rather than standing over the page on its own.
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_title)
 
-	# One chip per seat, built when the page opens: how many there are is the
-	# board's answer, not this page's.
-	_chip_bar = HBoxContainer.new()
-	_chip_bar.add_theme_constant_override("separation", 4)
-	bar.add_child(_chip_bar)
+	# Which seat is being picked for, in the livery the preview would give it.
+	_chip = PanelContainer.new()
+	_chip_label = _small_label(UiTheme.SIZE_BODY)
+	_chip.add_child(UiKit.pad(_chip_label, 7, 3))
+	bar.add_child(_chip)
 	return bar
 
 
@@ -346,21 +310,22 @@ func _set_faction(index: int) -> void:
 	_preview(free[0])
 
 
-## The tab a seat opens on: the first faction, in listing order, that no earlier
-## seat already commands, so pressing Enter through the walk fields different
-## armies rather than every seat on the first tab. Every faction holds more
-## generals than a board has seats, so a faction nobody wears always has one free.
+## The tab a seat with no general opens on: the first faction, in listing order,
+## that no other seat already commands, so confirming straight through fields
+## different armies rather than every seat on the first tab. Every faction holds
+## more generals than a board has seats, so a faction nobody wears has one free.
 func _default_faction() -> int:
 	var worn: Dictionary[StringName, bool] = {}
-	for i in _slot:
-		worn[CommanderVisuals.key_for_faction(_db.by_id(_picks[i]).faction)] = true
+	for seat: int in _taken:
+		if CommanderPicks.is_general(_taken[seat]):
+			worn[CommanderVisuals.key_for_faction(_db.by_id(_taken[seat]).faction)] = true
 	for i in _faction_keys.size():
 		if not worn.has(_faction_keys[i]):
 			return i
 	return 0
 
 
-## The faction's members no earlier seat is already commanding, in roster order.
+## The faction's members no other seat is already commanding, in roster order.
 func _free_members() -> Array[CommanderType]:
 	var free: Array[CommanderType] = []
 	for commander in _members():
@@ -369,20 +334,10 @@ func _free_members() -> Array[CommanderType]:
 	return free
 
 
-## The generals locked so far in this walk, seat-keyed — the seats *before* the
-## one in hand. The slots after it hold last walk's picks, which Back is on its
-## way to re-confirm, so counting them would let a seat block itself.
-func _locked_picks() -> Dictionary:
-	var locked: Dictionary = {}
-	for i in _slot:
-		locked[_seats[i]] = _picks[i]
-	return locked
-
-
-## Whether the seat in hand may command `id` — the walk's view of the one rule,
-## asked of `CommanderPicks` rather than restated here.
+## Whether the seat may command `id` — the one rule, asked of `CommanderPicks`
+## rather than restated here.
 func _free_to_take(id: StringName) -> bool:
-	return CommanderPicks.available(_locked_picks(), _seats[_slot], id)
+	return CommanderPicks.available(_taken, _seat, id)
 
 
 ## Opens a faction's tab and roster without choosing anybody from it — the half of
@@ -447,8 +402,8 @@ func _grab_first_mini() -> void:
 func _rebuild_minis() -> void:
 	var row := _mini_buttons[0].get_parent() if not _mini_buttons.is_empty() else _find_mini_row()
 	for button in _mini_buttons:
-		# Deferred: this runs from _input via _confirm, and a mini can be the
-		# viewport's focus owner when it does. remove_child leaves the tree
+		# Deferred: a mini can be the viewport's focus owner when a tab or a
+		# Random press rebuilds the row. remove_child leaves the tree
 		# synchronously (so the row's children below never see a corpse), but
 		# freeing itself is deferred so the focus owner outlives the handler.
 		row.remove_child(button)
@@ -537,19 +492,18 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 
 
 ## Scrolls the row until the previewed general's tile is whole. Called once per
-## rebuild — opening the page, a tab, a seat change, Back and Random all rebuild
-## the row — so the row opens on the seat's pick rather than on wherever the
-## previous faction left it. Random is why the rebuild owns it rather than the
-## focus: the draw previews a general nothing focused, and may be the sixth of a
-## faction the row shows three of. A tile the player *does* focus, by key or by
+## rebuild — opening the page, a tab and Random all rebuild the row — so the row
+## opens on the seat's pick rather than on wherever the previous faction left it.
+## Random is why the rebuild owns it rather than the focus: the draw previews a
+## general nothing focused, and may be the sixth of a faction the row shows three
+## of. A tile the player *does* focus, by key or by
 ## click, is `follow_focus`'s to bring into view.
 ##
 ## Queued rather than run, because a rebuilt row has no sizes until the frame
 ## settles and `ensure_control_visible` on an unplaced tile scrolls to nothing.
 ## Which tile is resolved when the call runs rather than when it was queued: the
 ## preview that names it lands after the rebuild, and two rebuilds can share one
-## frame — the seat walk confirms and re-opens the roster without a frame between
-## — so the tile named at queue time is out of the row by then, which
+## frame, so the tile named at queue time may be out of the row by then, which
 ## `ensure_control_visible` refuses out loud.
 func _reveal_previewed() -> void:
 	if _current == null:
@@ -559,12 +513,12 @@ func _reveal_previewed() -> void:
 		_mini_frame.ensure_control_visible(_mini_buttons[index])
 
 
-## Greys the portrait of a general an earlier seat already commands, and says
-## which seat holds them: a dead control with no reason is the affordance this
-## menu has been burned by once (COM-13). Disabled rather than absent, so the
-## roster row is the same row at the same widths for every seat of the walk.
+## Greys the portrait of a general another seat already commands, and says which
+## seat holds them: a dead control with no reason is the affordance this menu has
+## been burned by once (COM-13). Disabled rather than absent, so the roster row is
+## the same row at the same widths for every seat.
 func _mark_taken(button: Button, commander: CommanderType) -> void:
-	var seat := CommanderPicks.holder(_locked_picks(), commander.id)
+	var seat := CommanderPicks.holder(_taken, commander.id, _seat)
 	if seat == 0:
 		return
 	button.disabled = true
@@ -579,7 +533,7 @@ func _preview(commander: CommanderType) -> void:
 	_card.bind(commander)
 	_mark_tile(_tile_index_for(commander.id))
 	_refresh_summary()
-	_refresh_chips()  # the active side's chip tracks the browse, mirror fallback and all
+	_refresh_chip()
 
 
 func _preview_neutral() -> void:
@@ -594,9 +548,8 @@ func _preview_neutral() -> void:
 ## Focus stays on Random rather than following the draw onto its portrait, which
 ## is what keeps that re-roll one keystroke away.
 ##
-## The draw is without replacement: a general an earlier seat commands is out of
-## the pool, so rolling for the last seat of a four-army table can never hand it
-## somebody already on the field.
+## The draw is without replacement: a general another seat commands is out of
+## the pool, so the roll can never hand this seat somebody already on the field.
 func _preview_random() -> void:
 	var pool := _free_pool()
 	if pool.is_empty():
@@ -621,28 +574,15 @@ func _free_pool() -> Array[CommanderType]:
 # --- confirm / back ----------------------------------------------------------
 
 
+## Hands the seat's one pick back, `{seat: id}`, and closes.
 func _confirm() -> void:
 	if _current == null or not _free_to_take(_current.id):
 		return
-	_picks[_slot] = _current.id
-	if _slot + 1 < _picks.size():
-		_slot += 1
-		_refresh_chips()
-		_set_faction(_default_faction())
-		_grab_first_mini()
-		return
-	var chosen: Dictionary = {}
-	for i in _picks.size():
-		chosen[_seats[i]] = _picks[i]
-	confirmed.emit(chosen)
+	hide()
+	confirmed.emit({_seat: _current.id})
 
 
 func _back() -> void:
-	if _slot > 0:
-		_slot -= 1  # back to the seat before, restoring the pick it locked
-		_refresh_chips()
-		_focus_commander(_picks[_slot])
-		return
 	hide()
 	cancelled.emit()
 
@@ -661,7 +601,7 @@ func _back() -> void:
 ## Both halves are load-bearing: shortcuts are walked after the GUI, and a Button
 ## activates on the *release*, so a press-only handler sitting behind the GUI
 ## confirms and then lets the focused button fire too — on Confirm Pick that
-## locked Side 1 and Side 2 with one keystroke.
+## once locked two seats with one keystroke.
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -682,8 +622,8 @@ func _focus_owner() -> Control:
 	return get_viewport().gui_get_focus_owner()
 
 
-## Moves the tab/preview/focus to a specific commander id (used when Back restores
-## the Red pick). Neutral falls through to the first faction's first member.
+## Moves the tab/preview/focus to a specific commander id — the seat's general as
+## the page opens. Neutral falls through to the first faction's first member.
 func _focus_commander(id: StringName) -> void:
 	var commander := _db.by_id(id)
 	if commander.id == CommanderType.NEUTRAL_ID:
@@ -703,107 +643,24 @@ func _focus_commander(id: StringName) -> void:
 # --- chrome refresh ----------------------------------------------------------
 
 
-## The seat chips, live from the picks as they stand. A seat already walked past
-## or in hand stays filled and shows its livery; the seats after it are named but
-## uncoloured, and the moment two land on one faction the later one shows the
-## borrowed classic (D3), not a day-1 surprise.
-##
-## A roster past a duel takes the terse form — "1 · Meridian — P1" rather than
-## "1 · Meridian Coalition — Player 1" — because by the last seat every chip
-## carries the long one, and four of those run off the right of a 640px frame.
-## A duel keeps the long form, so a two-seat page is unchanged.
-func _refresh_chips() -> void:
-	var identity := _preview_identity()
-	var terse := _chips.size() > DUEL_SEATS
-	for i in _chips.size():
-		var seat: int = _seats[i]
-		var who := _seat_role(seat, terse)
-		if i > _slot:
-			# Not reached yet: named but uncoloured, so the walk's remaining length
-			# is visible without claiming a livery nothing has chosen.
-			_paint_chip(_chips[i], _chip_labels[i], "%d · %s" % [seat, who], null)
-			continue
-		_paint_chip(
-			_chips[i],
-			_chip_labels[i],
-			"%d · %s — %s" % [seat, _seat_name(identity, seat, terse), who],
-			identity.theme(seat)
-		)
-
-
-## What a chip calls a seat, asked of the identity that owns the answer, in its
-## long or its short form — never re-derived from the theme key, because a mirror
-## side keeps its faction's name while its colour is borrowed (faction-identity
-## D3), and a chip reading the key would then contradict the commander card.
-func _seat_name(identity: SideIdentity, seat: int, terse: bool) -> String:
-	return identity.short_name(seat) if terse else identity.display_name(seat)
-
-
-func _seat_role(seat: int, terse: bool) -> String:
-	if _ai_seats.has(seat):
-		return "CPU"
-	return "P%d" % seat if terse else "Player %d" % seat
-
-
-## The identity the current picks would produce: every seat already locked, plus
-## the one being previewed in hand. Resolving the whole thing rather than each
-## chip alone is what lets the mirror fallback show live.
-func _preview_identity() -> SideIdentity:
-	var picks: Dictionary = {}
-	for i in _picks.size():
-		if i < _slot:
-			picks[_seats[i]] = _db.by_id(_picks[i])
-		elif i == _slot:
-			picks[_seats[i]] = _current
-		else:
-			picks[_seats[i]] = null
-	return SideIdentity.resolve(picks)
-
-
-## Deals one chip per seat. Rebuilt on every `begin`, because how many seats
-## there are is the board's answer and the page is opened per match.
-func _build_chips() -> void:
-	for child in _chip_bar.get_children():
-		_chip_bar.remove_child(child)
-		child.queue_free()
-	_chips.clear()
-	_chip_labels.clear()
-	for _i in _picks.size():
-		var chip := PanelContainer.new()
-		var label := _small_label(UiTheme.SIZE_BODY)
-		chip.add_child(UiKit.pad(label, 7, 3))
-		_chip_bar.add_child(chip)
-		_chips.append(chip)
-		_chip_labels.append(label)
-
-
-## Fills a chip in a side's theme, or greys it (theme null) when the side is not
-## yet in hand. Deliberately not `UiKit.identity_chip`: that chip is a settled
-## fact (a dot on cream, read once in the menu footer), while a seat chip is
-## read at a glance across a walk still in progress, seat by seat, so the fill
-## itself is the doctrine and greying an unreached seat has nothing else to
-## show it with.
-func _paint_chip(
-	chip: PanelContainer, label: Label, text: String, theme: CommanderVisuals.FactionTheme
-) -> void:
-	chip.add_theme_stylebox_override(
+## The title chip: which seat this is and who plays it, filled in the livery the
+## previewed general would give it, grey under No Commander.
+func _refresh_chip() -> void:
+	var who := "CPU" if _is_cpu else "Human"
+	var general := _current != null and CommanderPicks.is_general(_current.id)
+	var theme := CommanderVisuals.theme_for(_current) if general else null
+	_chip.add_theme_stylebox_override(
 		"panel", UiTheme.flat(theme.color if theme != null else _INACTIVE)
 	)
-	label.add_theme_color_override("font_color", theme.ink if theme != null else _MUTED)
-	label.text = text
+	_chip_label.add_theme_color_override("font_color", theme.ink if theme != null else _MUTED)
+	_chip_label.text = "P%d · %s" % [_seat, who]
 
 
 func _refresh_summary() -> void:
-	var slot := "Side %d of %d" % [_slot + 1, _picks.size()]
-	var text := "%s — browse a faction, then Confirm." % slot
+	var text := "Seat %d — browse a faction, then Confirm." % _seat
 	if _current != null:
 		var theme := CommanderVisuals.theme_for(_current)
-		text = "%s · %s\nSelected: %s." % [slot, theme.display, _current.display_name]
-	if _slot > 0:
-		var locked := PackedStringArray()
-		for i in _slot:
-			locked.append("Side %d is %s" % [i + 1, _db.by_id(_picks[i]).display_name])
-		text += "  %s." % ", ".join(locked)
+		text = "Seat %d · %s\nSelected: %s." % [_seat, theme.display, _current.display_name]
 	_summary_label.text = text
 
 
@@ -822,7 +679,7 @@ func _style_tab(tab: Button, active: bool) -> void:
 ## Every caller sets text and colour itself right after, so the placeholders
 ## below never reach a frame; only font and size are this builder's own.
 ## Reset to top alignment because `hud_label` centres, and the summary box
-## (unlike a mini or a chip) is taller than its text.
+## (unlike a mini or the chip) is taller than its text.
 func _small_label(size: int) -> Label:
 	var label := UiTheme.hud_label("", size, UiTheme.INK, true)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP

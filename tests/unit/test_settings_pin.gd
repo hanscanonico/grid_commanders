@@ -90,3 +90,21 @@ func test_value_actions_offers_the_value_rows_less_the_ones_excepted() -> void:
 	var expected: Array[StringName] = fresh.offered_rows().duplicate()
 	expected.erase(Settings.SPEED_ROW)
 	assert_eq(ids, expected)
+
+
+## The Settings page adds the two motion preferences the setup panel used to hold,
+## after the shared rows, and stepping one flips it.
+func test_the_menu_page_offers_the_motion_rows_after_the_shared_ones() -> void:
+	var fresh = autofree(SETTINGS_SCRIPT.new())
+	fresh.pin(GameSpeed.DEFAULT_ID)
+	var ids: Array[StringName] = []
+	for action: Dictionary in fresh.menu_page_actions():
+		ids.append(action["id"])
+	var expected: Array[StringName] = fresh.offered_rows().duplicate()
+	expected.erase(Settings.SPEED_ROW)
+	expected.append_array(Settings.MENU_PAGE_ROWS)
+	assert_eq(ids, expected)
+	assert_eq(fresh.cycle_row(Settings.MENU_MOTION_ROW), "Menu motion: Off")
+	assert_false(fresh.menu_animations, "the row turns the motion off")
+	assert_eq(fresh.cycle_row(Settings.BATTLE_ANIMATIONS_ROW), "Battle animations: Off")
+	assert_false(fresh.battle_animations, "and the cut-ins")

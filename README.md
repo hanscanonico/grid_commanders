@@ -200,7 +200,7 @@ make smoke MODES="menu_campaign_debrief"  # the page a won mission comes back th
 make smoke MODES="menu_campaign_defeat"   # that page after a loss: the reason, and Retry leading
 make smoke MODES="menu_campaign_interlude" # the page between two blocks of a war
 make smoke MODES="menu_campaign_deep"      # that hub deep into a war: the one frame its list is scrolled
-make smoke MODES="menu_commander_select"   # the page Start opens: faction tabs, the roster grid, the seat chips
+make smoke MODES="menu_commander_select"   # the commander page for seat 1: faction tabs, the roster grid, the seat chip
 ```
 
 All twelve pose what they photograph, so a capture neither reads nor writes the running machine's
@@ -660,13 +660,12 @@ it — a computer turn that seemed to hang while you were away resumes when the 
 
 ## Main menu
 
-The game boots to the menu: pick a map, set the **seats**, pick a **Speed**,
-toggle **Fog of war**, **Battle animations** (the full-screen combat and capture cut-ins — a saved
-preference, on by default) and **Menu motion** (the board drifting behind the menus and the campaign
-pages revealing a line at a time — a saved preference too, on by default, and off holds every menu
-still from the press),
-then press **Start**, which opens the **commander selection page**; **Continue** skips selection and
-resumes the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
+The game boots to the menu: pick a map, set the **seats** and their **generals**, pick a **Speed**,
+toggle **Fog of war**, then press **Start**, which launches the match as set up — a map and Start is
+the whole fast path. **Battle animations** (the full-screen combat and capture cut-ins) and **Menu
+motion** (the board drifting behind the menus and the campaign pages revealing a line at a time) are
+saved device preferences, on by default, and live on the **Settings** page. **Continue** resumes
+the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
 under it names what it would resume — `DAY 13 · ARSENAL` — so the menu alone answers whether the save
 is the match you meant. With nothing to resume the line reads `NO SAVED MATCH`; with a save this
 build cannot open — a truncated file, a damaged one, or a board that has moved since — it reads
@@ -678,7 +677,9 @@ page (see Replays below), and **Quit** exits.
 The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
 it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
 side badge — one letter per army the board seats, **A** to **D**: armies sharing a badge fight as
-allies, and armies each on their own badge are a free-for-all. A board seating more than two adds a
+allies, and armies each on their own badge are a free-for-all. Each row ends in its **general**: a
+face chip, or **NO CO** for a seat with no commander (the default), CPU seats included. Pressing it
+opens the commander page for that seat alone, and the menu remembers each seat's pick. A board seating more than two adds a
 third choice, **Empty**: a closed seat brings no army at all — its units never enter and its
 properties open neutral for the others to take — so its side badge disappears with it, and the
 button greys out whenever closing one more seat would leave fewer than two armies (a duel board
@@ -695,25 +696,22 @@ teaching board and the one already in hand — and selects it, so the panel belo
 match will actually be played on.
 
 Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
-count, property count and pitch beneath the grid, and **Speed**, **Fog of war**, **Battle
-animations** and **Menu motion** each carry a permanent one-line explanation. How well the computer
+count, property count and pitch beneath the grid, and **Speed** and **Fog of war** each carry a
+permanent one-line explanation. How well the computer
 plays is not a match-wide setting: each row of the seat strip carries a tier chip that cycles
 **Easy** / **Normal** / **Difficult** / **Brutal** and goes inert on a row the computer is not
 playing (see Difficulty below). Each setting's dotted-underlined label — **Speed**,
-**Fog of war**, **Battle animations**, **Menu motion** — still elaborates in a tip anchored to it, on
+**Fog of war** — still elaborates in a tip anchored to it, on
 hover or on keyboard focus, and so do the map cells and the line under **Continue**; leaving, tabbing
 away or pressing Escape dismisses one.
 
-The selection page is a walk through the seats that play — a seat closed in the strip is skipped:
-you pick **P1**'s commander, confirm, then the next seated player's, and so on — the chips along
-the top preview each seat's faction name
-and colour as you browse, mirror rule included, and say **CPU** for a seat the computer plays. Four
-faction tabs and a peer portrait per member let you browse; one focused card shows the highlighted
-general's doctrine and Command Power in full (no hover tooltips), and a deliberate **No Commander**
-plays the plain rules.
-Mouse, keyboard, and controller all navigate it, and **Back** rewinds one seat — from the first it
-returns to the menu without discarding the map, seat or fog choices. Nothing is committed until every
-seat is locked.
+The commander page picks one seat's general. The chip along the top names the seat and says
+**CPU** for one the computer plays; a general another seat already commands is greyed and says which
+seat holds them. Four faction tabs and a peer portrait per member let you browse; one focused card
+shows the highlighted general's doctrine and Command Power in full (no hover tooltips), and a
+deliberate **No Commander** plays the plain rules. Mouse, keyboard, and controller all navigate it:
+**Enter** confirms the pick, **Esc** or **Back** returns to the menu with the seat unchanged, and
+either way focus lands back on that seat's chip.
 
 In battle the side in hand gets a portrait and charge meter in the docked bottom HUD bar — the
 portrait field in the side's resolved faction colour, the power named beside the meter it charges,

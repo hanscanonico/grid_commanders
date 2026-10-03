@@ -10,8 +10,14 @@ extends VBoxContainer
 ##
 ## How many rows there are is the **board's** answer and how they group is the
 ## **match's** (plan D1), so this takes a roster and hands back four facts:
-## `seats()`, `ai_teams()`, `sides()` and `seat_difficulty()`. It decides none of
-## them for itself and knows nothing about maps, saves or launching.
+## `seats()`, `ai_teams()`, `sides()` and `seat_difficulty()`, plus who commands
+## each seat (`generals`). It decides none of them for itself and knows nothing
+## about maps, saves or launching.
+##
+## Each row ends in its general (`SeatGeneralChip`): pressing it asks the menu to
+## open the commander page for that one seat (`general_requested`), and the pick
+## comes back through `seat_generals`. A seat nobody picked for plays with no
+## commander, which is what every match did before a seat could carry one.
 ##
 ## The tier is per seat rather than per match (COM-225): a four-army board can now
 ## be one Easy opponent and two Difficult ones, which is what the panel's single
@@ -34,6 +40,8 @@ extends VBoxContainer
 ## want it.
 
 signal changed
+## The general chip on `seat`'s row was pressed; `chip` is where focus goes back.
+signal general_requested(seat: int, chip: Control)
 
 ## Who is in a seat. `EMPTY` is the seat nobody takes: the army never enters the
 ## match at all, so its start dissolves to neutral ground the others fight over.
@@ -62,6 +70,9 @@ const _SEAT_SEGMENT_HEIGHT := 16
 ## stretched (`_widest_tier`), and every pixel it takes comes off "Human" beside
 ## it.
 const _TIER_CHIP_PAD := 6.0
+## The tier chip's cycler mark, so the chip reads as a control that steps rather
+## than as one more lit choice. Drawn by `UiMarks` where the pixel faces have none.
+const _TIER_CYCLE_MARK := " ▸"
 ## The roster every preset is written for. A smaller board can express only one of
 ## them, so there the row is built and dead rather than absent.
 const PRESET_SEATS := 4
@@ -163,6 +174,13 @@ var _tier: Array[int] = []
 ## Per seat: the tier chip. Held so it can be relabelled on a press and greyed for
 ## a seat the computer is not playing, the same way the Empty button is.
 var _tier_buttons: Array[Button] = []
+## Who commands each seat the board deals. Read freely; written through
+## `seat_generals`, so the rows repaint and the table reports a change.
+var generals := SeatGenerals.new()
+## The roster the chips resolve a general from, loaded once in `configure`.
+var _db: CommanderDB
+## Per seat: the general chip ending its row.
+var _general_chips: Array[SeatGeneralChip] = []
 ## Per seat: the "P1" label at the head of its row. Held because it is the row's
 ## identity swatch — it is set in the livery that seat's army wears, and a table
 ## that has just lost a seat is a different roster (`_repaint_seats`).
@@ -174,6 +192,7 @@ var _seat_labels: Array[Label] = []
 ## tiers is `DifficultyDB`'s and only the caller (the menu) holds it.
 func configure(tiers: Array[Difficulty] = []) -> void:
 	_tiers = tiers
+	_db = CommanderDB.load_default()
 
 
 ## Deals the strip for a board that seats `count` armies, keeping each seat's
@@ -197,6 +216,7 @@ func set_roster(count: int) -> void:
 	_tier.resize(count)
 	_who = reopened_seats(_who, _closable())
 	_side = normalised_sides(_side, count)
+	generals.keep(count)
 	_rebuild()
 
 
@@ -234,11 +254,18 @@ func seat_difficulty() -> Dictionary:
 
 ## Whether the tier chip on the seat at `index` is live — true exactly while the
 ## computer plays that seat. The generalisation of "Difficulty is dimmed while no
-## computer is seated" (COM-19) to a table where each seat answers for itself, and
-## public because the setup-context capture walks the table rather than
-## photographing one arrangement of it.
-func tier_operable(index: int) -> bool:
+## computer is seated" (COM-19) to a table where each seat answers for itself,
+## which `tier_rule_holds` walks for the setup-context capture.
+func _tier_operable(index: int) -> bool:
 	return index >= 0 and index < _who.size() and _who[index] == Seat.CPU
+
+
+## Sits generals down — a pick from the commander page, or the remembered ones
+## (`MenuSetupMemory.generals`) — over the seats this board deals.
+func seat_generals(picks: Dictionary) -> void:
+	generals.assign(picks, _seats.size())
+	_repaint_seats()
+	changed.emit()
 
 
 ## team -> side id, or **empty for a free-for-all**. Empty rather than one side
@@ -373,14 +400,14 @@ func tier_rule_holds() -> bool:
 		passed = false
 	var last := seat_count() - 1
 	set_human(last, false)
-	if not tier_operable(last):
+	if not _tier_operable(last):
 		push_error("main menu setup context: the tier stays disabled with a CPU seated")
 		passed = false
 	if seat_difficulty().is_empty():
 		push_error("main menu setup context: a CPU seat names no tier")
 		passed = false
 	set_human(last, true)
-	if tier_operable(last):
+	if _tier_operable(last):
 		push_error("main menu setup context: the tier remains operable with nobody to tune")
 		passed = false
 	return passed
@@ -527,7 +554,11 @@ func _settle_seats() -> void:
 	for i in _who_buttons.size():
 		_set_live(_who_buttons[i][Seat.EMPTY], _can_close(i))
 	for i in _tier_buttons.size():
-		_set_live(_tier_buttons[i], tier_operable(i))
+		_set_live(_tier_buttons[i], _tier_operable(i))
+	# Greyed rather than hidden (COM-224): a closed seat keeps its pick for later.
+	for i in _general_chips.size():
+		_set_live(_general_chips[i], _who[i] != Seat.EMPTY)
+		_general_chips[i].modulate = Color.WHITE if _who[i] != Seat.EMPTY else _DEAD_ROW_TINT
 	for i in _side_buttons.size():
 		var stands := _who[i] != Seat.EMPTY
 		for letter in _side_buttons[i].size():
@@ -567,6 +598,8 @@ func _repaint_seats() -> void:
 		_seat_labels[i].add_theme_color_override(
 			"font_color", livery if _who[i] != Seat.EMPTY else UiTheme.NEUTRAL_DARK
 		)
+		var commander := _db.by_id(generals.of(_seats[i])) if _db != null else null
+		_general_chips[i].show_general(commander, livery)
 	var lit := preset_matching(_who, _side)
 	for i in _preset_buttons.size():
 		_paint_preset(_preset_buttons[i], i == lit)
@@ -587,11 +620,17 @@ static func _paint_preset(button: Button, lit: bool) -> void:
 	button.add_theme_color_override(&"font_focus_color", UiTheme.WHITE)
 
 
-## The liveries for the table as it now stands, over the seats that play — the
-## roster the match itself will resolve over. `UiTheme` keeps the answer, so
-## asking again after every tap costs nothing.
+## The liveries for the table as it now stands, over the seats that play and the
+## generals picked for them — what the match itself will resolve. With no general
+## picked `UiTheme` keeps the answer, so asking again after every tap costs nothing.
 func _resolve_identity() -> void:
-	_identity = UiTheme.menu_identity_of(seats())
+	var picks: Dictionary = {}
+	var any_general := false
+	for seat in seats():
+		var id := generals.of(seat)
+		any_general = any_general or CommanderPicks.is_general(id)
+		picks[seat] = _db.by_id(id) if _db != null and CommanderPicks.is_general(id) else null
+	_identity = SideIdentity.resolve(picks) if any_general else UiTheme.menu_identity_of(seats())
 
 
 ## The livery the seat at `index` wears. A closed seat is in no roster, so the
@@ -614,6 +653,7 @@ func _rebuild() -> void:
 	_who_buttons.clear()
 	_side_buttons.clear()
 	_tier_buttons.clear()
+	_general_chips.clear()
 	_seat_labels.clear()
 	_resolve_identity()  # the rows are built in their liveries, then repainted in them
 	add_theme_constant_override("separation", 3)
@@ -638,7 +678,8 @@ func _rebuild() -> void:
 	_settle_seats()  # the Empty buttons only exist to be greyed once they are built
 
 
-## One seat on one line: a label, who plays it, and which side it stands on.
+## One seat on one line: a label, who plays it, which side it stands on, and the
+## general commanding it.
 ##
 ## Built off `UiKit.segment` with no caption (an empty `micro` hands back the
 ## bordered run bare) because the captioned form stacks a label above every
@@ -708,6 +749,10 @@ func _seat_row(index: int) -> Control:
 	side.size_flags_stretch_ratio = 0.8
 	row.add_child(side)
 	_side_buttons.append(side_buttons)
+	var chip := SeatGeneralChip.new(_SEAT_SEGMENT_HEIGHT)
+	chip.pressed.connect(func() -> void: general_requested.emit(_seats[index], chip))
+	row.add_child(chip)
+	_general_chips.append(chip)
 	return row
 
 
@@ -760,7 +805,10 @@ func _widest_tier() -> float:
 				UiTheme
 				. display()
 				. get_string_size(
-					tier.display_name, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_SEGMENT
+					tier.display_name + _TIER_CYCLE_MARK,
+					HORIZONTAL_ALIGNMENT_LEFT,
+					-1,
+					UiTheme.SIZE_SEGMENT
 				)
 				. x
 			)
@@ -772,7 +820,7 @@ func _widest_tier() -> float:
 func _tier_label(index: int) -> String:
 	if _tiers.is_empty() or index >= _tier.size():
 		return ""
-	return _tiers[_tier[index] % _tiers.size()].display_name
+	return _tiers[_tier[index] % _tiers.size()].display_name + _TIER_CYCLE_MARK
 
 
 ## Where the tier `id` sits in the menu order, or the default's place for an id

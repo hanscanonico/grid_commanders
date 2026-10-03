@@ -24,6 +24,9 @@ extends Node
 ## The board flipped between 2D and 3D. A battle in progress swaps its board on
 ## the spot, so the preference is heard rather than read once at boot.
 signal board_view_changed
+## Menu motion was turned on or off. The main menu's drifting backdrop answers on
+## the press, though the row that turns it is on the Settings page over it.
+signal menu_animations_changed
 
 const SETTINGS_PATH := "user://settings.cfg"
 ## Where an unreadable settings file is kept when one has to be written over. See
@@ -47,12 +50,12 @@ const BOARD_VIEW_KEY := "board_view_3d"
 ## back at.
 const DEFAULT_END_TURN_CONFIRM := true
 ## What a fresh install's menus move with, and what `pin` stands them back at: the
-## toggle's own checkmark is on the menu a capture photographs, so a machine that
-## turned the motion off must not change the frame.
+## row's own label is on the Settings page a capture may photograph, so a machine
+## that turned the motion off must not change the frame.
 const DEFAULT_MENU_ANIMATIONS := true
 ## What a fresh install cuts to a battle with, and what `pin` stands it back at
-## for the reason menu motion stands back: the toggle's own checkmark is on a
-## photographed menu.
+## for the reason menu motion stands back: the row's own label is on a
+## photographed page.
 const DEFAULT_BATTLE_ANIMATIONS := true
 ## What a fresh install opens in, and what `pin` stands the window back to: a
 ## capture is framed at the project's window size, and a machine whose player
@@ -120,12 +123,17 @@ const RESET_HINTS_ARG := "--reset-hints"
 const SPEED_ROW := &"speed"
 const SOUND_ROW := &"sound"
 const END_TURN_ROW := &"end_turn_confirm"
-## Windowed or full. Never on the main menu's own options row, which is full at
-## four controls — a fifth puts the setup panel past the 640-wide frame, which
-## `MenuCaptureDriver`'s gate refuses outright — so there it is the F11 key and the
-## menu's Settings page, which lists these same rows (`value_actions`).
+## Windowed or full. Never on the main menu's setup panel, whose Rules row holds
+## match options only — there it is the F11 key and the menu's Settings page,
+## which lists these same rows (`value_actions`).
 const WINDOW_ROW := &"window"
 const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW, WINDOW_ROW]
+## The two motion preferences, offered on the main menu's Settings page only
+## (`menu_page_actions`): they are the device's, not a match's, so they left the
+## setup panel, and the pause menu has no room a battle would miss them from.
+const BATTLE_ANIMATIONS_ROW := &"battle_animations"
+const MENU_MOTION_ROW := &"menu_motion"
+const MENU_PAGE_ROWS: Array[StringName] = [BATTLE_ANIMATIONS_ROW, MENU_MOTION_ROW]
 
 ## How fast moves and battles play out on screen. Never null. Callers read it at
 ## the moment they animate rather than caching it, so a mid-match change takes
@@ -268,10 +276,24 @@ func offered_rows() -> Array[StringName]:
 ## the pause menu and the main menu's Settings page offer one list. `except` drops
 ## a row the page already holds a control of its own for.
 func value_actions(except: Array[StringName] = []) -> Array[Dictionary]:
-	var actions: Array[Dictionary] = []
+	var rows: Array[StringName] = []
 	for row: StringName in offered_rows():
-		if row in except:
-			continue
+		if row not in except:
+			rows.append(row)
+	return _row_actions(rows)
+
+
+## The main menu's Settings page: the value rows less Speed, which the setup panel
+## holds, then the two motion rows only that page offers.
+func menu_page_actions() -> Array[Dictionary]:
+	var actions := value_actions([SPEED_ROW])
+	actions.append_array(_row_actions(MENU_PAGE_ROWS))
+	return actions
+
+
+func _row_actions(rows: Array[StringName]) -> Array[Dictionary]:
+	var actions: Array[Dictionary] = []
+	for row: StringName in rows:
 		actions.append(
 			{
 				"id": row,
@@ -340,6 +362,10 @@ func row_label(row: StringName) -> String:
 			return "End-turn check: %s" % ("On" if end_turn_confirm else "Off")
 		WINDOW_ROW:
 			return "Window: %s" % ("Fullscreen" if fullscreen else "Windowed")
+		BATTLE_ANIMATIONS_ROW:
+			return "Battle animations: %s" % ("On" if battle_animations else "Off")
+		MENU_MOTION_ROW:
+			return "Menu motion: %s" % ("On" if menu_animations else "Off")
 	push_error("Settings: %s names no value row" % row)
 	return ""
 
@@ -358,6 +384,10 @@ func cycle_row(row: StringName, step: int = 1) -> String:
 			set_end_turn_confirm(not end_turn_confirm)
 		WINDOW_ROW:
 			set_fullscreen(not fullscreen)
+		BATTLE_ANIMATIONS_ROW:
+			set_battle_animations(not battle_animations)
+		MENU_MOTION_ROW:
+			set_menu_animations(not menu_animations)
 	return row_label(row)
 
 
@@ -384,7 +414,7 @@ func _has_a_window() -> bool:
 	return not MobileProfile.active()
 
 
-## The setter the menu's checkbox is wired to. Mirrors set_speed: writes through
+## The setter the Battle animations row is wired to. Mirrors set_speed: writes through
 ## immediately so a preference set in one session is honoured in the next even if
 ## the game is closed the hard way, but a pinned or scripted launch (see pin and
 ## _apply_cmdline) never touches the file.
@@ -394,10 +424,11 @@ func set_battle_animations(enabled: bool) -> void:
 		_save()
 
 
-## The setter the Menu motion checkbox is wired to. Mirrors set_battle_animations,
+## The setter the Menu motion row is wired to. Mirrors set_battle_animations,
 ## down to a pinned or scripted launch leaving the file alone.
 func set_menu_animations(enabled: bool) -> void:
 	menu_animations = enabled
+	menu_animations_changed.emit()
 	if _persistent:
 		_save()
 
@@ -453,8 +484,8 @@ func pin_hints(all_retired: bool) -> void:
 ## one that never touched it. The volume, the cut-in toggle and menu motion stand
 ## back for the plainer half of the same reason: a capture poses the menu still
 ## and suppresses the cut-in whatever these preferences say, so all a stored
-## "off" or "Quiet" could reach is the map menu's own Sound row and the toggles'
-## own checkmarks in the frame.
+## "off" or "Quiet" could reach is the map menu's own Sound row and the Settings
+## page's motion rows in the frame.
 ##
 ## The remembered match setup is forgotten for the reason the window stands
 ## back: the menu captures promise the tutorial board leads.
