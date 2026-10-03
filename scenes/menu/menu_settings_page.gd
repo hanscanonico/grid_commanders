@@ -9,8 +9,8 @@ extends Control
 ## the pause menu draws, in the same `ActionMenu`, so a row reads and steps the
 ## same way in both places. Speed is left out because the setup panel already has
 ## its own Speed control — two controls writing one fact is the drift a single
-## authority exists to prevent — and the two animation toggles are on that panel
-## too.
+## authority exists to prevent. Battle animations and Menu motion are offered here
+## alone (`Settings.menu_page_actions`): device preferences, not match options.
 ##
 ## Shown over the menu without tearing it down, like the replays page: the menu
 ## behind it is hidden so no focus or click leaks through, and Back lands on the
@@ -82,7 +82,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func open() -> void:
 	_menu_root.hide()
 	show()
-	var rows := Settings.value_actions([Settings.SPEED_ROW])
+	var rows := Settings.menu_page_actions()
 	rows.append(_BACK)
 	_menu.open(rows, Vector2.ZERO)
 	_centre()

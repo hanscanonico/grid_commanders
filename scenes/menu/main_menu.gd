@@ -1,7 +1,7 @@
 class_name MainMenu
 extends Control
-## Main menu: pick a map and match options, choose commanders on the dedicated
-## selection page, then hand off to the battle scene by staging one MatchRequest.
+## Main menu: pick a map, seat the armies and their generals, set the rules, then
+## hand off to the battle scene by staging one MatchRequest.
 ##
 ## The screen wears the Grid Commander Design System (menu-revamp plan): a header
 ## with the wordmark, a cream Match Setup panel beside an action stack, all drawn
@@ -9,10 +9,9 @@ extends Control
 ## CommanderSelectPanel and CommanderCard — the layout is regular and data-driven,
 ## and code-built styleboxes are the one form this repo can review in a diff (D1).
 ##
-## The flow is untouched. "Start" opens the CommanderSelectPanel (readiness plan
-## G2) for the seats the strip has dealt, shown *over* this menu so the map and fog
-## choices survive a Back; no request is staged until every seat's commander is
-## confirmed there.
+## One surface: "Start" launches with the strip's picks as they stand. A seat
+## row's general chip opens the CommanderSelectPanel for that one seat, shown
+## *over* this menu so the setup survives it either way.
 ## "Continue" bypasses selection — a saved match restores its own commanders. It
 ## is disabled, not hidden, when there is nothing to resume (plan section 2), and
 ## it names what it would resume on the line beneath it: "Day 4 · Scrimmage".
@@ -35,7 +34,7 @@ const PANEL_ROW_GAP := 4
 ## Quit pinned flush with it sat on the screen's last pixels (SK-30).
 const FOOTER_AIR := 6
 
-## Everything the select page hides behind itself when it opens, so no focus or
+## Everything the commander page hides behind itself when it opens, so no focus or
 ## click leaks to the buttons underneath.
 var _menu_root: Control
 
@@ -50,9 +49,6 @@ var _fog_on := false
 ## ends at once and no single child is a reliable witness to it.
 var _column: VBoxContainer
 var _start_button: Button
-## The footer identity chips, one per seat. Rebuilt from the roster rather than
-## written out, so a board that seats four shows four.
-var _chips: HFlowContainer
 ## Why Start is refusing, under the button. A greyed control with no reason is the
 ## affordance this menu was burned by once already (COM-19).
 var _seat_refusal: Label
@@ -70,7 +66,7 @@ var _editor_button: Button
 var _quit_button: Button
 var _press_start: Label
 ## The page's scenery — the drifting board and the blinking PRESS START — and the
-## one switch that holds it, so the Menu motion toggle answers without rebuilding
+## one switch that holds it, so the Menu motion row answers without rebuilding
 ## the screen.
 var _motion := MenuMotion.new()
 ## True while this boot is posing a still frame for a capture, which holds the
@@ -78,15 +74,13 @@ var _motion := MenuMotion.new()
 var _posed := false
 
 var _select_panel: CommanderSelectPanel
+## The general chip that opened the commander page, for focus to return to.
+var _general_chip: Control
 var _replay_panel: ReplayPickerPanel
 ## Pick a war, pick a mission, deploy — the menu's campaign navigation, kept
 ## whole in its own collaborator because it is a different question from the
 ## board-and-fog setup this page is otherwise about.
 var _campaign_flow: MenuCampaignFlow
-## The seats the computer will play, taken off the strip when Start was pressed
-## and carried across the selection page so `confirmed` stages the same table the
-## player set up rather than re-asking a strip they may have walked back to.
-var _pending_ai_teams: Array[int] = []
 
 ## The database the picker parses its roster with.
 var _terrain_db: TerrainDB
@@ -133,8 +127,8 @@ func _ready() -> void:
 
 	_select_panel = CommanderSelectPanel.new()
 	add_child(_select_panel)
-	_select_panel.confirmed.connect(_on_selection_confirmed)
-	_select_panel.cancelled.connect(_on_selection_cancelled)
+	_select_panel.confirmed.connect(_on_general_picked)
+	_select_panel.cancelled.connect(_on_general_picked.bind({}))
 
 	_replay_panel = ReplayPickerPanel.new()
 	add_child(_replay_panel)
@@ -153,18 +147,24 @@ func _ready() -> void:
 		_continue.refresh(_capture_driver.posed_slot(_map_picker.maps()))
 	else:
 		_continue.refresh_from_disk()
-	_start_button.pressed.connect(func() -> void: _open_select(_seat_strip.ai_teams()))
+	_start_button.pressed.connect(
+		func() -> void:
+			_start(_seat_strip.ai_teams(), false, _seat_strip.generals.over(_seat_strip.seats()))
+	)
+	_seat_strip.general_requested.connect(_open_general)
+	Settings.menu_animations_changed.connect(_apply_menu_motion)
 	# The strip is the only writer of who plays what, so the rule that a table with
 	# no computer at it has no difficulty to tune follows it rather than a mode
 	# flag — and follows it the moment a seat changes, not only once Start is
 	# pressed, so the panel can never disagree with the match in hand.
 	_seat_strip.changed.connect(_refresh_seats)
 	_map_picker.map_selected.connect(_on_map_selected)
-	# The map picker chooses a board while it is being built, before the strip and
-	# the footer chips exist, so the selection is re-read once everything does —
-	# the roster is the board's answer and both of them are downstream of it.
+	# The map picker chooses a board while it is being built, before the strip
+	# exists, so the selection is re-read once it does — the roster is the board's
+	# answer and the strip is downstream of it.
 	_deal_seats_for_map()
 	_seat_strip.seat_table(MenuSetupMemory.table(remembered))
+	_seat_strip.seat_generals(MenuSetupMemory.generals(remembered, CommanderDB.load_default()))
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
 	_editor_button.pressed.connect(func() -> void: get_tree().change_scene_to_file(EDITOR_SCENE))
@@ -204,14 +204,11 @@ func _ready() -> void:
 		await _capture_driver.capture(shot_path, campaign_chrome)
 		return
 
-	# Dev captures of the selection page — which seat it walks to and which general
-	# it browses to are the driver's reading of `--co-select`, like every other
+	# Dev captures of the commander page, opened for seat 1 — which general it
+	# browses to is the driver's reading of `--co-select`, like every other
 	# capture flag; what that means on screen is this menu's own flow.
 	if _capture_driver.poses_selection():
-		_open_select([2] as Array[int])
-		var seat := _capture_driver.selection_seat()
-		if seat > 0:
-			_select_panel.debug_advance_to_seat(seat)
+		_open_general(1)
 		var browsed := _capture_driver.selection_commander()
 		if browsed != &"":
 			_select_panel.debug_preview(browsed)
@@ -246,8 +243,8 @@ func _pose_seats() -> void:
 
 ## Draws the whole screen. Both moving things on it — the drifting backdrop and
 ## the blinking PRESS START — are built either way and then held or let go by
-## `_apply_menu_motion`, so the Menu motion toggle takes effect on the press
-## rather than on the next boot.
+## `_apply_menu_motion`, so the Menu motion row takes effect on the press rather
+## than on the next boot.
 func _build() -> void:
 	# The fullest board on the picker's shelf is what drifts behind the page, baked
 	# by the thumbnail renderer — so the scenery can never disagree with the picker
@@ -262,6 +259,9 @@ func _build() -> void:
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 8)
+	# The frame's width less a gap each side, stated rather than left to whatever
+	# the widest row happens to ask for: the seat rows need every pixel of it.
+	column.custom_minimum_size.x = get_viewport_rect().size.x - 2 * UiTheme.GAP
 	center.add_child(column)
 	_column = column
 
@@ -325,6 +325,7 @@ func _build_setup_panel() -> Control:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", UiTheme.panel_box())
 	panel.custom_minimum_size = Vector2(UiTheme.CONTENT_W, 0)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 0)
@@ -363,7 +364,7 @@ func _build_setup_panel() -> Control:
 
 
 ## The seat strip: who plays each army the board deals, how well the computer
-## plays it, and who stands with whom. Built with this panel's own segment builder
+## plays it, who stands with whom and who commands it. Built with this panel's own segment builder
 ## so a seat row is the same control the speed row is — see SeatStrip, which owns
 ## the state.
 func _build_seats_row() -> Control:
@@ -378,10 +379,9 @@ func _build_seats_row() -> Control:
 	return col
 
 
-## Speed and the three checkboxes under one section header: pacing on the left,
-## then fog — this match's — and the two animation settings, which are the
-## device's (game-speed D1). One row rather than two, because the height they gave
-## back is the map picker's second shelf of boards (COM-258).
+## The match's rules under one section header: pacing, then fog. Battle
+## animations and Menu motion are the device's, not the match's, so they are rows
+## of the Settings page (`Settings.menu_page_actions`) rather than options here.
 func _build_options_row() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
@@ -398,26 +398,6 @@ func _build_options_row() -> Control:
 			"Off shows the whole map",
 			"Hides tiles beyond sight",
 			_on_fog_toggled
-		)
-	)
-	row.add_child(
-		_toggle_col(
-			"Battle animations",
-			Settings.battle_animations,
-			"Play the full-screen cut-in when an attack resolves",
-			"Any key skips one in progress",
-			"Cut-ins · any key skips",
-			_on_animations_toggled
-		)
-	)
-	row.add_child(
-		_toggle_col(
-			"Menu motion",
-			Settings.menu_animations,
-			"Drift the board behind the menus and reveal pages a line at a time",
-			"Off holds every menu still",
-			"Drift and blink",
-			_on_menu_animations_toggled
 		)
 	)
 	col.add_child(row)
@@ -444,7 +424,7 @@ func _build_speed_col() -> Control:
 		speed_detail,
 		_on_speed_selected
 	)
-	# Shorter than the tip: the four options share a row and the help lines set it.
+	# Shorter than the tip: the options share a row and the help lines set it.
 	speed.add_child(_option_help("Pacing, not outcomes"))
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# A segment clips rather than sizing to its label, so the tier run states the
@@ -469,8 +449,8 @@ func _toggle_col(
 
 
 ## The rail, read top to bottom: the primary action, the card that resumes a
-## match, the three quiet ways off this page, then a footer — who is at the table,
-## the blink, and Quit pinned last. Grouped rather than evenly spaced, because a
+## match, the quiet ways off this page, then a footer — the blink, and Quit
+## pinned last. Grouped rather than evenly spaced, because a
 ## column of equally-separated rows says nothing about which of them matters.
 func _build_action_stack() -> Control:
 	var col := VBoxContainer.new()
@@ -500,13 +480,6 @@ func _build_action_stack() -> Control:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
 
-	# One chip per seat, rebuilt when the map changes, and flowed because four
-	# chips in a row are wider than the stack they sit under.
-	_chips = HFlowContainer.new()
-	_chips.add_theme_constant_override("h_separation", 4)
-	_chips.alignment = FlowContainer.ALIGNMENT_CENTER
-	col.add_child(_chips)
-
 	_press_start = Label.new()
 	_press_start.text = ControlHints.chip_for(ControlHints.START_PROMPT)
 	_press_start.add_theme_font_override("font", UiTheme.stat())
@@ -519,6 +492,9 @@ func _build_action_stack() -> Control:
 	# Pinned last: leaving is not what this page offers; a browser tab cannot leave.
 	if not OS.has_feature("web"):
 		_quit_button = UiKit.text_link("Quit")
+		# A step lighter than a link on the cream panel: this one sits on the backdrop.
+		_quit_button.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+		_quit_button.add_theme_color_override("font_hover_color", UiTheme.WHITE)
 		col.add_child(_quit_button)
 		_quit_button.pressed.connect(get_tree().quit)
 	var air := Control.new()
@@ -545,20 +521,6 @@ func _build_secondary_group() -> Control:
 	col.add_child(settings)
 	MenuSettingsPage.attach(self, _menu_root, settings)
 	return col
-
-
-## One chip per army at the table — the seats that play, not the seats the board
-## deals, so closing one takes its livery off the footer as it takes it off the
-## board. Resolved over that same roster, which is what the battle resolves over.
-func _refresh_chips(seats: Array[int]) -> void:
-	if _chips == null:
-		return
-	for child in _chips.get_children():
-		_chips.remove_child(child)
-		child.queue_free()
-	var identity := UiTheme.menu_identity_of(seats)
-	for seat in seats:
-		_chips.add_child(UiKit.identity_chip(identity, seat, "P%d" % seat))
 
 
 # --- small helpers -----------------------------------------------------------
@@ -595,31 +557,11 @@ func _on_fog_toggled(pressed: bool) -> void:
 	MenuSetupMemory.remember(_map_picker.selected_map(), _fog_on, _seat_strip)
 
 
-## Battle animations, like speed, is a standing device preference: it writes
-## through the moment it is toggled rather than waiting for a match to start.
-func _on_animations_toggled(pressed: bool) -> void:
-	Settings.set_battle_animations(pressed)
-
-
-## Menu motion, the same kind of standing preference, and the one whose surface is
-## this very page — so the drift and the blink answer on the press rather than on
-## the next boot.
-func _on_menu_animations_toggled(pressed: bool) -> void:
-	Settings.set_menu_animations(pressed)
-	_apply_menu_motion()
-
-
-## Re-dresses the panel for the seats now at the table. Which tier each seat plays
-## at is the strip's own (a chip per row, dead where the computer is not playing
-## that seat — COM-19's rule per seat), so what is left here is Start and the
-## footer.
+## Re-dresses the panel for the seats now at the table. Which tier and general
+## each seat has is the strip's own, so what is left here is Start.
 func _refresh_seats() -> void:
 	_start_button.disabled = not _seat_strip.valid()
 	_seat_refusal.text = _seat_strip.refusal()
-	# The chips are dressed from the table too, not from the board: a seat closed
-	# here is an army that will not be on the map, so its livery leaves the footer
-	# in the same tap (open-seats plan D4).
-	_refresh_chips(_seat_strip.seats())
 	MenuSetupMemory.remember(_map_picker.selected_map(), _fog_on, _seat_strip)
 
 
@@ -639,30 +581,28 @@ func _deal_seats_for_map() -> void:
 	_refresh_seats()
 
 
-# --- flow (unchanged) --------------------------------------------------------
+# --- flow --------------------------------------------------------------------
 
 
-## Opens the selection page for the chosen mode, hiding the menu behind it so no
-## focus or click leaks through to the buttons underneath.
-func _open_select(ai_teams: Array[int]) -> void:
-	_pending_ai_teams = ai_teams
+## Opens the commander page for one seat, hiding the menu behind it so no focus
+## or click leaks through to the buttons underneath. `chip` is where focus lands
+## when the page closes.
+func _open_general(seat: int, chip: Control = null) -> void:
+	_general_chip = chip
 	_menu_root.hide()
-	# The filled seats, not the board's: a commander belongs to an army that plays,
-	# so a closed seat is not a slot to walk (open-seats plan D4).
-	_select_panel.begin(_seat_strip.seats(), ai_teams)
+	var generals := _seat_strip.generals
+	_select_panel.begin_seat(
+		seat, generals.of(seat), generals.besides(seat), _seat_strip.ai_teams().has(seat)
+	)
 
 
-func _on_selection_confirmed(picks: Dictionary) -> void:
-	_start(_pending_ai_teams, false, picks)
-
-
-## Back from selection returns to the setup exactly as it was left: the strip
-## still holds the table that opened the page, Start takes focus back, and the
-## panel re-reads the seats rather than assuming what they say.
-func _on_selection_cancelled() -> void:
+## Back from the commander page, with its one pick or none (`{}`, a Back): the
+## setup is as it was left, and focus returns to the chip that opened the page.
+func _on_general_picked(picks: Dictionary) -> void:
 	_menu_root.show()
-	_refresh_seats()  # the strip is unchanged, but the panel re-reads it either way
-	_start_button.grab_focus()
+	_seat_strip.seat_generals(picks)
+	if _general_chip != null:
+		_general_chip.grab_focus.call_deferred()
 
 
 func _open_replays() -> void:
@@ -683,7 +623,7 @@ func _on_replay_picked(path: String) -> void:
 	get_tree().change_scene_to_file(BATTLE_SCENE)
 
 
-## Back lands on the setup exactly as it was left, like the select page's Back.
+## Back lands on the setup exactly as it was left, like the commander page's Back.
 func _on_replay_cancelled() -> void:
 	_menu_root.show()
 	_replay_button.grab_focus()
@@ -739,7 +679,7 @@ func _chrome() -> Dictionary[String, Control]:
 ## check alone would have photographed the empty band again.
 ##
 ## Claimed only while the strip is on screen: a `--co-select` capture photographs
-## the selection page over a hidden menu, and a control the picture does not show
+## the commander page over a hidden menu, and a control the picture does not show
 ## is not one this frame promises anything about. Read back by
 ## MenuCaptureDriver's capture gate; a capture-driver seam.
 func seats_laid_out() -> bool:

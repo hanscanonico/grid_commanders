@@ -26,3 +26,23 @@ func test_fog_and_the_table_fall_back_on_anything_malformed() -> void:
 	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: garbled_sides}), {}, "sides")
 	var kept := {"who": [0, 1], "sides": [0, 1], "tiers": ["normal", "hard"]}
 	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: kept}), kept, "a sound table")
+
+
+## The seats' generals come back by seat, and an id the roster does not ship or a
+## general a second seat also claims is dropped — that seat plays with none.
+func test_remembered_generals_drop_a_stranger_and_a_duplicate() -> void:
+	var db := CommanderDB.load_default()
+	var stored := {"1": "alina_ward", "2": "no_such_general", "3": "alina_ward", "4": "gideon_holt"}
+	var read := MenuSetupMemory.generals({MenuSetupMemory.GENERALS_KEY: stored}, db)
+	assert_eq(read, {1: &"alina_ward", 4: &"gideon_holt"})
+
+
+func test_generals_fall_back_to_none_on_anything_malformed() -> void:
+	var db := CommanderDB.load_default()
+	assert_eq(MenuSetupMemory.generals({}, db), {}, "nothing remembered")
+	var garbled := {MenuSetupMemory.GENERALS_KEY: ["alina_ward"]}
+	assert_eq(MenuSetupMemory.generals(garbled, db), {}, "a list is not a seat table")
+	var bad_seat := {MenuSetupMemory.GENERALS_KEY: {"one": "alina_ward", "2": 7}}
+	assert_eq(
+		MenuSetupMemory.generals(bad_seat, db), {}, "neither entry names a seat and a general"
+	)

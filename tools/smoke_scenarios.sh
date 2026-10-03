@@ -251,8 +251,8 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # `menu_replays` opens the recordings page over a posed list, for the reason
 # `menu_with_save` poses a save: how many matches the machine running the sweep
 # happens to have played is not something a frame may depend on.
-# `menu_commander_select` is the page Start opens, which no frame held either:
-# the faction tabs, the roster grid and the seat chips. It photographs the page
+# `menu_commander_select` is the commander page a seat's general chip opens,
+# here for seat 1: the faction tabs, the roster grid and the seat chip. It photographs the page
 # as it opens rather than driving it, because Random draws with the global RNG
 # and this sweep's frames are compared byte for byte.
 # `menu_setup_context` additionally poses an all-human table and proves the
