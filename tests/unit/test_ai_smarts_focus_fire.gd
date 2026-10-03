@@ -72,7 +72,6 @@ func test_focus_fire_adds_nothing_to_a_shot_that_already_kills() -> void:
 ## One function rather than three because test_ai_smarts.gd is at the lint's
 ## public-method ceiling; the three scenarios read as one claim about the gate.
 func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
-	var planner := AIUnitActionPlanner.new(_profile())
 	var context := AIPlanningContext.new(unit_db)
 	var battleship_board := "[terrain]\nSSSSSSSS\n[units]\n1 c 0 0\n1 B 4 0\n2 s 7 0"
 
@@ -82,7 +81,7 @@ func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
 	dived_sub.dived = true
 	context.begin(dived)
 	assert_eq(
-		planner._follow_up_damage(context, dived.units_of(1)[0], dived_sub),
+		context.follow_up_damage(dived.units_of(1)[0], dived_sub),
 		0,
 		"a battleship threatens a dived sub with nothing it could legally land",
 	)
@@ -91,7 +90,7 @@ func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
 	var surfaced := Fixture.state(battleship_board)
 	context.begin(surfaced)
 	assert_gt(
-		planner._follow_up_damage(context, surfaced.units_of(1)[0], surfaced.units_of(2)[0]),
+		context.follow_up_damage(surfaced.units_of(1)[0], surfaced.units_of(2)[0]),
 		0,
 		"a surfaced sub is a legal battleship target, so its follow-up still counts",
 	)
@@ -102,7 +101,7 @@ func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
 	hunted_sub.dived = true
 	context.begin(hunted)
 	assert_gt(
-		planner._follow_up_damage(context, hunted.units_of(1)[0], hunted_sub),
+		context.follow_up_damage(hunted.units_of(1)[0], hunted_sub),
 		0,
 		"a cruiser hits submerged, so its follow-up still counts against a dive",
 	)
