@@ -38,20 +38,22 @@ signal map_selected(index: int)
 const MAP_CAPTION_LINES := 2
 ## The gap between cells, in both axes.
 const GRID_GAP := 8
-## How many boards a shelf row holds. Four rather than three since the setup panel
-## grew its section headers: a shorter cell four-up puts a whole shelf and the top
-## of the next in a viewport that used to hold three cells and a sliver, so the
-## roster reads further down for less of the panel's fixed height.
+## How many boards a shelf row holds: four keeps each picture wide enough to read
+## while two rows still fit the panel's height.
 const GRID_COLUMNS := 4
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
 ## The most lines a cell's name may take — a second only for a player's long name.
 const NAME_LINES_MAX := 2
-## A cell's picture: the shelf's width shared `GRID_COLUMNS` ways with the gutters
-## taken out, less this frame's own inset. Every cell is this size — the Random
-## cell draws a die in it — so the grid's rows and gutters are one shape whichever
-## cell is in them.
-const THUMB := Vector2(81.0 - 2 * CARD_PAD, 40)
+## The shelf's usable width: the measured 474px viewport less its 8px scrollbar,
+## rounded down so the four cells come out whole pixels wide.
+const SHELF_W := 464.0
+## One cell's width, the shelf shared `GRID_COLUMNS` ways with the gutters taken out.
+const CELL_W := (SHELF_W - (GRID_COLUMNS - 1) * GRID_GAP) / GRID_COLUMNS
+## A cell's picture: the cell less its frame's inset. Every cell is this size — the
+## Random cell draws a die in it — so the grid's rows and gutters are one shape
+## whichever cell is in them.
+const THUMB := Vector2(CELL_W - 2 * CARD_PAD, 52)
 ## The Random cell's die: one pip, the air between two of them, and the frame's
 ## inset. Sized so the whole face lands well inside a cell's picture slot.
 const DIE_PIP := 4
@@ -130,7 +132,8 @@ func configure(db: TerrainDB, remembered_path: String = "") -> void:
 	# body face rose to 10 (COM-271) — the peek is a board, not the top of a name,
 	# and this is where the taller names are paid for: it is still the one control
 	# here that scrolls by design, so it is still the one that gives ground when
-	# the panel runs out of height.
+	# the panel runs out of height. Two whole rows of the wider cells were measured
+	# and do not fit under a four-seat strip, so the shape stays a cell and a half.
 	_map_scroll.custom_minimum_size = Vector2(0, _cell_height() + 0.5 * _picture_height())
 	_map_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

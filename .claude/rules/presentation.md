@@ -603,7 +603,8 @@ forms named in the root index are in `docs/design_record.md`.
   convention (COM-15/U-11) and the visible match setup (COM-19/U-15) are shipped. The setup slice's
   one durable fact: **`MapCatalog.TUTORIAL_MAP_PATH` is the single authority for which board leads**
   — `ordered()` pins it at item zero and the menu reads the same key for its Tutorial badge, so
-  order and explanation cannot drift; everything else it added (the caption, the per-option help,
+  order and explanation cannot drift; everything else it added (the caption, the per-option help —
+  back in the Speed and Fog tooltips since the map picker took the Rules lines for bigger cards —
   Difficulty dimmed while no computer is seated — asked of the seat strip since FP5, not of a mode)
   is presentation, gated by the `menu_setup_context` capture. D3 is the transition-input convention
   and it has one authority:

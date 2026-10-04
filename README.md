@@ -190,7 +190,7 @@ that photograph a screen the battle scene never draws:
 ```sh
 make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
-make smoke MODES="menu_setup_context" # an all-human table: every option's help line, every tier chip dead
+make smoke MODES="menu_setup_context" # an all-human table: every tier chip dead
 make smoke MODES="menu_four_seats"    # a board that deals more than a duel: its · NP mark, a seat row per army
 make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
 make smoke MODES="menu_campaigns"     # the war picker, every campaign on a fresh profile
@@ -207,7 +207,7 @@ All twelve pose what they photograph, so a capture neither reads nor writes the 
 `user://save.json`, its recordings or its campaign profiles, and all twelve are tests as well as
 pictures: each measures the
 named chrome against the 640×360 logical frame and fails the run if any of it leaves. The first four
-measure the whole centered menu column, its map caption, every option-help line, every seat row *and*
+measure the whole centered menu column, its map caption, every seat row *and*
 its primary actions; `menu_replays`, the six campaign pages and `menu_commander_select` photograph
 their own page over a
 hidden menu, so each measures that page's own heading, first row and button instead — the menu's
@@ -220,7 +220,7 @@ size and stack on one spot, inside every frame and drawn in none of it, so the s
 asked whether it is the table it was dealt.
 
 `menu_setup_context` adds the half a picture cannot prove: that the tutorial board leads the picker
-and its description is printed, that no option-help line is empty, that the reserved caption holds
+and its description is printed, that the reserved caption holds
 for *every* shipped board and not just the one on screen, and that a seat's tier follows who is in it
 — it seats a computer and unseats it again, because a dimmed control photographs the same whether it
 can be undone or not.
