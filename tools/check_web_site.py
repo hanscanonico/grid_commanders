@@ -30,6 +30,8 @@ OG_SIZE = (1200, 630)
 DESCRIPTION_MAX = 160
 FORBIDDEN = "advance wars"
 MANIFEST_HREF = "/manifest.json"
+# Both pages load the one analytics file, which holds the key and the consent banner.
+ANALYTICS_TAG = '<script src="/analytics.js" defer></script>'
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SITE = ROOT / "deploy" / "web" / "site"
@@ -84,6 +86,12 @@ def check_game_head(html: str, where: str) -> None:
         fail("%s: the game page is noindex — it is meant to be found" % where)
     if '<link rel="manifest" href="%s">' % MANIFEST_HREF not in html:
         fail("%s: the game page does not link %s" % (where, MANIFEST_HREF))
+    check_analytics(html, where)
+
+
+def check_analytics(html: str, where: str) -> None:
+    if ANALYTICS_TAG not in html:
+        fail("%s: the page does not load /analytics.js" % where)
 
 
 def check_landing(html: str, where: str) -> None:
@@ -92,6 +100,7 @@ def check_landing(html: str, where: str) -> None:
         fail("%s: no <title>" % where)
 
     check_description(html, where)
+    check_analytics(html, where)
 
     href = canonical(html)
     if href != SITE + "/":
@@ -221,11 +230,20 @@ def main(argv: list[str]) -> int:
     check_robots(SOURCE_SITE / "robots.txt")
     check_sitemap(SOURCE_SITE / "sitemap.xml")
     check_manifest(SOURCE_SITE / "manifest.json")
+    if not (SOURCE_SITE / "analytics.js").is_file():
+        fail("%s: missing" % (SOURCE_SITE / "analytics.js"))
     check_game_head(head_include(), "export_presets.cfg html/head_include")
 
     if argv:
         exported = Path(argv[0])
-        for name in ("index.html", "og-battle.png", "robots.txt", "sitemap.xml", "manifest.json"):
+        for name in (
+            "index.html",
+            "og-battle.png",
+            "robots.txt",
+            "sitemap.xml",
+            "manifest.json",
+            "analytics.js",
+        ):
             if not (exported / name).is_file():
                 fail("%s: the exported site has no %s" % (exported, name))
         game = exported / "play" / "index.html"
