@@ -52,7 +52,8 @@
 		capture_pageview: true,
 		capture_pageleave: true,
 		autocapture: false,
-		disable_session_recording: true
+		disable_session_recording: true,
+		advanced_disable_flags: true
 	});
 	live = true;
 
@@ -76,8 +77,8 @@
 		window.posthog.opt_out_capturing();
 	}
 
-	// A thin bar along the bottom edge. It never takes focus, so the game keeps
-	// the keyboard, and it is gone for good after either button.
+	// A thin bar along the bottom edge, gone for good after either button. A
+	// click never moves focus onto it: Godot reads keys on its canvas only.
 	function showBanner() {
 		var bar = document.createElement("div");
 		bar.setAttribute("role", "region");
@@ -104,10 +105,16 @@
 				"border:1px solid #8a9099", "border-radius:3px",
 				"background:" + background, "color:" + color
 			].join(";");
+			b.addEventListener("mousedown", function (event) {
+				event.preventDefault();
+			});
 			b.addEventListener("click", function (event) {
 				event.stopPropagation();
+				var tabbedIn = document.activeElement === b;
 				choose();
 				bar.remove();
+				var canvas = document.getElementById("canvas");
+				if (tabbedIn && canvas) canvas.focus();
 			});
 			return b;
 		}

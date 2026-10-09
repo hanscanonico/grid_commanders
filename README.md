@@ -629,7 +629,7 @@ off the web), posed by `BattleAnalytics` (`scenes/battle/battle_analytics.gd`): 
 (mode, map, players, humans, difficulty, resumed), `match_ended` (mode, map, result, day),
 `campaign_mission_started` and `campaign_mission_cleared` (campaign, mission). A playback or a
 watched Balance Lab row reports nothing, and a board the player made is reported as `custom`.
-Autocapture and session recording are off.
+Autocapture, session recording and feature flags (`/flags`) are off.
 
 Consent: until a visitor chooses, PostHog keeps its state in memory — no cookie, no localStorage —
 so a visit counts but a return visit is not recognised. A thin bar at the bottom offers Accept and
