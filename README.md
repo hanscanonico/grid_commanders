@@ -617,6 +617,26 @@ token, on `127.0.0.1:8090`. If the existing stock_market tunnel should serve it 
 hostname to that tunnel pointing at this stack's `web` service — the two only need to share a Docker
 network.
 
+### Analytics (PostHog)
+
+Both pages load `deploy/web/site/analytics.js`, served as `/analytics.js`, which holds the one
+PostHog key and the consent banner. **The key is the owner's step**: replace `phc_REPLACE_ME` in
+that file with the project API key (EU cloud, `https://eu.i.posthog.com`) and redeploy. While it is
+the placeholder the file does nothing — no banner, no request to PostHog.
+
+It tracks page views and page leaves on the landing page and `/play/`, never `/admin`, and four
+in-game events the game sends through `Analytics.track` (`scenes/common/analytics.gd`, a no-op
+off the web), posed by `BattleAnalytics` (`scenes/battle/battle_analytics.gd`): `match_started`
+(mode, map, players, humans, difficulty, resumed), `match_ended` (mode, map, result, day),
+`campaign_mission_started` and `campaign_mission_cleared` (campaign, mission). A playback or a
+watched Balance Lab row reports nothing, and a board the player made is reported as `custom`.
+Autocapture and session recording are off.
+
+Consent: until a visitor chooses, PostHog keeps its state in memory — no cookie, no localStorage —
+so a visit counts but a return visit is not recognised. A thin bar at the bottom offers Accept and
+Decline; Accept switches PostHog to cookie persistence, Decline stops capturing, and the choice is
+kept in localStorage (`gc-analytics-consent`), so a visitor who declined never loads PostHog again.
+
 ### The admin page
 
 `https://gridcommanders.com/admin/` is a first-party, read-only site monitor: pageviews and unique

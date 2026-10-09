@@ -88,12 +88,18 @@ func _request_main_menu() -> void:
 ## Watch mode's flags and the staged seating, from the setup. Set once at build;
 ## a launch that named no `--days=` is given the horizon its kind of match is
 ## scored on, and a match with a human seat never reads either.
-func configure(watching: bool, days_cap: int, seated_ai: Array[int]) -> void:
-	_watching = watching
+##
+## The match's start is reported here because its end is reported here too, and
+## both skip the same runs: a playback and a watched row are nobody playing.
+func configure(request: MatchRequest, seated_ai: Array[int]) -> void:
+	_watching = request.watching
 	_seated_ai = seated_ai.duplicate()
-	_days_cap = days_cap
-	if days_cap == MatchRequest.DAYS_UNSET:
-		_days_cap = BalanceMatchEngine.DEFAULT_DAYS if watching else SPECTATOR_DAYS
+	_days_cap = request.days_cap
+	if request.days_cap == MatchRequest.DAYS_UNSET:
+		_days_cap = BalanceMatchEngine.DEFAULT_DAYS if _watching else SPECTATOR_DAYS
+	if _reports():
+		var resumed := request.resume or request.campaign_resume != &""
+		BattleAnalytics.started(_battle, resumed, _human_seats())
 
 
 ## The horizon for a match nobody is playing, and true when it ended the match
@@ -116,6 +122,33 @@ func end_watch_on_day_cap() -> bool:
 	_result_winner = BalanceMatchEngine.tiebreak(game)
 	enter_victory()
 	return true
+
+
+## Whether this match is reported to the web page's analytics: one being played,
+## never a playback or a watched Balance Lab row.
+func _reports() -> bool:
+	return not _watching and _battle.replay_path == ""
+
+
+func _human_seats() -> int:
+	var humans := 0
+	for team: int in _battle.game.teams:
+		if team not in _seated_ai:
+			humans += 1
+	return humans
+
+
+## The analytics' word for how the match went for the one human side: a
+## mission's own verdict inside a campaign, else the board's, and "other" for a
+## draw or a table with no single human side.
+func _human_verdict() -> String:
+	var outcome := CampaignSession.outcome
+	if outcome != null:
+		return "won" if outcome.status == MissionRuntime.Status.SUCCESS else "lost"
+	var human := _human_team()
+	if human == 0 or _result_winner == 0:
+		return "other"
+	return "won" if _battle.game.allied(human, _result_winner) else "lost"
 
 
 ## Whether nobody at this table is a person. Asked of the match's own roster —
@@ -165,6 +198,8 @@ func enter_victory(recorded: String = "") -> void:
 	var focused := victory_screen.get_viewport().gui_get_focus_owner()
 	if focused != null:
 		focused.release_focus()
+	if _reports():
+		BattleAnalytics.ended(_battle, _human_seats(), _human_verdict())
 	if _watching:
 		_report_watched_result()
 
