@@ -10,9 +10,9 @@
 (function () {
 	"use strict";
 
-	// Owner step: paste the PostHog project API key here and redeploy. While it
-	// is the placeholder nothing loads, no banner shows and no request is made.
-	var KEY = "phc_REPLACE_ME";
+	// The PostHog project API key (public by design). Set it back to the
+	// placeholder phc_REPLACE_ME to switch analytics off.
+	var KEY = "phc_x4Nrd4nfUyBF7sTTYZFEz9obMaL5Zd6KdxahokNZZMss";
 	var API_HOST = "https://eu.i.posthog.com";
 	var UI_HOST = "https://eu.posthog.com";
 	var CHOICE_KEY = "gc-analytics-consent";
