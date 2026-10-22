@@ -22,8 +22,11 @@
 # container image (COM-279). The restore watcher below stays as the safety net
 # for every launch that container cannot answer.
 #
+# An agent or script launch is also silent: nobody asked for its music, and it
+# plays at whoever is working at this desk.
+#
 # Usage: [GODOT=<binary>] [GODOT_CAPTURE_RENDERER=auto|container|desktop]
-#        tools/godot_gui.sh <godot args...>
+#        [GODOT_GUI_AUDIO=1] tools/godot_gui.sh <godot args...>
 #
 # The wrapper ends in `exec`, so its pid, exit status, and stdio are Godot's
 # own — timeout-and-kill callers (smoke_scenarios.sh) need no special casing.
@@ -136,6 +139,12 @@ exec_in_container() {
 	exec docker run --rm --init --name "$name" "${mounts[@]}" -w "$repo_dir" \
 		"$GODOT_CAPTURE_IMAGE" "$@"
 }
+
+# A launch that names its own driver keeps it, and GODOT_GUI_AUDIO=1 keeps the
+# sound; a tty launch is the human's own and plays as it always did.
+if ! is_interactive && [[ "${GODOT_GUI_AUDIO:-0}" != 1 && " $* " != *" --audio-driver "* ]]; then
+	set -- --audio-driver Dummy "$@"
+fi
 
 capture_shots="$(capture_dir "$@")"
 capture_renderer="${GODOT_CAPTURE_RENDERER:-auto}"
