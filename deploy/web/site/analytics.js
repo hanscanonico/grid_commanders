@@ -12,7 +12,7 @@
 
 	// The PostHog project API key (public by design). Set it back to the
 	// placeholder phc_REPLACE_ME to switch analytics off.
-	var KEY = "phc_x4Nrd4nfUyBF7sTTYZFEz9obMaL5Zd6KdxahokNZZMss";
+	var KEY = "phc_zxXXRdDUqu4sLTGTAcz9Kp9aGHvSnQpNXYpdwWtpxZwu";
 	var API_HOST = "https://eu.i.posthog.com";
 	var UI_HOST = "https://eu.posthog.com";
 	var CHOICE_KEY = "gc-analytics-consent";
