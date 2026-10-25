@@ -160,6 +160,7 @@ if [[ "$(uname)" == "Darwin" ]] && command -v python3 >/dev/null 2>&1; then
 	expect_engine_ran
 	expect_no_docker
 	((status == 0)) || fail "the launcher exited $status instead of the engine's 0"
+	[[ "$engine_argv" != *"--audio-driver"* ]] || fail "a human's launch was silenced: $engine_argv"
 	pass
 fi
 
@@ -259,6 +260,22 @@ expect_no_engine
 expect_no_docker_run
 expect_stderr_has "GODOT_CAPTURE_RENDERER=container, but the capture path shots is relative"
 ((status != 0)) || fail "the launcher exited 0 with a path the container cannot be given"
+pass
+
+# An agent's launch plays no music at whoever sits at this desk, unless it asks
+# for the sound back or names a driver of its own.
+GODOT_CAPTURE_RENDERER=desktop run_launcher "a tty-less launch is silent" --path .
+[[ "$engine_argv" == *"--audio-driver Dummy"* ]] || fail "no silent driver: $engine_argv"
+pass
+
+GODOT_CAPTURE_RENDERER=desktop GODOT_GUI_AUDIO=1 \
+	run_launcher "GODOT_GUI_AUDIO=1 keeps the sound" --path .
+[[ "$engine_argv" != *"--audio-driver"* ]] || fail "the sound was taken anyway: $engine_argv"
+pass
+
+GODOT_CAPTURE_RENDERER=desktop \
+	run_launcher "a launch naming its own driver keeps it" --audio-driver CoreAudio --path .
+[[ "$engine_argv" != *"Dummy"* ]] || fail "the caller's driver was replaced: $engine_argv"
 pass
 
 # A caller that kills the launcher outright leaves no trap to run, so the
