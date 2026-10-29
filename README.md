@@ -629,12 +629,15 @@ off the web), posed by `BattleAnalytics` (`scenes/battle/battle_analytics.gd`): 
 (mode, map, players, humans, difficulty, resumed), `match_ended` (mode, map, result, day),
 `campaign_mission_started` and `campaign_mission_cleared` (campaign, mission). A playback or a
 watched Balance Lab row reports nothing, and a board the player made is reported as `custom`.
-Autocapture, session recording and feature flags (`/flags`) are off.
+Autocapture and feature flags (`/flags`) are off. Session replay starts only after Accept and copies
+the game canvas at 4 frames a second (Godot keeps its WebGL frames readable, which the copy needs).
+Replay must also be switched on in the PostHog project settings, which `analytics.js` reads at load.
 
 Consent: until a visitor chooses, PostHog keeps its state in memory — no cookie, no localStorage —
 so a visit counts but a return visit is not recognised. A thin bar at the bottom offers Accept and
-Decline; Accept switches PostHog to cookie persistence, Decline stops capturing, and the choice is
-kept in localStorage (`gc-analytics-consent`), so a visitor who declined never loads PostHog again.
+Decline; Accept switches PostHog to cookie persistence and starts the replay, Decline stops
+capturing, and the choice is kept in localStorage (`gc-analytics-consent`), so a visitor who
+declined never loads PostHog again.
 
 ### The admin page
 
