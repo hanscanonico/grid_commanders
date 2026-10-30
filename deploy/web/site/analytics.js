@@ -16,6 +16,9 @@
 	var API_HOST = "https://eu.i.posthog.com";
 	var UI_HOST = "https://eu.posthog.com";
 	var CHOICE_KEY = "gc-analytics-consent";
+	// Accept since the banner has named the recording. A stored "granted" is older:
+	// it allowed the cookie only, so those visitors keep it and are asked again.
+	var ACCEPTED = "granted-replay";
 
 	var live = false;
 
@@ -47,7 +50,7 @@
 	window.posthog.init(KEY, {
 		api_host: API_HOST,
 		ui_host: UI_HOST,
-		persistence: choice === "granted" ? "localStorage+cookie" : "memory",
+		persistence: choice === "granted" || choice === ACCEPTED ? "localStorage+cookie" : "memory",
 		person_profiles: "identified_only",
 		capture_pageview: true,
 		capture_pageleave: true,
@@ -69,7 +72,7 @@
 	});
 	live = true;
 
-	if (choice === "granted") window.posthog.startSessionRecording();
+	if (choice === ACCEPTED) window.posthog.startSessionRecording();
 	else showBanner();
 
 	function remember(value) {
@@ -79,7 +82,7 @@
 	}
 
 	function accept() {
-		remember("granted");
+		remember(ACCEPTED);
 		window.posthog.set_config({ persistence: "localStorage+cookie" });
 		window.posthog.opt_in_capturing();
 		window.posthog.startSessionRecording();

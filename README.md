@@ -640,7 +640,8 @@ Consent: until a visitor chooses, PostHog keeps its state in memory — no cooki
 so a visit counts but a return visit is not recognised. A thin bar at the bottom offers Accept and
 Decline; Accept switches PostHog to cookie persistence and starts the replay, Decline stops
 capturing, and the choice is kept in localStorage (`gc-analytics-consent`), so a visitor who
-declined never loads PostHog again.
+declined never loads PostHog again. A stored `granted` is an Accept from before the bar named the
+recording: that visitor keeps the cookie, is not recorded and is asked again.
 
 ### The admin page
 
