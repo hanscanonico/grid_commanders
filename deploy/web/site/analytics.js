@@ -58,7 +58,14 @@
 		session_recording: {
 			captureCanvas: { recordCanvas: true, canvasFps: 4, canvasQuality: "0.4" }
 		},
-		advanced_disable_feature_flags: true
+		// The banner names the screen, mouse and clicks. The project settings would
+		// add console logs and network timings to the replay.
+		enable_recording_console_log: false,
+		capture_performance: false,
+		advanced_disable_feature_flags: true,
+		// With the project settings loaded, surveys.js would download for every
+		// visitor even though the project has no surveys.
+		disable_surveys: true
 	});
 	live = true;
 

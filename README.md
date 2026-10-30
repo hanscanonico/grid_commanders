@@ -632,6 +632,9 @@ watched Balance Lab row reports nothing, and a board the player made is reported
 Autocapture and feature flags (`/flags`) are off. Session replay starts only after Accept and copies
 the game canvas at 4 frames a second (Godot keeps its WebGL frames readable, which the copy needs).
 Replay must also be switched on in the PostHog project settings, which `analytics.js` reads at load.
+It takes the screen, mouse and clicks only: `analytics.js` turns off the console logs and network
+timings those settings would add. The settings load for every visitor, so heatmaps, dead clicks or
+exception capture switched on there would run before a visitor chooses. Leave them off.
 
 Consent: until a visitor chooses, PostHog keeps its state in memory — no cookie, no localStorage —
 so a visit counts but a return visit is not recognised. A thin bar at the bottom offers Accept and
