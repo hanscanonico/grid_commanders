@@ -100,8 +100,11 @@
 		var text = document.createElement("span");
 		text.textContent = "We count visits with PostHog to learn whether people play. Allow a cookie to tell return visits apart, and a recording of your screen, mouse and clicks to see where players get stuck?";
 		bar.appendChild(text);
-		bar.appendChild(button("Accept", "#6cc24a", "#111618", accept));
-		bar.appendChild(button("Decline", "transparent", "#eee7d6", decline));
+		var choices = document.createElement("span");
+		choices.style.cssText = "display:flex;gap:12px";
+		choices.appendChild(button("Accept", "#6cc24a", "#111618", accept));
+		choices.appendChild(button("Decline", "transparent", "#eee7d6", decline));
+		bar.appendChild(choices);
 
 		function button(label, background, color, choose) {
 			var b = document.createElement("button");
