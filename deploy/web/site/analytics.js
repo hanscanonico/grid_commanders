@@ -4,9 +4,9 @@
 //
 // Until a visitor chooses, PostHog keeps its state in memory: no cookie and no
 // localStorage, so a page view counts but a returning visitor is not recognised.
-// Accept switches to cookie persistence; Decline stops capturing. The choice is
-// remembered in localStorage under CHOICE_KEY, and a declined visitor's next
-// pages never load PostHog at all.
+// Accept switches to cookie persistence and starts session replay; Decline
+// stops capturing. The choice is remembered in localStorage under CHOICE_KEY,
+// and a declined visitor's next pages never load PostHog at all.
 (function () {
 	"use strict";
 
@@ -16,6 +16,9 @@
 	var API_HOST = "https://eu.i.posthog.com";
 	var UI_HOST = "https://eu.posthog.com";
 	var CHOICE_KEY = "gc-analytics-consent";
+	// Accept since the banner has named the recording. A stored "granted" is older:
+	// it allowed the cookie only, so those visitors keep it and are asked again.
+	var ACCEPTED = "granted-replay";
 
 	var live = false;
 
@@ -47,17 +50,30 @@
 	window.posthog.init(KEY, {
 		api_host: API_HOST,
 		ui_host: UI_HOST,
-		persistence: choice === "granted" ? "localStorage+cookie" : "memory",
+		persistence: choice === "granted" || choice === ACCEPTED ? "localStorage+cookie" : "memory",
 		person_profiles: "identified_only",
 		capture_pageview: true,
 		capture_pageleave: true,
 		autocapture: false,
+		// Replay starts only on consent. The game canvas is copied as images; Godot
+		// keeps its WebGL frames readable (preserveDrawingBuffer) on its own.
 		disable_session_recording: true,
-		advanced_disable_flags: true
+		session_recording: {
+			captureCanvas: { recordCanvas: true, canvasFps: 4, canvasQuality: "0.4" }
+		},
+		// The banner names the screen, mouse and clicks. The project settings would
+		// add console logs and network timings to the replay.
+		enable_recording_console_log: false,
+		capture_performance: false,
+		advanced_disable_feature_flags: true,
+		// With the project settings loaded, surveys.js would download for every
+		// visitor even though the project has no surveys.
+		disable_surveys: true
 	});
 	live = true;
 
-	if (choice !== "granted") showBanner();
+	if (choice === ACCEPTED) window.posthog.startSessionRecording();
+	else showBanner();
 
 	function remember(value) {
 		try {
@@ -66,9 +82,10 @@
 	}
 
 	function accept() {
-		remember("granted");
+		remember(ACCEPTED);
 		window.posthog.set_config({ persistence: "localStorage+cookie" });
 		window.posthog.opt_in_capturing();
+		window.posthog.startSessionRecording();
 	}
 
 	function decline() {
@@ -91,10 +108,13 @@
 			"font:13px/1.4 ui-sans-serif,system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 		].join(";");
 		var text = document.createElement("span");
-		text.textContent = "We count visits with PostHog to learn whether people play. Allow a cookie to tell return visits apart?";
+		text.textContent = "We count visits with PostHog to learn whether people play. Allow a cookie to tell return visits apart, and a recording of your screen, mouse and clicks to see where players get stuck?";
 		bar.appendChild(text);
-		bar.appendChild(button("Accept", "#6cc24a", "#111618", accept));
-		bar.appendChild(button("Decline", "transparent", "#eee7d6", decline));
+		var choices = document.createElement("span");
+		choices.style.cssText = "display:flex;gap:12px";
+		choices.appendChild(button("Accept", "#6cc24a", "#111618", accept));
+		choices.appendChild(button("Decline", "transparent", "#eee7d6", decline));
+		bar.appendChild(choices);
 
 		function button(label, background, color, choose) {
 			var b = document.createElement("button");
