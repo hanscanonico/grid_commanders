@@ -33,9 +33,23 @@ def _hull(k: Kit) -> None:
     wall = 0.045
     height = RIM - FLOOR
     for side in (-1.0, 1.0):
-        k.box((bay_x, side * (HULL_HALF - wall / 2 + 0.002), FLOOR + height / 2), (bay_len, wall, height), "team", 0.012, label="wall")
-        k.rivets([(x, side * (HULL_HALF - wall / 2 + 0.002), RIM) for x in (-0.31, -0.2, -0.09, 0.02)], (0, 0, 1), 0.009)
-    k.box((BAY_BACK + wall / 2, 0, FLOOR + height / 2), (wall, HULL_HALF * 2 - 0.02, height), "team_dark", 0.012, label="stern_door")
+        k.box(
+            (bay_x, side * (HULL_HALF - wall / 2 + 0.002), FLOOR + height / 2),
+            (bay_len, wall, height),
+            "team",
+            0.012,
+            label="wall",
+        )
+        k.rivets(
+            [(x, side * (HULL_HALF - wall / 2 + 0.002), RIM) for x in (-0.31, -0.2, -0.09, 0.02)], (0, 0, 1), 0.009
+        )
+    k.box(
+        (BAY_BACK + wall / 2, 0, FLOOR + height / 2),
+        (wall, HULL_HALF * 2 - 0.02, height),
+        "team_dark",
+        0.012,
+        label="stern_door",
+    )
     k.box((BAY_BACK - 0.002, 0, 0.13), (0.02, 0.2, 0.09), "team_dark", 0.006, label="ramp")
 
 

@@ -42,13 +42,29 @@ def _running_gear(k: Kit, side: float) -> None:
     wheel_r = 0.052
     for i in range(4):
         x = -0.235 + i * 0.155
-        k.moves(k.cyl((x, face, 0.066), (x, rim, 0.066), wheel_r, wheel_r * 0.92, "wheel", 12, 0.005, "wheel"), WHEEL, (x, 0.066))
+        k.moves(
+            k.cyl((x, face, 0.066), (x, rim, 0.066), wheel_r, wheel_r * 0.92, "wheel", 12, 0.005, "wheel"),
+            WHEEL,
+            (x, 0.066),
+        )
         cap = rim + side * 0.007
-        k.moves(k.cyl((x, rim - side * 0.002, 0.066), (x, cap, 0.066), 0.022, 0.018, "gunmetal", 8, 0.002, "hub"), WHEEL, (x, 0.066))
+        k.moves(
+            k.cyl((x, rim - side * 0.002, 0.066), (x, cap, 0.066), 0.022, 0.018, "gunmetal", 8, 0.002, "hub"),
+            WHEEL,
+            (x, 0.066),
+        )
     sprocket_x = half - 0.058
-    k.moves(k.cyl((sprocket_x, face, 0.086), (sprocket_x, rim, 0.086), 0.04, 0.038, "gunmetal", 8, 0.004, "sprocket"), WHEEL, (sprocket_x, 0.086))
+    k.moves(
+        k.cyl((sprocket_x, face, 0.086), (sprocket_x, rim, 0.086), 0.04, 0.038, "gunmetal", 8, 0.004, "sprocket"),
+        WHEEL,
+        (sprocket_x, 0.086),
+    )
     idler_x = -half + 0.058
-    k.moves(k.cyl((idler_x, face, 0.086), (idler_x, rim, 0.086), 0.034, 0.032, "wheel", 10, 0.004, "idler"), WHEEL, (idler_x, 0.086))
+    k.moves(
+        k.cyl((idler_x, face, 0.086), (idler_x, rim, 0.086), 0.034, 0.032, "wheel", 10, 0.004, "idler"),
+        WHEEL,
+        (idler_x, 0.086),
+    )
     # The fender: a soft shelf in the army's colour the lens looks down on.
     guard = TRACK_H + 0.014
     k.box((0.0, y + side * 0.002, guard), (TRACK_LEN * 0.975, TRACK_W + 0.024, 0.026), "team", 0.011, label="fender")
@@ -130,10 +146,28 @@ def _gun(k: Kit) -> None:
     z = HULL_TOP + 0.076
     mantlet_x = TURRET_X + 0.205
     k.box((mantlet_x, 0, z), (0.075, 0.13, 0.095), "gunmetal", 0.018, label="mantlet")
-    k.moves(k.cyl((mantlet_x + 0.02, 0, z), (MUZZLE_X - 0.05, 0, z), GUN_R * 1.15, GUN_R, "steel", 12, 0.002, "barrel"), RECOIL)
-    k.moves(k.cyl((mantlet_x + 0.055, 0, z), (mantlet_x + 0.09, 0, z), GUN_R * 1.3, GUN_R * 1.3, "gunmetal", 12, 0.004, "sleeve"), RECOIL)
+    k.moves(
+        k.cyl((mantlet_x + 0.02, 0, z), (MUZZLE_X - 0.05, 0, z), GUN_R * 1.15, GUN_R, "steel", 12, 0.002, "barrel"),
+        RECOIL,
+    )
+    k.moves(
+        k.cyl(
+            (mantlet_x + 0.055, 0, z),
+            (mantlet_x + 0.09, 0, z),
+            GUN_R * 1.3,
+            GUN_R * 1.3,
+            "gunmetal",
+            12,
+            0.004,
+            "sleeve",
+        ),
+        RECOIL,
+    )
     # The muzzle brake: the one thing a toy tank must have.
-    k.moves(k.cyl((MUZZLE_X - 0.055, 0, z), (MUZZLE_X, 0, z), GUN_R * 1.5, GUN_R * 1.42, "gunmetal", 12, 0.005, "brake"), RECOIL)
+    k.moves(
+        k.cyl((MUZZLE_X - 0.055, 0, z), (MUZZLE_X, 0, z), GUN_R * 1.5, GUN_R * 1.42, "gunmetal", 12, 0.005, "brake"),
+        RECOIL,
+    )
     k.marker("muzzle", (MUZZLE_X, 0, z))
 
 

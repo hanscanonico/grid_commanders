@@ -88,6 +88,8 @@ static func _add(parent: Node3D, mesh: Mesh, material: Material) -> void:
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
 	instance.material_override = material
+	# Flat ground has nothing to cast, and it is most of the board's triangles.
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(instance)
 
 

@@ -58,7 +58,9 @@ def window(k: Kit, x: float, y: float, z: float, facing: str, w: float = 0.05, h
         k.box((x, y - depth * 1.5, z), (w, 0.003, 0.005), "bone", 0.0, label="bar")
         k.box((x, y - depth * 1.5, z), (0.005, 0.003, h), "bone", 0.0, label="bar")
         for side in (-1.0, 1.0):
-            k.box((x + side * (w / 2 + 0.019), y - depth, z), (0.024, depth, h + 0.008), "team_dark", 0.0, label="shutter")
+            k.box(
+                (x + side * (w / 2 + 0.019), y - depth, z), (0.024, depth, h + 0.008), "team_dark", 0.0, label="shutter"
+            )
     else:
         sign = 1.0 if facing == "right" else -1.0
         k.box((x + sign * depth / 2, y, z), (depth, w + 0.014, h + 0.014), "bone", 0.0, label="frame")
@@ -67,7 +69,9 @@ def window(k: Kit, x: float, y: float, z: float, facing: str, w: float = 0.05, h
         k.box((x + sign * depth * 1.5, y, z), (0.003, 0.005, h), "bone", 0.0, label="bar")
 
 
-def gable_roof(k: Kit, x: float, y: float, wall_top: float, sx: float, sy: float, rise: float, role: str = "team") -> None:
+def gable_roof(
+    k: Kit, x: float, y: float, wall_top: float, sx: float, sy: float, rise: float, role: str = "team"
+) -> None:
     """A tiled roof with its ridge along Y, overhanging, courses stepped on the bake's copy."""
     half = sx / 2 + 0.024
     y0, y1 = y - sy / 2 - 0.026, y + sy / 2 + 0.026
@@ -147,7 +151,9 @@ def paving(
             k.box(((a + b) / 2, cy, z + 0.001), (b - a - gap, depth - gap, 0.004), role, 0.0, label="slab")
 
 
-def slope(p0: tuple[float, float], p1: tuple[float, float], courses: int, lap: float = 0.008) -> list[tuple[float, float]]:
+def slope(
+    p0: tuple[float, float], p1: tuple[float, float], courses: int, lap: float = 0.008
+) -> list[tuple[float, float]]:
     """A line from `p0` to `p1` stepped into laps, as sheets or tiles overlap down a roof."""
     points = []
     for i in range(courses):
@@ -218,13 +224,17 @@ def battlement(
     return part
 
 
-def merlon_ring(k: Kit, x: float, y: float, z: float, r: float, count: int, role: str = "plaster", h: float = 0.03) -> None:
+def merlon_ring(
+    k: Kit, x: float, y: float, z: float, r: float, count: int, role: str = "plaster", h: float = 0.03
+) -> None:
     """The teeth round a tower's top, unbevelled on the game's copy to stay cheap."""
     width = math.tau * r / count * 0.58
     for i in range(count):
         angle = math.tau * i / count
         part = k.box((0, 0, 0), (0.026, width, h), role, 0.003 if k.hi else 0.0, label="merlon")
-        part.matrix_world = Matrix.Translation((x + r * math.cos(angle), y + r * math.sin(angle), z + h / 2)) @ Matrix.Rotation(angle, 4, "Z")
+        part.matrix_world = Matrix.Translation(
+            (x + r * math.cos(angle), y + r * math.sin(angle), z + h / 2)
+        ) @ Matrix.Rotation(angle, 4, "Z")
         k.boost(part, 0.55)
 
 
@@ -252,11 +262,16 @@ def dome(
         sections.append(
             (
                 rz * math.sin(phi),
-                [(radius * math.cos(math.tau * j / sides), radius * math.sin(math.tau * j / sides)) for j in range(sides)],
+                [
+                    (radius * math.cos(math.tau * j / sides), radius * math.sin(math.tau * j / sides))
+                    for j in range(sides)
+                ],
             )
         )
     tip = rx * 0.05
-    sections.append((rz, [(tip * math.cos(math.tau * j / sides), tip * math.sin(math.tau * j / sides)) for j in range(sides)]))
+    sections.append(
+        (rz, [(tip * math.cos(math.tau * j / sides), tip * math.sin(math.tau * j / sides)) for j in range(sides)])
+    )
     return k.loft(sections, role, 0.0, (x, y, z), label)
 
 

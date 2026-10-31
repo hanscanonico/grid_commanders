@@ -28,8 +28,26 @@ def build(k: Kit) -> None:
         (hall_x + 0.085, hall_y + 0.03, 0),
         "spire",
     )
-    k.cyl((hall_x + 0.085, hall_y + 0.03 - 0.066, tower_top - 0.055), (hall_x + 0.085, hall_y + 0.03 - 0.072, tower_top - 0.055), 0.036, None, "bone", 12, 0.002, "clock")
-    k.cyl((hall_x + 0.085, hall_y + 0.03, tower_top + 0.125), (hall_x + 0.085, hall_y + 0.03, tower_top + 0.205), 0.006, None, "gunmetal", 6, 0.0, "pole")
+    k.cyl(
+        (hall_x + 0.085, hall_y + 0.03 - 0.066, tower_top - 0.055),
+        (hall_x + 0.085, hall_y + 0.03 - 0.072, tower_top - 0.055),
+        0.036,
+        None,
+        "bone",
+        12,
+        0.002,
+        "clock",
+    )
+    k.cyl(
+        (hall_x + 0.085, hall_y + 0.03, tower_top + 0.125),
+        (hall_x + 0.085, hall_y + 0.03, tower_top + 0.205),
+        0.006,
+        None,
+        "gunmetal",
+        6,
+        0.0,
+        "pole",
+    )
     k.box((hall_x + 0.122, hall_y + 0.03, tower_top + 0.18), (0.07, 0.008, 0.045), "team_light", 0.002, label="flag")
     # The door the hall opens onto the square, its steps down to the cobbles.
     k.box((hall_x - 0.06, hall_y - 0.15, PLINTH + 0.052), (0.075, 0.016, 0.104), "wood", 0.004, label="door")
@@ -42,7 +60,9 @@ def build(k: Kit) -> None:
     # Two low shops at the front corners: they must never hide the unit behind them.
     house(k, -0.335, -0.2, 0.2, 0.24, 0.105, 1, 0.075)
     house(k, 0.335, -0.2, 0.2, 0.24, 0.105, 1, 0.075)
-    k.box((0.335, -0.335, PLINTH + 0.098), (0.2, 0.05, 0.012), "team_light", 0.003, label="awning").rotation_euler[0] = 0.0
+    k.box((0.335, -0.335, PLINTH + 0.098), (0.2, 0.05, 0.012), "team_light", 0.003, label="awning").rotation_euler[
+        0
+    ] = 0.0
     k.box((-0.335, -0.335, PLINTH + 0.098), (0.2, 0.05, 0.012), "team_light", 0.003, label="awning")
 
     # Life on the square: a well, a lamp, two crates by the shop.

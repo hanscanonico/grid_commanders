@@ -45,7 +45,12 @@ def _plan(along: float = 1.0, across: float = 1.0, grow: float = 0.0) -> naval.O
 def _hull(k: Kit) -> None:
     k.loft([(naval.KEEL, _plan(0.95, 0.7)), (0.012, _plan(0.99, 0.94)), (DECK, _plan())], "team", 0.012, label="hull")
     if k.hi:
-        k.loft([(naval.KEEL + 0.012, _plan(0.97, 0.82, 0.004)), (0.0, _plan(0.99, 0.93, 0.004))], "team_dark", 0.0, label="stripe")
+        k.loft(
+            [(naval.KEEL + 0.012, _plan(0.97, 0.82, 0.004)), (0.0, _plan(0.99, 0.93, 0.004))],
+            "team_dark",
+            0.0,
+            label="stripe",
+        )
         k.loft([(-0.001, _plan(0.99, 0.94, 0.004)), (0.021, _plan(0.993, 0.95, 0.004))], "foam", 0.0, label="stripe")
     naval.wash(k, _plan(0.99, 0.94), 0.04, 0.01)
 
@@ -59,7 +64,9 @@ def _well(k: Kit) -> None:
             k.box((x0 + 0.04 + i * 0.066, 0, DECK + 0.007), (0.012, 0.26, 0.004), "gunmetal", 0.0, label="rib")
     for side in (-1.0, 1.0):
         y = side * 0.158
-        k.box((0.03, y, (DECK + WALL_TOP) / 2 - 0.006), (0.58, 0.04, WALL_TOP - DECK + 0.012), "team", 0.012, label="wall")
+        k.box(
+            (0.03, y, (DECK + WALL_TOP) / 2 - 0.006), (0.58, 0.04, WALL_TOP - DECK + 0.012), "team", 0.012, label="wall"
+        )
         k.box((0.03, y, WALL_TOP), (0.6, 0.05, 0.016), "team_light", 0.006, label="rail")
         k.rivets([(-0.2 + i * 0.066, side * 0.179, 0.105) for i in range(8)], (0, side, 0), 0.007)
     # What it carries: two lashed bundles, so the well never reads as a hole.

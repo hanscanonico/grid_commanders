@@ -26,7 +26,10 @@ SEA = Limits(0.42, -0.06, 0.45)
 PROPERTY = Limits(0.46, 0.0, 0.85)
 
 LIMITS = {
-    **{name: LAND for name in ("infantry", "mech", "recon", "tank", "md_tank", "apc", "anti_air", "rockets", "missiles")},
+    **{
+        name: LAND
+        for name in ("infantry", "mech", "recon", "tank", "md_tank", "apc", "anti_air", "rockets", "missiles")
+    },
     "artillery": Limits(0.42, 0.0, 0.8, 0.22),
     "infantry_lone": Limits(0.42, 0.0, 0.6),
     "mech_lone": Limits(0.42, 0.0, 0.6),
@@ -43,8 +46,7 @@ def check(name: str, obj) -> list[str]:
     world = [obj.matrix_world @ v.co for v in obj.data.vertices]
     xs, ys, zs = [p.x for p in world], [p.y for p in world], [p.z for p in world]
     print(
-        f"BOUNDS {name}: x {min(xs):.3f}..{max(xs):.3f}  y {min(ys):.3f}..{max(ys):.3f}  "
-        f"z {min(zs):.3f}..{max(zs):.3f}"
+        f"BOUNDS {name}: x {min(xs):.3f}..{max(xs):.3f}  y {min(ys):.3f}..{max(ys):.3f}  z {min(zs):.3f}..{max(zs):.3f}"
     )
     if limits is None:
         return []

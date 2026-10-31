@@ -44,7 +44,9 @@ def _body(k: Kit) -> None:
                 (x - 0.06, 0.222),
                 (x - 0.115, 0.192),
             ]
-            k.side_profile(arch, side * (HALF_Y - 0.01), side * (WHEEL_Y + WHEEL_W / 2 - 0.006), "team", 0.014, "fender")
+            k.side_profile(
+                arch, side * (HALF_Y - 0.01), side * (WHEEL_Y + WHEEL_W / 2 - 0.006), "team", 0.014, "fender"
+            )
     k.seam((0.07, 0, DECK + 0.001), (0.006, 0.28, 0.003))
     k.rivets([(x, -HALF_Y - 0.0005, 0.13) for x in (-0.09, -0.03, 0.03, 0.09)], (0, -1, 0), 0.007)
 
@@ -69,7 +71,10 @@ def _gun(k: Kit) -> None:
     k.box((x + 0.015, y, GUN_Z), (0.105, 0.052, 0.05), "gunmetal", 0.008, label="receiver")
     k.box((x + 0.075, y, GUN_Z + 0.002), (0.024, 0.13, 0.082), "team_dark", 0.007, label="gun_shield")
     k.moves(k.cyl((x + 0.05, y, GUN_Z), (MUZZLE_X - 0.03, y, GUN_Z), 0.021, 0.019, "steel", 8, 0.002, "barrel"), RECOIL)
-    k.moves(k.cyl((MUZZLE_X - 0.04, y, GUN_Z), (MUZZLE_X, y, GUN_Z), 0.028, 0.026, "gunmetal", 8, 0.003, "flash_hider"), RECOIL)
+    k.moves(
+        k.cyl((MUZZLE_X - 0.04, y, GUN_Z), (MUZZLE_X, y, GUN_Z), 0.028, 0.026, "gunmetal", 8, 0.003, "flash_hider"),
+        RECOIL,
+    )
     k.marker("muzzle", (MUZZLE_X, y, GUN_Z))
 
 

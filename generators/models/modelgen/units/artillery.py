@@ -41,14 +41,28 @@ def _mount(k: Kit) -> None:
     for side in (-1.0, 1.0):
         y = side * 0.105
         k.side_profile(
-            [(x - 0.15, HULL_TOP + 0.02), (x + 0.15, HULL_TOP + 0.02), (x + 0.075, PIVOT[1] + 0.075), (x - 0.095, PIVOT[1] + 0.05)],
+            [
+                (x - 0.15, HULL_TOP + 0.02),
+                (x + 0.15, HULL_TOP + 0.02),
+                (x + 0.075, PIVOT[1] + 0.075),
+                (x - 0.095, PIVOT[1] + 0.05),
+            ],
             y - 0.03,
             y + 0.03,
             "team",
             0.018,
             "cheek",
         )
-        k.cyl((x, y - side * 0.05, PIVOT[1]), (x, y + side * 0.034, PIVOT[1]), 0.036, 0.036, "gunmetal", 10, 0.004, "trunnion")
+        k.cyl(
+            (x, y - side * 0.05, PIVOT[1]),
+            (x, y + side * 0.034, PIVOT[1]),
+            0.036,
+            0.036,
+            "gunmetal",
+            10,
+            0.004,
+            "trunnion",
+        )
     k.box((x - 0.145, 0, HULL_TOP + 0.05), (0.04, 0.17, 0.06), "team_dark", 0.01, label="back_plate")
 
 

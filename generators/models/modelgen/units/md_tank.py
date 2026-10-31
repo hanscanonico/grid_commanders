@@ -21,10 +21,16 @@ def _running_gear(k: Kit, side: float) -> None:
     top = track_run(k, side, TRACK_LEN, TRACK_H, TRACK_W, TRACK_Y, 5, 0.056)
     y = side * TRACK_Y
     # The skirt: one heavy plate hung over the wheels' tops, so the flank reads as a wall.
-    k.box((0.0, side * (TRACK_Y + TRACK_W / 2 + 0.014), 0.13), (TRACK_LEN * 0.9, 0.026, 0.08), "team", 0.01, label="skirt")
+    k.box(
+        (0.0, side * (TRACK_Y + TRACK_W / 2 + 0.014), 0.13), (TRACK_LEN * 0.9, 0.026, 0.08), "team", 0.01, label="skirt"
+    )
     k.box((-0.2, y, top + 0.03), (0.26, 0.115, 0.06), "team_dark", 0.014, label="bin")
     k.box((0.19, y, top + 0.012), (0.27, 0.1, 0.024), "team_dark", 0.008, label="locker")
-    k.rivets([(x, side * (TRACK_Y + TRACK_W / 2 + 0.0275), 0.13) for x in (-0.3, -0.18, -0.06, 0.06, 0.18, 0.3)], (0, side, 0), 0.009)
+    k.rivets(
+        [(x, side * (TRACK_Y + TRACK_W / 2 + 0.0275), 0.13) for x in (-0.3, -0.18, -0.06, 0.06, 0.18, 0.3)],
+        (0, side, 0),
+        0.009,
+    )
 
 
 def _hull(k: Kit) -> None:
@@ -100,15 +106,42 @@ def _turret(k: Kit) -> None:
 def _gun(k: Kit) -> None:
     mantlet_x = TURRET_X + 0.195
     k.box((mantlet_x, 0, GUN_Z), (0.075, 0.155, 0.108), "gunmetal", 0.018, label="mantlet")
-    k.moves(k.cyl((mantlet_x + 0.02, 0, GUN_Z), (MUZZLE_X - 0.05, 0, GUN_Z), GUN_R * 1.1, GUN_R, "steel", 12, 0.002, "barrel"), RECOIL)
-    k.moves(k.cyl((mantlet_x + 0.05, 0, GUN_Z), (mantlet_x + 0.085, 0, GUN_Z), GUN_R * 1.22, GUN_R * 1.22, "gunmetal", 12, 0.004, "sleeve"), RECOIL)
+    k.moves(
+        k.cyl(
+            (mantlet_x + 0.02, 0, GUN_Z), (MUZZLE_X - 0.05, 0, GUN_Z), GUN_R * 1.1, GUN_R, "steel", 12, 0.002, "barrel"
+        ),
+        RECOIL,
+    )
+    k.moves(
+        k.cyl(
+            (mantlet_x + 0.05, 0, GUN_Z),
+            (mantlet_x + 0.085, 0, GUN_Z),
+            GUN_R * 1.22,
+            GUN_R * 1.22,
+            "gunmetal",
+            12,
+            0.004,
+            "sleeve",
+        ),
+        RECOIL,
+    )
     # The boxy muzzle brake, wider than it is tall, so the top-down lens gets a hammerhead.
     brake_len = 0.075
-    k.moves(k.box((MUZZLE_X - brake_len / 2, 0, GUN_Z), (brake_len, 0.178, 0.112), "gunmetal", 0.014, label="brake"), RECOIL)
+    k.moves(
+        k.box((MUZZLE_X - brake_len / 2, 0, GUN_Z), (brake_len, 0.178, 0.112), "gunmetal", 0.014, label="brake"), RECOIL
+    )
     if k.hi:
         for side in (-1.0, 1.0):
-            k.box((MUZZLE_X - brake_len / 2, side * 0.06, GUN_Z + 0.056), (0.022, 0.05, 0.004), "rubber", 0.0, label="brake_slot")
-            k.box((MUZZLE_X - brake_len / 2, side * 0.089, GUN_Z), (0.022, 0.004, 0.06), "rubber", 0.0, label="brake_slot")
+            k.box(
+                (MUZZLE_X - brake_len / 2, side * 0.06, GUN_Z + 0.056),
+                (0.022, 0.05, 0.004),
+                "rubber",
+                0.0,
+                label="brake_slot",
+            )
+            k.box(
+                (MUZZLE_X - brake_len / 2, side * 0.089, GUN_Z), (0.022, 0.004, 0.06), "rubber", 0.0, label="brake_slot"
+            )
     k.marker("muzzle", (MUZZLE_X, 0, GUN_Z))
 
 

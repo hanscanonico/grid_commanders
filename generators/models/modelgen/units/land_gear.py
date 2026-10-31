@@ -26,7 +26,9 @@ def raised(pivot: tuple[float, float], degrees: float) -> Callable[[float, float
     return at
 
 
-def track_run(k: Kit, side: float, length: float, height: float, width: float, y_mid: float, wheels: int, wheel_r: float) -> float:
+def track_run(
+    k: Kit, side: float, length: float, height: float, width: float, y_mid: float, wheels: int, wheel_r: float
+) -> float:
     """One track with its road wheels, sprocket, idler and fender. Answers the fender's top."""
     half = length / 2
     y = side * y_mid
@@ -53,13 +55,38 @@ def track_run(k: Kit, side: float, length: float, height: float, width: float, y
     span = length - 0.27
     for i in range(wheels):
         x = -span / 2 + span * i / (wheels - 1)
-        k.moves(k.cyl((x, face, wheel_z), (x, rim, wheel_z), wheel_r, wheel_r * 0.92, "wheel", 12, 0.005, "wheel"), WHEEL, (x, wheel_z))
-        k.moves(k.cyl((x, rim - side * 0.002, wheel_z), (x, cap, wheel_z), wheel_r * 0.42, wheel_r * 0.35, "gunmetal", 8, 0.002, "hub"), WHEEL, (x, wheel_z))
+        k.moves(
+            k.cyl((x, face, wheel_z), (x, rim, wheel_z), wheel_r, wheel_r * 0.92, "wheel", 12, 0.005, "wheel"),
+            WHEEL,
+            (x, wheel_z),
+        )
+        k.moves(
+            k.cyl(
+                (x, rim - side * 0.002, wheel_z),
+                (x, cap, wheel_z),
+                wheel_r * 0.42,
+                wheel_r * 0.35,
+                "gunmetal",
+                8,
+                0.002,
+                "hub",
+            ),
+            WHEEL,
+            (x, wheel_z),
+        )
     end_z = height * 0.57
     sprocket_x = half - 0.058
-    k.moves(k.cyl((sprocket_x, face, end_z), (sprocket_x, rim, end_z), 0.04, 0.038, "gunmetal", 8, 0.004, "sprocket"), WHEEL, (sprocket_x, end_z))
+    k.moves(
+        k.cyl((sprocket_x, face, end_z), (sprocket_x, rim, end_z), 0.04, 0.038, "gunmetal", 8, 0.004, "sprocket"),
+        WHEEL,
+        (sprocket_x, end_z),
+    )
     idler_x = -half + 0.058
-    k.moves(k.cyl((idler_x, face, end_z), (idler_x, rim, end_z), 0.034, 0.032, "wheel", 10, 0.004, "idler"), WHEEL, (idler_x, end_z))
+    k.moves(
+        k.cyl((idler_x, face, end_z), (idler_x, rim, end_z), 0.034, 0.032, "wheel", 10, 0.004, "idler"),
+        WHEEL,
+        (idler_x, end_z),
+    )
     guard = height + 0.014
     k.box((0.0, y + side * 0.002, guard), (length * 0.975, width + 0.024, 0.026), "team", 0.011, label="fender")
     return guard + 0.013
@@ -72,8 +99,25 @@ def tyre(k: Kit, x: float, side: float, y_mid: float, radius: float, width: floa
     outer = side * (y_mid + width / 2)
     k.moves(k.cyl((x, inner, z), (x, outer, z), radius, radius * 0.95, "rubber", 14, 0.012, "tyre"), WHEEL, (x, z))
     face = outer + side * 0.012
-    k.moves(k.cyl((x, outer - side * 0.004, z), (x, face, z), radius * 0.6, radius * 0.52, "wheel", 10, 0.005, "wheel_rim"), WHEEL, (x, z))
-    k.moves(k.cyl((x, face - side * 0.002, z), (x, face + side * 0.008, z), radius * 0.24, radius * 0.18, "gunmetal", 6, 0.002, "hub"), WHEEL, (x, z))
+    k.moves(
+        k.cyl((x, outer - side * 0.004, z), (x, face, z), radius * 0.6, radius * 0.52, "wheel", 10, 0.005, "wheel_rim"),
+        WHEEL,
+        (x, z),
+    )
+    k.moves(
+        k.cyl(
+            (x, face - side * 0.002, z),
+            (x, face + side * 0.008, z),
+            radius * 0.24,
+            radius * 0.18,
+            "gunmetal",
+            6,
+            0.002,
+            "hub",
+        ),
+        WHEEL,
+        (x, z),
+    )
     if k.hi:
         lugs = 18
         for i in range(lugs):

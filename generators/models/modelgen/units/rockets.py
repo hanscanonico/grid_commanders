@@ -24,7 +24,16 @@ def _tubes(k: Kit, at, length: float, width: float, base: float, count: int, r: 
     for i in range(count):
         y = -width / 2 + pitch * (i + 0.5)
         k.cyl(at(0.012, y, base), at(length - 0.012, y, base), r, r, "team_light", 8, 0.003, "tube")
-        k.cyl(at(length - 0.022, y, base), at(length + 0.006, y, base), r * 1.1, r * 1.1, "gunmetal", 8, 0.003, "tube_mouth")
+        k.cyl(
+            at(length - 0.022, y, base),
+            at(length + 0.006, y, base),
+            r * 1.1,
+            r * 1.1,
+            "gunmetal",
+            8,
+            0.003,
+            "tube_mouth",
+        )
         k.cyl(at(length + 0.002, y, base), at(length + 0.042, y, base), r * 0.82, r * 0.3, "brass", 6, 0.002, "nose")
 
 
@@ -37,7 +46,14 @@ def _launcher(k: Kit) -> None:
     back = 0.012
     origin = at(back, 0, LOW_H + 0.024)
     high = raised((origin[0], origin[2]), RAISE)
-    k.box(high(HIGH_LEN / 2, 0, HIGH_H / 2 - 0.004), (HIGH_LEN, HIGH_W, HIGH_H), "team_dark", 0.014, tilt=TILT, label="high_box")
+    k.box(
+        high(HIGH_LEN / 2, 0, HIGH_H / 2 - 0.004),
+        (HIGH_LEN, HIGH_W, HIGH_H),
+        "team_dark",
+        0.014,
+        tilt=TILT,
+        label="high_box",
+    )
     _tubes(k, high, HIGH_LEN, HIGH_W - 0.03, HIGH_H + 0.002, 3, TUBE_R)
     k.marker("muzzle", high(HIGH_LEN + 0.042, 0, HIGH_H + 0.002))
     if k.hi:

@@ -62,8 +62,22 @@ def _guns(k: Kit) -> None:
     # One breech block in the army's light tone holds all four: at the board it's a single mass.
     k.box(at(0.0), (0.13, 0.27, 0.075), "team_light", 0.016, tilt=math.radians(ELEVATION), label="breech")
     for y, w in ((-0.1, 0.0), (-0.035, 0.012), (0.035, 0.012), (0.1, 0.0)):
-        k.moves(k.cyl(at(0.04, y, w), at(GUN_ENDS - 0.03, y, w), GUN_RS * 1.05, GUN_RS, "steel", 8, 0.002, "barrel"), RECOIL)
-        k.moves(k.cyl(at(GUN_ENDS - 0.04, y, w), at(GUN_ENDS, y, w), GUN_RS * 1.35, GUN_RS * 1.25, "gunmetal", 8, 0.003, "flash_hider"), RECOIL)
+        k.moves(
+            k.cyl(at(0.04, y, w), at(GUN_ENDS - 0.03, y, w), GUN_RS * 1.05, GUN_RS, "steel", 8, 0.002, "barrel"), RECOIL
+        )
+        k.moves(
+            k.cyl(
+                at(GUN_ENDS - 0.04, y, w),
+                at(GUN_ENDS, y, w),
+                GUN_RS * 1.35,
+                GUN_RS * 1.25,
+                "gunmetal",
+                8,
+                0.003,
+                "flash_hider",
+            ),
+            RECOIL,
+        )
     k.marker("muzzle", at(GUN_ENDS, -0.035, 0.012))
 
 

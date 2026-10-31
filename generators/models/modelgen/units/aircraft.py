@@ -169,7 +169,7 @@ def rotor(k: Kit, blades: int, radius: float, chord: float, turned: float) -> No
         blade = turn(
             [(0.02, -half * 0.55), (grip, -half), (tip, -half), (tip, half), (grip, half), (0.02, half * 0.55)]
         )
-        k.loft([(0.001, blade), (0.001 + thick, blade)], "steel", 0.004, label="blade")
+        k.loft([(0.001, blade), (0.001 + thick, blade)], "gunmetal", 0.004, label="blade")
         end = turn(
             [
                 (tip - 0.002, -half - 0.001),

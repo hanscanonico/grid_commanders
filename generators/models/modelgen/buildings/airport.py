@@ -141,12 +141,24 @@ def _hangar(k: Kit) -> None:
     k.box((HANGAR_X, mouth_y, base + 0.078), (mouth_half * 2, 0.012, 0.156), "gunmetal", 0.0, label="mouth")
     leaf = mouth_half * 0.46
     for side in (-1.0, 1.0):
-        k.box((HANGAR_X + side * (mouth_half - leaf / 2), mouth_y - 0.012, base + 0.08), (leaf, 0.012, 0.16), "team_light", 0.003, label="leaf")
+        k.box(
+            (HANGAR_X + side * (mouth_half - leaf / 2), mouth_y - 0.012, base + 0.08),
+            (leaf, 0.012, 0.16),
+            "team_light",
+            0.003,
+            label="leaf",
+        )
         if k.hi:
             for i in range(1, 4):
                 seam_x = HANGAR_X + side * (mouth_half - leaf * i / 4)
                 k.box((seam_x, mouth_y - 0.019, base + 0.08), (0.004, 0.003, 0.16), "team", 0.0, label="leaf_seam")
-    k.box((HANGAR_X, mouth_y - 0.014, base + 0.172), (mouth_half * 2 + 0.03, 0.018, 0.02), "team_dark", 0.004, label="door_rail")
+    k.box(
+        (HANGAR_X, mouth_y - 0.014, base + 0.172),
+        (mouth_half * 2 + 0.03, 0.018, 0.02),
+        "team_dark",
+        0.004,
+        label="door_rail",
+    )
 
 
 def _windsock(k: Kit, x: float, y: float) -> None:

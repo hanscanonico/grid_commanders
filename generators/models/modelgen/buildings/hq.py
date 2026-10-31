@@ -12,7 +12,18 @@ import math
 
 from ..kit import Kit
 from ..paint import Role, grey
-from .parts import PLINTH, battlement, dome, flag, flatten_small_bevels, merlon_ring, paving, star_outline, uncap, wall_star
+from .parts import (
+    PLINTH,
+    battlement,
+    dome,
+    flag,
+    flatten_small_bevels,
+    merlon_ring,
+    paving,
+    star_outline,
+    uncap,
+    wall_star,
+)
 
 CAGE = 0.015
 REACH = 0.035
@@ -78,7 +89,9 @@ def _keep(k: Kit) -> None:
     k.box((0, y, KEEP_TOP + 0.004), (KEEP_SX + 0.03, KEEP_SY + 0.03, 0.012), "bone", 0.003, label="string")
     half = (KEEP_SX + 0.016) / 2
     for dy in (-(KEEP_SY + 0.016) / 2, (KEEP_SY + 0.016) / 2):
-        k.boost(battlement(k, (0, y + dy), KEEP_SX + 0.03, KEEP_TOP + 0.008, 6, "x", "wall", wall=0.012, tooth=0.034), 0.5)
+        k.boost(
+            battlement(k, (0, y + dy), KEEP_SX + 0.03, KEEP_TOP + 0.008, 6, "x", "wall", wall=0.012, tooth=0.034), 0.5
+        )
     for dx in (-half, half):
         k.boost(battlement(k, (dx, y), KEEP_SY + 0.03, KEEP_TOP + 0.008, 5, "y", "wall", wall=0.012, tooth=0.034), 0.5)
     k.box((0, y, KEEP_TOP + 0.012), (KEEP_SX, KEEP_SY, 0.012), "stone", 0.0, label="roof")
@@ -95,7 +108,20 @@ def _crown(k: Kit) -> None:
     y = KEEP_Y
     base = KEEP_TOP + 0.018
     uncap(k, k.cyl((0, y, base), (0, y, DRUM_TOP), DRUM_R, DRUM_R * 0.97, "plaster", 12, 0.006, "drum"))
-    uncap(k, k.cyl((0, y, DRUM_TOP - 0.002), (0, y, DRUM_TOP + 0.016), DOME_R + 0.008, DOME_R + 0.004, "brass", 12, 0.004, "dome_ring"), bottom=False)
+    uncap(
+        k,
+        k.cyl(
+            (0, y, DRUM_TOP - 0.002),
+            (0, y, DRUM_TOP + 0.016),
+            DOME_R + 0.008,
+            DOME_R + 0.004,
+            "brass",
+            12,
+            0.004,
+            "dome_ring",
+        ),
+        bottom=False,
+    )
     dome_z = DRUM_TOP + 0.014
     k.boost(dome(k, 0, y, dome_z, DOME_R, DOME_RISE, "team", rings=5, sides=12, power=0.82), 1.4)
     top = dome_z + DOME_RISE
@@ -111,7 +137,9 @@ def _crown(k: Kit) -> None:
         for t in range(7):
             phi = (t / 6) * math.pi / 2 * 0.94
             radius = (DOME_R + 0.003) * math.cos(phi) ** 0.82
-            points.append((radius * math.cos(angle), y + radius * math.sin(angle), dome_z + (DOME_RISE + 0.003) * math.sin(phi)))
+            points.append(
+                (radius * math.cos(angle), y + radius * math.sin(angle), dome_z + (DOME_RISE + 0.003) * math.sin(phi))
+            )
         for p0, p1 in zip(points, points[1:]):
             k.cyl(p0, p1, 0.0045, None, "team_dark", 4, 0.0, "dome_rib")
     # Tall windows round the drum, on the half the lens sees.
@@ -137,11 +165,23 @@ def _banner(k: Kit, x: float, y: float, z_top: float, length: float) -> None:
     width = 0.058
     k.box((x, y - 0.006, z_top - length / 2), (width, 0.01, length), "team", 0.002, label="banner")
     k.box((x, y - 0.012, z_top + 0.002), (width + 0.022, 0.012, 0.012), "brass", 0.003, label="banner_rod")
-    outline = [(x - width / 2, z_top - length), (x, z_top - length - 0.03), (x + width / 2, z_top - length), (x + width / 2, z_top - length + 0.01), (x - width / 2, z_top - length + 0.01)]
+    outline = [
+        (x - width / 2, z_top - length),
+        (x, z_top - length - 0.03),
+        (x + width / 2, z_top - length),
+        (x + width / 2, z_top - length + 0.01),
+        (x - width / 2, z_top - length + 0.01),
+    ]
     k.side_profile(outline, y - 0.011, y - 0.001, "team", 0.0, "banner_tip")
     if not k.hi:
         return
-    k.box((x, y - 0.012, z_top - length / 2), (width - 0.02, 0.002, length - 0.03), "team_light", 0.0, label="banner_stripe")
+    k.box(
+        (x, y - 0.012, z_top - length / 2),
+        (width - 0.02, 0.002, length - 0.03),
+        "team_light",
+        0.0,
+        label="banner_stripe",
+    )
     wall_star(k, x, y - 0.012, z_top - 0.05, 0.022, "bone", depth=0.002, bevel=0.0)
 
 
@@ -157,7 +197,16 @@ def _star_plate(k: Kit, x: float, y: float, z: float) -> None:
     if k.hi:
         rim = (face[0], face[1] + normal_y * 0.002, face[2] + normal_z * 0.002)
         k.cyl(face, rim, r, r - 0.002, "team_dark", 16, 0.0, "shield_rim")
-        k.cyl((rim[0], rim[1], rim[2]), (rim[0], rim[1] + normal_y * 0.002, rim[2] + normal_z * 0.002), r - 0.01, r - 0.01, "team_light", 16, 0.0, "shield_face")
+        k.cyl(
+            (rim[0], rim[1], rim[2]),
+            (rim[0], rim[1] + normal_y * 0.002, rim[2] + normal_z * 0.002),
+            r - 0.01,
+            r - 0.01,
+            "team_light",
+            16,
+            0.0,
+            "shield_face",
+        )
     k.boost(wall_star(k, face[0], face[1], face[2], r * 0.82, "brass", depth=0.012, lean=lean, bevel=0.003), 1.5)
 
 
@@ -172,13 +221,22 @@ def _portal(k: Kit) -> None:
     k.seam((0, front - 0.018, deck + 0.05), (0.005, 0.003, 0.098), "brass")
     for side in (-1.0, 1.0):
         cx = side * 0.078
-        uncap(k, k.cyl((cx, front - 0.03, deck), (cx, front - 0.03, deck + 0.128), 0.0165, 0.014, "bone", 8, 0.003, "column"))
+        uncap(
+            k,
+            k.cyl(
+                (cx, front - 0.03, deck), (cx, front - 0.03, deck + 0.128), 0.0165, 0.014, "bone", 8, 0.003, "column"
+            ),
+        )
     top = deck + 0.128
     k.box((0, front - 0.022, top + 0.008), (0.2, 0.05, 0.016), "bone", 0.003, label="entablature")
     pediment = [(-0.108, top + 0.016), (0.108, top + 0.016), (0.0, top + 0.07)]
     k.side_profile(pediment, front - 0.048, front + 0.002, "team", 0.004, "pediment")
     if k.hi:
-        k.side_profile(star_outline(0.016), front - 0.051, front - 0.047, "brass", 0.0, "tiny_star").location = (0.0, 0.0, top + 0.036)
+        k.side_profile(star_outline(0.016), front - 0.051, front - 0.047, "brass", 0.0, "tiny_star").location = (
+            0.0,
+            0.0,
+            top + 0.036,
+        )
 
 
 def _tower(k: Kit, x: float, y: float, r: float, top: float, cap_rise: float, windows: int) -> None:
@@ -186,9 +244,15 @@ def _tower(k: Kit, x: float, y: float, r: float, top: float, cap_rise: float, wi
     z = PLINTH
     uncap(k, k.cyl((x, y, z), (x, y, z + 0.05), r + 0.014, r, "stone", 12, 0.005, "tower_foot"))
     uncap(k, k.cyl((x, y, z + 0.05), (x, y, top), r, r, "plaster", 12, 0.005, "tower"))
-    uncap(k, k.cyl((x, y, top - 0.006), (x, y, top + 0.012), r + 0.012, r + 0.012, "team_dark", 12, 0.003, "tower_band"), top=False)
+    uncap(
+        k,
+        k.cyl((x, y, top - 0.006), (x, y, top + 0.012), r + 0.012, r + 0.012, "team_dark", 12, 0.003, "tower_band"),
+        top=False,
+    )
     merlon_ring(k, x, y, top + 0.012, r + 0.002, 8, "wall", 0.026)
-    uncap(k, k.cyl((x, y, top + 0.012), (x, y, top + 0.014 + cap_rise), r + 0.002, 0.005, "team", 12, 0.003, "tower_cap"))
+    uncap(
+        k, k.cyl((x, y, top + 0.012), (x, y, top + 0.014 + cap_rise), r + 0.002, 0.005, "team", 12, 0.003, "tower_cap")
+    )
     if not k.hi:
         return
     for i in range(windows):
@@ -205,7 +269,11 @@ def _bastion(k: Kit, x: float, y: float) -> None:
     top = z + 0.13
     uncap(k, k.cyl((x, y, z), (x, y, z + 0.034), r + 0.012, r, "stone", 12, 0.005, "bastion_foot"))
     uncap(k, k.cyl((x, y, z + 0.034), (x, y, top), r, r, "plaster", 12, 0.005, "bastion"))
-    uncap(k, k.cyl((x, y, top - 0.006), (x, y, top + 0.018), r + 0.01, r + 0.01, "team", 12, 0.003, "bastion_band"), top=False)
+    uncap(
+        k,
+        k.cyl((x, y, top - 0.006), (x, y, top + 0.018), r + 0.01, r + 0.01, "team", 12, 0.003, "bastion_band"),
+        top=False,
+    )
     merlon_ring(k, x, y, top + 0.018, r + 0.004, 8, "wall", 0.026)
     # A brass gun on each, the fort's teeth.
     gun_z = top + 0.046
@@ -226,7 +294,9 @@ def _curtain_wall(k: Kit) -> None:
         x = side * WALL_X
         k.box((x, middle, z + h / 2), (thick, length, h), "plaster", 0.006, label="curtain")
         k.seam((x, middle, z + 0.012), (thick + 0.008, length, 0.024), "stone")
-        k.boost(battlement(k, (x, middle), length, z + h - 0.002, 9, "y", "wall", thick=thick, wall=0.002, tooth=0.03), 0.6)
+        k.boost(
+            battlement(k, (x, middle), length, z + h - 0.002, 9, "y", "wall", thick=thick, wall=0.002, tooth=0.03), 0.6
+        )
     gate_gap = 0.09
     run = WALL_X - 0.076 - gate_gap
     for side in (-1.0, 1.0):
@@ -234,12 +304,18 @@ def _curtain_wall(k: Kit) -> None:
         low = 0.045
         k.box((x, -0.41, z + low / 2), (run, 0.036, low), "plaster", 0.006, label="front_wall")
         k.seam((x, -0.41, z + 0.012), (run, 0.044, 0.024), "stone")
-        k.boost(battlement(k, (x, -0.41), run, z + low - 0.002, 3, "x", "wall", thick=0.036, wall=0.002, tooth=0.024), 0.6)
+        k.boost(
+            battlement(k, (x, -0.41), run, z + low - 0.002, 3, "x", "wall", thick=0.036, wall=0.002, tooth=0.024), 0.6
+        )
         # The gate's two piers, each with a brass finial.
         px = side * (gate_gap - 0.012)
         k.box((px, -0.41, z + 0.055), (0.05, 0.05, 0.11), "stone", 0.005, label="gate_pier")
         k.box((px, -0.41, z + 0.113), (0.062, 0.062, 0.012), "bone", 0.003, label="pier_cap")
-        uncap(k, k.cyl((px, -0.41, z + 0.119), (px, -0.41, z + 0.138), 0.016, 0.011, "brass", 6, 0.002, "pier_finial"), top=False)
+        uncap(
+            k,
+            k.cyl((px, -0.41, z + 0.119), (px, -0.41, z + 0.138), 0.016, 0.011, "brass", 6, 0.002, "pier_finial"),
+            top=False,
+        )
 
 
 def _wings(k: Kit) -> None:
@@ -277,7 +353,19 @@ def build(k: Kit) -> None:
     _tower(k, 0.36, 0.355, TOWER_R, 0.36, 0.17, 3)
     _bastion(k, -0.362, -0.36)
     _bastion(k, 0.362, -0.36)
-    flag(k, 0.0, KEEP_Y, DRUM_TOP + DOME_RISE + 0.03, 0.85, 0.25, 0.115, "team_light", pole_r=0.0095, tail=0.04, thick=0.014)
+    flag(
+        k,
+        0.0,
+        KEEP_Y,
+        DRUM_TOP + DOME_RISE + 0.03,
+        0.85,
+        0.25,
+        0.115,
+        "team_light",
+        pole_r=0.0095,
+        tail=0.04,
+        thick=0.014,
+    )
     flatten_small_bevels(k, 0.005)
     k.marker("emblem", (0.0, -0.18, PLINTH))
     k.marker("emblem_edge", (0.12, -0.18, PLINTH))

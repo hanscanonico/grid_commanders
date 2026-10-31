@@ -34,9 +34,18 @@ def _water(k: Kit) -> None:
     # Foam where the wall meets the water, and a few long swells to catch the light.
     k.box((0, EDGE_Y - 0.008, z), (0.92, 0.012, 0.003), "foam", 0.0, label="foam")
     swells = (
-        (-0.38, -0.3, 0.07), (-0.2, -0.32, 0.09), (0.06, -0.3, 0.06), (0.26, -0.33, 0.1),
-        (-0.3, -0.37, 0.1), (-0.07, -0.38, 0.08), (0.14, -0.37, 0.07), (0.38, -0.38, 0.06),
-        (-0.4, -0.43, 0.06), (-0.17, -0.44, 0.1), (0.07, -0.43, 0.08), (0.3, -0.44, 0.09),
+        (-0.38, -0.3, 0.07),
+        (-0.2, -0.32, 0.09),
+        (0.06, -0.3, 0.06),
+        (0.26, -0.33, 0.1),
+        (-0.3, -0.37, 0.1),
+        (-0.07, -0.38, 0.08),
+        (0.14, -0.37, 0.07),
+        (0.38, -0.38, 0.06),
+        (-0.4, -0.43, 0.06),
+        (-0.17, -0.44, 0.1),
+        (0.07, -0.43, 0.08),
+        (0.3, -0.44, 0.09),
     )
     for x, y, length in swells:
         k.box((x, y, z), (length, 0.012, 0.003), "swell", 0.0, label="swell")
@@ -55,12 +64,24 @@ def _quay(k: Kit) -> None:
     courses = 3
     for row in range(courses):
         z = WATER_TOP + (row + 0.5) * (QUAY - WATER_TOP) / courses
-        k.box((0, EDGE_Y - 0.001, z + (QUAY - WATER_TOP) / courses / 2), (0.92, 0.002, 0.004), "gunmetal", 0.0, label="course")
+        k.box(
+            (0, EDGE_Y - 0.001, z + (QUAY - WATER_TOP) / courses / 2),
+            (0.92, 0.002, 0.004),
+            "gunmetal",
+            0.0,
+            label="course",
+        )
         pitch = 0.09
         for i in range(11):
             bx = -0.45 + i * pitch + (pitch / 2 if row % 2 else 0.0)
             if abs(bx) < 0.455:
-                k.box((bx, EDGE_Y - 0.001, z), (0.004, 0.002, (QUAY - WATER_TOP) / courses), "gunmetal", 0.0, label="joint")
+                k.box(
+                    (bx, EDGE_Y - 0.001, z),
+                    (0.004, 0.002, (QUAY - WATER_TOP) / courses),
+                    "gunmetal",
+                    0.0,
+                    label="joint",
+                )
     # Weed along the tide line.
     k.box((0, EDGE_Y - 0.001, WATER_TOP + 0.006), (0.92, 0.003, 0.012), "gunmetal", 0.0, label="tide")
     # Crane rails let into the stone.

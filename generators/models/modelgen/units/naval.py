@@ -28,10 +28,7 @@ Outline = list[tuple[float, float]]
 
 # A ship takes no road dust: the finish's dust is brown stipple from the ground up.
 ROLES: dict[str, Role] = {
-    **{
-        name: replace(PAINTS[name], dust=0.0)
-        for name in ("gunmetal", "rubber", "glass", "brass", "canvas", "wood")
-    },
+    **{name: replace(PAINTS[name], dust=0.0) for name in ("gunmetal", "rubber", "glass", "brass", "canvas", "wood")},
     "steel": replace(PAINTS["steel"], colour=(0.28, 0.31, 0.35), dust=0.0),
     # Fewer chips than a tank's: a ship's long edges turn them into white noise at board size.
     "team": replace(PAINTS["team"], dust=0.0, chip=0.3, edge=0.75),
@@ -119,7 +116,15 @@ def hull(
     wash(k, plan.outline(*scaled_at(0.0, deck)), foam_width, bow_wave, limit)
 
 
-def deck_plate(k: Kit, plan: Plan, deck: float, thick: float, role: str, sheer: tuple[float, float] = (0.0, 0.0), inset: float = 0.012) -> None:
+def deck_plate(
+    k: Kit,
+    plan: Plan,
+    deck: float,
+    thick: float,
+    role: str,
+    sheer: tuple[float, float] = (0.0, 0.0),
+    inset: float = 0.012,
+) -> None:
     """The planked or plated top, its edge just inside the hull's, rising with it at the bow."""
     inner = replace(plan, half_len=plan.half_len - inset, half_beam=plan.half_beam - inset)
     part = k.loft([(deck - 0.002, inner.outline()), (deck + thick, inner.outline())], role, 0.003, label="deck")
@@ -207,7 +212,16 @@ def house(front: float, back: float, half_y: float, scale: float = 1.0, facing: 
     """A gun house's plan: a flat-faced block, its front a little narrower, corners cut."""
     f, b, y = front * scale, back * scale, half_y * scale
     cut = 0.018 * scale
-    points = [(f, y * 0.8), (f - cut, y), (-b + cut, y), (-b, y * 0.88), (-b, -y * 0.88), (-b + cut, -y), (f - cut, -y), (f, -y * 0.8)]
+    points = [
+        (f, y * 0.8),
+        (f - cut, y),
+        (-b + cut, y),
+        (-b, y * 0.88),
+        (-b, -y * 0.88),
+        (-b + cut, -y),
+        (f - cut, -y),
+        (f, -y * 0.8),
+    ]
     return [(facing * x, py) for x, py in points]
 
 
@@ -224,7 +238,16 @@ def turret(
 ) -> tuple[float, float, float]:
     """An army-coloured gun house on a dark ring with its guns; answers its first gun's mouth."""
     front, back, half_y, height = size
-    k.cyl((x, 0, floor - 0.004), (x, 0, floor + 0.02), min(front, back, half_y) * 0.98, None, "gunmetal", 12, 0.003, "ring")
+    k.cyl(
+        (x, 0, floor - 0.004),
+        (x, 0, floor + 0.02),
+        min(front, back, half_y) * 0.98,
+        None,
+        "gunmetal",
+        12,
+        0.003,
+        "ring",
+    )
     k.loft(
         [
             (floor + 0.014, house(front, back, half_y, 0.97, facing)),
@@ -252,7 +275,9 @@ def turret(
     return mouth
 
 
-def gun(k: Kit, x: float, floor: float, y: float, length: float, radius: float, facing: float, recoil: bool) -> tuple[float, float, float]:
+def gun(
+    k: Kit, x: float, floor: float, y: float, length: float, radius: float, facing: float, recoil: bool
+) -> tuple[float, float, float]:
     """A barrel leaving a turret at the old model's trunnion and pitch; answers its mouth."""
     dx, dz = facing * math.cos(GUN_PITCH), math.sin(GUN_PITCH)
     root = (x + facing * GUN_TRUNNION[0], y, floor + GUN_TRUNNION[1])

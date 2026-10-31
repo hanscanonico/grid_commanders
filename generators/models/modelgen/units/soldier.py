@@ -135,7 +135,15 @@ class Man:
     def pivot(self, x: float, z: float) -> tuple[float, float]:
         return (self.x + x * self.s, z * self.s)
 
-    def loft(self, rings: list[tuple[float, float, float, float]], role: str, bevel: float, label: str, y: float = 0.0, sides: int = 10):
+    def loft(
+        self,
+        rings: list[tuple[float, float, float, float]],
+        role: str,
+        bevel: float,
+        label: str,
+        y: float = 0.0,
+        sides: int = 10,
+    ):
         """Stacked ellipses of (z, radius forward, radius across, shift forward)."""
         s = self.s
         sides = self.around(sides) * (2 if self.k.hi else 1)
@@ -156,7 +164,9 @@ class Man:
         s = self.s
         return self.k.box(self.p(*at), [v * s for v in size], role, bevel * s, taper, tilt, label)
 
-    def cyl(self, a, b, r0: float, r1: float | None, role: str, sides: int = 10, bevel: float = 0.003, label: str = "cyl"):
+    def cyl(
+        self, a, b, r0: float, r1: float | None, role: str, sides: int = 10, bevel: float = 0.003, label: str = "cyl"
+    ):
         s = self.s
         r1 = r0 if r1 is None else r1
         return self.k.cyl(self.p(*a), self.p(*b), r0 * s, r1 * s, role, self.around(sides), bevel * s, label)
@@ -255,9 +265,13 @@ class Man:
             w, h = r * 0.15, r * 0.21
             self.ball(on_skull(y, eye_z, 0.0006), (0.002, w, h), "eye_white", 4, 8, "eye_white")
             self.ball(on_skull(y, eye_z - h * 0.05, 0.0014), (0.002, w * 0.66, h * 0.76), "ink", 4, 8, "pupil")
-            self.ball(on_skull(y + w * 0.2, eye_z + h * 0.34, 0.0024), (0.002, w * 0.2, h * 0.18), "spark", 3, 6, "spark")
+            self.ball(
+                on_skull(y + w * 0.2, eye_z + h * 0.34, 0.0024), (0.002, w * 0.2, h * 0.18), "spark", 3, 6, "spark"
+            )
             self.ball(on_skull(y, eye_z + h * 1.3, 0.001), (0.002, w * 1.25, r * 0.05), "hair", 3, 8, "brow")
-            self.ball(on_skull(side * r * 0.62, z0 - r * 0.3, 0.0003), (0.0015, r * 0.15, r * 0.09), "blush", 3, 6, "blush")
+            self.ball(
+                on_skull(side * r * 0.62, z0 - r * 0.3, 0.0003), (0.0015, r * 0.15, r * 0.09), "blush", 3, 6, "blush"
+            )
         self.ball(on_skull(0.0, z0 - r * 0.15, 0.002), (0.004, r * 0.09, r * 0.1), "skin", 3, 6, "nose")
         self.ball(on_skull(0.0, z0 - r * 0.5, 0.001), (0.002, r * 0.17, r * 0.035), "lip", 3, 8, "mouth")
 
@@ -300,7 +314,11 @@ class Man:
         ]
         if self.k.hi:
             parts.append(self.box(on_rifle(-0.012, 0.022), (0.03, 0.01, 0.008), "steel", 0.0, tilt=tilt, label="bolt"))
-            parts.append(self.box(on_rifle(muzzle - 0.022, 0.02), (0.008, 0.008, 0.012), "gunmetal", 0.0, tilt=tilt, label="sight"))
+            parts.append(
+                self.box(
+                    on_rifle(muzzle - 0.022, 0.02), (0.008, 0.008, 0.012), "gunmetal", 0.0, tilt=tilt, label="sight"
+                )
+            )
         # The near hand has the grip; the far arm reaches across the belly to the forestock.
         wrap_near = (0.0, -0.014, -0.004)
         wrap_far = (0.0, 0.0, 0.017)
@@ -311,7 +329,11 @@ class Man:
             hand = (grab[0] + wrap[0], grab[1] + wrap[1], grab[2] + wrap[2])
             y = side * b.shoulder_y
             wrist = (hand[0] - 0.014, hand[1] + (0.014 if side > 0 else 0.0), hand[2] + 0.002)
-            parts.append(self.ball((0.0, y, b.shoulder_z + 0.004), (b.shoulder_r, b.shoulder_r, b.shoulder_r), "team", label="shoulder"))
+            parts.append(
+                self.ball(
+                    (0.0, y, b.shoulder_z + 0.004), (b.shoulder_r, b.shoulder_r, b.shoulder_r), "team", label="shoulder"
+                )
+            )
             parts.append(
                 self.tube(
                     [
@@ -349,11 +371,18 @@ class Man:
         parts = [
             self.cyl(on_tube(tail + 0.03), on_tube(front), tube_r, None, "team", 10, 0.0, "tube"),
             self.cyl(on_tube(tail), on_tube(tail + 0.034), tube_r + 0.012, tube_r, "gunmetal", 10, 0.004, "flare"),
-            self.cyl(on_tube(front - 0.02), on_tube(front - 0.002), tube_r + 0.005, None, "gunmetal", 10, 0.003, "collar"),
+            self.cyl(
+                on_tube(front - 0.02), on_tube(front - 0.002), tube_r + 0.005, None, "gunmetal", 10, 0.003, "collar"
+            ),
             self.cyl(on_tube(front - 0.004), on_tube(front + 0.05), 0.031, 0.027, "bone", 10, 0.004, "warhead"),
             self.cyl(on_tube(front + 0.048), on_tube(tip), 0.018, 0.007, "brass", 10, 0.0, "fuze"),
             self.box(grip_at, (0.024, 0.026, 0.03), "gunmetal", 0.004, tilt=tilt, label="grip"),
-            self.ball((0.0, y + 0.006, b.shoulder_z + 0.004), (b.shoulder_r, b.shoulder_r * 0.9, b.shoulder_r * 0.78), "armour", label="pad"),
+            self.ball(
+                (0.0, y + 0.006, b.shoulder_z + 0.004),
+                (b.shoulder_r, b.shoulder_r * 0.9, b.shoulder_r * 0.78),
+                "armour",
+                label="pad",
+            ),
             self.tube(
                 [
                     ((0.0, y + 0.006, b.shoulder_z), b.arm_r * 0.96, b.arm_r),
@@ -366,14 +395,23 @@ class Man:
             self.ball(hand, (0.026, 0.026, 0.026), "team_dark", label="gauntlet"),
         ]
         if self.k.hi:
-            parts.append(self.box(on_tube(0.0, tube_r + 0.008), (0.022, 0.008, 0.012), "gunmetal", 0.0, tilt=tilt, label="sight"))
+            parts.append(
+                self.box(on_tube(0.0, tube_r + 0.008), (0.022, 0.008, 0.012), "gunmetal", 0.0, tilt=tilt, label="sight")
+            )
             for a in (-0.05, 0.04):
-                parts.append(self.cyl(on_tube(a), on_tube(a + 0.008), tube_r + 0.002, None, "leather", 10, 0.0, "tube_band"))
+                parts.append(
+                    self.cyl(on_tube(a), on_tube(a + 0.008), tube_r + 0.002, None, "leather", 10, 0.0, "tube_band")
+                )
         for part in parts:
             self.k.moves(part, near, pivot)
         y = b.shoulder_y
         free = [
-            self.ball((0.0, y, b.shoulder_z + 0.004), (b.shoulder_r, b.shoulder_r * 0.9, b.shoulder_r * 0.78), "armour", label="pad"),
+            self.ball(
+                (0.0, y, b.shoulder_z + 0.004),
+                (b.shoulder_r, b.shoulder_r * 0.9, b.shoulder_r * 0.78),
+                "armour",
+                label="pad",
+            ),
             self.tube(
                 [
                     ((0.0, y, b.shoulder_z), b.arm_r * 0.96, b.arm_r),
@@ -418,10 +456,19 @@ class Man:
         self.cyl((x + 0.004, -0.072, 0.208), (x + 0.004, 0.072, 0.208), 0.027, None, "canvas", 10, 0.0, "bedroll")
         # Armour over the chest, what makes him a heavy at a glance.
         chest = b.torso[3]
-        self.box((chest[1] * 0.72, 0.0, chest[0] - 0.008), (0.034, chest[2] * 1.5, 0.066), "armour", 0.012, taper=0.9, label="breastplate")
+        self.box(
+            (chest[1] * 0.72, 0.0, chest[0] - 0.008),
+            (0.034, chest[2] * 1.5, 0.066),
+            "armour",
+            0.012,
+            taper=0.9,
+            label="breastplate",
+        )
         if self.k.hi:
             plate_x = chest[1] * 0.72 + 0.017
-            self.k.rivets([self.p(plate_x, side * 0.044, chest[0] + 0.012) for side in (-1.0, 1.0)], (1, 0, 0), 0.006 * self.s)
+            self.k.rivets(
+                [self.p(plate_x, side * 0.044, chest[0] + 0.012) for side in (-1.0, 1.0)], (1, 0, 0), 0.006 * self.s
+            )
             for dz in (0.145, 0.105):
                 self.box((x - 0.037, 0.0, dz), (0.004, 0.11, 0.008), "leather", 0.0, label="pack_strap")
 

@@ -43,7 +43,12 @@ def _tooth(k: Kit, x0: float, width: float, base: float) -> None:
         outline = [(x0, base - 0.004), *top, (crest + 0.006, base + RISE - 0.004)]
         k.side_profile(outline, y0, y1, "team", 0.0, "sheets")
     else:
-        outline = [(x0, base - 0.004), (x0, base + thick), (crest, base + RISE + thick), (crest + 0.006, base + RISE - 0.004)]
+        outline = [
+            (x0, base - 0.004),
+            (x0, base + thick),
+            (crest, base + RISE + thick),
+            (crest + 0.006, base + RISE - 0.004),
+        ]
         k.side_profile(outline, y0, y1, "team", 0.005, "slope")
     # The glass leans out of the wall: edge-on it would vanish from the lens.
     glass = [
@@ -53,15 +58,30 @@ def _tooth(k: Kit, x0: float, width: float, base: float) -> None:
         (x0 + width - 0.006, base - 0.004),
     ]
     k.side_profile(glass, y0 + 0.006, y1 - 0.006, "glass", 0.002, "glazing")
-    k.box((crest + 0.004, (y0 + y1) / 2, base + RISE + 0.012), (0.03, y1 - y0 + 0.012, 0.024), "team_dark", 0.007, label="crest")
+    k.box(
+        (crest + 0.004, (y0 + y1) / 2, base + RISE + 0.012),
+        (0.03, y1 - y0 + 0.012, 0.024),
+        "team_dark",
+        0.007,
+        label="crest",
+    )
     if k.hi:
         pitch = 0.05
         count = int((y1 - y0 - 0.01) / pitch)
         # Bars across the panes, on the glazed face.
         for i in range(1, count):
             bar_y = y0 + 0.006 + i * pitch
-            k.box((x0 + width - GLAZED_RUN / 2 + 0.011, bar_y, base + RISE / 2 + 0.008), (0.005, 0.006, RISE * 1.08), "bone", 0.0, tilt=GLASS_LEAN, label="bar")
-        k.box((x0 + width - 0.004, (y0 + y1) / 2, base + 0.012), (0.012, y1 - y0, 0.012), "gunmetal", 0.0, label="gutter")
+            k.box(
+                (x0 + width - GLAZED_RUN / 2 + 0.011, bar_y, base + RISE / 2 + 0.008),
+                (0.005, 0.006, RISE * 1.08),
+                "bone",
+                0.0,
+                tilt=GLASS_LEAN,
+                label="bar",
+            )
+        k.box(
+            (x0 + width - 0.004, (y0 + y1) / 2, base + 0.012), (0.012, y1 - y0, 0.012), "gunmetal", 0.0, label="gutter"
+        )
 
 
 def _gables(k: Kit, base: float) -> None:
@@ -88,8 +108,26 @@ def _hall(k: Kit) -> None:
     if k.hi:
         for i in range(TEETH):
             crest = -HALF_WIDTH + (i + 1) * width - GLAZED_RUN
-            k.cyl((crest - 0.05, FRONT - 0.004, base + 0.052), (crest - 0.05, FRONT, base + 0.052), 0.024, None, "bone", 12, 0.0, "light_rim")
-            k.cyl((crest - 0.05, FRONT - 0.007, base + 0.052), (crest - 0.05, FRONT - 0.004, base + 0.052), 0.017, None, "glass", 12, 0.0, "light")
+            k.cyl(
+                (crest - 0.05, FRONT - 0.004, base + 0.052),
+                (crest - 0.05, FRONT, base + 0.052),
+                0.024,
+                None,
+                "bone",
+                12,
+                0.0,
+                "light_rim",
+            )
+            k.cyl(
+                (crest - 0.05, FRONT - 0.007, base + 0.052),
+                (crest - 0.05, FRONT - 0.004, base + 0.052),
+                0.017,
+                None,
+                "glass",
+                12,
+                0.0,
+                "light",
+            )
     for wx in (-0.37, 0.37):
         window(k, wx, FRONT, z + 0.115, "front", w=0.038, h=0.08)
     for wy in (0.15, 0.255, 0.36):
@@ -106,8 +144,23 @@ def _roller_door(k: Kit) -> None:
     curtain_z = z + DOOR_GAP + curtain / 2
     k.box((0, y - 0.012, curtain_z), (DOOR_WIDTH - 0.008, 0.016, curtain), "door", 0.003, label="curtain")
     for side in (-1.0, 1.0):
-        k.box((side * (half + 0.016), y - 0.012, z + (DOOR_HEIGHT + 0.012) / 2), (0.034, 0.028, DOOR_HEIGHT + 0.012), "stone", 0.006, label="jamb")
-    k.cyl((-half - 0.02, y - 0.022, z + DOOR_HEIGHT + 0.012), (half + 0.02, y - 0.022, z + DOOR_HEIGHT + 0.012), 0.017, None, "team_dark", 10, 0.003, "roller")
+        k.box(
+            (side * (half + 0.016), y - 0.012, z + (DOOR_HEIGHT + 0.012) / 2),
+            (0.034, 0.028, DOOR_HEIGHT + 0.012),
+            "stone",
+            0.006,
+            label="jamb",
+        )
+    k.cyl(
+        (-half - 0.02, y - 0.022, z + DOOR_HEIGHT + 0.012),
+        (half + 0.02, y - 0.022, z + DOOR_HEIGHT + 0.012),
+        0.017,
+        None,
+        "team_dark",
+        10,
+        0.003,
+        "roller",
+    )
     if not k.hi:
         return
     slat = 0.02
@@ -122,7 +175,9 @@ def _smokestack(k: Kit, x: float, y: float, top: float, r: float) -> None:
     collar = top - 0.05
     collar_r = r * 0.74 + (r - r * 0.74) * 0.14 + 0.006
     k.cyl((x, y, collar), (x, y, collar + 0.034), collar_r, collar_r, "team", 12, 0.003, "stack_band")
-    k.cyl((x, y, top - 0.002), (x, y, top + 0.002), r * 0.74 + 0.004, r * 0.74 + 0.002, "gunmetal", 12, 0.0, "stack_lip")
+    k.cyl(
+        (x, y, top - 0.002), (x, y, top + 0.002), r * 0.74 + 0.004, r * 0.74 + 0.002, "gunmetal", 12, 0.0, "stack_lip"
+    )
     if not k.hi:
         return
     k.cyl((x, y, top + 0.002), (x, y, top + 0.004), r * 0.74 - 0.012, None, "rubber", 12, 0.0, "stack_mouth")

@@ -52,8 +52,19 @@ def _tower(k: Kit) -> None:
     k.cyl((x + 0.025, 0, top - 0.004), (x + 0.025, 0, 0.44), 0.017, 0.013, "steel", 8, 0.002, "mast")
     # The funnel, raked aft, behind the bridge.
     funnel = x - 0.047
-    k.cyl((funnel, 0, second - 0.004), (funnel - 0.01, 0, second + 0.082), 0.034, 0.031, "team_dark", 10, 0.006, "funnel")
-    k.cyl((funnel - 0.01, 0, second + 0.08), (funnel - 0.011, 0, second + 0.084), 0.022, None, "gunmetal", 10, 0.0, "funnel_cap")
+    k.cyl(
+        (funnel, 0, second - 0.004), (funnel - 0.01, 0, second + 0.082), 0.034, 0.031, "team_dark", 10, 0.006, "funnel"
+    )
+    k.cyl(
+        (funnel - 0.01, 0, second + 0.08),
+        (funnel - 0.011, 0, second + 0.084),
+        0.022,
+        None,
+        "gunmetal",
+        10,
+        0.0,
+        "funnel_cap",
+    )
     for side in (-1.0, 1.0):
         k.rivets([(x + dx, side * 0.084, floor + 0.05) for dx in (-0.055, -0.02, 0.015, 0.05)], (0, side, 0), 0.007)
 
@@ -66,7 +77,16 @@ def build(k: Kit) -> None:
     muzzle = naval.turret(k, FORE_X, DECK, GUNS, GUN_LENGTH, GUN_THICKNESS / 2)
     k.marker("muzzle", (muzzle[0], 0.0, muzzle[2]))
     # The second turret fires over the first from a barbette.
-    k.cyl((SECOND_X, 0, DECK_TOP - 0.004), (SECOND_X, 0, SECOND_FLOOR + 0.006), 0.076, 0.072, "team_dark", 12, 0.008, "barbette")
+    k.cyl(
+        (SECOND_X, 0, DECK_TOP - 0.004),
+        (SECOND_X, 0, SECOND_FLOOR + 0.006),
+        0.076,
+        0.072,
+        "team_dark",
+        12,
+        0.008,
+        "barbette",
+    )
     naval.turret(k, SECOND_X, SECOND_FLOOR, GUNS, GUN_LENGTH, GUN_THICKNESS / 2)
     # A gun facing aft has no room to slide back along -X, so it never recoils.
     naval.turret(k, AFT_X, DECK, GUNS, GUN_LENGTH, GUN_THICKNESS / 2, facing=-1.0, recoil=False)

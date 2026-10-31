@@ -51,7 +51,12 @@ def _pine(k: Kit, x: float, y: float, s: float, rng: random.Random) -> None:
 
 def _oak(k: Kit, x: float, y: float, s: float, rng: random.Random) -> None:
     k.cyl((x, y, 0.0), (x, y, 0.1 * s), 0.028 * s, 0.021 * s, "bark", 6, 0.0, "trunk")
-    lobes = ((0.0, 0.0, 0.16, 0.095), (-0.048, 0.03, 0.135, 0.072), (0.05, -0.025, 0.14, 0.072), (0.0, 0.0, 0.215, 0.064))
+    lobes = (
+        (0.0, 0.0, 0.16, 0.095),
+        (-0.048, 0.03, 0.135, 0.072),
+        (0.05, -0.025, 0.14, 0.072),
+        (0.0, 0.0, 0.215, 0.064),
+    )
     for dx, dy, dz, radius in lobes:
         cx, cy, cz, r = x + dx * s, y + dy * s, dz * s, radius * s
         k.ellipsoid((cx, cy, cz), (r, r, r * 0.92), "leaf", 5, 8, "crown")
