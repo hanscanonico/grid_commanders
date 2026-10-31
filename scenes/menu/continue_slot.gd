@@ -74,7 +74,7 @@ func _init(into: VBoxContainer, on_resume: Callable, on_resume_mission: Callable
 	# quiet rows and stays a step under the new match it must not compete with.
 	_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
 	_button.pressed.connect(_press)
-	body.add_child(_button)
+	body.add_child(UiKit.touchable(_button))
 	# What Continue resumes, on its own line rather than as the button's inline
 	# suffix: "Day 12 · The Straits" is longer than the stack can set at button
 	# size. It is metadata about the button above it, not a control —

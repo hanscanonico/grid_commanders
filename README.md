@@ -691,9 +691,8 @@ it — a computer turn that seemed to hang while you were away resumes when the 
 
 ## Main menu
 
-The game boots to the menu: pick a map, set the **seats** and their **generals**, pick a **Speed**,
-toggle **Fog of war**, then press **Start**, which launches the match as set up — a map and Start is
-the whole fast path. **Battle animations** (the full-screen combat and capture cut-ins) and **Menu
+The game boots to the title: **Continue**, **Skirmish**, **Campaign**, **Replays**, **Map Editor**,
+**Settings** and **Quit**. **Battle animations** (the full-screen combat and capture cut-ins) and **Menu
 motion** (the board drifting behind the menus and the campaign pages revealing a line at a time) are
 saved device preferences, on by default, and live on the **Settings** page. **Continue** resumes
 the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
@@ -705,36 +704,35 @@ wrong thing to hear about one you did. Either way the button is greyed out (disa
 **Campaign** opens the campaign select (see Campaigns below), **Replays** opens the recordings
 page (see Replays below), and **Quit** exits.
 
-The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
-it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
-side badge — one letter per army the board seats, **A** to **D**: armies sharing a badge fight as
-allies, and armies each on their own badge are a free-for-all. Each row ends in its **general**: a
-face chip, or **NO CO** for a seat with no commander (the default), CPU seats included. Pressing it
-opens the commander page for that seat alone, and the menu remembers each seat's pick. A board seating more than two adds a
-third choice, **Empty**: a closed seat brings no army at all — its units never enter and its
-properties open neutral for the others to take — so its side badge disappears with it, and the
-button greys out whenever closing one more seat would leave fewer than two armies (a duel board
-never shows it at all). The defaults are the one-click paths the two old mode buttons gave you —
-every seat open, seat 1 human, every other seat the computer's, every army its own side — so a duel
-still sets up in the clicks it always did: **Human/A** against **CPU/B**. Putting a
-person in every seat is the old hot-seat game. A four-army board additionally offers one-tap tables
-— **Free-for-all**, **2v2**, **3v1**, **Duel** and **Three-way** — each setting the seating and the
-grouping together (**Duel** seats the opposite pair, 1 and 3). **Start** greys out, and says why, if
-fewer than two armies are seated or the badges leave nobody with anyone to fight.
+**Skirmish** walks two steps; **Back** and Escape step back and lose nothing, and the setup is
+remembered for next time.
 
-The picker's first cell is **Random**: pressing it picks a board for you — any in the roster but the
-teaching board and the one already in hand — and selects it, so the panel below shows the board the
-match will actually be played on.
+**Choose a map** is the whole roster beside a preview of the board in hand: its size, army count,
+property count and pitch. The first cell is **Random**: pressing it picks a board for you — any in
+the roster but the teaching board and the one already in hand — and selects it, so the preview shows
+the board the match will actually be played on.
 
-Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
-count, property count and pitch beneath the grid, and **Speed** and **Fog of war** each carry a
-permanent one-line explanation. How well the computer
-plays is not a match-wide setting: each row of the seat strip carries a tier chip that cycles
-**Easy** / **Normal** / **Difficult** / **Brutal** and goes inert on a row the computer is not
-playing (see Difficulty below). Each setting's dotted-underlined label — **Speed**,
-**Fog of war** — still elaborates in a tip anchored to it, on
-hover or on keyboard focus, and so do the map cells and the line under **Continue**; leaving, tabbing
-away or pressing Escape dismisses one.
+**Players** deals one row per army the board seats. Each row is one selector, pressed to step through
+**Human**, **CPU Easy**, **CPU Normal**, **CPU Difficult**, **CPU Brutal** and **Empty**, and its
+**general**: a face and a name, or **No commander** (the default), CPU seats included. Pressing the
+general opens the commander page for that seat alone, and the menu remembers each seat's pick. A
+closed seat brings no army at all — its units never enter and its properties open neutral for the
+others to take — and the selector steps over **Empty** whenever closing one more seat would leave
+fewer than two armies. The defaults — every seat open, seat 1 human, every other seat the computer's,
+every army its own side — mean **Start Match** works without touching any of it. Putting a person in
+every seat is the old hot-seat game.
+
+A board seating three or four adds a **Mode** row of one-tap tables — **Free-for-all**, **2v1** or
+**2v2**, **3v1**, **Duel** and **Three-way**, as the seats allow — each setting the seating and the
+grouping together (**Duel** seats the opposite pair, 1 and 3). **Custom** shows a side letter per
+seat, **A** to **D**: armies sharing a letter fight as allies. **Start Match** greys out, and says
+why, if fewer than two armies are seated or the letters leave nobody with anyone to fight.
+
+Nothing decision-critical is behind the mouse: **Speed** and **Fog of war** each print a one-line
+explanation, and how well the computer plays is in the seat's own selector, not a match-wide setting
+(see Difficulty below). Each setting's dotted-underlined label — **Speed**, **Fog of war** — still
+elaborates in a tip anchored to it, on hover or on keyboard focus, and so do the line under
+**Continue** and the Random cell; leaving, tabbing away or pressing Escape dismisses one.
 
 The commander page picks one seat's general. The chip along the top names the seat and says
 **CPU** for one the computer plays; a general another seat already commands is greyed and says which
@@ -1149,7 +1147,7 @@ has to let a capture cut-in genuinely play to press the HUD's Fire button into t
 restores the pin before its frame, so what is photographed is still an Instant board.
 `make menu-screenshot` and the `menu_` scenarios, which boot that same screen, pin **Normal**
 instead — the menu's
-drifting backdrop and blinking **PRESS START** pin still under a capture (the animator's `capturing`
+drifting backdrop pins still under a capture (the animator's `capturing`
 precedent), so the pin's only effect on the frame is the **Speed** segment's highlight, and that
 should read as the tier a fresh install ships with.
 
@@ -1413,8 +1411,8 @@ to diverge when the AI changes; a replay cannot diverge, because the decisions a
 
 ## Difficulty
 
-Pick **Easy**, **Normal**, **Difficult** or **Brutal** **per seat** — each CPU row of the setup
-panel's seat strip carries a chip that cycles the tiers — or pass
+Pick **Easy**, **Normal**, **Difficult** or **Brutal** **per seat** — a seat's selector on the
+Players step walks the tiers — or pass
 `--difficulty=easy|normal|hard|brutal`.
 It steers exactly one thing: which `AIProfile` the computer plans with. **No tier is handed an
 advantage** — income, dice, the damage formula, and what the AI is allowed to see (the standing

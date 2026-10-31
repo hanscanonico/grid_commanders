@@ -4,6 +4,10 @@ extends Control
 ## Start on the second step starts the match; nothing comes after it. Back keeps
 ## every choice, and a choice is remembered as it is made (`MenuSetupMemory`).
 ##
+## The seats are dealt as Players opens rather than as a board is pressed: a seat a
+## smaller board has no room for is dropped, so merely browsing the shelf would cost
+## the table in hand.
+##
 ## Two steps rather than one surface because the seats and the map could not share a
 ## 640x360 frame: under a four-seat strip the shelf had 104px of height. Speed and
 ## fog ride on Players because two controls do not earn a screen of their own.
@@ -22,6 +26,9 @@ enum Step { MAP, PLAYERS }
 const _NAV_W := 92
 const _STEP_WORDS := "STEP %d OF 2"
 const _COLUMN_GAP := 10
+const _SPEED_TIP := "How fast moves and battles play out"
+const _SPEED_HELP := "Pacing only. Outcomes never change."
+const _FOG_HELP := "Hide the board beyond your units' sight."
 
 var map_picker: MapPicker
 var seat_strip := SeatStrip.new()
@@ -35,11 +42,11 @@ var _map_page: Control
 var _players_page: Control
 var _next: Button
 var _start: Button
+var _change_map: Button
 ## Why Start is refusing, beside the button. A greyed control with no reason is the
 ## affordance this menu was burned by once already (COM-19).
 var _refusal: Label
-var _board: MapThumbnail
-var _board_name: Label
+var _board := MapPreview.new()
 
 
 func _init(picker: MapPicker, difficulties: Array[Difficulty], remembered: Dictionary) -> void:
@@ -59,7 +66,7 @@ func _ready() -> void:
 	add_child(_map_page)
 	add_child(_players_page)
 	map_picker.reserve_caption()
-	map_picker.map_selected.connect(func(_index: int) -> void: _deal_seats())
+	map_picker.map_selected.connect(func(_index: int) -> void: _remember())
 	map_picker.map_chosen.connect(func() -> void: _next.grab_focus())
 	seat_strip.changed.connect(_refresh_table)
 	seat_strip.general_requested.connect(general_requested.emit)
@@ -74,7 +81,9 @@ func open_step(step: Step) -> void:
 	_map_page.visible = step == Step.MAP
 	_players_page.visible = step == Step.PLAYERS
 	if step == Step.PLAYERS:
-		_start.grab_focus()
+		_deal_seats()
+		# A dead Start is nothing to press Enter at (SK-23); its reason is beside it.
+		(_change_map if _start.disabled else _start).grab_focus()
 	else:
 		_next.grab_focus()
 		await map_picker.reveal_selection()
@@ -143,31 +152,15 @@ func _build_players_page() -> Control:
 func _build_rules_column() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
-	col.custom_minimum_size.x = MapPicker.PREVIEW_W
-
-	_board = MapThumbnail.new()
+	col.custom_minimum_size.x = MapPreview.WIDTH
 	col.add_child(_board)
-	_board_name = Label.new()
-	_board_name.add_theme_font_override("font", UiTheme.display(true))
-	_board_name.add_theme_font_size_override("font_size", UiTheme.SIZE_SUBTITLE)
-	_board_name.add_theme_color_override("font_color", UiTheme.INK)
-	_board_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_board_name.max_lines_visible = MapPicker.NAME_LINES_MAX
-	col.add_child(_board_name)
-
 	col.add_child(UiKit.rule())
 	col.add_child(_build_speed())
-	col.add_child(_help("Pacing only. Outcomes never change."))
+	col.add_child(_help(_SPEED_HELP))
 	col.add_child(
-		UiKit.toggle(
-			"Fog of war",
-			fog_on,
-			"Hide the board beyond your units' sight",
-			"Off shows the whole map",
-			_on_fog_toggled
-		)
+		UiKit.toggle("Fog of war", fog_on, _FOG_HELP, "Off shows the whole map", _on_fog_toggled)
 	)
-	col.add_child(_help("Hide the board beyond your units' sight."))
+	col.add_child(_help(_FOG_HELP))
 	return col
 
 
@@ -185,8 +178,8 @@ func _build_speed() -> Control:
 		labels,
 		selected,
 		UiTheme.CONTROL_ACCENT,
-		"How fast moves and battles play out",
-		"Pacing only · outcomes never change",
+		_SPEED_TIP,
+		_SPEED_HELP,
 		_on_speed_selected
 	)
 	# A segment clips rather than sizing to its label, so the run states its width.
@@ -229,6 +222,7 @@ func _page(title: String, step: Step, body: Control, back_text: String, forward:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(spacer)
 	if step == Step.PLAYERS:
+		_change_map = back
 		_refusal = UiKit.help_label("")
 		_refusal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		footer.add_child(_refusal)
@@ -273,15 +267,14 @@ func _deal_seats() -> void:
 	if map == null:
 		return
 	seat_strip.set_roster(map.player_count())
-	_board.setup(map, UiTheme.menu_identity(map.player_count()), MapPicker.PREVIEW_THUMB)
-	_board_name.text = MapCatalog.display_name(map.source_path)
+	_board.show_board(map)
 	_refresh_table()
 
 
 func _refresh_table() -> void:
 	_start.disabled = not seat_strip.valid()
 	_refusal.text = seat_strip.refusal()
-	MenuSetupMemory.remember(map_picker.selected_map(), fog_on, seat_strip)
+	_remember()
 
 
 ## Speed is the odd one out: a device preference, not a match option, so a tap writes
@@ -293,4 +286,8 @@ func _on_speed_selected(index: int) -> void:
 
 func _on_fog_toggled(pressed: bool) -> void:
 	fog_on = pressed
+	_remember()
+
+
+func _remember() -> void:
 	MenuSetupMemory.remember(map_picker.selected_map(), fog_on, seat_strip)

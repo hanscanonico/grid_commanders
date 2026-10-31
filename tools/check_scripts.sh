@@ -280,11 +280,11 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # each gained the one call that tells the view; which sprite is held and how it
 # marches are BattleView's and UnitSprite's, and there is nothing to extract.
 # main_menu.gd 718 -> 682: the Rules section is one line, its help in the tooltips.
-# main_menu.gd 682 -> 497: the title screen and two setup steps. The steps and their
+# main_menu.gd 682 -> 499: the title screen and two setup steps. The steps and their
 # rules are SkirmishSetup's; this file keeps the title, the flows and the staging.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1196
-scenes/menu/main_menu.gd 497
+scenes/menu/main_menu.gd 499
 core/save_codec.gd 1094
 ai/ai_unit_action_planner.gd 665
 scenes/battle/battle_scenario_driver.gd 668

@@ -76,8 +76,8 @@ const HARD_BORDER := CommanderVisuals.HARD_BORDER  # the darkest outline
 
 ## A thin ink rule between two rows (handoff --border-soft): INK faded to 45%.
 const BORDER_SOFT := Color(INK, 0.45)
-## What a *selected* quiet control is filled with: a seat's Human/CPU run, its
-## tier chip, the Speed tier, a checked toggle box. Ink, because the shell has one
+## What a *selected* quiet control is filled with: a seat a person plays, the Mode in
+## hand, the Speed tier, a checked toggle box. Ink, because the shell has one
 ## accent and it is spent on the primary action and the board in hand — a segment
 ## that lit up in a faction hue put four controls in competition with Start, which
 ## is the whole of "one accent". A faction hue on this panel now says exactly one
@@ -88,7 +88,6 @@ const HOVER_WASH := Color(PAPER_RAISED, 0.35)
 
 # --- canvas-pixel metrics (plan section 2) -------------------------------------
 const CONTENT_W := 370  # handoff 740 content column
-const ACTION_W := 122  # handoff 244 action stack
 const GAP := 8  # handoff 16 column gap
 const BORDER := 1  # chrome outline; 2 physical px on the default window
 const PANEL_BORDER := 2  # the panel's heavier outline

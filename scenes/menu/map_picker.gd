@@ -24,8 +24,8 @@ extends VBoxContainer
 ## the menu asks it rather than keeping a second copy.
 
 ## The board in hand changed. How many seats there are is the board's answer
-## (four-players D1), so the menu re-deals the strip off this rather than off
-## anything the player set.
+## (four-players D1), so the seat strip is re-dealt off this rather than off anything
+## the player set.
 signal map_selected(index: int)
 ## The player pressed a board's cell — not a restored or posed selection — so the
 ## step can hand focus on to Next.
@@ -47,9 +47,6 @@ const NAME_LINES_MAX := 2
 const SHELF_W := 464.0
 ## One cell's width, the shelf shared `GRID_COLUMNS` ways with the gutters taken out.
 const CELL_W := (SHELF_W - (GRID_COLUMNS - 1) * GRID_GAP) / GRID_COLUMNS
-## The preview column's width and its picture: what the frame leaves beside the shelf.
-const PREVIEW_W := 126
-const PREVIEW_THUMB := Vector2(PREVIEW_W, 90)
 ## A cell's picture: the cell less its frame's inset. Every cell is this size — the
 ## Random cell draws a die in it — so the grid's rows and gutters are one shape
 ## whichever cell is in them.
@@ -74,8 +71,7 @@ const CONFIRM_BUTTON_W := 120
 ## of its longest word, `Duplicate`, and no more.
 const MANAGE_BUTTON_W := 84
 
-var _preview: MapThumbnail
-var _map_header: Label
+var _preview := MapPreview.new()
 var _map_caption: Label
 var _map_scroll: ScrollContainer
 var _map_cells: Array[Button] = []
@@ -143,18 +139,8 @@ func configure(db: TerrainDB, remembered_path: String = "") -> void:
 func _build_preview() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
-	col.custom_minimum_size.x = PREVIEW_W
-
-	_preview = MapThumbnail.new()
+	col.custom_minimum_size.x = MapPreview.WIDTH
 	col.add_child(_preview)
-
-	_map_header = Label.new()
-	_map_header.add_theme_font_override("font", UiTheme.display(true))
-	_map_header.add_theme_font_size_override("font_size", UiTheme.SIZE_SUBTITLE)
-	_map_header.add_theme_color_override("font_color", UiTheme.INK)
-	_map_header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_map_header.max_lines_visible = NAME_LINES_MAX
-	col.add_child(_map_header)
 
 	_map_caption = UiKit.help_label("")
 	_map_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -325,12 +311,10 @@ func _refresh_facts() -> void:
 	var map := selected_map()
 	_manage_link.visible = map != null and is_custom(map)
 	if map == null:
-		_map_header.text = ""
+		_preview.clear()
 		_map_caption.text = ""
 		return
-	# The board's own roster, for the reason `_make_map_cell` gives.
-	_preview.setup(map, UiTheme.menu_identity(map.player_count()), PREVIEW_THUMB)
-	_map_header.text = MapCatalog.display_name(map.source_path)
+	_preview.show_board(map)
 	_map_caption.text = caption_text(map)
 
 
@@ -346,7 +330,7 @@ func reserve_caption() -> void:
 	_map_caption.text = words
 
 
-## No board may cost the panel a line the reserved caption does not have — the
+## No board may run past the lines the caption has reserved — the
 ## COM-5 class again, where the layout budget quietly depended on the selection.
 ## Measured on the live label's text alone; `_selected_map` and the seat strip
 ## the menu would otherwise re-deal per board (COM-48's capture workaround) stay
@@ -872,3 +856,6 @@ func _reload() -> void:
 	# `show_map`'s wait, and for its reason: the fresh cells have no layout yet, so
 	# a scroll asked for on this frame lands on where the old shelf was.
 	await show_map(clampi(wanted, 0, _maps.size() - 1))
+	# The cell `_close_confirm` focused went with the old shelf.
+	if _confirm == null and _selected_map < _map_cells.size():
+		_map_cells[_selected_map].grab_focus()

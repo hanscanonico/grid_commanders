@@ -90,7 +90,7 @@ const DEMO_MODES: Array[String] = [
 const CO_SELECT_ARG := "--co-select"
 const CO_SELECT_FIRST_SEAT := "red"
 ## Dev captures of the seat strip: `--menu-map=<name>` selects a board by the name
-## MapCatalog knows it by, and `--menu-preset=<n>` applies one of SeatStrip.PRESETS
+## MapCatalog knows it by, and `--menu-preset=<n>` applies one of the board's Modes
 ## by index. Together they photograph the strip at four seats in each grouping,
 ## which is the frame a two-army board cannot show.
 const MENU_MAP_ARG := "--menu-map"
@@ -259,9 +259,9 @@ func menu_map_index(maps: Array[MapData], shown: MapData) -> int:
 
 
 ## Which grouping preset `--menu-preset` names, or -1 when it names none this run
-## can apply — absent, not a number, or off the end of SeatStrip.PRESETS. Both
-## refusals are said out loud for `menu_map_index`'s reason.
-func menu_preset() -> int:
+## can apply — absent, not a number, or off the end of the Modes a board of
+## `seats_dealt` offers. Both refusals are said out loud for `menu_map_index`'s reason.
+func menu_preset(seats_dealt: int) -> int:
 	var args := CmdArgs.user()
 	if not CmdArgs.has(args, MENU_PRESET_ARG):
 		return -1
@@ -275,7 +275,7 @@ func menu_preset() -> int:
 		)
 		return -1
 	var preset := int(wanted)
-	if preset < 0 or preset >= SeatStrip.PRESETS.size():
+	if preset < 0 or preset >= SeatStrip.presets_for(seats_dealt).size():
 		push_error(
 			"main menu: no grouping preset %d; this capture shows the grouping in hand" % preset
 		)

@@ -169,3 +169,16 @@ func test_the_player_selector_says_who_plays_in_words() -> void:
 	assert_string_contains(SeatStrip.player_label(HUMAN, "Normal"), "Human")
 	assert_string_contains(SeatStrip.player_label(CPU, "Brutal"), "CPU Brutal")
 	assert_string_contains(SeatStrip.player_label(EMPTY, "Brutal"), "Empty")
+
+
+## Two armies left at any table are simply opposed, so no letters come up unasked:
+## a duel's seats, a three-seat board with a seat closed, or a four-seat board with two.
+func test_two_armies_raise_no_letters_unasked() -> void:
+	assert_false(
+		SeatStrip.shows_sides([HUMAN, EMPTY, CPU] as Array[int], [0, 0, 1] as Array[int], false)
+	)
+	assert_false(
+		SeatStrip.shows_sides(
+			[HUMAN, CPU, EMPTY, EMPTY] as Array[int], [0, 1, 2, 3] as Array[int], false
+		)
+	)

@@ -63,8 +63,7 @@ var _select_panel: CommanderSelectPanel
 var _general_chip: Control
 var _replay_panel: ReplayPickerPanel
 ## Pick a war, pick a mission, deploy — the menu's campaign navigation, kept
-## whole in its own collaborator because it is a different question from the
-## board-and-fog setup this page is otherwise about.
+## whole in its own collaborator.
 var _campaign_flow: MenuCampaignFlow
 
 ## The database the picker parses its roster with.
@@ -151,7 +150,7 @@ func _ready() -> void:
 	if CampaignSession.active():
 		_campaign_flow.resume()
 
-	await _pose_seats()
+	await _pose_setup()
 
 	# The replays page photographs a posed list over a hidden menu, exactly as the
 	# selection page below does, so it hands in its own chrome for the same reason:
@@ -191,20 +190,21 @@ func _ready() -> void:
 ## off the command line, so the seat strip can be photographed at more seats than
 ## the default board deals. Not on any play path — a run that asks for none of
 ## them does nothing here.
-func _pose_seats() -> void:
-	var step := _capture_driver.posed_step()
-	if step >= 0:
-		_open_setup(step)
+func _pose_setup() -> void:
 	# These ask for a board by mode rather than by name: the picker's `· NP` mark and
 	# a strip of more than two rows, which the tutorial board says neither of.
 	if _capture_driver.poses_many_seats():
 		await _map_picker.show_map(_capture_driver.four_seat_map(_map_picker.maps()))
-	if _capture_driver.poses(MenuCaptureDriver.DEMO_CUSTOM_SIDES):
-		_seat_strip.choose_custom()
 	var wanted := _capture_driver.menu_map_index(_map_picker.maps(), _map_picker.selected_map())
 	if wanted >= 0:
 		await _map_picker.show_map(wanted)
-	var preset := _capture_driver.menu_preset()
+	# Opened after the board is chosen: the Players step deals the seats as it opens.
+	var step := _capture_driver.posed_step()
+	if step >= 0:
+		_open_setup(step)
+	if _capture_driver.poses(MenuCaptureDriver.DEMO_CUSTOM_SIDES):
+		_seat_strip.choose_custom()
+	var preset := _capture_driver.menu_preset(_seat_strip.seat_count())
 	if preset >= 0:
 		_seat_strip.apply_preset_at(preset)
 
@@ -322,7 +322,7 @@ func _build_action_stack() -> Control:
 		# A step lighter than a link on the cream panel: this one sits on the backdrop.
 		_quit_button.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 		_quit_button.add_theme_color_override("font_hover_color", UiTheme.WHITE)
-		col.add_child(_quit_button)
+		col.add_child(UiKit.touchable(_quit_button))
 		_quit_button.pressed.connect(get_tree().quit)
 	return col
 
@@ -334,11 +334,11 @@ func _build_secondary_group() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 1)
 	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_replay_button)
+	col.add_child(UiKit.touchable(_replay_button))
 	_editor_button = UiKit.action_button("Map Editor", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_editor_button)
+	col.add_child(UiKit.touchable(_editor_button))
 	var settings := UiKit.action_button("Settings", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(settings)
+	col.add_child(UiKit.touchable(settings))
 	MenuSettingsPage.attach(self, _menu_root, settings)
 	return col
 
@@ -450,8 +450,10 @@ func _chrome() -> Dictionary[String, Control]:
 	return {
 		"the menu column": _column,
 		"Skirmish": _skirmish_button,
+		"Campaign": _campaign_button,
 		"Continue": _continue.button(),
 		"Replays": _replay_button,
+		"Map Editor": _editor_button,
 		"Quit": _quit_button,
 	}
 
@@ -476,7 +478,7 @@ func seats_laid_out() -> bool:
 
 
 ## Semantic half of the COM-19 capture gate: layout alone cannot prove that the
-## tutorial board leads, that a hot-seat setup has no operable AI difficulty, or
+## tutorial board leads, that a seat names a tier only while the computer plays it, or
 ## that the caption's budget holds for a board this frame does not show. Read
 ## back by MenuCaptureDriver's capture gate; a capture-driver seam.
 func setup_context_ready() -> bool:

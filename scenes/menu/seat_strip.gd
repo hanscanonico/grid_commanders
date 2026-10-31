@@ -114,7 +114,7 @@ var _seats: Array[int] = []
 ## stands on (an index into SIDE_LABELS).
 var _who: Array[int] = []
 var _side: Array[int] = []
-var _rows: GridContainer
+var _rows: VBoxContainer
 var _presets: HBoxContainer
 ## The Mode buttons in `presets_for` order — held so the one the table in hand
 ## matches can be lit on every repaint, like a segment's choice.
@@ -156,7 +156,7 @@ var _seat_labels: Array[Label] = []
 
 ## Sets the tiers the selectors walk through — the one thing about a row the strip
 ## reads off neither `UiKit`, `UiTheme` nor `SideIdentity`, because the roster of
-## tiers is `DifficultyDB`'s and only the caller (the menu) holds it.
+## tiers is `DifficultyDB`'s and only the caller holds it.
 func configure(tiers: Array[Difficulty] = []) -> void:
 	_tiers = tiers
 	_db = CommanderDB.load_default()
@@ -392,12 +392,16 @@ static func presets_for(seats_dealt: int) -> Array[Dictionary]:
 	return none
 
 
-## Whether the side letters are up: under Custom, or over a table no Mode describes,
-## where nothing else on screen would say who is allied. Never on a duel.
+## Whether the side letters are up: under Custom, or over a table of three or more
+## armies no Mode describes, where nothing else on screen would say who is allied.
+## Never on a duel board.
 static func shows_sides(who: Array[int], sides: Array[int], custom_chosen: bool) -> bool:
 	if presets_for(who.size()).is_empty():
 		return false
-	return custom_chosen or preset_matching(who, sides) < 0
+	if custom_chosen:
+		return true
+	var filled := who.size() - who.count(Seat.EMPTY)
+	return filled > MIN_FILLED and preset_matching(who, sides) < 0
 
 
 ## Where the selector goes from `who` on tier `tier`: a person, each computer tier
@@ -602,8 +606,8 @@ static func _paint_selector(selector: Button, who: int) -> void:
 		selector.add_theme_color_override(state, ink)
 
 
-## A preset button in the panel's quiet dress, filled with the chrome accent when
-## it is the table in hand — the lit choice of the segmented runs above it.
+## A Mode button in the quiet dress, filled with the chrome accent when it is the
+## table in hand.
 static func _paint_preset(button: Button, lit: bool) -> void:
 	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BODY)
 	if not lit:
@@ -657,9 +661,8 @@ func _rebuild() -> void:
 	_presets = HBoxContainer.new()
 	_presets.add_theme_constant_override("separation", 3)
 	add_child(_presets)
-	_rows = GridContainer.new()
-	_rows.columns = 1
-	_rows.add_theme_constant_override("v_separation", 3)
+	_rows = VBoxContainer.new()
+	_rows.add_theme_constant_override("separation", 3)
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(_rows)
 	for i in _seats.size():
@@ -845,7 +848,10 @@ func _set_seat(index: int, who: int) -> void:
 	changed.emit()
 
 
+## A letter pressed is Custom chosen, so landing on a table some Mode describes does
+## not take the letters away from under the player's finger.
 func _set_side(index: int, side: int) -> void:
+	_custom_chosen = true
 	_side[index] = side
 	_repaint_seats()
 	changed.emit()
