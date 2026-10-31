@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Grid Commanders — free turn-based tactics game in your browser</title>
-<meta name="description" content="A free turn-based tactics game you play in the browser, no download: grids, terrain, capture and income, commanders with powers. Inspired by Advance Wars.">
+<meta name="description" content="Command painted miniatures in a free turn-based tactics game. Plays in your browser with no download. Inspired by Advance Wars.">
 <link rel="canonical" href="https://gridcommanders.com/">
 <link rel="icon" type="image/png" href="/favicon.png">
 
@@ -12,14 +12,14 @@
 <meta property="og:site_name" content="Grid Commanders">
 <meta property="og:url" content="https://gridcommanders.com/">
 <meta property="og:title" content="Grid Commanders — free turn-based tactics in your browser">
-<meta property="og:description" content="Move squads over a grid, hold the high ground, capture the towns that pay for the next tank. Free, instant, no download.">
+<meta property="og:description" content="Command an army of painted miniatures. Take the towns that pay for your next tank. Free, with no download and no account.">
 <meta property="og:image" content="https://gridcommanders.com/og-battle.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A battle in Grid Commanders: tanks and infantry on a grid of plains, roads and mountains, with a damage forecast open.">
+<meta property="og:image:alt" content="Grid Commanders: red and blue miniature tanks face each other across a river on a tabletop battlefield.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Grid Commanders — free turn-based tactics in your browser">
-<meta name="twitter:description" content="Move squads over a grid, hold the high ground, capture the towns that pay for the next tank. Free, instant, no download.">
+<meta name="twitter:description" content="Command an army of painted miniatures. Take the towns that pay for your next tank. Free, with no download and no account.">
 <meta name="twitter:image" content="https://gridcommanders.com/og-battle.png">
 
 <!-- Owner step: Bing is blank until its console issues a code — paste it into content=""
@@ -49,132 +49,599 @@
 }
 </script>
 
+<link rel="preload" href="/art/fonts/bowlby-one.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face { font-family: "Bowlby One"; src: url("/art/fonts/bowlby-one.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Barlow"; font-weight: 400; src: url("/art/fonts/barlow-400.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Barlow"; font-weight: 600; src: url("/art/fonts/barlow-600.woff2") format("woff2"); font-display: swap; }
+
 :root {
 	color-scheme: dark;
-	--slate-900: #23272b;
-	--slate-800: #2b2f34;
-	--slate-700: #3a3f45;
-	--paper: #eee7d6;
-	--ink-3: #8a9099;
-	--gold: #e8b33c;
-	--capture: #6cc24a;
+	--table: #232938;
+	--table-deep: #181d29;
+	--table-rim: #39415a;
+	--ink: #11161a;
+	--paper: #f1ebdc;
+	--paper-dim: #b8bcc6;
+	--gold: #e9c928;
+	--gold-edge: #a48c16;
+	--grass: #5d8043;
+	--grass-alt: #52733a;
+	--air: #5f7da3;
+	--air-alt: #557296;
+	--sea: #2f6aa3;
+	--sea-alt: #295e92;
+	--meridian: #db4a3b;
+	--aurora: #3865d8;
+	--verdant: #2c8636;
+	--concord: #e9c928;
+	--iron: #4a5258;
+	--display: "Bowlby One", Impact, "Arial Black", sans-serif;
+	--gutter: clamp(16px, 4vw, 56px);
+	--wordmark: clamp(2.1rem, 10.1vw, 8.6rem);
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
 	margin: 0;
-	padding: 0 20px 64px;
-	background: var(--slate-900);
+	background: var(--table);
 	color: var(--paper);
-	font: 17px/1.6 ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font: 400 18px/1.55 Barlow, ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
 	overflow-wrap: break-word;
 }
-main { max-width: 760px; margin: 0 auto; }
-header { padding: 48px 0 8px; }
-h1 { margin: 0 0 12px; font-size: 2.1rem; line-height: 1.15; letter-spacing: 0.01em; }
-h2 { margin: 40px 0 12px; font-size: 1.25rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
-p { margin: 0 0 16px; }
-.pitch { font-size: 1.15rem; color: var(--paper); margin-bottom: 24px; }
-.shot {
-	display: block;
-	width: 100%;
-	height: auto;
-	border: 2px solid var(--slate-700);
-	border-radius: 3px;
-	image-rendering: pixelated;
-	background: var(--slate-800);
-}
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--gold); }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 400; }
+h2 { font-size: clamp(1.9rem, 4.6vw, 3.3rem); line-height: 1.05; }
+h3 { font-size: 1.35rem; line-height: 1.2; }
+p { margin: 0; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 var(--gutter); }
+.intro { max-width: 58ch; margin-top: 16px; color: var(--paper-dim); }
+
 .play {
 	display: inline-block;
-	margin: 24px 0 8px;
-	padding: 14px 34px;
-	background: var(--capture);
-	color: #111618;
-	font-size: 1.15rem;
-	font-weight: 700;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
+	padding: 15px 38px 13px;
+	background: var(--gold);
+	color: var(--ink);
+	font: 400 1.35rem/1.1 var(--display);
 	text-decoration: none;
-	border: 2px solid #111618;
+	border-radius: 6px;
+	box-shadow: 0 6px 0 var(--gold-edge), 0 10px 16px rgba(10, 13, 20, 0.45);
+}
+.play:hover { background: #f4d93f; }
+.play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--gold-edge); }
+
+/* The box lid: the wordmark stands on the empty table behind the battle. */
+.lid { position: relative; overflow: hidden; }
+.lid-text { position: relative; z-index: 1; padding-top: clamp(24px, 3.4vw, 48px); }
+.wordmark {
+	font-size: var(--wordmark);
+	line-height: 0.96;
+	white-space: nowrap;
+	text-transform: uppercase;
+	text-shadow: 0.035em 0.04em 0 var(--ink);
+}
+/* On a wide screen the pitch stands in the space GRID leaves beside COMMANDERS. */
+.pitch {
+	position: absolute;
+	top: clamp(24px, 3.4vw, 48px);
+	left: calc(var(--gutter) + 3.95 * var(--wordmark));
+	right: var(--gutter);
+}
+.lede { max-width: 32em; font-size: clamp(1.1rem, 1.75vw, 1.5rem); line-height: 1.25; font-weight: 600; }
+.cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 16px; }
+.free { color: var(--paper-dim); }
+.battle {
+	width: 100%;
+	aspect-ratio: 16 / 7.7;
+	object-fit: cover;
+	object-position: 50% 0;
+	margin-top: calc(-1.2 * var(--wordmark));
+	-webkit-mask-image: linear-gradient(transparent, #000 24%);
+	mask-image: linear-gradient(transparent, #000 24%);
+}
+.flags { display: flex; height: 10px; }
+.flags i { flex: 1; }
+.flags i:nth-child(1) { background: var(--meridian); }
+.flags i:nth-child(2) { background: var(--aurora); }
+.flags i:nth-child(3) { background: var(--verdant); }
+.flags i:nth-child(4) { background: var(--concord); }
+.flags i:nth-child(5) { background: var(--iron); }
+
+section { padding: clamp(56px, 8vw, 112px) 0; }
+
+/* A turn */
+.turn-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+	gap: clamp(28px, 4vw, 64px);
+	margin-top: clamp(28px, 4vw, 48px);
+	align-items: start;
+}
+.shots { display: grid; gap: 14px; }
+.shots img { width: 100%; border-radius: 4px; }
+.orders { list-style: none; margin: 0; padding: 0; counter-reset: order; }
+.orders li { counter-increment: order; position: relative; padding: 0 0 clamp(20px, 2.4vw, 30px) 62px; }
+.orders li:last-child { padding-bottom: 0; }
+.orders li::before {
+	content: counter(order);
+	position: absolute;
+	left: 0;
+	top: -2px;
+	width: 44px;
+	height: 44px;
+	display: grid;
+	place-items: center;
+	background: var(--grass);
+	font: 400 1.4rem/1 var(--display);
+}
+.orders p { margin-top: 4px; color: var(--paper-dim); }
+
+/* The tray: a strip of the board with a miniature on every square. */
+.answers { background: var(--table-deep); }
+.paints { display: flex; flex-wrap: wrap; gap: 8px 10px; margin-top: 24px; }
+.paint {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	padding: 7px 13px 7px 9px;
+	background: none;
+	border: 2px solid var(--table-rim);
+	border-radius: 4px;
+	color: var(--paper-dim);
+	font: 600 0.98rem/1.2 Barlow, sans-serif;
+	cursor: pointer;
+}
+.paint i { width: 16px; height: 16px; border-radius: 2px; }
+.paint[aria-pressed="true"] { border-color: var(--paper); color: var(--paper); }
+.bench {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+	gap: clamp(20px, 3vw, 40px);
+	margin-top: 22px;
+	align-items: start;
+}
+.tray { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); box-shadow: 0 0 0 5px #3b2c20; }
+.tile {
+	position: relative;
+	aspect-ratio: 1 / 1.12;
+	padding: 0;
+	border: 0;
+	background: var(--grass);
+	color: var(--paper);
+	font: 600 0.92rem/1.1 Barlow, sans-serif;
+	cursor: pointer;
+	overflow: hidden;
+}
+.tile:nth-child(even) { background: var(--grass-alt); }
+.tile.air { background: var(--air); }
+.tile.air:nth-child(even) { background: var(--air-alt); }
+.tile.sea { background: var(--sea); }
+.tile.sea:nth-child(even) { background: var(--sea-alt); }
+.tile img {
+	position: absolute;
+	inset: 2% 6% auto;
+	width: 88%;
+	filter: drop-shadow(0 5px 3px rgba(12, 18, 12, 0.5));
+	transition: transform 120ms ease-out;
+}
+.tile:hover img { transform: translateY(-3px); }
+.tile .name {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 8px;
+	text-align: center;
+	text-shadow: 0 1px 2px var(--ink), 0 0 4px var(--ink);
+}
+.tile .hit {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	min-width: 2.7em;
+	padding: 3px 5px 2px;
 	border-radius: 3px;
-	box-shadow: 3px 3px 0 rgba(17, 22, 24, 0.9);
+	background: var(--ink);
+	color: var(--paper);
+	font-size: 0.95rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
 }
-.play:hover, .play:focus { background: #7fd45c; }
-.note { color: var(--ink-3); font-size: 0.95rem; }
-ul { margin: 0 0 16px; padding-left: 22px; }
-li { margin-bottom: 8px; }
-li b { color: var(--gold); font-weight: 700; }
-a { color: var(--gold); }
-footer {
-	margin-top: 48px;
-	padding-top: 20px;
-	border-top: 1px solid var(--slate-700);
-	color: var(--ink-3);
-	font-size: 0.92rem;
+.tile .hit:empty { display: none; }
+.tile .hit.hard { background: var(--gold); color: var(--ink); }
+.tile.none img { opacity: 0.42; }
+.tile.none .hit { background: none; color: var(--paper); text-shadow: 0 1px 2px var(--ink); font-size: 0.8rem; }
+/* The selection is the game's own board cursor: four white corners. */
+.tile[aria-pressed="true"]::after {
+	content: "";
+	position: absolute;
+	inset: 6px;
+	--c: #fff;
+	--l: 24%;
+	--w: 5px;
+	background:
+		linear-gradient(var(--c), var(--c)) 0 0 / var(--l) var(--w),
+		linear-gradient(var(--c), var(--c)) 0 0 / var(--w) var(--l),
+		linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) var(--w),
+		linear-gradient(var(--c), var(--c)) 100% 0 / var(--w) var(--l),
+		linear-gradient(var(--c), var(--c)) 0 100% / var(--l) var(--w),
+		linear-gradient(var(--c), var(--c)) 0 100% / var(--w) var(--l),
+		linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) var(--w),
+		linear-gradient(var(--c), var(--c)) 100% 100% / var(--w) var(--l);
+	background-repeat: no-repeat;
+	filter: drop-shadow(0 1px 0 var(--ink));
+	animation: snap 130ms ease-out;
 }
-@media (max-width: 480px) {
-	body { padding: 0 14px 48px; font-size: 16px; }
-	header { padding-top: 32px; }
-	h1 { font-size: 1.6rem; }
-	.play { display: block; text-align: center; padding: 16px 20px; }
+@keyframes snap { from { transform: scale(1.14); opacity: 0; } }
+.tile:focus-visible { outline-offset: -5px; z-index: 1; }
+
+.readout { display: none; }
+.has-tray .readout { display: block; }
+.readout img { width: 190px; margin: -10px 0 -4px -10px; filter: drop-shadow(0 8px 5px rgba(0, 0, 0, 0.5)); }
+.readout h3 { font-size: 1.9rem; }
+.readout .role { margin-top: 6px; color: var(--paper-dim); }
+.facts { display: flex; gap: 22px; margin: 14px 0 0; font-variant-numeric: tabular-nums; }
+.facts dt { color: var(--paper-dim); font-size: 0.86rem; }
+.facts dd { margin: 0; font-weight: 600; font-size: 1.1rem; }
+.versus { display: grid; gap: 12px; margin-top: 18px; }
+.versus h4 { margin: 0 0 3px; font: 600 0.92rem/1.3 Barlow, sans-serif; color: var(--paper-dim); }
+.versus p { font-weight: 600; }
+.small { margin-top: 18px; color: var(--paper-dim); font-size: 0.92rem; }
+
+/* The campaign */
+.story { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(20px, 4vw, 64px); align-items: end; }
+.story .copy p { color: var(--paper); max-width: 56ch; }
+.story .copy p + p { margin-top: 14px; }
+.staff {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: clamp(14px, 2vw, 28px);
+	margin-top: clamp(36px, 5vw, 60px);
+}
+.general img { width: 100%; max-width: 230px; }
+.general { border-top: 0; }
+.general .stand { height: 6px; margin-bottom: 12px; }
+.general h3 { font-size: 1.12rem; }
+.general .army { font-weight: 600; font-size: 0.93rem; color: var(--paper-dim); }
+.general .power { margin-top: 8px; font-size: 0.96rem; color: var(--paper-dim); }
+.general .power b { display: block; color: var(--paper); font-weight: 600; }
+.more { margin-top: 26px; color: var(--paper-dim); }
+
+/* In the box */
+.box { background: var(--table-deep); }
+.parts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 clamp(28px, 5vw, 80px);
+	margin: clamp(24px, 3vw, 40px) 0 0;
+	padding: 0;
+	list-style: none;
+}
+.parts li {
+	display: grid;
+	grid-template-columns: clamp(3rem, 5.6vw, 4.6rem) 1fr;
+	gap: 2px 12px;
+	padding: 16px 0;
+	border-top: 2px solid var(--table-rim);
+}
+.parts .n { grid-row: span 2; font: 400 clamp(1.9rem, 3.4vw, 2.6rem)/1.1 var(--display); color: var(--gold); white-space: nowrap; }
+.parts b { font-weight: 600; font-size: 1.1rem; line-height: 1.3; }
+.parts span:last-child { grid-column: 2; color: var(--paper-dim); }
+
+/* Your move */
+.last { text-align: left; }
+.last .cta { margin-top: 22px; }
+.last .terms { max-width: 62ch; margin-top: 26px; color: var(--paper-dim); }
+.last .terms + .terms { margin-top: 12px; }
+footer { padding: 20px 0 34px; color: var(--paper-dim); font-size: 0.9rem; }
+
+@media (max-width: 1040px) {
+	.turn-grid, .bench, .story { grid-template-columns: minmax(0, 1fr); }
+	.readout img { width: 130px; margin: -8px 0 -2px -8px; float: left; }
+	.readout h3 { padding-top: 14px; }
+	.facts, .versus { clear: both; }
+	.bench .readout { order: -1; }
+	.staff { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+	.general img { max-width: 170px; }
+}
+@media (max-width: 900px) {
+	.pitch { position: static; margin-top: 16px; }
+	.battle { margin-top: -2vw; }
+}
+@media (max-width: 720px) {
+	body { font-size: 17px; }
+	.battle { aspect-ratio: 1 / 1; object-position: 47% 0; margin-top: -14vw; }
+	.tray { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	.tile { font-size: 0.86rem; }
+	.parts { grid-template-columns: minmax(0, 1fr); }
+	.play { display: block; width: 100%; text-align: center; }
+	.versus { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+	.versus h4, .versus p { font-size: 0.92rem; }
+	.staff { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.general:last-child { grid-column: span 2; max-width: calc(50% - 7px); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.tile img { transition: none; }
+	.tile:hover img { transform: none; }
+	.tile[aria-pressed="true"]::after { animation: none; }
+	.play:active { transform: none; }
 }
 </style>
 <script src="/analytics.js" defer></script>
 </head>
 <body>
-<main>
 
-<header>
-	<h1>Grid Commanders</h1>
-	<p class="pitch">A free turn-based tactics game you play in your browser. No download, no
-	account — open the page and the war starts.</p>
+<header class="lid">
+	<div class="wrap lid-text">
+		<h1 class="wordmark">Grid<br>Commanders</h1>
+		<div class="pitch">
+			<p class="lede">Command an army of painted miniatures in a free turn-based tactics game.</p>
+			<div class="cta">
+				<a class="play" href="/play/">Play now</a>
+				<p class="free">Plays in your browser. No download, no account, no ads.</p>
+			</div>
+		</div>
+	</div>
+	<img class="battle" width="2400" height="1350"
+		src="/art/battle-1200.webp"
+		srcset="/art/battle-1200.webp 1200w, /art/battle-2400.webp 2400w" sizes="(max-width: 720px) 160vw, 100vw"
+		alt="A tabletop battlefield. Red and blue miniature tanks, infantry and helicopters face each other across a river, with ships along the coast behind them.">
+	<div class="flags" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
 </header>
 
-<img class="shot" src="/og-battle.png" width="1200" height="630"
-	alt="A Grid Commanders battle: red and blue units on a grid of plains, roads, woods and mountains, with a damage forecast open over the board.">
+<main>
 
-<p><a class="play" href="/play/">Play now</a></p>
-<p class="note">Runs in any modern browser, on desktop or on a phone. First load is a big
-one — the whole game comes down at once — and it starts fast after that.</p>
+<section>
+	<div class="wrap">
+		<h2>A turn, in four orders</h2>
+		<div class="turn-grid">
+			<div class="shots">
+				<img src="/art/close-up.webp" width="1600" height="838" loading="lazy"
+					alt="Close to the table: red tanks in tall grass, a bridge over a river, and blue tanks on the far bank.">
+				<img src="/art/cut-in.webp" width="1400" height="582" loading="lazy"
+					alt="A combat cut-in: blue tanks take hits and burn while each side's health bar drops.">
+			</div>
+			<ol class="orders">
+				<li>
+					<h3>Move</h3>
+					<p>Roads are cheap, woods are slow, and only foot soldiers climb mountains. Where you stop decides how much of the next shot you absorb.</p>
+				</li>
+				<li>
+					<h3>Fire</h3>
+					<p>Point at a target and the game shows the damage both ways before you commit. Then the exchange plays out up close.</p>
+				</li>
+				<li>
+					<h3>Capture</h3>
+					<p>Foot soldiers take cities, bases, airports and ports over a few turns. Every property you hold pays you each morning.</p>
+				</li>
+				<li>
+					<h3>Build</h3>
+					<p>Spend that income on new units at your bases, airports and ports. Then end your turn and see what the other side does about it.</p>
+				</li>
+			</ol>
+		</div>
+	</div>
+</section>
 
-<h2>What it is</h2>
-<p>Grid Commanders is a turn-based tactics game on a square grid. Every unit spends a movement
-budget the terrain charges it for: a road is cheap, woods are slow, a mountain only takes foot
-soldiers, and whatever you end your turn standing on decides how much of an incoming shot you
-soak. The roster runs across land, air and sea in a rock-paper-scissors shape — anti-air eats
-helicopters, fighters eat anything that flies, a submarine hides until a cruiser hunts it down —
-so there is no single unit that wins.</p>
-<p>Money comes from the map, not from a build queue. Infantry walk into towns, factories and
-airports and take several turns to raise their flag; each property you hold pays you every
-morning, and that income is what buys the next tank. Commanders sit over all of it: each one bends
-the rules a little and charges a Command Power that fires once the meter is full. There is an
-authored campaign to fight through, and a computer opponent that plans its turn the same way you
-play yours — it issues the same commands, from the same rules, and it is never handed extra money
-or a look through your fog. It is <b>inspired by Advance Wars</b>, and it is its own game: original
-art, original units, original commanders.</p>
+<section class="answers">
+	<div class="wrap">
+		<h2>Every unit has an answer</h2>
+		<p class="intro">No single unit wins the war. Pick one and the board shows how hard it hits everything else.</p>
+		<div class="paints" role="group" aria-label="Army colours">
+			<button class="paint" type="button" data-army="meridian" aria-pressed="true"><i style="background:var(--meridian)"></i>Meridian Coalition</button>
+			<button class="paint" type="button" data-army="aurora" aria-pressed="false"><i style="background:var(--aurora)"></i>Aurora Compact</button>
+			<button class="paint" type="button" data-army="verdant" aria-pressed="false"><i style="background:var(--verdant)"></i>Verdant League</button>
+			<button class="paint" type="button" data-army="gold" aria-pressed="false"><i style="background:var(--concord)"></i>Gilded Concord</button>
+			<button class="paint" type="button" data-army="iron" aria-pressed="false"><i style="background:var(--iron)"></i>Iron Dominion</button>
+		</div>
+		<div class="bench">
+			<div class="tray" id="tray">
+				<button class="tile" type="button" data-unit="infantry" aria-pressed="false"><img src="/art/units/meridian/infantry.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Infantry</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="mech" aria-pressed="false"><img src="/art/units/meridian/mech.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Mech</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="recon" aria-pressed="false"><img src="/art/units/meridian/recon.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Recon</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="apc" aria-pressed="false"><img src="/art/units/meridian/apc.webp" width="320" height="320" alt="" loading="lazy"><span class="name">APC</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="tank" aria-pressed="true"><img src="/art/units/meridian/tank.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Tank</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="md_tank" aria-pressed="false"><img src="/art/units/meridian/md_tank.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Md Tank</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="artillery" aria-pressed="false"><img src="/art/units/meridian/artillery.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Artillery</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="rockets" aria-pressed="false"><img src="/art/units/meridian/rockets.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Rockets</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="anti_air" aria-pressed="false"><img src="/art/units/meridian/anti_air.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Anti-Air</span><span class="hit"></span></button>
+				<button class="tile" type="button" data-unit="missiles" aria-pressed="false"><img src="/art/units/meridian/missiles.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Missiles</span><span class="hit"></span></button>
+				<button class="tile air" type="button" data-unit="t_copter" aria-pressed="false"><img src="/art/units/meridian/t_copter.webp" width="320" height="320" alt="" loading="lazy"><span class="name">T-Copter</span><span class="hit"></span></button>
+				<button class="tile air" type="button" data-unit="b_copter" aria-pressed="false"><img src="/art/units/meridian/b_copter.webp" width="320" height="320" alt="" loading="lazy"><span class="name">B-Copter</span><span class="hit"></span></button>
+				<button class="tile air" type="button" data-unit="fighter" aria-pressed="false"><img src="/art/units/meridian/fighter.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Fighter</span><span class="hit"></span></button>
+				<button class="tile air" type="button" data-unit="bomber" aria-pressed="false"><img src="/art/units/meridian/bomber.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Bomber</span><span class="hit"></span></button>
+				<button class="tile sea" type="button" data-unit="lander" aria-pressed="false"><img src="/art/units/meridian/lander.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Lander</span><span class="hit"></span></button>
+				<button class="tile sea" type="button" data-unit="cruiser" aria-pressed="false"><img src="/art/units/meridian/cruiser.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Cruiser</span><span class="hit"></span></button>
+				<button class="tile sea" type="button" data-unit="sub" aria-pressed="false"><img src="/art/units/meridian/sub.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Sub</span><span class="hit"></span></button>
+				<button class="tile sea" type="button" data-unit="battleship" aria-pressed="false"><img src="/art/units/meridian/battleship.webp" width="320" height="320" alt="" loading="lazy"><span class="name">Battleship</span><span class="hit"></span></button>
+			</div>
+			<div class="readout" id="readout" aria-live="polite">
+				<img id="r-img" src="/art/units/meridian/tank.webp" width="320" height="320" alt="" loading="lazy">
+				<h3 id="r-name">Tank</h3>
+				<p class="role" id="r-role"></p>
+				<dl class="facts">
+					<div><dt>Cost</dt><dd id="r-cost"></dd></div>
+					<div><dt>Move</dt><dd id="r-move"></dd></div>
+					<div><dt>Range</dt><dd id="r-range"></dd></div>
+				</dl>
+				<div class="versus">
+					<div><h4>Hits hardest</h4><p id="r-best"></p></div>
+					<div class="worst"><h4>Watch out for</h4><p id="r-worst"></p></div>
+				</div>
+				<p class="small">Base damage at full health, before terrain, luck and generals.</p>
+			</div>
+		</div>
+	</div>
+</section>
 
-<h2>What you get</h2>
-<ul>
-	<li><b>Campaign</b> — authored missions with objectives, briefings and a story between them.</li>
-	<li><b>Skirmish against the computer</b> — any board, four difficulty tiers, fog of war optional.</li>
-	<li><b>Up to four armies</b> — free-for-all, 2v2, 3v1 or a duel, any seat human or computer.</li>
-	<li><b>A map editor</b> — paint your own board and play it.</li>
-	<li><b>Touch support</b> — the whole game is playable with a finger on a phone or tablet.</li>
-</ul>
+<section>
+	<div class="wrap">
+		<div class="story">
+			<h2>A war of five flags</h2>
+			<div class="copy">
+				<p>Five powers share one continent. A treaty has kept the peace for twenty years. The week it is due for renewal, the hall where it was signed burns down, and every army marches on the ruins.</p>
+				<p>The campaign runs for 39 missions across six acts. You command a different general most missions and fight under every flag, and what you do in one battle can change the next. A single run plays 36 of them.</p>
+			</div>
+		</div>
+		<div class="staff">
+			<div class="general">
+				<img src="/art/generals/mara_voss.webp" width="400" height="487" alt="Portrait of Mara Voss in a red uniform." loading="lazy">
+				<div class="stand" style="background:var(--meridian)"></div>
+				<h3>Mara Voss</h3>
+				<p class="army">Meridian Coalition</p>
+				<p class="power"><b>Hold the Line</b>+30% defence and +40% counter damage through the opponent's next turn.</p>
+			</div>
+			<div class="general">
+				<img src="/art/generals/sera_lark.webp" width="400" height="487" alt="Portrait of Sera Lark in a blue uniform." loading="lazy">
+				<div class="stand" style="background:var(--aurora)"></div>
+				<h3>Sera Lark</h3>
+				<p class="army">Aurora Compact</p>
+				<p class="power"><b>Forced March</b>Every unit gains a further +1 movement this turn.</p>
+			</div>
+			<div class="general">
+				<img src="/art/generals/nia_rowan.webp" width="400" height="487" alt="Portrait of Nia Rowan in a green uniform with a monocle." loading="lazy">
+				<div class="stand" style="background:var(--verdant)"></div>
+				<h3>Nia Rowan</h3>
+				<p class="army">Verdant League</p>
+				<p class="power"><b>Ghost March</b>Foot units and Recon get +1 movement and +1 vision, and woods do not block their sight.</p>
+			</div>
+			<div class="general">
+				<img src="/art/generals/lyra_quill.webp" width="400" height="487" alt="Portrait of Lyra Quill in a gold uniform with round glasses." loading="lazy">
+				<div class="stand" style="background:var(--concord)"></div>
+				<h3>Lyra Quill</h3>
+				<p class="army">Gilded Concord</p>
+				<p class="power"><b>Perfect Solution</b>Every attack rolls maximum luck and gains +10% attack this turn.</p>
+			</div>
+			<div class="general">
+				<img src="/art/generals/viktor_draeg.webp" width="400" height="487" alt="Portrait of Viktor Draeg in a charcoal uniform with an eyepatch." loading="lazy">
+				<div class="stand" style="background:var(--iron)"></div>
+				<h3>Viktor Draeg</h3>
+				<p class="army">Iron Dominion</p>
+				<p class="power"><b>Armoured Breakthrough</b>Tread units get +1 movement and ignore one terrain defence star when attacking.</p>
+			</div>
+		</div>
+		<p class="more">Five of the 22 generals. Each one changes the rules a little, and charges a Command Power as the battle goes on.</p>
+	</div>
+</section>
 
-<h2>Free, and open</h2>
-<p>Grid Commanders costs nothing and shows no ads. It is built in Godot with typed GDScript, and
-the source is on <a href="https://github.com/hanscanonico/grid_commanders">GitHub</a>.</p>
+<section class="box">
+	<div class="wrap">
+		<h2>What's in the box</h2>
+		<ul class="parts">
+			<li><span class="n">39</span><b>Campaign missions</b><span>A full story with objectives and briefings.</span></li>
+			<li><span class="n">31</span><b>Skirmish boards</b><span>And a map editor to paint your own.</span></li>
+			<li><span class="n">18</span><b>Units</b><span>On land, in the air and at sea.</span></li>
+			<li><span class="n">22</span><b>Generals</b><span>From five armies, each with a Command Power.</span></li>
+			<li><span class="n">4</span><b>Armies on one board</b><span>Free-for-all, 2v2, 3v1 or a duel. Any seat can be a person or the computer.</span></li>
+			<li><span class="n">4</span><b>Difficulty levels</b><span>The computer gets smarter, never richer. It gets no bonus income, damage or luck.</span></li>
+		</ul>
+	</div>
+</section>
 
-<p><a class="play" href="/play/">Play now</a></p>
-
-<footer>
-	<p>Grid Commanders — a turn-based tactics game. Not affiliated with, or endorsed by, Nintendo
-	or Intelligent Systems.</p>
-</footer>
+<section class="last">
+	<div class="wrap">
+		<h2>Your move</h2>
+		<div class="cta">
+			<a class="play" href="/play/">Play now</a>
+			<p class="free">The first load is about 46 MB. After that, your browser keeps it.</p>
+		</div>
+		<p class="terms">Plays in any modern browser, with a mouse and keyboard or by touch on a phone or tablet. Fog of war is optional.</p>
+		<p class="terms">Grid Commanders is free and has no ads. It is inspired by Advance Wars and has its own art, music and generals. It is built in Godot, and the source is on <a href="https://github.com/hanscanonico/grid_commanders">GitHub</a>.</p>
+	</div>
+</section>
 
 </main>
+
+<div class="flags" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+<footer>
+	<div class="wrap">
+		<p>Grid Commanders is not affiliated with, or endorsed by, Nintendo or Intelligent Systems.</p>
+	</div>
+</footer>
+
+<!-- The matchup tray. /art/roster.json is a copy of data/, which tools/check_web_site.py
+     holds equal. Without it the tray stays a plain picture of the roster. -->
+<script>
+(function () {
+	var HARD = 70;
+	var tiles = Array.prototype.slice.call(document.querySelectorAll(".tile"));
+	var paints = Array.prototype.slice.call(document.querySelectorAll(".paint"));
+	var byId = {};
+	var units = [];
+	var army = "meridian";
+	var selected = "tank";
+
+	function art(id) { return "/art/units/" + army + "/" + id + ".webp"; }
+
+	function names(list) {
+		return list.length ? list.map(function (u) { return u.name; }).join(", ") : "Nothing";
+	}
+
+	function strongest(score) {
+		return units
+			.filter(function (u) { return score(u) > 0; })
+			.sort(function (a, b) { return score(b) - score(a); })
+			.slice(0, 3);
+	}
+
+	function text(id, value) { document.getElementById(id).textContent = value; }
+
+	function show() {
+		var unit = byId[selected];
+		tiles.forEach(function (tile) {
+			var id = tile.getAttribute("data-unit");
+			var hit = tile.querySelector(".hit");
+			var damage = unit.hits[id];
+			var self = id === selected;
+			tile.setAttribute("aria-pressed", self ? "true" : "false");
+			tile.classList.toggle("none", !self && damage === undefined);
+			hit.classList.toggle("hard", damage >= HARD);
+			hit.textContent = self ? "" : damage === undefined ? "No shot" : damage + "%";
+		});
+		document.getElementById("r-img").src = art(selected);
+		text("r-name", unit.name);
+		text("r-role", unit.role);
+		text("r-cost", unit.cost.toLocaleString("en-US"));
+		text("r-move", unit.move);
+		var armed = Object.keys(unit.hits).length > 0;
+		var low = unit.range[0];
+		var high = unit.range[1];
+		text("r-range", !armed ? "Unarmed" : low === high ? low : low + "–" + high);
+		text("r-best", names(strongest(function (u) { return unit.hits[u.id] || 0; })));
+		text("r-worst", names(strongest(function (u) { return u.hits[selected] || 0; })));
+	}
+
+	function paint() {
+		paints.forEach(function (button) {
+			button.setAttribute("aria-pressed", button.getAttribute("data-army") === army ? "true" : "false");
+		});
+		tiles.forEach(function (tile) {
+			tile.querySelector("img").src = art(tile.getAttribute("data-unit"));
+		});
+	}
+
+	fetch("/art/roster.json").then(function (response) { return response.json(); }).then(function (roster) {
+		units = roster.units;
+		units.forEach(function (u) { byId[u.id] = u; });
+		document.documentElement.classList.add("has-tray");
+		tiles.forEach(function (tile) {
+			tile.addEventListener("click", function () {
+				selected = tile.getAttribute("data-unit");
+				show();
+			});
+		});
+		paints.forEach(function (button) {
+			button.addEventListener("click", function () {
+				army = button.getAttribute("data-army");
+				paint();
+				show();
+			});
+		});
+		show();
+	}).catch(function () {});
+})();
+</script>
 
 <!-- How long a visit lasts: a beat now, one every 30 s while the page is visible, and one
      when it goes away. Cookieless and id-free — the body is the page path, and the collector

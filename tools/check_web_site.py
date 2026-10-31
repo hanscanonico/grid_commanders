@@ -2,6 +2,7 @@
 """Audits what a crawler sees of gridcommanders.com.
 
 Usage:  tools/check_web_site.py [exported-site-dir]
+        tools/check_web_site.py --write-roster
 
 With no argument it reads the sources — `deploy/web/site/` and the Web preset's
 `html/head_include` — which is why `make check` can run it with no export in
@@ -15,6 +16,10 @@ by hand, from a generator or in another editor cannot quietly drop a tag.
 
 "Advance Wars" is held to body copy and the meta description — CLAUDE.md's legal
 note keeps it out of the title, the headings and the social titles.
+
+The landing page's matchup tray reads `art/roster.json`, a copy of the unit and
+damage data. A balance change makes it stale, so the audit rebuilds it from
+`data/` and fails on any difference; `--write-roster` refreshes the file.
 """
 
 import json
@@ -36,6 +41,12 @@ ANALYTICS_TAG = '<script src="/analytics.js" defer></script>'
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SITE = ROOT / "deploy" / "web" / "site"
 PRESETS = ROOT / "export_presets.cfg"
+ROSTER = SOURCE_SITE / "art" / "roster.json"
+# The order the tray lays the tiles out in: land, then air, then sea.
+ROSTER_ORDER = (
+    "infantry mech recon apc tank md_tank artillery rockets anti_air missiles "
+    "t_copter b_copter fighter bomber lander cruiser sub battleship"
+).split()
 
 failures: list[str] = []
 
@@ -220,12 +231,79 @@ def check_sitemap(path: Path) -> None:
         fail("%s: lists %r, expected %r" % (path, found, SITEMAP_URLS))
 
 
+def tres_field(text: str, name: str) -> str:
+    found = re.search(r"^%s = (.*)$" % name, text, re.MULTILINE)
+    return found.group(1).strip('&"') if found else ""
+
+
+def damage_matrices() -> tuple[dict, dict]:
+    """The damage chart's two matrices: attacker -> defender -> base damage."""
+    text = (ROOT / "data" / "damage_chart.tres").read_text()
+    sections = re.split(r"^secondary_chart = ", text, flags=re.MULTILINE)
+    matrices = []
+    for section in sections:
+        rows = re.findall(r'^&"(\w+)": \{\n(.*?)^\},?$', section, re.MULTILINE | re.DOTALL)
+        matrices.append(
+            {
+                attacker: {
+                    defender: int(damage)
+                    for defender, damage in re.findall(r'^&"(\w+)": (\d+)', cells, re.MULTILINE)
+                }
+                for attacker, cells in rows
+            }
+        )
+    return matrices[0], matrices[1]
+
+
+def build_roster() -> dict:
+    """What the tray shows. A shot is the primary weapon's, else the secondary's,
+    which is the order DamageChart.base_damage reads them in."""
+    primary, secondary = damage_matrices()
+    units = []
+    for unit_id in ROSTER_ORDER:
+        text = (ROOT / "data" / "units" / (unit_id + ".tres")).read_text()
+        hits = dict(secondary.get(unit_id, {}))
+        hits.update(primary.get(unit_id, {}))
+        units.append(
+            {
+                "id": unit_id,
+                "name": tres_field(text, "display_name"),
+                "role": tres_field(text, "role"),
+                "cost": int(tres_field(text, "cost")),
+                "move": int(tres_field(text, "move_points")),
+                "range": [int(tres_field(text, "min_range")), int(tres_field(text, "max_range"))],
+                "hits": hits,
+            }
+        )
+    return {"units": units}
+
+
+def check_roster(path: Path) -> None:
+    if not path.is_file():
+        fail("%s: missing; run tools/check_web_site.py --write-roster" % path)
+    elif json.loads(path.read_text()) != build_roster():
+        fail("%s: differs from data/; run tools/check_web_site.py --write-roster" % path)
+
+
+def check_art_links(html: str, site: Path, where: str) -> None:
+    """Every file the page names under /art/ ships, since a static page fails silently."""
+    for name in set(re.findall(r"/art/([\w./-]+\.\w+)", html)):
+        if not (site / "art" / name).is_file():
+            fail("%s: names /art/%s, which is not in the site" % (where, name))
+
+
 def main(argv: list[str]) -> int:
+    if argv == ["--write-roster"]:
+        ROSTER.write_text(json.dumps(build_roster(), indent=1) + "\n")
+        return 0
+
     landing = SOURCE_SITE / "index.html"
     if not landing.is_file():
         fail("%s: missing" % landing)
     else:
         check_landing(landing.read_text(), str(landing))
+        check_art_links(landing.read_text(), SOURCE_SITE, str(landing))
+    check_roster(ROSTER)
     check_og_image(SOURCE_SITE / "og-battle.png")
     check_robots(SOURCE_SITE / "robots.txt")
     check_sitemap(SOURCE_SITE / "sitemap.xml")

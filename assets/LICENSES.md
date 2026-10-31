@@ -13,6 +13,7 @@ source and license. Nintendo assets, names, and trade dress are never allowed.
 | `models/**/*.glb`, `models/**/*_paint.png`, `models/**/*_normal.png`, `models/terrain/ground_*.png` | built by `generators/models` in Blender from this repository's own scripts, with no asset library or AI generator | project-original |
 | `fonts/PixelifySans-Variable.ttf` | Pixelify Sans — Google Fonts, see below | SIL OFL 1.1 |
 | `fonts/Silkscreen-Regular.ttf`, `fonts/Silkscreen-Bold.ttf` | Silkscreen — Google Fonts, see below | SIL OFL 1.1 |
+| `deploy/web/site/art/fonts/bowlby-one.woff2`, `barlow-400.woff2`, `barlow-600.woff2` (landing page only) | Bowlby One and Barlow — Google Fonts; `Bowlby-OFL.txt` and `Barlow-OFL.txt` beside them | SIL OFL 1.1 |
 | `addons/gut/` (GUT, the test runner) | vendored addon — `addons/gut/LICENSE.md` | MIT |
 | `addons/godot_ai/` (the editor MCP bridge) | vendored addon — `addons/godot_ai/LICENSE` | MIT |
 

@@ -1,0 +1,406 @@
+{
+ "units": [
+  {
+   "id": "infantry",
+   "name": "Infantry",
+   "role": "The cheapest unit. Captures cities and HQs.",
+   "cost": 1000,
+   "move": 3,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 5,
+    "apc": 14,
+    "artillery": 15,
+    "b_copter": 7,
+    "infantry": 55,
+    "md_tank": 1,
+    "mech": 45,
+    "missiles": 25,
+    "recon": 12,
+    "rockets": 25,
+    "t_copter": 30,
+    "tank": 5
+   }
+  },
+  {
+   "id": "mech",
+   "name": "Mech",
+   "role": "Slow foot soldier with a bazooka. Captures.",
+   "cost": 3000,
+   "move": 2,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 65,
+    "apc": 75,
+    "artillery": 70,
+    "b_copter": 9,
+    "infantry": 65,
+    "md_tank": 15,
+    "mech": 55,
+    "missiles": 85,
+    "recon": 85,
+    "rockets": 85,
+    "t_copter": 35,
+    "tank": 55
+   }
+  },
+  {
+   "id": "recon",
+   "name": "Recon",
+   "role": "Fast scout that sees far. Hunts foot soldiers.",
+   "cost": 4000,
+   "move": 8,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 4,
+    "apc": 45,
+    "artillery": 45,
+    "b_copter": 10,
+    "infantry": 70,
+    "md_tank": 1,
+    "mech": 65,
+    "missiles": 28,
+    "recon": 35,
+    "rockets": 55,
+    "t_copter": 35,
+    "tank": 6
+   }
+  },
+  {
+   "id": "apc",
+   "name": "APC",
+   "role": "Moves foot soldiers and refills adjacent units.",
+   "cost": 5000,
+   "move": 6,
+   "range": [
+    0,
+    0
+   ],
+   "hits": {}
+  },
+  {
+   "id": "tank",
+   "name": "Tank",
+   "role": "Quick all-rounder for the front line.",
+   "cost": 7000,
+   "move": 6,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 65,
+    "apc": 75,
+    "artillery": 70,
+    "b_copter": 10,
+    "infantry": 75,
+    "md_tank": 15,
+    "mech": 70,
+    "missiles": 85,
+    "recon": 85,
+    "rockets": 85,
+    "t_copter": 40,
+    "tank": 55,
+    "battleship": 1,
+    "cruiser": 5,
+    "lander": 10,
+    "sub": 1
+   }
+  },
+  {
+   "id": "md_tank",
+   "name": "Md Tank",
+   "role": "Heavy armour that beats other vehicles.",
+   "cost": 16000,
+   "move": 5,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 105,
+    "apc": 105,
+    "artillery": 105,
+    "b_copter": 12,
+    "infantry": 105,
+    "md_tank": 55,
+    "mech": 95,
+    "missiles": 105,
+    "recon": 105,
+    "rockets": 105,
+    "t_copter": 45,
+    "tank": 85,
+    "battleship": 10,
+    "cruiser": 45,
+    "lander": 35,
+    "sub": 10
+   }
+  },
+  {
+   "id": "artillery",
+   "name": "Artillery",
+   "role": "Shells foes from a safe distance.",
+   "cost": 6000,
+   "move": 5,
+   "range": [
+    2,
+    3
+   ],
+   "hits": {
+    "anti_air": 75,
+    "apc": 70,
+    "artillery": 75,
+    "battleship": 40,
+    "cruiser": 65,
+    "infantry": 90,
+    "lander": 55,
+    "md_tank": 45,
+    "mech": 85,
+    "missiles": 80,
+    "recon": 80,
+    "rockets": 80,
+    "sub": 60,
+    "tank": 70
+   }
+  },
+  {
+   "id": "rockets",
+   "name": "Rockets",
+   "role": "Long-range fire on land and sea targets.",
+   "cost": 15000,
+   "move": 5,
+   "range": [
+    3,
+    5
+   ],
+   "hits": {
+    "anti_air": 85,
+    "apc": 80,
+    "artillery": 80,
+    "battleship": 55,
+    "cruiser": 85,
+    "infantry": 95,
+    "lander": 60,
+    "md_tank": 55,
+    "mech": 90,
+    "missiles": 90,
+    "recon": 90,
+    "rockets": 85,
+    "sub": 85,
+    "tank": 80
+   }
+  },
+  {
+   "id": "anti_air",
+   "name": "Anti-Air",
+   "role": "Shreds aircraft and foot soldiers up close.",
+   "cost": 8000,
+   "move": 6,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 45,
+    "apc": 50,
+    "artillery": 50,
+    "b_copter": 120,
+    "bomber": 75,
+    "fighter": 65,
+    "infantry": 105,
+    "md_tank": 10,
+    "mech": 105,
+    "missiles": 55,
+    "recon": 60,
+    "rockets": 55,
+    "t_copter": 120,
+    "tank": 25
+   }
+  },
+  {
+   "id": "missiles",
+   "name": "Missiles",
+   "role": "Long-range cover against aircraft.",
+   "cost": 12000,
+   "move": 4,
+   "range": [
+    3,
+    5
+   ],
+   "hits": {
+    "b_copter": 120,
+    "bomber": 100,
+    "fighter": 100,
+    "t_copter": 120
+   }
+  },
+  {
+   "id": "t_copter",
+   "name": "T-Copter",
+   "role": "Flies foot soldiers over any ground.",
+   "cost": 5000,
+   "move": 6,
+   "range": [
+    0,
+    0
+   ],
+   "hits": {}
+  },
+  {
+   "id": "b_copter",
+   "name": "B-Copter",
+   "role": "Gunship that strikes ground units and boats.",
+   "cost": 9000,
+   "move": 6,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 25,
+    "apc": 60,
+    "artillery": 65,
+    "b_copter": 65,
+    "battleship": 25,
+    "cruiser": 55,
+    "infantry": 75,
+    "lander": 25,
+    "md_tank": 25,
+    "mech": 75,
+    "missiles": 65,
+    "recon": 55,
+    "rockets": 65,
+    "sub": 25,
+    "t_copter": 95,
+    "tank": 55
+   }
+  },
+  {
+   "id": "fighter",
+   "name": "Fighter",
+   "role": "Rules the sky. Cannot hit the ground.",
+   "cost": 20000,
+   "move": 9,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "b_copter": 100,
+    "bomber": 100,
+    "fighter": 55,
+    "t_copter": 100
+   }
+  },
+  {
+   "id": "bomber",
+   "name": "Bomber",
+   "role": "Bombs land and sea units. No air attack.",
+   "cost": 22000,
+   "move": 7,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "anti_air": 95,
+    "apc": 105,
+    "artillery": 105,
+    "battleship": 75,
+    "cruiser": 85,
+    "infantry": 110,
+    "lander": 95,
+    "md_tank": 95,
+    "mech": 110,
+    "missiles": 105,
+    "recon": 105,
+    "rockets": 105,
+    "sub": 95,
+    "tank": 105
+   }
+  },
+  {
+   "id": "lander",
+   "name": "Lander",
+   "role": "Ferries land units across the sea.",
+   "cost": 12000,
+   "move": 6,
+   "range": [
+    0,
+    0
+   ],
+   "hits": {}
+  },
+  {
+   "id": "cruiser",
+   "name": "Cruiser",
+   "role": "Guards the fleet from aircraft and subs.",
+   "cost": 18000,
+   "move": 6,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "b_copter": 115,
+    "bomber": 65,
+    "fighter": 55,
+    "sub": 90,
+    "t_copter": 115
+   }
+  },
+  {
+   "id": "sub",
+   "name": "Sub",
+   "role": "Dives to hide. Hunts ships.",
+   "cost": 20000,
+   "move": 5,
+   "range": [
+    1,
+    1
+   ],
+   "hits": {
+    "battleship": 55,
+    "cruiser": 25,
+    "lander": 95,
+    "sub": 55
+   }
+  },
+  {
+   "id": "battleship",
+   "name": "Battleship",
+   "role": "Long-range guns that hit land and sea.",
+   "cost": 28000,
+   "move": 5,
+   "range": [
+    2,
+    6
+   ],
+   "hits": {
+    "anti_air": 85,
+    "apc": 80,
+    "artillery": 80,
+    "battleship": 50,
+    "cruiser": 95,
+    "infantry": 95,
+    "lander": 95,
+    "md_tank": 55,
+    "mech": 90,
+    "missiles": 90,
+    "recon": 90,
+    "rockets": 85,
+    "sub": 95,
+    "tank": 80
+   }
+  }
+ ]
+}

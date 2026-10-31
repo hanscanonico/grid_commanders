@@ -558,9 +558,12 @@ check, landing page and `/play/` both.
 ### The public site
 
 `deploy/web/site/` is the whole of gridcommanders.com's front door: one hand-written `index.html`
-with inline CSS and no build step, the sharing card `og-battle.png` (1200x630, captured from a real
-battle), a favicon, `robots.txt`, `sitemap.xml`, and the home-screen `manifest.json` with its two
-icons. The landing page carries the search and social
+with inline CSS and no build step, the sharing card `og-battle.png` (1200x630), a favicon,
+`robots.txt`, `sitemap.xml`, and the home-screen `manifest.json` with its two icons. `art/` holds
+the page's renders of the painted models, its fonts, and `roster.json`, the copy of `data/` its
+matchup tray reads: after a balance change run `tools/check_web_site.py --write-roster`, because the
+gate fails until the copy matches. The renders do not refresh themselves when a model changes. The
+landing page carries the search and social
 metadata — title, description, canonical, Open Graph and Twitter tags, a JSON-LD `VideoGame` block
 — and the game page carries its own description and canonical through the Web preset's
 `html/head_include`. `tools/check_web_site.py` is the gate, run by `make check` over the sources and
