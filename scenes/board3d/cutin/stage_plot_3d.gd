@@ -72,10 +72,15 @@ func setup(
 			rows[i] = rows[i].reverse()
 	_map = MapData.parse("[terrain]\n" + "\n".join(rows), db)
 	position = Vector3(-COLUMNS if side < 0 else 0, 0.0, -SQUAD_ROW - 0.5)
-	var meshes := TerrainMesher3D.build(_map)
-	_add(meshes[0], materials[0])
+	var meshes := TerrainMesher3D.build(_map, PaintedArt.on())
+	var worn: Array[Material] = materials
+	if PaintedArt.on():
+		worn = [PaintedBoard3D.ground_material(_map, false), materials[1]]
+		PaintedBoard3D.add_scenery(self, _map, null, null)
+	_add(meshes[0], worn[0])
 	if meshes[1] != null:
-		_add(meshes[1], materials[1])
+		_add(meshes[1], worn[1])
+	materials = worn
 	_add_apron(rows[ROWS - 1].left(1), BACK_ROWS, APRON_FAR, materials)
 	_add_apron(rows[0].left(1), -APRON_FAR, BACK_ROWS, materials)
 	_add_far_trees(rows[0].left(1))

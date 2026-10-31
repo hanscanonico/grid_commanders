@@ -110,7 +110,7 @@ func _pose(commander: CommanderType, variant: StringName) -> void:
 	var id := CommanderType.NEUTRAL_ID if commander == null else commander.id
 	var look := CommanderLooks3D.look_of(id)
 	look[CommanderHead3D.CLOSE_UP] = true
-	_actor.build(look, CommanderVisuals.theme_for(commander))
+	_actor.build(look, CommanderVisuals.theme_for(commander), id)
 	if id == CommanderType.NEUTRAL_ID:
 		_actor.set_hologram(EMPTY_SEAT)
 	_actor.rotation_degrees.y = PortraitShot3D.YAW_DEG

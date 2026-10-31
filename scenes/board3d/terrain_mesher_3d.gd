@@ -70,7 +70,8 @@ class Top:
 
 ## The land mesh and the water mesh, in that order; the water one is null on a
 ## board with no water on it.
-static func build(map: MapData) -> Array[ArrayMesh]:
+## `painted_props` leaves the woods and mountains off, for models that stand there.
+static func build(map: MapData, painted_props: bool = false) -> Array[ArrayMesh]:
 	var tops: Dictionary[Vector2i, Top] = {}
 	for y in map.height:
 		for x in map.width:
@@ -85,7 +86,8 @@ static func build(map: MapData) -> Array[ArrayMesh]:
 			any_water = any_water or top.wet[k]
 			_square_top(st, cell, k, top)
 			_square_walls(st, tops, cell, k)
-		_decorate(land, map, cell)
+		if not (painted_props and map.terrain_at(cell).id in [&"woods", &"mountain"]):
+			_decorate(land, map, cell)
 	var meshes: Array[ArrayMesh] = [land.commit(), water.commit() if any_water else null]
 	return meshes
 

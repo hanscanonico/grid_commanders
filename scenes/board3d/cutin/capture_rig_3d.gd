@@ -83,7 +83,7 @@ func setup(
 	_buildings = buildings
 	for building in _buildings:
 		var body := building.get_node("Body") as MeshInstance3D
-		MeshKit.flashable(body.material_override as StandardMaterial3D, Color.WHITE)
+		ModelSkin3D.flashable(body.material_override, Color.WHITE)
 	_stand_buildings()
 	_before = before
 	_after = after
@@ -139,15 +139,17 @@ func pose(
 	beats: CaptureBeats, captured: bool, t: float, feet: PackedVector3Array, eye: Vector3
 ) -> void:
 	var flipped := CaptureShot3D.flipped(beats, captured, t)
-	var mesh := PropertyModels3D.mesh_for(_terrain_id, _after if flipped else _before)
+	var theme := _after if flipped else _before
+	var mesh := PropertyModels3D.mesh_for(_terrain_id, theme)
 	var glow := pow(CaptureShot3D.bloom(beats, captured, t), 3.0)
 	var jolt := CaptureShot3D.building_scale(beats, captured, t)
 	for i in _buildings.size():
 		var body := _buildings[i].get_node("Body") as MeshInstance3D
 		body.mesh = mesh
 		_buildings[i].scale = jolt * _rest_scales[i]
-		var material := body.material_override as StandardMaterial3D
-		material.emission_energy_multiplier = FLASH_ENERGY * glow
+		if body.material_override is ShaderMaterial:
+			PaintedModels3D.wear(body.material_override as ShaderMaterial, theme)
+		ModelSkin3D.flash(body.material_override, FLASH_ENERGY * glow)
 	_fly(_old_flag, CaptureShot3D.old_flag(beats, captured, t), t)
 	_fly(_new_flag, CaptureShot3D.new_flag(beats, captured, t), t)
 	_fx.begin(eye)

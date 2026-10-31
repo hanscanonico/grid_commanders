@@ -73,10 +73,14 @@ static func atlas() -> Image:
 		var arrays := body.surface_get_arrays(0)
 		var corners: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
-		for i in range(0, corners.size(), 3):
-			if normals[i].y > 0.0:
-				var face: Array[Vector3] = [corners[i], corners[i + 1], corners[i + 2]]
-				_fill(image, tile, face, shade)
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else []
+		var count := indices.size() if not indices.is_empty() else corners.size()
+		for i in range(0, count, 3):
+			var a := indices[i] if not indices.is_empty() else i
+			var b := indices[i + 1] if not indices.is_empty() else i + 1
+			var c := indices[i + 2] if not indices.is_empty() else i + 2
+			if normals[a].y > 0.0:
+				_fill(image, tile, [corners[a], corners[b], corners[c]], shade)
 	return image
 
 

@@ -32,6 +32,9 @@ const TERRAIN_SHADER := preload("res://scenes/board3d/terrain_3d.gdshader")
 ## stands over its roofs rather than inside its walls and a docked hull clears
 ## the port's crane and shed; the roofs, low, still say whose it is.
 const OCCUPIED_HEIGHT := 0.3
+## The painted board's light, a step brighter: its art carries its own shade.
+const PAINTED_SUN := 0.95
+const PAINTED_AMBIENT := 0.42
 const SETTLE_RATE := 10.0
 const BACKGROUND := Color("#1a2130")
 const TABLE := Color("#262d3b")
@@ -274,6 +277,8 @@ func _on_view_changed() -> void:
 			_stage.leave()
 	_camera.camera.current = on
 	_environment.environment = _make_environment() if on else null
+	if PaintedArt.on() and not MobileProfile.active():
+		get_viewport().msaa_3d = Viewport.MSAA_4X if on else Viewport.MSAA_DISABLED
 	_overlay.render_target_update_mode = (
 		SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
 	)
@@ -353,10 +358,14 @@ func _build() -> void:
 	_build_overlay()
 	_fog_image = Image.create_empty(_map.width, _map.height, false, Image.FORMAT_L8)
 	_fog_texture = ImageTexture.create_from_image(_fog_image)
-	var meshes := TerrainMesher3D.build(_map)
-	_add_mesh(meshes[0], _terrain_material(false))
-	if meshes[1] != null:
-		_add_mesh(meshes[1], _terrain_material(true))
+	if PaintedArt.on():
+		PaintedModels3D.keep_shaders()
+		PaintedBoard3D.dress(self, _map, _overlay.get_texture(), _fog_texture)
+	else:
+		var meshes := TerrainMesher3D.build(_map)
+		_add_mesh(meshes[0], _terrain_material(false))
+		if meshes[1] != null:
+			_add_mesh(meshes[1], _terrain_material(true))
 	_prop_material = _terrain_material(false)
 	_add_table()
 	_units = UnitMirror3D.new()
@@ -456,7 +465,7 @@ func _add_sun() -> void:
 	# it — beside it on screen, where a sun behind the camera would hide it.
 	sun.rotation_degrees = Vector3(-48, -115, 0)
 	sun.light_color = Color("#fff6ea")
-	sun.light_energy = 0.8
+	sun.light_energy = PAINTED_SUN if PaintedArt.on() else 0.8
 	sun.shadow_enabled = true
 	add_child(sun)
 
@@ -467,7 +476,7 @@ func _make_environment() -> Environment:
 	env.background_color = BACKGROUND
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("#c3cfe6")
-	env.ambient_light_energy = 0.35
+	env.ambient_light_energy = PAINTED_AMBIENT if PaintedArt.on() else 0.35
 	return env
 
 
@@ -524,7 +533,10 @@ func _settle_properties(delta: float) -> void:
 ## range laid over its cell reads on its roof.
 func _dress(node: Node) -> void:
 	var geometry := node as GeometryInstance3D
-	if geometry != null:
+	if geometry != null and geometry.material_override is ShaderMaterial:
+		var worn := geometry.material_override as ShaderMaterial
+		PaintedModels3D.on_board(worn, _overlay.get_texture(), _fog_texture, Vector2(_map.size()))
+	elif geometry != null:
 		geometry.material_override = _prop_material
 	for child in node.get_children():
 		_dress(child)

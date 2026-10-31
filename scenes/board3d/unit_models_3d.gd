@@ -23,6 +23,8 @@ static var _warned: Dictionary[StringName, bool] = {}
 
 
 static func mesh_for(type_id: StringName, theme: CommanderVisuals.FactionTheme) -> ArrayMesh:
+	if PaintedArt.on() and PaintedModels3D.exists(PaintedModels3D.UNITS, type_id):
+		return PaintedModels3D.baked(PaintedModels3D.UNITS, type_id).mesh
 	var key := "%s|%s" % [type_id, theme.key]
 	if not _meshes.has(key):
 		var ramp := FactionRamp3D.of(theme)
@@ -35,6 +37,9 @@ static func mesh_for(type_id: StringName, theme: CommanderVisuals.FactionTheme) 
 ## One figure of a cut-in squad: a foot unit's lone soldier, any other unit's
 ## whole body.
 static func figure_mesh_for(type_id: StringName, theme: CommanderVisuals.FactionTheme) -> ArrayMesh:
+	if PaintedArt.on() and PaintedModels3D.exists(PaintedModels3D.UNITS, type_id):
+		var id := PaintedModels3D.unit_id(type_id, true)
+		return PaintedModels3D.baked(PaintedModels3D.UNITS, id).mesh
 	if type_id != &"infantry" and type_id != &"mech":
 		return mesh_for(type_id, theme)
 	var key := "%s|%s|lone" % [type_id, theme.key]
@@ -51,6 +56,11 @@ static func figure_mesh_for(type_id: StringName, theme: CommanderVisuals.Faction
 ## seven-tenths of its height. Asked of the cut-in's figure, so a mech answers
 ## for its lone trooper.
 static func muzzle_for(type_id: StringName, aabb: AABB) -> Vector3:
+	if PaintedArt.on() and PaintedModels3D.exists(PaintedModels3D.UNITS, type_id):
+		var marked := PaintedModels3D.muzzle_of(type_id, true)
+		if marked.is_finite():
+			return marked
+		return Vector3(aabb.end.x, aabb.position.y + aabb.size.y * 0.7, 0.0)
 	for muzzle: Vector3 in [
 		TrackedModels3D.muzzle_of(type_id),
 		LandModels3D.muzzle_of(type_id, LONE_SOLDIER_SCALE),
@@ -69,6 +79,8 @@ static func muzzle_for(type_id: StringName, aabb: AABB) -> Vector3:
 static func build(
 	type_id: StringName, theme: CommanderVisuals.FactionTheme, lone: bool = false
 ) -> Node3D:
+	if PaintedArt.on() and PaintedModels3D.exists(PaintedModels3D.UNITS, type_id):
+		return PaintedModels3D.unit(type_id, theme, lone)
 	var root := Node3D.new()
 	root.name = String(type_id)
 	var material := MeshKit.vertex_material()
