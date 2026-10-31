@@ -104,9 +104,11 @@ func setup(view: BattleView) -> void:
 
 
 ## The window outlives the battle, so leaving one with the 3D board up must not
-## leave the next scene drawn with BOARD_ROOT culled.
+## leave the next scene drawn with BOARD_ROOT culled or paying for MSAA buffers.
 func _exit_tree() -> void:
-	get_viewport().canvas_cull_mask |= BOARD_ROOT
+	var window := get_viewport()
+	window.canvas_cull_mask |= BOARD_ROOT
+	window.msaa_3d = Viewport.MSAA_DISABLED
 
 
 ## V flips the board from anywhere in the battle — a watched match, a paused one,

@@ -17,7 +17,18 @@ const LAND_LOWEST_TOP := 0.22
 const ARTILLERY_TOP := 0.8
 const UNARMED: Array[StringName] = [&"apc", &"t_copter", &"lander"]
 const BONES: Array[StringName] = [
-	&"hips", &"torso", &"head", &"arm_l", &"arm_r", &"leg_l", &"leg_r", &"prop"
+	&"hips",
+	&"torso",
+	&"head",
+	&"arm_l",
+	&"arm_r",
+	&"fore_l",
+	&"fore_r",
+	&"leg_l",
+	&"leg_r",
+	&"shin_l",
+	&"shin_r",
+	&"prop",
 ]
 
 
@@ -153,6 +164,18 @@ func test_a_flip_reuses_one_mesh_and_recolours_its_material() -> void:
 	var red := PropertyModels3D.mesh_for(&"city", CommanderVisuals.theme_for_key(&"meridian"))
 	var blue := PropertyModels3D.mesh_for(&"city", CommanderVisuals.theme_for_key(&"aurora"))
 	assert_same(red, blue)
+
+
+func test_a_captured_building_takes_the_badge_nobody_wore_before_it() -> void:
+	var nobody := CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
+	var army := CommanderVisuals.theme_for_key(&"meridian")
+	var material := PaintedModels3D.material_for(PaintedModels3D.BUILDINGS, &"base", nobody)
+	assert_null(material.get_shader_parameter(&"emblem"), "nobody wears no badge")
+	PaintedModels3D.wear(material, army)
+	assert_not_null(material.get_shader_parameter(&"emblem"), "the army's badge goes on")
+	assert_gt(float(material.get_shader_parameter(&"emblem_radius")), 0.0, "and it has a size")
+	PaintedModels3D.wear(material, nobody)
+	assert_null(material.get_shader_parameter(&"emblem"), "and it comes off again")
 
 
 func test_terrain_tiles_and_models_are_there() -> void:

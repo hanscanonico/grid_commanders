@@ -106,12 +106,8 @@ static func wear(material: ShaderMaterial, theme: CommanderVisuals.FactionTheme)
 	material.set_shader_parameter(&"ramp_base", ramp.base)
 	material.set_shader_parameter(&"ramp_light", ramp.light)
 	var emblem_path := "%s/%s.png" % [CommanderVisuals.FACTION_DIR, theme.key]
-	var worn := ResourceLoader.exists(emblem_path)
-	if worn:
-		material.set_shader_parameter(&"emblem", load(emblem_path))
-	var radius: Variant = material.get_shader_parameter(&"emblem_radius")
-	if radius != null and float(radius) > 0.0 and not worn:
-		material.set_shader_parameter(&"emblem_radius", 0.0)
+	var badge: Texture2D = load(emblem_path) if ResourceLoader.exists(emblem_path) else null
+	material.set_shader_parameter(&"emblem", badge)
 
 
 ## Puts a building or a prop on the board: its marks and its fog read on it.

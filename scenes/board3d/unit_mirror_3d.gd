@@ -215,7 +215,7 @@ func _drive(model: Model, sprite: UnitSprite, moved: float, delta: float) -> voi
 		model.rolled += moved
 		ModelSkin3D.drive(body, &"roll", model.rolled)
 	var gait := model.gait
-	if sprite.moving or sprite.in_hand:
+	if UnitSprite.marches(sprite.moving, sprite.in_hand, BoardBeat.still()):
 		gait += delta * MARCH_RATE
 	else:
 		gait = lerpf(gait, roundf(gait / PI) * PI, 1.0 - exp(-delta * MARCH_SETTLE))

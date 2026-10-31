@@ -27,7 +27,8 @@ uniform sampler2D normals : hint_normal, filter_linear_mipmap_anisotropic;
 uniform vec3 ramp_dark : source_color;
 uniform vec3 ramp_base : source_color;
 uniform vec3 ramp_light : source_color;
-uniform sampler2D emblem : source_color, filter_linear_mipmap, repeat_disable;
+// Nobody's building has no badge, and the default paints nothing where one goes.
+uniform sampler2D emblem : source_color, hint_default_transparent, filter_linear_mipmap, repeat_disable;
 // Where the army's badge is painted, seen from straight above, in the model's frame.
 uniform vec3 emblem_centre = vec3(0.0);
 uniform float emblem_radius = 0.0;

@@ -835,7 +835,9 @@ forms named in the root index are in `docs/design_record.md`.
   to the same numbers as the code models. D2: **`PaintedArt.on()` is the one switch**, on by default since
   the user approved the set, with `--art=code` to see the code models, and off in a headless run, which draws nothing and
   whose geometry suites measure the code models. `UnitModels3D`, `PropertyModels3D`,
-  `CommanderActor3D`, `Board3D` and `StagePlot3D` ask it, and nothing else knows which art is up.
+  `CommanderActor3D`, `Board3D`, `UnitMirror3D` and the cut-in stage's parts ask it, and nothing
+  outside `scenes/board3d/` knows which art is up. The 3D board's D4 below still states the code
+  models; they stay for `--art=code` and those suites, and this entry is what a player sees.
   D3: **one texture dresses every army.** The texture's alpha marks what wears the army's colour and
   there its grey is a place on `FactionRamp3D`'s ramp (`painted_miniature_3d.gdshaderinc`), so a
   shadow on red stays red. A capture's flip recolours the material and never swaps the mesh.

@@ -96,7 +96,8 @@ func setup(
 static func layout(terrain: TerrainType, ground: TerrainType) -> PackedStringArray:
 	var paving := ground.symbol
 	var stands := terrain.stands_in_cutin() and not terrain.is_property
-	var backlot := terrain.symbol if stands else ("." if terrain.is_property else paving)
+	var field_behind := terrain.is_property or ground.id == &"road"
+	var backlot := terrain.symbol if stands else ("." if field_behind else paving)
 	var rows := PackedStringArray()
 	for r in ROWS:
 		if r < BACK_ROWS:
