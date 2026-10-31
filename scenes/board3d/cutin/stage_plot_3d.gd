@@ -72,10 +72,15 @@ func setup(
 			rows[i] = rows[i].reverse()
 	_map = MapData.parse("[terrain]\n" + "\n".join(rows), db)
 	position = Vector3(-COLUMNS if side < 0 else 0, 0.0, -SQUAD_ROW - 0.5)
-	var meshes := TerrainMesher3D.build(_map)
-	_add(meshes[0], materials[0])
+	var meshes := TerrainMesher3D.build(_map, PaintedArt.on())
+	var worn: Array[Material] = materials
+	if PaintedArt.on():
+		worn = [PaintedBoard3D.ground_material(_map, false), materials[1]]
+		PaintedBoard3D.add_scenery(self, _map, null, null)
+	_add(meshes[0], worn[0])
 	if meshes[1] != null:
-		_add(meshes[1], materials[1])
+		_add(meshes[1], worn[1])
+	materials = worn
 	_add_apron(rows[ROWS - 1].left(1), BACK_ROWS, APRON_FAR, materials)
 	_add_apron(rows[0].left(1), -APRON_FAR, BACK_ROWS, materials)
 	_add_far_trees(rows[0].left(1))
@@ -91,7 +96,8 @@ func setup(
 static func layout(terrain: TerrainType, ground: TerrainType) -> PackedStringArray:
 	var paving := ground.symbol
 	var stands := terrain.stands_in_cutin() and not terrain.is_property
-	var backlot := terrain.symbol if stands else ("." if terrain.is_property else paving)
+	var field_behind := terrain.is_property or ground.id == &"road"
+	var backlot := terrain.symbol if stands else ("." if field_behind else paving)
 	var rows := PackedStringArray()
 	for r in ROWS:
 		if r < BACK_ROWS:
@@ -188,6 +194,16 @@ func _add_apron(symbol: String, z0: float, z1: float, materials: Array[Material]
 func _add_far_trees(symbol: String) -> void:
 	if _is_water(symbol) or symbol == "_":
 		return
+	if PaintedArt.on():
+		var stands: Array[Transform3D] = []
+		for i in FAR_TREES:
+			var out := 1.0 + 44.0 * SquadFormation3D.scatter(i, 91 + side)
+			var deep := -22.0 - 26.0 * SquadFormation3D.scatter(i, 93 + side)
+			var size := Vector3.ONE * (2.2 + 2.0 * SquadFormation3D.scatter(i, 95 + side))
+			var foot := Vector3(out * side, BoardSpace3D.LAND_TOP, deep) - position
+			stands.append(Transform3D(Basis.from_scale(size), foot))
+		PaintedBoard3D.add_stand(self, &"woods", stands)
+		return
 	var st := MeshKit.begin()
 	for i in FAR_TREES:
 		var out := 1.0 + 44.0 * SquadFormation3D.scatter(i, 91 + side)
@@ -206,6 +222,13 @@ func _add_far_trees(symbol: String) -> void:
 ## Three big peaks behind the patch's own, so a mountain reads as a range
 ## rather than a field of hillocks.
 func _add_range() -> void:
+	if PaintedArt.on():
+		var crags: Array[Transform3D] = []
+		for i in RANGE.size():
+			var foot := Vector3(RANGE[i].x * side, BoardSpace3D.LAND_TOP, RANGE[i].y) - position
+			crags.append(Transform3D(Basis.from_scale(Vector3.ONE * RANGE[i].z * 1.25), foot))
+		PaintedBoard3D.add_stand(self, &"mountain", crags)
+		return
 	var st := MeshKit.begin()
 	for i in RANGE.size():
 		var at := RANGE[i]

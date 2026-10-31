@@ -45,6 +45,13 @@ func test_what_stands_rises_behind_and_beside_the_squad_not_under_it() -> void:
 		assert_true(row.ends_with(symbol), "%s flanks it" % id)
 
 
+func test_a_road_is_one_road_through_a_field_with_no_lattice_behind_it() -> void:
+	var rows := _layout(&"road")
+	for r in StagePlot3D.ROWS:
+		var symbol := "=" if r == StagePlot3D.SQUAD_ROW else "."
+		assert_eq(rows[r], symbol.repeat(StagePlot3D.COLUMNS), "row %d" % r)
+
+
 func test_a_property_stands_on_a_lot_with_its_paving_in_front() -> void:
 	var city := _layout(&"city")
 	assert_eq(city[0], ".".repeat(StagePlot3D.COLUMNS), "the building's lot")

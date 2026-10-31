@@ -16,6 +16,11 @@ const FLASH_COLOUR := Color("#fff4dc")
 ## A casualty and a wreck char toward this.
 const CHAR := Color(0.28, 0.27, 0.27)
 const ROTOR_SPIN := 26.0
+## How much of a shot's kick the gun itself takes back, on a painted model; how
+## fast its soldiers march in; how far its wheels roll on the way.
+const RECOIL_SHARE := 0.6
+const MARCH_RATE := 13.0
+const ARRIVAL_ROLL := 2.5
 ## Figures stand larger than the board's own models, so a squad holds its own
 ## against a patch of ground built at the board's scale: a unit has a cell to
 ## itself there and a whole stage here.
@@ -63,7 +68,7 @@ var _scale := 1.0
 var _muzzle := Vector3.ZERO
 var _height := 0.3
 var _figures: Array[Node3D] = []
-var _materials: Array[StandardMaterial3D] = []
+var _materials: Array[Array] = []
 
 
 ## Stands `p_posted` figures of `p_type` on `plot` in `theme`, `p_standing` of
@@ -90,10 +95,10 @@ func setup(
 	_anchor = plot.squad_anchor((slots[slots.size() - 1].x - slots[0].x) * 0.5 * _spacing)
 	for slot in posted:
 		var figure := UnitModels3D.build(type.id, theme, true)
-		var body := figure.get_node("Body") as GeometryInstance3D
-		_materials.append(
-			MeshKit.flashable(body.material_override as StandardMaterial3D, FLASH_COLOUR)
-		)
+		var skins := ModelSkin3D.materials_of(figure)
+		for skin in skins:
+			ModelSkin3D.flashable(skin, FLASH_COLOUR)
+		_materials.append(skins)
 		_figures.append(figure)
 		add_child(figure)
 	pose()
@@ -184,12 +189,14 @@ func _to_stage(local: Vector3, height: float) -> Vector3:
 
 
 func _paint(slot: int, shown: float, charred: float) -> void:
-	var material := _materials[slot]
 	var tint := Color.WHITE.lerp(CHAR, clampf(charred, 0.0, 1.0))
-	material.albedo_color = Color(tint, shown)
-	var faded := shown < 0.999
-	var mode := BaseMaterial3D.TRANSPARENCY_ALPHA if faded else BaseMaterial3D.TRANSPARENCY_DISABLED
-	if material.transparency != mode:
-		material.transparency = mode
 	var lit := flash > 0.0 and slot < standing
-	material.emission_energy_multiplier = FLASH_ENERGY * flash if lit else 0.0
+	for skin: Material in _materials[slot]:
+		ModelSkin3D.paint(skin, Color(tint, shown))
+		ModelSkin3D.flash(skin, FLASH_ENERGY * flash if lit else 0.0)
+	if PaintedArt.on():
+		var body: Material = _materials[slot][0]
+		ModelSkin3D.drive(body, &"aim", SquadFormation3D.aim_ease(aim))
+		ModelSkin3D.drive(body, &"recoil", maxf(0.0, -kick) * RECOIL_SHARE)
+		ModelSkin3D.drive(body, &"gait", clock * MARCH_RATE if arrive < 1.0 else 0.0)
+		ModelSkin3D.drive(body, &"roll", arrive * ARRIVAL_ROLL)

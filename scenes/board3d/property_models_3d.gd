@@ -23,6 +23,8 @@ static var _warned: Dictionary[StringName, bool] = {}
 
 
 static func mesh_for(terrain_id: StringName, theme: CommanderVisuals.FactionTheme) -> ArrayMesh:
+	if PaintedArt.on() and PaintedModels3D.exists(PaintedModels3D.BUILDINGS, terrain_id):
+		return PaintedModels3D.baked(PaintedModels3D.BUILDINGS, terrain_id).mesh
 	var key := "%s|%s" % [terrain_id, theme.key]
 	if not _meshes.has(key):
 		var st := MeshKit.begin()
@@ -34,6 +36,8 @@ static func mesh_for(terrain_id: StringName, theme: CommanderVisuals.FactionThem
 ## A fresh model: one `Body`, with a material made for this call alone because
 ## the board tints it in place.
 static func build(terrain_id: StringName, theme: CommanderVisuals.FactionTheme) -> Node3D:
+	if PaintedArt.on() and PaintedModels3D.exists(PaintedModels3D.BUILDINGS, terrain_id):
+		return PaintedModels3D.property(terrain_id, theme)
 	var root := Node3D.new()
 	root.name = String(terrain_id)
 	var body := MeshInstance3D.new()

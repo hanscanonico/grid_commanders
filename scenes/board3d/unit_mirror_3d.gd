@@ -22,6 +22,9 @@ const BROADSIDE_RATE := 3.0
 ## How much darker a greyed unit draws, and how its colour is washed toward grey.
 const GREYED_TINT := Color(0.46, 0.46, 0.5)
 const ROTOR_SPIN := 22.0
+## How fast a painted soldier's legs swing while walking, and settle on stopping.
+const MARCH_RATE := 12.0
+const MARCH_SETTLE := 12.0
 const BADGE_HEIGHT := 0.42
 const BADGE_SIDE := 0.3
 const BADGE_PX := 16
@@ -44,7 +47,9 @@ var _primed := 0
 class Model:
 	extends RefCounted
 	var node: Node3D
-	var material: StandardMaterial3D
+	var materials: Array[Material] = []
+	var rolled := 0.0
+	var gait := 0.0
 	var row := -1
 	var yaw := 0.0
 	var plane := Vector2.ZERO
@@ -120,7 +125,7 @@ func _rebuild(sprite: UnitSprite, old: Model) -> Model:
 		sprite.unit.type.id, SideIdentity.theme_for_row(sprite.atlas_row)
 	)
 	var body := model.node.get_node("Body") as MeshInstance3D
-	model.material = body.material_override as StandardMaterial3D
+	model.materials = ModelSkin3D.materials_of(model.node)
 	model.top = body.mesh.get_aabb().end.y
 	if BattleCampaign.unit_name(sprite.unit) != "":
 		model.mark = UnitMark3D.make()
@@ -169,6 +174,7 @@ func _pose(model: Model, sprite: UnitSprite, delta: float, lens: Basis) -> void:
 		AirShadow3D.lay(model.shadow, height, ground)
 		model.shadow.visible = sprite.modulate.a >= 0.999
 	_tint(model, sprite)
+	_drive(model, sprite, step.length(), delta)
 	if domain == UnitType.AIR:
 		UnitModels3D.turn_rotors(node, _clock * ROTOR_SPIN + model.phase)
 
@@ -195,17 +201,27 @@ func _tint(model: Model, sprite: UnitSprite) -> void:
 	var tint := Color(flash.r, flash.g, flash.b, alpha)
 	if sprite.greyed():
 		tint = Color(tint.r * GREYED_TINT.r, tint.g * GREYED_TINT.g, tint.b * GREYED_TINT.b, alpha)
-	var faded := alpha < 0.999
-	var mode := BaseMaterial3D.TRANSPARENCY_ALPHA if faded else BaseMaterial3D.TRANSPARENCY_DISABLED
-	if model.material.transparency != mode:
-		model.material.transparency = mode
-		# A faded model writes its depth, so it draws as one silhouette rather
-		# than showing its own far side through itself. Only while faded, so an
-		# opaque model keeps the one shader every other board part shares.
-		model.material.depth_draw_mode = (
-			BaseMaterial3D.DEPTH_DRAW_ALWAYS if faded else BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
-		)
-	model.material.albedo_color = tint
+	for material in model.materials:
+		ModelSkin3D.paint(material, tint, true)
+
+
+## Rolls a painted model's wheels by the ground it covers, and marches its
+## soldiers while they walk, settling their legs together when they stop.
+func _drive(model: Model, sprite: UnitSprite, moved: float, delta: float) -> void:
+	if not PaintedArt.on():
+		return
+	var body := model.materials[0]
+	if moved > 0.0:
+		model.rolled += moved
+		ModelSkin3D.drive(body, &"roll", model.rolled)
+	var gait := model.gait
+	if UnitSprite.marches(sprite.moving, sprite.in_hand, BoardBeat.still()):
+		gait += delta * MARCH_RATE
+	else:
+		gait = lerpf(gait, roundf(gait / PI) * PI, 1.0 - exp(-delta * MARCH_SETTLE))
+	if gait != model.gait:
+		model.gait = gait
+		ModelSkin3D.drive(body, &"gait", gait)
 
 
 func _badges(model: Model, sprite: UnitSprite, lens: Basis) -> void:

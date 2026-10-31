@@ -87,7 +87,8 @@ res://
 ├─ assets/     # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/      # offline scripts: balance/, arena/, replay/, plus the checks and runners
 ├─ generators/ # Python pipelines: audio/, sprites/, portraits/ (make audio / tiles / portraits
-│             # install, make *-test gate them); .gdignore hides them from the engine
+│             # install, make *-test gate them), models/ (Blender, make models); .gdignore
+│             # hides them from the engine
 ├─ docs/       # the instruments' committed records; how to author a campaign mission
 ├─ deploy/     # the mini-PC hosting stack for the web build
 └─ tests/      # GUT tests — target the Node-free layers only (see Testing)

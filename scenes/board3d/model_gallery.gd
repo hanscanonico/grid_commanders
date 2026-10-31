@@ -15,7 +15,7 @@ const PROPERTY_OWNERS: Array[StringName] = [&"neutral", &"meridian", &"iron"]
 const PROPERTIES: Array[StringName] = [&"city", &"base", &"airport", &"port", &"hq"]
 const AIR: Array[StringName] = [&"fighter", &"bomber", &"b_copter", &"t_copter"]
 const SEA: Array[StringName] = [&"battleship", &"cruiser", &"lander", &"sub"]
-const PITCH_DEG := 50.0
+const PITCH_DEG := 52.0
 const GRASS := Color("5d8043")
 const WATER := Color("3f78a8")
 const ACTOR_COLUMNS := 11
@@ -173,16 +173,17 @@ func _stage(extent: Vector2, margin: float) -> void:
 
 	var sun := DirectionalLight3D.new()
 	sun.shadow_enabled = true
-	sun.light_energy = 0.9
-	sun.rotation_degrees = Vector3(-55, -35, 0)
+	sun.light_energy = 0.8
+	sun.light_color = Color("#fff6ea")
+	sun.rotation_degrees = Vector3(-48, -115, 0)
 	add_child(sun)
 
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Color("20262c")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("c8d4e0")
-	env.ambient_light_energy = 0.4
+	env.ambient_light_color = Color("#c3cfe6")
+	env.ambient_light_energy = 0.35
 	var world := WorldEnvironment.new()
 	world.environment = env
 	add_child(world)

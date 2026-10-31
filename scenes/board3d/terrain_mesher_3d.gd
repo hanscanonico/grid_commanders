@@ -44,6 +44,8 @@ const _STEPS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1)
 const _BITS: Array[int] = [
 	TerrainAutotiles.BIT_N, TerrainAutotiles.BIT_E, TerrainAutotiles.BIT_S, TerrainAutotiles.BIT_W
 ]
+## How many pieces a sub-square's side is cut into on the painted board.
+const _FINE_STEPS := 2
 const _WET: Array[StringName] = [&"sea", &"reef", &"river", &"bridge"]
 
 
@@ -70,7 +72,8 @@ class Top:
 
 ## The land mesh and the water mesh, in that order; the water one is null on a
 ## board with no water on it.
-static func build(map: MapData) -> Array[ArrayMesh]:
+## `painted_props` leaves the woods and mountains off, for models that stand there.
+static func build(map: MapData, painted_props: bool = false) -> Array[ArrayMesh]:
 	var tops: Dictionary[Vector2i, Top] = {}
 	for y in map.height:
 		for x in map.width:
@@ -83,9 +86,10 @@ static func build(map: MapData) -> Array[ArrayMesh]:
 		for k in 9:
 			var st := water if top.wet[k] else land
 			any_water = any_water or top.wet[k]
-			_square_top(st, cell, k, top)
-			_square_walls(st, tops, cell, k)
-		_decorate(land, map, cell)
+			_square_top(st, cell, k, top, painted_props)
+			_square_walls(st, tops, cell, k, painted_props)
+		if not (painted_props and map.terrain_at(cell).id in [&"woods", &"mountain"]):
+			_decorate(land, map, cell)
 	var meshes: Array[ArrayMesh] = [land.commit(), water.commit() if any_water else null]
 	return meshes
 
@@ -186,23 +190,53 @@ static func _square_rect(cell: Vector2i, k: int) -> Rect2:
 	return Rect2(from, to - from)
 
 
-static func _square_top(st: SurfaceTool, cell: Vector2i, k: int, top: Top) -> void:
+static func _square_top(st: SurfaceTool, cell: Vector2i, k: int, top: Top, fine: bool) -> void:
 	var r := _square_rect(cell, k)
 	var h := top.height[k]
-	MeshKit.quad(
+	_quad(
 		st,
 		Vector3(r.position.x, h, r.end.y),
 		Vector3(r.end.x, h, r.end.y),
 		Vector3(r.end.x, h, r.position.y),
 		Vector3(r.position.x, h, r.position.y),
-		top.colour[k]
+		top.colour[k],
+		_FINE_STEPS if fine else 1,
+		_FINE_STEPS if fine else 1
 	)
+
+
+## A quad cut `across` by `along` smaller ones: the painted board's shader wanders
+## every corner, and a long straight edge has to have corners to wander.
+static func _quad(
+	st: SurfaceTool,
+	a: Vector3,
+	b: Vector3,
+	c: Vector3,
+	d: Vector3,
+	colour: Color,
+	across: int,
+	along: int
+) -> void:
+	for i in across:
+		var u0 := float(i) / across
+		var u1 := float(i + 1) / across
+		for j in along:
+			var v0 := float(j) / along
+			var v1 := float(j + 1) / along
+			MeshKit.quad(
+				st,
+				a.lerp(b, u0).lerp(d.lerp(c, u0), v0),
+				a.lerp(b, u1).lerp(d.lerp(c, u1), v0),
+				a.lerp(b, u1).lerp(d.lerp(c, u1), v1),
+				a.lerp(b, u0).lerp(d.lerp(c, u0), v1),
+				colour
+			)
 
 
 ## A wall on every side of sub-square `k` whose neighbour — in this cell or the
 ## next — stands lower; off the board the neighbour is the slab's bottom.
 static func _square_walls(
-	st: SurfaceTool, tops: Dictionary[Vector2i, Top], cell: Vector2i, k: int
+	st: SurfaceTool, tops: Dictionary[Vector2i, Top], cell: Vector2i, k: int, fine: bool
 ) -> void:
 	var top := tops[cell]
 	var h := top.height[k]
@@ -218,11 +252,11 @@ static func _square_walls(
 			continue
 		var side_colour := _wall_colour(top, k)
 		if tops.has(other):
-			_wall(st, _square_rect(cell, k), side, low, h, side_colour)
+			_wall(st, _square_rect(cell, k), side, low, h, side_colour, fine)
 		else:
 			var band := h - _RIM_BAND
-			_wall(st, _square_rect(cell, k), side, band, h, side_colour)
-			_wall(st, _square_rect(cell, k), side, low, band, EARTH_DEEP)
+			_wall(st, _square_rect(cell, k), side, band, h, side_colour, fine)
+			_wall(st, _square_rect(cell, k), side, low, band, EARTH_DEEP, fine)
 
 
 static func _wall_colour(top: Top, k: int) -> Color:
@@ -233,47 +267,58 @@ static func _wall_colour(top: Top, k: int) -> Color:
 	return EARTH
 
 
-static func _wall(st: SurfaceTool, r: Rect2, side: int, lo: float, hi: float, c: Color) -> void:
+static func _wall(
+	st: SurfaceTool, r: Rect2, side: int, lo: float, hi: float, c: Color, fine: bool
+) -> void:
+	var steps := _FINE_STEPS if fine else 1
 	var x0 := r.position.x
 	var x1 := r.end.x
 	var z0 := r.position.y
 	var z1 := r.end.y
 	match side:
 		0:
-			MeshKit.quad(
+			_quad(
 				st,
 				Vector3(x1, lo, z0),
 				Vector3(x0, lo, z0),
 				Vector3(x0, hi, z0),
 				Vector3(x1, hi, z0),
-				c
+				c,
+				steps,
+				1
 			)
 		1:
-			MeshKit.quad(
+			_quad(
 				st,
 				Vector3(x1, lo, z1),
 				Vector3(x1, lo, z0),
 				Vector3(x1, hi, z0),
 				Vector3(x1, hi, z1),
-				c
+				c,
+				steps,
+				1
 			)
 		2:
-			MeshKit.quad(
+			_quad(
 				st,
 				Vector3(x0, lo, z1),
 				Vector3(x1, lo, z1),
 				Vector3(x1, hi, z1),
 				Vector3(x0, hi, z1),
-				c
+				c,
+				steps,
+				1
 			)
 		3:
-			MeshKit.quad(
+			_quad(
 				st,
 				Vector3(x0, lo, z0),
 				Vector3(x0, lo, z1),
 				Vector3(x0, hi, z1),
 				Vector3(x0, hi, z0),
-				c
+				c,
+				steps,
+				1
 			)
 
 
