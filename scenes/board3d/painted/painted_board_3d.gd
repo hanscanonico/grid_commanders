@@ -7,6 +7,7 @@ extends RefCounted
 const TEXTURES := "res://assets/models/terrain/ground_%s.png"
 const SHADER: Shader = preload("res://scenes/board3d/painted/painted_ground_3d.gdshader")
 const DRESSING: Shader = preload("res://scenes/board3d/painted/painted_dressing_3d.gdshader")
+const UNLIT: Shader = preload("res://scenes/board3d/painted/painted_unlit_3d.gdshader")
 ## Which tile a sub-square wears.
 const CLASS_GRASS := 0
 const CLASS_FLOOR := 1
@@ -51,7 +52,9 @@ static func ground_material(map: MapData, water: bool) -> ShaderMaterial:
 
 ## One stand of `terrain`'s model per place, in one draw call: the far woods and
 ## the range behind a cut-in's plot.
-static func add_stand(parent: Node3D, terrain: StringName, places: Array[Transform3D]) -> void:
+static func add_stand(
+	parent: Node3D, terrain: StringName, places: Array[Transform3D], unlit: bool = false
+) -> void:
 	var folder := PaintedModels3D.TERRAIN
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
@@ -63,6 +66,11 @@ static func add_stand(parent: Node3D, terrain: StringName, places: Array[Transfo
 	var instance := MultiMeshInstance3D.new()
 	instance.multimesh = multi
 	instance.material_override = PaintedModels3D.material_for(folder, terrain, neutral)
+	if unlit:
+		var far := ShaderMaterial.new()
+		far.shader = UNLIT
+		far.set_shader_parameter(&"paint", PaintedModels3D.baked(folder, terrain).paint)
+		instance.material_override = far
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(instance)
 

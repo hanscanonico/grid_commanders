@@ -9,7 +9,7 @@ TEXTURE = 256
 NORMAL_TEXTURE = 128
 CAGE = 0.05
 REACH = 0.15
-ROLES = {"cloud": Role((0.93, 0.95, 0.98), edge=0.0, wash=0.28, dust=0.0)}
+ROLES = {"cloud": Role((0.97, 0.98, 1.0), edge=0.0, wash=0.2, dust=0.0)}
 PUFFS = (
     (0.0, 0.0, 0.12, 0.42, 0.3, 0.26),
     (-0.42, 0.04, 0.06, 0.3, 0.24, 0.18),
@@ -23,5 +23,6 @@ PUFFS = (
 
 def build(k: Kit) -> None:
     k.cull = False
+    k.smooth_angle = 180.0
     for x, y, z, rx, ry, rz in PUFFS:
         k.ellipsoid((x, y, z), (rx, ry, rz), "cloud", 6, 10, "puff")

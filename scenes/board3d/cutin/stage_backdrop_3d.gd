@@ -30,7 +30,7 @@ static func build() -> Node3D:
 	var st := MeshKit.begin()
 	_hills(st)
 	if PaintedArt.on():
-		PaintedBoard3D.add_stand(root, &"cloud", _cloud_places())
+		PaintedBoard3D.add_stand(root, &"cloud", _cloud_places(), true)
 	else:
 		_clouds(st)
 	var far := MeshInstance3D.new()
