@@ -29,7 +29,10 @@ static func build() -> Node3D:
 	root.add_child(dome)
 	var st := MeshKit.begin()
 	_hills(st)
-	_clouds(st)
+	if PaintedArt.on():
+		PaintedBoard3D.add_stand(root, &"cloud", _cloud_places())
+	else:
+		_clouds(st)
 	var far := MeshInstance3D.new()
 	far.mesh = st.commit()
 	far.material_override = _unlit(false)
@@ -103,6 +106,21 @@ static func _hills(st: SurfaceTool) -> void:
 		MeshKit.column(
 			st, MeshKit.at(foot, rad_to_deg(turn) * 3.0), wide, wide * 0.08, tall, 7, colour
 		)
+
+
+## Where the painted sky's fat clouds hang, as the code clouds would.
+static func _cloud_places() -> Array[Transform3D]:
+	var places: Array[Transform3D] = []
+	for i in CLOUDS:
+		var turn := TAU * (float(i) + SquadFormation3D.scatter(i, 5)) / CLOUDS
+		var reach := 90.0 + SquadFormation3D.scatter(i, 6) * 40.0
+		var at := Vector3(
+			cos(turn) * reach, 22.0 + SquadFormation3D.scatter(i, 7) * 14.0, sin(turn) * reach
+		)
+		var size := 11.0 + SquadFormation3D.scatter(i, 8) * 11.0
+		var facing := Basis(Vector3.UP, turn + PI / 2.0)
+		places.append(Transform3D(facing.scaled(Vector3.ONE * size), at))
+	return places
 
 
 ## Flattened puffs high over the far hills, each three lobes, lit from above by

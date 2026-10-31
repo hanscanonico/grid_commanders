@@ -193,6 +193,16 @@ func _add_apron(symbol: String, z0: float, z1: float, materials: Array[Material]
 func _add_far_trees(symbol: String) -> void:
 	if _is_water(symbol) or symbol == "_":
 		return
+	if PaintedArt.on():
+		var stands: Array[Transform3D] = []
+		for i in FAR_TREES:
+			var out := 1.0 + 44.0 * SquadFormation3D.scatter(i, 91 + side)
+			var deep := -22.0 - 26.0 * SquadFormation3D.scatter(i, 93 + side)
+			var size := Vector3.ONE * (2.2 + 2.0 * SquadFormation3D.scatter(i, 95 + side))
+			var foot := Vector3(out * side, BoardSpace3D.LAND_TOP, deep) - position
+			stands.append(Transform3D(Basis.from_scale(size), foot))
+		PaintedBoard3D.add_stand(self, &"woods", stands)
+		return
 	var st := MeshKit.begin()
 	for i in FAR_TREES:
 		var out := 1.0 + 44.0 * SquadFormation3D.scatter(i, 91 + side)
@@ -211,6 +221,13 @@ func _add_far_trees(symbol: String) -> void:
 ## Three big peaks behind the patch's own, so a mountain reads as a range
 ## rather than a field of hillocks.
 func _add_range() -> void:
+	if PaintedArt.on():
+		var crags: Array[Transform3D] = []
+		for i in RANGE.size():
+			var foot := Vector3(RANGE[i].x * side, BoardSpace3D.LAND_TOP, RANGE[i].y) - position
+			crags.append(Transform3D(Basis.from_scale(Vector3.ONE * RANGE[i].z * 1.25), foot))
+		PaintedBoard3D.add_stand(self, &"mountain", crags)
+		return
 	var st := MeshKit.begin()
 	for i in RANGE.size():
 		var at := RANGE[i]

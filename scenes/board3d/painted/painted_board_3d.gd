@@ -20,6 +20,7 @@ const PEBBLES_PER_CELL := 9
 ## A phone draws a third of the dressing.
 const TOUCH_DENSITY := 0.34
 const TUFT_HEIGHT := 0.04
+const BLADES := 5
 
 
 ## The whole ground of `map` under `parent`.
@@ -46,6 +47,24 @@ static func ground_material(map: MapData, water: bool) -> ShaderMaterial:
 	material.set_shader_parameter(&"sand", load(TEXTURES % "sand"))
 	material.set_shader_parameter(&"earth", load(TEXTURES % "earth"))
 	return material
+
+
+## One stand of `terrain`'s model per place, in one draw call: the far woods and
+## the range behind a cut-in's plot.
+static func add_stand(parent: Node3D, terrain: StringName, places: Array[Transform3D]) -> void:
+	var folder := PaintedModels3D.TERRAIN
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.mesh = PaintedModels3D.baked(folder, terrain).mesh
+	multi.instance_count = places.size()
+	for i in places.size():
+		multi.set_instance_transform(i, places[i])
+	var neutral := CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
+	var instance := MultiMeshInstance3D.new()
+	instance.multimesh = multi
+	instance.material_override = PaintedModels3D.material_for(folder, terrain, neutral)
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
 
 
 ## The woods, mountains and dressing on `map`. A cut-in's plot passes no marks.
@@ -256,19 +275,17 @@ static func _add_multi(
 	parent.add_child(instance)
 
 
-## Three crossed blades, lit straight from above like the ground under them.
+## A few blades fanned out, lit straight from above like the ground under them.
 static func _tuft_mesh() -> Mesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var low := Color("3f6a24")
-	var high := Color("a8cf55")
-	for i in 3:
-		var angle := float(i) * PI / 3.0
-		var across := Vector3(cos(angle), 0, sin(angle)) * 0.02
-		var lean := Vector3(-sin(angle), 0, cos(angle)) * 0.008
-		for tip_side: float in [-1.0, 0.0, 1.0]:
-			var foot := across * tip_side
-			_blade(st, foot - across * 0.34, foot + across * 0.34, foot * 1.5 + lean, low, high)
+	var low := Color("4f7c2c")
+	var high := Color("b4d866")
+	for i in BLADES:
+		var angle := TAU * i / BLADES + 0.4
+		var out := Vector3(cos(angle), 0, sin(angle)) * 0.016
+		var across := Vector3(-sin(angle), 0, cos(angle)) * 0.009
+		_blade(st, out - across, out + across, out * 2.0, low, high)
 	return st.commit()
 
 

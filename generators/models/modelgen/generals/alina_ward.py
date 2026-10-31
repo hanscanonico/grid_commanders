@@ -3,12 +3,9 @@
 from .. import figure
 
 TEXTURE = 768
-ROLES = figure.looks_roles((242, 201, 160), (150, 72, 38))
-
-
-def build(k):
-    figure.build_figure(k, figure.CHIBI, 1.0)
-
-
-def rig(low):
-    figure.rig_figure(low, figure.CHIBI)
+LOOK = figure.look(
+    "light auburn long none none none v sash sabre", woman=True, age="young", mood="smile", iris="blue", gloves=True
+)
+ROLES = figure.looks_roles(LOOK)
+rig = figure.rig_figure
+build = figure.builder(LOOK)

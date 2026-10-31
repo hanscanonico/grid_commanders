@@ -115,16 +115,16 @@ static func wear(material: ShaderMaterial, theme: CommanderVisuals.FactionTheme)
 
 
 ## Puts a building or a prop on the board: its marks and its fog read on it.
-static func on_board(material: ShaderMaterial, overlay: Texture2D, fog: Texture2D, cells: Vector2) -> void:
+static func on_board(
+	material: ShaderMaterial, overlay: Texture2D, fog: Texture2D, cells: Vector2
+) -> void:
 	material.set_shader_parameter(&"on_board", true)
 	material.set_shader_parameter(&"overlay", overlay)
 	material.set_shader_parameter(&"fog_cells", fog)
 	material.set_shader_parameter(&"map_cells", cells)
 
 
-static func _single(
-	folder: String, id: StringName, theme: CommanderVisuals.FactionTheme
-) -> Node3D:
+static func _single(folder: String, id: StringName, theme: CommanderVisuals.FactionTheme) -> Node3D:
 	var root := Node3D.new()
 	root.name = String(id)
 	var body := MeshInstance3D.new()

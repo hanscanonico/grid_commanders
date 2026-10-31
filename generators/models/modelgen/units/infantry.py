@@ -7,7 +7,7 @@ from .soldier import ROLES, rifleman
 
 __all__ = ["ROLES", "TEXTURE", "build"]
 
-TEXTURE = 512
+TEXTURE = 384
 SQUAD = ((0.11, -0.02, 0), (-0.16, 0.205, 1), (-0.13, -0.235, 1))
 
 

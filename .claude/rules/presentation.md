@@ -645,7 +645,10 @@ forms named in the root index are in `docs/design_record.md`.
   as a thing to interact with, so nothing that merely decorates a cell may stand: decoration —
   phase-keyed texture variety, mountain scenery, future biome dressing — stays flat in the ground
   plane the way `TerrainAutotiles.variant`/`stands_in_cutin()` already draw it. The moment a
-  decorative tree "stands" the height a property does, a player will try to capture it.
+  decorative tree "stands" the height a property does, a player will try to capture it. **The
+  painted board's low dressing is the one allowance** (user ruling, 2026-10-31): grass tufts,
+  pebbles, flowers and shore foam may rise off the ground, no higher than a unit's ankles and never
+  near a building's height.
 - **The 3D board** (no plan artifact; this entry is its record, 2026-09-29) — the battle drawn a
   second way, flipped with the flat board by `V`, the on-screen view chip or `--view=3d`.
   User rulings: **full 3D models** for units and buildings (the pixel sprites are not drawn on it)
@@ -821,6 +824,34 @@ forms named in the root index are in `docs/design_record.md`.
   heights and shapes are keyed by terrain id in `BoardSpace3D` and `TerrainMesher3D` rather than
   by presentation keys on `TerrainType`, and the turn banner, the map editor and the menu
   backdrop stay 2D.
+- **The painted miniatures** (no plan artifact; this entry is its record; user rulings, 2026-10-31:
+  "redraw every 3D asset through Blender", painted-miniature look like a toy wargame on a tabletop,
+  balanced budget of +20–30 MB, rigged and animated, chibi generals, low dressing allowed). D1:
+  **the models are generated, and the art is committed.** `generators/models` is Python inside
+  Blender 5.2: a module under `modelgen/<folder>/` is built twice, `lo` for the game and `hi` for the
+  bake, and Cycles bakes a painter's recipe (`modelgen/paint.py`) onto the low copy. CI, the mini PC
+  and players never need Blender, and no asset library or AI generator is used. `modelgen/contract.py`
+  fails a build that leaves its footprint, and `tests/unit/test_painted_models_3d.gd` holds the game
+  to the same numbers as the code models. D2: **`PaintedArt.on()` is the one switch**, off until the
+  whole set is approved, on for a run with `--art=painted`. `UnitModels3D`, `PropertyModels3D`,
+  `CommanderActor3D`, `Board3D` and `StagePlot3D` ask it, and nothing else knows which art is up.
+  D3: **one texture dresses every army.** The texture's alpha marks what wears the army's colour and
+  there its grey is a place on `FactionRamp3D`'s ramp (`painted_miniature_3d.gdshaderinc`), so a
+  shadow on red stays red. A capture's flip recolours the material and never swaps the mesh.
+  **`ModelSkin3D` is the one way to tint, fade or flash a model**, whichever material it wears. D4:
+  **parts move in the vertex shader, not on a skeleton**, so a unit stays one draw call and a
+  posed frame stays a pure function of the clock: the second UV says which motion a vertex follows
+  and about which pivot (`modelgen/kit.py`), and the board or the cut-in hands over `roll`, `gait`,
+  `aim` and `recoil`. A rotor stays its own part, at `AirModels3D.ROTOR_HUBS`. **A general alone is
+  on a real skeleton**, posed by the same `ActorPose3D` clips as before, because their figure bends
+  at the elbow and the knee; the skeleton's rest pose keeps `CommanderFigure3D`'s landmarks, so the
+  portrait lens and every story framing still hold. D5: **the ground stays the mesher's**, so every
+  map and the map editor's boards work unchanged. `PaintedBoard3D` wears its land and water in
+  `painted_ground_3d.gdshader`: a top face takes a seamless baked tile from a 3x3 class lattice read
+  through noise, so edges wander while the marks still read the true grid, and a vertex wander moves
+  land and water together. **Dressing is flat-lit and low**: tufts, flowers and pebbles never rise
+  above a unit's ankles (`PaintedBoard3D.TUFT_HEIGHT`), which is how they keep the standing-terrain
+  rule below, and a phone draws a third of them.
 - **3D commander portraits** (user request, 2026-10-01: "create portraits in 3D for 3D modes") —
   while `Settings.board_3d` is on, every field that shows a general draws a 3D still of their
   figure instead of the pixel bust. **One provider, one seam**: `CommanderPortraits3D`

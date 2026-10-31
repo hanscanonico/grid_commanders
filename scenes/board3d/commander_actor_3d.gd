@@ -46,7 +46,9 @@ static func make(commander: CommanderType) -> CommanderActor3D:
 
 
 func build(
-	look: Dictionary, theme: CommanderVisuals.FactionTheme, id: StringName = CommanderType.NEUTRAL_ID
+	look: Dictionary,
+	theme: CommanderVisuals.FactionTheme,
+	id: StringName = CommanderType.NEUTRAL_ID
 ) -> void:
 	if PaintedArt.on() and _build_painted(id, theme):
 		pose(&"idle", 0.0)
@@ -166,13 +168,17 @@ func _pose_painted(sample: Dictionary) -> void:
 	for part: StringName in sample:
 		if part == &"root":
 			var hips := _bones[&"hips"]
-			_skeleton.set_bone_pose_position(hips, _skeleton.get_bone_rest(hips).origin + sample[part])
+			_skeleton.set_bone_pose_position(
+				hips, _skeleton.get_bone_rest(hips).origin + sample[part]
+			)
 		else:
 			_turn_bone(part, sample[part])
 	for side: String in ["l", "r"]:
 		var arm: Vector3 = sample[StringName("arm_" + side)]
 		var leg: Vector3 = sample[StringName("leg_" + side)]
-		_turn_bone(StringName("fore_" + side), Vector3(ELBOW_REST + maxf(arm.x, 0.0) * ELBOW_BEND, 0, 0))
+		_turn_bone(
+			StringName("fore_" + side), Vector3(ELBOW_REST + maxf(arm.x, 0.0) * ELBOW_BEND, 0, 0)
+		)
 		_turn_bone(StringName("shin_" + side), Vector3(-maxf(-leg.x, 0.0) * KNEE_BEND, 0, 0))
 
 

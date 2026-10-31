@@ -5,7 +5,7 @@
 A model is a module under `modelgen/<folder>/`, and its folder is where its files
 land under `assets/models/`. A module has `build(kit)` and may have `ROLES`,
 `TEXTURE`, `NORMAL_TEXTURE`, `CAGE`, `REACH` and `rig(low)`. `ground` bakes the
-terrain's tiles. A model that breaks `modelgen/contract.py` fails the run.
+terrain's tiles. `all` builds everything. A model that breaks `modelgen/contract.py` fails the run.
 """
 
 import argparse
@@ -34,6 +34,19 @@ def find(name: str):
         if importlib.util.find_spec(path) is not None:
             return importlib.import_module(path), folder
     raise SystemExit(f"no model named {name}")
+
+
+def every_model() -> list[str]:
+    """Every module under the folders, and the terrain's tiles."""
+    names = ["ground"]
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modelgen")
+    for folder in FOLDERS:
+        for file in sorted(os.listdir(os.path.join(root, folder))):
+            stem, extension = os.path.splitext(file)
+            module = importlib.import_module(f"modelgen.{folder}.{stem}") if extension == ".py" else None
+            if module is not None and hasattr(module, "build") and stem != "__init__":
+                names.append(stem)
+    return names
 
 
 def build(name: str, out: str, samples: int) -> list[str]:
@@ -96,7 +109,7 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=bake.BakeSettings.samples)
     args = parser.parse_args(argv)
     errors = []
-    for name in args.names:
+    for name in every_model() if args.names == ["all"] else args.names:
         if name == "ground":
             ground_textures.bake_tiles(os.path.join(args.out, "terrain"))
         else:

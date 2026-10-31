@@ -17,8 +17,9 @@ const float RECOIL = 6.0;
 const float TREAD = 7.0;
 // Radians a road wheel turns per cell driven, and a limb's swing.
 const float WHEEL_TURN = 18.0;
-const float SWING = 0.62;
-const float AIM_LIFT = 1.15;
+const float SWING = 0.5;
+const float ARM_SWING = 0.2;
+const float AIM_LIFT = 0.5;
 const float TREAD_BANDS = 26.0;
 
 uniform sampler2D paint : source_color, filter_linear_mipmap_anisotropic;
@@ -88,9 +89,9 @@ void vertex() {
 		} else if (kind == LEG_B) {
 			angle = sin(gait) * SWING;
 		} else if (kind == ARM_A) {
-			angle = sin(gait) * SWING * (1.0 - aim) - aim * AIM_LIFT;
+			angle = sin(gait) * ARM_SWING * (1.0 - aim) - aim * AIM_LIFT;
 		} else {
-			angle = -sin(gait) * SWING * (1.0 - aim) - aim * AIM_LIFT;
+			angle = -sin(gait) * ARM_SWING * (1.0 - aim) - aim * AIM_LIFT;
 		}
 		VERTEX.xy = pivot + turned(VERTEX.xy - pivot, angle);
 		NORMAL.xy = turned(NORMAL.xy, angle);

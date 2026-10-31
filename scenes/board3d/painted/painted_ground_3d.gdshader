@@ -73,7 +73,9 @@ vec3 tile_of(int which, vec2 uv) {
 // A slow wander of every corner of land and water alike, so no edge runs dead
 // straight. The tiles and the board's marks still read the unmoved grid.
 vec2 wander(vec2 p) {
-	return (vec2(value_noise(p * 1.7), value_noise(p * 1.7 + vec2(23.0, 41.0))) - 0.5) * 0.16;
+	vec2 slow = vec2(value_noise(p * 1.7), value_noise(p * 1.7 + vec2(23.0, 41.0))) - 0.5;
+	vec2 quick = vec2(value_noise(p * 4.3 + 7.0), value_noise(p * 4.3 + vec2(3.0, 19.0))) - 0.5;
+	return slow * 0.16 + quick * 0.09;
 }
 
 void vertex() {

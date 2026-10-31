@@ -97,6 +97,9 @@ def main() -> None:
     parser.add_argument("--armies", default="meridian,iron")
     parser.add_argument("--sea", action="store_true")
     parser.add_argument("--lift", type=float, default=0.0, help="raise the model, as an aircraft flies")
+    parser.add_argument(
+        "--yaw", type=float, default=0.0, help="turn the model, in degrees; a general faces the lens at 180"
+    )
     args = parser.parse_args(argv)
     folder = next(f for f in FOLDERS if os.path.exists(os.path.join(MODELS, f, f"{args.name}.glb")))
     for obj in list(bpy.data.objects):
@@ -129,6 +132,8 @@ def main() -> None:
         for obj in set(bpy.data.objects) - before:
             if obj.parent is None:
                 obj.location = (i * 1.05, 0, args.lift)
+                obj.rotation_mode = "XYZ"
+                obj.rotation_euler = (0, 0, math.radians(args.yaw))
             if obj.type == "MESH":
                 obj.data.materials.clear()
                 obj.data.materials.append(material_for(args.name, folder, army))

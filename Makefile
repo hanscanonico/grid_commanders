@@ -539,9 +539,21 @@ portraits-lint:
 	cd "$(PORTRAITGEN)" && "$(abspath $(PORTRAITGEN_PY))" -m ruff check . \
 		&& "$(abspath $(PORTRAITGEN_PY))" -m ruff format --check .
 
+# The painted miniatures need Blender 5.2 to build and nothing to play: the art
+# under assets/models is committed, so this runs only when a model changes. Its
+# Python has no venv of its own, since Blender brings its own and ruff is one tool.
+models-lint:
+	$(call require-portraitgen)
+	cd generators/models && "$(abspath $(PORTRAITGEN_PY))" -m ruff check . \
+		&& "$(abspath $(PORTRAITGEN_PY))" -m ruff format --check .
+
+models:
+	blender --background --python generators/models/build_models.py -- all
+	$(MAKE) import
+
 # Every generator's Python lint gate, each under its own ruff.toml, and the same
 # two commands CI runs. Out of `make verify` with the suites, for the venv.
-generators-lint: audio-lint sprites-lint portraits-lint
+generators-lint: audio-lint sprites-lint portraits-lint models-lint
 
 generators-test: audio-test sprites-test portraits-test
 
@@ -731,7 +743,7 @@ mobile-soak:
 	atlases \
 	audio audio-test audio-lint audio-snapshot sprites-test sprites-lint \
 	sprites-snapshot grain-census sheet-census generators-lint generators-test \
-	portraits-test portraits-lint portraits-snapshot admin-test admin-lint \
+	portraits-test portraits-lint portraits-snapshot models models-lint admin-test admin-lint \
 	web-test web-lint \
 	generators-venv portraits import campaign-difficulty export-android export-ios export-web serve-web \
 	screenshot menu-screenshot gallery-screenshot editor-screenshot commander-balance difficulty-check \
