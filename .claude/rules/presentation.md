@@ -597,16 +597,28 @@ forms named in the root index are in `docs/design_record.md`.
   text today — but the only lever is the root stretch, which letterboxes every platform at once, so
   it is a project-wide window decision and the `improve/web-font-oversampling` branch owns it, not a
   size ladder.
+- **The menu is a title and two setup steps** (no plan artifact; this entry is its record, user
+  request 2026-10-31: "way too convoluted"), superseding the one surface of #744. Under a four-seat
+  strip one 640x360 surface left the map shelf 104px and 45 controls on screen, and more polish could
+  not pay for that. `MainMenu` is the **title** (Continue, Skirmish, Campaign, Replays, Map Editor,
+  Settings, Quit); `SkirmishSetup` is the steps, **Map** then **Players**. **Start starts**: it stands
+  on the last step and nothing comes after it, the flaw of the wizard #744 replaced being a walk
+  hidden behind Start. Enter walks it (each step opens focused on its way forward), Esc and Back step
+  back and lose nothing. **Fewer controls, not just more screens**: a seat is one selector
+  (`SeatStrip.next_player`: Human, each CPU tier, Empty) and one general; grouping is the Mode row
+  (`SeatStrip.presets_for`), with the side letters only under Custom or over a table no Mode
+  describes (`SeatStrip.shows_sides`); a duel shows neither. This **retires COM-224's rule** that
+  every board builds the same dead controls: that rule kept a fixed-height panel from reflowing, and
+  a step with room has nothing to protect. PRESS START went with the Start it sat under.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
   slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
   end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`), the transition-input
   convention (COM-15/U-11) and the visible match setup (COM-19/U-15) are shipped. The setup slice's
   one durable fact: **`MapCatalog.TUTORIAL_MAP_PATH` is the single authority for which board leads**
   — `ordered()` pins it at item zero and the menu reads the same key for its Tutorial badge, so
-  order and explanation cannot drift; everything else it added (the caption, the per-option help —
-  back in the Speed and Fog tooltips since the map picker took the Rules lines for bigger cards —
-  Difficulty dimmed while no computer is seated — asked of the seat strip since FP5, not of a mode)
-  is presentation, gated by the `menu_setup_context` capture. D3 is the transition-input convention
+  order and explanation cannot drift; everything else it added (the caption, the per-option help,
+  printed beside Speed and Fog again now the Players step has the room, and a seat naming a tier
+  only while the computer plays it, asked of the seat strip) is presentation, gated by the `menu_setup_context` capture. D3 is the transition-input convention
   and it has one authority:
   `scenes/common/transition_input.gd` (`TransitionInput`) answers "was that a press?" for every
   boundary — a banner is an awaited blocking beat any press skips, no interactive menu may sit
@@ -630,7 +642,7 @@ forms named in the root index are in `docs/design_record.md`.
   key and the Settings page, never the options row**: that row holds the match's rules only —
   Speed and Fog of war — so a device preference has no place on it. The Settings page
   (`MenuSettingsPage`, SK-14) is the pause menu's own rows — `Settings.value_actions`, in the same
-  `ActionMenu` — less Speed, which the panel already holds, plus the two motion preferences, Battle
+  `ActionMenu` — less Speed, which the Players step already holds, plus the two motion preferences, Battle
   animations and Menu motion, offered there alone (`Settings.menu_page_actions`). Hidden under
   `MobileProfile` — `Settings.offered_rows()` is the one answer to whether this device has a window
   to stand anywhere but full, and the row, the key and the `DisplayServer` call all sit behind it.

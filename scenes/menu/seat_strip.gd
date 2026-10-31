@@ -1,12 +1,7 @@
 class_name SeatStrip
 extends VBoxContainer
-## Who sits at the table and who stands with whom (COM-48, four-players plan D6).
-##
-## One row per seat the board deals — who plays it, how well the computer plays it
-## and a side badge — plus the one-tap groupings on a board that seats four. It
-## replaces the two mode buttons the menu used to be able to express a match with,
-## which between them said only "one of you" or "two of you" and nothing at all
-## about sides.
+## Who sits at the table and who stands with whom (COM-48, four-players plan D6):
+## the Players step's Mode row and one row per seat the board deals.
 ##
 ## How many rows there are is the **board's** answer and how they group is the
 ## **match's** (plan D1), so this takes a roster and hands back four facts:
@@ -14,30 +9,23 @@ extends VBoxContainer
 ## each seat (`generals`). It decides none of them for itself and knows nothing
 ## about maps, saves or launching.
 ##
-## Each row ends in its general (`SeatGeneralChip`): pressing it asks the menu to
-## open the commander page for that one seat (`general_requested`), and the pick
-## comes back through `seat_generals`. A seat nobody picked for plays with no
-## commander, which is what every match did before a seat could carry one.
+## A row is one selector and one general. The selector walks every answer to "who
+## plays this seat" (`next_player`), because who plays and how well are one question
+## with one control; a tier is still only ever which `AIProfile` weighs a seat's
+## moves, never a cheat (difficulty plan D2). A seat's third state is **Empty**
+## (open-seats plan D4), which the walk steps over while closing the seat would leave
+## fewer than two armies.
 ##
-## The tier is per seat rather than per match (COM-225): a four-army board can now
-## be one Easy opponent and two Difficult ones, which is what the panel's single
-## Difficulty segment could not say. That segment is gone — two controls writing
-## one fact is the drift a single authority exists to prevent — and the tier a seat
-## carries is only ever which `AIProfile` weighs its moves, never a cheat
-## (difficulty plan D2).
+## Grouping is the Mode row's. The side letters only show under Custom, or for a
+## table no Mode describes (`shows_sides`): they say the same fact a Mode says, one
+## seat at a time, and most matches never want them. A duel gets neither.
 ##
-## A seat's third state is **Empty** (open-seats plan D4), and closing one is
-## allowed only while at least two seats would stay filled — so a duel board's
-## seats never close and neither do the last two of any board. The **rule** is that;
-## its **presentation** is that every board builds the same row and greys what it
-## refuses (COM-224). A control that appears and disappears with the board made the
-## panel a different screen per map, and a dead button says "not on this board"
-## where an absent one says nothing at all.
+## Each row's general (`SeatGeneralChip`) asks the menu to open the commander page
+## for that one seat (`general_requested`), and the pick comes back through
+## `seat_generals`. A seat nobody picked for plays with no commander.
 ##
-## The defaults are the old one-click paths: every seat open, seat 1 human, every
-## other seat the computer's, and every army its own side. A duel therefore sets up
-## in exactly the clicks it always did — the strip is something to ignore until you
-## want it.
+## The defaults: every seat open, seat 1 human, every other seat the computer's, and
+## every army its own side, so a match can be started without touching this at all.
 
 signal changed
 ## The general chip on `seat`'s row was pressed; `chip` is where focus goes back.
@@ -47,8 +35,6 @@ signal general_requested(seat: int, chip: Control)
 ## match at all, so its start dissolves to neutral ground the others fight over.
 enum Seat { HUMAN, CPU, EMPTY }
 
-## The labels a seat cycles through, indexed by `Seat`.
-const SEAT_LABELS: Array[String] = ["Human", "CPU", "Empty"]
 ## Side badges, in the order a seat cycles through them. Letters rather than
 ## faction names because a side is a grouping and not a livery: two armies on
 ## side A each keep their own colours (plan D5).
@@ -56,51 +42,26 @@ const SIDE_LABELS: Array[String] = ["A", "B", "C", "D"]
 ## The smallest table that is a match, which is also `GameState.MIN_SEATS` — the
 ## sim refuses a smaller one, and this is the menu never offering to build it.
 const MIN_FILLED := GameState.MIN_SEATS
-## The seat/side rows' segment-button height, against `UiKit.segment`'s default of
-## 18: two rows share a line here where a stand-alone group gets one to itself, and
-## the panel's height budget is real (`_seat_row`), so the strip is the one caller
-## that asks for a row a size denser. Named because it is the one size this file
-## does own — the widget shape comes from `UiKit` (`_seat_row`) and the colour
-## from `SideIdentity` (`_accent_for`).
-const _SEAT_SEGMENT_HEIGHT := 16
-## The air either side of a tier chip's word, over `UiTheme.segment_box`'s own 2px
-## margins — so the longest tier name fits inside the chip rather than being
-## clipped by it. Its own constant beside the height for the same reason that one
-## is: it is a size this file owns, because the chip is measured rather than
-## stretched (`_widest_tier`), and every pixel it takes comes off "Human" beside
-## it.
-const _TIER_CHIP_PAD := 6.0
-## The tier chip's cycler mark, so the chip reads as a control that steps rather
-## than as one more lit choice. Drawn by `UiMarks` where the pixel faces have none.
-const _TIER_CYCLE_MARK := " ▸"
-## The roster every preset is written for. A smaller board can express only one of
-## them, so there the row is built and dead rather than absent.
-const PRESET_SEATS := 4
-## How far back a preset row with nothing live on it is faded, over the disabled
-## dress its buttons already wear. A size this file owns for the reason the segment
-## height is: it is the fade of one row of this strip and not a shell token, and
-## `UiTheme` has no recipe for a group that is dead whole.
-const _DEAD_ROW_TINT := Color(1.0, 1.0, 1.0, 0.6)
-## The one-tap tables, each of them a seating *and* a grouping — the two facts a
-## row would otherwise take four taps to say between them. Offered only on a board
-## that seats four, because they are the only rosters where more than one of
-## either exists: three armies can be a free-for-all or a 2v1, which the badges
-## already express in one tap.
-##
-## `seats` is per seat and may be shorter than the board (nothing is closed past
-## its end); `sides` is the grouping the filled seats stand in. Every preset
-## carries both, so each button produces the table its tooltip promises whatever
-## seating was in hand — "2v2" pressed after "Duel" is still four armies in two
-## pairs, not two survivors packed onto one side. Duel fills the opposite-seat
-## pair, which §4's authoring convention makes the fair one on every four-seat
-## board, and Three-way drops the last seat.
-##
-## The row is built on every board and greyed where the board deals fewer than
-## four seats, for the reason the Empty button is (COM-224): a row that vanishes
-## restacks everything under it and makes the duel panel a different screen. Where
-## *every* preset is refused the row greys **as a unit** and says why once
-## (`preset_refusal`) — five dead buttons under a live heading read as five choices
-## the board turned down, one of them "Duel" on a board that is already a duel.
+## A seat row's height: a general's whole face chip inside the row's border.
+const ROW_H := 35
+## The side letters' width: four single letters, with room to aim at each.
+const SIDE_RUN_W := 72.0
+## How far back a closed seat's general is faded: its pick survives for later.
+const _CLOSED_TINT := Color(1.0, 1.0, 1.0, 0.6)
+## The "P1" label's width, since a pixel face sets 1 narrower than 2 and the rows
+## below it would not line up.
+const _SEAT_LABEL_W := 16.0
+## The selector's mark, so it reads as a control that steps.
+const _CYCLE_MARK := " ▸"
+## The air either side of the selector's longest word.
+const _SELECTOR_PAD := 14.0
+const _CUSTOM_LABEL := "Custom"
+const _CUSTOM_HELP := "Choose each army's side yourself"
+## The one-tap tables, each of them a seating *and* a grouping. `seats` is per seat;
+## `sides` is the grouping the filled seats stand in. Every preset carries both, so
+## "2v2" pressed after "Duel" is still four armies in two pairs. Duel fills the
+## opposite-seat pair, which the maps' authoring convention makes the fair one on
+## every four-seat board. Asked for through `presets_for`.
 const PRESETS: Array[Dictionary] = [
 	{
 		"label": "Free-for-all",
@@ -133,6 +94,20 @@ const PRESETS: Array[Dictionary] = [
 		"help": "Seats 1, 2 and 3; seat 4 stays empty",
 	},
 ]
+const THREE_SEAT_PRESETS: Array[Dictionary] = [
+	{
+		"label": "Free-for-all",
+		"sides": [0, 1, 2],
+		"seats": [Seat.HUMAN, Seat.CPU, Seat.CPU],
+		"help": "Every army for itself",
+	},
+	{
+		"label": "2v1",
+		"sides": [0, 0, 1],
+		"seats": [Seat.HUMAN, Seat.CPU, Seat.CPU],
+		"help": "Seats 1+2 against 3",
+	},
+]
 
 var _seats: Array[int] = []
 ## Per seat, parallel to `_seats`: who plays it (a `Seat`), and which side it
@@ -141,9 +116,12 @@ var _who: Array[int] = []
 var _side: Array[int] = []
 var _rows: GridContainer
 var _presets: HBoxContainer
-## The preset buttons, in PRESETS order — held so the one the table in hand
+## The Mode buttons in `presets_for` order — held so the one the table in hand
 ## matches can be lit on every repaint, like a segment's choice.
 var _preset_buttons: Array[Button] = []
+var _custom_button: Button
+## Custom was pressed, so the letters stay up even over a table a Mode describes.
+var _custom_chosen := false
 ## The liveries the seats will wear, resolved over the seats that **play** from
 ## the one authority the board and the footer chips also read (`SideIdentity`,
 ## faction-identity D1) — so P2's row is P2's colour rather than everyone's. No
@@ -152,28 +130,17 @@ var _preset_buttons: Array[Button] = []
 ## Re-resolved whenever the table changes, because closing a seat changes which
 ## seats are being resolved over.
 var _identity: SideIdentity = SideIdentity.resolve({})
-## The line under a dead preset row, hidden while the row is live — so a board that
-## offers a preset lays out exactly as it did before this label existed.
-var _preset_reason: Label
-## Per seat, parallel to `_seats`: that row's three runs of buttons — who plays
-## the seat, its side badges (one per letter in SIDE_LABELS) and its tier chip.
-## Held so every in-place change repaints through `_repaint_seats` rather than
-## rebuilding: a rebuild frees the very button whose `pressed` is running, which
-## on a preset press left a keyboard player with no focus owner. They are also
-## what lets a control be greyed rather than removed — Empty on a table at its
-## minimum, the letters the board does not seat and every letter of a closed row
-## (an empty seat brings no army and stands on no side, and a lit badge there
-## said the opposite in the one place the eye goes to check).
-var _who_buttons: Array[Array] = []
+## Per seat: the selector, and the side letters with their run. Held so every
+## in-place change repaints rather than rebuilds: a rebuild frees the very button
+## whose `pressed` is running, which left a keyboard player with no focus owner.
+var _player_buttons: Array[Button] = []
 var _side_buttons: Array[Array] = []
-## The tiers a seat cycles through, gentlest first, and per seat the one it is on.
-## Read off `DifficultyDB` by the caller rather than typed in here, so the chip can
-## never offer a tier that does not ship.
+var _side_runs: Array[Control] = []
+## The tiers a seat walks through, gentlest first, and per seat the one it is on.
+## Read off `DifficultyDB` by the caller rather than typed in here, so the selector
+## can never offer a tier that does not ship.
 var _tiers: Array[Difficulty] = []
 var _tier: Array[int] = []
-## Per seat: the tier chip. Held so it can be relabelled on a press and greyed for
-## a seat the computer is not playing, the same way the Empty button is.
-var _tier_buttons: Array[Button] = []
 ## Who commands each seat the board deals. Read freely; written through
 ## `seat_generals`, so the rows repaint and the table reports a change.
 var generals := SeatGenerals.new()
@@ -187,7 +154,7 @@ var _general_chips: Array[SeatGeneralChip] = []
 var _seat_labels: Array[Label] = []
 
 
-## Sets the tiers the chips cycle through — the one thing about a row the strip
+## Sets the tiers the selectors walk through — the one thing about a row the strip
 ## reads off neither `UiKit`, `UiTheme` nor `SideIdentity`, because the roster of
 ## tiers is `DifficultyDB`'s and only the caller (the menu) holds it.
 func configure(tiers: Array[Difficulty] = []) -> void:
@@ -216,6 +183,7 @@ func set_roster(count: int) -> void:
 	_tier.resize(count)
 	_who = reopened_seats(_who, _closable())
 	_side = normalised_sides(_side, count)
+	_custom_chosen = false
 	generals.keep(count)
 	_rebuild()
 
@@ -242,22 +210,13 @@ func ai_teams() -> Array[int]:
 
 ## team -> tier id, over the seats the **computer** plays — what
 ## `MatchRequest.seat_difficulty` takes. A human or closed seat brings no planner,
-## so it names no tier: the chip on such a row is dead and its value is whatever
-## the seat last carried, which is a state to keep and not a match fact to state.
+## so it names no tier: what it last carried is a state to keep, not a match fact.
 func seat_difficulty() -> Dictionary:
 	var tiers: Dictionary = {}
 	for i in _seats.size():
 		if _who[i] == Seat.CPU and _tier[i] < _tiers.size():
 			tiers[_seats[i]] = _tiers[_tier[i]].id
 	return tiers
-
-
-## Whether the tier chip on the seat at `index` is live — true exactly while the
-## computer plays that seat. The generalisation of "Difficulty is dimmed while no
-## computer is seated" (COM-19) to a table where each seat answers for itself,
-## which `tier_rule_holds` walks for the setup-context capture.
-func _tier_operable(index: int) -> bool:
-	return index >= 0 and index < _who.size() and _who[index] == Seat.CPU
 
 
 ## Sits generals down — a pick from the commander page, or the remembered ones
@@ -303,15 +262,6 @@ func refusal() -> String:
 	if seats().size() < MIN_FILLED:
 		return "Seat at least two armies"
 	return "Give at least two sides somebody to fight"
-
-
-## Why the preset row is dead on a board of `seats_dealt`, or "" while any preset
-## is live. The presets are written for a four-seat table, so a smaller board
-## refuses all five at once, so the row answers once rather than five times
-## (COM-233). Static and pure on `normalised_sides`' terms, so the copy and the
-## rule it states are checked without a scene.
-static func preset_refusal(seats_dealt: int) -> String:
-	return "" if seats_dealt >= PRESET_SEATS else "Presets need four seats"
 
 
 ## How many seats the board dealt.
@@ -383,16 +333,14 @@ func seat_table(remembered: Dictionary) -> void:
 		_who[i] = clampi(int(who[i]), Seat.HUMAN, Seat.EMPTY)
 		_side[i] = clampi(int(sides[i]), 0, _seats.size() - 1)
 		_tier[i] = _tier_index(str(tiers[i]) if i < tiers.size() else "")
-		_tier_buttons[i].text = _tier_label(i)
 	_who = reopened_seats(_who, _closable())
 	_settle_seats()
 	changed.emit()
 
 
 ## The COM-19 rule walked rather than photographed, for the setup-context
-## capture: a seat nobody but a person is in has no computer to tune and its tier
-## chip goes inert, and seating a computer there brings it back. Starts from, and
-## ends on, the all-human table that capture poses.
+## capture: a seat only a person is in names no tier, and seating a computer there
+## brings one back. Starts from, and ends on, the all-human table that capture poses.
 func tier_rule_holds() -> bool:
 	var passed := true
 	if not ai_teams().is_empty():
@@ -400,15 +348,12 @@ func tier_rule_holds() -> bool:
 		passed = false
 	var last := seat_count() - 1
 	set_human(last, false)
-	if not _tier_operable(last):
-		push_error("main menu setup context: the tier stays disabled with a CPU seated")
-		passed = false
-	if seat_difficulty().is_empty():
+	if not seat_difficulty().has(_seats[last]):
 		push_error("main menu setup context: a CPU seat names no tier")
 		passed = false
 	set_human(last, true)
-	if _tier_operable(last):
-		push_error("main menu setup context: the tier remains operable with nobody to tune")
+	if seat_difficulty().has(_seats[last]):
+		push_error("main menu setup context: a human seat still names a tier")
 		passed = false
 	return passed
 
@@ -420,12 +365,61 @@ func set_human(index: int, human: bool) -> void:
 	_set_seat(index, Seat.HUMAN if human else Seat.CPU)
 
 
-## Applies PRESETS[index]. Public for the dev capture that photographs the strip
-## in each grouping; the preset buttons call the same path.
+## Applies a Mode by index. Public for the dev capture that photographs the strip
+## in each grouping; the Mode buttons call the same path.
 func apply_preset_at(index: int) -> void:
-	if index < 0 or index >= PRESETS.size():
+	var presets := presets_for(_seats.size())
+	if index < 0 or index >= presets.size():
 		return
-	_apply_preset(PRESETS[index])
+	_apply_preset(presets[index])
+
+
+## Presses Custom. Public for the dev capture that photographs the side letters.
+func choose_custom() -> void:
+	_custom_chosen = true
+	_repaint_seats()
+	changed.emit()
+
+
+## The Modes a board of `seats_dealt` offers: none on a duel, whose two armies have
+## only one way to stand.
+static func presets_for(seats_dealt: int) -> Array[Dictionary]:
+	if seats_dealt == 4:
+		return PRESETS
+	if seats_dealt == 3:
+		return THREE_SEAT_PRESETS
+	var none: Array[Dictionary] = []
+	return none
+
+
+## Whether the side letters are up: under Custom, or over a table no Mode describes,
+## where nothing else on screen would say who is allied. Never on a duel.
+static func shows_sides(who: Array[int], sides: Array[int], custom_chosen: bool) -> bool:
+	if presets_for(who.size()).is_empty():
+		return false
+	return custom_chosen or preset_matching(who, sides) < 0
+
+
+## Where the selector goes from `who` on tier `tier`: a person, each computer tier
+## gentlest first, then nobody unless the seat may not close, then round again.
+static func next_player(who: int, tier: int, tier_count: int, closable: bool) -> Array[int]:
+	if who == Seat.HUMAN:
+		return [Seat.CPU, 0]
+	if who == Seat.CPU and tier + 1 < tier_count:
+		return [Seat.CPU, tier + 1]
+	if who == Seat.CPU and closable:
+		return [Seat.EMPTY, tier]
+	return [Seat.HUMAN, tier]
+
+
+## What the selector prints for a seat.
+static func player_label(who: int, tier_name: String) -> String:
+	match who:
+		Seat.HUMAN:
+			return "Human" + _CYCLE_MARK
+		Seat.CPU:
+			return "CPU %s%s" % [tier_name, _CYCLE_MARK]
+	return "Empty" + _CYCLE_MARK
 
 
 ## The sides `count` seats stand on once the roster has changed under them: the
@@ -454,19 +448,18 @@ static func normalised_sides(sides_in: Array[int], count: int) -> Array[int]:
 	return settled
 
 
-## Which of PRESETS the table `who` / `sides` is, or -1 for none (SK-22). A table
+## Which of `presets_for` the table `who` / `sides` is, or -1 for none (SK-22). A table
 ## is its seating and its grouping — which seats are filled and who stands with
 ## whom — not who plays each seat, so a 2v2 with two people at it is still the
 ## 2v2. Static and pure on `normalised_sides`' terms.
 static func preset_matching(who: Array[int], sides: Array[int]) -> int:
-	if who.size() != PRESET_SEATS:
-		return -1
+	var presets := presets_for(who.size())
 	var table := _grouping(who, sides)
-	for i in PRESETS.size():
+	for i in presets.size():
 		var preset_who: Array[int] = []
-		preset_who.assign(PRESETS[i]["seats"])
+		preset_who.assign(presets[i]["seats"])
 		var preset_sides: Array[int] = []
-		preset_sides.assign(PRESETS[i]["sides"])
+		preset_sides.assign(presets[i]["sides"])
 		if _grouping(preset_who, preset_sides) == table:
 			return i
 	return -1
@@ -491,9 +484,7 @@ static func _grouping(who: Array[int], sides: Array[int]) -> Array[int]:
 ## The seating `who_in` becomes once the roster has shrunk under it: closed seats
 ## reopened to the computer — the default everywhere past seat 1 — until the table
 ## is a match again, and every one of them reopened when the board is not
-## `closable`, because such a board's Empty buttons are all dead and a seat closed
-## there would be state nothing on screen could undo: greying Start with the one
-## control that would answer for it refusing the press. Static and pure on the
+## `closable`, because no selector on such a board could undo a closed seat. Static and pure on the
 ## same terms as `normalised_sides`, so the shrink path is checked without a
 ## scene (CLAUDE.md, Testing).
 static func reopened_seats(who_in: Array[int], closable: bool) -> Array[int]:
@@ -511,8 +502,7 @@ static func reopened_seats(who_in: Array[int], closable: bool) -> Array[int]:
 
 
 ## Whether the seat at `index` may be closed: only while at least `MIN_FILLED`
-## armies would be left at the table. False for every seat of a duel board, which
-## is why every Empty button on one is built dead.
+## armies would be left at the table. False for every seat of a duel board.
 func _can_close(index: int) -> bool:
 	if index < 0 or index >= _who.size():
 		return false
@@ -532,15 +522,9 @@ func _distinct_sides() -> int:
 
 
 ## What has to be true again after the table changes: the sides re-packed over
-## whoever is left, the Empty buttons greyed where closing one more would take
-## the table below a match, and every row repainted in the livery its seat wears
-## now — a table that has just lost a seat is a different roster, and the
-## identity is resolved over the seats that play.
-##
-## The re-pack is the same fix `normalised_sides` was written for and for the same
-## reason — closing a seat shrinks the table exactly as picking a smaller board
-## does, and a 3v1 whose lone army just left is otherwise three seats on one side
-## with Start greyed and nothing on screen explaining which tap caused it.
+## whoever is left — closing a seat shrinks the table exactly as picking a smaller
+## board does, and a 3v1 whose lone army just left is otherwise three seats on one
+## side with Start greyed — and every row repainted in the livery its seat wears now.
 func _settle_seats() -> void:
 	var filled: Array[int] = []
 	var standing: Array[int] = []
@@ -551,14 +535,10 @@ func _settle_seats() -> void:
 	var settled := normalised_sides(standing, filled.size())
 	for i in filled.size():
 		_side[filled[i]] = settled[i]
-	for i in _who_buttons.size():
-		_set_live(_who_buttons[i][Seat.EMPTY], _can_close(i))
-	for i in _tier_buttons.size():
-		_set_live(_tier_buttons[i], _tier_operable(i))
-	# Greyed rather than hidden (COM-224): a closed seat keeps its pick for later.
+	# Greyed rather than hidden: a closed seat keeps its pick for later.
 	for i in _general_chips.size():
 		_set_live(_general_chips[i], _who[i] != Seat.EMPTY)
-		_general_chips[i].modulate = Color.WHITE if _who[i] != Seat.EMPTY else _DEAD_ROW_TINT
+		_general_chips[i].modulate = Color.WHITE if _who[i] != Seat.EMPTY else _CLOSED_TINT
 	for i in _side_buttons.size():
 		var stands := _who[i] != Seat.EMPTY
 		for letter in _side_buttons[i].size():
@@ -573,42 +553,59 @@ static func _set_live(button: Button, live: bool) -> void:
 	button.focus_mode = Control.FOCUS_ALL if live else Control.FOCUS_NONE
 
 
-## Every row painted twice over, in two vocabularies. **Who plays a seat and how
-## well is chrome**, so those two runs fill in `UiTheme.CONTROL_ACCENT` like every
-## other quiet control on the panel; **which army a seat is** is the only thing a
-## faction hue says here, so it is spent on the side letters and on the seat's own
-## P-label, which is the row's identity swatch. Before this split a row lit three
-## controls in a saturated hue and put all of them in competition with Start.
-##
-## A dead control still wears its run's accent — `UiKit.style_segment` mixes the
-## *same* accent toward paper for its disabled dress, so the fade is the difference
-## between live and dead rather than a second fill.
-##
-## The strip paints its own rows because a row's identity is not fixed at build
-## time: closing a seat re-resolves the whole table's liveries, so the paint has
-## to be able to run again over buttons that already exist.
+## Every row painted in two vocabularies. **Who plays a seat is chrome**, so the
+## selector fills in `UiTheme.CONTROL_ACCENT` for a person and stays paper otherwise;
+## **which army a seat is** is the only thing a faction hue says here, so it is spent
+## on the side letters and on the seat's own P-label. The strip paints its own rows
+## because closing a seat re-resolves the whole table's liveries.
 func _repaint_seats() -> void:
 	_resolve_identity()
+	var letters_up := shows_sides(_who, _side, _custom_chosen)
 	for i in _seats.size():
 		var livery := _accent_for(i)
-		_paint_run(_who_buttons[i], _who[i], UiTheme.CONTROL_ACCENT)
+		_player_buttons[i].text = player_label(_who[i], _tier_name(i))
+		_paint_selector(_player_buttons[i], _who[i])
+		_side_runs[i].visible = letters_up
 		# No letter lit on a closed seat: it brings no army and stands on no side.
 		_paint_run(_side_buttons[i], _side[i] if _who[i] != Seat.EMPTY else -1, livery)
-		UiKit.style_segment(_tier_buttons[i], true, false, UiTheme.CONTROL_ACCENT)
 		_seat_labels[i].add_theme_color_override(
 			"font_color", livery if _who[i] != Seat.EMPTY else UiTheme.NEUTRAL_DARK
 		)
 		var commander := _db.by_id(generals.of(_seats[i])) if _db != null else null
 		_general_chips[i].show_general(commander, livery)
-	var lit := preset_matching(_who, _side)
+	var lit := -1 if letters_up else preset_matching(_who, _side)
 	for i in _preset_buttons.size():
 		_paint_preset(_preset_buttons[i], i == lit)
+	if _custom_button != null:
+		_paint_preset(_custom_button, letters_up)
+
+
+## The selector in the row's bordered dress: filled for a person, paper for the
+## computer, and faded words for a seat nobody takes.
+static func _paint_selector(selector: Button, who: int) -> void:
+	var human := who == Seat.HUMAN
+	var box := UiTheme.bordered(
+		UiTheme.CONTROL_ACCENT if human else UiTheme.PAPER,
+		UiTheme.HARD_BORDER,
+		UiTheme.BORDER,
+		true
+	)
+	for state: StringName in [&"normal", &"hover", &"pressed"]:
+		selector.add_theme_stylebox_override(state, box)
+	selector.add_theme_stylebox_override("focus", UiTheme.focus_box())
+	var ink := UiTheme.WHITE if human else UiTheme.INK
+	if who == Seat.EMPTY:
+		ink = UiTheme.NEUTRAL_DARK
+	for state: StringName in [
+		&"font_color", &"font_hover_color", &"font_pressed_color", &"font_focus_color"
+	]:
+		selector.add_theme_color_override(state, ink)
 
 
 ## A preset button in the panel's quiet dress, filled with the chrome accent when
 ## it is the table in hand — the lit choice of the segmented runs above it.
 static func _paint_preset(button: Button, lit: bool) -> void:
-	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_SEGMENT)
+	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BODY)
 	if not lit:
 		return
 	var box := button.get_theme_stylebox("normal").duplicate() as StyleBoxFlat
@@ -650,81 +647,39 @@ func _rebuild() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
-	_who_buttons.clear()
+	_player_buttons.clear()
 	_side_buttons.clear()
-	_tier_buttons.clear()
+	_side_runs.clear()
 	_general_chips.clear()
 	_seat_labels.clear()
 	_resolve_identity()  # the rows are built in their liveries, then repainted in them
-	add_theme_constant_override("separation", 3)
-	# Two seats to a line: a duel is one row, the height the panel already had, and
-	# a four-army board costs one extra line rather than three. The setup panel
-	# fits a fixed frame and refuses to overflow it (`_chrome`), so the strip has
-	# to earn its space.
+	add_theme_constant_override("separation", 5)
+	_presets = HBoxContainer.new()
+	_presets.add_theme_constant_override("separation", 3)
+	add_child(_presets)
 	_rows = GridContainer.new()
-	_rows.columns = 2
-	_rows.add_theme_constant_override("h_separation", 8)
+	_rows.columns = 1
 	_rows.add_theme_constant_override("v_separation", 3)
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(_rows)
 	for i in _seats.size():
 		_rows.add_child(_seat_row(i))
-	_presets = HBoxContainer.new()
-	_presets.add_theme_constant_override("separation", 4)
-	add_child(_presets)
-	_preset_reason = UiKit.help_label("")
-	add_child(_preset_reason)
 	_refresh_presets()
-	_settle_seats()  # the Empty buttons only exist to be greyed once they are built
+	_settle_seats()
 
 
-## One seat on one line: a label, who plays it, which side it stands on, and the
-## general commanding it.
-##
-## Built off `UiKit.segment` with no caption (an empty `micro` hands back the
-## bordered run bare) because the captioned form stacks a label above every
-## control, and four of those do not fit the panel's fixed height — so a seat
-## button still looks exactly like a difficulty button without the caption it has
-## no room for.
-##
-## Every choice is built on every board and greyed where that board refuses it
-## (COM-224): Empty on a table already at its minimum, and the letters of a side
-## the board does not seat. So a row is the same control at the same widths
-## whatever the map deals, and how many rows there are is the only thing a board
-## changes about this strip.
+## One seat on one line: a label, who plays it, the side letters when they are up,
+## and the general commanding it.
 func _seat_row(index: int) -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 2)
+	row.add_theme_constant_override("separation", 4)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var name_label := UiKit.micro_label("P%d" % _seats[index])
+	name_label.custom_minimum_size.x = _SEAT_LABEL_W
 	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(name_label)
 	_seat_labels.append(name_label)
-	var choices := PackedStringArray()
-	for label: String in SEAT_LABELS:
-		choices.append(label)
-	var who_buttons: Array[Button] = []
-	var who := UiKit.segment(
-		"",
-		choices,
-		_who[index],
-		UiTheme.CONTROL_ACCENT,
-		"",
-		"",
-		func(choice: int) -> void: _set_seat(index, choice),
-		who_buttons,
-		[],
-		_SEAT_SEGMENT_HEIGHT
-	)
-	# A third choice on the same line is a third word to fit, and the seat's words
-	# are the long ones — "Human" clipped to "Huma" at an even split. The badges are
-	# single letters and can spare the room.
-	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	who.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	who.size_flags_stretch_ratio = 2.0
-	row.add_child(who)
-	_who_buttons.append(who_buttons)
-	row.add_child(_tier_chip(index))
+	row.add_child(_player_selector(index))
 	var badges := PackedStringArray()
 	for label: String in SIDE_LABELS:
 		badges.append(label)
@@ -739,88 +694,62 @@ func _seat_row(index: int) -> Control:
 		func(choice: int) -> void: _set_side(index, choice),
 		side_buttons,
 		[],
-		_SEAT_SEGMENT_HEIGHT
+		ROW_H - 4
 	)
-	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	side.custom_minimum_size.x = SIDE_RUN_W
 	side.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	# The badges are single letters where the seat's words are five, so the row's
-	# spare width goes to the words: a run of four letters reads at this share and
-	# "Human" does not survive an even split.
-	side.size_flags_stretch_ratio = 0.8
 	row.add_child(side)
 	_side_buttons.append(side_buttons)
-	var chip := SeatGeneralChip.new(_SEAT_SEGMENT_HEIGHT)
+	_side_runs.append(side)
+	var chip := SeatGeneralChip.new(ROW_H)
 	chip.pressed.connect(func() -> void: general_requested.emit(_seats[index], chip))
 	row.add_child(chip)
 	_general_chips.append(chip)
 	return row
 
 
-## How well the computer plays this seat: one chip, cycling through the tiers
-## gentlest-first and showing the one in hand. A chip rather than a segment
-## because four tier names to a row do not fit the panel's fixed frame — and it is
-## the same button `UiKit.style_segment` dresses the seat and side runs with, so a
-## row still reads as one control per fact.
-##
-## Sized to the longest tier name rather than sharing the row's stretch, because
-## every pixel it takes past that comes off "Human" and "Empty" beside it — a row
-## that let it expand clipped both to three letters.
-##
-## Built on every row of every board and greyed where the computer is not playing
-## that seat (COM-224, and the COM-19 rule the panel's one Difficulty segment used
-## to carry): a chip that vanished with the seat's owner would restack the row.
-## Greyed, it wears the chrome accent faded — the same fill `_repaint_seats` gives
-## it live, not a second tint.
-func _tier_chip(index: int) -> Button:
-	var chip := Button.new()
-	chip.clip_text = true
-	chip.custom_minimum_size = Vector2(_widest_tier(), _SEAT_SEGMENT_HEIGHT)
-	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	chip.add_theme_font_override("font", UiTheme.display())
-	chip.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
-	chip.text = _tier_label(index)
-	UiKit.style_segment(chip, true, false, UiTheme.CONTROL_ACCENT)
+## Who plays this seat, one press a step (`next_player`). Sized to the longest thing
+## it can say, so walking it never moves the row.
+func _player_selector(index: int) -> Button:
+	var selector := Button.new()
+	selector.clip_text = true
+	selector.custom_minimum_size = Vector2(_widest_player(), ROW_H)
+	selector.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	selector.add_theme_font_override("font", UiTheme.display())
+	selector.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	Tooltip.attach(
-		chip,
-		"How well the computer plays this seat",
-		"Tap to cycle · a tier never cheats",
+		selector,
+		"Who plays this seat",
+		"Press to change · a tier never cheats",
 		Tooltip.Side.BOTTOM
 	)
-	chip.pressed.connect(_cycle_tier.bind(index))
-	UiKit.touchable(chip)
-	_tier_buttons.append(chip)
-	return chip
+	selector.pressed.connect(_step_player.bind(index))
+	UiKit.touchable(selector)
+	_player_buttons.append(selector)
+	return selector
 
 
-## How wide a chip has to be for the longest tier name to fit inside it, measured
-## in the font it is drawn in rather than guessed at — the roster of tiers is
-## data, so a fifth one with a longer name widens the chip by itself.
-func _widest_tier() -> float:
+func _widest_player() -> float:
 	var widest := 0.0
 	for tier in _tiers:
+		var words := player_label(Seat.CPU, tier.display_name)
 		widest = maxf(
 			widest,
 			(
 				UiTheme
 				. display()
-				. get_string_size(
-					tier.display_name + _TIER_CYCLE_MARK,
-					HORIZONTAL_ALIGNMENT_LEFT,
-					-1,
-					UiTheme.SIZE_SEGMENT
-				)
+				. get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_BODY)
 				. x
 			)
 		)
-	return widest + _TIER_CHIP_PAD
+	return widest + _SELECTOR_PAD
 
 
-## The tier the seat at `index` is on, as the chip prints it.
-func _tier_label(index: int) -> String:
+## The tier the seat at `index` is on, as the selector prints it.
+func _tier_name(index: int) -> String:
 	if _tiers.is_empty() or index >= _tier.size():
 		return ""
-	return _tiers[_tier[index] % _tiers.size()].display_name + _TIER_CYCLE_MARK
+	return _tiers[_tier[index] % _tiers.size()].display_name
 
 
 ## Where the tier `id` sits in the menu order, or the default's place for an id
@@ -833,8 +762,7 @@ func _tier_index(id: String) -> int:
 
 
 ## Which tier a fresh seat opens on: the shipped default, wherever it sits in the
-## menu order, so a table nobody tunes is the match every launch played before a
-## seat could carry a tier of its own.
+## menu order.
 func _default_tier() -> int:
 	for i in _tiers.size():
 		if _tiers[i].id == Difficulty.DEFAULT_ID:
@@ -842,56 +770,45 @@ func _default_tier() -> int:
 	return 0
 
 
-func _cycle_tier(index: int) -> void:
-	if _tiers.is_empty() or index >= _tier.size():
-		return
-	_tier[index] = (_tier[index] + 1) % _tiers.size()
-	_tier_buttons[index].text = _tier_label(index)
-	changed.emit()
+func _step_player(index: int) -> void:
+	var next := next_player(_who[index], _tier[index], _tiers.size(), _can_close(index))
+	_tier[index] = next[1]
+	_set_seat(index, next[0])
 
 
 ## Whether this board could ever offer a seat to close: only one seating more than
-## the minimum table can, because the last two seats never close. What it decides
-## is the *state* a shrinking roster settles into (`reopened_seats`), never whether
-## a button is built — every board builds all three.
+## the minimum table can, because the last two seats never close.
 func _closable() -> bool:
 	return _seats.size() > MIN_FILLED
 
 
+## The Mode row, up only on a board with more than one way to group.
 func _refresh_presets() -> void:
-	for child in _presets.get_children():
-		_presets.remove_child(child)
-		child.queue_free()
 	_preset_buttons.clear()
-	# Only a four-seat board has more than one table worth a shortcut; every other
-	# board gets the same row, dead whole and answered by one line under it.
-	var reason := preset_refusal(_seats.size())
-	var offered := reason.is_empty()
-	# One fade over the whole row rather than five disabled boxes side by side: the
-	# heading, the buttons and their frames go back together, which is what makes the
-	# reason under them read as the row's and not as the last button's.
-	_presets.modulate = Color.WHITE if offered else _DEAD_ROW_TINT
-	var heading := UiKit.micro_label("TABLE")
-	if not offered:
-		# Set in the reason line's own ink, so the dead row reads as heading, buttons
-		# and answer together rather than as a live heading over five refusals.
-		heading.add_theme_color_override("font_color", UiTheme.NEUTRAL)
+	_custom_button = null
+	var presets := presets_for(_seats.size())
+	_presets.visible = not presets.is_empty()
+	if presets.is_empty():
+		return
+	var heading := UiKit.micro_label("MODE")
+	heading.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_presets.add_child(heading)
-	for preset: Dictionary in PRESETS:
-		var button := Button.new()
-		button.text = String(preset["label"])
-		# The segmented control's own size: a preset row sits directly under the
-		# seat/side segments it sets in one tap, at the same density.
-		_paint_preset(button, false)
-		_set_live(button, offered)
-		_preset_buttons.append(button)
-		Tooltip.attach(
-			button, String(preset["help"]) if offered else reason, "", Tooltip.Side.BOTTOM
-		)
+	for preset: Dictionary in presets:
+		var button := _mode_button(String(preset["label"]), String(preset["help"]))
 		button.pressed.connect(func() -> void: _apply_preset(preset))
-		_presets.add_child(button)
-	_preset_reason.text = reason
-	_preset_reason.visible = not offered
+		_preset_buttons.append(button)
+	_custom_button = _mode_button(_CUSTOM_LABEL, _CUSTOM_HELP)
+	_custom_button.pressed.connect(choose_custom)
+
+
+func _mode_button(label: String, help: String) -> Button:
+	var button := Button.new()
+	button.text = label
+	_paint_preset(button, false)
+	Tooltip.attach(button, help, "", Tooltip.Side.BOTTOM)
+	UiKit.touchable(button)
+	_presets.add_child(button)
+	return button
 
 
 ## Repaints in place rather than rebuilding: a preset is applied from the `pressed`
@@ -903,6 +820,7 @@ func _refresh_presets() -> void:
 ## re-packed over whoever is left: applying them the other way round would settle a
 ## grouping across seats the same tap was about to close.
 func _apply_preset(preset: Dictionary) -> void:
+	_custom_chosen = false
 	var seating: Array = preset.get("seats", [])
 	for i in mini(_who.size(), seating.size()):
 		_who[i] = int(seating[i])
@@ -913,11 +831,9 @@ func _apply_preset(preset: Dictionary) -> void:
 	changed.emit()
 
 
-## The one writer for who sits at `index`; the segment control and `set_human`
-## both come through here, and only the segment control can ask for `Seat.EMPTY`.
-## The Empty button is greyed rather than absent when the table is at its minimum,
-## so a press can still arrive — from a keyboard, or from the frame before
-## `_settle_seats` ran — and is answered by putting the row back.
+## The one writer for who sits at `index`. A press can still ask for a seat that may
+## no longer close, from the frame before the table settled, and is answered by
+## putting the row back.
 func _set_seat(index: int, who: int) -> void:
 	if index < 0 or index >= _who.size():
 		return

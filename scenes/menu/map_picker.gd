@@ -1,45 +1,42 @@
 class_name MapPicker
 extends VBoxContainer
-## The map picker: a scrollable four-up grid of live board thumbnails, the whole
-## roster with its teaching board first (MapCatalog.ordered) — the dropdown is
-## gone (MN2). The selected cell gets the raised cream surface, the meridian
-## border and a ✓; scroll follows keyboard focus so every board is reachable
-## without a mouse. Focus only highlights a cell and a press selects it, so
-## walking focus through the grid to reach the seats or Start never trades the
-## board in hand for whichever cell the walk crossed (the class of SK-03). A
-## static caption beneath the viewport carries the decision-critical facts, so a
-## cell carries no tooltip repeating them.
+## The map step's body: a scrollable four-up grid of live board thumbnails, the
+## whole roster with its teaching board first (MapCatalog.ordered), beside a preview
+## of the board in hand — its picture, name and facts, read off the board itself.
+## The selected cell gets the raised cream surface, the meridian border and a ✓;
+## scroll follows keyboard focus so every board is reachable without a mouse. Focus
+## only highlights a cell and a press selects it, so walking focus through the grid
+## to reach Next never trades the board in hand for whichever cell the walk crossed
+## (the class of SK-03).
 ##
 ## The boards the player drew themselves come first, beside Random, badged
 ## Custom and otherwise ordinary cells: the same live thumbnail, the same
 ## selection, the same launch — a user map is a map file like any other, so
 ## nothing downstream of here learns where it came from. The Manage map link
-## beside the caption is the one control they add, and it is up only while one of
+## under the preview is the one control they add, and it is up only while one of
 ## them is the board in hand — so a machine with none lays out as it did before.
 ## Behind it are rename, duplicate and delete, none of which decides anything:
 ## `UserMaps` owns which name is free, what a copy is called, and whether a
 ## rename may happen at all.
 ##
 ## Its own widget rather than the menu's (COM-38), the shape SeatStrip already is:
-## the roster, the selection and every word read off it are one piece of state,
-## and the menu asks it rather than keeping a second copy. What the picker says
-## reaches the panel two ways — `header_label`, the title bar's "name · size",
-## which the panel hosts and this class words; and `map_selected`, which is how
-## the seat strip learns the board deals a different number of armies.
+## the roster, the selection and every word read off it are one piece of state, and
+## the menu asks it rather than keeping a second copy.
 
 ## The board in hand changed. How many seats there are is the board's answer
 ## (four-players D1), so the menu re-deals the strip off this rather than off
 ## anything the player set.
 signal map_selected(index: int)
+## The player pressed a board's cell — not a restored or posed selection — so the
+## step can hand focus on to Next.
+signal map_chosen
 
-## Lines reserved for the selected board's caption. The words change with the
-## selection; the height may not (UX-recovery D2), so the panel is as tall on the
-## longest description as on the shortest.
-const MAP_CAPTION_LINES := 2
+## Lines reserved for the selected board's caption in the preview column. The words
+## change with the selection; the layout may not (UX-recovery D2).
+const MAP_CAPTION_LINES := 9
 ## The gap between cells, in both axes.
 const GRID_GAP := 8
-## How many boards a shelf row holds: four keeps each picture wide enough to read
-## while two rows still fit the panel's height.
+## How many boards a shelf row holds: four keeps each picture wide enough to read.
 const GRID_COLUMNS := 4
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
@@ -50,6 +47,9 @@ const NAME_LINES_MAX := 2
 const SHELF_W := 464.0
 ## One cell's width, the shelf shared `GRID_COLUMNS` ways with the gutters taken out.
 const CELL_W := (SHELF_W - (GRID_COLUMNS - 1) * GRID_GAP) / GRID_COLUMNS
+## The preview column's width and its picture: what the frame leaves beside the shelf.
+const PREVIEW_W := 126
+const PREVIEW_THUMB := Vector2(PREVIEW_W, 90)
 ## A cell's picture: the cell less its frame's inset. Every cell is this size — the
 ## Random cell draws a die in it — so the grid's rows and gutters are one shape
 ## whichever cell is in them.
@@ -74,8 +74,7 @@ const CONFIRM_BUTTON_W := 120
 ## of its longest word, `Duplicate`, and no more.
 const MANAGE_BUTTON_W := 84
 
-## The panel's header-right "name · size". Built here and parented by the setup
-## panel's title bar, so the words and the label that sets them stay together.
+var _preview: MapThumbnail
 var _map_header: Label
 var _map_caption: Label
 var _map_scroll: ScrollContainer
@@ -105,6 +104,7 @@ var _confirm_page: Control
 ## The way to Rename, Duplicate and Delete — up only while a board the player
 ## drew is in hand, since none of the three may be done to a shipped board.
 var _manage_link: Button
+var _opened_on_new_board := false
 
 
 ## Parses the roster and draws the widget. Called before the picker is in the
@@ -114,31 +114,17 @@ var _manage_link: Button
 func configure(db: TerrainDB, remembered_path: String = "") -> void:
 	_terrain_db = db
 	_maps = roster(db)
-	add_theme_constant_override("separation", 3)
-	add_child(UiKit.section_header("Map"))
-
-	_map_header = Label.new()
-	_map_header.add_theme_font_override("font", UiTheme.stat())
-	_map_header.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	_map_header.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	_map_header.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", GRID_GAP)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	add_child(body)
 
 	_map_scroll = ScrollContainer.new()
-	# 126 before the seat strip took its lines of the panel's fixed height, and 80
-	# before COM-254 measured it against what the picker shows. COM-258 gave the
-	# ground back the other way: choosing a board is what this page is for, so the
-	# viewport is a whole cell and half of the next, which is the shape that says
-	# out loud there is more roster below. Half of the next *picture* since the
-	# body face rose to 10 (COM-271) — the peek is a board, not the top of a name,
-	# and this is where the taller names are paid for: it is still the one control
-	# here that scrolls by design, so it is still the one that gives ground when
-	# the panel runs out of height. Two whole rows of the wider cells were measured
-	# and do not fit under a four-seat strip, so the shape stays a cell and a half.
-	_map_scroll.custom_minimum_size = Vector2(0, _cell_height() + 0.5 * _picture_height())
+	_map_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_map_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_map_scroll.follow_focus = true
-	add_child(_map_scroll)
+	body.add_child(_map_scroll)
 
 	_grid = GridContainer.new()
 	_grid.columns = GRID_COLUMNS
@@ -148,29 +134,43 @@ func configure(db: TerrainDB, remembered_path: String = "") -> void:
 	_map_scroll.add_child(_grid)
 
 	_fill_grid()
+	body.add_child(_build_preview())
+	_open_on(remembered_path)
+
+
+## The board in hand, shown properly: the shelf's cells are for telling boards apart,
+## this is for deciding on one.
+func _build_preview() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	col.custom_minimum_size.x = PREVIEW_W
+
+	_preview = MapThumbnail.new()
+	col.add_child(_preview)
+
+	_map_header = Label.new()
+	_map_header.add_theme_font_override("font", UiTheme.display(true))
+	_map_header.add_theme_font_size_override("font_size", UiTheme.SIZE_SUBTITLE)
+	_map_header.add_theme_color_override("font_color", UiTheme.INK)
+	_map_header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_map_header.max_lines_visible = NAME_LINES_MAX
+	col.add_child(_map_header)
+
 	_map_caption = UiKit.help_label("")
 	_map_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_map_caption.max_lines_visible = MAP_CAPTION_LINES
 	_map_caption.add_theme_constant_override("line_spacing", 1)
+	_map_caption.add_theme_color_override("font_color", UiTheme.INK)
+	col.add_child(_map_caption)
 
-	# The link shares the caption's line rather than standing on a cell: a cell is
-	# a picture of a board and the caption is where this picker talks about the
-	# board in hand. It is hidden for every shipped board, and a hidden control
-	# takes no space in a container — so a machine with no boards of its own lays
-	# this row out exactly as it did before. One link and not three: links share
-	# the caption's width, so a second would cost that caption a line on some
-	# board, which is the COM-5 class again — a layout budget that depends on the
-	# selection. The three actions live on the page it opens.
-	var facts := HBoxContainer.new()
-	facts.add_theme_constant_override("separation", UiTheme.GAP)
-	facts.add_child(_map_caption)
+	# One link and not three: the three actions live on the page it opens. Hidden for
+	# every shipped board, and none of the three may be done to one.
 	_manage_link = UiKit.text_link("Manage map")
-	_manage_link.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_manage_link.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_manage_link.pressed.connect(_ask_manage)
 	UiKit.touchable(_manage_link)
-	facts.add_child(_manage_link)
-	add_child(facts)
-	_open_on(remembered_path)
+	col.add_child(_manage_link)
+	return col
 
 
 ## The board the shelf opens on: the one the player has just saved in the editor,
@@ -180,15 +180,22 @@ func configure(db: TerrainDB, remembered_path: String = "") -> void:
 func _open_on(remembered_path: String) -> void:
 	var just_drawn := UserMaps.take_last_saved()
 	if just_drawn != "" and select_path(UserMaps.path_for(just_drawn)):
+		_opened_on_new_board = true
 		return
 	if remembered_path != "" and select_path(remembered_path):
 		return
 	select(home_index(_maps))
 
 
-## The player's own boards lead the shelf, so the board it opens on can sit below
-## the viewport, and `configure`'s scroll ran before there was a layout to scroll.
-func _ready() -> void:
+## True when the shelf opened on a board the player has just saved in the editor,
+## who came back to play it rather than to read the title screen.
+func opened_on_new_board() -> bool:
+	return _opened_on_new_board
+
+
+## Scrolls the board in hand into view. A hidden step has no layout to scroll, so
+## the step asks for this as it opens, a frame on from showing itself.
+func reveal_selection() -> void:
 	await get_tree().process_frame
 	if _selected_map < _map_cells.size():
 		_map_scroll.ensure_control_visible(_map_cells[_selected_map])
@@ -233,11 +240,6 @@ func _fill_grid() -> void:
 	_grid.add_child(_random_cell)
 	for i in _maps.size():
 		_grid.add_child(_make_map_cell(i, _maps[i]))
-
-
-## The title bar's half of the picker, handed over for the setup panel to parent.
-func header_label() -> Label:
-	return _map_header
 
 
 ## The roster, in the order the cells are in.
@@ -293,8 +295,8 @@ func caption() -> Label:
 
 
 ## Picks a board: repaints the cells (the selected one raised, red-bordered and
-## ✓-marked), updates the header-right name·size, and scrolls the choice into
-## view so keyboard focus never lands on an off-screen cell.
+## ✓-marked), updates the preview, and scrolls the choice into view so keyboard focus
+## never lands on an off-screen cell.
 func select(index: int) -> void:
 	if index < 0 or index >= _maps.size():
 		return
@@ -313,13 +315,11 @@ func select(index: int) -> void:
 ## the old one stood. The dev captures and `_reload` are its two callers.
 func show_map(index: int) -> void:
 	select(index)
-	await get_tree().process_frame
-	if _selected_map < _map_cells.size():
-		_map_scroll.ensure_control_visible(_map_cells[_selected_map])
+	await reveal_selection()
 	await get_tree().process_frame
 
 
-## Header and persistent caption, read off the board itself so no hand-kept table
+## The preview, read off the board itself so no hand-kept table
 ## can drift from it.
 func _refresh_facts() -> void:
 	var map := selected_map()
@@ -328,9 +328,9 @@ func _refresh_facts() -> void:
 		_map_header.text = ""
 		_map_caption.text = ""
 		return
-	_map_header.text = (
-		"%s · %d×%d" % [MapCatalog.display_name(map.source_path), map.width, map.height]
-	)
+	# The board's own roster, for the reason `_make_map_cell` gives.
+	_preview.setup(map, UiTheme.menu_identity(map.player_count()), PREVIEW_THUMB)
+	_map_header.text = MapCatalog.display_name(map.source_path)
 	_map_caption.text = caption_text(map)
 
 
@@ -525,7 +525,11 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	content.add_child(name_label)
 	UiTheme.make_decoration(content)
 
-	button.pressed.connect(select.bind(index))
+	button.pressed.connect(
+		func() -> void:
+			select(index)
+			map_chosen.emit()
+	)
 	_map_cells.append(button)
 	_map_marks.append(name_label)
 	_map_ticks.append(tick)

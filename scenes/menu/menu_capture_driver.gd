@@ -16,12 +16,11 @@ extends RefCounted
 ## depend on whether this machine has a match in progress, so neither may the
 ## capture that proves it.
 ##
-## `--demo=menu_setup_context` poses the hot-seat setup without leaving the menu.
-## Its gate also proves that the tutorial board leads, its description is printed,
-## and a seat's tier chip follows who is in it — it seats a
-## computer and unseats it again, because "disabled" photographs the same whether
-## it can be undone or not. It measures the caption on every board for the same
-## reason: the reserved lines must hold for a board this frame does not show.
+## `--demo=menu_setup_context` opens the map step over a hot-seat table. Its gate also
+## proves that the tutorial board leads, its description is printed, and a seat's tier
+## follows who is in it — it seats a computer and unseats it again. It measures the
+## caption on every board too: the reserved lines must hold for a board this frame
+## does not show.
 ##
 ## `--demo=menu_commander_select` opens the commander page the way `--co-select`
 ## does, and is that page's place in the sweep: as it opens for seat 1, on the
@@ -30,9 +29,10 @@ extends RefCounted
 ## not depend on a draw. `--co-select=<commander_id>` below stays the hand-run
 ## way to photograph another general.
 ##
-## `--demo=menu_four_seats` selects a board that deals more than a duel, which is
-## the one frame the picker's `· NP` suffix and a four-row seat strip can be seen
-## in — the boards the other menu modes photograph all seat two.
+## `--demo=menu_four_seats` opens the Players step on a board that deals more than a
+## duel: the Mode row and four seats, which the tutorial board has neither of.
+## `--demo=menu_players` is that step on a duel, and `--demo=menu_custom_sides` the
+## four-seat table with the side letters up.
 ##
 ## Second, the gate. An overflowing menu renders a perfectly good picture, so a
 ## smoke scenario that only proved a frame was written would have sailed straight
@@ -49,6 +49,8 @@ const DEMO_WITH_SAVE := "menu_with_save"
 const DEMO_NO_SAVE := "menu_no_save"
 const DEMO_SETUP_CONTEXT := "menu_setup_context"
 const DEMO_FOUR_SEATS := "menu_four_seats"
+const DEMO_PLAYERS := "menu_players"
+const DEMO_CUSTOM_SIDES := "menu_custom_sides"
 const DEMO_REPLAYS := "menu_replays"
 const DEMO_CAMPAIGNS := "menu_campaigns"
 const DEMO_CAMPAIGN_HUB := "menu_campaign_hub"
@@ -68,6 +70,8 @@ const DEMO_MODES: Array[String] = [
 	DEMO_NO_SAVE,
 	DEMO_SETUP_CONTEXT,
 	DEMO_FOUR_SEATS,
+	DEMO_PLAYERS,
+	DEMO_CUSTOM_SIDES,
 	DEMO_REPLAYS,
 	DEMO_CAMPAIGNS,
 	DEMO_CAMPAIGN_HUB,
@@ -171,6 +175,27 @@ func selection_commander() -> StringName:
 	if _co_select == CO_SELECT_FIRST_SEAT:
 		return &""
 	return StringName(_co_select)
+
+
+## True for the modes photographing a table of more than two seats.
+func poses_many_seats() -> bool:
+	return _demo == DEMO_FOUR_SEATS or _demo == DEMO_CUSTOM_SIDES
+
+
+## Which skirmish step this run photographs, or -1 for the title. The seat-strip flags
+## name the Players step when no mode says otherwise.
+func posed_step() -> int:
+	if _demo == DEMO_SETUP_CONTEXT:
+		return SkirmishSetup.Step.MAP
+	var args := CmdArgs.user()
+	if (
+		poses_many_seats()
+		or _demo == DEMO_PLAYERS
+		or CmdArgs.has(args, MENU_MAP_ARG)
+		or CmdArgs.has(args, MENU_PRESET_ARG)
+	):
+		return SkirmishSetup.Step.PLAYERS
+	return -1
 
 
 ## The recording list `menu_replays` poses, for the reason `posed_slot` poses a
@@ -331,8 +356,8 @@ func _capture_gate(chrome_source: Callable, context_ok: bool) -> bool:
 
 ## Every named control lies fully inside the logical frame.
 ##
-## The menu hands in its whole centered column, every seat row *and* its three
-## primary actions.
+## The menu hands in its whole centered column or the step on screen, every seat
+## row *and* its primary actions.
 ## The column is the load-bearing check: a too-tall one is centered into an
 ## offset that runs off both ends at once, so its individual children are poor
 ## witnesses — the wordmark's own rect sat at exactly y=0 in a build whose title

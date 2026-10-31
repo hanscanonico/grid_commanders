@@ -25,7 +25,7 @@ target fails with "Godot binary not found". Symlink the one you already have:
 Then:
 
 ```sh
-make run             # boot the game — the menu (map, seats, difficulty, speed, commanders, fog, Start / Continue / Campaign)
+make run             # boot the game — the title (Continue / Skirmish / Campaign) and the skirmish's two setup steps
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
 make verify          # the merge gate: check + capture-test + lint + format-check + test + determinism, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
@@ -188,10 +188,12 @@ A mode whose name begins `menu_` boots the **main menu** instead of the board �
 that photograph a screen the battle scene never draws:
 
 ```sh
-make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
+make smoke MODES="menu_with_save"     # the title with Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
-make smoke MODES="menu_setup_context" # an all-human table: every tier chip dead
-make smoke MODES="menu_four_seats"    # a board that deals more than a duel: its · NP mark, a seat row per army
+make smoke MODES="menu_setup_context" # the map step over an all-human table, with the tier rule walked
+make smoke MODES="menu_four_seats"    # the Players step on a four-army board: the Mode row, a row per seat
+make smoke MODES="menu_players"       # the Players step on a duel
+make smoke MODES="menu_custom_sides"  # the four-seat table with the side letters up
 make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
 make smoke MODES="menu_campaigns"     # the war picker, every campaign on a fresh profile
 make smoke MODES="menu_campaign_hub"  # one war's mission list, first mission open and the rest locked

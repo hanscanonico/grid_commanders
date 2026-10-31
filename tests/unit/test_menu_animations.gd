@@ -1,7 +1,6 @@
 extends GutTest
 ## Menu motion: the device preference that holds the menus still (COM-242) — the
-## board drifting behind the main menu, its blinking PRESS START and the campaign
-## pages' staggered reveals.
+## board drifting behind the main menu and the campaign pages' staggered reveals.
 ##
 ## Read off a fresh instance of the script rather than the live autoload, which has
 ## already loaded whatever this machine's player chose, and pinned before anything

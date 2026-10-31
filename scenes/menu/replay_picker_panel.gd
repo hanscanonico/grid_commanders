@@ -2,7 +2,7 @@ class_name ReplayPickerPanel
 extends Control
 ## The list of recorded matches, shown over the main menu without tearing it down
 ## — `CommanderSelectPanel`'s smaller sibling, and built the same way for the same
-## reason: a Back has to land on the setup exactly as it was left.
+## reason: a Back has to land on the title exactly as it was left.
 ##
 ## Every match records itself (replay plan D5), so this page is the only place a
 ## player meets that fact. It reads `ReplayFile.list()`, which parses a file's
