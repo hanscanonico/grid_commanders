@@ -45,7 +45,7 @@ for.
 > - **Touch support** — the whole game works with a finger
 >
 > The computer opponent plays by your rules: it issues the same commands from the same rulebook,
-> and it is never handed extra money or a look through your fog.
+> and no difficulty level hands it extra money, damage or luck.
 >
 > It is inspired by Advance Wars, and it is its own game — original art, original units, original
 > commanders. Built in Godot; the source is on GitHub.
