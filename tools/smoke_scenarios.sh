@@ -239,7 +239,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 #
 # The menu scenarios are the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
-# centered menu column, every seat row and all three primary actions against the 640x360 frame
+# centered menu column and its actions against the 640x360 frame
 # before it writes a thing. The column is the load-bearing witness, not the
 # wordmark: a too-tall column is centered into an offset that runs off both ends
 # at once, so the wordmark's own rect sat at exactly y=0 in a visibly sheared
@@ -255,12 +255,11 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # here for seat 1: the faction tabs, the roster grid and the seat chip. It photographs the page
 # as it opens rather than driving it, because Random draws with the global RNG
 # and this sweep's frames are compared byte for byte.
-# `menu_setup_context` additionally poses an all-human table and proves the
-# tutorial board leads, static facts/help, and disabled AI difficulty — a table
-# with no computer at it has none to tune — before photographing them. It opens
-# on the tutorial board, as every other menu mode does, so `menu_four_seats`
-# selects the first board on the shelf that deals more than a duel: the picker's
-# `· NP` suffix and a four-row seat strip are otherwise in no frame at all.
+# `menu_setup_context` opens the map step over an all-human table and proves the
+# tutorial board leads, its facts are printed, and a seat names a tier only while
+# the computer plays it. `menu_four_seats` is the Players step on the first board
+# that deals more than a duel, `menu_players` that step on a duel, and
+# `menu_custom_sides` the four-seat table with the side letters up.
 #
 # The campaign menu scenarios are the same argument for the authored
 # campaign, which had no frame anywhere: `menu_campaigns` is the war picker,
@@ -372,7 +371,8 @@ DEFAULT_MODES=(
 	cutin_volley:bomber:tank cutin_volley:sub:cruiser cutin_volley:anti_air:infantry
 	cutin_volley:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
-	menu_with_save menu_no_save menu_setup_context menu_four_seats menu_replays
+	menu_with_save menu_no_save menu_setup_context menu_four_seats menu_players
+	menu_custom_sides menu_replays
 	menu_campaigns menu_campaign_hub menu_campaign_brief menu_campaign_debrief
 	menu_campaign_defeat menu_campaign_interlude menu_campaign_deep
 	menu_commander_select

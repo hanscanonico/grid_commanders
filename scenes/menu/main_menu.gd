@@ -1,23 +1,20 @@
 class_name MainMenu
 extends Control
-## Main menu: pick a map, seat the armies and their generals, set the rules, then
-## hand off to the battle scene by staging one MatchRequest.
+## The title screen and everything reached from it: Continue, a skirmish, the
+## campaign, recordings, the map editor and the settings. A skirmish is set up on
+## its own two steps (`SkirmishSetup`) and handed off by staging one MatchRequest.
 ##
-## The screen wears the Grid Commander Design System (menu-revamp plan): a header
-## with the wordmark, a cream Match Setup panel beside an action stack, all drawn
-## from UiTheme's styleboxes and fonts. Built in code rather than a .tscn, like
-## CommanderSelectPanel and CommanderCard — the layout is regular and data-driven,
-## and code-built styleboxes are the one form this repo can review in a diff (D1).
+## The screen wears the Grid Commander Design System (menu-revamp plan), built in
+## code rather than a .tscn, like CommanderSelectPanel and CommanderCard — the layout
+## is regular and data-driven, and code-built styleboxes are the one form this repo
+## can review in a diff (D1).
 ##
-## One surface: "Start" launches with the strip's picks as they stand. A seat
-## row's general chip opens the CommanderSelectPanel for that one seat, shown
-## *over* this menu so the setup survives it either way.
-## "Continue" bypasses selection — a saved match restores its own commanders. It
-## is disabled, not hidden, when there is nothing to resume (plan section 2), and
-## it names what it would resume on the line beneath it: "Day 4 · Scrimmage".
-## Disabled rather than hidden is also what keeps the two layouts the same height:
-## a save's presence may never change the layout budget (UX-recovery D2), which is
-## what `--demo=menu_with_save` / `--demo=menu_no_save` photograph and what
+## "Continue" bypasses setup — a saved match restores its own commanders. It is
+## disabled, not hidden, when there is nothing to resume (plan section 2), and it
+## names what it would resume on the line beneath it: "Day 4 · Scrimmage". Disabled
+## rather than hidden is also what keeps the two layouts the same height: a save's
+## presence may never change the layout budget (UX-recovery D2), which is what
+## `--demo=menu_with_save` / `--demo=menu_no_save` photograph and what
 ## MenuCaptureDriver refuses to let regress.
 
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
@@ -25,36 +22,27 @@ const EDITOR_SCENE := "res://scenes/editor/map_editor.tscn"
 const ICON_PATH := "res://assets/icon.png"
 ## Faction-silent by faction-identity D5: no "Red vs Blue" reaches a player screen.
 const TAGLINE := "TURN-BASED TACTICS · PICK YOUR GROUND"
-## The space between two groups of rows inside the Match Setup panel. Named so a
-## row group built elsewhere can match it: the seat strip sets its own separation
-## (SeatStrip._rebuild) and is tighter than this, which reads as a grouping the
-## panel does not have. 5 until COM-254 grew every caption in it by two pixels.
-const PANEL_ROW_GAP := 4
-## Air under the rail's last line: the setup panel runs to the frame's foot, and
-## Quit pinned flush with it sat on the screen's last pixels (SK-30).
-const FOOTER_AIR := 6
+## The title's button stack: wide enough for the longest thing Continue names.
+const STACK_W := 180
 
 ## Everything the commander page hides behind itself when it opens, so no focus or
 ## click leaks to the buttons underneath.
 var _menu_root: Control
 
-## The map picker (MN2), the one owner of the roster and of which board is in
-## hand: the panel hosts its title-bar label and re-deals the seats when it says
-## the selection changed.
+## The title screen, and the skirmish steps that replace it.
+var _title: Control
+var _setup: SkirmishSetup
+## The map picker (MN2), the one owner of the roster and of which board is in hand.
 var _map_picker: MapPicker
-var _fog_on := false
-## The whole centered stack — header, setup panel, action column. Kept because it
+## Who sits where and who stands with whom (plan D6). The one authority on both,
+## asked at launch rather than mirrored into menu state.
+var _seat_strip: SeatStrip
+## The whole centered stack — wordmark and buttons. Kept because it
 ## is the one rect that answers "does the menu fit?": the CenterContainer around
 ## it hands a too-tall column a negative offset, so an overflow runs off *both*
 ## ends at once and no single child is a reliable witness to it.
 var _column: VBoxContainer
-var _start_button: Button
-## Why Start is refusing, under the button. A greyed control with no reason is the
-## affordance this menu was burned by once already (COM-19).
-var _seat_refusal: Label
-## Who sits where and who stands with whom (plan D6). The one authority on both,
-## asked at launch rather than mirrored into menu state.
-var _seat_strip: SeatStrip
+var _skirmish_button: Button
 ## The Continue row — the button, its caption, its tip and the press that opens
 ## the save — kept whole in its own collaborator. It is handed what the slot
 ## holds; where that comes from stays this page's decision.
@@ -63,10 +51,8 @@ var _campaign_button: Button
 var _replay_button: Button
 var _editor_button: Button
 var _quit_button: Button
-var _press_start: Label
-## The page's scenery — the drifting board and the blinking PRESS START — and the
-## one switch that holds it, so the Menu motion row answers without rebuilding
-## the screen.
+## The page's scenery and the one switch that holds it, so the Menu motion row
+## answers without rebuilding the screen.
 var _motion := MenuMotion.new()
 ## True while this boot is posing a still frame for a capture, which holds the
 ## motion whatever the player prefers — see `_apply_menu_motion`.
@@ -77,16 +63,11 @@ var _select_panel: CommanderSelectPanel
 var _general_chip: Control
 var _replay_panel: ReplayPickerPanel
 ## Pick a war, pick a mission, deploy — the menu's campaign navigation, kept
-## whole in its own collaborator because it is a different question from the
-## board-and-fog setup this page is otherwise about.
+## whole in its own collaborator.
 var _campaign_flow: MenuCampaignFlow
 
 ## The database the picker parses its roster with.
 var _terrain_db: TerrainDB
-## The difficulty tiers in menu order, gentlest first — handed to the seat strip,
-## which is where a tier is chosen (COM-225).
-var _difficulties: Array[Difficulty] = []
-var _speed_tiers: Array[GameSpeed] = []
 ## Dev-only, built on every boot because it is what reads the command line; it
 ## poses nothing and gates nothing on an ordinary run.
 var _capture_driver: MenuCaptureDriver
@@ -101,8 +82,7 @@ func _ready() -> void:
 		# The battle scene's rule, and for the same reason: a capture must not show
 		# — or depend on — the preference of the machine that took it. The menu's
 		# tier is its own (see GameSpeed.MENU_CAPTURE_ID); the pin's only observable
-		# effect here is the Speed segment's highlight and the blinking PRESS START,
-		# which is pinned solid below.
+		# effect here is the Speed segment's highlight.
 		Settings.pin(GameSpeed.MENU_CAPTURE_ID)
 	if _capture_driver.rejected():
 		get_tree().quit(1)
@@ -111,18 +91,15 @@ func _ready() -> void:
 	Music.play(&"parade")
 
 	_terrain_db = TerrainDB.load_default()
-	# Held before the panel's first deal remembers over it; a capture's pin has
+	# Held before the setup's first deal remembers over it; a capture's pin has
 	# already emptied it, so a photographed menu leads with the tutorial board.
 	var remembered := Settings.match_setup
 	# Built and stocked before the page is drawn: the backdrop bakes the fullest
-	# board in the roster, and the setup panel's title bar parents its header label.
+	# board in the roster.
 	_map_picker = MapPicker.new()
 	_map_picker.configure(_terrain_db, MenuSetupMemory.map_path(remembered))
-	_fog_on = MenuSetupMemory.fog(remembered)
-	_difficulties = DifficultyDB.load_default().all()
-	_speed_tiers = GameSpeed.ordered()
 	_posed = shot_path != ""
-	_build()
+	_build(remembered)
 
 	_select_panel = CommanderSelectPanel.new()
 	add_child(_select_panel)
@@ -146,43 +123,34 @@ func _ready() -> void:
 		_continue.refresh(_capture_driver.posed_slot(_map_picker.maps()))
 	else:
 		_continue.refresh_from_disk()
-	_start_button.pressed.connect(
+	_setup.start_requested.connect(
 		func() -> void:
 			_start(_seat_strip.ai_teams(), false, _seat_strip.generals.over(_seat_strip.seats()))
 	)
-	_seat_strip.general_requested.connect(_open_general)
+	_setup.general_requested.connect(_open_general)
+	_setup.closed.connect(_close_setup)
+	_skirmish_button.pressed.connect(_open_setup.bind(SkirmishSetup.Step.MAP))
 	Settings.menu_animations_changed.connect(_apply_menu_motion)
-	# The strip is the only writer of who plays what, so the rule that a table with
-	# no computer at it has no difficulty to tune follows it rather than a mode
-	# flag — and follows it the moment a seat changes, not only once Start is
-	# pressed, so the panel can never disagree with the match in hand.
-	_seat_strip.changed.connect(_refresh_seats)
-	_map_picker.map_selected.connect(_on_map_selected)
-	# The map picker chooses a board while it is being built, before the strip
-	# exists, so the selection is re-read once it does — the roster is the board's
-	# answer and the strip is downstream of it.
-	_deal_seats_for_map()
-	_seat_strip.seat_table(MenuSetupMemory.table(remembered))
-	_seat_strip.seat_generals(MenuSetupMemory.generals(remembered, CommanderDB.load_default()))
 	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
 	_editor_button.pressed.connect(func() -> void: get_tree().change_scene_to_file(EDITOR_SCENE))
 	if _capture_driver.poses(MenuCaptureDriver.DEMO_SETUP_CONTEXT):
-		# The frame that photographs the dimmed Difficulty: a table of nothing but
-		# people has no computer to tune. Posed by seating everyone rather than by
-		# focusing a mode button, because the seats are the rule's subject now.
+		# A table of nothing but people, which the capture's rule walk starts from.
 		for seat in _seat_strip.seat_count():
 			_seat_strip.set_human(seat, true)
-		_refresh_seats()
-	_start_button.grab_focus()
+	_focus_title()
+	# A board just saved in the editor was drawn to be played, so the player lands on
+	# it rather than on the title.
+	if _map_picker.opened_on_new_board():
+		_open_setup(SkirmishSetup.Step.MAP)
 	# Coming back from a mission lands on the debrief and the hub, not on the menu:
 	# the campaign is still the thing being played. The session is cleared as it is
-	# read, so a later Quit-to-menu cannot reopen a campaign nobody is in. Last,
-	# after the Start button's grab, so the debrief's own button keeps the focus.
+	# read, so a later Quit-to-menu cannot reopen a campaign nobody is in. Last, so
+	# the debrief's own button keeps the focus.
 	if CampaignSession.active():
 		_campaign_flow.resume()
 
-	await _pose_seats()
+	await _pose_setup()
 
 	# The replays page photographs a posed list over a hidden menu, exactly as the
 	# selection page below does, so it hands in its own chrome for the same reason:
@@ -222,57 +190,63 @@ func _ready() -> void:
 ## off the command line, so the seat strip can be photographed at more seats than
 ## the default board deals. Not on any play path — a run that asks for none of
 ## them does nothing here.
-func _pose_seats() -> void:
-	# `menu_four_seats` asks for a board by mode rather than by name: the picker's
-	# `· NP` mark and a strip of more than two rows, which every other menu
-	# scenario's tutorial board says neither of.
-	if _capture_driver.poses(MenuCaptureDriver.DEMO_FOUR_SEATS):
+func _pose_setup() -> void:
+	# These ask for a board by mode rather than by name: the picker's `· NP` mark and
+	# a strip of more than two rows, which the tutorial board says neither of.
+	if _capture_driver.poses_many_seats():
 		await _map_picker.show_map(_capture_driver.four_seat_map(_map_picker.maps()))
 	var wanted := _capture_driver.menu_map_index(_map_picker.maps(), _map_picker.selected_map())
 	if wanted >= 0:
 		await _map_picker.show_map(wanted)
-	var preset := _capture_driver.menu_preset()
+	# Opened after the board is chosen: the Players step deals the seats as it opens.
+	var step := _capture_driver.posed_step()
+	if step >= 0:
+		_open_setup(step)
+	if _capture_driver.poses(MenuCaptureDriver.DEMO_CUSTOM_SIDES):
+		_seat_strip.choose_custom()
+	var preset := _capture_driver.menu_preset(_seat_strip.seat_count())
 	if preset >= 0:
 		_seat_strip.apply_preset_at(preset)
-		_refresh_seats()
 
 
 # --- layout ------------------------------------------------------------------
 
 
-## Draws the whole screen. Both moving things on it — the drifting backdrop and
-## the blinking PRESS START — are built either way and then held or let go by
-## `_apply_menu_motion`, so the Menu motion row takes effect on the press rather
-## than on the next boot.
-func _build() -> void:
+## Draws the whole screen: the backdrop, the title, and the skirmish steps hidden
+## behind it.
+func _build(remembered: Dictionary) -> void:
 	# The fullest board on the picker's shelf is what drifts behind the page, baked
 	# by the thumbnail renderer — so the scenery can never disagree with the picker
 	# (plan R2). The picker measures it rather than the menu taking the roster's last
 	# entry: a board the player drew is listed after the shipped ones at any size.
 	_motion.paint_backdrop(self, MapPicker.fullest(_map_picker.maps()))
 
+	_menu_root = Control.new()
+	_menu_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_menu_root)
+
+	_title = Control.new()
+	_title.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_menu_root.add_child(_title)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
-	_menu_root = center
+	_title.add_child(center)
+	_column = VBoxContainer.new()
+	_column.add_theme_constant_override("separation", 10)
+	center.add_child(_column)
+	_column.add_child(_build_header())
+	_column.add_child(_build_action_stack())
+	var view := ViewChip.for_menu()
+	view.set_anchors_and_offsets_preset(
+		Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, UiTheme.GAP
+	)
+	view.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_title.add_child(view)
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 8)
-	# The frame's width less a gap each side, stated rather than left to whatever
-	# the widest row happens to ask for: the seat rows need every pixel of it.
-	column.custom_minimum_size.x = get_viewport_rect().size.x - 2 * UiTheme.GAP
-	center.add_child(column)
-	_column = column
-
-	column.add_child(_build_header())
-
-	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", UiTheme.GAP)
-	body.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_child(body)
-	body.add_child(_build_setup_panel())
-	body.add_child(_build_action_stack())
-	_map_picker.reserve_caption()
+	_setup = SkirmishSetup.new(_map_picker, DifficultyDB.load_default().all(), remembered)
+	_seat_strip = _setup.seat_strip
+	_setup.hide()
+	_menu_root.add_child(_setup)
 	_apply_menu_motion()
 
 
@@ -316,188 +290,55 @@ func _build_header() -> Control:
 	titles.add_child(tagline)
 
 	row.add_child(titles)
-	row.add_child(ViewChip.for_menu())
 	return row
 
 
-func _build_setup_panel() -> Control:
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_box())
-	panel.custom_minimum_size = Vector2(UiTheme.CONTENT_W, 0)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 0)
-	panel.add_child(col)
-
-	# --- title bar: "Match Setup" + the selected map's name and size ---
-	var header := PanelContainer.new()
-	header.add_theme_stylebox_override("panel", UiTheme.header_box())
-	var header_row := HBoxContainer.new()
-	header_row.add_theme_constant_override("separation", 6)
-	var title := Label.new()
-	title.text = "MATCH SETUP"
-	title.add_theme_font_override("font", UiTheme.display(true))
-	title.add_theme_font_size_override("font_size", UiTheme.SIZE_TITLE)
-	title.add_theme_color_override("font_color", UiTheme.WHITE)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header_row.add_child(title)
-	# The picker's words, in the panel's title bar: the board's name and size are
-	# the selection speaking, so the label that sets them is the picker's.
-	header_row.add_child(_map_picker.header_label())
-	header.add_child(header_row)
-	col.add_child(header)
-
-	# --- body ---
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", PANEL_ROW_GAP)
-	col.add_child(UiKit.pad(body, 8, 7))
-
-	# The picker takes the panel's slack: choosing a board is what this page is
-	# for, and every other row here says its piece in a fixed number of lines.
-	_map_picker.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(_map_picker)
-	body.add_child(_build_seats_row())
-	body.add_child(_build_options_row())
-	return panel
-
-
-## The seat strip: who plays each army the board deals, how well the computer
-## plays it, who stands with whom and who commands it. Built with this panel's own segment builder
-## so a seat row is the same control the speed row is — see SeatStrip, which owns
-## the state.
-func _build_seats_row() -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
-	col.add_child(UiKit.section_header("Seats"))
-	if _difficulties.is_empty():
-		push_error("main menu: no difficulty tiers found in %s" % DifficultyDB.DIFFICULTY_DIR)
-	_seat_strip = SeatStrip.new()
-	_seat_strip.configure(_difficulties)
-	col.add_child(_seat_strip)
-	return col
-
-
-## The match's rules on one line: pacing, then fog. Each control's tooltip carries
-## its explanation, so the line gives the map picker its height. Battle
-## animations and Menu motion are the device's, not the match's, so they are rows
-## of the Settings page (`Settings.menu_page_actions`) rather than options here.
-func _build_options_row() -> Control:
-	var row := HBoxContainer.new()
-	# Wider than the gap inside a toggle: each ON/OFF belongs to the label it follows.
-	row.add_theme_constant_override("separation", 2 * UiKit.TOGGLE_GAP)
-	row.add_child(_build_speed_col())
-	var fog := UiKit.toggle(
-		"Fog of war",
-		_fog_on,
-		"Hide the board beyond your units' sight",
-		"Off shows the whole map",
-		_on_fog_toggled
-	)
-	fog.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Level with the speed segment's buttons rather than its label above them.
-	fog.size_flags_vertical = Control.SIZE_SHRINK_END
-	row.add_child(fog)
-	return row
-
-
-func _build_speed_col() -> Control:
-	# No Difficulty segment: how well the computer plays is per seat now (COM-225)
-	# and the seat strip is the one control that says it. Two controls writing one
-	# fact is the drift a single authority exists to prevent.
-	var speed_labels := PackedStringArray()
-	var speed_selected := 0
-	for i in _speed_tiers.size():
-		speed_labels.append(_speed_tiers[i].display_name)
-		if _speed_tiers[i].id == Settings.speed.id:
-			speed_selected = i
-	var speed := UiKit.segment(
-		"Speed",
-		speed_labels,
-		speed_selected,
-		UiTheme.CONTROL_ACCENT,
-		"How fast moves and battles play out",
-		"Pacing only · outcomes never change",
-		_on_speed_selected
-	)
-	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# A segment clips rather than sizing to its label, so the tier run states the
-	# width it must stand at: an even share of this row set "Instant" as "Instan".
-	speed.custom_minimum_size = Vector2(UiKit.segment_min_width(speed_labels), 0)
-	return speed
-
-
-## The rail, read top to bottom: the primary action, the card that resumes a
-## match, the quiet ways off this page, then a footer — the blink, and Quit
-## pinned last. Grouped rather than evenly spaced, because a
-## column of equally-separated rows says nothing about which of them matters.
+## The stack, read top to bottom: the card that resumes a match, the two ways to
+## play a new one, the quiet ways off this page, and Quit. Grouped rather than evenly
+## spaced, because a column of equally-separated rows says nothing about which of
+## them matters.
 func _build_action_stack() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 5)
-	col.custom_minimum_size = Vector2(UiTheme.ACTION_W, 0)
-
-	var identity := UiTheme.menu_identity()
-	# One action where there were two modes: who is playing is the seat strip's to
-	# say now, so this button only has to mean "with these seats" (plan D6).
-	_start_button = UiKit.action_button(
-		"Start", "Match", UiTheme.ButtonVariant.PRIMARY, identity.theme(1)
-	)
-	col.add_child(_start_button)
-	_seat_refusal = UiKit.help_label("")
-	_seat_refusal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_seat_refusal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(_seat_refusal)
+	col.custom_minimum_size = Vector2(STACK_W, 0)
+	col.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
 	_continue = ContinueSlot.new(
 		col,
 		func() -> void: _start([] as Array[int], true, {}),
 		func(campaign_id: StringName) -> bool: return _campaign_flow.resume_saved(campaign_id)
 	)
+	_skirmish_button = UiKit.action_button(
+		"Skirmish", "", UiTheme.ButtonVariant.PRIMARY, UiTheme.menu_identity().theme(1)
+	)
+	col.add_child(UiKit.touchable(_skirmish_button))
+	_campaign_button = UiKit.action_button("Campaign", "", UiTheme.ButtonVariant.SECONDARY, null)
+	col.add_child(UiKit.touchable(_campaign_button))
 	col.add_child(_build_secondary_group())
 
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	col.add_child(spacer)
-
-	_press_start = Label.new()
-	_press_start.text = ControlHints.chip_for(ControlHints.START_PROMPT)
-	_press_start.add_theme_font_override("font", UiTheme.stat())
-	_press_start.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
-	_press_start.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
-	_press_start.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(_press_start)
-	_motion.blink(self, _press_start)
-
-	# Pinned last: leaving is not what this page offers; a browser tab cannot leave.
+	# Leaving is not what this page offers; a browser tab cannot leave.
 	if not OS.has_feature("web"):
 		_quit_button = UiKit.text_link("Quit")
 		# A step lighter than a link on the cream panel: this one sits on the backdrop.
 		_quit_button.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 		_quit_button.add_theme_color_override("font_hover_color", UiTheme.WHITE)
-		col.add_child(_quit_button)
+		col.add_child(UiKit.touchable(_quit_button))
 		_quit_button.pressed.connect(get_tree().quit)
-	var air := Control.new()
-	air.custom_minimum_size = Vector2(0, FOOTER_AIR)
-	col.add_child(air)
 	return col
 
 
-## The four ways off this page, tight against one another so they read as one
-## group a step below Continue: an authored war, the recordings of matches
-## already played, authoring a board — which is the one thing here that is not
-## playing the game (COM-263) — and the device's settings (SK-14). Chrome-less,
-## because none of them starts the match this page sets up.
+## The recordings of matches already played, authoring a board — the one thing here
+## that is not playing the game (COM-263) — and the device's settings (SK-14).
+## Chrome-less, because none of them starts a match.
 func _build_secondary_group() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 1)
-	_campaign_button = UiKit.action_button("Campaign", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_campaign_button)
 	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_replay_button)
+	col.add_child(UiKit.touchable(_replay_button))
 	_editor_button = UiKit.action_button("Map Editor", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_editor_button)
+	col.add_child(UiKit.touchable(_editor_button))
 	var settings := UiKit.action_button("Settings", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(settings)
+	col.add_child(UiKit.touchable(settings))
 	MenuSettingsPage.attach(self, _menu_root, settings)
 	return col
 
@@ -511,47 +352,27 @@ func _apply_menu_motion() -> void:
 	_motion.set_moving(not _posed and Settings.menu_animations)
 
 
-# --- match option state ------------------------------------------------------
-
-
-## Speed is the odd one out: a device preference, not a match option, so a tap
-## writes Settings.set_speed immediately and never rides MatchConfig (game-speed
-## plan D1). The same setting applies to the next match and to a resumed save.
-func _on_speed_selected(index: int) -> void:
-	if index >= 0 and index < _speed_tiers.size():
-		Settings.set_speed(_speed_tiers[index].id)
-
-
-func _on_fog_toggled(pressed: bool) -> void:
-	_fog_on = pressed
-	MenuSetupMemory.remember(_map_picker.selected_map(), _fog_on, _seat_strip)
-
-
-## Re-dresses the panel for the seats now at the table. Which tier and general
-## each seat has is the strip's own, so what is left here is Start.
-func _refresh_seats() -> void:
-	_start_button.disabled = not _seat_strip.valid()
-	_seat_refusal.text = _seat_strip.refusal()
-	MenuSetupMemory.remember(_map_picker.selected_map(), _fog_on, _seat_strip)
-
-
-func _on_map_selected(_index: int) -> void:
-	_deal_seats_for_map()
-
-
-## How many seats there are is the board's answer (four-players D1), so the strip
-## is re-dealt from the picker's selection rather than from anything the player
-## set. Silent while the strip is still being built: the picker chooses a board on
-## its way up, before there is a strip to deal to.
-func _deal_seats_for_map() -> void:
-	var map := _map_picker.selected_map()
-	if map == null or _seat_strip == null:
-		return
-	_seat_strip.set_roster(map.player_count())
-	_refresh_seats()
-
-
 # --- flow --------------------------------------------------------------------
+
+
+## Where focus rests on the title: the match waiting to be resumed, else a new one.
+func _focus_title() -> void:
+	if _continue.button().disabled:
+		_skirmish_button.grab_focus()
+	else:
+		_continue.button().grab_focus()
+
+
+func _open_setup(step: SkirmishSetup.Step) -> void:
+	_title.hide()
+	_setup.show()
+	_setup.open_step(step)
+
+
+func _close_setup() -> void:
+	_setup.hide()
+	_title.show()
+	_skirmish_button.grab_focus()
 
 
 ## Opens the commander page for one seat, hiding the menu behind it so no focus
@@ -593,7 +414,7 @@ func _on_replay_picked(path: String) -> void:
 	get_tree().change_scene_to_file(BATTLE_SCENE)
 
 
-## Back lands on the setup exactly as it was left, like the commander page's Back.
+## Back lands where it was pressed, like the commander page's Back.
 func _on_replay_cancelled() -> void:
 	_menu_root.show()
 	_replay_button.grab_focus()
@@ -606,7 +427,7 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 	var request := MatchRequest.from_menu(
 		map.source_path if map != null else MatchRequest.DEFAULT_MAP_PATH,
 		ai_teams,
-		_fog_on,
+		_setup.fog_on,
 		Difficulty.DEFAULT_ID,
 		commanders,
 		load_save,
@@ -621,24 +442,20 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 # --- dev captures ------------------------------------------------------------
 
 
-## What a capture measures itself against: the whole centered stack, plus every
-## primary action by name. See MenuCaptureDriver._fits for why it is both.
+## What a capture measures itself against: the step on screen, or the whole centered
+## stack plus every action by name. See MenuCaptureDriver._fits for why it is both.
 func _chrome() -> Dictionary[String, Control]:
-	var chrome: Dictionary[String, Control] = {
+	if _setup.visible:
+		return _setup.chrome()
+	return {
 		"the menu column": _column,
-		"selected map facts": _map_picker.caption(),
-		"Start": _start_button,
+		"Skirmish": _skirmish_button,
+		"Campaign": _campaign_button,
 		"Continue": _continue.button(),
 		"Replays": _replay_button,
+		"Map Editor": _editor_button,
 		"Quit": _quit_button,
 	}
-	# Every seat by name, the way the select page names its chips: a control the
-	# gate does not name is a control that can silently vanish, which is how the
-	# strip came to be photographed as bare panel.
-	var seats := _seat_strip.rows()
-	for i in seats.size():
-		chrome["seat %d" % (i + 1)] = seats[i]
-	return chrome
 
 
 ## The other half of naming the seat strip in a capture: the rows are in `_chrome`
@@ -661,7 +478,7 @@ func seats_laid_out() -> bool:
 
 
 ## Semantic half of the COM-19 capture gate: layout alone cannot prove that the
-## tutorial board leads, that a hot-seat setup has no operable AI difficulty, or
+## tutorial board leads, that a seat names a tier only while the computer plays it, or
 ## that the caption's budget holds for a board this frame does not show. Read
 ## back by MenuCaptureDriver's capture gate; a capture-driver seam.
 func setup_context_ready() -> bool:

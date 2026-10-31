@@ -5,8 +5,7 @@ extends RefCounted
 ##
 ## `MenuCampaignFlow`'s shape — a collaborator holding one coherent slice of a
 ## screen that was getting wide — and split off `MainMenu` for the same reason:
-## the menu is a *setup* page, and whether there is a match to come back to is a
-## different question from which board and how much fog.
+## whether there is a match to come back to is its own question on the title.
 ##
 ## Whether the row is read off the disk (`refresh_from_disk`) or handed a posed
 ## slot (`refresh`) stays the menu's decision; this class reads no autoload and no
@@ -71,15 +70,14 @@ func _init(into: VBoxContainer, on_resume: Callable, on_resume_mission: Callable
 	card.add_child(body)
 	into.add_child(card)
 
-	# The one filled row under Start: resuming is the action a returning player came
-	# for, so it outranks the two offers below it and stays a step under the match
-	# it must not compete with.
+	# Filled: resuming is the action a returning player came for, so it outranks the
+	# quiet rows and stays a step under the new match it must not compete with.
 	_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
 	_button.pressed.connect(_press)
-	body.add_child(_button)
+	body.add_child(UiKit.touchable(_button))
 	# What Continue resumes, on its own line rather than as the button's inline
-	# suffix: "Day 12 · The Straits" is longer than the 122px action stack can set
-	# at button size. It is metadata about the button above it, not a control —
+	# suffix: "Day 12 · The Straits" is longer than the stack can set at button
+	# size. It is metadata about the button above it, not a control —
 	# hence muted ink and no dotted rule. `refresh` sets the words.
 	# Deliberately not wrapped: how tall this card stands may not depend on whether
 	# there is a match to come back to (UX-recovery D2), and a wrapped subtitle is a
@@ -180,9 +178,8 @@ func _render() -> void:
 	_tip.set_copy("Resume the saved match", "Its own board and commanders apply")
 
 
-## Continue with nothing to offer: the dim NEUTRAL_DARK of PRESS START, because it
-## explains a disabled button and must not read as loudly as a match waiting to be
-## resumed.
+## Continue with nothing to offer: a dim NEUTRAL_DARK, because it explains a disabled
+## button and must not read as loudly as a match waiting to be resumed.
 func _refuse(caption: String, tip: String, detail: String) -> void:
 	_button.disabled = true
 	_caption.text = UiKit.caption_with_reason(caption, detail)

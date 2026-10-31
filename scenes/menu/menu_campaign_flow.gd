@@ -4,8 +4,8 @@ extends RefCounted
 ##
 ## `BattleExit`'s shape — a collaborator holding one coherent slice of a screen
 ## that was getting wide — and split off `MainMenu` for that reason rather than
-## for tidiness: the menu is a *setup* page, and which mission of which campaign
-## a player is in is a different question from which board and how much fog.
+## for tidiness: which mission of which campaign a player is in is a different
+## question from anything else the title offers.
 ##
 ## It owns the campaign's pages and the walk between them, and nothing else.
 ## Staging is still one `MatchRequest` through `MatchConfig`, exactly as the

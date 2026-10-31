@@ -161,21 +161,6 @@ static func help_label(text: String) -> Label:
 	return label
 
 
-## The heading over a group of rows: the section's name in small caps, then a
-## hairline that runs to the edge of whatever holds it. The rule is what makes a
-## header a *container* — a bare label floating over a flat sheet reads as one more
-## row, where a label with a line off its shoulder reads as everything under it.
-static func section_header(text: String) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 5)
-	row.add_child(micro_label(text))
-	var line := rule()
-	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(line)
-	return row
-
-
 ## A full-screen page's centred explanatory line: what this page is, or what it
 ## would hold if it held anything. Unlike `micro_label`/`help_label` it reads as a
 ## sentence rather than a caption, so it keeps its own case and centres — and it
@@ -439,8 +424,7 @@ static func segment_min_width(labels: PackedStringArray) -> float:
 
 
 ## One segment of a segmented row, in every state. Public because the seat strip
-## dresses its own rows and its tier chips with it, so a seat row is the same
-## control the speed row is.
+## dresses its side letters with it, so they are the same control the speed row is.
 static func style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> void:
 	var normal := UiTheme.segment_box(active, accent)
 	if divided:

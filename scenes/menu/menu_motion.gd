@@ -1,23 +1,16 @@
 class_name MenuMotion
 extends RefCounted
-## The two moving things behind the main menu — the shipped board drifting under
-## the page, and the blinking PRESS START — and the one switch that holds them.
-##
-## Apart from the menu because holding them is one question about both: a capture
-## poses a still frame (the animator's `capturing` precedent, plan MN2/R3) and the
-## Menu motion preference asks for the same stillness, so `set_moving` is where
-## either answer lands rather than two branches in two builders. The menu keeps
-## the setup it is otherwise about; this keeps its scenery.
+## The shipped board drifting under the main menu, and the one switch that holds it:
+## a capture poses a still frame (the animator's `capturing` precedent, plan MN2/R3)
+## and the Menu motion preference asks for the same stillness, so `set_moving` is
+## where either answer lands.
 
 ## Canvas px per cell in the drifting terrain field, and how much bigger than the
 ## canvas the field is drawn so panning never exposes an edge.
 const BACKDROP_TILE := 4
 const BACKDROP_SPAN := Vector2(680, 400)
-const BLINK_SECONDS := 0.7
 
 var _drift: Tween
-var _blink: Timer
-var _press_start: Label
 
 
 ## The backdrop the menu sits on: a radial-lit slate floor (a brighter pool at
@@ -61,27 +54,11 @@ func paint_backdrop(host: Control, board: MapData) -> void:
 	_drift.tween_property(field, "position", -period, 40.0).from(Vector2.ZERO)
 
 
-## Blinks `label` on `host`'s clock.
-func blink(host: Control, label: Label) -> void:
-	_press_start = label
-	_blink = Timer.new()
-	_blink.wait_time = BLINK_SECONDS
-	_blink.autostart = true
-	host.add_child(_blink)
-	_blink.timeout.connect(func() -> void: label.visible = not label.visible)
-
-
-## Lets go of both moving things, or holds them where a still page wants them.
-## PRESS START is left lit rather than wherever the blink had it, a held frame
-## being no more allowed to depend on when it was held than on which machine held
-## it.
+## Lets the board drift, or holds it where a still page wants it.
 func set_moving(moving: bool) -> void:
-	if _drift != null:
-		if moving:
-			_drift.play()
-		else:
-			_drift.pause()
-	if _blink != null:
-		_blink.paused = not moving
-	if not moving and _press_start != null:
-		_press_start.visible = true
+	if _drift == null:
+		return
+	if moving:
+		_drift.play()
+	else:
+		_drift.pause()

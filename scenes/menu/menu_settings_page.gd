@@ -7,7 +7,7 @@ extends Control
 ##
 ## Not a second settings screen: the rows are `Settings.value_actions`, the list
 ## the pause menu draws, in the same `ActionMenu`, so a row reads and steps the
-## same way in both places. Speed is left out because the setup panel already has
+## same way in both places. Speed is left out because the Players step already has
 ## its own Speed control — two controls writing one fact is the drift a single
 ## authority exists to prevent. Battle animations and Menu motion are offered here
 ## alone (`Settings.menu_page_actions`): device preferences, not match options.

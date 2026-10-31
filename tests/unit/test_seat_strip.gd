@@ -91,23 +91,25 @@ func test_a_full_seating_is_left_alone() -> void:
 		)
 
 
-## The preset row is dead on every board that seats fewer than four, and the row
-## says so once (COM-233): a board with a live preset has no reason to give.
-func test_a_board_that_seats_fewer_than_four_refuses_the_whole_preset_row() -> void:
-	assert_eq(SeatStrip.preset_refusal(SeatStrip.PRESET_SEATS), "")
-	for dealt in range(SeatStrip.MIN_FILLED, SeatStrip.PRESET_SEATS):
-		assert_ne(SeatStrip.preset_refusal(dealt), "", "%d seats offers no preset" % dealt)
+## How many ways a table can group is the board's answer: a duel has one, so it
+## offers no Mode row at all, and three armies can only be all apart or two on one.
+func test_a_board_offers_the_modes_its_seats_can_hold() -> void:
+	assert_eq(SeatStrip.presets_for(2).size(), 0)
+	assert_eq(SeatStrip.presets_for(3).size(), 2)
+	assert_eq(SeatStrip.presets_for(4).size(), 5)
 
 
 ## SK-22: the preset row lights the table in hand. Each preset, applied as it is
 ## written, is itself.
 func test_every_preset_matches_its_own_table() -> void:
-	for i in SeatStrip.PRESETS.size():
-		var who: Array[int] = []
-		who.assign(SeatStrip.PRESETS[i]["seats"])
-		var sides: Array[int] = []
-		sides.assign(SeatStrip.PRESETS[i]["sides"])
-		assert_eq(SeatStrip.preset_matching(who, sides), i, SeatStrip.PRESETS[i]["label"])
+	for seats_dealt in [3, 4]:
+		var presets := SeatStrip.presets_for(seats_dealt)
+		for i in presets.size():
+			var who: Array[int] = []
+			who.assign(presets[i]["seats"])
+			var sides: Array[int] = []
+			sides.assign(presets[i]["sides"])
+			assert_eq(SeatStrip.preset_matching(who, sides), i, presets[i]["label"])
 
 
 ## A table is its seating and grouping, not who plays each seat or which letters
@@ -132,3 +134,51 @@ func test_a_table_no_preset_writes_lights_none() -> void:
 		-1
 	)
 	assert_eq(SeatStrip.preset_matching([HUMAN, CPU] as Array[int], [0, 1] as Array[int]), -1)
+
+
+## The side letters are out of the way until the player asks for them, and a table
+## no Mode describes shows them, since nothing else on screen would say who is allied.
+func test_the_side_letters_show_for_custom_or_a_table_no_mode_describes() -> void:
+	var free_for_all: Array[int] = [HUMAN, CPU, CPU, CPU]
+	assert_false(SeatStrip.shows_sides(free_for_all, [0, 1, 2, 3] as Array[int], false))
+	assert_true(SeatStrip.shows_sides(free_for_all, [0, 1, 2, 3] as Array[int], true))
+	assert_true(SeatStrip.shows_sides(free_for_all, [0, 1, 1, 0] as Array[int], false))
+
+
+## A duel's two armies are always opposed, so there is nothing to letter, whatever
+## was asked for on a bigger board before.
+func test_a_duel_never_shows_the_side_letters() -> void:
+	assert_false(SeatStrip.shows_sides([HUMAN, CPU] as Array[int], [0, 1] as Array[int], true))
+
+
+## One selector walks every answer to "who plays this seat": a person, each tier of
+## the computer gentlest first, then nobody, then round again.
+func test_the_player_selector_walks_human_every_tier_then_empty() -> void:
+	assert_eq(SeatStrip.next_player(HUMAN, 2, 3, true), [CPU, 0] as Array[int])
+	assert_eq(SeatStrip.next_player(CPU, 0, 3, true), [CPU, 1] as Array[int])
+	assert_eq(SeatStrip.next_player(CPU, 2, 3, true), [EMPTY, 2] as Array[int])
+	assert_eq(SeatStrip.next_player(EMPTY, 2, 3, true), [HUMAN, 2] as Array[int])
+
+
+## The last two seats of a table never close, so the walk steps over Empty there.
+func test_the_player_selector_skips_empty_when_the_seat_may_not_close() -> void:
+	assert_eq(SeatStrip.next_player(CPU, 2, 3, false), [HUMAN, 2] as Array[int])
+
+
+func test_the_player_selector_says_who_plays_in_words() -> void:
+	assert_string_contains(SeatStrip.player_label(HUMAN, "Normal"), "Human")
+	assert_string_contains(SeatStrip.player_label(CPU, "Brutal"), "CPU Brutal")
+	assert_string_contains(SeatStrip.player_label(EMPTY, "Brutal"), "Empty")
+
+
+## Two armies left at any table are simply opposed, so no letters come up unasked:
+## a duel's seats, a three-seat board with a seat closed, or a four-seat board with two.
+func test_two_armies_raise_no_letters_unasked() -> void:
+	assert_false(
+		SeatStrip.shows_sides([HUMAN, EMPTY, CPU] as Array[int], [0, 0, 1] as Array[int], false)
+	)
+	assert_false(
+		SeatStrip.shows_sides(
+			[HUMAN, CPU, EMPTY, EMPTY] as Array[int], [0, 1, 2, 3] as Array[int], false
+		)
+	)
