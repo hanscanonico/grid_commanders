@@ -40,7 +40,7 @@ func _within_footprint(aabb: AABB, half: float, what: String) -> void:
 	assert_lte(aabb.end.z, half + TOLERANCE, "%s reaches past +Z" % what)
 
 
-func test_the_switch_starts_off() -> void:
+func test_the_switch_can_still_show_the_code_models() -> void:
 	PaintedArt.force(false)
 	assert_false(PaintedArt.on())
 	var code_model := UnitModels3D.build(&"tank", CommanderVisuals.theme_for(null))

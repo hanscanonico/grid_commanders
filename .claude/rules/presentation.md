@@ -832,8 +832,9 @@ forms named in the root index are in `docs/design_record.md`.
   bake, and Cycles bakes a painter's recipe (`modelgen/paint.py`) onto the low copy. CI, the mini PC
   and players never need Blender, and no asset library or AI generator is used. `modelgen/contract.py`
   fails a build that leaves its footprint, and `tests/unit/test_painted_models_3d.gd` holds the game
-  to the same numbers as the code models. D2: **`PaintedArt.on()` is the one switch**, off until the
-  whole set is approved, on for a run with `--art=painted`. `UnitModels3D`, `PropertyModels3D`,
+  to the same numbers as the code models. D2: **`PaintedArt.on()` is the one switch**, on by default since
+  the user approved the set, with `--art=code` to see the code models, and off in a headless run, which draws nothing and
+  whose geometry suites measure the code models. `UnitModels3D`, `PropertyModels3D`,
   `CommanderActor3D`, `Board3D` and `StagePlot3D` ask it, and nothing else knows which art is up.
   D3: **one texture dresses every army.** The texture's alpha marks what wears the army's colour and
   there its grey is a place on `FactionRamp3D`'s ramp (`painted_miniature_3d.gdshaderinc`), so a
