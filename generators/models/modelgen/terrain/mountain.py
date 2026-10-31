@@ -73,8 +73,8 @@ def build(k: Kit) -> None:
         k.rock((x, y, z), (rx, ry, z * 1.3), "granite", seed, 0.34, 4, 6, label=f"boulder{i}")
     # The peaks: the tall crag, its twin and a low spur, off the back of the shoulder.
     for x, y, rx, ry, top, seed in (
-        (-0.15, 0.2, 0.31, 0.26, 0.84, 1.3),
-        (0.24, 0.26, 0.25, 0.21, 0.62, 2.7),
+        (-0.15, 0.2, 0.3, 0.25, 0.72, 1.3),
+        (0.24, 0.26, 0.24, 0.2, 0.56, 2.7),
         (-0.36, 0.3, 0.14, 0.14, 0.42, 4.9),
     ):
         k.crag(x, y, rx, ry, top, "granite", seed, label="peak")
