@@ -37,6 +37,9 @@ const DEFAULT_MAP_PATH := "res://maps/first_steps.txt"
 
 ## `days_cap` for a launch that wrote no `--days=`.
 const DAYS_UNSET := 0
+## How long a watched match stays on its result before the process quits, unless
+## `--watch-hold=` says otherwise.
+const DEFAULT_WATCH_HOLD_SECONDS := 1.5
 
 ## The board. A path, already resolved: `--map=` accepts a catalog *name*, and
 ## resolving it is the CLI adapter's job so everything downstream sees a path.
@@ -110,6 +113,9 @@ var replay_requested := false
 ## spec. The scene prints its result and exits when the match ends, so a watched
 ## run can be diffed against the CSV row it was launched from.
 var watching := false
+## `--watch-hold=`: seconds the result stays up before a watched match quits. A
+## script diffing result lines wants that short; a stream's viewers want to read it.
+var watch_hold_seconds := DEFAULT_WATCH_HOLD_SECONDS
 ## The day after which a match nobody has won is scored on the harness's own
 ## tiebreak. `--days=`, matching the Lab's flag; `DAYS_UNSET` when the launch named
 ## no horizon, which the flag can never produce because it clamps to 1 — the same
@@ -231,6 +237,8 @@ func apply_cmdline(args: PackedStringArray) -> void:
 			map_text = ""  # a board named on the line is that file, not one carried
 	if CmdArgs.has(args, "--days"):
 		days_cap = maxi(1, int(CmdArgs.value(args, "--days")))
+	if CmdArgs.has(args, "--watch-hold"):
+		watch_hold_seconds = maxf(0.0, float(CmdArgs.value(args, "--watch-hold")))
 	if CmdArgs.has(args, "--replay"):
 		replay_path = CmdArgs.value(args, "--replay").strip_edges()
 		replay_requested = true

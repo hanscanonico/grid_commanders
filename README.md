@@ -733,6 +733,52 @@ in a file on disk; the command-line flags do not exist there; the menu shows no 
 cannot close itself; and a hidden tab pauses the game outright, because the browser stops drawing
 it — a computer turn that seemed to hang while you were away resumes when the tab is back.
 
+## Twitch stream
+
+The mini PC can play the game against itself around the clock and stream it to Twitch, from a
+docker-compose stack under `deploy/stream/` that is separate from the site's. Each match is a Hard
+duel on a random board from `deploy/stream/boards.txt`, between two random commanders, on the 3D
+board with sound. A card names the next match between games, and a caption under the top bar names
+the current one and the site.
+
+```sh
+# A private preview: with no key it records its last five minutes inside the container.
+deploy/stream/deploy
+docker compose -f deploy/stream/docker-compose.yml logs -f stream
+docker compose -f deploy/stream/docker-compose.yml exec -T stream \
+  cat /run/stream/preview/part0.mp4 > part0.mp4
+
+# Going live: paste the key from Twitch's Creator Dashboard into a mode 600 file.
+cp deploy/stream/.env.example deploy/stream/.env && chmod 600 deploy/stream/.env
+deploy/stream/deploy
+
+# Off, and it stays off.
+docker compose -f deploy/stream/docker-compose.yml down
+```
+
+When it is on, a green push to `main` rebuilds and restarts it after the site deploys, which cuts
+the match in progress. When it is off, a push leaves it off. A failed stream build does not fail
+the site's deploy and leaves the running stream alone.
+
+The numbers, measured on the mini PC (i5-12600H, Alder Lake iGPU) on 2026-11-01 at 720p and 30 fps:
+
+| Board and renderer | Frames per second | Load |
+|---|---|---|
+| 3D on the software renderer | 1-4 | 11 cores |
+| Flat board on the software renderer | 30 | 4-5 cores |
+| 3D on the Intel GPU, while encoding | 30, dipping to about 27 | about 2 cores, box about 13% busy |
+
+So the GPU is required. Xvfb has none of its own, so VirtualGL hands the game's OpenGL calls to
+`/dev/dri/renderD128` and copies each finished frame onto the virtual screen. If no GPU answers at
+startup the container stops and says so rather than burn every core at 1 fps. The first match after
+a start compiles shaders and stutters for about ten seconds; later ones reuse the cache.
+
+Nothing the show writes reaches the disk: a size-limited tmpfs holds the game's data, the build
+turns the game's log files off, and the container's log is capped at 30 MB. One game process per
+match means a crash costs that match. The encoder is a separate loop, so it reconnects by itself
+when Twitch ends a broadcast at its 48-hour limit or the network drops, and the key is scrubbed
+from anything it prints.
+
 ## Main menu
 
 The game boots to the title: **Continue**, **Skirmish**, **Campaign**, **Replays**, **Map Editor**,

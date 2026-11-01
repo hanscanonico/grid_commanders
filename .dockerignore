@@ -1,4 +1,5 @@
-# The build context for deploy/web: what the headless export needs and nothing more.
+# The build context for the images under deploy/: what the headless import and
+# export need and nothing more.
 .git
 .godot
 bin
@@ -13,3 +14,4 @@ docs
 *.png
 screenshot*.png.import
 deploy/web/.env
+deploy/stream/.env

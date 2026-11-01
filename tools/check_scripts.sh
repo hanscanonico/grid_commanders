@@ -545,6 +545,23 @@ if (($# == 0)); then
 		failed=$((failed + 1))
 	fi
 
+	# The images under deploy/ name the same engine by godot-ci's tag.
+	for dockerfile in deploy/web/Dockerfile deploy/stream/Dockerfile; do
+		if ! grep -q "^FROM barichello/godot-ci:${workflow_version%-stable} " "$dockerfile"; then
+			echo "check: $dockerfile does not build on godot-ci:${workflow_version%-stable}" >&2
+			failed=$((failed + 1))
+		fi
+	done
+
+	# A board the stream names must still ship, or its rotation quietly shrinks.
+	while read -r board; do
+		case "$board" in "" | \#*) continue ;; esac
+		if [[ ! -f "maps/$board.txt" ]]; then
+			echo "check: deploy/stream/boards.txt names $board, which is not in maps/" >&2
+			failed=$((failed + 1))
+		fi
+	done <deploy/stream/boards.txt
+
 	# The public site is HTML and a preset key, so no engine gate reaches it
 	# either. What a crawler and a link preview see — title, description,
 	# canonical, the OG tags, the sitemap, the route into the game — is checked

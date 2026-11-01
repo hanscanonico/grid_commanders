@@ -289,3 +289,10 @@ jobs:
           git fetch origin
           git merge --ff-only "$GITHUB_SHA"
           deploy/web/deploy --no-pull
+
+      # Only when it is on, so a merge never puts a stopped stream back on air. A
+      # failure here must not read as a failed site deploy: the site is already up.
+      - name: Follow with the Twitch stream, if it is on
+        working-directory: /home/mini-pc/Documents/grid_commanders
+        continue-on-error: true
+        run: deploy/stream/deploy --if-running

@@ -33,6 +33,7 @@ var victory_screen: VictoryLockup
 ## match came from a Balance Lab spec. Makes the scene announce its result and
 ## exit, which is what turns BS3's replay-fidelity check into a diff.
 var _watching := false
+var _watch_hold_seconds := MatchRequest.DEFAULT_WATCH_HOLD_SECONDS
 ## The day this match is scored on if nobody has won it: `--days=` when the launch
 ## wrote one, otherwise the Lab's default for a watched row and `SPECTATOR_DAYS`
 ## for a spectated one. Read **only** for a match no person is playing, so a
@@ -93,6 +94,7 @@ func _request_main_menu() -> void:
 ## both skip the same runs: a playback and a watched row are nobody playing.
 func configure(request: MatchRequest, seated_ai: Array[int]) -> void:
 	_watching = request.watching
+	_watch_hold_seconds = request.watch_hold_seconds
 	_seated_ai = seated_ai.duplicate()
 	_days_cap = request.days_cap
 	if request.days_cap == MatchRequest.DAYS_UNSET:
@@ -437,7 +439,7 @@ func _standings_text() -> String:
 ## row's winner.
 func _report_watched_result() -> void:
 	print("watch: team %d wins on day %d" % [_result_winner, _battle.game.day])
-	await _battle.get_tree().create_timer(1.5).timeout  # let the lockup land on screen
+	await _battle.get_tree().create_timer(_watch_hold_seconds).timeout  # the lockup lands
 	if not is_instance_valid(_battle):
 		return  # the lockup was left for a rematch or the menu; that run is not ours to end
 	_battle.get_tree().quit()

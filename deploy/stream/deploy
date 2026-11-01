@@ -1,0 +1,26 @@
+#!/bin/bash -e
+# Build the stream from this checkout and (re)start it. With a key in
+# deploy/stream/.env, that goes live.
+# Usage: deploy/stream/deploy [--if-running]
+# --if-running does nothing unless the stream is already on, which is how a merge
+# follows it without putting a stream its owner stopped back on air.
+cd "$(dirname "$0")/../.."
+
+compose="docker compose -f deploy/stream/docker-compose.yml"
+
+if [ "${1:-}" = "--if-running" ] && [ -z "$($compose ps -q --status running stream 2>/dev/null)" ]; then
+  echo "The stream is off; leaving it off."
+  exit 0
+fi
+
+RENDER_GID="$(getent group render | cut -d: -f3)"
+export RENDER_GID
+if [ -z "$RENDER_GID" ]; then
+  echo "This machine has no render group, so the container cannot reach its GPU." >&2
+  exit 1
+fi
+
+$compose build
+$compose up -d
+docker image prune -f --filter label=grid-commanders.stream=true >/dev/null
+echo "Stream started. Check: $compose logs stream"
