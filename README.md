@@ -650,7 +650,22 @@ recording: that visitor keeps the cookie, is not recorded and is asked again.
 
 ### The admin page
 
-`https://gridcommanders.com/admin/` is a first-party, read-only site monitor: pageviews and unique
+`https://gridcommanders.com/admin/` is a read-only site monitor with two panels.
+
+**Players** is the one to read for people, and the page opens on it. It reads PostHog: visits, how
+many opened the game, played a match and finished one, the median time in game, and tables by page,
+country, referrer, device, match mode, map and campaign mission. The collector asks
+[PostHog's query API](https://posthog.com/docs/api/queries) from the server, so the key never
+reaches the page, and it keeps each range's answer for five minutes. It counts only the site's own
+hosts, because a local build posts to the same project, and it applies the project's internal and
+test user filter. A visit is a PostHog session rather than a person: a visitor who has not accepted
+the banner keeps nothing on their device, so each page they load is a new visit. Someone who declined
+counts on that one page and never again, and an ad blocker hides a visitor altogether. PostHog's MCP
+server is for AI agents and logs in through a browser, so a deployed page cannot use it; this panel
+calls the API underneath it.
+
+**Server traffic** is the first-party monitor, and it counts every page request nginx saw, so it
+includes the scanners PostHog never hears from. It shows pageviews and unique
 visitors per day, broken down by landing page, country, referrer host, device class and UTM
 campaign, plus how long a visit lasts — average session, the engaged share, a session-length
 breakdown and time on page for the landing page against the game. It is fed server side — nginx
@@ -679,6 +694,26 @@ answers 403 by design** — there is no other way in and no fallback. The owner'
 5. `openssl rand -hex 32` into `ADMIN_HASH_SECRET`. Changing it later restarts today's unique
    counts; leaving it blank restarts them on every container start.
 6. Redeploy (`deploy/web/deploy --no-pull`, or push to `main`).
+
+The Players panel needs one more key, `ADMIN_POSTHOG_KEY`. Without it the panel says so and asks
+PostHog nothing; Server traffic works either way.
+
+1. In PostHog, open your account settings, then **Personal API keys**, and create a key with the
+   **Query Read** scope and, if the form offers it, access to this project alone. The key is shown
+   once. It looks like `phx_…`.
+2. With the key on the clipboard, install it on the host. It is piped rather than typed, so it never
+   reaches a shell history or a screen:
+
+   ```sh
+   pbpaste | ssh mini-pc@192.168.1.37 'read -r key; cd ~/Documents/grid_commanders/deploy/web &&
+     { grep -v "^ADMIN_POSTHOG_KEY=" .env; printf "ADMIN_POSTHOG_KEY=%s\n" "$key"; } > .env.new &&
+     chmod 600 .env.new && mv .env.new .env && docker compose up -d admin'
+   ```
+
+3. To stop your own visits counting, go to PostHog's **Settings → Project → Filter out internal and
+   test users** and add the event property **IP address**, **doesn't equal**, your home address. The
+   panel applies the filter when it asks, so it covers past events too. It cannot help on a changing
+   address, or if the project discards client IPs.
 
 `/admin` is excluded from `robots.txt` and absent from the sitemap, and every response it sends
 carries `no-store` and `noindex`.

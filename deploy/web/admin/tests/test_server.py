@@ -11,6 +11,7 @@ from admin import access, server
 from admin.server import AdminServer, Config
 from admin.store import Store
 from tests import keys
+from tests.fake_posthog import FakePostHog
 
 CHROME = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -228,6 +229,7 @@ class UnconfiguredAccessTests(ServerCase):
             "/admin/",
             "/admin/api/panels",
             "/admin/api/traffic?range=30d",
+            "/admin/api/players?range=30d",
             "/admin/static/admin.css",
         ):
             with self.subTest(path=path):
@@ -266,7 +268,20 @@ class ConfiguredAccessTests(ServerCase):
     def test_the_panel_listing(self):
         status, body, _ = self.request("GET", "/admin/api/panels", self.signed())
         self.assertEqual(status, 200)
-        self.assertEqual(json.loads(body), [{"slug": "traffic", "name": "Traffic"}])
+        self.assertEqual(
+            json.loads(body),
+            [
+                {"slug": "players", "name": "Players"},
+                {"slug": "traffic", "name": "Server traffic"},
+            ],
+        )
+
+    def test_the_players_panel_without_a_key_says_so(self):
+        status, body, _ = self.request(
+            "GET", "/admin/api/players?range=30d", self.signed()
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"configured": False, "range": "30d"})
 
     def test_the_traffic_panel_answers_json(self):
         status, body, _ = self.request(
@@ -291,6 +306,7 @@ class ConfiguredAccessTests(ServerCase):
         for path, marker in (
             ("/admin/static/admin.css", "--accent"),
             ("/admin/static/admin.js", "render_traffic"),
+            ("/admin/static/admin.js", "render_players"),
         ):
             with self.subTest(path=path):
                 status, body, _ = self.request("GET", path, self.signed())
@@ -331,6 +347,38 @@ class ConfiguredAccessTests(ServerCase):
         payload = json.loads(body)
         self.assertEqual(payload["views"], 1)
         self.assertEqual(payload["breakdowns"]["country"][0]["key"], "DE")
+
+
+class PlayersRouteTests(ServerCase):
+    KEY = "phx_secret_test_key"
+
+    def setUp(self):
+        self.fake = FakePostHog()
+        self.addCleanup(self.fake.close)
+        self.fake.answers = {"admin_totals": [[30, 14, 5, 2]]}
+        self.env = {
+            "ADMIN_ACCESS_TEAM": "gridcommanders",
+            "ADMIN_ACCESS_AUD": "test-aud",
+            "ADMIN_POSTHOG_KEY": self.KEY,
+            "ADMIN_POSTHOG_URL": self.fake.url,
+        }
+        super().setUp()
+
+    def test_the_numbers_reach_the_page_and_the_key_does_not(self):
+        status, body, _ = self.request("GET", "/admin/api/players", self.signed())
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["visits"], 30)
+        self.assertNotIn(self.KEY, body)
+
+    def test_the_default_project_is_the_sites(self):
+        self.request("GET", "/admin/api/players", self.signed())
+        self.assertEqual(self.fake.requests[0].path, "/api/projects/318370/query/")
+        self.assertEqual(self.fake.requests[0].authorization, f"Bearer {self.KEY}")
+
+    def test_a_stranger_spends_none_of_the_keys_budget(self):
+        status, _, _ = self.request("GET", "/admin/api/players")
+        self.assertEqual(status, 403)
+        self.assertEqual(self.fake.requests, [])
 
 
 if __name__ == "__main__":
