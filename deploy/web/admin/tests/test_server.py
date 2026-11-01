@@ -307,6 +307,7 @@ class ConfiguredAccessTests(ServerCase):
             ("/admin/static/admin.css", "--accent"),
             ("/admin/static/admin.js", "render_traffic"),
             ("/admin/static/admin.js", "render_players"),
+            ("/admin/static/admin.js", "mine !== state.latest"),
         ):
             with self.subTest(path=path):
                 status, body, _ = self.request("GET", path, self.signed())
