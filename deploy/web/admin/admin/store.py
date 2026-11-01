@@ -177,6 +177,13 @@ def day_of(moment: datetime) -> str:
     return moment.astimezone(timezone.utc).strftime("%Y-%m-%d")
 
 
+def range_span(range_key: str, now: datetime) -> tuple[str, str]:
+    """The first and last day of a range ending today, as ISO dates."""
+    today = day_of(now)
+    first = datetime.fromisoformat(today).date() - timedelta(days=RANGES[range_key] - 1)
+    return first.isoformat(), today
+
+
 class Store:
     """Every read and write of the database, behind one lock.
 
@@ -320,11 +327,7 @@ class Store:
         panel's footnote says the same thing to the reader.
         """
         range_key = resolve_range(asked)
-        span = RANGES[range_key]
-        today = day_of(now)
-        first = (
-            datetime.fromisoformat(today).date() - timedelta(days=span - 1)
-        ).isoformat()
+        first, today = range_span(range_key, now)
         with self._lock:
             live = fold_slots(self._slots(today))
             daily = self._daily_totals(first, today, live)

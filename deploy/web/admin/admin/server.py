@@ -6,7 +6,8 @@ would be worse than no collector. `/beat` is the heartbeat the pages send
 while they are visible, and answers 204 the same way, for the same reason:
 nothing a visitor's browser sends here may come back as an error they see.
 Everything under `/admin` goes through the Cloudflare Access check first, and
-answers 403 when it is not configured.
+answers 403 when it is not configured. The one request this server makes itself,
+besides fetching the Access keys, is a panel's query to PostHog.
 """
 
 from __future__ import annotations
@@ -23,6 +24,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from . import access, hit, panels
+from .posthog import PostHog
+from .sources import Sources
 from .store import Store, day_of
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -30,6 +33,8 @@ ROLLUP_INTERVAL_SECONDS = 3600
 DEFAULT_PORT = 8000
 DEFAULT_DB_PATH = "/data/admin.sqlite"
 DEFAULT_SITE_HOST = "gridcommanders.com"
+DEFAULT_POSTHOG_URL = "https://eu.posthog.com"
+DEFAULT_POSTHOG_PROJECT = "318370"
 # nginx caps the beat body far lower; this is the collector's own ceiling on
 # what it will read off a socket at all.
 MAX_BODY_BYTES = 4096
@@ -47,6 +52,13 @@ class Config:
         self.db_path = source.get("ADMIN_DB_PATH", "").strip() or DEFAULT_DB_PATH
         self.site_host = source.get("ADMIN_SITE_HOST", "").strip() or DEFAULT_SITE_HOST
         self.port = int(source.get("ADMIN_PORT", "").strip() or DEFAULT_PORT)
+        self.posthog_key = source.get("ADMIN_POSTHOG_KEY", "").strip()
+        self.posthog_url = (
+            source.get("ADMIN_POSTHOG_URL", "").strip() or DEFAULT_POSTHOG_URL
+        )
+        self.posthog_project = (
+            source.get("ADMIN_POSTHOG_PROJECT", "").strip() or DEFAULT_POSTHOG_PROJECT
+        )
         self.hash_secret = source.get("ADMIN_HASH_SECRET", "").strip()
         if not self.hash_secret:
             # A restart with a fresh secret starts today's visitors over. Say
@@ -165,7 +177,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": "no such panel"})
             return
         asked = parse_qs(urlsplit(self.path).query).get("range", [""])[-1]
-        self._json(200, panel.query(self.store, asked, datetime.now(timezone.utc)))
+        now = datetime.now(timezone.utc)
+        self._json(200, panel.query(self.server.sources, asked, now))
 
     def _page(self) -> None:
         self._file(STATIC_DIR / "index.html")
@@ -242,6 +255,15 @@ class AdminServer(ThreadingHTTPServer):
         self.config = config
         self.store = store
         self.key_cache = key_cache or access.KeyCache()
+        self.sources = Sources(
+            store,
+            PostHog(
+                config.posthog_url,
+                config.posthog_project,
+                config.posthog_key,
+                config.site_host,
+            ),
+        )
 
 
 def rollup_forever(store: Store, stop: threading.Event) -> None:
@@ -264,6 +286,8 @@ def main() -> None:
     store = Store(config.db_path)
     if not config.access_configured:
         log.warning("ADMIN_ACCESS_TEAM/ADMIN_ACCESS_AUD unset: /admin answers 403.")
+    if not config.posthog_key:
+        log.warning("ADMIN_POSTHOG_KEY unset: the Players panel shows its setup note.")
     stop = threading.Event()
     threading.Thread(
         target=rollup_forever, args=(store, stop), daemon=True, name="rollup"

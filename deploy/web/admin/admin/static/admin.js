@@ -44,6 +44,29 @@ const TIME_COLUMNS = [
 	["Visitors", (row) => number(row.visitors)],
 	["Time", (row) => duration(row.seconds)],
 ];
+const VISIT_COLUMNS = [
+	["Visits", (row) => number(row.visits)],
+	["Played", (row) => number(row.played)],
+];
+const MATCH_COLUMNS = [
+	["Started", (row) => number(row.started)],
+	["Finished", (row) => number(row.finished)],
+];
+const MISSION_COLUMNS = [
+	["Started", (row) => number(row.started)],
+	["Cleared", (row) => number(row.cleared)],
+];
+
+function note(text) {
+	return el("p", { class: "note", text });
+}
+
+function tile(value, label) {
+	return el("div", {}, [
+		el("b", { text: value }),
+		el("span", { text: label }),
+	]);
+}
 
 function card(title, kids) {
 	return el("section", { class: "card" }, [el("h2", { text: title }), ...kids]);
@@ -75,31 +98,32 @@ function table(heading, rows, columns = VIEW_COLUMNS) {
 	return el("table", {}, [head, body]);
 }
 
-// One bar per day, drawn against the busiest day in the range.
-function chart(daily) {
+// One bar per day, drawn against the busiest day in the range. `value` is what a
+// bar measures, `caption` what its tooltip says and `label` what the chart is.
+function chart(daily, value, caption, label) {
 	const width = 1000;
 	const height = 180;
 	const floor = height - 18;
-	const peak = Math.max(1, ...daily.map((day) => day.views));
+	const peak = Math.max(1, ...daily.map(value));
 	const step = width / Math.max(1, daily.length);
 	const svg = svgEl("svg", {
 		viewBox: `0 0 ${width} ${height}`,
 		preserveAspectRatio: "none",
 		role: "img",
-		"aria-label": "Pageviews per day",
+		"aria-label": label,
 	});
 	daily.forEach((day, index) => {
-		const tall = Math.round((day.views / peak) * floor);
+		const tall = Math.round((value(day) / peak) * floor);
 		const bar = svgEl("rect", {
 			x: (index * step + step * 0.15).toFixed(1),
 			y: floor - tall,
 			width: (step * 0.7).toFixed(1),
-			height: Math.max(tall, day.views > 0 ? 1 : 0),
+			height: Math.max(tall, value(day) > 0 ? 1 : 0),
 		});
-		bar.appendChild(svgEl("title", { text: `${day.day}: ${day.views} views` }));
+		bar.appendChild(svgEl("title", { text: caption(day) }));
 		svg.appendChild(bar);
 	});
-	const label = (index, anchor) =>
+	const axis = (index, anchor) =>
 		svgEl("text", {
 			class: "axis",
 			x: Math.min(width - 2, Math.max(2, index * step + step / 2)),
@@ -108,8 +132,8 @@ function chart(daily) {
 			text: daily[index].day,
 		});
 	if (daily.length > 0) {
-		svg.appendChild(label(0, "start"));
-		svg.appendChild(label(daily.length - 1, "end"));
+		svg.appendChild(axis(0, "start"));
+		svg.appendChild(axis(daily.length - 1, "end"));
 	}
 	return svg;
 }
@@ -123,32 +147,93 @@ const percent = (part, whole) =>
 const engaged_share = (data) => percent(data.engaged_visitors, data.uniques);
 const played_share = (data) => percent(data.played_uniques, data.landing_uniques);
 
+function render_players(data) {
+	if (!data.configured) {
+		return [
+			note(
+				"PostHog is not connected yet. Create a personal API key with Query" +
+					" Read access, limited to this project, and put it in deploy/web/.env" +
+					" on the host as ADMIN_POSTHOG_KEY. README's \"The admin page\" has" +
+					" the steps. The Server traffic panel works without it.",
+			),
+		];
+	}
+	if (data.error) return [note(`Could not read PostHog. ${data.error}`)];
+	const kids = [];
+	if (data.stale) {
+		kids.push(
+			note(
+				`PostHog could not refresh this, so it is the answer from` +
+					` ${data.fetched_at}. ${data.stale}`,
+			),
+		);
+	}
+	kids.push(
+		el("div", { class: "headline" }, [
+			tile(number(data.visits), "visits"),
+			tile(number(data.game_opens), "opened the game"),
+			tile(
+				number(data.played),
+				`played a match (${percent(data.played, data.game_opens)})`,
+			),
+			tile(number(data.finished), "finished a match"),
+			tile(
+				data.measured_sessions === 0 ? "—" : duration(data.median_seconds),
+				`median in game (of ${number(data.measured_sessions)})`,
+			),
+			tile(data.range, `${data.from} → ${data.to}`),
+		]),
+		card("Visits per day", [
+			chart(
+				data.daily,
+				(day) => day.visits,
+				(day) =>
+					`${day.day}: ${day.visits} visits, ${day.game_opens} game opens,` +
+					` ${day.played} played`,
+				"Visits per day",
+			),
+		]),
+		el("div", { class: "tables" }, [
+			card("Page", [table("Path", data.pages, VISIT_COLUMNS)]),
+			card("Country", [table("Country", data.countries, VISIT_COLUMNS)]),
+			card("Referrer", [table("Host", data.referrers, VISIT_COLUMNS)]),
+			card("Device", [table("Class", data.devices, VISIT_COLUMNS)]),
+			card("Match mode", [table("Mode", data.modes, MATCH_COLUMNS)]),
+			card("Map", [table("Map", data.maps, MATCH_COLUMNS)]),
+			card("Campaign mission", [table("Mission", data.missions, MISSION_COLUMNS)]),
+		]),
+		note(
+			"From PostHog, as of " + data.fetched_at + ". It counts browsers that ran" +
+				" the page's script on this site, so server-side scanners and local" +
+				" test builds never appear here, and neither does anyone PostHog's" +
+				" internal and test user filter leaves out. A bot driving a real" +
+				" browser can still count. A visit is a PostHog session, not a person." +
+				" Someone who has not accepted the banner keeps" +
+				" nothing on their device, so each page they load is a new visit and" +
+				" a click from the landing page to the game counts twice. Someone who" +
+				" declined counts on that one page and never again, and an ad blocker" +
+				" hides a visitor altogether; Server traffic still sees both. Played" +
+				" leaves out tables with no human seat, and its percentage is of game" +
+				" opens. A table's Started counts a saved match again each time it is" +
+				" picked up, so it can run ahead of Finished. Time in game runs from a" +
+				" session's first event to its last, so it reads short, and a session" +
+				" that sent nothing after its page view is not measured at all.",
+		),
+	);
+	return kids;
+}
+
 function render_traffic(data) {
 	const headline = el("div", { class: "headline" }, [
-		el("div", {}, [
-			el("b", { text: number(data.views) }),
-			el("span", { text: "pageviews" }),
-		]),
-		el("div", {}, [
-			el("b", { text: number(data.uniques) }),
-			el("span", { text: "unique visitors" }),
-		]),
-		el("div", {}, [
-			el("b", { text: duration(data.avg_seconds) }),
-			el("span", { text: "average session" }),
-		]),
-		el("div", {}, [
-			el("b", { text: number(data.engaged_visitors) }),
-			el("span", { text: `engaged (${engaged_share(data)} of uniques)` }),
-		]),
-		el("div", {}, [
-			el("b", { text: played_share(data) }),
-			el("span", { text: "played (of landing visitors)" }),
-		]),
-		el("div", {}, [
-			el("b", { text: data.range }),
-			el("span", { text: `${data.from} → ${data.to}` }),
-		]),
+		tile(number(data.views), "pageviews"),
+		tile(number(data.uniques), "unique visitors"),
+		tile(duration(data.avg_seconds), "average session"),
+		tile(
+			number(data.engaged_visitors),
+			`engaged (${engaged_share(data)} of uniques)`,
+		),
+		tile(played_share(data), "played (of landing visitors)"),
+		tile(data.range, `${data.from} → ${data.to}`),
 	]);
 	const tables = el("div", { class: "tables" }, [
 		card("Landing page", [table("Path", data.breakdowns.path)]),
@@ -165,30 +250,37 @@ function render_traffic(data) {
 	]);
 	return [
 		headline,
-		card("Pageviews per day", [chart(data.daily)]),
+		card("Pageviews per day", [
+			chart(
+				data.daily,
+				(day) => day.views,
+				(day) => `${day.day}: ${day.views} views`,
+				"Pageviews per day",
+			),
+		]),
 		tables,
-		el("p", {
-			class: "note",
-			text:
-				"Cookieless and IP-free: a visitor is a hash salted with the day, so" +
-				" the same person counts once per day and cannot be followed across" +
-				" days. A range's uniques is therefore the sum of daily uniques, not" +
-				" distinct people over the range. Bots are dropped by user agent." +
+		note(
+			"Every page request the server saw. Bots are dropped by user agent, so a" +
+				" scanner that sends a browser's user agent still counts here; the" +
+				" Players panel leaves those out. Cookieless and IP-free: a visitor is" +
+				" a hash salted with the day, so the same person counts once per day" +
+				" and cannot be followed across days. A range's uniques is therefore" +
+				" the sum of daily uniques, not distinct people over the range." +
 				" Duration comes from a heartbeat the page sends every 30 s while it" +
 				" is visible, carrying nothing but which page it is; a session is the" +
 				" 30-second slots it beat in, so a visitor whose browser blocks the" +
 				" beacon still counts as a view and a unique, but not as engaged." +
 				" Played is the share of landing-page visitors who opened the game;" +
 				" with the engaged share it is what separates people from scanners.",
-		}),
+		),
 	];
 }
 
-const RENDERERS = { traffic: render_traffic };
+const RENDERERS = { players: render_players, traffic: render_traffic };
 
 async function load() {
 	const body = document.getElementById("body");
-	body.replaceChildren(el("p", { class: "note", text: "Loading…" }));
+	body.replaceChildren(note("Loading…"));
 	try {
 		const response = await fetch(
 			`/admin/api/${state.panel}?range=${state.range}`,
@@ -198,14 +290,10 @@ async function load() {
 		const data = await response.json();
 		const render = RENDERERS[state.panel];
 		body.replaceChildren(
-			...(render
-				? render(data)
-				: [el("p", { class: "note", text: "This panel has no renderer yet." })]),
+			...(render ? render(data) : [note("This panel has no renderer yet.")]),
 		);
 	} catch (error) {
-		body.replaceChildren(
-			el("p", { class: "note", text: `Could not load the panel: ${error.message}` }),
-		);
+		body.replaceChildren(note(`Could not load the panel: ${error.message}`));
 	}
 }
 
