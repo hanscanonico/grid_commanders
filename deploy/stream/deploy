@@ -8,10 +8,14 @@ cd "$(dirname "$0")/../.."
 
 compose="docker compose -f deploy/stream/docker-compose.yml"
 
-if [ "${1:-}" = "--if-running" ] && [ -z "$($compose ps -q --status running stream 2>/dev/null)" ]; then
-  echo "The stream is off; leaving it off."
-  exit 0
-fi
+leave_off_if_stopped() {
+  if [ "$1" = "--if-running" ] && [ -z "$($compose ps -q --status running stream 2>/dev/null)" ]; then
+    echo "The stream is off; leaving it off."
+    exit 0
+  fi
+}
+
+leave_off_if_stopped "${1:-}"
 
 RENDER_GID="$(getent group render | cut -d: -f3)"
 export RENDER_GID
@@ -21,6 +25,8 @@ if [ -z "$RENDER_GID" ]; then
 fi
 
 $compose build
+# Asked again because a build takes minutes, and its owner may stop the stream during one.
+leave_off_if_stopped "${1:-}"
 $compose up -d
 docker image prune -f --filter label=grid-commanders.stream=true >/dev/null
 echo "Stream started. Check: $compose logs stream"

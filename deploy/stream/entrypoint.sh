@@ -113,8 +113,6 @@ drawtext=fontfile=$LABEL_FONT:text='Grid Commanders - bots playing bots - $SITE'
 }
 
 play_match() {
-	# Every match saves a recording, and a stream that never stops would keep them all.
-	rm -rf "$XDG_DATA_HOME/godot/app_userdata/Grid Commanders/replays"
 	# shellcheck disable=SC2086
 	timeout -k 10 "$MATCH_LIMIT_SECONDS" $VGLRUN godot --audio-driver PulseAudio \
 		--max-fps "$FPS" --print-fps --resolution "$SIZE" --position 0,0 --path "$GAME" \
@@ -161,8 +159,14 @@ encode() {
 		"${output[@]}"
 }
 
-# ffmpeg names its output in some errors, and that address holds the stream key.
-redact_key() { sed -u -E 's#(/app/)[^[:space:]"'\'']+#\1<key>#g'; }
+# ffmpeg names its output in some errors, and that address holds the stream key. The
+# second pass is for the key on its own, as a server's error message may repeat it.
+redact_key() {
+	local line
+	sed -u -E 's#(/app/)[^[:space:]"'\'']+#\1<key>#g' | while IFS= read -r line; do
+		printf '%s\n' "${line//"${TWITCH_STREAM_KEY:-}"/<key>}"
+	done
+}
 
 # Twitch ends a broadcast after 48 hours and networks drop; both land here. Something
 # that fails straight away, like a bad key, waits longer before trying again.
@@ -182,6 +186,8 @@ encoder_loop() {
 }
 
 main() {
+	# Only the encoder's address needs the key, so no child process inherits it.
+	export -n TWITCH_STREAM_KEY
 	mkdir -p "$HOME" "$XDG_DATA_HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_RUNTIME_DIR"
 	chmod 700 "$XDG_RUNTIME_DIR"
 	if [ -n "${TWITCH_STREAM_KEY:-}" ]; then

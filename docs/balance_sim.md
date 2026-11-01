@@ -265,7 +265,8 @@ presentation and touch no sim state.
 
 The scene prints `watch: team N wins on day D` and exits when the match ends, so
 the fidelity check is a diff against the `matches.csv` row, not someone watching
-a window and remembering.
+a window and remembering. `--watch-hold=` is how many seconds the result stays up
+before that exit, 1.5 unless it says otherwise.
 
 **Watch mode honours `--days=` too** (default 20, the Lab's default). Most rows
 terminate `day_cap` — a rule-based AI rarely races to an HQ — and those are

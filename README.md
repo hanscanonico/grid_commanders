@@ -757,7 +757,8 @@ docker compose -f deploy/stream/docker-compose.yml down
 ```
 
 When it is on, a green push to `main` rebuilds and restarts it after the site deploys, which cuts
-the match in progress. When it is off, a push leaves it off. A failed stream build does not fail
+the match in progress. When it is off, a push leaves it off. A private preview counts as on, so if `deploy/stream/.env`
+holds a key by then, the next push goes live. A failed stream build does not fail
 the site's deploy and leaves the running stream alone.
 
 The numbers, measured on the mini PC (i5-12600H, Alder Lake iGPU) on 2026-11-01 at 720p and 30 fps:
