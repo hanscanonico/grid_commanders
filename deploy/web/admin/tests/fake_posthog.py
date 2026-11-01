@@ -14,6 +14,7 @@ class FakePostHog:
         self.status = 200
         self.raw: bytes | None = None
         self.location: str | None = None
+        self.cut_short = False
         self.requests: list[SimpleNamespace] = []
         fake = self
 
@@ -39,7 +40,8 @@ class FakePostHog:
                 if answer is None:
                     rows = fake.answers.get(body.get("name"), [])
                     answer = json.dumps({"results": rows}).encode("utf-8")
-                self.send_header("Content-Length", str(len(answer)))
+                promised = len(answer) + (1 if fake.cut_short else 0)
+                self.send_header("Content-Length", str(promised))
                 self.end_headers()
                 self.wfile.write(answer)
 

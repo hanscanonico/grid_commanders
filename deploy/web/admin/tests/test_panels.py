@@ -111,7 +111,7 @@ class PlayersPanelTests(PlayersPanelCase):
         self.assertEqual(answer["range"], "30d")
         self.assertEqual(answer["from"], "2026-08-16")
         self.assertEqual(answer["to"], "2026-09-14")
-        self.assertEqual(answer["fetched_at"], "12:00 UTC")
+        self.assertEqual(answer["fetched_at"], "2026-09-14 12:00 UTC")
 
     def test_every_day_of_the_range_is_there_a_quiet_one_included(self):
         daily = self.answer()["daily"]
@@ -219,6 +219,30 @@ class PlayersQueryTests(PlayersPanelCase):
         self.assertIn("uniqIf(properties.$session_id", sql)
         self.assertNotIn("distinct_id", sql)
 
+    def test_what_each_headline_number_counts(self):
+        sql = self.fake.sql("admin_totals")
+        for column in (
+            "uniqIf(properties.$session_id, event = '$pageview') AS visits",
+            "uniqIf(properties.$session_id, event = '$pageview'"
+            " AND properties.$pathname = '/play/') AS game",
+            "uniqIf(properties.$session_id, event = 'match_started'"
+            " AND properties.mode != 'spectate') AS played",
+            "uniqIf(properties.$session_id, event = 'match_ended'"
+            " AND properties.mode != 'spectate') AS finished",
+        ):
+            with self.subTest(column=column):
+                self.assertIn(column, sql)
+
+    def test_time_in_game_measures_the_game_page_and_only_a_real_length(self):
+        sql = self.fake.sql("admin_time")
+        self.assertIn("WHERE properties.$pathname = '/play/' AND", sql)
+        self.assertIn("WHERE secs > 0", sql)
+
+    def test_a_mission_counts_its_starts_and_its_clears_apart(self):
+        sql = self.fake.sql("admin_mission")
+        self.assertIn("countIf(event = 'campaign_mission_started') AS started", sql)
+        self.assertIn("countIf(event = 'campaign_mission_cleared') AS cleared", sql)
+
     def test_a_year_of_days_fits_the_query(self):
         # PostHog stops at 100 rows unless a query names its own limit.
         self.assertIn("LIMIT 400", self.fake.sql("admin_daily"))
@@ -239,6 +263,14 @@ class PlayersPanelStateTests(unittest.TestCase):
         fake = FakePostHog()
         self.addCleanup(fake.close)
         fake.answers["admin_totals"] = [[1, 2]]
+        sources = Sources(None, PostHog(fake.url, "318370", KEY, SITE))
+        answer = panels.players.query(sources, "7d", NOW)
+        self.assertIn("cannot read", answer["error"])
+
+    def test_an_empty_row_is_an_answer_too(self):
+        fake = FakePostHog()
+        self.addCleanup(fake.close)
+        fake.answers["admin_daily"] = [[]]
         sources = Sources(None, PostHog(fake.url, "318370", KEY, SITE))
         answer = panels.players.query(sources, "7d", NOW)
         self.assertIn("cannot read", answer["error"])

@@ -702,12 +702,15 @@ PostHog nothing; Server traffic works either way.
    **Query Read** scope and, if the form offers it, access to this project alone. The key is shown
    once. It looks like `phx_…`.
 2. With the key on the clipboard, install it on the host. It is piped rather than typed, so it never
-   reaches a shell history or a screen:
+   reaches a shell history or a screen. The checks leave `.env` alone unless the clipboard holds a
+   key and the file's other secrets can be carried over:
 
    ```sh
-   pbpaste | ssh mini-pc@192.168.1.37 'read -r key; cd ~/Documents/grid_commanders/deploy/web &&
+   pbpaste | ssh <user>@<host> 'read -r key; umask 077
+     case "$key" in phx_*) ;; *) echo "The clipboard holds no phx_ key."; exit 1 ;; esac
+     cd <checkout>/deploy/web && test -r .env &&
      { grep -v "^ADMIN_POSTHOG_KEY=" .env; printf "ADMIN_POSTHOG_KEY=%s\n" "$key"; } > .env.new &&
-     chmod 600 .env.new && mv .env.new .env && docker compose up -d admin'
+     mv .env.new .env && docker compose up -d admin'
    ```
 
 3. To stop your own visits counting, go to PostHog's **Settings → Project → Filter out internal and

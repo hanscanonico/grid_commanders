@@ -113,7 +113,7 @@ def _read(posthog: PostHog, range_key: str, now: datetime) -> dict:
     failure like any other, not a dropped connection the page cannot explain."""
     try:
         return _fresh(posthog, range_key, now)
-    except (TypeError, ValueError) as error:
+    except (TypeError, ValueError, LookupError) as error:
         raise PostHogError(f"PostHog sent rows this panel cannot read: {error}")
 
 
@@ -130,7 +130,7 @@ def _fresh(posthog: PostHog, range_key: str, now: datetime) -> dict:
         "range": range_key,
         "from": first,
         "to": today,
-        "fetched_at": now.strftime("%H:%M UTC"),
+        "fetched_at": now.strftime("%Y-%m-%d %H:%M UTC"),
         "visits": _count(visits),
         "game_opens": _count(game_opens),
         "played": _count(played),

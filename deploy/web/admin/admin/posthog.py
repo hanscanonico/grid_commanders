@@ -1,12 +1,13 @@
 """PostHog's query API, read from the server.
 
 The personal key stays on this side of /admin: the page only ever sees the
-numbers a panel made of an answer. Every query goes through `rows`, which is
-what holds it to the site's own traffic, so no panel can forget to.
+numbers a panel made of an answer. A query writes `SCOPE` in its WHERE and `rows`
+fills in what holds it to the site's own traffic.
 """
 
 from __future__ import annotations
 
+import http.client
 import json
 import logging
 import threading
@@ -99,7 +100,7 @@ class PostHog:
             with error:
                 reason = _refusal(error)
             raise self._failed(name, reason) from None
-        except OSError:
+        except (OSError, http.client.HTTPException):
             raise self._failed(name, "PostHog did not answer.") from None
         except (ValueError, KeyError, TypeError):
             raise self._failed(name, _UNREADABLE) from None
@@ -167,6 +168,6 @@ def _refusal(error: urllib.error.HTTPError) -> str:
         return "PostHog's rate limit for this key is used up for now."
     try:
         detail = json.loads(error.read()).get("detail") or ""
-    except (ValueError, AttributeError, OSError):
+    except (ValueError, AttributeError, OSError, http.client.HTTPException):
         detail = ""
     return f"PostHog answered {error.code}. {detail}".strip()

@@ -107,6 +107,15 @@ class FailureTests(FakeCase):
             posthog.rows("q", "SELECT 1", "2026-10-26")
         self.assertIn("did not answer", str(caught.exception))
 
+    def test_an_answer_cut_short_is_no_answer(self):
+        self.fake.cut_short = True
+        self.assertIn("did not answer", self.refusal())
+
+    def test_a_refusal_cut_short_still_names_the_status(self):
+        self.fake.cut_short = True
+        self.fake.status = 500
+        self.assertIn("answered 500", self.refusal())
+
     def test_a_redirect_is_not_followed_with_the_key(self):
         elsewhere = FakePostHog()
         self.addCleanup(elsewhere.close)

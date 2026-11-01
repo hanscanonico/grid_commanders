@@ -163,7 +163,7 @@ function render_players(data) {
 	if (data.stale) {
 		kids.push(
 			note(
-				`PostHog did not answer just now, so this is the answer from` +
+				`PostHog could not refresh this, so it is the answer from` +
 					` ${data.fetched_at}. ${data.stale}`,
 			),
 		);
@@ -206,16 +206,18 @@ function render_players(data) {
 			"From PostHog, as of " + data.fetched_at + ". It counts browsers that ran" +
 				" the page's script on this site, so server-side scanners and local" +
 				" test builds never appear here, and neither does anyone PostHog's" +
-				" internal and test user filter leaves out. A visit is a PostHog" +
-				" session, not a person. Someone who has not accepted the banner keeps" +
+				" internal and test user filter leaves out. A bot driving a real" +
+				" browser can still count. A visit is a PostHog session, not a person." +
+				" Someone who has not accepted the banner keeps" +
 				" nothing on their device, so each page they load is a new visit and" +
 				" a click from the landing page to the game counts twice. Someone who" +
 				" declined counts on that one page and never again, and an ad blocker" +
 				" hides a visitor altogether; Server traffic still sees both. Played" +
 				" leaves out tables with no human seat, and its percentage is of game" +
-				" opens. Time in game runs from a session's first event to its last," +
-				" so it reads short, and a session that sent nothing after its page" +
-				" view is not measured at all.",
+				" opens. A table's Started counts a saved match again each time it is" +
+				" picked up, so it can run ahead of Finished. Time in game runs from a" +
+				" session's first event to its last, so it reads short, and a session" +
+				" that sent nothing after its page view is not measured at all.",
 		),
 	);
 	return kids;
