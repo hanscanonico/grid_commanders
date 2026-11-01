@@ -6,6 +6,15 @@
 # follows it without putting a stream its owner stopped back on air.
 cd "$(dirname "$0")/../.."
 
+# Anything else would start the stream, and a mistyped flag must not go live.
+case "${1:-}" in
+"" | --if-running) ;;
+*)
+  echo "Usage: deploy/stream/deploy [--if-running]" >&2
+  exit 2
+  ;;
+esac
+
 compose="docker compose -f deploy/stream/docker-compose.yml"
 
 leave_off_if_stopped() {

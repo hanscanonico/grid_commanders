@@ -144,7 +144,12 @@ match_loop() {
 encode() {
 	local output
 	if [ -n "${TWITCH_STREAM_KEY:-}" ]; then
-		output=(-f flv "$TWITCH_INGEST/$TWITCH_STREAM_KEY")
+		output=(-f flv)
+		# ffmpeg does not check who it is talking to by default, and this sends the key.
+		case "$TWITCH_INGEST" in
+		rtmps://*) output+=(-tls_verify 1 -ca_file /etc/ssl/certs/ca-certificates.crt) ;;
+		esac
+		output+=("$TWITCH_INGEST/$TWITCH_STREAM_KEY")
 	else
 		mkdir -p "$RUN/preview"
 		output=(-f segment -segment_time 60 -segment_wrap 5 -reset_timestamps 1 "$RUN/preview/part%d.mp4")
@@ -209,7 +214,10 @@ main() {
 	set_caption "$SITE"
 	match_loop &
 	encoder_loop &
-	wait -n
+	# Polled, because `wait -n` can miss a job that a signal killed before it got there.
+	while [ "$(jobs -r | wc -l)" -eq 4 ]; do
+		sleep 1
+	done
 	say "a required process stopped, restarting the container"
 	# shellcheck disable=SC2046
 	kill $(jobs -p) 2>/dev/null

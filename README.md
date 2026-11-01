@@ -756,10 +756,12 @@ deploy/stream/deploy
 docker compose -f deploy/stream/docker-compose.yml down
 ```
 
-When it is on, a green push to `main` rebuilds and restarts it after the site deploys, which cuts
-the match in progress. When it is off, a push leaves it off. A private preview counts as on, so if `deploy/stream/.env`
-holds a key by then, the next push goes live. A failed stream build does not fail
-the site's deploy and leaves the running stream alone.
+When it is on, a green push to `main` that changes the game rebuilds and restarts it after the site
+deploys, which cuts the match in progress. A push that changes only what
+`deploy/stream/Dockerfile.dockerignore` lists, such as the docs or the site, leaves it on air. When
+it is off, a push leaves it off. A private preview counts as on, so if `deploy/stream/.env` holds a
+key by then, the next push goes live. A failed stream build does not fail the site's deploy and
+leaves the running stream alone.
 
 The numbers, measured on the mini PC (i5-12600H, Alder Lake iGPU) on 2026-11-01 at 720p and 30 fps:
 
@@ -777,8 +779,9 @@ a start compiles shaders and stutters for about ten seconds; later ones reuse th
 Nothing the show writes reaches the disk: a size-limited tmpfs holds the game's data, the build
 turns the game's log files off, and the container's log is capped at 30 MB. One game process per
 match means a crash costs that match. The encoder is a separate loop, so it reconnects by itself
-when Twitch ends a broadcast at its 48-hour limit or the network drops, and the key is scrubbed
-from anything it prints.
+when Twitch ends a broadcast at its 48-hour limit or the network drops. It checks Twitch's certificate
+before sending the key and scrubs the key from anything it prints, though anyone with a shell on the
+host can read it in `ps` or `docker inspect`.
 
 ## Main menu
 

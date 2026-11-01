@@ -7,6 +7,9 @@ services:
     build:
       context: ../..
       dockerfile: deploy/stream/Dockerfile
+      # A provenance record is stamped per build, which would give an unchanged build
+      # a new image id and make `up -d` restart the stream for nothing.
+      provenance: false
     restart: unless-stopped
     init: true
     stop_grace_period: 5s
@@ -28,6 +31,10 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    # A dead connection to Twitch gives up in about a minute instead of about 15, and
+    # the encoder reconnects.
+    sysctls:
+      net.ipv4.tcp_retries2: "7"
     # Nothing the show writes reaches the disk: this is the same flood of game logs
     # that once filled it, stopped at a fixed size.
     tmpfs:

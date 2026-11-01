@@ -15,6 +15,7 @@ ADD --checksum=sha256:df3f7788ce41b182a47c0d298e5cd6d2d63579522cb41825970b7726e8
 	/tmp/virtualgl.deb
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	/tmp/virtualgl.deb \
+	ca-certificates \
 	ffmpeg \
 	fontconfig \
 	fonts-dejavu-core \
