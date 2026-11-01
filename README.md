@@ -657,12 +657,11 @@ many opened the game, played a match and finished one, the median time in game, 
 country, referrer, device, match mode, map and campaign mission. The collector asks
 [PostHog's query API](https://posthog.com/docs/api/queries) from the server, so the key never
 reaches the page, and it keeps each range's answer for five minutes. It counts only the site's own
-hosts, because a local build posts to the same project, and it applies the project's internal and
-test user filter. A visit is a PostHog session rather than a person: a visitor who has not accepted
-the banner keeps nothing on their device, so each page they load is a new visit. Someone who declined
-counts on that one page and never again, and an ad blocker hides a visitor altogether. PostHog's MCP
-server is for AI agents and logs in through a browser, so a deployed page cannot use it; this panel
-calls the API underneath it.
+hosts, because a local build posts to the same project. A visit is a PostHog session rather than a
+person: a visitor who has not accepted the banner keeps nothing on their device, so each page they
+load is a new visit. Someone who declined counts on that one page and never again, and an ad blocker
+hides a visitor altogether. PostHog's MCP server is for AI agents and logs in through a browser, so
+a deployed page cannot use it; this panel calls the API underneath it.
 
 **Server traffic** is the first-party monitor, and it counts every page request nginx saw, so it
 includes the scanners PostHog never hears from. It shows pageviews and unique
@@ -713,10 +712,13 @@ PostHog nothing; Server traffic works either way.
      mv .env.new .env && docker compose up -d admin'
    ```
 
-3. To stop your own visits counting, go to PostHog's **Settings → Project → Filter out internal and
-   test users** and add the event property **IP address**, **doesn't equal**, your home address. The
-   panel applies the filter when it asks, so it covers past events too. It cannot help on a changing
-   address, or if the project discards client IPs.
+3. To stop your own visits counting, make each browser of yours one that declined: press **Decline**
+   on the banner, or, where you already accepted, run
+   `localStorage.setItem("gc-analytics-consent", "denied")` in the console on the site. PostHog never
+   loads there again; removing that item brings the banner back. It covers later visits only.
+   PostHog's internal and test user filter cannot do this job. The project discards client IPs, so
+   there is no address to filter on, and that filter's cohort reads person profiles, which anonymous
+   visitors do not have. The panel still applies the filter, so an identified test user would drop out.
 
 `/admin` is excluded from `robots.txt` and absent from the sitemap, and every response it sends
 carries `no-store` and `noindex`.
