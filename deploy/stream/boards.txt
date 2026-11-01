@@ -1,0 +1,19 @@
+# The boards the stream plays. A duel at the Hard tier on each of these usually
+# ends in a real win inside the 40-day cap: at least 5 of 8 matches, measured with
+# `make balance-sim SIM="--sweep=maps --red=<co>:hard --blue=<co>:hard --seeds=2 --days=40"`.
+# Left out: crossfire, meridian, the_slough, the_straits and tideflats, where most
+# matches ran to the cap and were scored on points.
+arsenal
+blackwood
+boot_camp
+exclave
+first_steps
+forge
+ironworks
+isthmus
+jet_stream
+powder_keg
+riverline
+scrimmage
+steelworks
+timberline

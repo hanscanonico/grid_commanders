@@ -1,0 +1,55 @@
+#!/bin/bash -e
+# Build the stream from this checkout and (re)start it. With a key in
+# deploy/stream/.env, that goes live.
+# Usage: deploy/stream/deploy [--if-running]
+# --if-running does nothing unless the stream is already on, which is how a merge
+# follows it without putting a stream its owner stopped back on air.
+cd "$(dirname "$0")/../.."
+
+# Anything else would start the stream, and a mistyped flag must not go live.
+case "${1:-}" in
+"" | --if-running) ;;
+*)
+  echo "Usage: deploy/stream/deploy [--if-running]" >&2
+  exit 2
+  ;;
+esac
+
+compose="docker compose -f deploy/stream/docker-compose.yml"
+# Must match the service's `image:` in docker-compose.yml.
+image="grid-commanders-stream:latest"
+
+layers() {
+  docker image inspect --format '{{.RootFS.Layers}}' "$1" 2>/dev/null || true
+}
+
+leave_off_if_stopped() {
+  if [ "$1" = "--if-running" ] && [ -z "$($compose ps -q --status running stream 2>/dev/null)" ]; then
+    echo "The stream is off; leaving it off."
+    exit 0
+  fi
+}
+
+leave_off_if_stopped "${1:-}"
+
+RENDER_GID="$(getent group render | cut -d: -f3)"
+export RENDER_GID
+if [ -z "$RENDER_GID" ]; then
+  echo "This machine has no render group, so the container cannot reach its GPU." >&2
+  exit 1
+fi
+
+before="$(layers "$image")"
+
+$compose build
+# Asked again because a build takes minutes, and its owner may stop the stream during one.
+leave_off_if_stopped "${1:-}"
+# The layers, because the build stamps each image with a record that gives even an
+# unchanged game a new id, and `up -d` would restart the stream for it.
+if [ "${1:-}" = "--if-running" ] && [ "$before" = "$(layers "$image")" ]; then
+  echo "Nothing the stream uses changed; leaving it on air."
+else
+  $compose up -d
+  echo "Stream started. Check: $compose logs stream"
+fi
+docker image prune -f --filter label=grid-commanders.stream=true >/dev/null

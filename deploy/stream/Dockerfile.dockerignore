@@ -1,0 +1,26 @@
+# What the stream's image leaves out, in place of the root .dockerignore. A push that
+# changes only these builds the same image, so `up -d` leaves the stream on air.
+.claude
+.dockerignore
+.git
+.gitattributes
+.github
+.gitignore
+.godot
+.gutconfig.json
+.lavish
+.promo
+bin
+build
+deploy/stream/.env
+deploy/web
+docs
+export_presets.cfg
+gdlintrc
+generators
+Makefile
+reports
+screenshot*.png.import
+tests
+*.md
+*.png

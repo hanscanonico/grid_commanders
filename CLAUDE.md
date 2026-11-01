@@ -90,7 +90,7 @@ res://
 │             # install, make *-test gate them), models/ (Blender, make models); .gdignore
 │             # hides them from the engine
 ├─ docs/       # the instruments' committed records; how to author a campaign mission
-├─ deploy/     # the mini-PC hosting stack for the web build
+├─ deploy/     # the mini-PC stacks: web/ hosts the web build, stream/ the Twitch stream
 └─ tests/      # GUT tests — target the Node-free layers only (see Testing)
 ```
 

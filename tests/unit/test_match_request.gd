@@ -93,6 +93,18 @@ func test_days_is_unset_until_a_flag_writes_one() -> void:
 	assert_ne(sentinel.days_cap, MatchRequest.DAYS_UNSET, "the flag can never write the sentinel")
 
 
+func test_watch_hold_keeps_its_default_until_a_flag_writes_one_and_never_goes_negative() -> void:
+	var untouched := MatchRequest.new()
+	untouched.apply_cmdline(Fixture.args(["--watch"]))
+	assert_eq(untouched.watch_hold_seconds, MatchRequest.DEFAULT_WATCH_HOLD_SECONDS)
+	var held := MatchRequest.new()
+	held.apply_cmdline(Fixture.args(["--watch", "--watch-hold=12"]))
+	assert_eq(held.watch_hold_seconds, 12.0)
+	var negative := MatchRequest.new()
+	negative.apply_cmdline(Fixture.args(["--watch-hold=-3"]))
+	assert_eq(negative.watch_hold_seconds, 0.0)
+
+
 func test_difficulty_is_carried_as_an_id_for_the_database_to_resolve() -> void:
 	var request := MatchRequest.new()
 	request.apply_cmdline(Fixture.args(["--difficulty=  hard  "]))

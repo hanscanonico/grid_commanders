@@ -1,0 +1,44 @@
+# Its own project, so starting or stopping the stream never touches deploy/web.
+name: grid-commanders-stream
+
+services:
+  stream:
+    image: grid-commanders-stream:latest
+    build:
+      context: ../..
+      dockerfile: deploy/stream/Dockerfile
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 5s
+    environment:
+      # `:-` so a checkout with no key can still build and run the private preview.
+      TWITCH_STREAM_KEY: ${TWITCH_STREAM_KEY:-}
+      TWITCH_INGEST: ${TWITCH_INGEST:-rtmps://ingest.global-contribute.live-video.net/app}
+    user: "1000:1000"
+    # deploy/stream/deploy reads the host's render group; 990 is the mini PC's.
+    group_add:
+      - "${RENDER_GID:-990}"
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    # Measured at about 2 cores. The cap keeps a runaway from starving the site.
+    cpus: 4
+    mem_limit: 3g
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # A dead connection to Twitch gives up in about a minute instead of about 15, and
+    # the encoder reconnects.
+    sysctls:
+      net.ipv4.tcp_retries2: "7"
+    # Nothing the show writes reaches the disk: this is the same flood of game logs
+    # that once filled it, stopped at a fixed size.
+    tmpfs:
+      - /run/stream:size=512m,mode=0700,uid=1000,gid=1000
+      - /tmp:size=64m,mode=1777
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
