@@ -20,7 +20,6 @@ gdlintrc
 generators
 Makefile
 reports
-research_notes
 screenshot*.png.import
 tests
 *.md
