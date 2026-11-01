@@ -715,10 +715,14 @@ PostHog nothing; Server traffic works either way.
 3. To stop your own visits counting, make each browser of yours one that declined: press **Decline**
    on the banner, or, where you already accepted, run
    `localStorage.setItem("gc-analytics-consent", "denied")` in the console on the site. PostHog never
-   loads there again; removing that item brings the banner back. It covers later visits only.
+   loads there again. It covers later visits only, and only that browser's store for that host: `www.`
+   keeps its own, and a private window starts empty. Removing the item brings the banner back, though
+   after **Decline** PostHog's own opt-out stays, so that browser sends nothing until you press
+   **Accept**.
    PostHog's internal and test user filter cannot do this job. The project discards client IPs, so
-   there is no address to filter on, and that filter's cohort reads person profiles, which anonymous
-   visitors do not have. The panel still applies the filter, so an identified test user would drop out.
+   there is no address to filter on, and the filter's person and cohort entries read person profiles,
+   which anonymous visitors do not have. The panel still applies the filter, but the site identifies
+   nobody, so those entries remove no one.
 
 `/admin` is excluded from `robots.txt` and absent from the sitemap, and every response it sends
 carries `no-store` and `noindex`.
