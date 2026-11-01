@@ -16,6 +16,12 @@ case "${1:-}" in
 esac
 
 compose="docker compose -f deploy/stream/docker-compose.yml"
+# Must match the service's `image:` in docker-compose.yml.
+image="grid-commanders-stream:latest"
+
+layers() {
+  docker image inspect --format '{{.RootFS.Layers}}' "$1" 2>/dev/null || true
+}
 
 leave_off_if_stopped() {
   if [ "$1" = "--if-running" ] && [ -z "$($compose ps -q --status running stream 2>/dev/null)" ]; then
@@ -33,9 +39,17 @@ if [ -z "$RENDER_GID" ]; then
   exit 1
 fi
 
+before="$(layers "$image")"
+
 $compose build
 # Asked again because a build takes minutes, and its owner may stop the stream during one.
 leave_off_if_stopped "${1:-}"
-$compose up -d
+# The layers, because the build stamps each image with a record that gives even an
+# unchanged game a new id, and `up -d` would restart the stream for it.
+if [ "${1:-}" = "--if-running" ] && [ "$before" = "$(layers "$image")" ]; then
+  echo "Nothing the stream uses changed; leaving it on air."
+else
+  $compose up -d
+  echo "Stream started. Check: $compose logs stream"
+fi
 docker image prune -f --filter label=grid-commanders.stream=true >/dev/null
-echo "Stream started. Check: $compose logs stream"

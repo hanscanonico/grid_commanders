@@ -7,9 +7,6 @@ services:
     build:
       context: ../..
       dockerfile: deploy/stream/Dockerfile
-      # A provenance record is stamped per build, which would give an unchanged build
-      # a new image id and make `up -d` restart the stream for nothing.
-      provenance: false
     restart: unless-stopped
     init: true
     stop_grace_period: 5s
