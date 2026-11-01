@@ -178,7 +178,7 @@ var board_3d := DEFAULT_BOARD_3D
 ## teach next and stops drawing itself once it holds them all.
 var retired_hints: Array[StringName] = []
 
-## The match the main menu last set up — `MenuSetupMemory`'s board, fog and
+## The match the main menu last set up — `MenuSetupMemory`'s board and
 ## seats — so returning to the menu, or launching the game again, finds the table
 ## as it was left. Only ever a pre-fill: what a match plays is still the request
 ## the menu stages from what is on screen.

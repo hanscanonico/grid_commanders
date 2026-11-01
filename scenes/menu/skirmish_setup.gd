@@ -53,7 +53,6 @@ func _init(picker: MapPicker, difficulties: Array[Difficulty], remembered: Dicti
 	map_picker = picker
 	_difficulties = difficulties
 	_remembered = remembered
-	fog_on = MenuSetupMemory.fog(remembered)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 
@@ -286,8 +285,7 @@ func _on_speed_selected(index: int) -> void:
 
 func _on_fog_toggled(pressed: bool) -> void:
 	fog_on = pressed
-	_remember()
 
 
 func _remember() -> void:
-	MenuSetupMemory.remember(map_picker.selected_map(), fog_on, seat_strip)
+	MenuSetupMemory.remember(map_picker.selected_map(), seat_strip)

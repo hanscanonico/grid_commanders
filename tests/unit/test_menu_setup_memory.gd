@@ -15,10 +15,7 @@ func test_nothing_sound_remembered_reads_as_no_board() -> void:
 	assert_eq(MenuSetupMemory.map_path(garbled), "", "a value that is no path")
 
 
-func test_fog_and_the_table_fall_back_on_anything_malformed() -> void:
-	assert_false(MenuSetupMemory.fog({}), "fog starts off")
-	assert_true(MenuSetupMemory.fog({MenuSetupMemory.FOG_KEY: true}))
-	assert_false(MenuSetupMemory.fog({MenuSetupMemory.FOG_KEY: "yes"}))
+func test_the_table_falls_back_on_anything_malformed() -> void:
 	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: [1, 2]}), {})
 	var garbled_seats := {"who": "human,cpu", "sides": [0, 1], "tiers": []}
 	assert_eq(MenuSetupMemory.table({MenuSetupMemory.TABLE_KEY: garbled_seats}), {}, "seats")
