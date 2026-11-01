@@ -4,7 +4,7 @@
 "use strict";
 
 const RANGES = ["7d", "30d", "90d", "365d"];
-const state = { panel: null, range: "7d", panels: [] };
+const state = { panel: null, range: "7d", panels: [], latest: 0 };
 
 const el = (tag, attrs = {}, kids = []) => {
 	const node = document.createElement(tag);
@@ -278,8 +278,11 @@ function render_traffic(data) {
 
 const RENDERERS = { players: render_players, traffic: render_traffic };
 
+// PostHog can take seconds to answer, so the reader may have moved on by the
+// time an answer lands. Only the latest load may draw.
 async function load() {
 	const body = document.getElementById("body");
+	const mine = ++state.latest;
 	body.replaceChildren(note("Loading…"));
 	try {
 		const response = await fetch(
@@ -288,11 +291,13 @@ async function load() {
 		);
 		if (!response.ok) throw new Error(`HTTP ${response.status}`);
 		const data = await response.json();
+		if (mine !== state.latest) return;
 		const render = RENDERERS[state.panel];
 		body.replaceChildren(
 			...(render ? render(data) : [note("This panel has no renderer yet.")]),
 		);
 	} catch (error) {
+		if (mine !== state.latest) return;
 		body.replaceChildren(note(`Could not load the panel: ${error.message}`));
 	}
 }
