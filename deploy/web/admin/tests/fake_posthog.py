@@ -29,6 +29,7 @@ class FakePostHog:
                     SimpleNamespace(
                         path=self.path,
                         authorization=self.headers.get("Authorization"),
+                        user_agent=self.headers.get("User-Agent"),
                         name=body.get("name"),
                         query=body.get("query", {}),
                     )

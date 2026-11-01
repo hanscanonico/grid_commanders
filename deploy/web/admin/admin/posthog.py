@@ -25,6 +25,9 @@ TIMEOUT_SECONDS = 20
 REMEMBER_SECONDS = 300
 # Where a query's SQL says "only the events this site's numbers may count".
 SCOPE = "{scope}"
+# urllib's default names Python, which a firewall in front of an API may block,
+# and that 403 would read on the panel as a refused key.
+USER_AGENT = "grid-commanders-admin"
 
 
 class PostHogError(Exception):
@@ -90,6 +93,7 @@ class PostHog:
             headers={
                 "Authorization": f"Bearer {self._key}",
                 "Content-Type": "application/json",
+                "User-Agent": USER_AGENT,
             },
         )
         try:

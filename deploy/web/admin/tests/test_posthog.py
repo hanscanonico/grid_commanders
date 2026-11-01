@@ -28,6 +28,7 @@ class RowsTests(FakeCase):
         sent = self.fake.requests[0]
         self.assertEqual(sent.path, "/api/projects/318370/query/")
         self.assertEqual(sent.authorization, f"Bearer {KEY}")
+        self.assertEqual(sent.user_agent, "grid-commanders-admin")
         self.assertEqual(sent.name, "q")
         self.assertEqual(sent.query["kind"], "HogQLQuery")
         self.assertEqual(sent.query["query"], "SELECT 1")
