@@ -16,6 +16,8 @@ readonly RESULT_HOLD_SECONDS=12
 # By command count and pace, the longest measured match on these boards is about 31 minutes.
 readonly MATCH_LIMIT_SECONDS=3600
 readonly SITE=gridcommanders.com
+readonly PLAY_LINE="Play it yourself - $SITE/play"
+readonly GOLD=0xf5c84c
 readonly TITLE_FONT=$GAME/assets/fonts/PixelifySans-Variable.ttf
 readonly LABEL_FONT=$GAME/assets/fonts/Silkscreen-Regular.ttf
 readonly VGLRUN="/opt/VirtualGL/bin/vglrun -d egl"
@@ -81,16 +83,25 @@ pick_match() {
 	echo "$board $(commanders | shuf -n2 | xargs) $(shuf -i 0-2147483647 -n1)"
 }
 
-# The line under the top bar, read by the encoder. Moved into place in one step so
-# the encoder can never read half of it. It sits on the right because a commander's
-# power window takes the left of the screen, and on a cut-in that height is black.
+# The match line the encoder draws. Moved into place in one step so the encoder can
+# never read half of it.
 set_caption() {
 	echo "$1" >"$RUN/caption.tmp"
 	mv "$RUN/caption.tmp" "$RUN/caption.txt"
 }
 
+# What the encoder draws over every frame: the match under the top bar, and under it
+# where to play. Both sit on the right because a commander's power window takes the
+# left of the screen, and on a cut-in that height is black.
+overlay() {
+	local label="fontfile=$LABEL_FONT:fontsize=16:box=1:boxcolor=black@0.6:boxborderw=6:x=w-text_w-10"
+	echo "drawtext=$label:textfile=$RUN/caption.txt:reload=$FPS:expansion=none:fontcolor=white:y=52,\
+drawtext=$label:text='$PLAY_LINE':fontcolor=$GOLD:y=78"
+}
+
 # What shows on the screen when no game window covers it. The game's boot splash is
-# this same file (override.cfg), so the card stays up while the next match loads.
+# this same file (override.cfg), so the card stays up while the next match loads. The
+# title sits low enough to clear the overlay's two lines, which cover the card too.
 draw_card() {
 	local board red blue portraits=$GAME/assets/portraits/commanders
 	board=$(title_case "$1")
@@ -104,11 +115,11 @@ draw_card() {
 [0][left]overlay=110:172[with_left];\
 [with_left][right]overlay=840:172,\
 drawtext=fontfile=$LABEL_FONT:text='NEXT MATCH':fontcolor=0xa8b0c0:fontsize=24:x=(w-text_w)/2:y=16,\
-drawtext=fontfile=$TITLE_FONT:text='$board':fontcolor=0xf5c84c:fontsize=56:x=(w-text_w)/2:y=80,\
+drawtext=fontfile=$TITLE_FONT:text='$board':fontcolor=$GOLD:fontsize=56:x=(w-text_w)/2:y=110,\
 drawtext=fontfile=$TITLE_FONT:text='vs':fontcolor=white:fontsize=72:x=(w-text_w)/2:y=330,\
 drawtext=fontfile=$LABEL_FONT:text='$red':fontcolor=white:fontsize=24:x=275-text_w/2:y=592,\
 drawtext=fontfile=$LABEL_FONT:text='$blue':fontcolor=white:fontsize=24:x=1005-text_w/2:y=592,\
-drawtext=fontfile=$LABEL_FONT:text='Grid Commanders - bots playing bots - $SITE':fontcolor=0xa8b0c0:fontsize=20:x=(w-text_w)/2:y=664" \
+drawtext=fontfile=$LABEL_FONT:text='Grid Commanders - bots playing bots':fontcolor=0xa8b0c0:fontsize=20:x=(w-text_w)/2:y=664" \
 		-frames:v 1 "$RUN/card.png" && hsetroot -fill "$RUN/card.png" >/dev/null
 }
 
@@ -127,7 +138,7 @@ match_loop() {
 	read -r board red blue seed <<<"$(pick_match "")"
 	draw_card "$board" "$red" "$blue"
 	while :; do
-		set_caption "$(title_case "$board") - $(title_case "$red") vs $(title_case "$blue") - $SITE"
+		set_caption "$(title_case "$board") - $(title_case "$red") vs $(title_case "$blue")"
 		sleep "$CARD_SECONDS"
 		say "playing $board: $red vs $blue, seed $seed"
 		read -r next_board next_red next_blue next_seed <<<"$(pick_match "$board")"
@@ -157,7 +168,7 @@ encode() {
 	ffmpeg -hide_banner -loglevel warning -nostdin \
 		-thread_queue_size 1024 -f x11grab -draw_mouse 0 -framerate "$FPS" -video_size "$SIZE" -i "$DISPLAY" \
 		-thread_queue_size 1024 -f pulse -i stream.monitor \
-		-vf "drawtext=fontfile=$LABEL_FONT:textfile=$RUN/caption.txt:reload=$FPS:expansion=none:fontcolor=white:fontsize=16:box=1:boxcolor=black@0.6:boxborderw=6:x=w-text_w-10:y=52" \
+		-vf "$(overlay)" \
 		-c:v libx264 -preset veryfast -profile:v main -pix_fmt yuv420p \
 		-b:v 3500k -maxrate 3500k -bufsize 7000k -g $((FPS * 2)) -keyint_min $((FPS * 2)) -sc_threshold 0 \
 		-af aresample=async=1 -c:a aac -b:a 128k -ar 48000 -ac 2 \
@@ -211,7 +222,7 @@ main() {
 	wait_for_socket "$RUN/pulse.sock" || exit 1
 	require_gpu || exit 1
 
-	set_caption "$SITE"
+	set_caption "Grid Commanders"
 	match_loop &
 	encoder_loop &
 	# Polled, because `wait -n` can miss a job that a signal killed before it got there.
