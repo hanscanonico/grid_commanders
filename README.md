@@ -738,8 +738,8 @@ it — a computer turn that seemed to hang while you were away resumes when the 
 The mini PC can play the game against itself around the clock and stream it to Twitch, from a
 docker-compose stack under `deploy/stream/` that is separate from the site's. Each match is a Hard
 duel on a random board from `deploy/stream/boards.txt`, between two random commanders, on the 3D
-board with sound. A card names the next match between games, and a caption under the top bar names
-the current one and the site.
+board with sound. A card names the next match between games. Under the top bar a caption names the
+current one, and a gold line under it says where to play: `gridcommanders.com/play`.
 
 ```sh
 # A private preview: with no key it records its last five minutes inside the container.
