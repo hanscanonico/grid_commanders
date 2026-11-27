@@ -65,11 +65,11 @@
 		},
 		{
 			"artifact": "",
-			"ended": 1795807750,
+			"ended": 1795808874,
 			"exit": 2,
 			"job": "difficulty-check",
 			"kind": "section",
-			"log": "reports/grind/logs/difficulty-check-20261127-202645.log",
+			"log": "reports/grind/logs/difficulty-check-20261127-204529.log",
 			"marker": "=== difficulty ladder ===",
 			"reading": [
 				"=== difficulty ladder ===",
@@ -81,7 +81,7 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1795807605,
+			"started": 1795808729,
 			"status": "failed"
 		},
 		{
@@ -93,14 +93,8 @@
 			"log": "reports/grind/logs/commander-balance-20261112-200704.log",
 			"marker": "=== commander balance ===",
 			"reading": [
-				"=== commander balance ===",
-				"matches 9680   decisive 9679   draws 1   rejected 0   cap-stalls 0",
-				"first-side bias (non-mirror decisive games) +33.9 pp (REVIEW, threshold +-5)",
-				"commander            win%   n   band",
-				"  iris_colt           22.3  880  WARN",
-				"  rhea_sol            36.9  880  WARN",
-				"\u2026",
-				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
+				"(marker '=== commander balance ===' not found in the log)",
+				"(no output)"
 			],
 			"started": 1794510424,
 			"status": "done"
@@ -114,24 +108,19 @@
 			"log": "reports/grind/logs/campaign-difficulty-20261112-203811.log",
 			"marker": "campaign-difficulty: ",
 			"reading": [
-				"campaign-difficulty: 5 flagged (never won, a clock at or under the median win, or a blind seat never",
-				"five_flags         ff04_the_lantern_hall            normal  win   0%  fog    \u2014  day  0  deadline  0 ",
-				"five_flags         ff06_the_last_parade             normal  win   0%  fog    \u2014  day  0  deadline  0 ",
-				"five_flags         ff15_nias_road                   normal  win   0%  fog   0%  day  0  deadline  0 ",
-				"five_flags         ff16_the_hunters_road            normal  win   0%  fog   0%  day  0  deadline  0 ",
-				"five_flags         ff25_kharn                       normal  win   0%  fog    \u2014  day  0  deadline  0 ",
-				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
+				"(marker 'campaign-difficulty: ' not found in the log)",
+				"(no output)"
 			],
 			"started": 1794512291,
 			"status": "done"
 		},
 		{
 			"artifact": "",
-			"ended": 1795808121,
+			"ended": 1795809240,
 			"exit": 2,
 			"job": "legibility-ratchet",
 			"kind": "section",
-			"log": "reports/grind/logs/legibility-ratchet-20261127-202911.log",
+			"log": "reports/grind/logs/legibility-ratchet-20261127-204754.log",
 			"marker": "# Legibility ratchet",
 			"reading": [
 				"# Legibility ratchet",
@@ -143,7 +132,7 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1795807751,
+			"started": 1795808874,
 			"status": "failed"
 		},
 		{
@@ -407,7 +396,7 @@
 			"balance-pool-timberline",
 			"replay-survey-timberline"
 		],
-		"pass": 1160,
+		"pass": 1161,
 		"phase": "idle",
 		"queue": [
 			"balance-pool-arsenal",
@@ -428,5 +417,5 @@
 		"sha": "7530e3fe",
 		"started": 0
 	},
-	"written": 1795808122
+	"written": 1795809241
 }
