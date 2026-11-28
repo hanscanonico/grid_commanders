@@ -65,11 +65,11 @@
 		},
 		{
 			"artifact": "",
-			"ended": 1795841354,
+			"ended": 1795842472,
 			"exit": 2,
 			"job": "difficulty-check",
 			"kind": "section",
-			"log": "reports/grind/logs/difficulty-check-20261128-054649.log",
+			"log": "reports/grind/logs/difficulty-check-20261128-060532.log",
 			"marker": "=== difficulty ladder ===",
 			"reading": [
 				"=== difficulty ladder ===",
@@ -81,7 +81,7 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1795841209,
+			"started": 1795842332,
 			"status": "failed"
 		},
 		{
@@ -116,11 +116,11 @@
 		},
 		{
 			"artifact": "",
-			"ended": 1795841725,
+			"ended": 1795842838,
 			"exit": 2,
 			"job": "legibility-ratchet",
 			"kind": "section",
-			"log": "reports/grind/logs/legibility-ratchet-20261128-054915.log",
+			"log": "reports/grind/logs/legibility-ratchet-20261128-060753.log",
 			"marker": "# Legibility ratchet",
 			"reading": [
 				"# Legibility ratchet",
@@ -132,7 +132,7 @@
 				"\u2026",
 				"make[1]\u00a0: on quitte le r\u00e9pertoire \u00ab\u00a0/home/mini-pc/Documents/grid_commanders\u00a0\u00bb"
 			],
-			"started": 1795841355,
+			"started": 1795842473,
 			"status": "failed"
 		},
 		{
@@ -396,7 +396,7 @@
 			"balance-pool-timberline",
 			"replay-survey-timberline"
 		],
-		"pass": 1190,
+		"pass": 1191,
 		"phase": "idle",
 		"queue": [
 			"balance-pool-arsenal",
@@ -417,5 +417,5 @@
 		"sha": "7530e3fe",
 		"started": 0
 	},
-	"written": 1795841726
+	"written": 1795842839
 }
